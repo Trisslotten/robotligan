@@ -7,7 +7,5 @@ int main(unsigned argc, char **argv)
 
 	std::cout << "Test från development";
 
-	HEjdjaje
-
 	return EXIT_SUCCESS;
 }
