@@ -76,7 +76,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Graphics\Header files;$(SolutionDir)Physics\Header files;$(SolutionDir)Sound\Header files;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Graphics\Header files;$(SolutionDir)Physics\Header files;$(SolutionDir)Sound\Header files;$(SolutionDir)Network API\Header files;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -88,7 +88,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Graphics\Header files;$(SolutionDir)Physics\Header files;$(SolutionDir)Sound\Header files;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Graphics\Header files;$(SolutionDir)Physics\Header files;$(SolutionDir)Sound\Header files;$(SolutionDir)Network API\Header files;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -102,7 +102,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Graphics\Header files;$(SolutionDir)Physics\Header files;$(SolutionDir)Sound\Header files;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Graphics\Header files;$(SolutionDir)Physics\Header files;$(SolutionDir)Sound\Header files;$(SolutionDir)Network API\Header files;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -118,7 +118,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Graphics\Header files;$(SolutionDir)Physics\Header files;$(SolutionDir)Sound\Header files;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Graphics\Header files;$(SolutionDir)Physics\Header files;$(SolutionDir)Sound\Header files;$(SolutionDir)Network API\Header files;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -132,6 +132,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Graphics\Graphics.vcxproj">
       <Project>{00483ef8-3152-4d9a-875b-69bb294a3118}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Network API\Network API.vcxproj">
+      <Project>{68631d0d-6f1d-4257-8c3d-dd4ef4cd8b6f}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Physics\Physics.vcxproj">
       <Project>{01d1b82d-bd74-4e9c-89e4-c7f7ab9aefc2}</Project>
