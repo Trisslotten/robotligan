@@ -20,8 +20,8 @@ int main(unsigned argc, char **argv) {
   print(registry);
 
   std::cout << "Test från development2 " << glob::GraphicsTest() << "\n";
-  std::cout << "RAM usage: " << util::memoryinfo::getInstance().getRamUsage() << "MB\n";
-  std::cout << "VRAM usage: " << util::memoryinfo::getInstance().getUsedVRAM() << "MB\n";
+  std::cout << "RAM usage: " << util::MemoryInfo::GetInstance().GetUsedRAM() << " MB\n";
+  std::cout << "VRAM usage: " << util::MemoryInfo::GetInstance().GetUsedVRAM() << " MB\n";
   std::cin.ignore();
   return EXIT_SUCCESS;
 }
