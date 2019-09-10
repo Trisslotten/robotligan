@@ -4,7 +4,7 @@
 
 #include <entt.hpp>
 #include "PrintPositionSystem.h"
-
+#include "util/meminfo.h"
 //#include <glad/glad.h>
 
 int main(unsigned argc, char **argv) {
@@ -21,7 +21,8 @@ int main(unsigned argc, char **argv) {
   print(registry);
 
   std::cout << "Test från development2 " << glob::GraphicsTest() << "\n";
-  std::cout << "Test från Network" << 
-
+  std::cout << "RAM usage: " << util::MemoryInfo::GetInstance().GetUsedRAM() << " MB\n";
+  std::cout << "VRAM usage: " << util::MemoryInfo::GetInstance().GetUsedVRAM() << " MB\n";
+  std::cin.ignore();
   return EXIT_SUCCESS;
 }
