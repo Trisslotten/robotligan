@@ -180,16 +180,16 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\glob\graphics.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="src\mesh.h" />
     <ClInclude Include="src\Model\mesh.h" />
+    <ClInclude Include="src\Model\model.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="src\graphics.cpp" />
-    <ClCompile Include="src\mesh.cpp" />
     <ClCompile Include="src\Model\mesh.cpp" />
+    <ClCompile Include="src\Model\model.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
