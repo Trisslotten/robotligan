@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "Test.h"
+#include <glob/graphics.h>
 #include "testphysics.h"
 #include "testSound.h"
 #include "testNetwork.h"
@@ -12,7 +12,9 @@ int main(unsigned argc, char **argv)
 {
 	std::cout << "Hello World!*!!!111\n";
 
-	std::cout << "Test från development" << testGraphics() << " " << testPhysics() << " " << testSound() << " " << testNetwork();
+	std::cout << "Test från development " << testPhysics() << " " << testSound() << " " << testNetwork();
+
+	std::cout << "Test från development2 " << glob::GraphicsTest() << "\n";
 
 	return EXIT_SUCCESS;
 }
