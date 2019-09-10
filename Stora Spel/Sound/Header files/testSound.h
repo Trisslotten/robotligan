@@ -1,3 +1,9 @@
 #pragma once
 
-__declspec(dllexport) int testSound();
+#ifdef MAKEDLL
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT __declspec(dllimport)
+#endif
+
+EXPORT int testSound();
