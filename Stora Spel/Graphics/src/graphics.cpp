@@ -1,6 +1,11 @@
-#include "pistol/graphics.h"
+#include "glob/graphics.h"
 
-int GraphicsTestPistol()
-{
-	return 20;
-}
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+
+namespace glob {
+
+int GraphicsTest() { return 20; }
+
+}  // namespace glob
