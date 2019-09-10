@@ -18,7 +18,10 @@
     <ClInclude Include="framework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Header files\testphysics.h">
+    <ClInclude Include="include\boundingboxes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\collision.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -26,7 +29,7 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="testPhysics.cpp">
+    <ClCompile Include="src\collision.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
