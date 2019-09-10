@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <glob/graphics.h>
+
 #include <entt.hpp>
 #include "PrintPositionSystem.h"
 
@@ -20,6 +21,7 @@ int main(unsigned argc, char **argv) {
   print(registry);
 
   std::cout << "Test från development2 " << glob::GraphicsTest() << "\n";
+  std::cout << "Test från Network" << 
 
   return EXIT_SUCCESS;
 }

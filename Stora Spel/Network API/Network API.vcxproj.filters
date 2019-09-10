@@ -15,18 +15,21 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h">
+    <ClInclude Include="include\framework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Header files\testNetwork.h">
+    <ClInclude Include="include\constants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NetAPI\socket\tcplistener.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NetAPI\socket\tcpclient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="testNetwork.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
