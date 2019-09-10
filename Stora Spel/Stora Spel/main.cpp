@@ -1,31 +1,25 @@
 #include <iostream>
 
+#include <glob/graphics.h>
 #include <entt.hpp>
 #include "PrintPositionSystem.h"
-#include <glob/graphics.h>
-#include "testphysics.h"
-#include "testSound.h"
-#include "testNetwork.h"
 
 //#include <glad/glad.h>
 
-
-
 int main(unsigned argc, char **argv) {
-	std::cout << "Hello World!*!!!111\n";
+  std::cout << "Hello World!*!!!111\n";
 
-	std::cout << "Test från development\n";
+  std::cout << "Test från development\n";
 
-	 entt::registry registry;
+  entt::registry registry;
 
-     auto entity = registry.create();
-     registry.assign<Position>(entity, 1.0f, 2.0f, 3.0f);
-     registry.assign<Velocity>(entity, 3.0f, 2.0f, 1.0f);
-     
-     print(registry);
-	std::cout << "Test från development " << testPhysics() << " " << testSound() << " " << testNetwork();
+  auto entity = registry.create();
+  registry.assign<Position>(entity, 1.0f, 2.0f, 3.0f);
+  registry.assign<Velocity>(entity, 3.0f, 2.0f, 1.0f);
 
-	std::cout << "Test från development2 " << glob::GraphicsTest() << "\n";
+  print(registry);
 
-	return EXIT_SUCCESS;
+  std::cout << "Test från development2 " << glob::GraphicsTest() << "\n";
+
+  return EXIT_SUCCESS;
 }
