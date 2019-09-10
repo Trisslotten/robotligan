@@ -5,6 +5,9 @@
 #include "testSound.h"
 #include "testNetwork.h"
 
+//#include <glad/glad.h>
+
+
 int main(unsigned argc, char **argv)
 {
 	std::cout << "Hello World!*!!!111\n";

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef TEST_H
+#define TEST_H
 
 #ifdef MAKEDLL
 #define EXPORT __declspec(dllexport)
@@ -7,3 +8,8 @@
 #endif
 
 EXPORT int testGraphics();
+
+
+#endif // !TEST_H
+
+
