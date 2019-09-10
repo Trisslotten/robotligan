@@ -36,12 +36,12 @@ void SATtest(const glm::vec3& axis, const Corners& c, float* min, float* max) {
   }
 }
 
-bool isBetween(float val, float lower, float upper) {
+bool IsBetween(float val, float lower, float upper) {
   return lower <= val && val <= upper;
 }
 
 bool overlaps(float min1, float max1, float min2, float max2) {
-  return isBetween(min2, min1, max1) || isBetween(min1, min2, max2);
+  return IsBetween(min2, min1, max1) || IsBetween(min1, min2, max2);
 }
 
 bool Intersect(const Sphere& s1, const Sphere& s2) {
@@ -65,29 +65,24 @@ bool Intersect(const Sphere& s, const OBB& o) {
 }
 
 bool Intersect(const OBB& o1, const OBB& o2) {
-  glm::vec3 normals[3] = {};
-  normals[0] = o1.normals[0] * o1.extents[0];
-  normals[1] = o1.normals[1] * o1.extents[1];
-  normals[2] = o1.normals[2] * o1.extents[2];
   Corners c1 = getCorners(o1);
   Corners c2 = getCorners(o2);
 
-  std::vector<glm::vec3> testnormals;
-  testnormals.reserve(15);
+  std::vector<glm::vec3> test_normals;
+  test_normals.reserve(15);
 
   for (int i = 0; i < 3; ++i) {
-    // glm::vec3 n1 = o1.normals[i] * o1.extents[i];
-    testnormals.push_back(o1.normals[i]);
+    test_normals.push_back(o1.normals[i]);
     for (int j = 0; j < 3; ++j) {
-      if (i == 0) testnormals.push_back(o2.normals[j]);
-      testnormals.push_back(glm::cross(o1.normals[i], o2.normals[j]));
+      if (i == 0) test_normals.push_back(o2.normals[j]);
+      test_normals.push_back(glm::cross(o1.normals[i], o2.normals[j]));
     }
   }
 
-  for (int i = 0; i < testnormals.size(); ++i) {
+  for (int i = 0; i < test_normals.size(); ++i) {
     float min1, max1, min2, max2;
-    SATtest(testnormals[i], c1, &min1, &max1);
-    SATtest(testnormals[i], c2, &min2, &max2);
+    SATtest(test_normals[i], c1, &min1, &max1);
+    SATtest(test_normals[i], c2, &min2, &max2);
 
     if (!overlaps(min1, max1, min2, max2)) {
       return false;
