@@ -7,9 +7,13 @@
 #define EXPORT __declspec(dllimport)
 #endif
 
+
+
 namespace glob {
 
+
 EXPORT int GraphicsTest();
+
 
 } // namespace glob
 
