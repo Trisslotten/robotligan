@@ -9,9 +9,9 @@
 
 namespace glob {
 
-void Init();
+EXPORT void Init();
 
-void Render();
+EXPORT void Render();
 
 }  // namespace glob
 

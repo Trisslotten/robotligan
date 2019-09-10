@@ -181,12 +181,14 @@
     <ClInclude Include="include\glob\graphics.h" />
     <ClInclude Include="include\glob\window.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="src\shader.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="src\graphics.cpp" />
+    <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\window.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

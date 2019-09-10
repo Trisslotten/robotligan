@@ -3,6 +3,7 @@
 #include <entt.hpp>
 #include "PrintPositionSystem.h"
 #include <glob/window.h>
+#include <glob/graphics.h>
 
 //#include <glad/glad.h>
 
@@ -21,10 +22,13 @@ int main(unsigned argc, char **argv) {
 
   glob::window::Create();
 
+  glob::Init();
+
   while (!glob::window::ShouldClose()) {
     // tick
 
     // render
+    glob::Render();
 
     glob::window::Update();
   }
