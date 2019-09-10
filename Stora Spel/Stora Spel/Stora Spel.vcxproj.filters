@@ -29,5 +29,8 @@
     <ClInclude Include="Entt systems\PrintPositionSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="util\meminfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
