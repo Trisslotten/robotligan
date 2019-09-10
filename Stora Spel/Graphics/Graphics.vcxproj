@@ -180,10 +180,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
-    <ClInclude Include="Header files\Test.h" />
+    <ClInclude Include="Header files\pistol\graphics.h" />
+    <ClInclude Include="Header files\pistol\Test.h" />
+    <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="glad.c" />
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="src\graphics.cpp" />
     <ClCompile Include="Test.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

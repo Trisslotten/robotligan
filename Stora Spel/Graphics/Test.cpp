@@ -1,4 +1,4 @@
-#include "Test.h"
+#include "pistol/Test.h"
 
 //OpenGL libraries
 #include <glad/glad.h>
