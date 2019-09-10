@@ -33,5 +33,19 @@ int main(unsigned argc, char **argv) {
   else
     std::cout << "No collision\n";
 
+  OBB o = {};
+  o.center = {-6.0f, 1.0f, 0.0f};
+  o.extents[0] = 1.0f;
+  o.extents[1] = 1.0f;
+  o.extents[2] = 1.0f;
+  o.normals[0] = {1.0f, 0.0f, 0.0f};
+  o.normals[1] = {0.0f, 1.0f, 0.0f};
+  o.normals[2] = {0.0f, 0.0f, 1.0f};
+
+  if (Intersect(s1, o))
+    std::cout << "Intersection\n";
+  else
+    std::cout << "No collision\n";
+
   return EXIT_SUCCESS;
 }
