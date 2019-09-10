@@ -13,4 +13,4 @@ EXPORT int GraphicsTest();
 
 } // namespace glob
 
-#endif  // GLOB_GRAPHICS_H_
+#endif  // GLOB_GRAPHICS_fvH_
