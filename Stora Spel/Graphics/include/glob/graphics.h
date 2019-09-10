@@ -9,8 +9,10 @@
 
 namespace glob {
 
-EXPORT int GraphicsTest();
+void Init();
 
-} // namespace glob
+void Render();
 
-#endif  // GLOB_GRAPHICS_fvH_
+}  // namespace glob
+
+#endif  // GLOB_GRAPHICS_H_

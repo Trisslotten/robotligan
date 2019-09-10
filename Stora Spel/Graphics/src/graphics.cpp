@@ -1,11 +1,24 @@
 #include "glob/graphics.h"
 
+// no move plz
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
+// no move plz
 
+#include <GLFW/glfw3.h>
+#include <iostream>
+
+namespace {
+
+}  // namespace
 
 namespace glob {
 
-int GraphicsTest() { return 20; }
+void Init() {
+
+}
+
+void Render() {
+
+}
 
 }  // namespace glob
