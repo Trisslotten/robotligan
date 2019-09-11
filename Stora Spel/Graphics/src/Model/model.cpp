@@ -67,8 +67,31 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
 }
 
 GLint Model::TextureFromFile(const char* path, std::string directory) {
-  // Titta på detta imorgon om hur man gör med att ladda in textur från fil
-  return GLint();
+  std::string filename = std::string(path);
+  filename = directory + '/' + filename;
+
+  // Generate texture id
+  GLuint texture_id;
+  glGenTextures(1, &texture_id);
+
+  // Load image somehow
+  
+  // Generate texture data
+  glBindTexture(GL_TEXTURE_2D, texture_id);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, /*Image size x*/, /*Image size y*/, 0,
+               GL_RGBA, GL_UNSIGNED_INT,
+               /*Image pointer*/);
+  glGenerateMipmap(GL_TEXTURE_2D);
+
+  // Set some parameters for the texture
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                  GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glBindTexture(GL_TEXTURE_2D, 0);  // Unbind the texture
+
+  return texture_id;
 }
 
 void Model::LoadModel(std::string path) {
