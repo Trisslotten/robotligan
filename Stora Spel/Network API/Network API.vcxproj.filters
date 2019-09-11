@@ -18,18 +18,33 @@
     <ClInclude Include="include\framework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\constants.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\NetAPI\socket\tcplistener.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\NetAPI\socket\tcpclient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\NetAPI\netinitialization.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NetAPI\common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NetAPI\networkTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\NetAPI\socket\tcpclient.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\NetAPI\netinitialization.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\NetAPI\networkTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
