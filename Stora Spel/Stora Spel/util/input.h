@@ -1,7 +1,8 @@
 #ifndef INPUT_H_
 #define INPUT_H_
 
-#include "../../glm/vec2.hpp"
+#include "../../glm/glm/common.hpp"
+#include "../../glm/glm/vec2.hpp"
 
 class Input
 {
@@ -9,7 +10,7 @@ public:
 	Input() = delete;
 	static bool initialize();
 	static bool isKeyDown(int key);
-	static bool isMouseButtonDown(int key);
+	static bool isMouseButtonDown(int button);
 	static bool isButtonPressed(int button);
 	static bool isKeyPressed(int key);
 	static void reset();
