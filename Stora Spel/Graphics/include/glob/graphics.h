@@ -7,10 +7,14 @@
 #define EXPORT __declspec(dllimport)
 #endif
 
+
+
 namespace glob {
 
-EXPORT int GraphicsTest();
+EXPORT void Init();
 
-} // namespace glob
+EXPORT void Render();
 
-#endif  // GLOB_GRAPHICS_fvH_
+}  // namespace glob
+
+#endif  // GLOB_GRAPHICS_H_
