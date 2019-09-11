@@ -33,7 +33,10 @@ Camera::Camera(
 	this->world_up_ = glm::vec3(0.0f, 1.0f, 0.0f);
 
 	//Calculate yaw and pitch values
-	this->LookAtPoint(in_target);
+	//this->LookAtPoint(in_target);
+
+	this->yaw_ = 0;
+    this->pitch_ = 0;
 
 	///Calculate directional vectors
 	this->UpdateDirectionalVectors();

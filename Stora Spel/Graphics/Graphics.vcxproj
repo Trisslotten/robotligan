@@ -179,7 +179,9 @@
   <ItemGroup>
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\glob\graphics.h" />
+    <ClInclude Include="include\glob\window.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="src\shader.h" />
     <ClInclude Include="src\camera\camera.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -188,6 +190,8 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="src\camera\camera.cpp" />
     <ClCompile Include="src\graphics.cpp" />
+    <ClCompile Include="src\shader.cpp" />
+    <ClCompile Include="src\window.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

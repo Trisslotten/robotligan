@@ -1,8 +1,9 @@
 #include <iostream>
 
-#include <glob/graphics.h>
 #include <entt.hpp>
 #include "PrintPositionSystem.h"
+#include <glob/window.h>
+#include <glob/graphics.h>
 
 //#include <glad/glad.h>
 
@@ -19,7 +20,20 @@ int main(unsigned argc, char **argv) {
 
   print(registry);
 
-  std::cout << "Test från development2 " << glob::GraphicsTest() << "\n";
+  glob::window::Create();
+
+  glob::Init();
+
+  while (!glob::window::ShouldClose()) {
+    // tick
+
+    // render
+    glob::Render();
+
+    glob::window::Update();
+  }
+
+  glob::window::Cleanup();
 
   return EXIT_SUCCESS;
 }
