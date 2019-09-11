@@ -104,12 +104,25 @@ void Camera::LookAtPoint(glm::vec3 in_target) {
 		glm::vec3(0.0f, 1.0f, 0.0f)
 	);
 
+	//Calculate the reference vector
+	//The vector needs to be the product of a ccw rotation
+	//If the target's y-value is higher than our position we are looking up
+	glm::vec3 ref_vec = glm::vec3(0.0f);
+	if (in_target.y > this->position_.y) {
+		//Cross from the flat vector to the actual one
+		ref_vec = glm::cross(temp_dir_f, temp_dir);
+	}
+	else {
+		//Otherwise cross from the actual vector to the flat one
+		ref_vec = glm::cross(temp_dir, temp_dir_f);
+	}
+
 	//Check the angle between the flattened and unflattened angle
 	//That is the camera's pitch
 	this->pitch_ = glm::orientedAngle(
 		temp_dir_f,
 		temp_dir,
-		glm::cross(temp_dir_f, temp_dir)
+		ref_vec
 	);
 
 	//Update the directional vectors and then the view matrix
