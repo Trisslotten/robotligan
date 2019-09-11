@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "lodepng.h"
+
 Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   std::vector<Vertex> vertex;
   std::vector<GLuint> indices;
@@ -74,13 +76,21 @@ GLint Model::TextureFromFile(const char* path, std::string directory) {
   GLuint texture_id;
   glGenTextures(1, &texture_id);
 
-  // Load image somehow
-  
+  // Load texture
+  std::vector<unsigned char> image;
+  unsigned width, height;
+
+  unsigned error = lodepng::decode(image, width, height, filename);
+  if (error != 0) {
+    std::cout << "ERROR: Could not load texture: " << filename << "\n";
+    return false;
+  }
+
   // Generate texture data
   glBindTexture(GL_TEXTURE_2D, texture_id);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, /*Image size x*/, /*Image size y*/, 0,
-               GL_RGBA, GL_UNSIGNED_INT,
-               /*Image pointer*/);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
+               GL_RGBA, GL_UNSIGNED_BYTE,
+               &image);
   glGenerateMipmap(GL_TEXTURE_2D);
 
   // Set some parameters for the texture

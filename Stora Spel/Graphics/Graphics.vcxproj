@@ -72,7 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)Graphics\include;$(SolutionDir)Graphics\external\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)glm;$(SolutionDir)Graphics\include;$(SolutionDir)Graphics\external\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Graphics\external\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -180,6 +180,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\glob\graphics.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="src\Model\lodepng.h" />
     <ClInclude Include="src\Model\mesh.h" />
     <ClInclude Include="src\Model\model.h" />
   </ItemGroup>
@@ -188,8 +189,13 @@
     <ClCompile Include="glad.c" />
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="src\graphics.cpp" />
+    <ClCompile Include="src\Model\lodepng.cpp" />
     <ClCompile Include="src\Model\mesh.cpp" />
     <ClCompile Include="src\Model\model.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="external\lib\assimp-vc140-mt.lib" />
+    <Library Include="external\lib\glfw3.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
