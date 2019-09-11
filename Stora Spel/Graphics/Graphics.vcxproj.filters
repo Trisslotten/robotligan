@@ -58,7 +58,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="external\lib\assimp-vc140-mt.lib" />
     <Library Include="external\lib\glfw3.lib" />
   </ItemGroup>
 </Project>
