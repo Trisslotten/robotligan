@@ -25,9 +25,10 @@ class Model {
    
  public:
   Model(char* path);
+  Model();
   ~Model();
 
-  void LoadModelFromFile(GLchar* path);
+  void LoadModelFromFile(const GLchar* path);
   void Draw(GLuint shader);
 };
 

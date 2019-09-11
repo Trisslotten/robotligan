@@ -17,7 +17,7 @@
 namespace glob {
 
 class ShaderProgram {
-  const std::string SHADERS_PATH = "shaders/";
+  const std::string SHADERS_PATH = "assets/shaders/";
 
   std::unordered_map<GLenum, std::string> paths;
   std::unordered_map<GLenum, GLuint> ids;

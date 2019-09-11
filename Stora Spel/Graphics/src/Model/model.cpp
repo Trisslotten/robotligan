@@ -88,17 +88,17 @@ GLint Model::TextureFromFile(const char* path, std::string directory) {
 
   // Generate texture data
   glBindTexture(GL_TEXTURE_2D, texture_id);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
-               GL_RGBA, GL_UNSIGNED_BYTE,
-               &image);
-  glGenerateMipmap(GL_TEXTURE_2D);
-
-  // Set some parameters for the texture
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                  GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+               GL_UNSIGNED_BYTE, image.data());
+  // glGenerateMipmap(GL_TEXTURE_2D);
+
+  // Set some parameters for the texture
+  
   glBindTexture(GL_TEXTURE_2D, 0);  // Unbind the texture
 
   return texture_id;
@@ -166,10 +166,11 @@ std::vector<Texture> Model::LoadMaterielTextures(aiMaterial* material,
 }
 
 Model::Model(char* path) { LoadModel(path); }
+Model::Model() {}
 
 Model::~Model() {}
 
-void Model::LoadModelFromFile(GLchar* path) { LoadModel(path); }
+void Model::LoadModelFromFile(const GLchar* path) { LoadModel(path); }
 
 void Model::Draw(GLuint shader) {
   for (unsigned int i = 0; i < mesh_.size(); i++) {

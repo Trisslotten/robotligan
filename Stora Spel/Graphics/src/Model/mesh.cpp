@@ -1,5 +1,7 @@
 #include "mesh.h"
 
+#include <iostream>
+
 void Mesh::SetupMesh() {
   /*---------------Generate needed buffers--------------*/
   glGenVertexArrays(1, &vertex_array_object_);
@@ -25,8 +27,8 @@ void Mesh::SetupMesh() {
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex),
                         (GLvoid*)offsetof(Vertex, texture));
 
-  glEnableVertexAttribArray(3);  // Layout 2 for normals
-  glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+  glEnableVertexAttribArray(2);  // Layout 2 for normals
+  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
                         (GLvoid*)offsetof(Vertex, normals));
 }
 
@@ -44,8 +46,9 @@ Mesh::~Mesh() {}
 void Mesh::Draw(GLuint shader) {
   for (unsigned int i = 0; i < textures_.size(); i++) {
     glActiveTexture(GL_TEXTURE0 + i);  // Activate proper texture unit
+	glBindTexture(GL_TEXTURE_2D, textures_[i].id_texture);
     std::string name = textures_[i].type;
-    glUniform1i(glGetUniformLocation(shader, (name).c_str()), i + 2);
+    glUniform1i(glGetUniformLocation(shader, (name).c_str()), i);
   }
   glActiveTexture(GL_TEXTURE0);
 

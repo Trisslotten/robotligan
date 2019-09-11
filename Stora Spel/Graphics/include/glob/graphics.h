@@ -14,6 +14,8 @@ namespace glob {
 
 EXPORT void Init();
 
+//EXPORT void Submit(Model) 
+
 // submit things to render, for testing
 EXPORT void DebugSubmitSphere(glm::vec3 pos, float radius);
 EXPORT void DebugSubmitCube(glm::vec3 pos, glm::vec3 side_lengths,
