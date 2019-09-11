@@ -3,17 +3,6 @@
 //Private------------------------------------------------------------------------------------------
 void Camera::UpdateDirectionalVectors() {
 	
-	/*
-	
-	NTS: Old, uses yaw/pitch as degrees
-
-	//Calculate the direction using yaw and pitch
-	this->cam_direction_.x = cos(glm::radians(this->yaw_)) * cos(glm::radians(this->pitch_));
-	this->cam_direction_.y = sin(glm::radians(this->pitch_));
-	this->cam_direction_.z = sin(glm::radians(this->yaw_)) * cos(glm::radians(this->pitch_));
-	this->cam_direction_ = glm::normalize(this->cam_direction_);
-	*/
-
 	//Calculate the direction using yaw and pitch
 	this->cam_direction_.x = cos(this->yaw_) * cos(this->pitch_);
 	this->cam_direction_.y = sin(this->pitch_);
