@@ -103,8 +103,8 @@ void Render() {
 
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
 
-  glBindVertexArray(quad_vao);
-  //glBindVertexArray(triangle_vao);
+  //glBindVertexArray(quad_vao);
+  glBindVertexArray(triangle_vao);
   test_shader.use();
   test_shader.uniform("cam_transform", cam_transform);
   glDrawArrays(GL_TRIANGLES, 0, 3);
