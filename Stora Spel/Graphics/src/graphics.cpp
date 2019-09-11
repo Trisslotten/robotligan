@@ -50,9 +50,9 @@ void Init() {
   glBindVertexArray(triangle_vao);
 
   std::vector<glm::vec3> vertices{
-      {-1, -1, -1},
-      {3, -1, 1},
-      {-1, 3, 1},
+      {0, 1, 1},
+      {0, -1, 1},
+      {0, -1, -1},
   };
 
   glGenBuffers(1, &triangle_vbo);
@@ -73,10 +73,7 @@ void Render() {
 
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
 
-  cam_transform =
-      glm::perspective(glm::radians(90.f), 16.f / 9.f, 0.1f, 100.f) *
-      glm::lookAt(glm::vec3(3), glm::vec3(0), glm::vec3(0, 1, 0));
-
+  //glBindVertexArray(quad_vao);
   glBindVertexArray(triangle_vao);
   test_shader.use();
   test_shader.uniform("cam_transform", cam_transform);
