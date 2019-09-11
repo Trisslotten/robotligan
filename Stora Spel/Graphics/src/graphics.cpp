@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 #include <iostream>
 
+#include "camera/camera.hpp"
 #include "shader.h"
 
 namespace glob {
@@ -15,6 +16,8 @@ namespace {
 
 ShaderProgram test_shader;
 GLuint quad_vbo, quad_vao;
+Camera camera{glm::vec3(-3,0,0), glm::vec3(0), 90, 16.f/9.f, 0.1f, 100.f};
+
 }  // namespace
 
 void Init() {
@@ -26,9 +29,9 @@ void Init() {
   glBindVertexArray(quad_vao);
 
   std::vector<glm::vec3> vertices{
-      {-1, -1, 0},
-      {3, -1, 0},
-      {-1, 3, 0},
+      {-1, -1, -1},
+      {3, -1, 1},
+      {-1, 3, 1},
   };
 
   glGenBuffers(1, &quad_vbo);
@@ -44,8 +47,13 @@ void Init() {
 void Render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
+
+  //cam_transform = glm::perspective(glm::radians(90.f), 16.f/9.f, 0.1f, 100.f) * glm::lookAt(glm::vec3(3), glm::vec3(0), glm::vec3(0, 1, 0));
+
   glBindVertexArray(quad_vao);
   test_shader.use();
+  test_shader.uniform("cam_transform", cam_transform);
   glDrawArrays(GL_TRIANGLES, 0, 3);
   glBindVertexArray(0);
 }
