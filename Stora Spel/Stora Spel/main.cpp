@@ -4,6 +4,7 @@
 #include <entt.hpp>
 #include "PrintPositionSystem.h"
 #include "collision.h"
+#include "physics.h"
 
 //#include <glad/glad.h>
 
@@ -55,6 +56,15 @@ int main(unsigned argc, char **argv) {
     std::cout << "Intersection\n";
   else
     std::cout << "No collision\n";
+
+  PhysicsObject po;
+  po.friction = 0.f;
+  po.velocity = glm::vec3(0, 20, 0);
+  po.position = glm::vec3(0, 0, 0);
+
+  for (int i = 0; i < 100; ++i) update(&po, 0.1f);
+
+  std::cout << "Test :" << po.position.y << std::endl;
 
   return EXIT_SUCCESS;
 }

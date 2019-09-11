@@ -146,6 +146,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Components\physics_component.h" />
     <ClInclude Include="Components\velocity.h" />
     <ClInclude Include="Components\position.h" />
     <ClInclude Include="Entt systems\PrintPositionSystem.h" />

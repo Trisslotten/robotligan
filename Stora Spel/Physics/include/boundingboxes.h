@@ -14,4 +14,10 @@ struct OBB {
   float extents[3];     // lenght to each plane
 };
 
+struct Arena {
+  float xmin, xmax;
+  float ymin, ymax;
+  float zmin, zmax;
+};
+
 #endif  // PHYSICS_INCLUDE_BOUNDINGBOXES_H_

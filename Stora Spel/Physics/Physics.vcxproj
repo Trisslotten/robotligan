@@ -162,10 +162,13 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\boundingboxes.h" />
     <ClInclude Include="include\collision.h" />
+    <ClInclude Include="include\physics.h" />
+    <ClInclude Include="include\physics_object.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="src\collision.cpp" />
+    <ClCompile Include="src\physics.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

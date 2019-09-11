@@ -24,12 +24,21 @@
     <ClInclude Include="include\collision.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\physics_object.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\physics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\collision.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
