@@ -179,7 +179,10 @@
   <ItemGroup>
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\glob\graphics.h" />
+    <ClInclude Include="include\glob\window.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="src\shader.h" />
+    <ClInclude Include="src\camera\camera.hpp" />
     <ClInclude Include="src\Model\lodepng.h" />
     <ClInclude Include="src\Model\mesh.h" />
     <ClInclude Include="src\Model\model.h" />
@@ -188,7 +191,10 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="pch.cpp" />
+    <ClCompile Include="src\camera\camera.cpp" />
     <ClCompile Include="src\graphics.cpp" />
+    <ClCompile Include="src\shader.cpp" />
+    <ClCompile Include="src\window.cpp" />
     <ClCompile Include="src\Model\lodepng.cpp" />
     <ClCompile Include="src\Model\mesh.cpp" />
     <ClCompile Include="src\Model\model.cpp" />

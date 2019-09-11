@@ -11,10 +11,10 @@
 
 namespace glob {
 
+EXPORT void Init();
 
-EXPORT int GraphicsTest();
+EXPORT void Render();
 
+}  // namespace glob
 
-} // namespace glob
-
-#endif  // GLOB_GRAPHICS_fvH_
+#endif  // GLOB_GRAPHICS_H_
