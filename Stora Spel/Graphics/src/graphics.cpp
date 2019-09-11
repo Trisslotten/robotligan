@@ -16,14 +16,12 @@ namespace {
 
 ShaderProgram test_shader;
 GLuint quad_vbo, quad_vao;
-Camera camera{
-	glm::vec3(-9.0f, 0.0f, 0.0f),
-	glm::vec3(0.0f),
-	90,
-	(16.f/9.f), 
-	0.1f, 
-	100.f
-};
+Camera camera{glm::vec3(-9.0f, 0.0f, 0.0f),
+              glm::vec3(0.0f),
+              90,
+              (16.f / 9.f),
+              0.1f,
+              100.f};
 
 }  // namespace
 
