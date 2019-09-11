@@ -10,8 +10,8 @@ private:
 	//Variables for the view matrix
 	glm::vec3 position_;			//Camera position
 
-	float yaw_;						//Yaw is for looking left/right
-	float pitch_;					//Pitch is for looking up/down
+	float yaw_;						//Yaw is for looking left/right. Tracked in radians
+	float pitch_;					//Pitch is for looking up/down. Tracked in radians
 	glm::vec3 cam_direction_;		//Vector FROM camera in the direction its looking
 
 	glm::vec3 world_up_;			//Up in the world
@@ -30,21 +30,27 @@ private:
 
 	//Functions
 	void UpdateDirectionalVectors();
+	void UpdateViewMatrix();
 
 public:
 	Camera(
-		glm::vec3 in_pos,
-		glm::vec3 in_target,
-		float in_fov_deg,
-		float in_aspect,
-		float in_nearplane,
-		float in_farplane
+		glm::vec3 in_pos,			//Position where camera is created
+		glm::vec3 in_target,		//Point camera is looking
+		float in_fov_deg,			//Field of view
+		float in_aspect,			//Aspect ratio
+		float in_nearplane,			//Near z-plane in view-space
+		float in_farplane			//Far z-plane in view-space
 	);
 	~Camera();
 
+	glm::vec3 GetPosition() const;
 	glm::mat4 GetViewPerspectiveMatrix() const;
 
+	void MoveCamera(glm::vec3 in_vec);
 	void LookAtPoint(glm::vec3 in_target);
+	void TurnCameraViaDegrees(float in_yaw_deg, float in_pitch_deg);
+	void TurnCameraViaRadians(float in_yaw_rad, float in_pitch_rad);
+	
 };
 
 #endif // !CAMERA_HPP
