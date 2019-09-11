@@ -91,3 +91,28 @@ bool Intersect(const OBB& o1, const OBB& o2) {
 
   return true;
 }
+
+bool Intersect(const Arena& a, const Sphere& s) {
+  if (s.center.x + s.radius >= a.xmax) return true;
+  if (s.center.x - s.radius <= a.xmin) return true;
+  if (s.center.y + s.radius >= a.ymax) return true;
+  if (s.center.y - s.radius <= a.ymin) return true;
+  if (s.center.z + s.radius >= a.zmax) return true;
+  if (s.center.z - s.radius <= a.zmin) return true;
+
+  return false;
+}
+
+bool Intersect(const Arena& a, const OBB& o) {
+  Corners c = getCorners(o);
+  for (int i = 0; i < 8; ++i) {
+    if (c.corners[i].x >= a.xmax) return true;
+    if (c.corners[i].x <= a.xmin) return true;
+    if (c.corners[i].y >= a.ymax) return true;
+    if (c.corners[i].y <= a.ymin) return true;
+    if (c.corners[i].z >= a.zmax) return true;
+    if (c.corners[i].z <= a.zmin) return true;
+  }
+
+  return false;
+ }
