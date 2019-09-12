@@ -5,10 +5,9 @@
 #include "ball_component.h"
 #include "boundingboxes.h"
 #include "collision.h"
-#include "velocity.h"
 #include "physics.h"
 #include "physics_component.h"
-
+#include "velocity.h"
 
 // temp function to print glm::vec3
 void printglm(glm::vec3 v) {
@@ -16,8 +15,7 @@ void printglm(glm::vec3 v) {
 }
 
 void UpdatePhysics(entt::registry& registry, float dt) {
-  auto view_ball =
-      registry.view<BallComponent, physics::Sphere, Velocity>();
+  auto view_ball = registry.view<BallComponent, physics::Sphere, Velocity>();
 
   for (auto entity : view_ball) {
     auto& ball = view_ball.get<BallComponent>(entity);
@@ -29,20 +27,25 @@ void UpdatePhysics(entt::registry& registry, float dt) {
     po.friction = .0f;
     po.position = s.center;
     po.velocity = v.velocity;
-    //printglm(s.center);
-    //std::cout << std::endl;
+    // printglm(s.center);
+    // std::cout << std::endl;
 
     update(&po, dt);
 
     s.center = po.position;
     v.velocity = po.velocity;
-    //printglm(s.center);
-    //std::cout << std::endl;
+    // printglm(s.center);
+    // std::cout << std::endl;
   }
 
-  auto view_players = registry.view<TransformComponent, Velocity>();
+  auto view_moveable = registry.view<TransformComponent, Velocity>();
 
+  for (auto entity : view_moveable) {
+    TransformComponent& tc = view_moveable.get<TransformComponent>(entity);
+    Velocity& vc = view_moveable.get<Velocity>(entity);
 
+    tc.position += vc.velocity;
+  }
 }
 
 #endif  // PHYSICS_SYSTEM_H

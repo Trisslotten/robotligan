@@ -16,35 +16,50 @@ void update(entt::registry &registry) {
       .each([](CameraComponent &cc, PlayerComponent &pc, TransformComponent &tc,
                Velocity &v) {
         // rotation
-        float sensitivity = 1.0f;
+        float sensitivity = 0.003f;
         glm::vec2 rot = Input::mouseMov() *
                         sensitivity;  // rotation this frame from mouse move
         float yaw = rot.x;
         float pitch = rot.y;
 
         if (Input::isMouseButtonDown(GLFW_MOUSE_BUTTON_1)) {
+         
           cc.AddAngles(yaw, pitch);
-          tc.rotate(glm::vec3(pitch, 0, yaw));
+          tc.rotate(glm::vec3(0, yaw, 0));
         }
 
-        // tc.rotation.x += pitch;
-        // tc.rotation.z += yaw;
+        // Caputre keyboard input and apply velocity
 
         glm::vec3 final_velocity(0, 0, 0);
 
+        glm::vec3 front = tc.Forward();
+        front.y = 0;  // we don't want the player to fly
+        glm::vec3 up(0, 1, 0);
+        glm::vec3 right = glm::cross(front, up);
+
         if (Input::isKeyDown(GLFW_KEY_W)) {
-          glm::vec3 frwd = tc.Forward();
-          final_velocity += frwd * pc.walkSpeed;
-          std::cout << "Forward vector: " << frwd.x << " " << frwd.y << " "
-                    << frwd.z << "\n";
+          final_velocity += front * pc.walkSpeed;
+        }
+        if (Input::isKeyDown(GLFW_KEY_S)) {
+          final_velocity -= front * pc.walkSpeed;
+        }
+        if (Input::isKeyDown(GLFW_KEY_D)) {
+          final_velocity += right * pc.walkSpeed;
+        }
+        if (Input::isKeyDown(GLFW_KEY_A)) {
+          final_velocity -= right * pc.walkSpeed;
         }
 
-        // physics stuff
+        // physics stuff, absolute atm, need to change. Other systems may affect
+        // velocity of player object.
         v.velocity = final_velocity;
 
+        /*
+                NETWORK STUFF?
+        */
+
         // maybe move to new CameraSystem?
-        // cc.cam->TurnCameraViaDegrees(yaw, pitch);
-        cc.cam->MoveCamera(tc.position + cc.offset);
+        cc.cam_->SetPosition(tc.position + cc.offset_);
         // maybe move to new CameraSystem?
       });
 }

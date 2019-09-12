@@ -50,9 +50,11 @@ class Camera {
   EXPORT glm::mat4 GetViewPerspectiveMatrix() const;
 
   EXPORT void MoveCamera(glm::vec3 in_vec);
+  EXPORT void SetPosition(glm::vec3 in_vec);
   EXPORT void LookAtPoint(glm::vec3 in_target);
   EXPORT void TurnCameraViaDegrees(float in_yaw_deg, float in_pitch_deg);
   EXPORT void SetAnglesViaDegrees(float in_yaw_deg, float in_pitch_deg);
+  EXPORT void SetAnglesViaRadians(float in_yaw_rad, float in_pitch_rad);
   EXPORT void TurnCameraViaRadians(float in_yaw_rad, float in_pitch_rad);
 };
 

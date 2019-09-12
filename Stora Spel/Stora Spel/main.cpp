@@ -50,9 +50,9 @@ int main(unsigned argc, char **argv) {
   registry.assign<CameraComponent>(
       avatar,
       (Camera *)
-          glob::GetCamera());  // get the camera pointer from glob renderer
+          glob::GetCamera(), glm::vec3(0,1,0));  // get the camera pointer from glob renderer
   registry.assign<PlayerComponent>(avatar);
-  registry.assign<TransformComponent>(avatar, glm::vec3(0, 0, 0),
+  registry.assign<TransformComponent>(avatar, glm::vec3(-9.f, 0.f, 0.f),
                                       glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
   registry.assign<Velocity>(avatar, glm::vec3(.0f, .0f, .0f));
   registry.assign<physics::OBB>(
