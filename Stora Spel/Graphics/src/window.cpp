@@ -54,7 +54,7 @@ void Create() {
 
   printf("DEBUG window.cpp: Using OpenGL %s\n", glGetString(GL_VERSION));
 
-  //glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   // vsync 1, off 0
   glfwSwapInterval(1);
