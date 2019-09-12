@@ -1,50 +1,52 @@
-#ifndef CAMERA_HPP
-#define CAMERA_HPP
+#ifndef CAMERA_HPP_
+#define CAMERA_HPP_
 
 #include <glm/glm.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
 class Camera {
-private:
+ private:
+  // Variables for the view matrix
+  glm::vec3 position_;  // Camera position
 
-	//Variables for the view matrix
-	glm::vec3 position_;			//Camera position
+  float yaw_;    // Yaw is for looking left/right. Tracked in radians
+  float pitch_;  // Pitch is for looking up/down. Tracked in radians
+  glm::vec3 cam_direction_;  // Vector FROM camera in the direction its looking
 
-	float yaw_;						//Yaw is for looking left/right
-	float pitch_;					//Pitch is for looking up/down
-	glm::vec3 cam_direction_;		//Vector FROM camera in the direction its looking
+  glm::vec3 world_up_;   // Up in the world
+  glm::vec3 cam_right_;  // Straight right of the camera
+  glm::vec3 cam_up_;     // Direction of the top of the camera
 
-	glm::vec3 world_up_;			//Up in the world
-	glm::vec3 cam_right_;			//Straight right of the camera
-	glm::vec3 cam_up_;				//Direction of the top of the camera
+  // Variables for the perpective matrix
+  float fov_;
+  float nearplane_;
+  float farplane_;
 
-	//Variables for the perpective matrix
-	float fov_;
-	float nearplane_;
-	float farplane_;
-	
+  // Matrices
+  glm::mat4 view_mat_;         // View matrix
+  glm::mat4 perspective_mat_;  // Perspective matrix
 
-	//Matrices
-	glm::mat4 view_mat_;			//View matrix
-	glm::mat4 perspective_mat_;		//Perspective matrix
+  // Functions
+  void UpdateDirectionalVectors();
+  void UpdateViewMatrix();
 
-	//Functions
-	void UpdateDirectionalVectors();
+ public:
+  Camera(glm::vec3 in_pos,     // Position where camera is created
+         glm::vec3 in_target,  // Point camera is looking
+         float in_fov_deg,     // Field of view
+         float in_aspect,      // Aspect ratio
+         float in_nearplane,   // Near z-plane in view-space
+         float in_farplane     // Far z-plane in view-space
+  );
+  ~Camera();
 
-public:
-	Camera(
-		glm::vec3 in_pos,
-		glm::vec3 in_target,
-		float in_fov_deg,
-		float in_aspect,
-		float in_nearplane,
-		float in_farplane
-	);
-	~Camera();
+  glm::vec3 GetPosition() const;
+  glm::mat4 GetViewPerspectiveMatrix() const;
 
-	glm::mat4 GetViewPerspectiveMatrix() const;
-
-	void LookAtPoint(glm::vec3 in_target);
+  void MoveCamera(glm::vec3 in_vec);
+  void LookAtPoint(glm::vec3 in_target);
+  void TurnCameraViaDegrees(float in_yaw_deg, float in_pitch_deg);
+  void TurnCameraViaRadians(float in_yaw_rad, float in_pitch_rad);
 };
 
-#endif // !CAMERA_HPP
+#endif  // !CAMERA_HPP
