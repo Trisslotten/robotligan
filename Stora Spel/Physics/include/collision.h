@@ -9,11 +9,12 @@
 #define EXPORT __declspec(dllimport)
 #endif
 
+namespace physics {
 EXPORT bool Intersect(const OBB& o1, const OBB& o2);
 EXPORT bool Intersect(const Sphere& s1, const Sphere& s2);
-EXPORT bool Intersect(const Sphere& s, const OBB& o);
-EXPORT bool Intersect(const Arena& a, const Sphere& s);
-EXPORT bool Intersect(const Arena& a, const OBB& o);
-
+EXPORT bool Intersect(const Sphere& s, const OBB& o, glm::vec3* normal);
+EXPORT bool Intersect(const Arena& a, const Sphere& s, glm::vec3* normal);
+EXPORT bool Intersect(const Arena& a, const OBB& o, glm::vec3* pos);
+}  // namespace physics
 
 #endif  // PHYSICS_INCLUDE_COLLISION_H_

@@ -3,6 +3,8 @@
 
 #include <vec3.hpp>
 
+namespace physics {
+
 struct Sphere {
   glm::vec3 center;
   float radius;
@@ -10,8 +12,8 @@ struct Sphere {
 
 struct OBB {
   glm::vec3 center;
-  glm::vec3 normals[3]; // normalized plane normals
-  float extents[3];     // lenght to each plane
+  glm::vec3 normals[3];  // normalized plane normals
+  float extents[3];      // lenght to each plane
 };
 
 struct Arena {
@@ -19,5 +21,5 @@ struct Arena {
   float ymin, ymax;
   float zmin, zmax;
 };
-
+}  // namespace physics
 #endif  // PHYSICS_INCLUDE_BOUNDINGBOXES_H_

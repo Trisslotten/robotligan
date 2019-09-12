@@ -7,7 +7,7 @@ struct Corners {
   glm::vec3 corners[8];
 };
 
-Corners getCorners(const OBB& obb) {
+Corners getCorners(const physics::OBB& obb) {
   glm::vec3 normals[3] = {};
   normals[0] = obb.normals[0] * obb.extents[0];
   normals[1] = obb.normals[1] * obb.extents[1];
@@ -44,13 +44,14 @@ bool overlaps(float min1, float max1, float min2, float max2) {
   return IsBetween(min2, min1, max1) || IsBetween(min1, min2, max2);
 }
 
-bool Intersect(const Sphere& s1, const Sphere& s2) {
+bool physics::Intersect(const physics::Sphere& s1, const physics::Sphere& s2) {
   float d = glm::distance(s1.center, s2.center);
 
   return d <= (s1.radius + s2.radius);
 }
 
-bool Intersect(const Sphere& s, const OBB& o) {
+bool physics::Intersect(const physics::Sphere& s, const physics::OBB& o,
+               glm::vec3* normal) {
   glm::vec3 retPt = o.center;
   glm::vec3 d = s.center - o.center;
 
@@ -61,10 +62,35 @@ bool Intersect(const Sphere& s, const OBB& o) {
     retPt += dist * o.normals[i];
   }
   glm::vec3 v = retPt - s.center;
-  return glm::dot(v, v) <= s.radius * s.radius;
+
+  bool intersect = glm::dot(v, v) <= s.radius * s.radius;
+
+  if (intersect) {
+    glm::vec3 impact_vector = retPt - o.center;
+    glm::vec3 impact_normal;
+    float gap = 1000000000.f;
+
+    for (int i = 0; i < 3; ++i) {
+      float dot_val = glm::dot(o.normals[i], impact_vector);
+      glm::vec3 temp_normal = o.normals[i];
+      if (dot_val < 0) {
+        dot_val = -dot_val;
+        temp_normal *= -1;
+      }
+      float temp = o.extents[0] - dot_val;
+      if (temp < gap) {
+        gap = temp;
+        impact_normal = temp_normal;
+      } 
+    }
+
+    *normal = impact_normal;
+  }
+
+  return intersect;
 }
 
-bool Intersect(const OBB& o1, const OBB& o2) {
+bool physics::Intersect(const physics::OBB& o1, const physics::OBB& o2) {
   Corners c1 = getCorners(o1);
   Corners c2 = getCorners(o2);
 
@@ -92,27 +118,57 @@ bool Intersect(const OBB& o1, const OBB& o2) {
   return true;
 }
 
-bool Intersect(const Arena& a, const Sphere& s) {
-  if (s.center.x + s.radius >= a.xmax) return true;
-  if (s.center.x - s.radius <= a.xmin) return true;
-  if (s.center.y + s.radius >= a.ymax) return true;
-  if (s.center.y - s.radius <= a.ymin) return true;
-  if (s.center.z + s.radius >= a.zmax) return true;
-  if (s.center.z - s.radius <= a.zmin) return true;
+bool physics::Intersect(const physics::Arena& a, const physics::Sphere& s,
+               glm::vec3* normal) {
+  if (s.center.x + s.radius >= a.xmax) {
+    *normal = glm::vec3(-1.f, 0.f, 0.f);
+    return true;
+  }
+  if (s.center.x - s.radius <= a.xmin) {
+    *normal = glm::vec3(1.f, 0.f, 0.f);
+    return true;
+  }
+  if (s.center.y + s.radius >= a.ymax) {
+    *normal = glm::vec3(0.f, -1.f, 0.f);
+    return true;
+  }
+  if (s.center.y - s.radius <= a.ymin) {
+    *normal = glm::vec3(0.f, 1.f, 0.f);
+    return true;
+  }
+  if (s.center.z + s.radius >= a.zmax) {
+    *normal = glm::vec3(0.f, 0.f, -1.f);
+    return true;
+  }
+  if (s.center.z - s.radius <= a.zmin) {
+    *normal = glm::vec3(0.f, 0.f, 1.f);
+    return true;
+  }
 
   return false;
 }
 
-bool Intersect(const Arena& a, const OBB& o) {
+bool physics::Intersect(const physics::Arena& a, const physics::OBB& o,
+                        glm::vec3* pos) {
   Corners c = getCorners(o);
+  glm::vec3 move = {};
+
   for (int i = 0; i < 8; ++i) {
-    if (c.corners[i].x >= a.xmax) return true;
-    if (c.corners[i].x <= a.xmin) return true;
-    if (c.corners[i].y >= a.ymax) return true;
-    if (c.corners[i].y <= a.ymin) return true;
-    if (c.corners[i].z >= a.zmax) return true;
-    if (c.corners[i].z <= a.zmin) return true;
+    if (a.xmax - c.corners[i].x < move.x)
+      move.x = a.xmax - c.corners[i].x;
+    if (a.xmin - c.corners[i].x > move.x)
+      move.x = a.xmin - c.corners[i].x;
+    if (a.ymax - c.corners[i].y < move.y)
+      move.y = a.ymax - c.corners[i].y;
+    if (a.ymin - c.corners[i].y > move.y)
+      move.y = a.ymin - c.corners[i].y;
+    if (a.zmax - c.corners[i].z < move.z)
+      move.z = a.zmax - c.corners[i].z;
+    if (a.zmin - c.corners[i].z > move.z)
+      move.z = a.zmin - c.corners[i].z;
   }
 
-  return false;
+  *pos = o.center + move;
+
+  return move.x || move.y || move.z;
  }

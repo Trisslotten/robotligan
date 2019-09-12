@@ -1,10 +1,10 @@
 #ifndef VELOCITY_H
 #define VELOCITY_H
 
+#include <vec3.hpp>
+
 struct Velocity {
-  float x;
-  float y;
-  float z;
+  glm::vec3 velocity;
 };
 
 #endif  // VELOCITY_H

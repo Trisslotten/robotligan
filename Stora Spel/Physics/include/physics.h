@@ -9,6 +9,8 @@
 #define EXPORT __declspec(dllimport)
 #endif
 
+namespace physics {
 EXPORT void update(PhysicsObject* po, float dt);
+} // namespace physics
 
 #endif  // PHYSICS_INCLUDE_PHYSICS_H_
