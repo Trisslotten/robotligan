@@ -1,10 +1,22 @@
 #include <iostream>
 
 #include <glob/graphics.h>
+#include <glob/window.h>
 #include <entt.hpp>
+#include "PlayerControllerSystem.h"
 #include "PrintPositionSystem.h"
+
+#include <GLFW/glfw3.h>
+#include "util/input.h"
 #include "util/meminfo.h"
-//#include <glad/glad.h>
+
+void init() {
+  glob::window::Create();
+  glob::Init();
+  Input::initialize();
+}
+
+void updateSystems(entt::registry *reg) { p_controller::update(*reg); }
 
 int main(unsigned argc, char **argv) {
   std::cout << "Hello World!*!!!111\n";
@@ -19,9 +31,32 @@ int main(unsigned argc, char **argv) {
 
   print(registry);
 
-  std::cout << "Test från development2 " << glob::GraphicsTest() << "\n";
-  std::cout << "RAM usage: " << util::MemoryInfo::GetInstance().GetUsedRAM() << " MB\n";
-  std::cout << "VRAM usage: " << util::MemoryInfo::GetInstance().GetUsedVRAM() << " MB\n";
+  init();  // Initialize everything
+
+  auto avatar = registry.create();  // this is the player avatar
+  registry.assign<CameraComponent>(
+      avatar,
+      (Camera *)
+          glob::GetCamera());  // get the camera pointer from glob renderer
+  registry.assign<PlayerComponent>(avatar);
+  registry.assign<TransformComponent>(avatar, glm::vec3(0, 0, 0),
+                                      glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
+
+  while (!glob::window::ShouldClose()) {
+    // tick
+    updateSystems(&registry);
+
+    // render
+    glob::Render();
+
+    glob::window::Update();
+  }
+
+  glob::window::Cleanup();
+  std::cout << "RAM usage: " << util::MemoryInfo::GetInstance().GetUsedRAM()
+            << " MB\n";
+  std::cout << "VRAM usage: " << util::MemoryInfo::GetInstance().GetUsedVRAM()
+            << " MB\n";
   std::cin.ignore();
   return EXIT_SUCCESS;
 }

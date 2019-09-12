@@ -102,7 +102,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Graphics\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)glm;$(SolutionDir)Graphics\external\include;$(SolutionDir)Graphics\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -148,12 +148,19 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\input.cpp" />
     <ClCompile Include="src\AbilityHandler\ability_handler.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Components\camera.h" />
+    <ClInclude Include="Components\camera_component.h" />
+    <ClInclude Include="Components\player_component.h" />
+    <ClInclude Include="Components\transform_component.h" />
     <ClInclude Include="Components\velocity.h" />
     <ClInclude Include="Components\position.h" />
+    <ClInclude Include="Entt systems\PlayerControllerSystem.h" />
     <ClInclude Include="Entt systems\PrintPositionSystem.h" />
+    <ClInclude Include="util\input.h" />
     <ClInclude Include="src\AbilityHandler\ability_handler.hpp" />
     <ClInclude Include="util\meminfo.h" />
   </ItemGroup>
@@ -170,6 +177,10 @@
     <ProjectReference Include="..\Sound\Sound.vcxproj">
       <Project>{253c9a10-014b-47a8-b166-2674f428f936}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\testshader.frag" />
+    <None Include="shaders\testshader.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
