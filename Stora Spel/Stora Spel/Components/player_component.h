@@ -3,6 +3,8 @@
 
 struct PlayerComponent {
   int id = 0;
+  //Primary ability ID
+  //Secondary ability ID (Pick up)
 };
 
 #endif  // PLAYER_COMPONENT_H_

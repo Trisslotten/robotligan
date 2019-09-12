@@ -21,13 +21,16 @@ void update(entt::registry &registry) {
         tc.rotation.y += yaw;
         tc.rotation = glm::clamp(tc.rotation, -180.f, 180.f);
 
-		if (Input::isKeyDown(GLFW_KEY_W)) {
-
-			//velocity stuff, handle acc here and let PhysicsSystem handle movement and collisions?
-		}
+        if (Input::isKeyDown(GLFW_KEY_W)) {
+          // velocity stuff, handle acc here and let PhysicsSystem handle
+          // movement and collisions?
+        }
+        if (Input::isKeyDown(GLFW_KEY_E)) {
+			//Trigger ability func, send in player as parameter
+        }
 
         // maybe move to new CameraSystem?
-        cc.cam->TurnCameraViaDegrees(yaw, pitch*-1);
+        cc.cam->TurnCameraViaDegrees(yaw, pitch * -1);
         cc.cam->MoveCamera(tc.position + cc.offset);
         // maybe move to new CameraSystem?
       });
