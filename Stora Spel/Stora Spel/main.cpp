@@ -3,6 +3,7 @@
 #include <glob/graphics.h>
 #include <glob/window.h>
 #include <entt.hpp>
+#include "AbilityControllerSystem.hpp"
 #include "PlayerControllerSystem.h"
 #include "PrintPositionSystem.h"
 
@@ -16,7 +17,10 @@ void init() {
   Input::initialize();
 }
 
-void updateSystems(entt::registry *reg) { p_controller::update(*reg); }
+void updateSystems(entt::registry *reg) {
+  p_controller::update(*reg);
+  a_controller::Update(*reg);
+}
 
 int main(unsigned argc, char **argv) {
   std::cout << "Hello World!*!!!111\n";

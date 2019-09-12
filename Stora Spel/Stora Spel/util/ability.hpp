@@ -30,6 +30,10 @@ AbilityID RandomAbilityID() {
   return (AbilityID)id;
 }
 
+
+//Declare functions used my TriggerAbility()
+void CreateMissileEntity(entt::registry &registry);
+
 void TriggerAbility(entt::registry &registry /*Player*/) {
   AbilityID temp_id = NULL_ABILITY;
 
@@ -66,9 +70,10 @@ void TriggerAbility(entt::registry &registry /*Player*/) {
 void CreateMissileEntity(entt::registry &registry) {
   // Create new entity
   auto entity = registry.create();
-  
-  //Assign it a missile_component
-  registry.assign<MissileComponent>(entity/*, other parameters (i.e. start pos, velocity, time etc*/);
+
+  // Assign it a missile_component
+  registry.assign<MissileComponent>(
+      entity /*, other parameters (i.e. start pos, velocity, time etc*/);
 }
 
 };  // namespace ability

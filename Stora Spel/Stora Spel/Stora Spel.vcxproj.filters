@@ -89,6 +89,9 @@
     <ClInclude Include="Components\Ability Components\homing_ball_component.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Entt systems\AbilityControllerSystem.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />
