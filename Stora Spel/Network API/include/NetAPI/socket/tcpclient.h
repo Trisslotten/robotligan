@@ -21,11 +21,13 @@ namespace NetAPI {
 			void *Recive();
 			int querryError() { return error; }
 			void setBlocking(bool block = true) { blocking = block; }
+			void setActive(bool c = true) { connected = c; };
+			void operator=(const SOCKET& other);
 		private:
 			bool blocking = false;
 			int error = 0;
 			bool connected = false;
-			unsigned buffersize = 0;
+			unsigned buffersize = 512;
 			void *sendbuffer = nullptr;
 			void *recbuffer = nullptr;
 			SOCKET sendsocket = INVALID_SOCKET;

@@ -1,6 +1,6 @@
 #include <NetAPI/common.h>
 #include <NetAPI/networkTest.h>
-#include <NetAPI/netinitialization.h>
+#include <NetAPI/helper/netinitialization.h>
 namespace NetAPI
 {
 	EXPORT int testfunc()

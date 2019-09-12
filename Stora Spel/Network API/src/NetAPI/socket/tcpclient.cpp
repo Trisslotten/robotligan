@@ -93,6 +93,11 @@ void* NetAPI::Socket::tcpclient::Recive()
 		return nullptr;
 	}
 }
+void NetAPI::Socket::tcpclient::operator=(const SOCKET& other)
+{
+	connected = true;
+	sendsocket = other;
+}
 NetAPI::Socket::tcpclient::~tcpclient()
 {
 	error = shutdown(sendsocket, SD_SEND);

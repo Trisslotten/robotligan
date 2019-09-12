@@ -1,7 +1,7 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include <pch.h>
 #include <NetAPI/common.h>
-#include <NetAPI/netinitialization.h>
+#include <NetAPI/helper/netinitialization.h>
 
 /*
 	Skapa ny tråd i dllMain som initierar variabeln.

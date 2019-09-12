@@ -169,15 +169,16 @@
   <ItemGroup>
     <ClInclude Include="include\framework.h" />
     <ClInclude Include="include\NetAPI\common.h" />
-    <ClInclude Include="include\NetAPI\netinitialization.h" />
+    <ClInclude Include="include\NetAPI\helper\netinitialization.h" />
     <ClInclude Include="include\NetAPI\networkTest.h" />
     <ClInclude Include="include\NetAPI\socket\tcpclient.h" />
     <ClInclude Include="include\NetAPI\socket\tcplistener.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="src\NetAPI\socket\tcplistener.cpp" />
     <ClCompile Include="src\NetAPI\socket\tcpclient.cpp" />
-    <ClCompile Include="src\NetAPI\netinitialization.cpp" />
+    <ClCompile Include="src\NetAPI\helper\netinitialization.cpp" />
     <ClCompile Include="src\NetAPI\networkTest.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
