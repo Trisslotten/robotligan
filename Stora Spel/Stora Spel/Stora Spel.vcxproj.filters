@@ -32,6 +32,18 @@
     <ClInclude Include="Entt systems\PrintPositionSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Entt systems\collision_system.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\ball_component.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\physics_component.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entt systems\physics_system.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="util\meminfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
