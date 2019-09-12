@@ -148,11 +148,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\AbilityHandler\ability_handler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Components\velocity.h" />
     <ClInclude Include="Components\position.h" />
     <ClInclude Include="Entt systems\PrintPositionSystem.h" />
+    <ClInclude Include="src\AbilityHandler\ability_handler.hpp" />
     <ClInclude Include="util\meminfo.h" />
   </ItemGroup>
   <ItemGroup>
