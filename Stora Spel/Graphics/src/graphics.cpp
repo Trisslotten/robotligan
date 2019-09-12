@@ -8,7 +8,7 @@
 #include <glm/glm.hpp>
 #include <iostream>
 
-#include "camera/camera.hpp"
+#include "glob/camera.hpp"
 #include "shader.h"
 
 namespace glob {
@@ -51,7 +51,6 @@ void Init() {
 
 void Render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
 
   glBindVertexArray(quad_vao);
@@ -60,5 +59,7 @@ void Render() {
   glDrawArrays(GL_TRIANGLES, 0, 3);
   glBindVertexArray(0);
 }
+
+void* GetCamera() { return (void*)&camera; }
 
 }  // namespace glob

@@ -7,11 +7,14 @@
 #define EXPORT __declspec(dllimport)
 #endif
 
+
 namespace glob {
 
 EXPORT void Init();
 
 EXPORT void Render();
+
+EXPORT void* GetCamera();
 
 }  // namespace glob
 

@@ -182,7 +182,7 @@
     <ClInclude Include="include\glob\window.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="src\shader.h" />
-    <ClInclude Include="src\camera\camera.hpp" />
+    <ClInclude Include="include\glob\camera.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />

@@ -152,8 +152,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Components\camera.h" />
+    <ClInclude Include="Components\camera_component.h" />
+    <ClInclude Include="Components\player_component.h" />
+    <ClInclude Include="Components\transform_component.h" />
     <ClInclude Include="Components\velocity.h" />
     <ClInclude Include="Components\position.h" />
+    <ClInclude Include="Entt systems\PlayerControllerSystem.h" />
     <ClInclude Include="Entt systems\PrintPositionSystem.h" />
     <ClInclude Include="util\input.h" />
     <ClInclude Include="util\meminfo.h" />

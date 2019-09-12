@@ -1,4 +1,4 @@
-#include "camera.hpp"
+#include "glob/camera.hpp"
 
 // Private------------------------------------------------------------------------------------------
 void Camera::UpdateDirectionalVectors() {
@@ -95,9 +95,13 @@ void Camera::LookAtPoint(glm::vec3 in_target) {
 void Camera::TurnCameraViaDegrees(float in_yaw_deg, float in_pitch_deg) {
   this->yaw_ += glm::radians(in_yaw_deg);
   this->pitch_ += glm::radians(in_pitch_deg);
+  this->UpdateDirectionalVectors();
+  this->UpdateViewMatrix();
 }
 
 void Camera::TurnCameraViaRadians(float in_yaw_rad, float in_pitch_rad) {
   this->yaw_ += in_yaw_rad;
   this->pitch_ += in_pitch_rad;
+  this->UpdateDirectionalVectors();
+  this->UpdateViewMatrix();
 }

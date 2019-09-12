@@ -1,7 +1,6 @@
 #ifndef PRINTPOSITIONSYSTEM_H
 #define PRINTPOSITIONSYSTEM_H
 
-#include <entt.hpp>
 #include "position.h"
 #include "velocity.h"
 

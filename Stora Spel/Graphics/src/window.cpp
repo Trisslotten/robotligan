@@ -37,12 +37,12 @@ void Create() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 
-  int width = 1920;
-  int height = 1080;
+  int width = 1280; //1920;
+  int height = 720; //1080;
   const char* title_str = "Hello World";
 
-  glfw_window =
-      glfwCreateWindow(width, height, title_str, glfwGetPrimaryMonitor(), NULL);
+  glfw_window = glfwCreateWindow(width, height, title_str, NULL,
+                                 NULL);  // glfwGetPrimaryMonitor(), NULL);
 
   if (!glfw_window) {
     std::cout << "ERROR: Could not create glfw window\n";

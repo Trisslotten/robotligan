@@ -1,6 +1,12 @@
 #ifndef CAMERA_HPP_
 #define CAMERA_HPP_
 
+#ifdef MAKEDLL
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT __declspec(dllimport)
+#endif
+
 #include <glm/glm.hpp>
 #include <glm/gtx/vector_angle.hpp>
 
@@ -40,13 +46,13 @@ class Camera {
   );
   ~Camera();
 
-  glm::vec3 GetPosition() const;
-  glm::mat4 GetViewPerspectiveMatrix() const;
+  EXPORT glm::vec3 GetPosition() const;
+  EXPORT glm::mat4 GetViewPerspectiveMatrix() const;
 
-  void MoveCamera(glm::vec3 in_vec);
-  void LookAtPoint(glm::vec3 in_target);
-  void TurnCameraViaDegrees(float in_yaw_deg, float in_pitch_deg);
-  void TurnCameraViaRadians(float in_yaw_rad, float in_pitch_rad);
+  EXPORT void MoveCamera(glm::vec3 in_vec);
+  EXPORT void LookAtPoint(glm::vec3 in_target);
+  EXPORT void TurnCameraViaDegrees(float in_yaw_deg, float in_pitch_deg);
+  EXPORT void TurnCameraViaRadians(float in_yaw_rad, float in_pitch_rad);
 };
 
 #endif  // !CAMERA_HPP

@@ -1,5 +1,5 @@
 #include "../util/input.h"
-#include <GLFW/glfw3.h>
+
 #include <glob/window.h>
 #include <glm/glm.hpp>
 

@@ -30,7 +30,7 @@
     <ClInclude Include="src\shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\camera\camera.hpp">
+    <ClInclude Include="include\glob\camera.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

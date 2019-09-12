@@ -1,6 +1,8 @@
 #ifndef INPUT_H_
 #define INPUT_H_
 
+#include <GLFW/glfw3.h>
+
 #include "../../glm/glm/common.hpp"
 #include "../../glm/glm/vec2.hpp"
 

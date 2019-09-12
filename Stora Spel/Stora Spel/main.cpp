@@ -3,11 +3,20 @@
 #include <glob/graphics.h>
 #include <glob/window.h>
 #include <entt.hpp>
+#include "PlayerControllerSystem.h"
 #include "PrintPositionSystem.h"
 
 #include <GLFW/glfw3.h>
 #include "util/input.h"
 #include "util/meminfo.h"
+
+void init() {
+  glob::window::Create();
+  glob::Init();
+  Input::initialize();
+}
+
+void updateSystems(entt::registry *reg) { p_controller::update(*reg); }
 
 int main(unsigned argc, char **argv) {
   std::cout << "Hello World!*!!!111\n";
@@ -22,24 +31,25 @@ int main(unsigned argc, char **argv) {
 
   print(registry);
 
-  glob::window::Create();
+  init();  // Initialize everything
 
-  glob::Init();
-
-  Input::initialize();
+  auto avatar = registry.create();  // this is the player avatar
+  registry.assign<CameraComponent>(
+      avatar,
+      (Camera *)
+          glob::GetCamera());  // get the camera pointer from glob renderer
+  registry.assign<PlayerComponent>(avatar);
+  registry.assign<TransformComponent>(avatar, glm::vec3(0, 0, 0),
+                                      glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
 
   while (!glob::window::ShouldClose()) {
     // tick
+    updateSystems(&registry);
 
     // render
     glob::Render();
 
     glob::window::Update();
-
-    if (Input::isKeyDown(GLFW_KEY_W)) {
-      glm::vec2 mpos = Input::mousePos();
-      std::cout << "W PRESSED MOUSE AT: " << mpos.x << ", " << mpos.y << "\n";
-    }
   }
 
   glob::window::Cleanup();
