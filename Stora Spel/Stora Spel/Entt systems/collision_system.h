@@ -5,7 +5,7 @@
 #include "boundingboxes.h"
 #include "ball_component.h"
 #include "collision.h"
-#include <glm.hpp>
+#include <glm/glm.hpp>
 
 // temp function to print glm::vec3
 void printglm1(glm::vec3 v) {

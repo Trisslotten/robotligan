@@ -99,6 +99,13 @@ void Camera::TurnCameraViaDegrees(float in_yaw_deg, float in_pitch_deg) {
   this->UpdateViewMatrix();
 }
 
+void Camera::SetAnglesViaDegrees(float in_yaw_deg, float in_pitch_deg) {
+  this->yaw_ = glm::radians(in_yaw_deg);
+  this->pitch_ = glm::radians(in_pitch_deg);
+  this->UpdateDirectionalVectors();
+  this->UpdateViewMatrix();
+}
+
 void Camera::TurnCameraViaRadians(float in_yaw_rad, float in_pitch_rad) {
   this->yaw_ += in_yaw_rad;
   this->pitch_ += in_pitch_rad;

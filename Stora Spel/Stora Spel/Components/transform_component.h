@@ -3,11 +3,27 @@
 
 #include <glm/glm.hpp>
 
-
 struct TransformComponent {
   glm::vec3 position;
   glm::vec3 rotation;
   glm::vec3 scale;
+
+  void setRotation(glm::vec3 rot) {
+    rotation = rot;
+    rotation = glm::clamp(rotation, -180.f, 180.f);
+  }
+
+  void rotate(glm::vec3 rot) {
+    rotation += rot;
+    rotation = glm::clamp(rotation, -180.f, 180.f); 
+  }
+
+  glm::vec3 Forward() {
+    float x = cos(rotation.z) * cos(rotation.x);
+    float y = sin(rotation.z) * cos(rotation.x);
+    float z = sin(rotation.x);
+    return glm::normalize(glm::vec3(x, y, z));
+  }
 };
 
 #endif  // !TRANSFORM_COMPONENT_H_

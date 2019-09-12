@@ -1,6 +1,6 @@
 #include "collision.h"
 
-#include <glm.hpp>
+#include <glm/glm.hpp>
 #include <vector>
 
 struct Corners {

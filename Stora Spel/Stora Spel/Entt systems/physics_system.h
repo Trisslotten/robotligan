@@ -7,7 +7,7 @@
 #include "collision.h"
 #include "velocity.h"
 #include "physics.h"
-
+#include "physics_component.h"
 
 
 // temp function to print glm::vec3
@@ -39,6 +39,10 @@ void UpdatePhysics(entt::registry& registry, float dt) {
     //printglm(s.center);
     //std::cout << std::endl;
   }
+
+  auto view_players = registry.view<TransformComponent, Velocity>();
+
+
 }
 
 #endif  // PHYSICS_SYSTEM_H

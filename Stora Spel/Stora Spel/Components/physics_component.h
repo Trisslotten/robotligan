@@ -1,7 +1,7 @@
 #ifndef PHYSICS_COMPONENT_H
 #define PHYSICS_COMPONENT_H
 
-#include <glm.hpp>
+#include <glm/glm.hpp>
 
 struct PhysicsComponent {
   glm::vec3 velocity;

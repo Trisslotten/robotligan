@@ -52,6 +52,7 @@ class Camera {
   EXPORT void MoveCamera(glm::vec3 in_vec);
   EXPORT void LookAtPoint(glm::vec3 in_target);
   EXPORT void TurnCameraViaDegrees(float in_yaw_deg, float in_pitch_deg);
+  EXPORT void SetAnglesViaDegrees(float in_yaw_deg, float in_pitch_deg);
   EXPORT void TurnCameraViaRadians(float in_yaw_rad, float in_pitch_rad);
 };
 

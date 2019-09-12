@@ -1,7 +1,7 @@
 #ifndef VELOCITY_H
 #define VELOCITY_H
 
-#include <vec3.hpp>
+#include <glm/vec3.hpp>
 
 struct Velocity {
   glm::vec3 velocity;

@@ -3,7 +3,7 @@
 #include <glob/graphics.h>
 #include <glob/window.h>
 #include <entt.hpp>
-#include "PlayerControllerSystem.h"
+#include "playercontroller_system.h"
 #include "PrintPositionSystem.h"
 #include "collision_system.h"
 #include "physics_system.h"
@@ -20,7 +20,11 @@ void init() {
   Input::initialize();
 }
 
-void updateSystems(entt::registry *reg) { p_controller::update(*reg); }
+void updateSystems(entt::registry *reg) { 
+	p_controller::update(*reg);
+	UpdatePhysics(*reg, 1.0f);
+	UpdateCollisions(*reg);
+}
 
 int main(unsigned argc, char **argv) {
   std::cout << "Hello World!*!!!111\n";
@@ -35,10 +39,6 @@ int main(unsigned argc, char **argv) {
   registry.assign<physics::Sphere>(entity, glm::vec3(0.0f, 1.0f, 0.0f), 1.0f);
 
   entity = registry.create();
-  registry.assign<Velocity>(entity, glm::vec3(.0f, .0f, .0f));
-  registry.assign<physics::OBB>(
-      entity, glm::vec3(5.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.f, 0.f),
-      glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
 
   entity = registry.create();
   registry.assign<physics::Arena>(entity, -10.f, 10.f, 0.f, 5.f, -10.f, 10.f);
@@ -54,6 +54,11 @@ int main(unsigned argc, char **argv) {
   registry.assign<PlayerComponent>(avatar);
   registry.assign<TransformComponent>(avatar, glm::vec3(0, 0, 0),
                                       glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
+  registry.assign<Velocity>(avatar, glm::vec3(.0f, .0f, .0f));
+  registry.assign<physics::OBB>(
+      avatar, glm::vec3(5.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.f, 0.f),
+      glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
+
 
   while (!glob::window::ShouldClose()) {
     // tick
@@ -63,10 +68,6 @@ int main(unsigned argc, char **argv) {
     glob::Render();
 
     glob::window::Update();
-  }
-  for (int i = 0; i < 20; i++) {
-    UpdatePhysics(registry, 1.0f);
-    UpdateCollisions(registry);
   }
 
   glob::window::Cleanup();
