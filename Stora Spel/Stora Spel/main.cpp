@@ -21,7 +21,7 @@ void init() {
 }
 
 void updateSystems(entt::registry *reg) { 
-	p_controller::update(*reg);
+	p_controller::Update(*reg);
 	UpdatePhysics(*reg, 1.0f);
 	UpdateCollisions(*reg);
 }
@@ -61,6 +61,7 @@ int main(unsigned argc, char **argv) {
 
 
   while (!glob::window::ShouldClose()) {
+    Input::reset();
     // tick
     updateSystems(&registry);
 
