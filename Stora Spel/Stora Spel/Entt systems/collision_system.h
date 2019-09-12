@@ -14,11 +14,11 @@ void printglm1(glm::vec3 v) {
 
 
 void UpdateCollisions(entt::registry &registry) {
-  //check ball collision
   auto view_ball = registry.view<BallComponent, physics::Sphere, Velocity>();
   auto view_player = registry.view<physics::OBB, Velocity>();
   auto view_arena = registry.view<physics::Arena, Velocity>();
 
+  //check ball collision
   // Loop over all balls
   for (auto entity : view_ball) {
     auto& ball = view_ball.get<BallComponent>(entity);
@@ -38,15 +38,6 @@ void UpdateCollisions(entt::registry &registry) {
       } else {
         //std::cout << "no collision" << std::endl;
       }
-
-      // Collision between Player and Arena
-      for (auto arena : view_arena) {
-        auto& a = view_arena.get<physics::Arena>(arena);
-        glm::vec3 new_pos;
-        if (Intersect(a, o, &new_pos)) {
-          o.center = new_pos;
-        }
-      }
     }
 
     // Collision between ball and arena
@@ -61,6 +52,32 @@ void UpdateCollisions(entt::registry &registry) {
         v.velocity = v.velocity - normal * dot_val * 2.f;
       } else {
         //std::cout << "no collision" << std::endl;
+      }
+    }
+  }
+
+  // check player collision
+  // Loop over all players
+  for (auto player : view_player) {
+    auto& o = view_player.get<physics::OBB>(player);
+
+    // Collision between Player and Arena
+    for (auto arena : view_arena) {
+      auto& a = view_arena.get<physics::Arena>(arena);
+      glm::vec3 new_pos;
+      if (Intersect(a, o, &new_pos)) {
+        o.center = new_pos;
+      }
+    }
+
+    // Collision between player and player
+    for (auto p2 : view_player) {
+      if (player != p2) {
+        auto& o2 = view_player.get<physics::OBB>(p2);
+        if (physics::Intersect(o, o2)) {
+          o.center += glm::vec3(1.f, 0.f, 0.f);
+          o2.center -= glm::vec3(1.f, 0.f, 0.f);
+        }
       }
     }
   }
