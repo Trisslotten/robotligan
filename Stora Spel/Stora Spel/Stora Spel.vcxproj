@@ -151,6 +151,7 @@
     <ClCompile Include="src\input.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Components\camera.h" />
     <ClInclude Include="Components\velocity.h" />
     <ClInclude Include="Components\position.h" />
     <ClInclude Include="Entt systems\PrintPositionSystem.h" />
