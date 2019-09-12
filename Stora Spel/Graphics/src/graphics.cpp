@@ -16,7 +16,12 @@ namespace {
 
 ShaderProgram test_shader;
 GLuint quad_vbo, quad_vao;
-Camera camera{glm::vec3(-3,0,0), glm::vec3(0), 90, 16.f/9.f, 0.1f, 100.f};
+Camera camera{glm::vec3(-9.0f, 0.0f, 0.0f),
+              glm::vec3(0.0f),
+              90,
+              (16.f / 9.f),
+              0.1f,
+              100.f};
 
 }  // namespace
 
@@ -29,9 +34,9 @@ void Init() {
   glBindVertexArray(quad_vao);
 
   std::vector<glm::vec3> vertices{
-      {-1, -1, -1},
-      {3, -1, 1},
-      {-1, 3, 1},
+      {0, 1, 1},
+      {0, -1, 1},
+      {0, -1, -1},
   };
 
   glGenBuffers(1, &quad_vbo);
@@ -48,8 +53,6 @@ void Render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
-
-  //cam_transform = glm::perspective(glm::radians(90.f), 16.f/9.f, 0.1f, 100.f) * glm::lookAt(glm::vec3(3), glm::vec3(0), glm::vec3(0, 1, 0));
 
   glBindVertexArray(quad_vao);
   test_shader.use();
