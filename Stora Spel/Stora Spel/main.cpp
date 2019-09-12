@@ -25,7 +25,7 @@ int main(unsigned argc, char **argv) {
   glob::window::Create();
   glob::Init();
 
-  glob::ModelHandle model_h = glob::GetModel("assets/Mech/Ball.obj");
+  glob::ModelHandle model_h = glob::GetModel("assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
   glob::ModelHandle model_h2 = glob::GetModel("assets/Mech/Ball.obj");
 
   float time = 0.f;

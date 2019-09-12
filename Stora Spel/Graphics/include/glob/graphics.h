@@ -14,6 +14,7 @@
 namespace glob {
 
 typedef unsigned long ModelHandle;
+typedef unsigned long TextureHandle;
 
 /*
  * Initialize renderer.
@@ -26,6 +27,12 @@ EXPORT void Init();
  * Skips loading if model is loaded.
  */
 EXPORT ModelHandle GetModel(const std::string& filepath);
+
+/*
+ * Returns a texture handle for the specified image file.
+ * Skips loading if image is loaded.
+EXPORT TextureHandle GetTexture(const std::string& filepath);
+ */
 
 /*
  * Submit a model to be rendered.

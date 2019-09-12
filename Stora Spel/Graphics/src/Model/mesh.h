@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+namespace glob {
+
 struct Vertex {
   glm::vec3 position;
   glm::vec3 normals;
@@ -31,11 +33,13 @@ class Mesh {
   void SetupMesh();
 
  public:
-  Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices,
-       std::vector<Texture> textures);
+  Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices,
+       const std::vector<Texture>& textures);
   ~Mesh();
 
   void Draw(GLuint shader);
 };
+
+}  // namespace glob
 
 #endif

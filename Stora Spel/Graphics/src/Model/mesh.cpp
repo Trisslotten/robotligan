@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+namespace glob {
+
 void Mesh::SetupMesh() {
   /*---------------Generate needed buffers--------------*/
   glGenVertexArrays(1, &vertex_array_object_);
@@ -32,8 +34,8 @@ void Mesh::SetupMesh() {
                         (GLvoid*)offsetof(Vertex, normals));
 }
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices,
-           std::vector<Texture> textures) {
+Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices,
+           const std::vector<Texture>& textures) {
   vertices_ = vertices;
   indices_ = indices;
   textures_ = textures;
@@ -46,7 +48,7 @@ Mesh::~Mesh() {}
 void Mesh::Draw(GLuint shader) {
   for (unsigned int i = 0; i < textures_.size(); i++) {
     glActiveTexture(GL_TEXTURE0 + i);  // Activate proper texture unit
-	glBindTexture(GL_TEXTURE_2D, textures_[i].id_texture);
+    glBindTexture(GL_TEXTURE_2D, textures_[i].id_texture);
     std::string name = textures_[i].type;
     glUniform1i(glGetUniformLocation(shader, (name).c_str()), i);
   }
@@ -57,3 +59,5 @@ void Mesh::Draw(GLuint shader) {
   glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_INT, 0);
   glBindVertexArray(0);
 }
+
+}  // namespace glob

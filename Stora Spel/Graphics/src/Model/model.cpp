@@ -4,6 +4,8 @@
 
 #include "lodepng.h"
 
+namespace glob {
+
 Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   std::vector<Vertex> vertex;
   std::vector<GLuint> indices;
@@ -20,6 +22,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
     vector_vertices.z = mesh->mVertices[i].z;
     temp_vertex.position = vector_vertices;
     // Process texture
+    
     if (mesh->mTextureCoords[0]) {
       glm::vec2 vector_texture;
       vector_texture.x = mesh->mTextureCoords[0][i].x;
@@ -49,7 +52,6 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   }
 
   // Process materials
-
   if (mesh->mMaterialIndex >= 0) {
     aiMaterial* temp_material = scene->mMaterials[mesh->mMaterialIndex];
     std::vector<Texture> diffuse_maps =
@@ -106,13 +108,18 @@ GLint Model::TextureFromFile(const char* path, std::string directory) {
 
 void Model::LoadModel(std::string path) {
   Assimp::Importer import;
+
+  unsigned int flags = 0;
+  flags |= aiProcess_Triangulate;
+  flags |= aiProcess_FlipUVs;
+
   const aiScene* scene =
-      import.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+      import.ReadFile(path, flags);
 
   if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
       !scene->mRootNode) {
-    std::cout << "ERROR model.cpp: During Assimp load model: " << import.GetErrorString()
-              << "\n";
+    std::cout << "ERROR model.cpp: During Assimp load model: "
+              << import.GetErrorString() << "\n";
     return;
   }
 
@@ -160,6 +167,7 @@ std::vector<Texture> Model::LoadMaterielTextures(aiMaterial* material,
       temp_texture.id_texture = TextureFromFile(ai_string.C_Str(), directory_);
       temp_texture.type = type_name;
       temp_texture.path = ai_string;
+      std::cout << ai_string.C_Str() << "\n";
       texture.push_back(temp_texture);
       texture_loaded_.push_back(temp_texture);
     }
@@ -168,15 +176,17 @@ std::vector<Texture> Model::LoadMaterielTextures(aiMaterial* material,
   return texture;
 }
 
-Model::Model(char* path) { LoadModel(path); }
+Model::Model(const std::string& path) { LoadModel(path); }
 Model::Model() {}
 
 Model::~Model() {}
 
-void Model::LoadModelFromFile(const GLchar* path) { LoadModel(path); }
+void Model::LoadFromFile(const std::string& path) { LoadModel(path); }
 
-void Model::Draw(GLuint shader) {
+void Model::Draw(ShaderProgram& shader) {
   for (unsigned int i = 0; i < mesh_.size(); i++) {
-    mesh_[i].Draw(shader);
+    mesh_[i].Draw(shader.getId());
   }
 }
+
+}  // namespace glob

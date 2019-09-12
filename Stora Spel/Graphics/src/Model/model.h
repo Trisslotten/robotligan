@@ -5,6 +5,9 @@
 
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
+#include "../shader.h"
+
+namespace glob {
 
 class Model {
  private:
@@ -27,13 +30,15 @@ class Model {
 
  public:
   Model();
-  Model(char* path);
+  Model(const std::string& path);
   ~Model();
 
-  void LoadModelFromFile(const GLchar* path);
-
+  void LoadFromFile(const std::string& path);
   bool IsLoaded() { return is_loaded; };
-  void Draw(GLuint shader);
+
+  void Draw(ShaderProgram& shader);
 };
+
+}  // namespace glob
 
 #endif

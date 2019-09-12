@@ -72,7 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)glm;$(SolutionDir)Graphics\include;$(SolutionDir)Graphics\external\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)glm;$(SolutionDir)Graphics\include;$(SolutionDir)Graphics\external\include;$(SolutionDir)Graphics\src;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Graphics\external\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -87,7 +87,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)Graphics\include;$(SolutionDir)Graphics\external\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)glm;$(SolutionDir)Graphics\include;$(SolutionDir)Graphics\external\include;$(SolutionDir)Graphics\src;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Graphics\external\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

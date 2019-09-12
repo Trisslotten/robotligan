@@ -32,15 +32,15 @@ void Create() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 
-  int width = 1920;
-  int height = 1080;
+  int width = 1280;
+  int height = 720;
   const char* title_str = "Hello World";
 
   glfw_window =
-      glfwCreateWindow(width, height, title_str, glfwGetPrimaryMonitor(), NULL);
+      glfwCreateWindow(width, height, title_str, NULL, NULL);
 
   if (!glfw_window) {
-    std::cout << "ERROR: Could not create glfw window\n";
+    std::cout << "ERROR window.cpp: Could not create glfw window\n";
     glfwTerminate();
     assert(0);
   }
@@ -54,8 +54,10 @@ void Create() {
 
   printf("DEBUG window.cpp: Using OpenGL %s\n", glGetString(GL_VERSION));
 
+  //glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
   // vsync 1, off 0
-  glfwSwapInterval(0);
+  glfwSwapInterval(1);
 
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);

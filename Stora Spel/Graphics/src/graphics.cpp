@@ -17,7 +17,7 @@ namespace glob {
 namespace {
 
 struct RenderItem {
-  Model* model;
+  Model *model;
   glm::mat4 transform;
 };
 
@@ -26,12 +26,18 @@ ShaderProgram test_shader;
 
 GLuint triangle_vbo, triangle_vao;
 
-Camera camera{glm::vec3(-3, 0, 0), glm::vec3(0), 90, 16.f / 9.f, 0.1f, 100.f};
+Camera camera{glm::vec3(3, -8, 2), glm::vec3(0,3,0), 90, 16.f / 9.f, 0.1f, 100.f};
 
-ModelHandle current_guid = 1;
+/*
+TextureHandle current_texture_guid = 1;
+std::unordered_map<std::string, TextureHandle> texture_handles;
+std::unordered_map<TextureHandle, Texture> textures;
+*/
 
+ModelHandle current_model_guid = 1;
 std::unordered_map<std::string, ModelHandle> model_handles;
 std::unordered_map<ModelHandle, Model> models;
+
 std::vector<RenderItem> items_to_render;
 
 }  // namespace
@@ -58,33 +64,49 @@ void Init() {
                vertices.data(), GL_STATIC_DRAW);
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
-                        (GLvoid*)0);
+                        (GLvoid *)0);
 }
 
-ModelHandle GetModel(const std::string& filepath) {
-  ModelHandle result = 0;
+// H=Handle, A=Asset
+template <class H, class A>
+H GetAsset(std::unordered_map<std::string, H> &handles,
+           std::unordered_map<H, A> &assets, H &guid,
+           const std::string filepath) {
+  H result = 0;
 
-  auto item = model_handles.find(filepath);
-  if (item == model_handles.end()) {
-    std::cout << "DEBUG graphics.cpp: Loading model '" << filepath << "'\n";
-    Model& model = models[current_guid];
-    model.LoadModelFromFile(filepath.c_str());
-    if (model.IsLoaded()) {
-      model_handles[filepath] = current_guid;
-      result = current_guid;
-      current_guid++;
+  auto item = handles.find(filepath);
+  if (item == handles.end()) {
+    std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";
+    A &asset = assets[current_model_guid];
+    asset.LoadFromFile(filepath);
+    if (asset.IsLoaded()) {
+      handles[filepath] = guid;
+      result = guid;
+      guid++;
     } else {
-      // remove the model since it could not load
-      models.erase(current_guid);
+      // remove the asset since it could not load
+      assets.erase(guid);
     }
   } else {
-    // if model is loaded
-    std::cout << "DEBUG graphics.cpp: Model '" << filepath << "' already loaded\n";
+    // if asset is loaded
+    std::cout << "DEBUG graphics.cpp: Asset '" << filepath
+              << "' already loaded\n";
     result = item->second;
   }
 
   return result;
 }
+
+ModelHandle GetModel(const std::string &filepath) {
+  return GetAsset<ModelHandle, Model>(model_handles, models, current_model_guid,
+                                      filepath);
+}
+/*
+TextureHandle GetTexture(const std::string &filepath) {
+  return GetAsset<TextureHandle, Texture>(texture_handles, textures,
+                                          current_texture_guid, filepath);
+}
+*/
 
 void Submit(ModelHandle model_h, glm::vec3 pos) {
   glm::mat4 transform = glm::translate(pos);
@@ -119,12 +141,11 @@ void Render() {
 
   model_shader.use();
   model_shader.uniform("cam_transform", cam_transform);
-  for (auto& render_item : items_to_render) {
+  for (auto &render_item : items_to_render) {
     model_shader.uniform("model_transform", render_item.transform);
-    render_item.model->Draw(model_shader.getId());
+    render_item.model->Draw(model_shader);
   }
   items_to_render.clear();
-
 }
 
 void DebugSubmitSphere(glm::vec3 pos, float radius) {
