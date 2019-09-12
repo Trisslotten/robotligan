@@ -19,7 +19,7 @@ namespace window {
 
 void Create() {
   if (glfw_window) {
-    std::cout << "WARNING: Calling WindowCreate() when window already created"
+    std::cout << "WARNING window.cpp: Calling WindowCreate() when window already created"
               << std::endl;
     return;
   }
@@ -48,11 +48,11 @@ void Create() {
   glfwMakeContextCurrent(glfw_window);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-    std::cout << "ERROR: Failed to initialize OpenGL context" << std::endl;
+    std::cout << "ERROR window.cpp: Failed to initialize OpenGL context" << std::endl;
     assert(0);
   }
 
-  printf("DEBUG: Using OpenGL %s\n", glGetString(GL_VERSION));
+  printf("DEBUG window.cpp: Using OpenGL %s\n", glGetString(GL_VERSION));
 
   // vsync 1, off 0
   glfwSwapInterval(0);

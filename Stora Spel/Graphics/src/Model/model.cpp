@@ -98,7 +98,7 @@ GLint Model::TextureFromFile(const char* path, std::string directory) {
   // glGenerateMipmap(GL_TEXTURE_2D);
 
   // Set some parameters for the texture
-  
+
   glBindTexture(GL_TEXTURE_2D, 0);  // Unbind the texture
 
   return texture_id;
@@ -111,12 +111,15 @@ void Model::LoadModel(std::string path) {
 
   if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
       !scene->mRootNode) {
-    std::cout << "Assimp load model error: " << import.GetErrorString() << "\n";
+    std::cout << "ERROR model.cpp: During Assimp load model: " << import.GetErrorString()
+              << "\n";
     return;
   }
 
   directory_ = path.substr(0, path.find_last_of('/'));
   ProcessNode(scene->mRootNode, scene);
+
+  is_loaded = true;
 }
 
 void Model::ProcessNode(aiNode* node, const aiScene* scene) {

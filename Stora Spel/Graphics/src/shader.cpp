@@ -53,7 +53,7 @@ GLuint compileShader(GLenum type, const std::string& name) {
   std::string shaderText((std::istreambuf_iterator<char>(shaderFile)),
                          std::istreambuf_iterator<char>());
   if (!shaderFile.is_open()) {
-    std::cout << "ERROR: Could not open file: " << path << "\n";
+    std::cout << "ERROR shader.cpp: Could not open file: " << path << "\n";
     // system("pause");
     // exit(1);
   }
@@ -74,7 +74,8 @@ GLuint compileShader(GLenum type, const std::string& name) {
     glGetShaderInfoLog(shader, log_size, &log_size, &error[0]);
     std::string errorstr{&error[0]};
 
-    std::cout << "ERROR: In shader '" << name << "':\n" << errorstr << "\n";
+    std::cout << "ERROR shader.cpp: In shader '" << name << "':\n"
+              << errorstr << "\n";
 
     glDeleteShader(shader);
     // system("pause");
@@ -146,7 +147,7 @@ void ShaderProgram::reload() {
 
   glDeleteProgram(id);
 
-  std::cout << "DEBUG: Reloading Shaders:\n";
+  std::cout << "DEBUG shader.cpp: Reloading Shaders:\n";
   for (auto elem : paths) {
     std::cout << "  " << elem.second << "\n";
   }
@@ -162,7 +163,11 @@ GLuint ShaderProgram::findUniformLocation(const std::string& name) {
   if (it == uniform_locations.end()) {
     uniform_location = glGetUniformLocation(id, name.c_str());
     if (uniform_location == -1) {
-      std::cout << "ERROR: could not find uniform '" << name << "' in shader\n";
+      std::cout << "WARNING shader.cpp: could not find uniform '" << name
+                << "' in shaders: \n";
+      for (auto item : paths) {
+        std::cout << "\t" << item.second << "\n";
+      }
     }
     uniform_locations[name] = uniform_location;
   } else

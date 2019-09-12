@@ -22,13 +22,17 @@ class Model {
                                             std::string type_name);
 
   std::string directory_;
-   
+
+  bool is_loaded = false;
+
  public:
-  Model(char* path);
   Model();
+  Model(char* path);
   ~Model();
 
   void LoadModelFromFile(const GLchar* path);
+
+  bool IsLoaded() { return is_loaded; };
   void Draw(GLuint shader);
 };
 
