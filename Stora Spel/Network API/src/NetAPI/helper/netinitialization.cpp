@@ -1,4 +1,4 @@
-#include <NetAPI/netinitialization.h>
+#include <NetAPI/helper/netinitialization.h>
 
 NetAPI::initialization::GlobalSocketInternals& NetAPI::initialization::GlobalSocketInternals::GetInstance()
 {
@@ -30,7 +30,7 @@ bool NetAPI::initialization::GlobalSocketInternals::initializeWsock(char major, 
 	return true;
 }
 
-bool NetAPI::initialization::GlobalSocketInternals::WinsockInitialized()
+bool NetAPI::initialization::WinsockInitialized()
 {
 	SOCKET s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (s == INVALID_SOCKET && WSAGetLastError() == WSANOTINITIALISED) {

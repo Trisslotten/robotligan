@@ -33,6 +33,12 @@
     <ClInclude Include="include\NetAPI\helper\netinitialization.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\NetAPI\socket\client.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\NetAPI\helper\errors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -48,6 +54,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\NetAPI\helper\netinitialization.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\NetAPI\socket\client.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\NetAPI\helper\errors.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

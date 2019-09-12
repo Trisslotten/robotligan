@@ -4,24 +4,22 @@ NetAPI::Socket::tcpclient::tcpclient()
 {
 	buffersize = 512;
 	
-	sendbuffer = new char[buffersize];
 	recbuffer = new char[buffersize];
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 0;
 }
 
 void NetAPI::Socket::tcpclient::SetBufferSize(unsigned size)
 {
 	buffersize = size;
-	free(sendbuffer);
-	free(recbuffer);
-	sendbuffer = new char[buffersize];
+	delete recbuffer;
 	recbuffer = new char[buffersize];
 }
 void NetAPI::Socket::tcpclient::flushbuffers()
 {
-	ZeroMemory(sendbuffer, sizeof(char) * buffersize);
 	ZeroMemory(recbuffer, sizeof(char) * buffersize);
 }
-bool NetAPI::Socket::tcpclient::Connect(const char* addr, unsigned short port)
+bool NetAPI::Socket::tcpclient::Connect(const char * addr, unsigned short port)
 {
 	struct addrinfo* result = NULL, * ptr = NULL, hints = {};
 	error = getaddrinfo(addr, std::to_string(port).c_str(), &hints, &result);
@@ -34,9 +32,8 @@ bool NetAPI::Socket::tcpclient::Connect(const char* addr, unsigned short port)
 
 		sendsocket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
 		if (sendsocket == INVALID_SOCKET) {
-			printf("socket failed with error: %ld\n", WSAGetLastError());
-			WSACleanup();
-			return 1;
+			error = WSAGetLastError();
+			return false;
 		}
 		error = connect(sendsocket, ptr->ai_addr, (int)ptr->ai_addrlen);
 		if (error == SOCKET_ERROR) {
@@ -46,7 +43,6 @@ bool NetAPI::Socket::tcpclient::Connect(const char* addr, unsigned short port)
 		}
 		break;
 	}
-	freeaddrinfo(result);
 	if (sendsocket == INVALID_SOCKET) 
 	{
 		error = WSAGetLastError();
@@ -64,33 +60,51 @@ bool NetAPI::Socket::tcpclient::Connect(const char* addr, unsigned short port)
 	connected = true;
 	return true;
 }
-bool NetAPI::Socket::tcpclient::Send(void* data, unsigned length)
+bool NetAPI::Socket::tcpclient::Send(const char * data, unsigned length)
 {
-	error = send(sendsocket, (char*)data, length, 0);
-	if (error)
+	int bytes = send(sendsocket, data, length, 0);
+	if (bytes == SOCKET_ERROR)
 	{
 		error = WSAGetLastError();
 		return false;
 	}
 	return true;
 }
-void* NetAPI::Socket::tcpclient::Recive()
+const char *NetAPI::Socket::tcpclient::Recive()
 {
 	//Implement blocking? meeh
-	this->flushbuffers();
-	error = recv(sendsocket, (char*)recbuffer, buffersize, 0);
-	if (error > 0)
+	int bytes = 1;
+	FD_ZERO(&readSet);
+	FD_SET(sendsocket, &readSet);
+	if (select(sendsocket, &readSet, NULL, NULL, &timeout) == 1)
 	{
-		return recbuffer;
-	}
-	if (error == 0)
-	{
-		connected = false;
-		return nullptr;
+		bytes = recv(sendsocket, recbuffer, buffersize, 0);
+		if (bytes > 0)
+		{
+			return recbuffer;
+		}
+		if (bytes == 0)
+		{
+			connected = false;
+			return NetAPI::Common::socket_not_connected;
+		}
+		else
+		{
+			error = WSAGetLastError();
+			return nullptr;
+		}
 	}
 	else
 	{
-		return nullptr;
+		return NetAPI::Common::no_data_available;
+	}
+}
+void NetAPI::Socket::tcpclient::disconnect()
+{
+	if (connected && sendsocket != INVALID_SOCKET)
+	{
+		connected = false;
+		closesocket(sendsocket);
 	}
 }
 void NetAPI::Socket::tcpclient::operator=(const SOCKET& other)
@@ -98,9 +112,8 @@ void NetAPI::Socket::tcpclient::operator=(const SOCKET& other)
 	connected = true;
 	sendsocket = other;
 }
+//Potentiell memoryleak?
 NetAPI::Socket::tcpclient::~tcpclient()
 {
 	error = shutdown(sendsocket, SD_SEND);
-	free(sendbuffer);
-	free(recbuffer);
 }

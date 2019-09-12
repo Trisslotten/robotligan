@@ -4,6 +4,7 @@
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <NetAPI/common.h>
 #ifndef SOCKET_INTERNALS_H
 #define SOCKET_INTERNALS_H
 namespace NetAPI
@@ -22,7 +23,7 @@ namespace NetAPI
 			 static GlobalSocketInternals& GetInstance();
 			 bool initializeWsock(char major = 2, char minor = 2);
 			 SocketInternals internals = {};
-			 bool WinsockInitialized();
+			 
 		 private:
 			 GlobalSocketInternals() = default;
 			 ~GlobalSocketInternals() = default;
@@ -32,6 +33,7 @@ namespace NetAPI
 			 GlobalSocketInternals(GlobalSocketInternals&&) = delete;
 			 GlobalSocketInternals& operator=(GlobalSocketInternals&&) = delete;
 		 };
+		EXPORT bool  WinsockInitialized();
 	}
 }
 #endif // !SOCKET_INTERNALS_H

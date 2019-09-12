@@ -6,11 +6,12 @@
 #include <ws2tcpip.h>
 #include <windows.h>
 #include <NetAPI/socket/tcpclient.h>
+#include <NetAPI/common.h>
 namespace NetAPI
 {
 	namespace Socket
 	{
-		class tcplistener
+		class EXPORT tcplistener
 		{
 		public:
 			tcplistener();
@@ -18,11 +19,15 @@ namespace NetAPI
 			bool Bind(const unsigned short port);
 			tcpclient Accept();
 			int querryError() { return error; }
+			const char* Recv(SOCKET& cli);
+			void disconnect();
 		private:
+			fd_set readSet = {};
+			timeval timeout = {};
 			bool setup = false;
 			int error = 0;
 			unsigned buffersize = 512;
-			void* recbuffer = nullptr;
+			char *recbuffer;
 			SOCKET listensocket = INVALID_SOCKET;
 		};
 	}

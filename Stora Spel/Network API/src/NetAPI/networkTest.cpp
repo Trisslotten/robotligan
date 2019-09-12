@@ -9,6 +9,6 @@ namespace NetAPI
 	}
 	EXPORT bool netInitialized()
 	{
-		return NetAPI::initialization::GlobalSocketInternals::GetInstance().internals.initialized;
+		return NetAPI::initialization::GlobalSocketInternals::GetInstance().internals.error;
 	}
 }
