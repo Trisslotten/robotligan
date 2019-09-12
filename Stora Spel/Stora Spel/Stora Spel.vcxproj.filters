@@ -41,5 +41,8 @@
     <ClInclude Include="Entt systems\physics_system.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="util\meminfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
