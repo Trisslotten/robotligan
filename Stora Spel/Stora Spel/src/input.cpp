@@ -3,7 +3,7 @@
 #include <iostream>
 #include <unordered_map>
 
-#include <glob/window.h>
+#include <glob/window.hpp>
 #include <glm/glm.hpp>
 
 namespace {

@@ -80,11 +80,10 @@ int main(unsigned argc, char **argv) {
     dt = timer.Restart();
     Input::Reset();
     // tick
-    time += 1.f / 60.f;
     // render
 
     glob::Submit(model_h, glm::translate(glm::vec3(0)) *
-                              glm::rotate(time * 0.5f, glm::vec3(0, 1, 0)));
+                              glm::rotate(0.5f, glm::vec3(0, 1, 0)));
     glob::Submit(model_h2,
                  glm::translate(glm::vec3(0, 9, 3.f * 0)));
     updateSystems(&registry, dt);

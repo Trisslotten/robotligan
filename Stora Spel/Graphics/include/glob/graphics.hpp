@@ -46,6 +46,8 @@ EXPORT void Submit(ModelHandle model_h, glm::mat4 transform);
  */
 EXPORT void Render();
 
+EXPORT void* GetCamera();
+
 }  // namespace glob
 
 #endif  // GLOB_GRAPHICS_HPP_

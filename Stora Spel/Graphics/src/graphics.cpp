@@ -11,7 +11,7 @@
 #include <unordered_map>
 
 #include "Model/model.hpp"
-#include "camera/camera.hpp"
+#include "glob/camera.hpp"
 #include "shader.hpp"
 
 namespace glob {
