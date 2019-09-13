@@ -1,8 +1,0 @@
-#ifndef GRAVITY_CHANGE_COMPONENT_HPP_
-#define GRAVITY_CHANGE_COMPONENT_HPP_
-
-struct GravityChangeComponent {
-
-};
-
-#endif  // GRAVITY_CHANGE_COMPONENT_HPP_

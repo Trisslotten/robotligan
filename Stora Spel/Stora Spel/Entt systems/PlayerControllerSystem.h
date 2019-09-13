@@ -5,14 +5,14 @@
 #include "camera_component.h"
 #include "player_component.hpp"
 #include "transform_component.h"
+#include "ability_component.hpp"
 #include "util/input.h"
-#include <util/ability.hpp>
 
 namespace p_controller {
 
 void update(entt::registry &registry) {
-  registry.view<CameraComponent, PlayerComponent, TransformComponent>().each(
-      [&](CameraComponent &cc, PlayerComponent &pc, TransformComponent &tc) {
+  registry.view<CameraComponent, PlayerComponent, TransformComponent, AbilityComponent>().each(
+      [&](CameraComponent &cc, PlayerComponent &pc, TransformComponent &tc, AbilityComponent &ac) {
         // rotation
         float sensitivity = 1.0f;
         glm::vec2 rot = Input::mouseMov() * sensitivity;
@@ -26,9 +26,11 @@ void update(entt::registry &registry) {
           // velocity stuff, handle acc here and let PhysicsSystem handle
           // movement and collisions?
         }
+        if (Input::isKeyDown(GLFW_KEY_Q)) {
+          ac.use_primary = true;
+        }
         if (Input::isKeyDown(GLFW_KEY_E)) {
-          // Trigger ability func, send in player as parameter
-          Ability::TriggerAbility(registry, pc, true);
+          ac.use_secondary = true;
         }
 
         // maybe move to new CameraSystem?
