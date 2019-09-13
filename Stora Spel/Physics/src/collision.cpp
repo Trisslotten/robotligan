@@ -3,8 +3,6 @@
 #include <glm/glm.hpp>
 #include <vector>
 
-#include <glm.hpp>
-
 struct Corners {
   glm::vec3 corners[8];
 };

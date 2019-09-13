@@ -6,7 +6,7 @@
 #include "camera_component.hpp"
 #include "player_component.hpp"
 #include "transform_component.hpp"
-#include "velocity.hpp"
+#include "velocity_component.hpp"
 
 namespace player_controller {
 
@@ -16,13 +16,13 @@ void Update(entt::registry& registry, float dt) {
   foo();
 
   auto view_controller = registry.view<CameraComponent, PlayerComponent,
-                                       TransformComponent, Velocity>();
+                                       TransformComponent, VelocityComponent>();
 
   for (auto entity : view_controller) {
     CameraComponent& cc = view_controller.get<CameraComponent>(entity);
     PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
     TransformComponent& tc = view_controller.get<TransformComponent>(entity);
-    Velocity& vc = view_controller.get<Velocity>(entity);
+    VelocityComponent& vc = view_controller.get<VelocityComponent>(entity);
     // rotation
     float sensitivity = 0.003f;
     glm::vec2 rot =

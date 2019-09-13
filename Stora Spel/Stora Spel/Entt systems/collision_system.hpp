@@ -2,9 +2,6 @@
 #define COLLISION_SYSTEM_HPP_
 
 #include <entity/registry.hpp>
-#include "boundingboxes.h"
-#include "ball_component.hpp"
-#include "collision.h"
 #include <glm/glm.hpp>
 
 #include "ball_component.hpp"

@@ -8,6 +8,7 @@
 #include "collision.hpp"
 #include "physics.hpp"
 #include "velocity_component.hpp"
+#include "transform_component.hpp"
 
 void UpdatePhysics(entt::registry& registry, float dt) {
   auto view_ball =
@@ -33,11 +34,11 @@ void UpdatePhysics(entt::registry& registry, float dt) {
     // std::cout << std::endl;
   }
 
-  auto view_moveable = registry.view<TransformComponent, Velocity>();
+  auto view_moveable = registry.view<TransformComponent, VelocityComponent>();
 
   for (auto entity : view_moveable) {
     TransformComponent& tc = view_moveable.get<TransformComponent>(entity);
-    Velocity& vc = view_moveable.get<Velocity>(entity);
+    VelocityComponent& vc = view_moveable.get<VelocityComponent>(entity);
 
     tc.position += vc.velocity;
   }
