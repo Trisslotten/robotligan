@@ -25,6 +25,7 @@ enum AbilityID {
 
 class Ability {
  public:
+  Ability() = delete;
   AbilityID RandomAbilityID();
   void TriggerAbility(entt::registry &registry /*Player*/);
   void CreateMissileEntity(entt::registry &registry);
