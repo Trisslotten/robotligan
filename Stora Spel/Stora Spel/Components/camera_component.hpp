@@ -14,7 +14,7 @@ struct CameraComponent {
   float pitch = 0;
   bool clamped = true;
 
-  void clampAngles() { //prevent camera from spinning around an axis infinitely if clamped.
+  void ClampAngles() { //prevent camera from spinning around an axis infinitely if clamped.
     if (clamped) {
       pitch = glm::clamp(pitch, glm::radians(-89.0f), glm::radians(89.0f));
       if (yaw > pi * 2.f || yaw < pi * -2.f) {
@@ -26,13 +26,13 @@ struct CameraComponent {
   void SetAngles(float _yaw, float _pitch) {
     yaw = _yaw;
     pitch = _pitch;
-    clampAngles();
+    ClampAngles();
     cam->SetAnglesViaRadians(yaw, pitch);
   }
   void AddAngles(float _yaw, float _pitch) {
     yaw += _yaw;
     pitch -= _pitch;
-    clampAngles();
+    ClampAngles();
     cam->SetAnglesViaRadians(yaw, pitch);
   }
   glm::vec3 LookDirection() {

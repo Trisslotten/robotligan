@@ -3,7 +3,7 @@
 #include <glob/graphics.h>
 #include <glob/window.h>
 #include <entt.hpp>
-#include "PrintPositionSystem.hpp"
+#include "print_position_system.hpp"
 #include "ball_component.hpp"
 #include "collision.h"
 #include "collision_system.hpp"

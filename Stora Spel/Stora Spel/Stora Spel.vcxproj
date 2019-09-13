@@ -174,7 +174,7 @@
     <ClInclude Include="Entt systems\physics_system.h" />
     <ClInclude Include="Entt systems\ability_controller_system.hpp" />
     <ClInclude Include="Entt systems\PrintPositionSystem.h" />
-    <ClInclude Include="Entt systems\PrintPositionSystem.hpp" />
+    <ClInclude Include="Entt systems\print_position_system.hpp" />
     <ClInclude Include="util\input.h" />
     <ClInclude Include="util\input.hpp" />
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
