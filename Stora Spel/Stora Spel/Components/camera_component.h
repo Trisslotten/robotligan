@@ -1,5 +1,5 @@
-#ifndef CAMERA_H_
-#define CAMERA_H_
+#ifndef CAMERA_COPONENT_HPP_
+#define CAMERA_COMPONENT_HPP_
 
 #include <glm/glm.hpp>
 #include "glob/camera.hpp"
@@ -39,4 +39,4 @@ struct CameraComponent {
   }
 };
 
-#endif  // CAMERA_H_
+#endif  // CAMERA_COMPONENT_HPP_
