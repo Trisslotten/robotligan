@@ -41,9 +41,6 @@
     <ClInclude Include="Components\ball_component.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Components\physics_component.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Entt systems\physics_system.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -59,9 +56,6 @@
     <ClInclude Include="Components\camera_component.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Components\player_component.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Components\transform_component.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -71,7 +65,43 @@
     <ClInclude Include="util\transform_helper.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Entt systems\playercontroller_system.hpp">
+    <ClInclude Include="Components\physics_component.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\player_component.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entt systems\PrintPositionSystem.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entt systems\physics_system.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entt systems\collision_system.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\velocity.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\transform_component.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\position.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\camera_component.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\ball_component.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\meminfo.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\input.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entt systems\player_controller_system.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

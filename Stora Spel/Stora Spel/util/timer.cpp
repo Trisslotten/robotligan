@@ -4,43 +4,43 @@
 
 Timer::Timer()
 {
-	start = std::chrono::high_resolution_clock::now();
+	start_ = std::chrono::high_resolution_clock::now();
 }
 
-double Timer::restart()
+double Timer::Restart()
 {
 	auto now = std::chrono::high_resolution_clock::now();
-	double diff = std::chrono::duration_cast<std::chrono::nanoseconds>(now - start).count();
-	start = std::chrono::high_resolution_clock::now();
-	paused = false;
+	double diff = std::chrono::duration_cast<std::chrono::nanoseconds>(now - start_).count();
+	start_ = std::chrono::high_resolution_clock::now();
+	paused_ = false;
 	return diff / 1000000000.0;
 }
 
-double Timer::elapsed()
+double Timer::Elapsed()
 {
 	auto now = std::chrono::high_resolution_clock::now();
-	if (paused)
-		now = pause_time;
-	double diff = std::chrono::duration_cast<std::chrono::nanoseconds>(now - start).count();
+	if (paused_)
+		now = pause_time_;
+	double diff = std::chrono::duration_cast<std::chrono::nanoseconds>(now - start_).count();
 	return diff / 1000000000.0;
 }
 
-void Timer::pause()
+void Timer::Pause()
 {
-	if (!paused)
+	if (!paused_)
 	{
-		pause_time = std::chrono::high_resolution_clock::now();
-		paused = true;
+		pause_time_ = std::chrono::high_resolution_clock::now();
+		paused_ = true;
 	}
 }
 
-void Timer::resume()
+void Timer::Resume()
 {
-	if (paused)
+	if (paused_)
 	{
 		auto now = std::chrono::high_resolution_clock::now();
-		start += now - pause_time;
-		paused = false;
+		start_ += now - pause_time_;
+		paused_ = false;
 	}
 }
 

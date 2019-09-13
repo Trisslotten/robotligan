@@ -1,21 +1,21 @@
-#pragma once
+#ifndef TIMER_HPP_
+#define TIMER_HPP_
 
 #include <chrono>
 #include <vector>
 
 class Timer
 {
-	bool paused = false;
-	std::chrono::time_point<std::chrono::high_resolution_clock> start;
-	std::chrono::time_point<std::chrono::high_resolution_clock> pause_time;
+	bool paused_ = false;
+	std::chrono::time_point<std::chrono::high_resolution_clock> start_;
+	std::chrono::time_point<std::chrono::high_resolution_clock> pause_time_;
 public:
 	Timer();
-	double restart();
-	double elapsed();
-	void pause();
-	void resume();
+	double Restart();
+	double Elapsed();
+	void Pause();
+	void Resume();
 };
-
 
 /*
 ** TODO: implement if needed, 
@@ -30,3 +30,5 @@ public:
 	void restartAll();
 };
 */
+
+#endif //TIMER_HPP_

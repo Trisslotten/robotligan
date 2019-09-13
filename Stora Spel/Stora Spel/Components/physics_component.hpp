@@ -1,5 +1,5 @@
-#ifndef PHYSICS_COMPONENT_H
-#define PHYSICS_COMPONENT_H
+#ifndef PHYSICS_COMPONENT_HPP
+#define PHYSICS_COMPONENT_HPP
 
 #include <glm/glm.hpp>
 
@@ -8,4 +8,4 @@ struct PhysicsComponent {
   float friction;
 };
 
-#endif  // PHYSICS_COMPONENT_H
+#endif  // PHYSICS_COMPONENT_HPP

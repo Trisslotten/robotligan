@@ -1,10 +1,10 @@
-#include "../util/input.h"
-
-#include <glob/window.h>
-#include <glm/glm.hpp>
+#include "../util/input.hpp"
 
 #include <iostream>
 #include <unordered_map>
+
+#include <glob/window.h>
+#include <glm/glm.hpp>
 
 namespace {
 static bool inititalized = false;
@@ -16,37 +16,37 @@ static std::unordered_map<int, int> pre_buttons;
 
 float axis_threshold = 0.2;
 
-void key_callback(GLFWwindow* window, int key, int scancode, int action,
-                  int mods) {
+void KeyCallback(GLFWwindow* window, int key, int scancode, int action,
+                 int mods) {
   if (action == GLFW_PRESS) {
     pre_keys[key]++;
     std::cout << key << "\n";
   }
 }
-void mouseCallback(GLFWwindow* window, int button, int action, int mods) {
+void MouseCallback(GLFWwindow* window, int button, int action, int mods) {
   if (action == GLFW_PRESS) {
     pre_buttons[button]++;
     std::cout << button << "\n";
   }
 }
 }  // namespace
-bool Input::initialize() {
+bool Input::Initialize() {
   if (!glob::window::IsInitialized() || inititalized) {
     return false;
   }
-  glob::window::SetKeyCallback((GLFWkeyfun)key_callback);
-  glob::window::SetMouseCallback((GLFWmousebuttonfun)mouseCallback);
+  glob::window::SetKeyCallback((GLFWkeyfun)KeyCallback);
+  glob::window::SetMouseCallback((GLFWmousebuttonfun)MouseCallback);
   inititalized = true;
   return true;
 }
 
-bool Input::isKeyDown(int key) { return glob::window::KeyDown(key); }
+bool Input::IsKeyDown(int key) { return glob::window::KeyDown(key); }
 
-bool Input::isMouseButtonDown(int button) {
+bool Input::IsMouseButtonDown(int button) {
   return glob::window::MouseButtonDown(button);
 }
 
-bool Input::isButtonPressed(int button) {
+bool Input::IsButtonPressed(int button) {
   if (buttons[button] > 0) {
     return true;
   } else {
@@ -54,7 +54,7 @@ bool Input::isButtonPressed(int button) {
   }
 }
 
-bool Input::isKeyPressed(int key) {
+bool Input::IsKeyPressed(int key) {
   if (keys[key] > 0) {
     return true;
   } else {
@@ -62,16 +62,16 @@ bool Input::isKeyPressed(int key) {
   }
 }
 
-void Input::reset() {
+void Input::Reset() {
   keys = pre_keys;
   pre_keys.clear();
   buttons = pre_buttons;
   pre_buttons.clear();
 }
 
-glm::vec2 Input::mouseMov() { return glob::window::MouseMovement(); }
+glm::vec2 Input::MouseMov() { return glob::window::MouseMovement(); }
 
-glm::vec2 Input::mousePos() { return glob::window::MousePosition(); }
+glm::vec2 Input::MousePos() { return glob::window::MousePosition(); }
 
 /*bool Input::gamepad_present() {
         int present = glfwJoystickPresent(GLFW_JOYSTICK_1);

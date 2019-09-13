@@ -3,27 +3,27 @@
 #include <glob/graphics.h>
 #include <glob/window.h>
 #include <entt.hpp>
-#include "PrintPositionSystem.h"
-#include "ball_component.h"
+#include "PrintPositionSystem.hpp"
+#include "ball_component.hpp"
 #include "collision.h"
-#include "collision_system.h"
-#include "physics_system.h"
-#include "playercontroller_system.hpp"
+#include "collision_system.hpp"
+#include "physics_system.hpp"
+#include "player_controller_system.hpp"
 
 #include <GLFW/glfw3.h>
-#include "util/input.h"
-#include "util/meminfo.h"
+#include "util/input.hpp"
+#include "util/meminfo.hpp"
 
 #include "util/timer.hpp"
 
 void init() {
   glob::window::Create();
   glob::Init();
-  Input::initialize();
+  Input::Initialize();
 }
 
 void updateSystems(entt::registry *reg, float dt) {
-  p_controller::Update(*reg, dt);
+  player_controller::Update(*reg, dt);
   UpdatePhysics(*reg, dt);
   UpdateCollisions(*reg);
 }
@@ -62,11 +62,11 @@ int main(unsigned argc, char **argv) {
       avatar, glm::vec3(5.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.f, 0.f),
       glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
 
-  timer.restart();
+  timer.Restart();
   float dt = 0.0f;
   while (!glob::window::ShouldClose()) {
-    dt = timer.restart();
-    Input::reset();
+    dt = timer.Restart();
+    Input::Reset();
     // tick
     updateSystems(&registry, dt);
 

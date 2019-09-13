@@ -10,7 +10,7 @@ struct TransformComponent {
   glm::vec3 rotation;
   glm::vec3 scale;
 
-  void setRotation(glm::vec3 rot) {
+  void SetRotation(glm::vec3 rot) {
     rotation = rot;
     //rotation = glm::clamp(rotation, -180.f, 180.f);
   }

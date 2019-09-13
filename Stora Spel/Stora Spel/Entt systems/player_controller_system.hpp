@@ -1,14 +1,14 @@
-#ifndef PLAYER_CONTROLLER_SYSTEM_H_
-#define PLAYER_CONTROLLER_SYSTEM_H_
+#ifndef PLAYER_CONTROLLER_SYSTEM_HPP_
+#define PLAYER_CONTROLLER_SYSTEM_HPP_
 
 #include <entt.hpp>
-#include "../util/input.h"
-#include "camera_component.h"
-#include "player_component.h"
-#include "transform_component.h"
-#include "velocity.h"
+#include "../util/input.hpp"
+#include "camera_component.hpp"
+#include "player_component.hpp"
+#include "transform_component.hpp"
+#include "velocity.hpp"
 
-namespace p_controller {
+namespace player_controller {
 
 void Update(entt::registry &registry, float dt) {
   registry
@@ -17,12 +17,12 @@ void Update(entt::registry &registry, float dt) {
                 TransformComponent &tc, Velocity &v) {
         // rotation
         float sensitivity = 0.003f;
-        glm::vec2 rot = Input::mouseMov() *
+        glm::vec2 rot = Input::MouseMov() *
                         sensitivity;  // rotation this frame from mouse move
         float yaw = rot.x;
         float pitch = rot.y;
 
-        if (Input::isMouseButtonDown(GLFW_MOUSE_BUTTON_1)) {
+        if (Input::IsMouseButtonDown(GLFW_MOUSE_BUTTON_1)) {
           cc.AddAngles(yaw, pitch);
           tc.Rotate(glm::vec3(0, yaw, 0));
         }
@@ -33,14 +33,14 @@ void Update(entt::registry &registry, float dt) {
 
         // base movement direction on camera orientation.
         glm::vec3 frwd = cc.LookDirection();
-			//transform_helper::DirVectorFromRadians(cc.yaw_, cc.pitch_);
+        // transform_helper::DirVectorFromRadians(cc.yaw_, cc.pitch_);
 
-        if (Input::isKeyPressed(GLFW_KEY_N)) {
-          pc.no_clip_ = !pc.no_clip_;
+        if (Input::IsKeyPressed(GLFW_KEY_N)) {
+          pc.no_clip = !pc.no_clip;
         }
 
         // we don't want the player to fly if no clip is disabled.
-        if (!pc.no_clip_) {
+        if (!pc.no_clip) {
           frwd.y = 0;
           frwd = glm::normalize(
               frwd);  // renormalize, otherwize done in DirVectorFromRadians
@@ -49,25 +49,25 @@ void Update(entt::registry &registry, float dt) {
         glm::vec3 up(0, 1, 0);
         glm::vec3 right = glm::normalize(glm::cross(frwd, up));
 
-        if (Input::isKeyDown(GLFW_KEY_W)) {
-          final_velocity += frwd * pc.walkspeed_ * dt;
+        if (Input::IsKeyDown(GLFW_KEY_W)) {
+          final_velocity += frwd * pc.walkspeed * dt;
         }
-        if (Input::isKeyDown(GLFW_KEY_S)) {
-          final_velocity -= frwd * pc.walkspeed_ * dt;
+        if (Input::IsKeyDown(GLFW_KEY_S)) {
+          final_velocity -= frwd * pc.walkspeed * dt;
         }
-        if (Input::isKeyDown(GLFW_KEY_D)) {
-          final_velocity += right * pc.walkspeed_ * dt;
+        if (Input::IsKeyDown(GLFW_KEY_D)) {
+          final_velocity += right * pc.walkspeed * dt;
         }
-        if (Input::isKeyDown(GLFW_KEY_A)) {
-          final_velocity -= right * pc.walkspeed_ * dt;
+        if (Input::IsKeyDown(GLFW_KEY_A)) {
+          final_velocity -= right * pc.walkspeed * dt;
         }
 
-        if (Input::isKeyDown(GLFW_KEY_LEFT_SHIFT)) {
+        if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT)) {
           final_velocity *= 2;
         }
 
-        // physics stuff, absolute atm, may need to change. Other systems may affect velocity.
-        // velocity of player object.
+        // physics stuff, absolute atm, may need to change. Other systems may
+        // affect velocity. velocity of player object.
         v.velocity = final_velocity;
 
         /*
@@ -75,11 +75,11 @@ void Update(entt::registry &registry, float dt) {
         */
 
         // maybe move to new CameraSystem?
-        cc.cam_->SetPosition(tc.position + cc.offset_);
+        cc.cam->SetPosition(tc.position + cc.offset);
         // maybe move to new CameraSystem?
       });
 }
 
 };  // namespace p_controller
 
-#endif  // !PLAYER_CONTROLLER_SYSTEM_H_
+#endif  // !PLAYER_CONTROLLER_SYSTEM_HPP_

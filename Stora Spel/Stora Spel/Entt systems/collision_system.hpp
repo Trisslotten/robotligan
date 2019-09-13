@@ -1,9 +1,9 @@
-#ifndef COLLISION_SYSTEM_H
-#define COLLISION_SYSTEM_H
+#ifndef COLLISION_SYSTEM_HPP
+#define COLLISION_SYSTEM_HPP
 
 #include <entity/registry.hpp>
 #include "boundingboxes.h"
-#include "ball_component.h"
+#include "ball_component.hpp"
 #include "collision.h"
 #include <glm/glm.hpp>
 
@@ -66,4 +66,4 @@ void UpdateCollisions(entt::registry &registry) {
   }
 }
 
-#endif  // COLLISION_SYSTEM_H
+#endif  // COLLISION_SYSTEM_HPP

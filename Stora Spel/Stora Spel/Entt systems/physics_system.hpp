@@ -1,14 +1,14 @@
-#ifndef PHYSICS_SYSTEM_H
-#define PHYSICS_SYSTEM_H
+#ifndef PHYSICS_SYSTEM_HPP
+#define PHYSICS_SYSTEM_HPP
 
 #include <entity/registry.hpp>
-#include "ball_component.h"
+#include "ball_component.hpp"
 #include "boundingboxes.h"
 #include "collision.h"
 #include "physics.h"
-#include "physics_component.h"
-#include "velocity.h"
-#include "transform_component.h"
+#include "physics_component.hpp"
+#include "velocity.hpp"
+#include "transform_component.hpp"
 
 // temp function to print glm::vec3
 void printglm(glm::vec3 v) {
@@ -49,4 +49,4 @@ void UpdatePhysics(entt::registry& registry, float dt) {
   }
 }
 
-#endif  // PHYSICS_SYSTEM_H
+#endif  // PHYSICS_SYSTEM_HPP
