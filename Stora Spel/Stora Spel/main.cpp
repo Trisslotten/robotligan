@@ -14,7 +14,15 @@
 #include "player_controller_system.hpp"
 #include "ability_controller_system.hpp"
 
+#include <NetAPI/networkTest.hpp>
+#include <NetAPI/socket/server.hpp>
+#include <NetAPI/socket/tcpclient.hpp>
+#include "util/meminfo.h"
+#include <thread>
+#include <chrono>
 //#include <glad/glad.h>
+#pragma comment(lib, "Ws2_32.lib")
+int main(unsigned argc, char **argv) {
 
 #include <GLFW/glfw3.h>
 #include "util/input.hpp"
@@ -41,7 +49,6 @@ int main(unsigned argc, char **argv) {
   std::cout << "Hello World!*!!!111\n";
 
   std::cout << "Test från development\n";
-
   entt::registry registry;
 
   auto entity = registry.create();
@@ -97,6 +104,9 @@ int main(unsigned argc, char **argv) {
             << " MB\n";
   std::cout << "VRAM usage: " << util::MemoryInfo::GetInstance().GetUsedVRAM()
             << " MB\n";
+
+  std::cout << "WSA is initialized? " << std::boolalpha << NetAPI::Initialization::WinsockInitialized() << std::endl;
+
   std::cin.ignore();
   return EXIT_SUCCESS;
 }

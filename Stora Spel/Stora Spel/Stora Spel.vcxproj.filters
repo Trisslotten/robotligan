@@ -6,6 +6,12 @@
     <ClCompile Include="util\timer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="nettest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClInclude Include="Components\ability_component.hpp" />
     <ClInclude Include="Components\ball_component.hpp" />
     <ClInclude Include="Components\camera_component.hpp" />
