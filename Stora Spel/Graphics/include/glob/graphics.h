@@ -14,7 +14,7 @@
 namespace glob {
 
 typedef unsigned long ModelHandle;
-typedef unsigned long TextureHandle;
+//typedef unsigned long TextureHandle;
 
 /*
  * Initialize renderer.
@@ -39,15 +39,6 @@ EXPORT TextureHandle GetTexture(const std::string& filepath);
  */
 EXPORT void Submit(ModelHandle model_h, glm::vec3 pos);
 EXPORT void Submit(ModelHandle model_h, glm::mat4 transform);
-
-/*
- * submit things to render, for testing
- */
-EXPORT void DebugSubmitSphere(glm::vec3 pos, float radius);
-EXPORT void DebugSubmitCube(glm::vec3 pos, glm::vec3 side_lengths,
-                            glm::quat orientation = glm::quat());
-EXPORT void DebugSubmitPlane(glm::vec3 pos, glm::vec2 side_lengths,
-                             glm::vec3 up);
 
 /*
  * Render all items submitted this frame

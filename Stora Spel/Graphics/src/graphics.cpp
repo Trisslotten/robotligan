@@ -21,12 +21,13 @@ struct RenderItem {
   glm::mat4 transform;
 };
 
-ShaderProgram model_shader;
 ShaderProgram test_shader;
+ShaderProgram model_shader;
 
 GLuint triangle_vbo, triangle_vao;
 
-Camera camera{glm::vec3(3, -8, 2), glm::vec3(0,3,0), 90, 16.f / 9.f, 0.1f, 100.f};
+Camera camera{
+    glm::vec3(25, 5, 0), glm::vec3(0, 3, 0), 90, 16.f / 9.f, 0.1f, 100.f};
 
 /*
 TextureHandle current_texture_guid = 1;
@@ -39,6 +40,12 @@ std::unordered_map<std::string, ModelHandle> model_handles;
 std::unordered_map<ModelHandle, Model> models;
 
 std::vector<RenderItem> items_to_render;
+
+void DrawFullscreenQuad() {
+  glBindVertexArray(triangle_vao);
+  glDrawArrays(GL_TRIANGLES, 0, 3);
+  glBindVertexArray(0);
+}
 
 }  // namespace
 
@@ -120,9 +127,13 @@ void Submit(ModelHandle model_h, glm::mat4 transform) {
     return;
   }
 
+  const glm::mat4 pre_rotation =
+      glm::rotate(glm::pi<float>() / 2.f, glm::vec3(0, 1, 0)) *
+      glm::rotate(-glm::pi<float>() / 2.f, glm::vec3(1, 0, 0));
+
   RenderItem to_render;
   to_render.model = &find_res->second;
-  to_render.transform = transform;
+  to_render.transform = transform * pre_rotation;
   items_to_render.push_back(to_render);
 }
 
@@ -130,14 +141,6 @@ void Render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
-
-  /*
-  glBindVertexArray(triangle_vao);
-  test_shader.use();
-  test_shader.uniform("cam_transform", cam_transform);
-  glDrawArrays(GL_TRIANGLES, 0, 3);
-  glBindVertexArray(0);
-  */
 
   model_shader.use();
   model_shader.uniform("cam_transform", cam_transform);
@@ -147,15 +150,5 @@ void Render() {
   }
   items_to_render.clear();
 }
-
-void DebugSubmitSphere(glm::vec3 pos, float radius) {
-  // RenderItem to_render;
-  // items_to_render.push_back();
-}
-
-void DebugSubmitCube(glm::vec3 pos, glm::vec3 side_lengths,
-                     glm::quat orientation) {}
-
-void DebugSubmitPlane(glm::vec3 pos, glm::vec2 side_lengths, glm::vec3 up) {}
 
 }  // namespace glob

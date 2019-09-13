@@ -129,6 +129,7 @@ void Model::LoadModel(std::string path) {
   is_loaded = true;
 }
 
+// TODO: check if node transform fixes up-vector from blender export
 void Model::ProcessNode(aiNode* node, const aiScene* scene) {
   // Process all the nodes meshes
 
@@ -136,6 +137,7 @@ void Model::ProcessNode(aiNode* node, const aiScene* scene) {
     aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
     mesh_.push_back(ProcessMesh(mesh, scene));
   }
+
 
   // Then process nodes children
 
@@ -185,7 +187,7 @@ void Model::LoadFromFile(const std::string& path) { LoadModel(path); }
 
 void Model::Draw(ShaderProgram& shader) {
   for (unsigned int i = 0; i < mesh_.size(); i++) {
-    mesh_[i].Draw(shader.getId());
+    mesh_[i].Draw(shader);
   }
 }
 

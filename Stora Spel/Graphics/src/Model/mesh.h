@@ -4,9 +4,10 @@
 #include <assimp/scene.h>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
-
 #include <string>
 #include <vector>
+
+#include "../shader.h"
 
 namespace glob {
 
@@ -37,7 +38,7 @@ class Mesh {
        const std::vector<Texture>& textures);
   ~Mesh();
 
-  void Draw(GLuint shader);
+  void Draw(ShaderProgram& shader);
 };
 
 }  // namespace glob

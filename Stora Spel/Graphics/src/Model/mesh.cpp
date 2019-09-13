@@ -45,14 +45,12 @@ Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indic
 
 Mesh::~Mesh() {}
 
-void Mesh::Draw(GLuint shader) {
+void Mesh::Draw(ShaderProgram& shader) {
   for (unsigned int i = 0; i < textures_.size(); i++) {
-    glActiveTexture(GL_TEXTURE0 + i);  // Activate proper texture unit
+    glActiveTexture(GL_TEXTURE0 + i);
     glBindTexture(GL_TEXTURE_2D, textures_[i].id_texture);
-    std::string name = textures_[i].type;
-    glUniform1i(glGetUniformLocation(shader, (name).c_str()), i);
+    shader.uniform(textures_[i].type, i);
   }
-  glActiveTexture(GL_TEXTURE0);
 
   // Draw mesh
   glBindVertexArray(vertex_array_object_);
