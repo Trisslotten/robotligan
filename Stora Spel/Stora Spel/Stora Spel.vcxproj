@@ -77,10 +77,10 @@
     <IncludePath>$(SolutionDir)glm;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)glm;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Graphics\external\include;$(SolutionDir)glm;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)glm;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Graphics\external\include;$(SolutionDir)glm;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
