@@ -1,5 +1,5 @@
-#ifndef MESH_H_
-#define MESH_H_
+#ifndef MESH_HPP_
+#define MESH_HPP_
 
 #include <assimp/scene.h>
 #include <glad/glad.h>
@@ -7,6 +7,10 @@
 
 #include <string>
 #include <vector>
+
+#include "../shader.hpp"
+
+namespace glob {
 
 struct Vertex {
   glm::vec3 position;
@@ -31,11 +35,13 @@ class Mesh {
   void SetupMesh();
 
  public:
-  Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices,
-       std::vector<Texture> textures);
+  Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices,
+       const std::vector<Texture>& textures);
   ~Mesh();
 
-  void Draw(GLuint shader);
+  void Draw(ShaderProgram& shader);
 };
 
-#endif
+}  // namespace glob
+
+#endif  // MESH_HPP_

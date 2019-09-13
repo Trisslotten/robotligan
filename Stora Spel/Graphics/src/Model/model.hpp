@@ -1,10 +1,13 @@
-#ifndef MODEL_H_
-#define MODEL_H_
+#ifndef MODEL_HPP_
+#define MODEL_HPP_
 
-#include "mesh.h"
+#include "mesh.hpp"
 
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
+#include "../shader.hpp"
+
+namespace glob {
 
 class Model {
  private:
@@ -22,14 +25,20 @@ class Model {
                                             std::string type_name);
 
   std::string directory_;
-   
+
+  bool is_loaded_ = false;
+
  public:
-  Model(char* path);
   Model();
+  Model(const std::string& path);
   ~Model();
 
-  void LoadModelFromFile(const GLchar* path);
-  void Draw(GLuint shader);
+  void LoadFromFile(const std::string& path);
+  bool IsLoaded() { return is_loaded_; };
+
+  void Draw(ShaderProgram& shader);
 };
 
-#endif
+}  // namespace glob
+
+#endif // MODEL_HPP_
