@@ -2,9 +2,9 @@
 #define WIN32_LEAN_AND_MEAN
 #ifndef TCPLISTENER_H
 #define TCPLISTENER_H
-#include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <windows.h>
 #include <NetAPI/common.hpp>
 #include <NetAPI/socket/tcpclient.hpp>
 namespace NetAPI {
