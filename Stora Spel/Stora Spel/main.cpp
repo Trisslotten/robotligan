@@ -9,6 +9,8 @@
 #include "collision_system.hpp"
 #include "physics_system.hpp"
 #include "player_controller_system.hpp"
+#include "ability_controller_system.hpp"
+
 
 #include <GLFW/glfw3.h>
 #include "util/input.hpp"
@@ -24,6 +26,7 @@ void init() {
 
 void updateSystems(entt::registry *reg, float dt) {
   player_controller::Update(*reg, dt);
+  ability_controller::Update(*reg);
   UpdatePhysics(*reg, dt);
   UpdateCollisions(*reg);
 }

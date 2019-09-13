@@ -98,9 +98,20 @@
     <ClInclude Include="util\meminfo.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Components\transform_component.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\AbilityHandler\ability.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entt systems\ability_controller_system.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Components\player_component.hpp">
     <ClInclude Include="util\input.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Components\ability_component.hpp">
     <ClInclude Include="Entt systems\player_controller_system.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
