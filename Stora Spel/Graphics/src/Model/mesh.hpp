@@ -1,5 +1,5 @@
-#ifndef MESH_H_
-#define MESH_H_
+#ifndef MESH_HPP_
+#define MESH_HPP_
 
 #include <assimp/scene.h>
 #include <glad/glad.h>
@@ -43,4 +43,4 @@ class Mesh {
 
 }  // namespace glob
 
-#endif
+#endif // MESH_HPP_

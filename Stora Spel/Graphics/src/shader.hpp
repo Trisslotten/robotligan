@@ -1,5 +1,5 @@
-#ifndef GLOB_SHADER_H_
-#define GLOB_SHADER_H_
+#ifndef GLOB_SHADER_HPP_
+#define GLOB_SHADER_HPP_
 
 // no move plz
 #include <glad/glad.h>
@@ -79,4 +79,4 @@ class ShaderProgram {
 
 }  // namespace glob
 
-#endif GLOB_SHADER_H_
+#endif GLOB_SHADER_HPP_

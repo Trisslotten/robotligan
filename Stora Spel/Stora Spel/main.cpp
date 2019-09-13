@@ -1,11 +1,10 @@
 #include <iostream>
 
+#include <entt.hpp>
+#include <glm/gtx/transform.hpp>
 #include <glob/graphics.hpp>
 #include <glob/window.hpp>
-#include <entt.hpp>
 #include "PrintPositionSystem.h"
-
-#include <glm/gtx/transform.hpp>
 
 //#include <glad/glad.h>
 
@@ -36,8 +35,9 @@ int main(unsigned argc, char **argv) {
     // render
 
     glob::Submit(model_h, glm::translate(glm::vec3(0)) *
-                              glm::rotate(time*0.5f, glm::vec3(0, 1, 0)));
-    glob::Submit(model_h2, glm::translate(glm::vec3(0, 9, 3.f*glm::sin(time))));
+                              glm::rotate(time * 0.5f, glm::vec3(0, 1, 0)));
+    glob::Submit(model_h2,
+                 glm::translate(glm::vec3(0, 9, 3.f * glm::sin(time))));
 
     glob::Render();
     glob::window::Update();

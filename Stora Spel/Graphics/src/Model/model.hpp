@@ -1,5 +1,5 @@
-#ifndef MODEL_H_
-#define MODEL_H_
+#ifndef MODEL_HPP_
+#define MODEL_HPP_
 
 #include "mesh.hpp"
 
@@ -41,4 +41,4 @@ class Model {
 
 }  // namespace glob
 
-#endif
+#endif // MODEL_HPP_
