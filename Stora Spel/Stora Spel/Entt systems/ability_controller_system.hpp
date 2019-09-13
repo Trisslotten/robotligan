@@ -7,6 +7,9 @@
 
 namespace ability_controller {
 
+void TriggerAbility(entt::registry &registry, AbilityID in_id);
+void CreateMissileEntity(entt::registry &registry);
+
 void Update(entt::registry &registry) {
   registry.view<PlayerComponent, AbilityComponent, Position>().each(
       [&](PlayerComponent &player_component, AbilityComponent &ability_component,
@@ -31,8 +34,6 @@ void Update(entt::registry &registry) {
 
 
 }
-
-};  // namespace ability_controller
 
 void TriggerAbility(entt::registry &registry, AbilityID in_id) {
   
@@ -71,5 +72,7 @@ void CreateMissileEntity(entt::registry &registry) {
 
   // WIP: Assign it the correct components here
 }
+
+};  // namespace ability_controller
 
 #endif  // !ABILITY_CONTROLLER_SYSTEM_HPP_
