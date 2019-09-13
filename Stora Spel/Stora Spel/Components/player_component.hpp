@@ -1,7 +1,7 @@
-#ifndef PLAYER_COMPONENT_H_
-#define PLAYER_COMPONENT_H_
+#ifndef PLAYER_COMPONENT_HPP_
+#define PLAYER_COMPONENT_HPP_
 
-#include <util/ability.hpp>
+#include <util/enums/ability_id.hpp>
 
 struct PlayerComponent {
   int id = 0;
@@ -9,4 +9,4 @@ struct PlayerComponent {
   AbilityID secondary_ability = NULL_ABILITY;
 };
 
-#endif  // PLAYER_COMPONENT_H_
+#endif  // PLAYER_COMPONENT_HPP_

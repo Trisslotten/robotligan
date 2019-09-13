@@ -3,7 +3,7 @@
 #include <glob/graphics.h>
 #include <glob/window.h>
 #include <entt.hpp>
-#include "AbilityControllerSystem.hpp"
+#include "ability_controller_system.hpp"
 #include "PlayerControllerSystem.h"
 #include "PrintPositionSystem.h"
 

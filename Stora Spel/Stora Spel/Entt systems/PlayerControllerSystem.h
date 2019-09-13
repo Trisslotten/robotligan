@@ -3,7 +3,7 @@
 
 #include <entt.hpp>
 #include "camera_component.h"
-#include "player_component.h"
+#include "player_component.hpp"
 #include "transform_component.h"
 #include "util/input.h"
 #include <util/ability.hpp>
@@ -28,7 +28,7 @@ void update(entt::registry &registry) {
         }
         if (Input::isKeyDown(GLFW_KEY_E)) {
           // Trigger ability func, send in player as parameter
-          Ability::TriggerAbility(registry, pc);
+          Ability::TriggerAbility(registry, pc, true);
         }
 
         // maybe move to new CameraSystem?

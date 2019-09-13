@@ -1,0 +1,20 @@
+#ifndef ABILITY_ID_HPP_
+#define ABILITY_ID_HPP_
+
+enum AbilityID {
+  NULL_ABILITY,
+  BUILD_WALL,
+  FAKE_BALL,
+  FORCE_PUSH,
+  GRAVITY_CHANGE,
+  HOMING_BALL,
+  INVISIBILITY,
+  MISSILE,
+  SUPER_STRIKE,
+  SWITCH_GOALS,
+  TELEPORT,
+  // Fill with more ability and passive boosts
+  NUM_OF_ABILITY_IDS
+};
+
+#endif  // !ABILITY_ID_HPP_
