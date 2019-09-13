@@ -168,7 +168,7 @@
     <ClInclude Include="Components\transform_component.h" />
     <ClInclude Include="Components\velocity.h" />
     <ClInclude Include="Components\position.h" />
-    <ClInclude Include="Entt systems\AbilityControllerSystem.hpp" />
+    <ClInclude Include="Entt systems\ability_controller_system.hpp" />
     <ClInclude Include="Entt systems\PlayerControllerSystem.h" />
     <ClInclude Include="Entt systems\PrintPositionSystem.h" />
     <ClInclude Include="util\ability.hpp" />

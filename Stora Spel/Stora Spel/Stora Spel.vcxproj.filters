@@ -89,10 +89,10 @@
     <ClInclude Include="Components\Ability Components\homing_ball_component.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Entt systems\AbilityControllerSystem.hpp">
+    <ClInclude Include="util\ability.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="util\ability.hpp">
+    <ClInclude Include="Entt systems\ability_controller_system.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
