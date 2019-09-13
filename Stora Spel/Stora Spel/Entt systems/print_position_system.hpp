@@ -10,4 +10,4 @@ void Print(entt::registry &registry) {
   });
 }
 
-#endif  // PRINTPOSITIONSYSTEM_HPP
+#endif  // PRINT_POSITION_SYSTEM_HPP_
