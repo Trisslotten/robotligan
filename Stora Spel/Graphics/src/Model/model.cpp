@@ -1,8 +1,8 @@
-#include "model.h"
+#include "model.hpp"
 
 #include <iostream>
 
-#include "lodepng.h"
+#include "lodepng.hpp"
 
 namespace glob {
 

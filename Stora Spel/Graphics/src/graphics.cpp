@@ -1,4 +1,4 @@
-#include "glob/graphics.h"
+#include "glob/graphics.hpp"
 
 // no move plz
 #include <glad/glad.h>
@@ -9,9 +9,9 @@
 #include <iostream>
 #include <unordered_map>
 
-#include "Model/model.h"
+#include "Model/model.hpp"
 #include "camera/camera.hpp"
-#include "shader.h"
+#include "shader.hpp"
 
 namespace glob {
 namespace {

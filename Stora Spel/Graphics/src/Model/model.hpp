@@ -1,11 +1,11 @@
 #ifndef MODEL_H_
 #define MODEL_H_
 
-#include "mesh.h"
+#include "mesh.hpp"
 
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
-#include "../shader.h"
+#include "../shader.hpp"
 
 namespace glob {
 

@@ -1,4 +1,4 @@
-#include "glob/window.h"
+#include "glob/window.hpp"
 
 // no move plz
 #include <glad/glad.h>

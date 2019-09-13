@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include <glob/graphics.h>
-#include <glob/window.h>
+#include <glob/graphics.hpp>
+#include <glob/window.hpp>
 #include <entt.hpp>
 #include "PrintPositionSystem.h"
 
