@@ -1,29 +1,25 @@
-#ifndef COLLISION_SYSTEM_H
-#define COLLISION_SYSTEM_H
+#ifndef COLLISION_SYSTEM_HPP_
+#define COLLISION_SYSTEM_HPP_
 
 #include <entity/registry.hpp>
-#include "boundingboxes.h"
-#include "ball_component.h"
-#include "collision.h"
 #include <glm.hpp>
 
-// temp function to print glm::vec3
-void printglm1(glm::vec3 v) {
-  std::cout << "x: " << v.x << " y: " << v.y << " z: " << v.z;
-}
-
+#include "ball_component.hpp"
+#include "boundingboxes.hpp"
+#include "collision.hpp"
+#include "velocity_component.hpp"
 
 void UpdateCollisions(entt::registry &registry) {
-  auto view_ball = registry.view<BallComponent, physics::Sphere, Velocity>();
-  auto view_player = registry.view<physics::OBB, Velocity>();
-  auto view_arena = registry.view<physics::Arena, Velocity>();
+  auto view_ball = registry.view<BallComponent, physics::Sphere, VelocityComponent>();
+  auto view_player = registry.view<physics::OBB, VelocityComponent>();
+  auto view_arena = registry.view<physics::Arena, VelocityComponent>();
 
   //check ball collision
   // Loop over all balls
   for (auto entity : view_ball) {
     auto& ball = view_ball.get<BallComponent>(entity);
     auto& s = view_ball.get<physics::Sphere>(entity);
-    auto& v = view_ball.get<Velocity>(entity);
+    auto& v = view_ball.get<VelocityComponent>(entity);
 
     // Collision between ball and players
     for (auto player : view_player) {
@@ -31,7 +27,6 @@ void UpdateCollisions(entt::registry &registry) {
 
       glm::vec3 normal;
       if (Intersect(s, o, &normal)) {
-        //printglm1(normal);
         //std::cout << "collision" << std::endl;
         float dot_val = glm::dot(v.velocity, normal);
         v.velocity = v.velocity - normal * dot_val * 2.f;
@@ -46,7 +41,6 @@ void UpdateCollisions(entt::registry &registry) {
 
       glm::vec3 normal;
       if (Intersect(a, s, &normal)) {
-        //printglm1(normal);
         //std::cout << "collision" << std::endl;
         float dot_val = glm::dot(v.velocity, normal);
         v.velocity = v.velocity - normal * dot_val * 2.f;
@@ -83,4 +77,4 @@ void UpdateCollisions(entt::registry &registry) {
   }
 }
 
-#endif  // COLLISION_SYSTEM_H
+#endif  // COLLISION_SYSTEM_HPP_

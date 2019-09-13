@@ -18,16 +18,16 @@
     <ClInclude Include="framework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\boundingboxes.h">
+    <ClInclude Include="include\boundingboxes.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\collision.h">
+    <ClInclude Include="include\collision.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\physics_object.h">
+    <ClInclude Include="include\physics.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\physics.h">
+    <ClInclude Include="include\physics_object.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

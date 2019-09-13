@@ -150,13 +150,11 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Components\ball_component.h" />
-    <ClInclude Include="Components\physics_component.h" />
-    <ClInclude Include="Components\velocity.h" />
-    <ClInclude Include="Components\position.h" />
-    <ClInclude Include="Entt systems\collision_system.h" />
-    <ClInclude Include="Entt systems\physics_system.h" />
-    <ClInclude Include="Entt systems\PrintPositionSystem.h" />
+    <ClInclude Include="Components\ball_component.hpp" />
+    <ClInclude Include="Components\physics_component.hpp" />
+    <ClInclude Include="Components\velocity_component.hpp" />
+    <ClInclude Include="Entt systems\collision_system.hpp" />
+    <ClInclude Include="Entt systems\physics_system.hpp" />
     <ClInclude Include="util\meminfo.h" />
   </ItemGroup>
   <ItemGroup>

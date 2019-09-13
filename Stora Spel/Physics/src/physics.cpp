@@ -1,10 +1,10 @@
-#include "physics.h"
+#include "physics.hpp"
 
 #include <glm.hpp>
 
-constexpr float g = 9.82;
+constexpr float g = 9.82f;
 
-void physics::update(physics::PhysicsObject* po, float dt) {
+void physics::Update(physics::PhysicsObject* po, float dt) {
   float deacc = po->friction * dt;
   float vel = glm::length(po->velocity);
   vel -= deacc;

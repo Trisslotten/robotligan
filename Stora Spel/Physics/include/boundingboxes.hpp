@@ -1,5 +1,5 @@
-#ifndef PHYSICS_INCLUDE_BOUNDINGBOXES_H_
-#define PHYSICS_INCLUDE_BOUNDINGBOXES_H_
+#ifndef PHYSICS_INCLUDE_BOUNDINGBOXES_HPP_
+#define PHYSICS_INCLUDE_BOUNDINGBOXES_HPP_
 
 #include <vec3.hpp>
 
@@ -22,4 +22,4 @@ struct Arena {
   float zmin, zmax;
 };
 }  // namespace physics
-#endif  // PHYSICS_INCLUDE_BOUNDINGBOXES_H_
+#endif  // PHYSICS_INCLUDE_BOUNDINGBOXES_HPP_
