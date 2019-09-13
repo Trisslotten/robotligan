@@ -1,6 +1,6 @@
 #include "physics.hpp"
 
-#include <glm.hpp>
+#include <glm/glm.hpp>
 
 constexpr float g = 9.82f;
 

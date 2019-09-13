@@ -1,7 +1,7 @@
 #ifndef PHYSICS_INCLUDE_BOUNDINGBOXES_HPP_
 #define PHYSICS_INCLUDE_BOUNDINGBOXES_HPP_
 
-#include <vec3.hpp>
+#include <glm/glm.hpp>
 
 namespace physics {
 

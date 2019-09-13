@@ -29,7 +29,17 @@ void UpdatePhysics(entt::registry& registry, float dt) {
 
     s.center = po.position;
     v.velocity = po.velocity;
-    //std::cout << std::endl;
+    // printglm(s.center);
+    // std::cout << std::endl;
+  }
+
+  auto view_moveable = registry.view<TransformComponent, Velocity>();
+
+  for (auto entity : view_moveable) {
+    TransformComponent& tc = view_moveable.get<TransformComponent>(entity);
+    Velocity& vc = view_moveable.get<Velocity>(entity);
+
+    tc.position += vc.velocity;
   }
 }
 

@@ -1,7 +1,7 @@
 #ifndef PHYSICS_OBJECT_HPP_
 #define PHYSICS_OBJECT_HPP_
 
-#include <vec3.hpp>
+#include <glm/vec3.hpp>
 
 namespace physics {
 

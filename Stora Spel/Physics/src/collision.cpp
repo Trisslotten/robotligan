@@ -1,5 +1,6 @@
 #include "collision.hpp"
 
+#include <glm/glm.hpp>
 #include <vector>
 
 #include <glm.hpp>
