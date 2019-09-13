@@ -1,7 +1,7 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include <pch.h>
-#include <NetAPI/common.h>
-#include <NetAPI/helper/netinitialization.h>
+#include <NetAPI/common.hpp>
+#include <NetAPI/helper/netinitialization.hpp>
 
 /*
 	Skapa ny tråd i dllMain som initierar variabeln.
@@ -16,7 +16,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     switch (ul_reason_for_call)
     {
     case DLL_PROCESS_ATTACH:
-		NetAPI::initialization::GlobalSocketInternals::GetInstance().initializeWsock();
+		NetAPI::Initialization::GlobalSocketInternals::GetInstance().InitializeWsock();
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:

@@ -1,14 +1,10 @@
-#include <NetAPI/common.h>
-#include <NetAPI/networkTest.h>
-#include <NetAPI/helper/netinitialization.h>
-namespace NetAPI
-{
-	EXPORT int testfunc()
-	{
-		return 0;
-	}
-	EXPORT bool netInitialized()
-	{
-		return NetAPI::initialization::GlobalSocketInternals::GetInstance().internals.error;
-	}
+#include <NetAPI/common.hpp>
+#include <NetAPI/helper/netinitialization.hpp>
+#include <NetAPI/networkTest.hpp>
+namespace NetAPI {
+EXPORT int TestFunc() { return 0; }
+EXPORT bool NetInitialized() {
+  return NetAPI::Initialization::GlobalSocketInternals::GetInstance()
+      .internals_.error;
 }
+}  // namespace NetAPI

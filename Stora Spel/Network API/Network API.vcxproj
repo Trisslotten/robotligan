@@ -167,18 +167,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="include\NetAPI\helper\errors.h" />
-    <ClInclude Include="include\NetAPI\socket\client.h" />
+    <ClInclude Include="include\NetAPI\helper\errors.hpp" />
     <ClInclude Include="include\framework.h" />
-    <ClInclude Include="include\NetAPI\common.h" />
-    <ClInclude Include="include\NetAPI\helper\netinitialization.h" />
-    <ClInclude Include="include\NetAPI\networkTest.h" />
-    <ClInclude Include="include\NetAPI\socket\tcpclient.h" />
-    <ClInclude Include="include\NetAPI\socket\tcplistener.h" />
+    <ClInclude Include="include\NetAPI\common.hpp" />
+    <ClInclude Include="include\NetAPI\helper\netinitialization.hpp" />
+    <ClInclude Include="include\NetAPI\networkTest.hpp" />
+    <ClInclude Include="include\NetAPI\socket\tcpclient.hpp" />
+    <ClInclude Include="include\NetAPI\socket\tcplistener.hpp" />
+    <ClInclude Include="include\NetAPI\socket\server.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\NetAPI\socket\server.cpp" />
     <ClCompile Include="src\NetAPI\helper\errors.cpp" />
-    <ClCompile Include="src\NetAPI\socket\client.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="src\NetAPI\socket\tcplistener.cpp" />
     <ClCompile Include="src\NetAPI\socket\tcpclient.cpp" />
