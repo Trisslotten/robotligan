@@ -65,13 +65,13 @@
     <ClInclude Include="Components\transform_component.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Entt systems\playercontroller_system.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="util\timer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="util\transform_helper.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Entt systems\playercontroller_system.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

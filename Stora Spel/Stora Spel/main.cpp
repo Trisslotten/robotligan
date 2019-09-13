@@ -8,7 +8,7 @@
 #include "collision.h"
 #include "collision_system.h"
 #include "physics_system.h"
-#include "playercontroller_system.h"
+#include "playercontroller_system.hpp"
 
 #include <GLFW/glfw3.h>
 #include "util/input.h"
