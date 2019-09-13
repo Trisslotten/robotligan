@@ -1,4 +1,4 @@
-#ifndef CAMERA_COPONENT_HPP_
+#ifndef CAMERA_COMPONENT_HPP_
 #define CAMERA_COMPONENT_HPP_
 
 #include <glm/glm.hpp>
