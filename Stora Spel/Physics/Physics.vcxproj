@@ -160,10 +160,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
-    <ClInclude Include="include\boundingboxes.h" />
-    <ClInclude Include="include\collision.h" />
-    <ClInclude Include="include\physics.h" />
-    <ClInclude Include="include\physics_object.h" />
+    <ClInclude Include="include\boundingboxes.hpp" />
+    <ClInclude Include="include\collision.hpp" />
+    <ClInclude Include="include\physics.hpp" />
+    <ClInclude Include="include\physics_object.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
