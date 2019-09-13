@@ -21,7 +21,7 @@ int main() {
     }
     for (unsigned i = 0; i < server.GetConnectedPlayers(); i++) {
       NetAPI::Socket::Data d = server[i];
-      if (server.hasdata(d) && !server.SocketDisconnected(d)) {
+      if (server.HasData(d) && !server.SocketDisconnected(d)) {
         std::cout << d.buffer << std::endl;
         if (!sent) {
           server.SendToAll(cool_data);

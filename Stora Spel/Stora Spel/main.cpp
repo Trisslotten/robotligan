@@ -1,11 +1,13 @@
 #include <iostream>
-
 #include <entt.hpp>
+#include <NetAPI/networkTest.hpp>
+#include <NetAPI/socket/server.hpp>
+#include <NetAPI/socket/tcpclient.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glob/graphics.hpp>
 #include <glob/window.hpp>
-
 #include <entity/registry.hpp>
+
 #include "collision_system.hpp"
 #include "physics_system.hpp"
 #include "collision.hpp"
@@ -13,22 +15,14 @@
 #include "print_position_system.hpp"
 #include "player_controller_system.hpp"
 #include "ability_controller_system.hpp"
-
-#include <NetAPI/networkTest.hpp>
-#include <NetAPI/socket/server.hpp>
-#include <NetAPI/socket/tcpclient.hpp>
-#include "util/meminfo.h"
-#include <thread>
-#include <chrono>
-//#include <glad/glad.h>
-#pragma comment(lib, "Ws2_32.lib")
-int main(unsigned argc, char **argv) {
-
 #include <GLFW/glfw3.h>
 #include "util/input.hpp"
 #include "util/meminfo.hpp"
-
 #include "util/timer.hpp"
+#include "util/meminfo.hpp"
+
+#include <thread>
+#include <chrono>
 
 void init() {
   glob::window::Create();

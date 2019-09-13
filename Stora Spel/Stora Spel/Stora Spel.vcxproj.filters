@@ -4,12 +4,10 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\input.cpp" />
     <ClCompile Include="util\timer.cpp" />
+    <ClCompile Include="nettest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="nettest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClInclude Include="Components\ability_component.hpp" />
@@ -35,9 +33,6 @@
   <ItemGroup>
     <None Include="shaders\testshader.frag" />
     <None Include="shaders\testshader.vert" />
-    <ClInclude Include="util\meminfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Components\ball_component.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
