@@ -6,12 +6,13 @@
 #include "player_component.h"
 #include "transform_component.h"
 #include "util/input.h"
+#include <util/ability.hpp>
 
 namespace p_controller {
 
 void update(entt::registry &registry) {
   registry.view<CameraComponent, PlayerComponent, TransformComponent>().each(
-      [](CameraComponent &cc, PlayerComponent &pc, TransformComponent &tc) {
+      [&](CameraComponent &cc, PlayerComponent &pc, TransformComponent &tc) {
         // rotation
         float sensitivity = 1.0f;
         glm::vec2 rot = Input::mouseMov() * sensitivity;
@@ -26,7 +27,8 @@ void update(entt::registry &registry) {
           // movement and collisions?
         }
         if (Input::isKeyDown(GLFW_KEY_E)) {
-			//Trigger ability func, send in player as parameter
+          // Trigger ability func, send in player as parameter
+          Ability::TriggerAbility(registry, pc);
         }
 
         // maybe move to new CameraSystem?

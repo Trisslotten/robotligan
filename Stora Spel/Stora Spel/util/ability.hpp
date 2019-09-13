@@ -5,6 +5,7 @@
 #include <entt.hpp>
 
 #include "Ability Components/missile_component.hpp"
+#include "player_component.h"
 // NTS: Include other ability components here
 
 enum AbilityID {
@@ -26,9 +27,12 @@ enum AbilityID {
 class Ability {
  public:
   Ability() = delete;
-  AbilityID RandomAbilityID();
-  void TriggerAbility(entt::registry &registry /*Player*/);
-  void CreateMissileEntity(entt::registry &registry);
+  static AbilityID RandomAbilityID();
+  static void TriggerAbility(entt::registry &registry,
+                             PlayerComponent &player_component,
+                             bool secondary_ability);
+  static void CreateMissileEntity(entt::registry &registry,
+                                  PlayerComponent &player_component);
 };
 
 #endif  // !ABILITY_HPP_

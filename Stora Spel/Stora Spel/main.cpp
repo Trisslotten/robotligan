@@ -19,7 +19,7 @@ void init() {
 
 void updateSystems(entt::registry *reg) {
   p_controller::update(*reg);
-  a_controller::Update(*reg);
+  ability_controller::Update(*reg);
 }
 
 int main(unsigned argc, char **argv) {

@@ -3,7 +3,7 @@
 
 #include "../util/ability.hpp"
 
-namespace a_controller {
+namespace ability_controller {
 
 void Update(entt::registry &registry) {
   // Fetch all entities with the Build Wall component
@@ -41,6 +41,6 @@ void Update(entt::registry &registry) {
   // and loop over each entity in that view
 }
 
-};  // namespace a_controller
+};  // namespace ability_controller
 
 #endif  // !ABILITY_CONTROLLER_SYSTEM_HPP_

@@ -1,12 +1,22 @@
-#include "ability.hpp"
+//#include "util/ability.hpp"
+#include <util/ability.hpp>
 
 AbilityID Ability::RandomAbilityID() {
   int id = rand() % (NUM_OF_ABILITY_IDS - 1) + 1;
   return (AbilityID)id;
 }
 
-void Ability::TriggerAbility(entt::registry& registry) {
+void Ability::TriggerAbility(entt::registry& registry,
+                             PlayerComponent& player_component,
+                             bool secondary_ability) {
+  // NTS: Get this value from player later
   AbilityID temp_id = NULL_ABILITY;
+
+  if (!secondary_ability) {
+    temp_id = player_component.primary_ability;
+  } else {
+    temp_id = player_component.secondary_ability;
+  }
 
   switch (temp_id) {
     case NULL_ABILITY:
@@ -24,7 +34,7 @@ void Ability::TriggerAbility(entt::registry& registry) {
     case INVISIBILITY:
       break;
     case MISSILE:
-      CreateMissileEntity(registry);
+      CreateMissileEntity(registry, player_component);
       break;
     case SUPER_STRIKE:
       break;
@@ -38,7 +48,8 @@ void Ability::TriggerAbility(entt::registry& registry) {
 }
 
 // NTS: Example function
-void Ability::CreateMissileEntity(entt::registry& registry) {
+void Ability::CreateMissileEntity(entt::registry& registry,
+                                  PlayerComponent& player_component) {
   // Create new entity
   auto entity = registry.create();
 

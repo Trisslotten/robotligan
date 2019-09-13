@@ -71,16 +71,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -149,7 +149,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\input.cpp" />
-    <ClCompile Include="src\AbilityHandler\ability.cpp" />
+    <ClCompile Include="src\ability.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Components\Ability Components\build_wall_component.hpp" />
@@ -171,6 +171,7 @@
     <ClInclude Include="Entt systems\AbilityControllerSystem.hpp" />
     <ClInclude Include="Entt systems\PlayerControllerSystem.h" />
     <ClInclude Include="Entt systems\PrintPositionSystem.h" />
+    <ClInclude Include="util\ability.hpp" />
     <ClInclude Include="util\input.h" />
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
     <ClInclude Include="util\meminfo.h" />
