@@ -1,5 +1,5 @@
-#ifndef GLOB_GRAPHICS_H_
-#define GLOB_GRAPHICS_H_
+#ifndef GLOB_GRAPHICS_HPP_
+#define GLOB_GRAPHICS_HPP_
 
 #ifdef MAKEDLL
 #define EXPORT __declspec(dllexport)
@@ -9,6 +9,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+
 #include <string>
 
 namespace glob {
@@ -47,4 +48,4 @@ EXPORT void Render();
 
 }  // namespace glob
 
-#endif  // GLOB_GRAPHICS_H_
+#endif  // GLOB_GRAPHICS_HPP_

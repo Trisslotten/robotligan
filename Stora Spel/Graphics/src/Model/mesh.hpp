@@ -4,6 +4,7 @@
 #include <assimp/scene.h>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
+
 #include <string>
 #include <vector>
 
@@ -43,4 +44,4 @@ class Mesh {
 
 }  // namespace glob
 
-#endif // MESH_HPP_
+#endif  // MESH_HPP_

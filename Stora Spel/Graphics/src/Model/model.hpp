@@ -26,7 +26,7 @@ class Model {
 
   std::string directory_;
 
-  bool is_loaded = false;
+  bool is_loaded_ = false;
 
  public:
   Model();
@@ -34,7 +34,7 @@ class Model {
   ~Model();
 
   void LoadFromFile(const std::string& path);
-  bool IsLoaded() { return is_loaded; };
+  bool IsLoaded() { return is_loaded_; };
 
   void Draw(ShaderProgram& shader);
 };

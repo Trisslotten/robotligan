@@ -126,7 +126,7 @@ void Model::LoadModel(std::string path) {
   directory_ = path.substr(0, path.find_last_of('/'));
   ProcessNode(scene->mRootNode, scene);
 
-  is_loaded = true;
+  is_loaded_ = true;
 }
 
 // TODO: check if node transform fixes up-vector from blender export
