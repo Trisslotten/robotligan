@@ -32,8 +32,8 @@ void Update(entt::registry &registry, float dt) {
         glm::vec3 final_velocity(0, 0, 0);
 
         // base movement direction on camera orientation.
-        glm::vec3 frwd =
-            transform_helper::DirVectorFromRadians(cc.yaw_, cc.pitch_);
+        glm::vec3 frwd = cc.LookDirection();
+			//transform_helper::DirVectorFromRadians(cc.yaw_, cc.pitch_);
 
         if (Input::isKeyPressed(GLFW_KEY_N)) {
           pc.no_clip_ = !pc.no_clip_;

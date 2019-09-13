@@ -34,6 +34,9 @@ struct CameraComponent {
     clampAngles();
     cam_->SetAnglesViaRadians(yaw_, pitch_);
   }
+  glm::vec3 LookDirection() {
+    return transform_helper::DirVectorFromRadians(yaw_, pitch_);
+  }
 };
 
 #endif  // CAMERA_H_
