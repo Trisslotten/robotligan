@@ -21,6 +21,9 @@
     <ClCompile Include="src\input.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="util\timer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Components\position.h">
@@ -63,6 +66,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Entt systems\playercontroller_system.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\timer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="util\transform_helper.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

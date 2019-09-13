@@ -3,16 +3,18 @@
 #include <glob/graphics.h>
 #include <glob/window.h>
 #include <entt.hpp>
-#include "playercontroller_system.h"
 #include "PrintPositionSystem.h"
+#include "ball_component.h"
+#include "collision.h"
 #include "collision_system.h"
 #include "physics_system.h"
-#include "collision.h"
-#include "ball_component.h"
+#include "playercontroller_system.h"
 
 #include <GLFW/glfw3.h>
 #include "util/input.h"
 #include "util/meminfo.h"
+
+#include "util/timer.hpp"
 
 void init() {
   glob::window::Create();
@@ -20,13 +22,15 @@ void init() {
   Input::initialize();
 }
 
-void updateSystems(entt::registry *reg) { 
-	p_controller::Update(*reg);
-	UpdatePhysics(*reg, 1.0f);
-	UpdateCollisions(*reg);
+void updateSystems(entt::registry *reg, float dt) {
+  p_controller::Update(*reg, dt);
+  UpdatePhysics(*reg, dt);
+  UpdateCollisions(*reg);
 }
 
 int main(unsigned argc, char **argv) {
+  Timer timer;
+
   std::cout << "Hello World!*!!!111\n";
 
   std::cout << "Test från development\n";
@@ -48,9 +52,8 @@ int main(unsigned argc, char **argv) {
 
   auto avatar = registry.create();  // this is the player avatar
   registry.assign<CameraComponent>(
-      avatar,
-      (Camera *)
-          glob::GetCamera(), glm::vec3(0,1,0));  // get the camera pointer from glob renderer
+      avatar, (Camera *)glob::GetCamera(),
+      glm::vec3(0, 1, 0));  // get the camera pointer from glob renderer
   registry.assign<PlayerComponent>(avatar);
   registry.assign<TransformComponent>(avatar, glm::vec3(-9.f, 0.f, 0.f),
                                       glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
@@ -59,11 +62,13 @@ int main(unsigned argc, char **argv) {
       avatar, glm::vec3(5.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.f, 0.f),
       glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
 
-
+  timer.restart();
+  float dt = 0.0f;
   while (!glob::window::ShouldClose()) {
+    dt = timer.restart();
     Input::reset();
     // tick
-    updateSystems(&registry);
+    updateSystems(&registry, dt);
 
     // render
     glob::Render();

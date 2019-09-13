@@ -150,6 +150,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="src\input.cpp" />
+    <ClCompile Include="util\timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Components\camera.h" />
@@ -166,6 +167,8 @@
     <ClInclude Include="Entt systems\PrintPositionSystem.h" />
     <ClInclude Include="util\input.h" />
     <ClInclude Include="util\meminfo.h" />
+    <ClInclude Include="util\timer.hpp" />
+    <ClInclude Include="util\transform_helper.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Graphics\Graphics.vcxproj">

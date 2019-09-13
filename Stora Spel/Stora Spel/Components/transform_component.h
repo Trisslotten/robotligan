@@ -3,6 +3,8 @@
 
 #include <glm/glm.hpp>
 
+#include "../util/transform_helper.hpp"
+
 struct TransformComponent {
   glm::vec3 position;
   glm::vec3 rotation;
@@ -18,14 +20,8 @@ struct TransformComponent {
     //rotation = glm::clamp(rotation, -180.f, 180.f); 
   }
 
-  glm::vec3 Forward() { //might be broken? works for x and z.
-    //sin(rotation.x);
-
-	float x = cos(rotation.y) * cos(rotation.x);
-    float y = -sin(rotation.x);
-    float z = sin(rotation.y) * cos(rotation.x);
-
-    return glm::normalize(glm::vec3(x, y, z));
+  glm::vec3 Forward() {
+	return transform_helper::DirVectorFromRadians(rotation.y, rotation.x);
   }
 };
 

@@ -8,6 +8,7 @@
 #include "physics.h"
 #include "physics_component.h"
 #include "velocity.h"
+#include "transform_component.h"
 
 // temp function to print glm::vec3
 void printglm(glm::vec3 v) {
