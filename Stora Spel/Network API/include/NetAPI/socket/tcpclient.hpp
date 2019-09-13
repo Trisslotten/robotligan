@@ -1,4 +1,3 @@
-#pragma once
 #ifndef TCPCLIENT_H
 #define TCPCLIENT_H
 #define WIN32_LEAN_MEAN

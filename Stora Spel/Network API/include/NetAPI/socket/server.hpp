@@ -1,4 +1,3 @@
-#pragma once
 #pragma warning(push)
 #pragma warning(disable : 4251)
 #include <NetAPI/common.hpp>
@@ -17,7 +16,7 @@ class EXPORT Server {
   bool SocketDisconnected(Data& d) {
     return (strcmp(d.buffer, NetAPI::Common::kSocketNotConnected) == 0);
   }
-  bool hasdata(Data& d) {
+  bool HasData(Data& d) {
     if (strcmp(d.buffer, Common::kNoDataAvailable) == 0 ||
         strcmp(d.buffer, Common::kFailedToRecieve) == 0) {
       return false;

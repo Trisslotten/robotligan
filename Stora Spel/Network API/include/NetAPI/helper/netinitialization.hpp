@@ -1,12 +1,12 @@
 #pragma once
+#ifndef SOCKET_INTERNALS_H
+#define SOCKET_INTERNALS_H
 #define WIN32_LEAN_AND_MEAN
 #include <stdio.h>
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <NetAPI/common.hpp>
-#ifndef SOCKET_INTERNALS_H
-#define SOCKET_INTERNALS_H
 namespace NetAPI {
 namespace Initialization {
 struct SocketInternals {
