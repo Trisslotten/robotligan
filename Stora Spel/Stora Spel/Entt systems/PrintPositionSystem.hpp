@@ -1,9 +1,8 @@
-#ifndef PRINTPOSITIONSYSTEM_H
-#define PRINTPOSITIONSYSTEM_H
+#ifndef PRINTPOSITIONSYSTEM_HPP
+#define PRINTPOSITIONSYSTEM_HPP
 
-#include <entt.hpp>
-#include "position.h"
-#include "velocity.h"
+#include "position.hpp"
+#include "velocity.hpp"
 
 void print(entt::registry &registry) {
   registry.view<Position, Velocity>().each([](auto &pos, auto &vel) {
@@ -11,4 +10,4 @@ void print(entt::registry &registry) {
   });
 }
 
-#endif  // PRINTPOSITIONSYSTEM_H
+#endif  // PRINTPOSITIONSYSTEM_HPP
