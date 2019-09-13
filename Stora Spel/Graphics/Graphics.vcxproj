@@ -72,7 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)Graphics\include;$(SolutionDir)Graphics\external\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)glm;$(SolutionDir)Graphics\include;$(SolutionDir)Graphics\external\include;$(SolutionDir)Graphics\src;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Graphics\external\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -87,7 +87,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)Graphics\include;$(SolutionDir)Graphics\external\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)glm;$(SolutionDir)Graphics\include;$(SolutionDir)Graphics\external\include;$(SolutionDir)Graphics\src;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)Graphics\external\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -105,7 +105,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;assimp-vc142-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)Graphics\lib\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -172,17 +172,20 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;assimp-vc142-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)Graphics\lib\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
-    <ClInclude Include="include\glob\graphics.h" />
-    <ClInclude Include="include\glob\window.h" />
+    <ClInclude Include="include\glob\graphics.hpp" />
+    <ClInclude Include="include\glob\window.hpp" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="src\shader.h" />
-    <ClInclude Include="include\glob\camera.hpp" />
+    <ClInclude Include="src\shader.hpp" />
+    <ClInclude Include="src\camera\camera.hpp" />
+    <ClInclude Include="src\Model\lodepng.hpp" />
+    <ClInclude Include="src\Model\mesh.hpp" />
+    <ClInclude Include="src\Model\model.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -192,6 +195,12 @@
     <ClCompile Include="src\graphics.cpp" />
     <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\window.cpp" />
+    <ClCompile Include="src\Model\lodepng.cpp" />
+    <ClCompile Include="src\Model\mesh.cpp" />
+    <ClCompile Include="src\Model\model.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="external\lib\glfw3.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

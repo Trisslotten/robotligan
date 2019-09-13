@@ -1,13 +1,15 @@
 #include <iostream>
 
-#include <glob/graphics.h>
+#include <entt.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glob/graphics.hpp>
+#include <glob/window.hpp>
+
 #include <entity/registry.hpp>
 #include "collision_system.hpp"
 #include "physics_system.hpp"
 #include "collision.hpp"
 #include "ball_component.hpp"
-#include <glob/window.h>
-#include <entt.hpp>
 #include "print_position_system.hpp"
 #include "player_controller_system.hpp"
 #include "ability_controller_system.hpp"
@@ -53,8 +55,13 @@ int main(unsigned argc, char **argv) {
   registry.assign<physics::Arena>(entity, -10.f, 10.f, 0.f, 5.f, -10.f, 10.f);
   registry.assign<VelocityComponent>(entity, glm::vec3(.0f, .0f, .0f));
 
+  glob::window::Create();
+  glob::Init();
   init();  // Initialize everything
 
+  glob::ModelHandle model_h =
+      glob::GetModel("assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
+  glob::ModelHandle model_h2 = glob::GetModel("assets/Mech/Ball.obj");
   auto avatar = registry.create();  // this is the player avatar
   registry.assign<CameraComponent>(
       avatar, (Camera *)glob::GetCamera(),
@@ -73,11 +80,16 @@ int main(unsigned argc, char **argv) {
     dt = timer.Restart();
     Input::Reset();
     // tick
+    time += 1.f / 60.f;
+    // render
+
+    glob::Submit(model_h, glm::translate(glm::vec3(0)) *
+                              glm::rotate(time * 0.5f, glm::vec3(0, 1, 0)));
+    glob::Submit(model_h2,
+                 glm::translate(glm::vec3(0, 9, 3.f * 0)));
     updateSystems(&registry, dt);
 
-    // render
     glob::Render();
-
     glob::window::Update();
   }
 

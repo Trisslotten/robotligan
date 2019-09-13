@@ -1,5 +1,5 @@
-#ifndef GLOB_SHADER_H_
-#define GLOB_SHADER_H_
+#ifndef GLOB_SHADER_HPP_
+#define GLOB_SHADER_HPP_
 
 // no move plz
 #include <glad/glad.h>
@@ -17,7 +17,7 @@
 namespace glob {
 
 class ShaderProgram {
-  const std::string SHADERS_PATH = "shaders/";
+  const std::string SHADERS_PATH = "assets/shaders/";
 
   std::unordered_map<GLenum, std::string> paths;
   std::unordered_map<GLenum, GLuint> ids;
@@ -79,4 +79,4 @@ class ShaderProgram {
 
 }  // namespace glob
 
-#endif GLOB_SHADER_H_
+#endif GLOB_SHADER_HPP_

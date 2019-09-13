@@ -1,5 +1,5 @@
-#ifndef GLOB_WINDOW_H_
-#define GLOB_WINDOW_H_
+#ifndef GLOB_WINDOW_HPP_
+#define GLOB_WINDOW_HPP_
 
 #ifdef MAKEDLL
 #define EXPORT __declspec(dllexport)
@@ -36,4 +36,4 @@ EXPORT void SetMouseCallback(void (*GLFWmousebuttonfun)(GLFWwindow*, int, int,
 }  // namespace window
 }  // namespace glob
 
-#endif  // GLOB_WINDOW_H_
+#endif  // GLOB_WINDOW_HPP_

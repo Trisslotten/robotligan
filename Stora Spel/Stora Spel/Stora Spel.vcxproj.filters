@@ -58,4 +58,10 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\testshader.vert" />
+    <None Include="shaders\testshader.frag" />
+    <None Include="assets\shaders\modelshader.vert" />
+    <None Include="assets\shaders\modelshader.frag" />
+  </ItemGroup>
 </Project>
