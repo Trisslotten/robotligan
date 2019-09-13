@@ -1,5 +1,5 @@
-#ifndef PHYSICS_OBJECT_H
-#define PHYSICS_OBJECT_H
+#ifndef PHYSICS_OBJECT_HPP_
+#define PHYSICS_OBJECT_HPP_
 
 #include <vec3.hpp>
 
@@ -13,4 +13,4 @@ struct PhysicsObject {
 };
 }  // namespace physics
 
-#endif  // PHYSICS_OBJECT_H
+#endif  // PHYSICS_OBJECT_HPP_

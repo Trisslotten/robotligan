@@ -1,17 +1,19 @@
-#include "collision.h"
+#include "collision.hpp"
+
+#include <vector>
 
 #include <glm.hpp>
-#include <vector>
 
 struct Corners {
   glm::vec3 corners[8];
 };
 
-Corners getCorners(const physics::OBB& obb) {
+Corners GetCorners(const physics::OBB& obb) {
   glm::vec3 normals[3] = {};
   normals[0] = obb.normals[0] * obb.extents[0];
   normals[1] = obb.normals[1] * obb.extents[1];
   normals[2] = obb.normals[2] * obb.extents[2];
+  
   Corners c = {};
   c.corners[0] = obb.center + (normals[0] + normals[1] + normals[2]);
   c.corners[1] = obb.center + (-normals[0] + normals[1] + normals[2]);
@@ -25,7 +27,7 @@ Corners getCorners(const physics::OBB& obb) {
   return c;
 }
 
-void SATtest(const glm::vec3& axis, const Corners& c, float* min, float* max) {
+void SatTest(const glm::vec3& axis, const Corners& c, float* min, float* max) {
   *min = 10000000.f;   // infinity
   *max = -10000000.f;  // -infinity
 
@@ -40,7 +42,7 @@ bool IsBetween(float val, float lower, float upper) {
   return lower <= val && val <= upper;
 }
 
-bool overlaps(float min1, float max1, float min2, float max2) {
+bool Overlaps(float min1, float max1, float min2, float max2) {
   return IsBetween(min2, min1, max1) || IsBetween(min1, min2, max2);
 }
 
@@ -91,8 +93,8 @@ bool physics::Intersect(const physics::Sphere& s, const physics::OBB& o,
 }
 
 bool physics::Intersect(const physics::OBB& o1, const physics::OBB& o2) {
-  Corners c1 = getCorners(o1);
-  Corners c2 = getCorners(o2);
+  Corners c1 = GetCorners(o1);
+  Corners c2 = GetCorners(o2);
 
   std::vector<glm::vec3> test_normals;
   test_normals.reserve(15);
@@ -107,10 +109,10 @@ bool physics::Intersect(const physics::OBB& o1, const physics::OBB& o2) {
 
   for (int i = 0; i < test_normals.size(); ++i) {
     float min1, max1, min2, max2;
-    SATtest(test_normals[i], c1, &min1, &max1);
-    SATtest(test_normals[i], c2, &min2, &max2);
+    SatTest(test_normals[i], c1, &min1, &max1);
+    SatTest(test_normals[i], c2, &min2, &max2);
 
-    if (!overlaps(min1, max1, min2, max2)) {
+    if (!Overlaps(min1, max1, min2, max2)) {
       return false;
     }
   }
@@ -150,7 +152,7 @@ bool physics::Intersect(const physics::Arena& a, const physics::Sphere& s,
 
 bool physics::Intersect(const physics::Arena& a, const physics::OBB& o,
                         glm::vec3* pos) {
-  Corners c = getCorners(o);
+  Corners c = GetCorners(o);
   glm::vec3 move = {};
 
   for (int i = 0; i < 8; ++i) {
