@@ -10,76 +10,84 @@
 
 namespace player_controller {
 
-void Update(entt::registry &registry, float dt) {
-  registry
-      .view<CameraComponent, PlayerComponent, TransformComponent, Velocity>()
-      .each([&](CameraComponent &cc, PlayerComponent &pc,
-                TransformComponent &tc, Velocity &v) {
-        // rotation
-        float sensitivity = 0.003f;
-        glm::vec2 rot = Input::MouseMov() *
-                        sensitivity;  // rotation this frame from mouse move
-        float yaw = rot.x;
-        float pitch = rot.y;
+void foo() {}
 
-        if (Input::IsMouseButtonDown(GLFW_MOUSE_BUTTON_1)) {
-          cc.AddAngles(yaw, pitch);
-          tc.Rotate(glm::vec3(0, yaw, 0));
-        }
+void Update(entt::registry& registry, float dt) {
+  foo();
 
-        // Caputre keyboard input and apply velocity
+  auto view_controller = registry.view<CameraComponent, PlayerComponent,
+                                       TransformComponent, Velocity>();
 
-        glm::vec3 final_velocity(0, 0, 0);
+  for (auto entity : view_controller) {
+    CameraComponent& cc = view_controller.get<CameraComponent>(entity);
+    PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
+    TransformComponent& tc = view_controller.get<TransformComponent>(entity);
+    Velocity& vc = view_controller.get<Velocity>(entity);
+    // rotation
+    float sensitivity = 0.003f;
+    glm::vec2 rot =
+        Input::MouseMov() * sensitivity;  // rotation this frame from mouse move
+    float yaw = rot.x;
+    float pitch = rot.y;
 
-        // base movement direction on camera orientation.
-        glm::vec3 frwd = cc.LookDirection();
-        // transform_helper::DirVectorFromRadians(cc.yaw_, cc.pitch_);
+    if (Input::IsMouseButtonDown(GLFW_MOUSE_BUTTON_1)) {
+      cc.AddAngles(yaw, pitch);
+      tc.Rotate(glm::vec3(0, yaw, 0));
+    }
 
-        if (Input::IsKeyPressed(GLFW_KEY_N)) {
-          pc.no_clip = !pc.no_clip;
-        }
+    // Caputre keyboard input and apply velocity
 
-        // we don't want the player to fly if no clip is disabled.
-        if (!pc.no_clip) {
-          frwd.y = 0;
-          frwd = glm::normalize(
-              frwd);  // renormalize, otherwize done in DirVectorFromRadians
-        }
+    glm::vec3 final_velocity(0, 0, 0);
 
-        glm::vec3 up(0, 1, 0);
-        glm::vec3 right = glm::normalize(glm::cross(frwd, up));
+    // base movement direction on camera orientation.
+    glm::vec3 frwd = cc.LookDirection();
+    // transform_helper::DirVectorFromRadians(cc.yaw_, cc.pitch_);
 
-        if (Input::IsKeyDown(GLFW_KEY_W)) {
-          final_velocity += frwd * pc.walkspeed * dt;
-        }
-        if (Input::IsKeyDown(GLFW_KEY_S)) {
-          final_velocity -= frwd * pc.walkspeed * dt;
-        }
-        if (Input::IsKeyDown(GLFW_KEY_D)) {
-          final_velocity += right * pc.walkspeed * dt;
-        }
-        if (Input::IsKeyDown(GLFW_KEY_A)) {
-          final_velocity -= right * pc.walkspeed * dt;
-        }
+    if (Input::IsKeyPressed(GLFW_KEY_N)) {
+      pc.no_clip = !pc.no_clip;
+    }
 
-        if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT)) {
-          final_velocity *= 2;
-        }
+    // we don't want the player to fly if no clip is disabled.
+    if (!pc.no_clip) {
+      frwd.y = 0;
+      frwd = glm::normalize(frwd);  // renormalize, otherwize done
+                                    // in DirVectorFromRadians
+    }
 
-        // physics stuff, absolute atm, may need to change. Other systems may
-        // affect velocity. velocity of player object.
-        v.velocity = final_velocity;
+    glm::vec3 up(0, 1, 0);
+    glm::vec3 right = glm::normalize(glm::cross(frwd, up));
 
-        /*
-                NETWORK STUFF?
-        */
+    if (Input::IsKeyDown(GLFW_KEY_W)) {
+      final_velocity += frwd * pc.walkspeed * dt;
+    }
+    if (Input::IsKeyDown(GLFW_KEY_S)) {
+      final_velocity -= frwd * pc.walkspeed * dt;
+    }
+    if (Input::IsKeyDown(GLFW_KEY_D)) {
+      final_velocity += right * pc.walkspeed * dt;
+    }
+    if (Input::IsKeyDown(GLFW_KEY_A)) {
+      final_velocity -= right * pc.walkspeed * dt;
+    }
 
-        // maybe move to new CameraSystem?
-        cc.cam->SetPosition(tc.position + cc.offset);
-        // maybe move to new CameraSystem?
-      });
+    if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT)) {
+      final_velocity *= 2;
+    }
+
+    // physics stuff, absolute atm, may need to change. Other
+    // systems may affect velocity. velocity of player object.
+    vc.velocity = final_velocity;
+
+    /*
+            NETWORK STUFF?
+    */
+
+    // maybe move to new CameraSystem?
+    cc.cam->SetPosition(tc.position + cc.offset);
+    // maybe move to new CameraSystem?
+  };
 }
 
-};  // namespace p_controller
+};  // namespace player_controller
 
 #endif  // !PLAYER_CONTROLLER_SYSTEM_HPP_
