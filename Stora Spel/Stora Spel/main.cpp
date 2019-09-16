@@ -74,6 +74,7 @@ int main(unsigned argc, char **argv) {
   registry.assign<physics::OBB>(
       avatar, glm::vec3(5.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.f, 0.f),
       glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
+  registry.assign<AbilityComponent>(avatar);
 
   timer.Restart();
   float dt = 0.0f;
