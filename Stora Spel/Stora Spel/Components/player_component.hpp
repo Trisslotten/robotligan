@@ -3,14 +3,16 @@
 
 struct PlayerComponent {
   int id = 0;
-  float walkspeed = 6.f;
-  float jump_speed = 1.0f;
+  float walkspeed = 15.f;
+  float jump_speed = 5.0f;
   bool no_clip = false;
 
   //"Stamina"
   int energy_max = 100;
   int energy_current = 100;
   int cost_jump = 10;
+  int cost_sprint = 3;
+  int energy_regen_tick = 1;
 
   float kick_pitch = .3f;
   float kick_reach = 1.0f;

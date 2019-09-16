@@ -37,13 +37,13 @@ void Update(entt::registry& registry, float dt) {
     cam_c.AddAngles(yaw, pitch);
     trans_c.Rotate(glm::vec3(0, yaw, 0));
 
-	if (Input::IsMouseButtonDown(GLFW_MOUSE_BUTTON_2)) {
+    if (Input::IsMouseButtonDown(GLFW_MOUSE_BUTTON_2)) {
       ability_c.shoot = true;
-	}
+    }
     // Caputre keyboard input and apply velocity
 
     glm::vec3 final_velocity = physics_c.velocity;  //(0, 0, 0);
-        glm::vec3 accum_velocity = glm::vec3(0.f);
+    glm::vec3 accum_velocity = glm::vec3(0.f);
 
     // base movement direction on camera orientation.
     glm::vec3 frwd = cam_c.LookDirection();
@@ -53,7 +53,8 @@ void Update(entt::registry& registry, float dt) {
       player_c.no_clip = !player_c.no_clip;
       if (player_c.no_clip) {
         physics_c.is_airborne = false;
-	  }
+        physics_c.velocity = glm::vec3(0);
+      }
     }
 
     // we don't want the player to fly if no clip is disabled.
@@ -66,7 +67,7 @@ void Update(entt::registry& registry, float dt) {
     glm::vec3 up(0, 1, 0);
     glm::vec3 right = glm::normalize(glm::cross(frwd, up));
 
-    if (abs(accum_velocity.length()) < player_c.walkspeed * 4) {
+    if (true){//abs(accum_velocity.length()) < player_c.walkspeed * 4) {
       if (Input::IsKeyDown(GLFW_KEY_W)) {
         accum_velocity += frwd * player_c.walkspeed * dt;
       }
@@ -80,43 +81,52 @@ void Update(entt::registry& registry, float dt) {
         accum_velocity -= right * player_c.walkspeed * dt;
       }
 
-      if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT)) {
-        accum_velocity *= 1.2f;
+      if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT) && player_c.energy_current > player_c.cost_sprint) {
+        accum_velocity *= 2.f;
+        player_c.energy_current -= player_c.cost_sprint;
       }
     }
 
-	final_velocity += accum_velocity;
+	// physics stuff
 
-    // physics stuff
+    final_velocity += accum_velocity;
 
     physics_c.velocity = final_velocity;
 
     glm::vec3 cur_move_dir = glm::normalize(physics_c.velocity);
 
-    // slowdown
-    float cur_move_speed = physics_c.velocity.length();
-    if (cur_move_speed > 0) {
-      //physics_c.velocity *= 0.8f;
-    }
-    cur_move_speed = physics_c.velocity.length();
-    if (cur_move_speed < 0.1f) {
-      physics_c.velocity = glm::vec3(0, 0, 0);
-    }
+    
     // IF player is pressing space
     // AND is not airborne
     // AND has more enery than the cost for jumping
-    if (Input::IsKeyDown(GLFW_KEY_SPACE) && !physics_c.is_airborne &&
+    if (Input::IsKeyPressed(GLFW_KEY_SPACE) && !physics_c.is_airborne &&
         player_c.energy_current > player_c.cost_jump && !player_c.no_clip) {
       // Add velocity upwards
-      final_velocity += up * player_c.jump_speed * dt;
+      final_velocity += up * player_c.jump_speed;
       // Set them to be airborne
       physics_c.is_airborne = true;
       // Subtract energy cost from resources
       player_c.energy_current -= player_c.cost_jump;
     }
+
+    player_c.energy_current = std::min((player_c.energy_current + player_c.energy_regen_tick), player_c.energy_max);
+
     // physics stuff, absolute atm, may need to change. Other
     // systems may affect velocity. velocity of player object.
     physics_c.velocity = final_velocity;
+
+	// slowdown
+    glm::vec3 sidemov =
+        glm::vec3(physics_c.velocity.x, 0, physics_c.velocity.z);
+    float cur_move_speed = glm::length(sidemov);
+    if (cur_move_speed > 0.f) {
+      physics_c.velocity.x *= 0.95f;
+      physics_c.velocity.z *= 0.95f;
+    }
+    cur_move_speed = physics_c.velocity.length();
+    if (cur_move_speed < 0.1f) {
+      //physics_c.velocity = glm::vec3(0, 0, 0);
+    }
 
     // Ability buttons
     if (Input::IsKeyDown(GLFW_KEY_Q)) {
@@ -126,10 +136,12 @@ void Update(entt::registry& registry, float dt) {
       ability_c.use_primary = true;
     }
 
-	std::cout << "pos: " << trans_c.position.x << " " << trans_c.position.y
-              << " " << trans_c.position.z << "\n";
+    //std::cout << "pos: " << trans_c.position.x << " " << trans_c.position.y
+    //          << " " << trans_c.position.z << "\n";
 
-	//kick ball
+	std::cout << "stam: " << player_c.energy_current << "\n";
+
+    // kick ball
     if (Input::IsButtonPressed(GLFW_MOUSE_BUTTON_1)) {
       glm::vec3 kick_dir =
           cam_c.LookDirection() + glm::vec3(0, player_c.kick_pitch, 0);

@@ -16,6 +16,7 @@
 #include "print_position_system.hpp"
 #include "player_controller_system.hpp"
 #include "ability_controller_system.hpp"
+#include "collision_temp_debug_system.h"
 #include <GLFW/glfw3.h>
 #include "util/input.hpp"
 #include "util/meminfo.hpp"
@@ -32,10 +33,13 @@ void init() {
 }
 
 void updateSystems(entt::registry *reg, float dt) {
+  collision_debug::Update(*reg);
   player_controller::Update(*reg, dt);
   ability_controller::Update(*reg);
+ 
   UpdatePhysics(*reg, dt);
   UpdateCollisions(*reg);
+  
 }
 
 int main(unsigned argc, char **argv) {
@@ -69,7 +73,7 @@ int main(unsigned argc, char **argv) {
       avatar, (Camera *)glob::GetCamera(),
       glm::vec3(0, 1, 0));  // get the camera pointer from glob renderer
   registry.assign<PlayerComponent>(avatar);
-  registry.assign<TransformComponent>(avatar, glm::vec3(-9.f, 0.f, 0.f),
+  registry.assign<TransformComponent>(avatar, glm::vec3(-9.f, 4.f, 0.f),
                                       glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
   registry.assign<PhysicsComponent>(avatar, glm::vec3(.0f, .0f, .0f));
   registry.assign<physics::OBB>(
