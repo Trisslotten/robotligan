@@ -6,7 +6,7 @@
 struct PhysicsComponent {
   glm::vec3 velocity;
   float friction;
-  bool airborne;
+  bool is_airborne = false;
 };
 
 #endif  // PHYSICS_COMPONENT_HPP_
