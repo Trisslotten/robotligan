@@ -7,6 +7,7 @@
 #include "physics_component.hpp"
 #include "player_component.hpp"
 #include "transform_component.hpp"
+#include "ability_component.hpp"
 
 namespace player_controller {
 
