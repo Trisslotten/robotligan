@@ -7,17 +7,17 @@
 #include "boundingboxes.hpp"
 #include "collision.hpp"
 #include "physics.hpp"
-#include "velocity_component.hpp"
+#include "physics_component.hpp"
 #include "transform_component.hpp"
 
 void UpdatePhysics(entt::registry& registry, float dt) {
   auto view_ball =
-      registry.view<BallComponent, physics::Sphere, VelocityComponent>();
+      registry.view<BallComponent, physics::Sphere, PhysicsComponent>();
 
   for (auto entity : view_ball) {
     auto& ball = view_ball.get<BallComponent>(entity);
     auto& s = view_ball.get<physics::Sphere>(entity);
-    auto& v = view_ball.get<VelocityComponent>(entity);
+    auto& v = view_ball.get<PhysicsComponent>(entity);
 
     physics::PhysicsObject po;
     po.airborne = ball.is_airborne;
@@ -34,11 +34,11 @@ void UpdatePhysics(entt::registry& registry, float dt) {
     // std::cout << std::endl;
   }
 
-  auto view_moveable = registry.view<TransformComponent, VelocityComponent>();
+  auto view_moveable = registry.view<TransformComponent, PhysicsComponent>();
 
   for (auto entity : view_moveable) {
     TransformComponent& tc = view_moveable.get<TransformComponent>(entity);
-    VelocityComponent& vc = view_moveable.get<VelocityComponent>(entity);
+    PhysicsComponent& vc = view_moveable.get<PhysicsComponent>(entity);
 
     tc.position += vc.velocity;
   }

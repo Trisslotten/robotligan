@@ -4,6 +4,7 @@
 struct PlayerComponent {
   int id = 0;
   float walkspeed = 1.f;
+  float jump_speed = 5.0f;
   bool no_clip = false;
 };
 

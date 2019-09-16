@@ -20,7 +20,7 @@ enum AbilityID {
 struct AbilityComponent {
   AbilityID primary_ability = NULL_ABILITY;
   bool use_primary = false;
-  unsigned int cooldown = 0.0f; 
+  unsigned int cooldown = 0; 
 
   AbilityID secondary_ability = NULL_ABILITY;
   bool use_secondary = false;
