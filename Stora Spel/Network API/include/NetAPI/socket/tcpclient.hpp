@@ -1,9 +1,9 @@
 #ifndef TCPCLIENT_H
 #define TCPCLIENT_H
 #define WIN32_LEAN_MEAN
+#include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <windows.h>
 #include <NetAPI/common.hpp>
 #include <NetAPI/helper/netinitialization.hpp>
 #include <NetAPI/packet.hpp>
