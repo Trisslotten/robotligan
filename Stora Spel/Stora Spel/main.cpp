@@ -8,6 +8,7 @@
 #include <glob/window.hpp>
 #include <entity/registry.hpp>
 
+#include "ability_component.hpp"
 #include "collision_system.hpp"
 #include "physics_system.hpp"
 #include "collision.hpp"
@@ -47,14 +48,14 @@ int main(unsigned argc, char **argv) {
 
   auto entity = registry.create();
   registry.assign<BallComponent>(entity, true, false);
-  registry.assign<PhysicsComponent>(entity, glm::vec3(1.0f, 0.0f, 0.0f));
+  registry.assign<VelocityComponent>(entity, glm::vec3(1.0f, 0.0f, 0.0f));
   registry.assign<physics::Sphere>(entity, glm::vec3(0.0f, 1.0f, 0.0f), 1.0f);
 
   entity = registry.create();
 
   entity = registry.create();
   registry.assign<physics::Arena>(entity, -10.f, 10.f, 0.f, 5.f, -10.f, 10.f);
-  registry.assign<PhysicsComponent>(entity, glm::vec3(.0f, .0f, .0f));
+  registry.assign<VelocityComponent>(entity, glm::vec3(.0f, .0f, .0f));
 
   glob::window::Create();
   glob::Init();
@@ -62,7 +63,7 @@ int main(unsigned argc, char **argv) {
 
   glob::ModelHandle model_h =
       glob::GetModel("assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
-  glob::ModelHandle model_h2 = glob::GetModel("assets/ball/Ball.fbx");
+  glob::ModelHandle model_h2 = glob::GetModel("assets/Ball/Ball.fbx");
   auto avatar = registry.create();  // this is the player avatar
   registry.assign<CameraComponent>(
       avatar, (Camera *)glob::GetCamera(),
@@ -70,11 +71,11 @@ int main(unsigned argc, char **argv) {
   registry.assign<PlayerComponent>(avatar);
   registry.assign<TransformComponent>(avatar, glm::vec3(-9.f, 0.f, 0.f),
                                       glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
-  registry.assign<PhysicsComponent>(avatar, glm::vec3(.0f, .0f, .0f));
+  registry.assign<VelocityComponent>(avatar, glm::vec3(.0f, .0f, .0f));
   registry.assign<physics::OBB>(
       avatar, glm::vec3(5.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.f, 0.f),
       glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
-  registry.assign<AbilityComponent>(avatar);
+  registry.assign<AbilityComponent>(avatar/*, NULL_ABILITY, false, 0.0f, NULL_ABILITY, false, false, 0.0f*/);
 
   timer.Restart();
   float dt = 0.0f;
@@ -86,8 +87,8 @@ int main(unsigned argc, char **argv) {
 
     glob::Submit(model_h, glm::translate(glm::vec3(0)) *
                               glm::rotate(0.5f, glm::vec3(0, 1, 0)));
-    //glob::Submit(model_h2,
-      //           glm::translate(glm::vec3(0, 9, 3.f * 0)));
+    glob::Submit(model_h2,
+                 glm::translate(glm::vec3(0, 9, 3.f * 0)));
     updateSystems(&registry, dt);
 
     glob::Render();
