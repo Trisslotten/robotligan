@@ -9,7 +9,6 @@
 #include "physics.hpp"
 #include "physics_component.hpp"
 #include "transform_component.hpp"
-#include "velocity_component.hpp"
 
 void UpdatePhysics(entt::registry& registry, float dt) {
   auto view_ball =
