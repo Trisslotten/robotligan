@@ -161,11 +161,13 @@
     <ClInclude Include="Components\physics_component.hpp" />
     <ClInclude Include="Components\transform_component.hpp" />
     <ClInclude Include="Components\velocity.hpp" />
+    <ClInclude Include="Components\wireframe_component.hpp" />
     <ClInclude Include="Entt systems\collision_system.hpp" />
     <ClInclude Include="Entt systems\physics_system.hpp" />
     <ClInclude Include="Entt systems\player_controller_system.hpp" />
     <ClInclude Include="Entt systems\ability_controller_system.hpp" />
     <ClInclude Include="Entt systems\print_position_system.hpp" />
+    <ClInclude Include="Entt systems\render_system.hpp" />
     <ClInclude Include="util\input.hpp" />
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
     <ClInclude Include="Components\velocity_component.hpp" />
@@ -190,6 +192,7 @@
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />
     <None Include="assets\shaders\modelshader.vert" />
+    <None Include="Assets\shaders\wireframe.frag" />
     <None Include="shaders\testshader.frag" />
     <None Include="shaders\testshader.vert" />
   </ItemGroup>

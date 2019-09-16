@@ -12,12 +12,13 @@
 
 void UpdatePhysics(entt::registry& registry, float dt) {
   auto view_ball =
-      registry.view<BallComponent, physics::Sphere, VelocityComponent>();
+      registry.view<BallComponent, physics::Sphere, VelocityComponent, TransformComponent>();
 
   for (auto entity : view_ball) {
     auto& ball = view_ball.get<BallComponent>(entity);
     auto& s = view_ball.get<physics::Sphere>(entity);
     auto& v = view_ball.get<VelocityComponent>(entity);
+    auto& t = view_ball.get<TransformComponent>(entity);
 
     physics::PhysicsObject po;
     po.airborne = ball.is_airborne;
@@ -29,6 +30,7 @@ void UpdatePhysics(entt::registry& registry, float dt) {
     Update(&po, dt);
 
     s.center = po.position;
+    t.position = po.position;
     v.velocity = po.velocity;
     // printglm(s.center);
     // std::cout << std::endl;
@@ -40,7 +42,7 @@ void UpdatePhysics(entt::registry& registry, float dt) {
     TransformComponent& tc = view_moveable.get<TransformComponent>(entity);
     VelocityComponent& vc = view_moveable.get<VelocityComponent>(entity);
 
-    tc.position += vc.velocity;
+    //tc.position += vc.velocity;
   }
 }
 
