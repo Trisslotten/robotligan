@@ -7,19 +7,21 @@
 #include "ball_component.hpp"
 #include "boundingboxes.hpp"
 #include "collision.hpp"
+#include "projectile_component.hpp"
 #include "velocity_component.hpp"
 
 void UpdateCollisions(entt::registry &registry) {
   auto view_ball = registry.view<BallComponent, physics::Sphere, VelocityComponent>();
   auto view_player = registry.view<physics::OBB, VelocityComponent>();
   auto view_arena = registry.view<physics::Arena, VelocityComponent>();
+  auto view_projectile = registry.view<physics::Sphere, ProjectileComponent>();
 
   //check ball collision
   // Loop over all balls
-  for (auto entity : view_ball) {
-    auto& ball = view_ball.get<BallComponent>(entity);
-    auto& s = view_ball.get<physics::Sphere>(entity);
-    auto& v = view_ball.get<VelocityComponent>(entity);
+  for (auto ball_entity : view_ball) {
+    auto& ball = view_ball.get<BallComponent>(ball_entity);
+    auto& s = view_ball.get<physics::Sphere>(ball_entity);
+    auto& v = view_ball.get<VelocityComponent>(ball_entity);
 
     // Collision between ball and players
     for (auto player : view_player) {
@@ -48,6 +50,21 @@ void UpdateCollisions(entt::registry &registry) {
         //std::cout << "no collision" << std::endl;
       }
     }
+
+	//collision with ball and projectiles
+    for (auto projectile : view_projectile) {
+      auto hitbox = view_projectile.get<physics::Sphere>(projectile);
+      auto id = view_projectile.get<ProjectileComponent>(projectile);
+      if (Intersect(s, hitbox)) {
+        if (id.projectile_id == CANNON_BALL && ball.is_real == true) {
+          glm::vec3 dir = normalize(s.center - hitbox.center);
+          registry.destroy(projectile);
+		} else {
+          registry.destroy(projectile);
+          registry.destroy(ball_entity);
+		}
+	  }
+	}
   }
 
   // check player collision

@@ -20,10 +20,13 @@ enum AbilityID {
 struct AbilityComponent {
   AbilityID primary_ability = NULL_ABILITY;
   bool use_primary = false;
-  unsigned int cooldown = 0.0f; 
+  float cooldown = 0.0f;
 
   AbilityID secondary_ability = NULL_ABILITY;
   bool use_secondary = false;
+
+  bool shoot = false;
+  float shoot_cooldown = 0.0f;
 };
 
 #endif  // !ABILITY_COMPONENT_HPP_

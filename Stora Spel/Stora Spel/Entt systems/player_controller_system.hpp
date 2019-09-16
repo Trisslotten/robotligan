@@ -3,6 +3,7 @@
 
 #include <entt.hpp>
 #include "../util/input.hpp"
+#include "ability_component.hpp"
 #include "camera_component.hpp"
 #include "player_component.hpp"
 #include "transform_component.hpp"
@@ -16,13 +17,15 @@ void Update(entt::registry& registry, float dt) {
   foo();
 
   auto view_controller = registry.view<CameraComponent, PlayerComponent,
-                                       TransformComponent, VelocityComponent>();
+                                       TransformComponent, VelocityComponent, AbilityComponent>();
 
   for (auto entity : view_controller) {
     CameraComponent& cc = view_controller.get<CameraComponent>(entity);
     PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
     TransformComponent& tc = view_controller.get<TransformComponent>(entity);
     VelocityComponent& vc = view_controller.get<VelocityComponent>(entity);
+    AbilityComponent& ac = view_controller.get<AbilityComponent>(entity);
+
     // rotation
     float sensitivity = 0.003f;
     glm::vec2 rot =
@@ -35,6 +38,9 @@ void Update(entt::registry& registry, float dt) {
       tc.Rotate(glm::vec3(0, yaw, 0));
     }
 
+	if (Input::IsMouseButtonDown(GLFW_MOUSE_BUTTON_2)) {
+      ac.shoot = true;
+	}
     // Caputre keyboard input and apply velocity
 
     glm::vec3 final_velocity(0, 0, 0);
