@@ -1,5 +1,8 @@
 #pragma warning(push)
 #pragma warning(disable : 4251)
+#ifndef SERVER_HPP_
+#define SERVER_HPP_
+
 #include <NetAPI/common.hpp>
 #include <NetAPI/socket/tcplistener.hpp>
 #include <vector>
@@ -44,3 +47,4 @@ class EXPORT Server {
 
 }  // namespace Socket
 }  // namespace NetAPI
+#endif // SERVER_HPP_

@@ -1,5 +1,5 @@
-#ifndef TCPCLIENT_H
-#define TCPCLIENT_H
+#ifndef TCPCLIENT_HPP_
+#define TCPCLIENT_HPP_
 #define WIN32_LEAN_MEAN
 #include <NetAPI/common.hpp>
 #include <NetAPI/helper/netinitialization.hpp>

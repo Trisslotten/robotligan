@@ -60,8 +60,7 @@ bool NetAPI::Socket::TcpClient::Send(const char* data, size_t length) {
   }
   return true;
 }
-bool NetAPI::Socket::TcpClient::Send(NetAPI::Common::Packet& p)
-{
+bool NetAPI::Socket::TcpClient::Send(NetAPI::Common::Packet& p) {
 	error_ = send(send_socket_,p. GetRaw(), (int)p.GetPacketSize(), 0);
 	if (error_ == SOCKET_ERROR) {
 		error_ = WSAGetLastError();

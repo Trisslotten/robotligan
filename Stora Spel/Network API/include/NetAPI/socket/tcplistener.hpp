@@ -1,6 +1,6 @@
 #define WIN32_LEAN_AND_MEAN
-#ifndef TCPLISTENER_H
-#define TCPLISTENER_H
+#ifndef TCPLISTENER_HPP_
+#define TCPLISTENER_HPP_
 #include <NetAPI/common.hpp>
 #include <NetAPI/socket/tcpclient.hpp>
 #include <windows.h>

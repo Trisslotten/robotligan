@@ -1,5 +1,5 @@
-#ifndef PACKET_H
-#define PACKET_H
+#ifndef PACKET_HPP_
+#define PACKET_HPP_
 #include <NetAPI/common.hpp>
 #include <cstdint>
 #include <cstring>
