@@ -112,12 +112,12 @@ void UpdateCollisions(entt::registry& registry) {
     // Collision between Player and Arena
     for (auto arena : view_arena) {
       auto& a = view_arena.get<physics::Arena>(arena);
-      glm::vec3 new_pos;
-      if (Intersect(a, player_hitbox, &new_pos)) {
-		player_hitbox.center = new_pos;
+      glm::vec3 move_vector;
+      if (Intersect(a, player_hitbox, &move_vector)) {
+        player_hitbox.center += move_vector;
         auto& transform_c = view_player.get<TransformComponent>(player);
-        transform_c.position = new_pos;
-        if (new_pos.y > 0.0f) {
+        transform_c.position = player_hitbox.center;
+        if (move_vector.y > 0.0f) {
           physics_c.is_airborne = false;
         }
       }

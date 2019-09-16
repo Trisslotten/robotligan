@@ -150,7 +150,7 @@ bool physics::Intersect(const physics::Arena& a, const physics::Sphere& s,
 }
 
 bool physics::Intersect(const physics::Arena& a, const physics::OBB& o,
-                        glm::vec3* pos) {
+                        glm::vec3* move_vector) {
   Corners c = GetCorners(o);
   glm::vec3 move = {};
 
@@ -169,7 +169,7 @@ bool physics::Intersect(const physics::Arena& a, const physics::OBB& o,
       move.z = a.zmin - c.corners[i].z;
   }
 
-  *pos = o.center + move;
+  *move_vector = move;
 
   return move.x || move.y || move.z;
  }
