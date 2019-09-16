@@ -3,11 +3,11 @@
 
 #include <entt.hpp>
 #include "../util/input.hpp"
+#include "ability_component.hpp"
 #include "camera_component.hpp"
 #include "physics_component.hpp"
 #include "player_component.hpp"
 #include "transform_component.hpp"
-#include "ability_component.hpp"
 
 namespace player_controller {
 
@@ -76,9 +76,17 @@ void Update(entt::registry& registry, float dt) {
     if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT)) {
       final_velocity *= 2;
     }
-    if (Input::IsKeyDown(GLFW_KEY_SPACE) && !physics_c.airborne) {
-      final_velocity += up * player_c.jump_speed;
+    // IF player is pressing space
+    // AND is not airborne
+    // AND has more enery than the cost for jumping
+    if (Input::IsKeyDown(GLFW_KEY_SPACE) && !physics_c.airborne &&
+        player_c.energy_current > player_c.cost_jump) {
+      // Add velocity upwards
+      final_velocity += up * player_c.jump_speed * dt;
+      // Set them to be airborne
       physics_c.airborne = true;
+      // Subtract energy cost from resources
+      player_c.energy_current -= player_c.cost_jump;
     }
     // physics stuff, absolute atm, may need to change. Other
     // systems may affect velocity. velocity of player object.
