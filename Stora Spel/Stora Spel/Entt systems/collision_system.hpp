@@ -10,6 +10,7 @@
 #include "projectile_component.hpp"
 #include "physics_component.hpp"
 #include "transform_component.hpp"
+
 void UpdateSphere(entt::registry& registry) {
   auto view_moveable = registry.view<TransformComponent, PhysicsComponent, physics::Sphere>();
   for (auto object : view_moveable) {
