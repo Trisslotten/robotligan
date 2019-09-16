@@ -38,11 +38,12 @@ void Update(entt::registry& registry, float dt) {
     trans_c.Rotate(glm::vec3(0, yaw, 0));
 
 	if (Input::IsMouseButtonDown(GLFW_MOUSE_BUTTON_2)) {
-      ac.shoot = true;
+      ability_c.shoot = true;
 	}
     // Caputre keyboard input and apply velocity
 
     glm::vec3 final_velocity = physics_c.velocity;  //(0, 0, 0);
+        glm::vec3 accum_velocity = glm::vec3(0.f);
 
     // base movement direction on camera orientation.
     glm::vec3 frwd = cam_c.LookDirection();
@@ -50,6 +51,9 @@ void Update(entt::registry& registry, float dt) {
 
     if (Input::IsKeyPressed(GLFW_KEY_N)) {
       player_c.no_clip = !player_c.no_clip;
+      if (player_c.no_clip) {
+        physics_c.is_airborne = false;
+	  }
     }
 
     // we don't want the player to fly if no clip is disabled.
@@ -62,24 +66,26 @@ void Update(entt::registry& registry, float dt) {
     glm::vec3 up(0, 1, 0);
     glm::vec3 right = glm::normalize(glm::cross(frwd, up));
 
-    if (abs(final_velocity.length()) < player_c.walkspeed * 4) {
+    if (abs(accum_velocity.length()) < player_c.walkspeed * 4) {
       if (Input::IsKeyDown(GLFW_KEY_W)) {
-        final_velocity += frwd * player_c.walkspeed * dt;
+        accum_velocity += frwd * player_c.walkspeed * dt;
       }
       if (Input::IsKeyDown(GLFW_KEY_S)) {
-        final_velocity -= frwd * player_c.walkspeed * dt;
+        accum_velocity -= frwd * player_c.walkspeed * dt;
       }
       if (Input::IsKeyDown(GLFW_KEY_D)) {
-        final_velocity += right * player_c.walkspeed * dt;
+        accum_velocity += right * player_c.walkspeed * dt;
       }
       if (Input::IsKeyDown(GLFW_KEY_A)) {
-        final_velocity -= right * player_c.walkspeed * dt;
+        accum_velocity -= right * player_c.walkspeed * dt;
       }
 
       if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT)) {
-        final_velocity *= 1.1;
+        accum_velocity *= 1.2f;
       }
     }
+
+	final_velocity += accum_velocity;
 
     // physics stuff
 
@@ -100,7 +106,7 @@ void Update(entt::registry& registry, float dt) {
     // AND is not airborne
     // AND has more enery than the cost for jumping
     if (Input::IsKeyDown(GLFW_KEY_SPACE) && !physics_c.is_airborne &&
-        player_c.energy_current > player_c.cost_jump) {
+        player_c.energy_current > player_c.cost_jump && !player_c.no_clip) {
       // Add velocity upwards
       final_velocity += up * player_c.jump_speed * dt;
       // Set them to be airborne
