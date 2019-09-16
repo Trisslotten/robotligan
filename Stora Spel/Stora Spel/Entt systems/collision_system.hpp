@@ -7,12 +7,15 @@
 #include "ball_component.hpp"
 #include "boundingboxes.hpp"
 #include "collision.hpp"
+#include "projectile_component.hpp"
 #include "physics_component.hpp"
 
 void UpdateCollisions(entt::registry &registry) {
-  auto view_ball = registry.view<BallComponent, physics::Sphere, PhysicsComponent>();
+  auto view_ball =
+      registry.view<BallComponent, physics::Sphere, PhysicsComponent>();
   auto view_player = registry.view<physics::OBB, PhysicsComponent>();
   auto view_arena = registry.view<physics::Arena, PhysicsComponent>();
+  auto view_projectile = registry.view<physics::Sphere, ProjectileComponent>();
 
   //check ball collision
   // Loop over all balls
@@ -48,6 +51,21 @@ void UpdateCollisions(entt::registry &registry) {
         //std::cout << "no collision" << std::endl;
       }
     }
+
+	//collision with ball and projectiles
+    for (auto projectile : view_projectile) {
+      auto hitbox = view_projectile.get<physics::Sphere>(projectile);
+      auto id = view_projectile.get<ProjectileComponent>(projectile);
+      if (Intersect(s, hitbox)) {
+        if (id.projectile_id == CANNON_BALL && ball.is_real == true) {
+          glm::vec3 dir = normalize(s.center - hitbox.center);
+          registry.destroy(projectile);
+		} else {
+          registry.destroy(projectile);
+          registry.destroy(ball_entity);
+		}
+	  }
+	}
   }
 
   // check player collision

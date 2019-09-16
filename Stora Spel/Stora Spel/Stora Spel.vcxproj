@@ -174,6 +174,7 @@
     <ClInclude Include="Components\player_component.hpp" />
     <ClInclude Include="Components\position.hpp" />
     <ClInclude Include="Components\physics_component.hpp" />
+    <ClInclude Include="Components\projectile_component.hpp" />
     <ClInclude Include="Components\transform_component.hpp" />
     <ClInclude Include="Components\velocity.hpp" />
     <ClInclude Include="Entt systems\collision_system.hpp" />

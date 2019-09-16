@@ -37,6 +37,9 @@ void Update(entt::registry& registry, float dt) {
     cam_c.AddAngles(yaw, pitch);
     trans_c.Rotate(glm::vec3(0, yaw, 0));
 
+	if (Input::IsMouseButtonDown(GLFW_MOUSE_BUTTON_2)) {
+      ac.shoot = true;
+	}
     // Caputre keyboard input and apply velocity
 
     glm::vec3 final_velocity = physics_c.velocity;  //(0, 0, 0);

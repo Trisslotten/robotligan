@@ -51,4 +51,7 @@
     <None Include="assets\shaders\modelshader.vert" />
     <None Include="assets\shaders\modelshader.frag" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Components\projectile_component.hpp" />
+  </ItemGroup>
 </Project>
