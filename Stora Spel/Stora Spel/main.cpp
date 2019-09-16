@@ -16,11 +16,13 @@
 #include "print_position_system.hpp"
 #include "player_controller_system.hpp"
 #include "ability_controller_system.hpp"
-#include <GLFW/glfw3.h>
+#include <GLFW/glfw3.h> //NTS: This one must be included after certain other things
 #include "util/input.hpp"
 #include "util/meminfo.hpp"
 #include "util/timer.hpp"
 #include "util/meminfo.hpp"
+
+#include "util/global_settings.hpp"
 
 #include <thread>
 #include <chrono>
@@ -40,6 +42,10 @@ void updateSystems(entt::registry *reg, float dt) {
 
 int main(unsigned argc, char **argv) {
   Timer timer;
+
+  //Tell the GlobalSettings class to do a first read from the settings file
+  //NTS: Do this in init()? Why is init not first in main()?
+  GlobalSettings::Access()->UpdateValuesFromFile();
 
   std::cout << "Hello World!*!!!111\n";
 
@@ -84,6 +90,16 @@ int main(unsigned argc, char **argv) {
     Input::Reset();
     // tick
     // render
+
+	//Check if the keys for global settings are pressed
+    if (Input::IsKeyPressed(GLFW_KEY_U)) {
+		//Update contents of GlobalSettings from file
+		GlobalSettings::Access()->UpdateValuesFromFile();
+    }
+	if (Input::IsKeyPressed(GLFW_KEY_U)) {
+		//Write contents of GlobalSettings to console
+		GlobalSettings::Access()->WriteMapToConsole();
+	}
 
     glob::Submit(model_h, glm::translate(glm::vec3(0)) *
                               glm::rotate(0.5f, glm::vec3(0, 1, 0)));

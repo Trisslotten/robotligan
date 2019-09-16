@@ -5,6 +5,7 @@
     <ClCompile Include="util\timer.cpp" />
     <ClCompile Include="nettest.cpp" />
     <ClCompile Include="util\input.cpp" />
+    <ClCompile Include="util\global_settings.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -53,5 +54,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Components\projectile_component.hpp" />
+    <ClInclude Include="util\global_settings.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="util\settings.txt" />
   </ItemGroup>
 </Project>

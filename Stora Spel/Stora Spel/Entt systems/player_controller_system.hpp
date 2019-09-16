@@ -126,8 +126,8 @@ void Update(entt::registry& registry, float dt) {
       ability_c.use_primary = true;
     }
 
-	std::cout << "pos: " << trans_c.position.x << " " << trans_c.position.y
-              << " " << trans_c.position.z << "\n";
+	//std::cout << "pos: " << trans_c.position.x << " " << trans_c.position.y
+    //          << " " << trans_c.position.z << "\n";
 
 	//kick ball
     if (Input::IsButtonPressed(GLFW_MOUSE_BUTTON_1)) {

@@ -1,0 +1,10 @@
+
+>TEST_A=13.0
+
+bliblah
+
+hai
+>TEST_B=45.0
+>TEST_C=32.0
+
+>TEST_D=1.0
