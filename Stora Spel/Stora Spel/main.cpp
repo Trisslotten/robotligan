@@ -93,13 +93,11 @@ int main(unsigned argc, char **argv) {
 
 	//Check if the keys for global settings are pressed
     if (Input::IsKeyPressed(GLFW_KEY_U)) {
-		//Update contents of GlobalSettings from file
-		GlobalSettings::Access()->UpdateValuesFromFile();
+      // Update contents of GlobalSettings from file
+      GlobalSettings::Access()->UpdateValuesFromFile();
+      // Write contents of GlobalSettings to console
+      GlobalSettings::Access()->WriteMapToConsole();
     }
-	if (Input::IsKeyPressed(GLFW_KEY_U)) {
-		//Write contents of GlobalSettings to console
-		GlobalSettings::Access()->WriteMapToConsole();
-	}
 
     glob::Submit(model_h, glm::translate(glm::vec3(0)) *
                               glm::rotate(0.5f, glm::vec3(0, 1, 0)));

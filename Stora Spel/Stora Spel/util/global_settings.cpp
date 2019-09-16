@@ -13,9 +13,8 @@ GlobalSettings* GlobalSettings::Access() {
 }
 
 void GlobalSettings::UpdateValuesFromFile() {
-  // Create one char* to hold line identifier
-  char line_identifier[1];
-  // Create two strings to hold key and value
+  // Create three strings to hold entire line, key and value
+  std::string cur_str;
   std::string key_str;
   std::string val_str;
 
@@ -34,20 +33,25 @@ void GlobalSettings::UpdateValuesFromFile() {
 
   // Read through the settings file
   while (settings_file) {
-    // Read the line identifier
-    settings_file.read(line_identifier, 1);
+    // Read up to the end of the line. Save as the current line
+    std::getline(settings_file, cur_str, '\n');
 
-    // '>' indicates a line that holds a value
-    if (line_identifier == ">") {
-      // Read up to the '=' sign. Save as key.
-      std::getline(settings_file, key_str, '=');
-      // Read up to the end of the line. Save as value.
-      std::getline(settings_file, val_str, '\n');
-      // Save what has been read into the map
+    // Check if the first char is '>'
+    if (!(cur_str.size() == 0) && cur_str.at(0) == '>') {
+      // If it is, read the string up the '=' delimiter. That is the key.
+      key_str = cur_str.substr(0, cur_str.find('='));
+
+	  //Remove the '>' from the key
+      key_str.erase(0,1);
+
+	  //Remove the part holding the key from the strong, along with the delimiter
+      cur_str.erase(0, cur_str.find('=') + 1);
+
+	  //Save the remaining string as the value
+      val_str = cur_str;
+
+	  // Save what has been read into the map
       this->settings_map_[key_str] = std::stof(val_str);
-    } else {
-      // If a '>' is found the program skips the line
-      std::getline(settings_file, val_str, '\n');
     }
   }
 
