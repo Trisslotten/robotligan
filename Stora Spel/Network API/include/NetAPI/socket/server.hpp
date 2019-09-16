@@ -11,8 +11,10 @@ class EXPORT Server {
   bool Update();
   void SendToAll(const char* data, size_t len);
   void SendToAll(Data& d);
+  void SendToAll(NetAPI::Common::Packet& p);
   void Send(unsigned id, const char* data, size_t len);
   void Send(Data& d);
+  void Send(NetAPI::Common::Packet& p);
   bool SocketDisconnected(Data& d) {
     return (strcmp(d.buffer, NetAPI::Common::kSocketNotConnected) == 0);
   }

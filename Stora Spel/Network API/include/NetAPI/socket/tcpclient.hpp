@@ -6,6 +6,7 @@
 #include <windows.h>
 #include <NetAPI/common.hpp>
 #include <NetAPI/helper/netinitialization.hpp>
+#include <NetAPI/packet.hpp>
 #include <thread>
 
 namespace NetAPI {
@@ -19,6 +20,7 @@ class EXPORT TcpClient {
   void FlushBuffers();  // Unknown behaviour
   bool Connect(const char* addr, unsigned short port);
   bool Send(const char* data, size_t length);
+  bool Send(NetAPI::Common::Packet& p);
   const char* Recive();
   int QuerryError() { return error_; }
   void SetBlocking(bool block = true) { blocking_ = block; }
