@@ -19,10 +19,10 @@ void UpdateCollisions(entt::registry &registry) {
 
   //check ball collision
   // Loop over all balls
-  for (auto entity : view_ball) {
-    auto& ball = view_ball.get<BallComponent>(entity);
-    auto& s = view_ball.get<physics::Sphere>(entity);
-    auto& v = view_ball.get<PhysicsComponent>(entity);
+  for (auto ball_entity : view_ball) {
+    auto& ball = view_ball.get<BallComponent>(ball_entity);
+    auto& s = view_ball.get<physics::Sphere>(ball_entity);
+    auto& v = view_ball.get<PhysicsComponent>(ball_entity);
 
     // Collision between ball and players
     for (auto player : view_player) {
