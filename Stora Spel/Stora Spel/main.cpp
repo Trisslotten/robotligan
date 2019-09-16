@@ -62,7 +62,7 @@ int main(unsigned argc, char **argv) {
 
   glob::ModelHandle model_h =
       glob::GetModel("assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
-  glob::ModelHandle model_h2 = glob::GetModel("assets/Mech/Ball.obj");
+  glob::ModelHandle model_h2 = glob::GetModel("assets/ball/Ball.fbx");
   auto avatar = registry.create();  // this is the player avatar
   registry.assign<CameraComponent>(
       avatar, (Camera *)glob::GetCamera(),
