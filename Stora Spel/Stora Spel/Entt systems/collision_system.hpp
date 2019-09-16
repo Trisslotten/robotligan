@@ -7,19 +7,19 @@
 #include "ball_component.hpp"
 #include "boundingboxes.hpp"
 #include "collision.hpp"
-#include "velocity_component.hpp"
+#include "physics_component.hpp"
 
 void UpdateCollisions(entt::registry &registry) {
-  auto view_ball = registry.view<BallComponent, physics::Sphere, VelocityComponent>();
-  auto view_player = registry.view<physics::OBB, VelocityComponent>();
-  auto view_arena = registry.view<physics::Arena, VelocityComponent>();
+  auto view_ball = registry.view<BallComponent, physics::Sphere, PhysicsComponent>();
+  auto view_player = registry.view<physics::OBB, PhysicsComponent>();
+  auto view_arena = registry.view<physics::Arena, PhysicsComponent>();
 
   //check ball collision
   // Loop over all balls
   for (auto entity : view_ball) {
     auto& ball = view_ball.get<BallComponent>(entity);
     auto& s = view_ball.get<physics::Sphere>(entity);
-    auto& v = view_ball.get<VelocityComponent>(entity);
+    auto& v = view_ball.get<PhysicsComponent>(entity);
 
     // Collision between ball and players
     for (auto player : view_player) {

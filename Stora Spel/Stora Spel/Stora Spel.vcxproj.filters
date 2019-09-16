@@ -28,7 +28,6 @@
     <ClInclude Include="util\timer.hpp" />
     <ClInclude Include="util\transform_helper.hpp" />
     <ClInclude Include="Entt systems\print_position_system.hpp" />
-    <ClInclude Include="Components\velocity_component.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.frag" />
