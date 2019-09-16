@@ -15,8 +15,9 @@ void foo() {}
 void Update(entt::registry& registry, float dt) {
   foo();
 
-  auto view_controller = registry.view<CameraComponent, PlayerComponent,
-                                       TransformComponent, PhysicsComponent>();
+  auto view_controller =
+      registry.view<CameraComponent, PlayerComponent, TransformComponent,
+                    PhysicsComponent, AbilityComponent>();
 
   for (auto entity : view_controller) {
     CameraComponent& cam_c = view_controller.get<CameraComponent>(entity);
@@ -24,6 +25,7 @@ void Update(entt::registry& registry, float dt) {
     TransformComponent& trans_c =
         view_controller.get<TransformComponent>(entity);
     PhysicsComponent& physics_c = view_controller.get<PhysicsComponent>(entity);
+    AbilityComponent& ability_c = view_controller.get<AbilityComponent>(entity);
     // rotation
     float sensitivity = 0.003f;
     glm::vec2 rot =
@@ -70,19 +72,24 @@ void Update(entt::registry& registry, float dt) {
     if (Input::IsKeyDown(GLFW_KEY_A)) {
       final_velocity -= right * player_c.walkspeed * dt;
     }
-
     if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT)) {
       final_velocity *= 2;
     }
-
     if (Input::IsKeyDown(GLFW_KEY_SPACE) && !physics_c.airborne) {
       final_velocity += up * player_c.jump_speed;
       physics_c.airborne = true;
     }
-
     // physics stuff, absolute atm, may need to change. Other
     // systems may affect velocity. velocity of player object.
     physics_c.velocity = final_velocity;
+
+    // Ability buttons
+    if (Input::IsKeyDown(GLFW_KEY_Q)) {
+      ability_c.use_primary = true;
+    }
+    if (Input::IsKeyDown(GLFW_KEY_E)) {
+      ability_c.use_primary = true;
+    }
 
     /*
             NETWORK STUFF?
