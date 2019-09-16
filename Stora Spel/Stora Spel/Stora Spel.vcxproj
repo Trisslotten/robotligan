@@ -184,7 +184,6 @@
     <ClInclude Include="Entt systems\print_position_system.hpp" />
     <ClInclude Include="util\input.hpp" />
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
-    <ClInclude Include="Components\velocity_component.hpp" />
     <ClInclude Include="util\meminfo.hpp" />
     <ClInclude Include="util\timer.hpp" />
     <ClInclude Include="util\transform_helper.hpp" />

@@ -8,12 +8,13 @@
 #include "boundingboxes.hpp"
 #include "collision.hpp"
 #include "projectile_component.hpp"
-#include "velocity_component.hpp"
+#include "physics_component.hpp"
 
 void UpdateCollisions(entt::registry &registry) {
-  auto view_ball = registry.view<BallComponent, physics::Sphere, VelocityComponent>();
-  auto view_player = registry.view<physics::OBB, VelocityComponent>();
-  auto view_arena = registry.view<physics::Arena, VelocityComponent>();
+  auto view_ball =
+      registry.view<BallComponent, physics::Sphere, PhysicsComponent>();
+  auto view_player = registry.view<physics::OBB, PhysicsComponent>();
+  auto view_arena = registry.view<physics::Arena, PhysicsComponent>();
   auto view_projectile = registry.view<physics::Sphere, ProjectileComponent>();
 
   //check ball collision
@@ -21,7 +22,7 @@ void UpdateCollisions(entt::registry &registry) {
   for (auto ball_entity : view_ball) {
     auto& ball = view_ball.get<BallComponent>(ball_entity);
     auto& s = view_ball.get<physics::Sphere>(ball_entity);
-    auto& v = view_ball.get<VelocityComponent>(ball_entity);
+    auto& v = view_ball.get<PhysicsComponent>(ball_entity);
 
     // Collision between ball and players
     for (auto player : view_player) {
@@ -53,16 +54,33 @@ void UpdateCollisions(entt::registry &registry) {
 
 	//collision with ball and projectiles
     for (auto projectile : view_projectile) {
-      auto hitbox = view_projectile.get<physics::Sphere>(projectile);
-      auto id = view_projectile.get<ProjectileComponent>(projectile);
+      auto& hitbox = view_projectile.get<physics::Sphere>(projectile);
+      auto& id = view_projectile.get<ProjectileComponent>(projectile);
       if (Intersect(s, hitbox)) {
         if (id.projectile_id == CANNON_BALL && ball.is_real == true) {
           glm::vec3 dir = normalize(s.center - hitbox.center);
+          v.velocity = dir * 20.0f;
+          v.is_airborne = true;
           registry.destroy(projectile);
 		} else {
           registry.destroy(projectile);
           registry.destroy(ball_entity);
 		}
+	  }
+	}
+  }
+
+  // collision with arena and projectiles
+  for (auto arena : view_arena) {
+    auto& arena_hitbox = view_arena.get<physics::Arena>(arena);
+	for (auto projectile : view_projectile) {
+	  auto& hitbox = view_projectile.get<physics::Sphere>(projectile);
+	  auto& id = view_projectile.get<ProjectileComponent>(projectile);
+      glm::vec3 normal;
+      if (Intersect(arena_hitbox, hitbox, &normal)) {
+        if (id.projectile_id == CANNON_BALL) {
+          registry.destroy(projectile);
+        }
 	  }
 	}
   }

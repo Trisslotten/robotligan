@@ -33,7 +33,7 @@ void init() {
 
 void updateSystems(entt::registry *reg, float dt) {
   player_controller::Update(*reg, dt);
-  ability_controller::Update(*reg);
+  ability_controller::Update(*reg, dt);
   UpdatePhysics(*reg, dt);
   UpdateCollisions(*reg);
 }
@@ -48,14 +48,14 @@ int main(unsigned argc, char **argv) {
 
   auto entity = registry.create();
   registry.assign<BallComponent>(entity, true, false);
-  registry.assign<VelocityComponent>(entity, glm::vec3(1.0f, 0.0f, 0.0f));
+  registry.assign<PhysicsComponent>(entity, glm::vec3(1.0f, 0.0f, 0.0f));
   registry.assign<physics::Sphere>(entity, glm::vec3(0.0f, 1.0f, 0.0f), 1.0f);
 
   entity = registry.create();
 
   entity = registry.create();
   registry.assign<physics::Arena>(entity, -10.f, 10.f, 0.f, 5.f, -10.f, 10.f);
-  registry.assign<VelocityComponent>(entity, glm::vec3(.0f, .0f, .0f));
+  registry.assign<PhysicsComponent>(entity, glm::vec3(.0f, .0f, .0f));
 
   glob::window::Create();
   glob::Init();
@@ -71,7 +71,7 @@ int main(unsigned argc, char **argv) {
   registry.assign<PlayerComponent>(avatar);
   registry.assign<TransformComponent>(avatar, glm::vec3(-9.f, 0.f, 0.f),
                                       glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
-  registry.assign<VelocityComponent>(avatar, glm::vec3(.0f, .0f, .0f));
+  registry.assign<PhysicsComponent>(avatar, glm::vec3(.0f, .0f, .0f));
   registry.assign<physics::OBB>(
       avatar, glm::vec3(5.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.f, 0.f),
       glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);

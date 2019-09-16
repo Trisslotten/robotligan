@@ -16,10 +16,13 @@ void CreateMissileEntity(entt::registry &registry);
 void CreateCannonBallEntity(entt::registry &registry);
 
 void Update(
-    entt::registry &registry) {
+    entt::registry &registry, float dt) {
   registry.view<PlayerComponent, AbilityComponent>().each(
       [&](PlayerComponent &player_component,
           AbilityComponent &ability_component) {
+		//update cooldown
+        ability_component.cooldown -= dt;
+        ability_component.shoot_cooldown -= dt;
         // First check if primary ability is being used
         // AND ability is not on cooldown
         if (ability_component.use_primary &&
@@ -33,10 +36,11 @@ void Update(
         }
 
 		//Check if the player should shoot
-        if (ability_component.shoot == true) {
+        if (ability_component.shoot && ability_component.shoot_cooldown <= 0.0f) {
           CreateCannonBallEntity(registry);
-          ability_component.shoot = false;
+          ability_component.shoot_cooldown = 10.0f;
 		}
+        ability_component.shoot = false;
       });
 }
 
