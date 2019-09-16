@@ -33,7 +33,7 @@ void init() {
 
 void updateSystems(entt::registry *reg, float dt) {
   player_controller::Update(*reg, dt);
-  ability_controller::Update(*reg);
+  ability_controller::Update(*reg, dt);
   UpdatePhysics(*reg, dt);
   UpdateCollisions(*reg);
 }

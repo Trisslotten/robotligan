@@ -54,16 +54,33 @@ void UpdateCollisions(entt::registry &registry) {
 
 	//collision with ball and projectiles
     for (auto projectile : view_projectile) {
-      auto hitbox = view_projectile.get<physics::Sphere>(projectile);
-      auto id = view_projectile.get<ProjectileComponent>(projectile);
+      auto& hitbox = view_projectile.get<physics::Sphere>(projectile);
+      auto& id = view_projectile.get<ProjectileComponent>(projectile);
       if (Intersect(s, hitbox)) {
         if (id.projectile_id == CANNON_BALL && ball.is_real == true) {
           glm::vec3 dir = normalize(s.center - hitbox.center);
+          v.velocity = dir * 20.0f;
+          v.is_airborne = true;
           registry.destroy(projectile);
 		} else {
           registry.destroy(projectile);
           registry.destroy(ball_entity);
 		}
+	  }
+	}
+  }
+
+  // collision with arena and projectiles
+  for (auto arena : view_arena) {
+    auto& arena_hitbox = view_arena.get<physics::Arena>(arena);
+	for (auto projectile : view_projectile) {
+	  auto& hitbox = view_projectile.get<physics::Sphere>(projectile);
+	  auto& id = view_projectile.get<ProjectileComponent>(projectile);
+      glm::vec3 normal;
+      if (Intersect(arena_hitbox, hitbox, &normal)) {
+        if (id.projectile_id == CANNON_BALL) {
+          registry.destroy(projectile);
+        }
 	  }
 	}
   }
