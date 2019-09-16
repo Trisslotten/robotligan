@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "lodepng.hpp"
+#include <lodepng.hpp>
 
 namespace glob {
 

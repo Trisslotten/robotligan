@@ -33,13 +33,28 @@
     <ClInclude Include="src\Model\mesh.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\Model\lodepng.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\glob\window.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\glob\graphics.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\2D\text_renderer.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\include\msdfgen\msdfgen.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\include\msdfgen\msdfgen-ext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="external\include\ft2build.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tinyxml2.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lodepng.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -71,7 +86,13 @@
     <ClCompile Include="src\Model\model.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\Model\lodepng.cpp">
+    <ClCompile Include="src\2D\text_renderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tinyxml2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lodepng.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
