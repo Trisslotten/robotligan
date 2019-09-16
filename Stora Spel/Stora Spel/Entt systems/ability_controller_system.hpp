@@ -1,7 +1,7 @@
 #ifndef ABILITY_CONTROLLER_SYSTEM_HPP_
 #define ABILITY_CONTROLLER_SYSTEM_HPP_
 
-//#include <position.h>
+#include <position.hpp>
 #include <ability_component.hpp>
 #include <player_component.hpp>
 
