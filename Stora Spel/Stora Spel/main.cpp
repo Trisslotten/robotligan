@@ -1,12 +1,11 @@
 #include <iostream>
-
+#include <entt.hpp>
 #include <glob/graphics.h>
 #include <NetAPI/networkTest.hpp>
 #include <NetAPI/packet.hpp>
 #include <NetAPI/socket/server.hpp>
 #include <NetAPI/socket/tcpclient.hpp>
 #include <chrono>
-#include <entt.hpp>
 #include <thread>
 #include "PrintPositionSystem.h"
 #include "util/meminfo.h"

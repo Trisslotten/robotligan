@@ -40,7 +40,7 @@ class EXPORT Packet {
   PacketHeader& GetHeader() { return p_; }
 
  private:
-  PacketHeader p_;
+  PacketHeader p_ = {};
   char* data_ = {};
   size_t size_of_data_ = 0;
 };
