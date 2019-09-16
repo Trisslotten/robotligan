@@ -2,9 +2,9 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="src\input.cpp" />
     <ClCompile Include="util\timer.cpp" />
     <ClCompile Include="nettest.cpp" />
+    <ClCompile Include="util\input.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
