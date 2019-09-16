@@ -70,7 +70,7 @@ int main(unsigned argc, char **argv) {
   registry.assign<PlayerComponent>(avatar);
   registry.assign<TransformComponent>(avatar, glm::vec3(-9.f, 0.f, 0.f),
                                       glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
-  registry.assign<VelocityComponent>(avatar, glm::vec3(.0f, .0f, .0f));
+  registry.assign<PhysicsComponent>(avatar, glm::vec3(.0f, .0f, .0f));
   registry.assign<physics::OBB>(
       avatar, glm::vec3(5.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.f, 0.f),
       glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
@@ -85,8 +85,8 @@ int main(unsigned argc, char **argv) {
 
     glob::Submit(model_h, glm::translate(glm::vec3(0)) *
                               glm::rotate(0.5f, glm::vec3(0, 1, 0)));
-    glob::Submit(model_h2,
-                 glm::translate(glm::vec3(0, 9, 3.f * 0)));
+    //glob::Submit(model_h2,
+      //           glm::translate(glm::vec3(0, 9, 3.f * 0)));
     updateSystems(&registry, dt);
 
     glob::Render();
