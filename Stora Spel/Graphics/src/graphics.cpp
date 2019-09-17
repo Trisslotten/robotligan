@@ -22,6 +22,13 @@ struct RenderItem {
   glm::mat4 transform;
 };
 
+struct LightItem {
+	glm::vec3 pos;
+	glm::vec3 color;
+	glm::float32 radius;
+	glm::float32 ambient;
+};
+
 ShaderProgram test_shader;
 ShaderProgram model_shader;
 ShaderProgram wireframe_shader;
@@ -43,6 +50,7 @@ std::unordered_map<std::string, ModelHandle> model_handles;
 std::unordered_map<ModelHandle, Model> models;
 
 std::vector<RenderItem> items_to_render;
+std::vector<LightItem> lights_to_render;
 std::vector<glm::mat4> cubes;
 
 void DrawFullscreenQuad() {
@@ -167,6 +175,15 @@ TextureHandle GetTexture(const std::string &filepath) {
 }
 */
 
+void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius, glm::float32 ambient) {
+	LightItem  item;
+	item.pos = pos;
+	item.color = color;
+	item.radius = radius;
+	item.ambient = ambient;
+	lights_to_render.push_back(item);
+}
+
 void Submit(ModelHandle model_h, glm::vec3 pos) {
   glm::mat4 transform = glm::translate(pos);
   Submit(model_h, transform);
@@ -196,6 +213,14 @@ void Render() {
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
 
   model_shader.use();
+
+  for (auto& light_item : lights_to_render) {
+	  model_shader.uniform("light_pos", light_item.pos);
+	  model_shader.uniform("light_col", light_item.color);
+	  model_shader.uniform("light_radius", light_item.radius);
+	  model_shader.uniform("light_amb", light_item.ambient);
+  }
+
   model_shader.uniform("cam_transform", cam_transform);
   for (auto &render_item : items_to_render) {
     model_shader.uniform("model_transform", render_item.transform);
@@ -205,6 +230,7 @@ void Render() {
   // render wireframe cubes
   for (auto &m : cubes) DrawCube(m);
 
+  lights_to_render.clear();
   items_to_render.clear();
   cubes.clear();
 }

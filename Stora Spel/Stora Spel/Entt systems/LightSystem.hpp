@@ -1,5 +1,5 @@
-#ifndef SLIGHTSYSTEM_HPP_
-#define SLIGHTSYSTEM_HPP_
+#ifndef LIGHTSYSTEM_HPP_
+#define LIGHTSYSTEM_HPP_
 
 #include <entt.hpp>
 #include "light_component.hpp"
@@ -11,4 +11,4 @@ void print(entt::registry& registry) {
 	//});
 }
 
-#endif  // SLIGHTSYSTEM_HPP_
+#endif  // LIGHTSYSTEM_HPP_

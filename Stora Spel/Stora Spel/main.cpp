@@ -63,6 +63,11 @@ int main(unsigned argc, char **argv) {
 
   entt::registry registry;
 
+  //Create light
+  auto light = registry.create();
+  registry.assign<LightComponent>(light, glm::vec3(1.f, 1.f, 1.f), 10.f, 0.2f);
+  registry.assign<TransformComponent>(light, glm::vec3(0.f,5.f,0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
+
   // Create ball
   auto entity = registry.create();
   registry.assign<BallComponent>(entity, true, true);

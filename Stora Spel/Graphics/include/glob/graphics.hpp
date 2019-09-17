@@ -38,6 +38,7 @@ EXPORT TextureHandle GetTexture(const std::string& filepath);
 /*
  * Submit a model to be rendered.
  */
+EXPORT void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius, glm::float32 ambient);
 EXPORT void Submit(ModelHandle model_h, glm::vec3 pos);
 EXPORT void Submit(ModelHandle model_h, glm::mat4 transform);
 EXPORT void SubmitCube(glm::mat4 t);
