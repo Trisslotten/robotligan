@@ -12,7 +12,7 @@
 #include "wireframe_component.hpp"
 
 // temp variable
-bool render_wireframe = true;
+bool render_wireframe = false;
 
 void Render(entt::registry& registry) {
   auto view_model = registry.view<ModelComponent, TransformComponent>();

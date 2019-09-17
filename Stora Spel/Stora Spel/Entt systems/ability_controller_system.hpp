@@ -1,15 +1,14 @@
 #ifndef ABILITY_CONTROLLER_SYSTEM_HPP_
 #define ABILITY_CONTROLLER_SYSTEM_HPP_
 
-#include <position.hpp>
 #include <ability_component.hpp>
 #include <boundingboxes.hpp>
 #include <camera_component.hpp>
+#include <model_component.hpp>
 #include <player_component.hpp>
 #include <physics_component.hpp>
 #include <projectile_component.hpp>
 #include <transform_component.hpp>
-#include "model_component.hpp"
 
 namespace ability_controller {
 
