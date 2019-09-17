@@ -55,4 +55,8 @@
     <None Include="assets\shaders\modelshader.vert" />
     <None Include="assets\shaders\modelshader.frag" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Components\projectile_component.hpp" />
+    <ClInclude Include="Entt systems\collision_temp_debug_system.h" />
+  </ItemGroup>
 </Project>

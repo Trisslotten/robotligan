@@ -12,6 +12,7 @@
 #include "ability_controller_system.hpp"
 #include "ball_component.hpp"
 #include "collision.hpp"
+#include "ability_component.hpp"
 #include "collision_system.hpp"
 #include "physics_system.hpp"
 #include "player_controller_system.hpp"
@@ -19,8 +20,7 @@
 #include "render_system.hpp"
 #include "transform_component.hpp"
 
-//#include <glad/glad.h>
-
+#include "collision_temp_debug_system.h"
 #include <GLFW/glfw3.h>
 #include "util/input.hpp"
 #include "util/meminfo.hpp"
@@ -37,8 +37,10 @@ void init() {
 }
 
 void updateSystems(entt::registry *reg, float dt) {
+  collision_debug::Update(*reg);
   player_controller::Update(*reg, dt);
-  ability_controller::Update(*reg);
+  ability_controller::Update(*reg, dt);
+ 
   UpdatePhysics(*reg, dt);
   UpdateCollisions(*reg);
   Render(*reg);
@@ -66,7 +68,7 @@ int main(unsigned argc, char **argv) {
   // Create ball
   auto entity = registry.create();
   registry.assign<BallComponent>(entity, true, true);
-  registry.assign<VelocityComponent>(entity, glm::vec3(1.0f, 0.0f, 2.0f));
+  registry.assign<PhysicsComponent>(entity, glm::vec3(1.0f, 0.0f, 0.0f));
   registry.assign<physics::Sphere>(entity, glm::vec3(0.0f, 0.0f, 0.0f), 1.0f);
   registry.assign<glob::ModelHandle>(entity, model_h2);
   registry.assign<TransformComponent>(entity, glm::vec3(0.f), glm::vec3(0.f), glm::vec3(1.f));
@@ -91,14 +93,18 @@ int main(unsigned argc, char **argv) {
       avatar, (Camera *)glob::GetCamera(),
       glm::vec3(0, 1, 0));  // get the camera pointer from glob renderer
   registry.assign<PlayerComponent>(avatar);
-  registry.assign<TransformComponent>(avatar, glm::vec3(-9.f, 0.f, 0.f),
+  registry.assign<TransformComponent>(avatar, glm::vec3(-9.f, 4.f, 0.f),
                                       glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
-  registry.assign<VelocityComponent>(avatar, glm::vec3(.0f, .0f, .0f));
+  registry.assign<PhysicsComponent>(avatar, glm::vec3(.0f, .0f, .0f));
  
+  registry.assign<physics::OBB>(    avatar, glm::vec3(5.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.f, 0.f),
+      glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
+  registry.assign<AbilityComponent>(avatar, NULL_ABILITY, false, 0.0f, NULL_ABILITY, false, false, 0.0f);
   // opponent
   glm::vec3 scale = glm::vec3(.1f, .1f, .1f);
   entity = registry.create();
   registry.assign<glob::ModelHandle>(entity, model_h);
+  
   registry.assign<physics::OBB>(
       entity, glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f) * scale,
       glm::vec3(1.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f),
