@@ -14,6 +14,11 @@
 #include "camera/camera.hpp"
 #include "shader.hpp"
 
+#include "Font/Font2D.hpp"
+
+#include <msdfgen/msdfgen.h>
+#include <msdfgen/msdfgen-ext.h>
+
 namespace glob {
 namespace {
 
@@ -37,8 +42,11 @@ std::unordered_map<TextureHandle, Texture> textures;
 */
 
 ModelHandle current_model_guid = 1;
+ModelHandle current_font_guid = 1;
 std::unordered_map<std::string, ModelHandle> model_handles;
 std::unordered_map<ModelHandle, Model> models;
+std::unordered_map<std::string, Font2DHandle> font_2D_handles;
+std::unordered_map<Font2DHandle, Font2D> fonts;
 
 std::vector<RenderItem> items_to_render;
 
@@ -108,6 +116,11 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
 ModelHandle GetModel(const std::string &filepath) {
   return GetAsset<ModelHandle, Model>(model_handles, models, current_model_guid,
                                       filepath);
+}
+Font2DHandle GetFont(const std::string &filepath) {
+  return GetAsset(font_2D_handles, fonts, current_font_guid,
+                                      filepath);
+	return Font2DHandle();
 }
 /*
 TextureHandle GetTexture(const std::string &filepath) {

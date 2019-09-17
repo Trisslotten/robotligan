@@ -29,6 +29,9 @@ int main(unsigned argc, char **argv) {
       glob::GetModel("assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
   glob::ModelHandle model_h2 = glob::GetModel("assets/Mech/Ball.obj");
 
+  glob::Font2DHandle font_test =
+      glob::GetFont("assets/fonts/fonts/comic.ttf");
+
   float time = 0.f;
   while (!glob::window::ShouldClose()) {
     // tick

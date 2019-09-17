@@ -15,6 +15,7 @@
 namespace glob {
 
 typedef unsigned long ModelHandle;
+typedef unsigned long Font2DHandle;
 //typedef unsigned long TextureHandle;
 
 /*
@@ -28,6 +29,10 @@ EXPORT void Init();
  * Skips loading if model is loaded.
  */
 EXPORT ModelHandle GetModel(const std::string& filepath);
+
+
+
+EXPORT Font2DHandle GetFont(const std::string& filepath);
 
 /*
  * Returns a texture handle for the specified image file.

@@ -100,6 +100,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(SolutionDir)Graphics\include;$(SolutionDir)Graphics\lib\include;$(SolutionDir)glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -185,6 +186,7 @@
     <ClInclude Include="include\glob\window.hpp" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="src\2D\text_renderer.hpp" />
+    <ClInclude Include="src\Font\Font2D.hpp" />
     <ClInclude Include="src\tinyxml2.hpp" />
     <ClInclude Include="src\shader.hpp" />
     <ClInclude Include="src\camera\camera.hpp" />
@@ -198,6 +200,7 @@
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="src\2D\text_renderer.cpp" />
     <ClCompile Include="src\camera\camera.cpp" />
+    <ClCompile Include="src\Font\Font2D.cpp" />
     <ClCompile Include="src\graphics.cpp" />
     <ClCompile Include="src\tinyxml2.cpp" />
     <ClCompile Include="src\shader.cpp" />
