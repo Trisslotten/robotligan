@@ -4,48 +4,40 @@
 #include <transform_component.hpp>
 #include <velocity_component.hpp>
 
-namespace {
-
-auto CreateTestEntity(entt::registry& reg) {
-  auto entity = reg.create();
-  reg.assign<TransformComponent>(entity, glm::vec3(-9.f, 0.f, 0.f),
-                                 glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
-  reg.assign<VelocityComponent>(entity, glm::vec3(.0f, .0f, .0f));
-}
-
-}  // namespace
+namespace {}  // namespace
 
 GameServer::~GameServer() { server_.Cleanup(); }
 
-void GameServer::Init() {
-  // asd
-  server_.Setup(1337);
-}
+void GameServer::Init() { server_.Setup(1337); }
 
 void GameServer::Update(float dt) {
-  // asd
   server_.Update();
-  std::cout << server_.GetConnectedPlayers() << "\n";
 
-  glm::vec3 vel{0};
+  int diff = server_.GetConnectedPlayers() - positions_.size();
+  for (int i = 0; i < diff; i++) {
+    positions_.push_back(glm::vec3(0));
+  }
+
   for (short i = 0; i < server_.GetConnectedPlayers(); i++) {
     auto data = server_[i];
     if (server_.HasData(data)) {
-      std::cout << "DEBUG: Packet has data!\n";
-      memcpy(&vel, data.buffer, sizeof(testpos_));
-      std::cout << "\t vel: " << vel.x << " " << vel.y << " " << vel.z << "\n";
+      int actionflag = 0;
+      memcpy(&actionflag, data.buffer, sizeof(int));
+
+      glm::vec3 vel;
+      if ((actionflag & 1) == 1) vel += glm::vec3(1, 0, 0);
+      if ((actionflag & 2) == 2) vel += glm::vec3(-1, 0, 0);
+      if ((actionflag & 4) == 4) vel += glm::vec3(0, 0, -1);
+      if ((actionflag & 8) == 8) vel += glm::vec3(0, 0, 1);
+      if (length(vel) > 0.0001f) vel = normalize(vel);
+
+      positions_[i] += 5.f * vel * dt;
     }
   }
 
-  testpos_ += 5.f*vel * dt;
-  // asd_ = 2*glm::sin(global_timer.Elapsed());
-
-  std::cout << "\t pos: " << testpos_.x << " " << testpos_.y << " "
-            << testpos_.z << "\n";
-
   NetAPI::Socket::Data data;
   data.ID = 0;
-  data.buffer = (char*)(&testpos_);
-  data.len = sizeof(testpos_);
+  data.buffer = (char*)(positions_.data());
+  data.len = sizeof(glm::vec3) * positions_.size();
   server_.Send(data);
 }
