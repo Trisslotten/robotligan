@@ -1,4 +1,5 @@
 #include <NetAPI/networkTest.hpp>
+#include <NetAPI/packet.hpp>
 #include <NetAPI/socket/server.hpp>
 #include <NetAPI/socket/tcpclient.hpp>
 // do not touch
@@ -156,6 +157,10 @@ int main(unsigned argc, char **argv) {
   std::cout << "WSA is initialized? " << std::boolalpha
             << NetAPI::Initialization::WinsockInitialized() << std::endl;
 
+  std::cout << "RAM usage: " << util::MemoryInfo::GetInstance().GetUsedRAM()
+            << " MB\n";
+  std::cout << "VRAM usage: " << util::MemoryInfo::GetInstance().GetUsedVRAM()
+            << " MB\n";
   std::cin.ignore();
   return EXIT_SUCCESS;
 }
