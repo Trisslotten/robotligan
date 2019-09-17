@@ -2,9 +2,10 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="src\input.cpp" />
     <ClCompile Include="util\timer.cpp" />
     <ClCompile Include="nettest.cpp" />
+    <ClCompile Include="util\input.cpp" />
+    <ClCompile Include="util\global_settings.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -53,6 +54,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Components\projectile_component.hpp" />
+    <ClInclude Include="util\global_settings.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="util\settings.txt" />
+    <Text Include="util\errorlog.txt" />
     <ClInclude Include="Entt systems\collision_temp_debug_system.h" />
   </ItemGroup>
 </Project>
