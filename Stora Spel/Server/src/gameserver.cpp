@@ -37,9 +37,7 @@ void GameServer::Update(float dt) {
 
   NetAPI::Common::Packet packet;
   packet << positions_.size();
-  for (auto& p : positions_) {
-    packet << p;
-  }
+  packet.Add(positions_.data(), positions_.size());
 
   NetAPI::Socket::Data data;
   data.ID = 0;

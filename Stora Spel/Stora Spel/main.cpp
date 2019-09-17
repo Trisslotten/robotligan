@@ -75,9 +75,7 @@ int main(unsigned argc, char **argv) {
       avatar, glm::vec3(5.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.f, 0.f),
       glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
 
-
   std::vector<glm::vec3> positions;
-  positions.resize(20);
   double net_numframes = 0;
   double render_numframes = 0;
   Timer debugTimer;
@@ -92,8 +90,6 @@ int main(unsigned argc, char **argv) {
     std::cout << "ERROR: Client could not connect!\n";
     return EXIT_FAILURE;
   }
-
-  glm::vec3 testpos{};
 
   timer.Restart();
   float dt = 0.0f;
@@ -114,10 +110,15 @@ int main(unsigned argc, char **argv) {
         // inte data
 
       } else {
-
-
-        memcpy(&testpos, buffer, sizeof(testpos));
-        
+        size_t phsize = sizeof(NetAPI::Common::PacketHeader);
+        size_t arrlen = 0;
+        memcpy(&arrlen, buffer + phsize, sizeof(size_t));
+        int diff = arrlen - positions.size();
+        for (int i = 0; i < diff; i++) {
+          positions.push_back(glm::vec3(0));
+        }
+        memcpy(positions.data(), buffer + phsize + sizeof(size_t),
+               sizeof(glm::vec3) * arrlen);
       }
       byte id = tcp_client.GetID();
 
@@ -129,21 +130,22 @@ int main(unsigned argc, char **argv) {
 
       tcp_client.Send((char *)&actionflag, sizeof(int));
 
-	  net_numframes++;
+      net_numframes++;
     }
-	render_numframes++;
-	if (debugTimer.Elapsed() > 1.0) {
-		double elapsed = debugTimer.Restart();
-		//std::cout << "Net rate:    " << net_numframes / elapsed << "\n";
-		//std::cout << "Render rate: " << render_numframes / elapsed << "\n\n";
-		net_numframes = 0;
-		render_numframes = 0;
-	}
-	
+    render_numframes++;
+    if (debugTimer.Elapsed() > 1.0) {
+      double elapsed = debugTimer.Restart();
+      // std::cout << "Net rate:    " << net_numframes / elapsed << "\n";
+      // std::cout << "Render rate: " << render_numframes / elapsed << "\n\n";
+      net_numframes = 0;
+      render_numframes = 0;
+    }
 
     updateSystems(&registry, dt);
 
-    glob::Submit(ball_h, testpos);
+    for (const auto &p : positions) {
+      glob::Submit(ball_h, p);
+    }
 
     glob::Render();
     glob::window::Update();
