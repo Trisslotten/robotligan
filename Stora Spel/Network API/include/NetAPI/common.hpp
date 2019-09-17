@@ -26,7 +26,7 @@ struct EXPORT Data {
     this->ID = id;
   }
 };
-constexpr byte EVERYONE = 255;
+constexpr unsigned short EVERYONE = 255;
 }  // namespace Socket
 }  // namespace NetAPI
 #endif  // !COMMON_H

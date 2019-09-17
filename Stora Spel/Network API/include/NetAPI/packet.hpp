@@ -6,8 +6,8 @@
 namespace NetAPI {
 namespace Common {
 struct EXPORT PacketHeader {
-  byte PacketAction[10];
-  byte Reciever = NetAPI::Socket::EVERYONE;
+  unsigned short PacketAction[10];
+  unsigned short Reciever = NetAPI::Socket::EVERYONE;
   unsigned PacketID = 0;
 };
 class EXPORT Packet {
@@ -21,29 +21,17 @@ class EXPORT Packet {
             (strcmp(data_ + sizeof(p_), kNoDataAvailable) == 0));
   }
   template <typename T>
-  Packet& operator<<(T& data) {
-    std::memcpy(data_ + size_of_data_, &data, sizeof(data));
-    size_of_data_ += sizeof(data);
-    return *this;
-  }
-  template <typename T>
   Packet& operator<<(T data) {
     std::memcpy(data_ + size_of_data_, &data, sizeof(data));
     size_of_data_ += sizeof(data);
     return *this;
   }
-  Packet& operator<<(PacketHeader& header) {
+  Packet& operator<<(PacketHeader header) {
     std::memcpy(data_, &header, sizeof(header));
     return *this;
   }
   template <typename T>
   Packet& operator>>(T& data) {
-    size_of_data_ -= sizeof(data);
-    std::memcpy(&data, data_ + size_of_data_, sizeof(data));
-    return *this;
-  }
-  template <typename T>
-  Packet& operator>>(T data) {
     size_of_data_ -= sizeof(data);
     std::memcpy(&data, data_ + size_of_data_, sizeof(data));
     return *this;
