@@ -214,12 +214,15 @@ void Render() {
 
   model_shader.use();
 
+  int lightNR = 0;
   for (auto& light_item : lights_to_render) {
-	  model_shader.uniform("light_pos", light_item.pos);
-	  model_shader.uniform("light_col", light_item.color);
-	  model_shader.uniform("light_radius", light_item.radius);
-	  model_shader.uniform("light_amb", light_item.ambient);
+	  model_shader.uniform("light_pos[" + std::to_string(lightNR) + "]", light_item.pos);
+	  model_shader.uniform("light_col[" + std::to_string(lightNR) + "]", light_item.color);
+	  model_shader.uniform("light_radius[" + std::to_string(lightNR) + "]", light_item.radius);
+	  model_shader.uniform("light_amb[" + std::to_string(lightNR) + "]", light_item.ambient);
+	  lightNR++;
   }
+  model_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
 
   model_shader.uniform("cam_transform", cam_transform);
   for (auto &render_item : items_to_render) {
