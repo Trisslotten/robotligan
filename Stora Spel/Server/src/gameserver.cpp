@@ -19,10 +19,11 @@ void GameServer::Update(float dt) {
   }
 
   for (short i = 0; i < server_.GetConnectedPlayers(); i++) {
-    auto data = server_[i];
-    if (server_.HasData(data)) {
+    auto packet = server_[i];
+    
+    if (!packet.IsEmpty()) {
       int actionflag = 0;
-      memcpy(&actionflag, data.buffer, sizeof(int));
+      packet >> actionflag;
 
       glm::vec3 vel;
       if ((actionflag & 1) == 1) vel += glm::vec3(1, 0, 0);
@@ -36,13 +37,8 @@ void GameServer::Update(float dt) {
   }
 
   NetAPI::Common::Packet packet;
-  packet << positions_.size();
   packet.Add(positions_.data(), positions_.size());
+  packet << positions_.size();
 
-  NetAPI::Socket::Data data;
-  data.ID = 0;
-  data.buffer = packet.GetRaw();
-  data.len = packet.GetPacketSize();
-
-  server_.Send(data);
+  server_.Send(packet);
 }
