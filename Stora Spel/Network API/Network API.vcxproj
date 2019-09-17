@@ -72,15 +72,19 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>include/;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>include/;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>include/;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>include/;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -88,14 +92,16 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;NETWORKAPI_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions);MAKEDLL</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;NETWORKAPI_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions);MAKEDLL;MAKEDLL_NET</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>ws2_32.lib;Mswsock.lib;AdvApi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -104,14 +110,16 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;NETWORKAPI_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions);MAKEDLL</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;NETWORKAPI_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions);MAKEDLL;MAKEDLL_NET</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>ws2_32.lib;Mswsock.lib;AdvApi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -122,9 +130,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;NETWORKAPI_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions);MAKEDLL</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;NETWORKAPI_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions);MAKEDLL;MAKEDLL_NET</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -132,6 +141,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>ws2_32.lib;Mswsock.lib;AdvApi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -142,9 +152,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;NETWORKAPI_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions);MAKEDLL</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;NETWORKAPI_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions);MAKEDLL;MAKEDLL_NET</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -152,15 +163,27 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>ws2_32.lib;Mswsock.lib;AdvApi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h" />
-    <ClInclude Include="Header files\testNetwork.h" />
+    <ClInclude Include="include\NetAPI\helper\errors.hpp" />
+    <ClInclude Include="include\framework.h" />
+    <ClInclude Include="include\NetAPI\common.hpp" />
+    <ClInclude Include="include\NetAPI\helper\netinitialization.hpp" />
+    <ClInclude Include="include\NetAPI\networkTest.hpp" />
+    <ClInclude Include="include\NetAPI\socket\tcpclient.hpp" />
+    <ClInclude Include="include\NetAPI\socket\tcplistener.hpp" />
+    <ClInclude Include="include\NetAPI\socket\server.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\NetAPI\socket\server.cpp" />
+    <ClCompile Include="src\NetAPI\helper\errors.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="testNetwork.cpp" />
+    <ClCompile Include="src\NetAPI\socket\tcplistener.cpp" />
+    <ClCompile Include="src\NetAPI\socket\tcpclient.cpp" />
+    <ClCompile Include="src\NetAPI\helper\netinitialization.cpp" />
+    <ClCompile Include="src\NetAPI\networkTest.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

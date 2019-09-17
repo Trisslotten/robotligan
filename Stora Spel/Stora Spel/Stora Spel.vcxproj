@@ -71,16 +71,20 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>..\Network API\include;$(IncludePath)</IncludePath>
     <IncludePath>$(SolutionDir)glm;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>..\Network API\include;$(IncludePath)</IncludePath>
     <IncludePath>$(SolutionDir)glm;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)glm;$(IncludePath)</IncludePath>
+    <IncludePath>..\Network API\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Graphics\external\include;$(SolutionDir)glm;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)glm;$(IncludePath)</IncludePath>
+    <IncludePath>..\Network API\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Graphics\external\include;$(SolutionDir)glm;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -88,11 +92,12 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;%(AdditionalIncludeDirectories);$(SolutionDir)Physics\include;$(SolutionDir)glm</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>DXGI.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -101,11 +106,13 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Graphics\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)glm;$(SolutionDir)Graphics\external\include;$(SolutionDir)Graphics\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Graphics\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;%(AdditionalIncludeDirectories);$(SolutionDir)Physics\include;$(SolutionDir)glm</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>DXGI.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -116,13 +123,14 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;%(AdditionalIncludeDirectories);$(SolutionDir)Physics\include;$(SolutionDir)glm</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>DXGI.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -133,22 +141,54 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)Graphics\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Graphics\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;%(AdditionalIncludeDirectories);$(SolutionDir)Physics\include;$(SolutionDir)glm</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>DXGI.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="main.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="nettest.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="src\input.cpp" />
+    <ClCompile Include="util\timer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Components\velocity.h" />
-    <ClInclude Include="Components\position.h" />
-    <ClInclude Include="Entt systems\PrintPositionSystem.h" />
+    <ClInclude Include="Components\ability_component.hpp" />
+    <ClInclude Include="Components\ball_component.hpp" />
+    <ClInclude Include="Components\camera_component.hpp" />
+    <ClInclude Include="Components\player_component.hpp" />
+    <ClInclude Include="Components\position.hpp" />
+    <ClInclude Include="Components\physics_component.hpp" />
+    <ClInclude Include="Components\transform_component.hpp" />
+    <ClInclude Include="Components\velocity.hpp" />
+    <ClInclude Include="Components\wireframe_component.hpp" />
+    <ClInclude Include="Entt systems\collision_system.hpp" />
+    <ClInclude Include="Entt systems\physics_system.hpp" />
+    <ClInclude Include="Entt systems\player_controller_system.hpp" />
+    <ClInclude Include="Entt systems\ability_controller_system.hpp" />
+    <ClInclude Include="Entt systems\print_position_system.hpp" />
+    <ClInclude Include="Entt systems\render_system.hpp" />
+    <ClInclude Include="util\input.hpp" />
+    <ClInclude Include="src\AbilityHandler\ability.hpp" />
+    <ClInclude Include="Components\velocity_component.hpp" />
+    <ClInclude Include="util\meminfo.hpp" />
+    <ClInclude Include="util\timer.hpp" />
+    <ClInclude Include="util\transform_helper.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Graphics\Graphics.vcxproj">
@@ -167,6 +207,7 @@
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />
     <None Include="assets\shaders\modelshader.vert" />
+    <None Include="Assets\shaders\wireframe.frag" />
     <None Include="shaders\testshader.frag" />
     <None Include="shaders\testshader.vert" />
   </ItemGroup>
