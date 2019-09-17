@@ -25,21 +25,21 @@ bool NetAPI::Socket::Server::Update() {
   unsigned removed = 0;
   for (short i = 0; i < connectedplayers_; i++) {
     if (clients_[i]->IsConnected()) {
-      clientdata_[i].buffer = clients_.at(i)->Recive();
-      if (this->SocketDisconnected(clientdata_[i])) {
+		clientdata_[i] = clients_[i]->Recieve();
+      if (!clients_[i]->IsConnected()) {
         clients_[i]->Disconnect();
       }
-      clientdata_[i].len = clients_.at(i)->GetLastRecvLen();
-      clientdata_[i].ID = clients_.at(i)->GetID();
     }
   }
+  NetAPI::Common::PacketHeader header;
   for (auto& d : datatosend_) {
-    if (d.ID == EVERYONE) {
+	  d >> header;
+    if (header.PacketID == EVERYONE) {
       for (auto& cli : clients_) {
-        cli->Send(d.buffer, d.len);
+        cli->Send(d);
       }
     } else {
-      clients_.at(d.ID)->Send(d.buffer, d.len);
+      clients_.at(header.PacketID)->Send(d);
     }
   }
   datatosend_.clear();
@@ -47,25 +47,21 @@ bool NetAPI::Socket::Server::Update() {
 }
 
 void NetAPI::Socket::Server::SendToAll(const char* data, size_t len) {
-  datatosend_.push_back(Data(data, len, NetAPI::Socket::EVERYONE));
+	datatosend_.push_back(NetAPI::Common::Packet(data, len));
 }
-void NetAPI::Socket::Server::SendToAll(Data& d) { datatosend_.push_back(d); }
 
 void NetAPI::Socket::Server::SendToAll(NetAPI::Common::Packet& p) {
-  datatosend_.push_back(Data());
-  datatosend_.back().buffer = p.GetRaw();
-  datatosend_.back().ID = p.GetHeader().PacketID;
-  datatosend_.back().len = p.GetPacketSize();
+	datatosend_.push_back(p);
 }
 
 void NetAPI::Socket::Server::Send(unsigned id, const char* data, size_t len) {
-  datatosend_.push_back(Data(data, len, id));
+	NetAPI::Common::Packet p(data, len);
+	NetAPI::Common::PacketHeader h;
+	h.PacketID = id;
+	p << h;
+	Send(p);
 }
-void NetAPI::Socket::Server::Send(Data& d) { datatosend_.push_back(d); }
 
 void NetAPI::Socket::Server::Send(NetAPI::Common::Packet& p) {
-  datatosend_.push_back(Data());
-  datatosend_.back().buffer = p.GetRaw();
-  datatosend_.back().ID = p.GetHeader().PacketID;
-  datatosend_.back().len = p.GetPacketSize();
+	datatosend_.push_back(p);
 }
