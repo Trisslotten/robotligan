@@ -29,6 +29,8 @@
     <ClInclude Include="util\transform_helper.hpp" />
     <ClInclude Include="Entt systems\print_position_system.hpp" />
     <ClInclude Include="Components\velocity_component.hpp" />
+    <ClInclude Include="Entt systems\render_system.hpp" />
+    <ClInclude Include="Components\wireframe_component.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.frag" />
@@ -45,6 +47,7 @@
     <ClInclude Include="Entt systems\physics_system.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <None Include="Assets\shaders\wireframe.frag" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />

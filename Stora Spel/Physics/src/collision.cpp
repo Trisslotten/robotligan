@@ -121,32 +121,38 @@ bool physics::Intersect(const physics::OBB& o1, const physics::OBB& o2) {
 
 bool physics::Intersect(const physics::Arena& a, const physics::Sphere& s,
                glm::vec3* normal) {
+  bool intersect = false;
+  glm::vec3 n = glm::vec3(0.f);
   if (s.center.x + s.radius >= a.xmax) {
-    *normal = glm::vec3(-1.f, 0.f, 0.f);
-    return true;
+    n += glm::vec3(-1.f, 0.f, 0.f);
+    intersect = true;
   }
   if (s.center.x - s.radius <= a.xmin) {
-    *normal = glm::vec3(1.f, 0.f, 0.f);
-    return true;
+    n += glm::vec3(1.f, 0.f, 0.f);
+    intersect = true;
   }
   if (s.center.y + s.radius >= a.ymax) {
-    *normal = glm::vec3(0.f, -1.f, 0.f);
-    return true;
+    n += glm::vec3(0.f, -1.f, 0.f);
+    intersect = true;
   }
   if (s.center.y - s.radius <= a.ymin) {
-    *normal = glm::vec3(0.f, 1.f, 0.f);
-    return true;
+    n += glm::vec3(0.f, 1.f, 0.f);
+    intersect = true;
   }
   if (s.center.z + s.radius >= a.zmax) {
-    *normal = glm::vec3(0.f, 0.f, -1.f);
-    return true;
+    n += glm::vec3(0.f, 0.f, -1.f);
+    intersect = true;
   }
   if (s.center.z - s.radius <= a.zmin) {
-    *normal = glm::vec3(0.f, 0.f, 1.f);
-    return true;
+    n += glm::vec3(0.f, 0.f, 1.f);
+    intersect = true;
   }
 
-  return false;
+  if (intersect) {
+    *normal = glm::normalize(n); 
+  }
+
+  return intersect;
 }
 
 bool physics::Intersect(const physics::Arena& a, const physics::OBB& o,
