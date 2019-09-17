@@ -22,6 +22,12 @@ class EXPORT Packet {
     size_of_data_ += sizeof(data);
     return *this;
   }
+  template <typename T>
+  Packet& operator<<(T data) {
+    std::memcpy(data_ + size_of_data_, &data, sizeof(data));
+    size_of_data_ += sizeof(data);
+    return *this;
+  }
   Packet& operator<<(PacketHeader& header) {
     std::memcpy(data_, &header, sizeof(header));
     return *this;
@@ -32,12 +38,30 @@ class EXPORT Packet {
     std::memcpy(&data, data_ + size_of_data_, sizeof(data));
     return *this;
   }
+  template <typename T>
+  Packet& operator>>(T data) {
+    size_of_data_ -= sizeof(data);
+    std::memcpy(&data, data_ + size_of_data_, sizeof(data));
+    return *this;
+  }
   Packet& operator>>(PacketHeader& header) {
     std::memcpy(&header, data_, sizeof(header));
     return *this;
   }
   const char* GetRaw() { return data_; }
   PacketHeader& GetHeader() { return p_; }
+  template <typename T>
+  Packet& Add(T* data, size_t size) {
+    std::memcpy(data_ + size_of_data_, data, size);
+    size_of_data_ += size;
+    return *this;
+  }
+  template <typename T>
+  Packet& Remove(T* data, size_t size) {
+    size_of_data_ -= size;
+    std::memcpy(data, data_ + size_of_data_, size);
+    return *this;
+  }
 
  private:
   PacketHeader p_ = {};
