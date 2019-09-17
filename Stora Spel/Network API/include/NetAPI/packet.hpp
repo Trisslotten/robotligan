@@ -23,7 +23,7 @@ class EXPORT Packet {
     return *this;
   }
   Packet& operator<<(PacketHeader& header) {
-    std::memcpy(&header, data_, sizeof(header));
+    std::memcpy(data_, &header, sizeof(header));
     return *this;
   }
   template <typename T>
