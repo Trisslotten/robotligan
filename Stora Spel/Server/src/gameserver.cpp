@@ -35,9 +35,16 @@ void GameServer::Update(float dt) {
     }
   }
 
+  NetAPI::Common::Packet packet;
+  packet << positions_.size();
+  for (auto& p : positions_) {
+    packet << p;
+  }
+
   NetAPI::Socket::Data data;
   data.ID = 0;
-  data.buffer = (char*)(positions_.data());
-  data.len = sizeof(glm::vec3) * positions_.size();
+  data.buffer = packet.GetRaw();
+  data.len = packet.GetPacketSize();
+
   server_.Send(data);
 }
