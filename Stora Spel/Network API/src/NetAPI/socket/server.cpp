@@ -55,7 +55,7 @@ void NetAPI::Socket::Server::SendToAll(NetAPI::Common::Packet& p) {
 }
 
 void NetAPI::Socket::Server::Send(unsigned id, const char* data, size_t len) {
-	NetAPI::Common::Packet p;
+	NetAPI::Common::Packet p(data, len);
 	NetAPI::Common::PacketHeader h;
 	h.PacketID = id;
 	p << h;
