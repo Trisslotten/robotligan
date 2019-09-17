@@ -68,7 +68,7 @@ int main(unsigned argc, char **argv) {
   // Create ball
   auto entity = registry.create();
   registry.assign<BallComponent>(entity, true, true);
-  registry.assign<PhysicsComponent>(entity, glm::vec3(1.0f, 0.0f, 0.0f));
+  registry.assign<PhysicsComponent>(entity, glm::vec3(1.0f, 0.0f, 0.0f), true, 0.0f);
   registry.assign<physics::Sphere>(entity, glm::vec3(0.0f, 0.0f, 0.0f), 1.0f);
   registry.assign<glob::ModelHandle>(entity, model_h2);
   registry.assign<TransformComponent>(entity, glm::vec3(0.f), glm::vec3(0.f), glm::vec3(1.f));
@@ -132,19 +132,19 @@ int main(unsigned argc, char **argv) {
     //                          glm::rotate(0.5f, glm::vec3(0, 1, 0)));
 
     // Render ball
-    auto view_ball =
-        registry.view<BallComponent, physics::Sphere, VelocityComponent, TransformComponent>();
-
-    glm::vec3 t;
-    for (auto entity : view_ball) {
-      auto& ref = view_ball.get<physics::Sphere>(entity);
-      auto &tra = view_ball.get<TransformComponent>(entity);
-      t = ref.center;
-      tra.position = t;
-      //glob::Submit(model_h2, glm::translate(t));
-      //glob::SubmitCube(glm::translate(t) * glm::scale(glm::vec3(1.f, 1.f, 1.f)));
-      //glob::SubmitCube(glm::scale(glm::vec3(v2, v3, v1)));
-    }
+    //auto view_ball =
+    //    registry.view<BallComponent, physics::Sphere, TransformComponent>();
+    //
+    //glm::vec3 t;
+    //for (auto entity : view_ball) {
+    //  auto& ref = view_ball.get<physics::Sphere>(entity);
+    //  auto &tra = view_ball.get<TransformComponent>(entity);
+    //  t = ref.center;
+    //  tra.position = t;
+    //  //glob::Submit(model_h2, glm::translate(t));
+    //  //glob::SubmitCube(glm::translate(t) * glm::scale(glm::vec3(1.f, 1.f, 1.f)));
+    //  //glob::SubmitCube(glm::scale(glm::vec3(v2, v3, v1)));
+    //}
     //glob::Submit(model_h3, glm::translate(glm::vec3(0)));
     updateSystems(&registry, 0.01f);
 

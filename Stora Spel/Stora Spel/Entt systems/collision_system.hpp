@@ -1,6 +1,8 @@
 #ifndef COLLISION_SYSTEM_HPP_
 #define COLLISION_SYSTEM_HPP_
 
+#include <iterator>
+
 #include <entity/registry.hpp>
 #include <glm/glm.hpp>
 
@@ -32,7 +34,7 @@ void UpdateCollisions(entt::registry& registry) {
   UpdateSphere(registry);
   UpdateOBB(registry);
   auto view_ball =
-      registry.view<BallComponent, physics::Sphere, PhysicsComponent>();
+      registry.view<BallComponent, physics::Sphere, PhysicsComponent, TransformComponent>();
   auto view_player = registry.view<physics::OBB, PhysicsComponent, TransformComponent>();
   auto view_arena = registry.view<physics::Arena>();
   auto view_projectile = registry.view<physics::Sphere, ProjectileComponent>();
@@ -92,7 +94,7 @@ void UpdateCollisions(entt::registry& registry) {
 
   // collision with arena and projectiles
   for (auto arena : view_arena) {
-    auto& arena_hitbox = view_arena.get<physics::Arena>(arena);
+    auto& arena_hitbox = view_arena.get(arena);
 	for (auto projectile : view_projectile) {
 	  auto& proj_hitbox = view_projectile.get<physics::Sphere>(projectile);
 	  auto& id = view_projectile.get<ProjectileComponent>(projectile);
@@ -127,7 +129,7 @@ void UpdateCollisions(entt::registry& registry) {
     }
 
     // Collision between player and player
-    for (auto it2 = it++; it2 != view_player.end(); ++it2) {
+    for (auto it2 = std::next(it, 1); it2 != view_player.end(); ++it2) {
       auto p2 = *it2;
       auto& player2_hitbox = view_player.get<physics::OBB>(p2);
       if (physics::Intersect(player_hitbox, player2_hitbox)) {

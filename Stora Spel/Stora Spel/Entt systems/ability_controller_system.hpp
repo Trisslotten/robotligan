@@ -4,6 +4,7 @@
 #include <position.hpp>
 #include <ability_component.hpp>
 #include <boundingboxes.hpp>
+#include <camera_component.hpp>
 #include <player_component.hpp>
 #include <physics_component.hpp>
 #include <projectile_component.hpp>
@@ -38,7 +39,7 @@ void Update(
 		//Check if the player should shoot
         if (ability_component.shoot && ability_component.shoot_cooldown <= 0.0f) {
           CreateCannonBallEntity(registry);
-          ability_component.shoot_cooldown = 10.0f;
+          ability_component.shoot_cooldown = 1.0f;
 		}
         ability_component.shoot = false;
       });
@@ -90,13 +91,15 @@ void CreateCannonBallEntity(entt::registry& registry) {
     PlayerComponent &pc = view_controller.get<PlayerComponent>(entity);
     TransformComponent &tc = view_controller.get<TransformComponent>(entity);
 
-    float speed = 500.0f;
+    float speed = 50.0f;
     auto cannonball = registry.create();
     registry.assign<PhysicsComponent>(
         cannonball, glm::vec3(cc.LookDirection() * speed), true, 0.0f);
-    registry.assign<TransformComponent>(cannonball, glm::vec3(tc.position + cc.offset), glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
-    registry.assign<physics::Sphere>(cannonball, glm::vec3(tc.position + cc.offset), 1.0f);
+    registry.assign<TransformComponent>(cannonball, glm::vec3(tc.position + cc.offset), glm::vec3(0, 0, 0), glm::vec3(.3f, .3f, .3f));
+    registry.assign<physics::Sphere>(cannonball, glm::vec3(tc.position + cc.offset), .3f);
     registry.assign<ProjectileComponent>(cannonball, CANNON_BALL);
+    registry.assign<glob::ModelHandle>(cannonball,
+                                       glob::GetModel("assets/Ball/Ball.fbx"));
   }
 }
 

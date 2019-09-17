@@ -9,11 +9,10 @@
 #include "collision.hpp"
 #include <glob/graphics.hpp>
 #include "transform_component.hpp"
-#include "velocity_component.hpp"
 #include "wireframe_component.hpp"
 
 // temp variable
-bool render_wireframe = false;
+bool render_wireframe = true;
 
 void Render(entt::registry& registry) {
   auto view_model = registry.view<glob::ModelHandle, TransformComponent>();
