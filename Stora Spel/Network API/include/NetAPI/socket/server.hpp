@@ -1,5 +1,8 @@
 #pragma warning(push)
 #pragma warning(disable : 4251)
+#ifndef SERVER_HPP_
+#define SERVER_HPP_
+
 #include <NetAPI/common.hpp>
 #include <NetAPI/socket/tcplistener.hpp>
 #include <vector>
@@ -11,8 +14,10 @@ class EXPORT Server {
   bool Update();
   void SendToAll(const char* data, size_t len);
   void SendToAll(Data& d);
+  void SendToAll(NetAPI::Common::Packet& p);
   void Send(unsigned id, const char* data, size_t len);
   void Send(Data& d);
+  void Send(NetAPI::Common::Packet& p);
   bool SocketDisconnected(Data& d) {
     return (strcmp(d.buffer, NetAPI::Common::kSocketNotConnected) == 0);
   }
@@ -42,3 +47,4 @@ class EXPORT Server {
 
 }  // namespace Socket
 }  // namespace NetAPI
+#endif // SERVER_HPP_

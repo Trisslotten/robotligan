@@ -51,7 +51,21 @@ void NetAPI::Socket::Server::SendToAll(const char* data, size_t len) {
 }
 void NetAPI::Socket::Server::SendToAll(Data& d) { datatosend_.push_back(d); }
 
+void NetAPI::Socket::Server::SendToAll(NetAPI::Common::Packet& p) {
+  datatosend_.push_back(Data());
+  datatosend_.back().buffer = p.GetRaw();
+  datatosend_.back().ID = p.GetHeader().PacketID;
+  datatosend_.back().len = p.GetPacketSize();
+}
+
 void NetAPI::Socket::Server::Send(unsigned id, const char* data, size_t len) {
   datatosend_.push_back(Data(data, len, id));
 }
 void NetAPI::Socket::Server::Send(Data& d) { datatosend_.push_back(d); }
+
+void NetAPI::Socket::Server::Send(NetAPI::Common::Packet& p) {
+  datatosend_.push_back(Data());
+  datatosend_.back().buffer = p.GetRaw();
+  datatosend_.back().ID = p.GetHeader().PacketID;
+  datatosend_.back().len = p.GetPacketSize();
+}
