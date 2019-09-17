@@ -79,11 +79,11 @@ int main(unsigned argc, char **argv) {
   double net_numframes = 0;
   double render_numframes = 0;
   Timer debugTimer;
-  double net_tickrate = 5;
+  double net_tickrate = 64;
   double net_ticktime = 1.0 / net_tickrate;
   double net_loop_accum = 0.0;
   NetAPI::Socket::TcpClient tcp_client;
-  tcp_client.Connect("127.0.0.1", 1337);
+  tcp_client.Connect("192.168.1.47", 1337);
   if (tcp_client.IsConnected()) {
     std::cout << "DEBUG: Client Connected!\n";
   } else {
@@ -104,7 +104,7 @@ int main(unsigned argc, char **argv) {
       {
         auto packet = tcp_client.Recieve();
         if (!packet.IsEmpty()) {
-          size_t arrsize = 0;
+          int arrsize = 0;
           packet >> arrsize;
           positions.resize(arrsize);
           packet.Remove(positions.data(), arrsize);
@@ -134,6 +134,7 @@ int main(unsigned argc, char **argv) {
       for (auto &p : positions) {
         std::cout << p.x << "\n";
       }
+      std::cout << "\n";
       net_numframes = 0;
       render_numframes = 0;
     }

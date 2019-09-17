@@ -20,12 +20,12 @@ void GameServer::Update(float dt) {
 
   for (short i = 0; i < server_.GetConnectedPlayers(); i++) {
     auto packet = server_[i];
-    
+
     if (!packet.IsEmpty()) {
       int actionflag = 0;
       packet >> actionflag;
 
-      glm::vec3 vel;
+      glm::vec3 vel{0};
       if ((actionflag & 1) == 1) vel += glm::vec3(1, 0, 0);
       if ((actionflag & 2) == 2) vel += glm::vec3(-1, 0, 0);
       if ((actionflag & 4) == 4) vel += glm::vec3(0, 0, -1);
@@ -33,12 +33,20 @@ void GameServer::Update(float dt) {
       if (length(vel) > 0.0001f) vel = normalize(vel);
 
       positions_[i] += 5.f * vel * dt;
+
+      // std::cout << "actionflag=" << actionflag << "\n";
     }
   }
+  for (auto& p : positions_) {
+    std::cout << p.x << "\n";
+  }
+  std::cout << "\n";
 
-  NetAPI::Common::Packet packet;
-  packet.Add(positions_.data(), positions_.size());
-  packet << positions_.size();
+  if (positions_.size() > 0) {
+    NetAPI::Common::Packet packet;
+    packet.Add(positions_.data(), positions_.size());
+    packet << (int)positions_.size();
 
-  server_.Send(packet);
+    server_.Send(packet);
+  }
 }
