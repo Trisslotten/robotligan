@@ -7,20 +7,23 @@
 #include "ball_component.hpp"
 #include "boundingboxes.hpp"
 #include "collision.hpp"
-#include <glob/graphics.hpp>
+#include "model_component.hpp"
 #include "transform_component.hpp"
 #include "wireframe_component.hpp"
 
 // temp variable
-bool render_wireframe = true;
+bool render_wireframe = false;
 
 void Render(entt::registry& registry) {
-  auto view_model = registry.view<glob::ModelHandle, TransformComponent>();
+  auto view_model = registry.view<ModelComponent, TransformComponent>();
 
   for (auto& model : view_model) {
     auto& t = view_model.get<TransformComponent>(model);
-    glob::Submit(view_model.get<glob::ModelHandle>(model),
-                 glm::translate(t.position) * glm::scale(t.scale));
+    auto& m = view_model.get<ModelComponent>(model);
+    glob::Submit(m.handle,
+                 glm::translate(t.position) *
+                     glm::rotate(-t.rotation.y, glm::vec3(0.f, 1.f, 0.f)) *
+                     glm::translate(-m.offset) * glm::scale(t.scale));
   }
 
 

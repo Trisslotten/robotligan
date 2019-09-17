@@ -15,9 +15,9 @@ struct PlayerComponent {
   int energy_regen_tick = 1;
 
   float kick_pitch = .3f;
-  float kick_reach = 1.0f;
+  float kick_reach = 2.0f;
   float kick_fov = 0.6f;
-  float kick_force = 2.0f;
+  float kick_force = 20.0f;
 };
 
 #endif  // PLAYER_COMPONENT_H_

@@ -1,10 +1,10 @@
 #ifndef ABILITY_CONTROLLER_SYSTEM_HPP_
 #define ABILITY_CONTROLLER_SYSTEM_HPP_
 
-#include <position.hpp>
 #include <ability_component.hpp>
 #include <boundingboxes.hpp>
 #include <camera_component.hpp>
+#include <model_component.hpp>
 #include <player_component.hpp>
 #include <physics_component.hpp>
 #include <projectile_component.hpp>
@@ -98,7 +98,7 @@ void CreateCannonBallEntity(entt::registry& registry) {
     registry.assign<TransformComponent>(cannonball, glm::vec3(tc.position + cc.offset), glm::vec3(0, 0, 0), glm::vec3(.3f, .3f, .3f));
     registry.assign<physics::Sphere>(cannonball, glm::vec3(tc.position + cc.offset), .3f);
     registry.assign<ProjectileComponent>(cannonball, CANNON_BALL);
-    registry.assign<glob::ModelHandle>(cannonball,
+    registry.assign<ModelComponent>(cannonball,
                                        glob::GetModel("assets/Ball/Ball.fbx"));
   }
 }

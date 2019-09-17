@@ -171,6 +171,7 @@
     <ClInclude Include="Components\ability_component.hpp" />
     <ClInclude Include="Components\ball_component.hpp" />
     <ClInclude Include="Components\camera_component.hpp" />
+    <ClInclude Include="Components\model_component.hpp" />
     <ClInclude Include="Components\player_component.hpp" />
     <ClInclude Include="Components\position.hpp" />
     <ClInclude Include="Components\physics_component.hpp" />
