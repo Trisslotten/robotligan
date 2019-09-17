@@ -17,7 +17,6 @@ bool render_wireframe = false;
 
 void Render(entt::registry& registry) {
   auto view_model = registry.view<glob::ModelHandle, TransformComponent>();
-  auto view_wireframe = registry.view<WireframeComponent, TransformComponent>();
 
   for (auto& model : view_model) {
     auto& t = view_model.get<TransformComponent>(model);
@@ -25,11 +24,28 @@ void Render(entt::registry& registry) {
                  glm::translate(t.position) * glm::scale(t.scale));
   }
 
+
+  // Render wireframes
+  auto view_wireframe = registry.view<WireframeComponent, physics::OBB>();
+  auto view_wireframe_s = registry.view<WireframeComponent, physics::Sphere, TransformComponent>();
+  auto view_wireframe_a =
+      registry.view<WireframeComponent, physics::Arena, TransformComponent>();
   if (render_wireframe) {
     for (auto& w : view_wireframe) {
       auto& wc = view_wireframe.get<WireframeComponent>(w);
-      auto& t = view_wireframe.get<TransformComponent>(w);
-      glob::SubmitCube(glm::translate(t.position) * glm::scale(wc.scale));
+      auto& o = view_wireframe.get<physics::OBB>(w);
+      glob::SubmitCube(glm::translate(o.center) * glm::scale(wc.scale));
+    }
+
+    for (auto& w : view_wireframe_s) {
+      auto& wc = view_wireframe_s.get<WireframeComponent>(w);
+      auto& o = view_wireframe_s.get<TransformComponent>(w);
+      glob::SubmitCube(glm::translate(o.position) * glm::scale(wc.scale));
+    }
+    for (auto& w : view_wireframe_a) {
+      auto& wc = view_wireframe_a.get<WireframeComponent>(w);
+      auto& o = view_wireframe_a.get<TransformComponent>(w);
+      glob::SubmitCube(glm::translate(o.position) * glm::scale(wc.scale));
     }
   }
 }

@@ -93,11 +93,18 @@ int main(unsigned argc, char **argv) {
   glm::vec3 scale = glm::vec3(.1f, .1f, .1f);
   entity = registry.create();
   registry.assign<glob::ModelHandle>(entity, model_h);
+  registry.assign<physics::OBB>(
+      entity, glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f) * scale,
+      glm::vec3(1.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f),
+       glm::vec3(0.f, 0.f, 1.f),
+      (11.223f - (-0.205f)) * scale.x / 2.f, (8.159f - (-10.316f)) * scale.y / 2.f,
+       (10.206f - (-1.196f)) * scale.z / 2.f);
   registry.assign<WireframeComponent>(
       entity,
       glm::vec3(11.223f - (-0.205f), 8.159f - (-10.316f), 10.206f - (-1.196f)) *
           0.5f * scale);
-  registry.assign<TransformComponent>(entity, glm::vec3(0.f, 0.f, 0.f),
+  registry.assign<TransformComponent>(
+      entity, glm::vec3(0.f,0.f,0.f),
                                       glm::vec3(0, 0, 0), scale);
 
 
