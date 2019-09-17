@@ -41,16 +41,17 @@ void GlobalSettings::UpdateValuesFromFile() {
       // If it is, read the string up the '=' delimiter. That is the key.
       key_str = cur_str.substr(0, cur_str.find('='));
 
-	  //Remove the '>' from the key
-      key_str.erase(0,1);
+      // Remove the '>' from the key
+      key_str.erase(0, 1);
 
-	  //Remove the part holding the key from the strong, along with the delimiter
+      // Remove the part holding the key from the strong, along with the
+      // delimiter
       cur_str.erase(0, cur_str.find('=') + 1);
 
-	  //Save the remaining string as the value
+      // Save the remaining string as the value
       val_str = cur_str;
 
-	  // Save what has been read into the map
+      // Save what has been read into the map
       this->settings_map_[key_str] = std::stof(val_str);
     }
   }
@@ -63,10 +64,8 @@ float GlobalSettings::ValueOf(std::string in_identifier) {
   if (this->settings_map_.find(in_identifier) == settings_map_.end()) {
     // If not, write error message to terminal
     // NTS: Should maybe write to a error log instead?
-    std::cout << "ERROR::"
-              << "global_settings.cpp::"
-              << "ValueOf()::"
-              << "Tried to access unavailable value '" << in_identifier << "'";
+    this->WriteError("global_settings.cpp", "ValueOf()",
+                     ("Unavailable value: " + in_identifier));
     return 0.0;
   }
 
@@ -81,7 +80,7 @@ void GlobalSettings::WriteError(std::string in_file_name,
   // FALSE:	Write to file (/util/errorlog.txt)
   if (true) {
     std::cout << "ERROR::" << in_file_name << "::" << in_function_name << "::"
-              << "'" << in_msg << "'\n";
+              << "[" << in_msg << "]\n";
     return;
   }
 

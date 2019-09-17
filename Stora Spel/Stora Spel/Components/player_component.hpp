@@ -1,21 +1,24 @@
 #ifndef PLAYER_COMPONENT_HPP_
 #define PLAYER_COMPONENT_HPP_
 
+#include "..//util/global_settings.hpp"
+
 struct PlayerComponent {
   int id = 0;
-  float walkspeed = 6.f;
-  float jump_speed = 1.0f;
+  float walkspeed = GlobalSettings::Access()->ValueOf("PLAYER_SPEED_WALK");
+  float jump_speed = GlobalSettings::Access()->ValueOf("PLAYER_SPEED_JUMP");
   bool no_clip = false;
 
-  //"Stamina"
-  int energy_max = 100;
-  int energy_current = 100;
-  int cost_jump = 10;
+  // "Stamina"
+  int energy_max = (int)GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_MAX");
+  int energy_current = (int)GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_MAX");
+  int cost_jump = (int)GlobalSettings::Access()->ValueOf("PLAYER_COST_JUMP");
 
-  float kick_pitch = .3f;
-  float kick_reach = 1.0f;
-  float kick_fov = 0.6f;
-  float kick_force = 2.0f;
+  // Kicking values
+  float kick_pitch = GlobalSettings::Access()->ValueOf("PLAYER_KICK_PITCH");
+  float kick_reach = GlobalSettings::Access()->ValueOf("PLAYER_KICK_REACH");
+  float kick_fov = GlobalSettings::Access()->ValueOf("PLAYER_KICK_FOV");
+  float kick_force = GlobalSettings::Access()->ValueOf("PLAYER_KICK_FORCE");
 };
 
 #endif  // PLAYER_COMPONENT_H_
