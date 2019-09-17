@@ -25,12 +25,10 @@ bool NetAPI::Socket::Server::Update() {
   unsigned removed = 0;
   for (short i = 0; i < connectedplayers_; i++) {
     if (clients_[i]->IsConnected()) {
-      clientdata_[i].buffer = clients_.at(i)->Recive();
-      if (this->SocketDisconnected(clientdata_[i])) {
+		clientdata_[i] = clients_[i]->Recieve();
+      if (!clients_[i]->IsConnected()) {
         clients_[i]->Disconnect();
       }
-      clientdata_[i].len = clients_.at(i)->GetLastRecvLen();
-      clientdata_[i].ID = clients_.at(i)->GetID();
     }
   }
   for (auto& d : datatosend_) {

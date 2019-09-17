@@ -29,7 +29,7 @@ class EXPORT Server {
     return true;
   }
   short GetConnectedPlayers() { return connectedplayers_; }
-  Data operator[](short ID) { return clientdata_.at(ID); }
+  NetAPI::Common::Packet& operator[](short ID) { return clientdata_.at(ID); }
   void Cleanup() {
     for (auto ptr : clients_) {
       delete ptr;
@@ -42,7 +42,7 @@ class EXPORT Server {
   short connectedplayers_ = 0;
   std::vector<TcpClient*> clients_ = std::vector<TcpClient*>();
   std::vector<Data> datatosend_;
-  std::vector<NetAPI::Socket::Data> clientdata_;
+  std::vector<NetAPI::Common::Packet> clientdata_;
 };
 
 }  // namespace Socket
