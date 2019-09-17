@@ -45,4 +45,4 @@ class EXPORT Server {
 
 }  // namespace Socket
 }  // namespace NetAPI
-#endif // SERVER_HPP_
+#endif  // SERVER_HPP_

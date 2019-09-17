@@ -4,7 +4,12 @@ bool NetAPI::Socket::Server::Setup(unsigned short port) {
   if (listener_.Bind(port)) {
     setup_ = true;
   }
-  clientdata_.resize(6);
+  clients_.resize(NetAPI::Common::kMaxPlayers);
+  for (auto& cli : clients_) {
+    cli = new TcpClient();
+  }
+  clientdata_.resize(NetAPI::Common::kMaxPlayers);
+
   return setup_;
 }
 
@@ -39,7 +44,7 @@ bool NetAPI::Socket::Server::Update() {
   NetAPI::Common::PacketHeader header;
   for (auto& d : datatosend_) {
     d >> header;
-    if (header.PacketID == EVERYONE) {
+    if (header.Reciever == EVERYONE) {
       for (auto& cli : clients_) {
         cli->Send(d);
       }

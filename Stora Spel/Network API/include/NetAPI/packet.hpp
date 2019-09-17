@@ -10,9 +10,13 @@ struct EXPORT PacketHeader {
   unsigned short Reciever = NetAPI::Socket::EVERYONE;
   unsigned PacketID = 0;
 };
+
 class EXPORT Packet {
  public:
-  Packet(size_t in_size = 512);
+  Packet();
+  Packet(const Packet& other);
+  Packet& operator=(const Packet&);
+
   Packet(const char* in_buffer, size_t in_size);
   ~Packet();
   size_t& GetPacketSize() { return size_of_data_; }
@@ -44,20 +48,20 @@ class EXPORT Packet {
   PacketHeader& GetHeader() { return p_; }
   template <typename T>
   Packet& Add(T* data, size_t size) {
-    std::memcpy(data_ + size_of_data_, data, size);
-    size_of_data_ += size;
+    std::memcpy(data_ + size_of_data_, data, sizeof(T) * size);
+    size_of_data_ += sizeof(T) * size;
     return *this;
   }
   template <typename T>
   Packet& Remove(T* data, size_t size) {
-    size_of_data_ -= size;
-    std::memcpy(data, data_ + size_of_data_, size);
+    size_of_data_ -= sizeof(T) * size;
+    std::memcpy(data, data_ + size_of_data_, sizeof(T) * size);
     return *this;
   }
 
  private:
   PacketHeader p_ = {};
-  char* data_ = {};
+  char* data_ = nullptr;
   size_t size_of_data_ = 0;
 };
 }  // namespace Common
