@@ -42,6 +42,7 @@ bool NetAPI::Socket::Server::Update() {
       clients_.at(d.ID)->Send(d.buffer, d.len);
     }
   }
+  datatosend_.clear();
   return true;
 }
 
