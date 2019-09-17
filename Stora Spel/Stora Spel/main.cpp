@@ -1,6 +1,5 @@
 #include <iostream>
 #include <entt.hpp>
-#include <glob/graphics.h>
 #include <NetAPI/networkTest.hpp>
 #include <NetAPI/packet.hpp>
 #include <NetAPI/socket/server.hpp>
