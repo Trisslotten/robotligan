@@ -79,7 +79,7 @@ void GlobalSettings::WriteError(std::string in_file_name,
   // TRUE:	Write to console
   // FALSE:	Write to file (/util/errorlog.txt)
   if (true) {
-    std::cout << "ERROR::" << in_file_name << "::" << in_function_name << "::"
+    std::cerr << "ERROR::" << in_file_name << "::" << in_function_name << "::"
               << "[" << in_msg << "]\n";
     return;
   }
@@ -91,7 +91,9 @@ void GlobalSettings::WriteError(std::string in_file_name,
   std::ofstream error_file("util/errorlog.txt");
 
   error_file.write(in_file_name.c_str(), file_name_size);
+  error_file.write("::", 2);
   error_file.write(in_function_name.c_str(), function_name_size);
+  error_file.write("::", 2);
   error_file.write(in_msg.c_str(), msg_size);
   error_file.write("\n\n", 2);
 

@@ -5,7 +5,7 @@
 
 struct PlayerComponent {
   int id = 0;
-  float walkspeed = GlobalSettings::Access()->ValueOf("PLAYER_SPEED_WALK");
+  float walkspeed = GlobalSettings::Access()->ValueOf("PLAYER_SPEeED_WALK");
   float jump_speed = GlobalSettings::Access()->ValueOf("PLAYER_SPEED_JUMP");
   bool no_clip = false;
 

@@ -14,12 +14,12 @@ class GlobalSettings {
   GlobalSettings(){};
   ~GlobalSettings(){};
 
+ public:
   // NTS:	Delete copy constructor
   //		and assignment operator
   GlobalSettings(GlobalSettings&) = delete;
   void operator=(GlobalSettings const&) = delete;
 
- public:
   static GlobalSettings* Access();
   void UpdateValuesFromFile();
   float ValueOf(std::string in_identifier);

@@ -211,6 +211,7 @@
     <None Include="shaders\testshader.vert" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="util\errorlog.txt" />
     <Text Include="util\settings.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
