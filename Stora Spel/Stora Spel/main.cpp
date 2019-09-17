@@ -74,7 +74,11 @@ int main(unsigned argc, char **argv) {
       avatar, glm::vec3(5.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.f, 0.f),
       glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
 
-  double net_tickrate = 15.0;
+
+  double net_numframes = 0;
+  double render_numframes = 0;
+  Timer debugTimer;
+  double net_tickrate = 20.0;
   double net_ticktime = 1.0 / net_tickrate;
   double net_loop_accum = 0.0;
   NetAPI::Socket::TcpClient tcp_client;
@@ -107,11 +111,10 @@ int main(unsigned argc, char **argv) {
         // inte data
 
       } else {
-        std::cout << "packet length: " << len << "\n";
+        //std::cout << "packet length: " << len << "\n";
         //std::cout << "tcp error: " << tcp_client.QuerryError() << "\n";
         memcpy(&testpos, buffer, sizeof(testpos));
-        std::cout << "\t pos: " << testpos.x << " " << testpos.y << " "
-                  << testpos.z << "\n";
+        //std::cout << "\t pos: " << testpos.x << " " << testpos.y << " " << testpos.z << "\n";
       }
       byte id = tcp_client.GetID();
 
@@ -120,8 +123,21 @@ int main(unsigned argc, char **argv) {
       if (Input::IsKeyDown(GLFW_KEY_DOWN)) vel += glm::vec3(-1, 0, 0);
       if (Input::IsKeyDown(GLFW_KEY_LEFT)) vel += glm::vec3(0, 0, -1);
       if (Input::IsKeyDown(GLFW_KEY_RIGHT)) vel += glm::vec3(0, 0, 1);
+	  if(length(vel) > 0.001f)
+		vel = normalize(vel);
       tcp_client.Send((char *)&vel, sizeof(vel));
+
+	  net_numframes++;
     }
+	render_numframes++;
+	if (debugTimer.Elapsed() > 1.0) {
+		double elapsed = debugTimer.Restart();
+		//std::cout << "Net rate:    " << net_numframes / elapsed << "\n";
+		//std::cout << "Render rate: " << render_numframes / elapsed << "\n\n";
+		net_numframes = 0;
+		render_numframes = 0;
+	}
+	
 
     updateSystems(&registry, dt);
 

@@ -8,7 +8,7 @@ int main(unsigned argc, char** argv) {
 
   Timer timer;
   double accum = 0;
-  double tickrate = 15;
+  double tickrate = 20;
   double ticktime = 1.0 / tickrate;
 
   GameServer server;

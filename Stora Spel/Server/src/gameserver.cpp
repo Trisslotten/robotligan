@@ -37,7 +37,7 @@ void GameServer::Update(float dt) {
     }
   }
 
-  testpos_ += vel * dt;
+  testpos_ += 5.f*vel * dt;
   // asd_ = 2*glm::sin(global_timer.Elapsed());
 
   std::cout << "\t pos: " << testpos_.x << " " << testpos_.y << " "
