@@ -13,9 +13,13 @@ struct EXPORT PacketHeader {
 class EXPORT Packet {
  public:
   Packet(size_t in_size = 512);
+  Packet(const char* in_buffer, size_t in_size);
   ~Packet();
   size_t& GetPacketSize() { return size_of_data_; }
-  bool IsEmpty() { return (size_of_data_ <= sizeof(p_)); }
+  bool IsEmpty() {
+    return (size_of_data_ <= sizeof(p_) ||
+            (strcmp(data_ + sizeof(p_), kNoDataAvailable) == 0));
+  }
   template <typename T>
   Packet& operator<<(T& data) {
     std::memcpy(data_ + size_of_data_, &data, sizeof(data));
