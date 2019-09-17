@@ -139,7 +139,7 @@ void Update(entt::registry& registry, float dt) {
     //std::cout << "pos: " << trans_c.position.x << " " << trans_c.position.y
     //          << " " << trans_c.position.z << "\n";
 
-	std::cout << "stam: " << player_c.energy_current << "\n";
+	//std::cout << "stam: " << player_c.energy_current << "\n";
 
     // kick ball
     if (Input::IsButtonPressed(GLFW_MOUSE_BUTTON_1)) {
@@ -150,15 +150,15 @@ void Update(entt::registry& registry, float dt) {
           registry.view<BallComponent, PhysicsComponent, TransformComponent>();
 
       for (auto entity : view_balls) {
-        PhysicsComponent ball_physics_c =
+        PhysicsComponent& ball_physics_c =
             view_balls.get<PhysicsComponent>(entity);
-        TransformComponent ball_trans_c =
+        TransformComponent& ball_trans_c =
             view_balls.get<TransformComponent>(entity);
 
         glm::vec3 player_ball_vec = ball_trans_c.position - trans_c.position;
         glm::vec3 player_ball_dir = glm::normalize(player_ball_vec);
         glm::vec3 player_look_dir = cam_c.LookDirection();
-        float dist = player_ball_vec.length();
+        float dist = length(player_ball_vec);
         float dot = glm::dot(player_look_dir, player_ball_dir);
         if (dist < player_c.kick_reach &&
             dot > player_c.kick_fov) {  // if player is close enough to ball and
@@ -172,7 +172,7 @@ void Update(entt::registry& registry, float dt) {
     /*
             NETWORK STUFF?
     */
-    cam_c.cam->SetPosition(trans_c.position + cam_c.offset);
+    cam_c.cam->SetPosition(trans_c.position + glm::rotate(cam_c.offset, -trans_c.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f)));
   };
 }
 

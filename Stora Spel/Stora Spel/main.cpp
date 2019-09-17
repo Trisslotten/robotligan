@@ -14,6 +14,7 @@
 #include "collision.hpp"
 #include "ability_component.hpp"
 #include "collision_system.hpp"
+#include "model_component.hpp"
 #include "physics_system.hpp"
 #include "player_controller_system.hpp"
 #include "print_position_system.hpp"
@@ -37,7 +38,7 @@ void init() {
 }
 
 void updateSystems(entt::registry *reg, float dt) {
-  collision_debug::Update(*reg);
+  //collision_debug::Update(*reg);
   player_controller::Update(*reg, dt);
   ability_controller::Update(*reg, dt);
  
@@ -70,7 +71,7 @@ int main(unsigned argc, char **argv) {
   registry.assign<BallComponent>(entity, true, true);
   registry.assign<PhysicsComponent>(entity, glm::vec3(1.0f, 0.0f, 0.0f), true, 0.0f);
   registry.assign<physics::Sphere>(entity, glm::vec3(0.0f, 0.0f, 0.0f), 1.0f);
-  registry.assign<glob::ModelHandle>(entity, model_h2);
+  registry.assign<ModelComponent>(entity, model_h2);
   registry.assign<TransformComponent>(entity, glm::vec3(5.f, 0.f, 0.f), glm::vec3(0.f), glm::vec3(1.f));
   registry.assign<WireframeComponent>(entity, glm::vec3(1.f));
 
@@ -81,7 +82,7 @@ int main(unsigned argc, char **argv) {
   float v2 = 10.6859;  // 13.596f;
   float v3 = 5.723f;
   registry.assign<physics::Arena>(entity, -v2, v2, -v3, v3, -v1, v1);
-  registry.assign<glob::ModelHandle>(entity, model_h3);
+  registry.assign<ModelComponent>(entity, model_h3);
   registry.assign<TransformComponent>(entity, glm::vec3(0.f), glm::vec3(0.f),
                                       glm::vec3(1.f));
   registry.assign<WireframeComponent>(entity, glm::vec3(v2, v3, v1));
@@ -90,17 +91,26 @@ int main(unsigned argc, char **argv) {
   glm::vec3 scale_character = glm::vec3(.1f, .1f, .1f);
 
   auto avatar = registry.create();  // this is the player avatar
-  registry.assign<glob::ModelHandle>(avatar, model_h);
+  registry.assign<ModelComponent>(
+      avatar, model_h,
+      glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f) *
+          scale_character);
   registry.assign<CameraComponent>(
       avatar, (Camera *)glob::GetCamera(),
-      glm::vec3(0, 1, 0));  // get the camera pointer from glob renderer
+      glm::vec3(0.38f, 0.62f, -0.06f));  // get the camera pointer from glob renderer
   registry.assign<PlayerComponent>(avatar);
   registry.assign<TransformComponent>(avatar, glm::vec3(-9.f, 4.f, 0.f),
                                       glm::vec3(0, 0, 0), scale_character);
   registry.assign<PhysicsComponent>(avatar, glm::vec3(.0f, .0f, .0f), true, 0.f);
  
-  registry.assign<physics::OBB>(    avatar, glm::vec3(5.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.f, 0.f),
-      glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
+  registry.assign<physics::OBB>(
+      avatar,
+      glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f) *
+          scale_character,
+      glm::vec3(1.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f),
+      glm::vec3(0.f, 0.f, 1.f), (11.223f - (-0.205f)) * scale_character.x / 2.f,
+      (8.159f - (-10.316f)) * scale_character.y / 2.f,
+      (10.206f - (-1.196f)) * scale_character.z / 2.f);
   registry.assign<AbilityComponent>(avatar, NULL_ABILITY, false, 0.0f, NULL_ABILITY, false, false, 0.0f);
   registry.assign<WireframeComponent>(
       avatar,
@@ -108,7 +118,10 @@ int main(unsigned argc, char **argv) {
           0.5f * scale_character);
   // opponent
   entity = registry.create();
-  registry.assign<glob::ModelHandle>(entity, model_h);
+  registry.assign<ModelComponent>(
+      entity, model_h,
+      glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f) *
+          scale_character);
   registry.assign<PhysicsComponent>(entity, glm::vec3(0), true, 0.f);
   registry.assign<physics::OBB>(
       entity, glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f) * scale_character,
@@ -131,11 +144,36 @@ int main(unsigned argc, char **argv) {
     dt = timer.Restart();
     Input::Reset();
     // tick
-    if (Input::IsKeyDown(GLFW_KEY_K)) {
+    /*if (Input::IsKeyDown(GLFW_KEY_K)) {
       auto& c = registry.get<CameraComponent>(avatar);
       c.offset.x += 0.01f;
       std::cout << "Camera: " << c.offset.x << std::endl;
     }
+    if (Input::IsKeyDown(GLFW_KEY_L)) {
+      auto &c = registry.get<CameraComponent>(avatar);
+      c.offset.x -= 0.01f;
+      std::cout << "Camera: " << c.offset.x << std::endl;
+    }
+    if (Input::IsKeyDown(GLFW_KEY_O)) {
+      auto &c = registry.get<CameraComponent>(avatar);
+      c.offset.y += 0.01f;
+      std::cout << "Camera y: " << c.offset.y << std::endl;
+    }
+    if (Input::IsKeyDown(GLFW_KEY_P)) {
+      auto &c = registry.get<CameraComponent>(avatar);
+      c.offset.y -= 0.01f;
+      std::cout << "Camera y: " << c.offset.y << std::endl;
+    }
+    if (Input::IsKeyDown(GLFW_KEY_U)) {
+      auto &c = registry.get<CameraComponent>(avatar);
+      c.offset.z += 0.01f;
+      std::cout << "Camera z: " << c.offset.z << std::endl;
+    }
+    if (Input::IsKeyDown(GLFW_KEY_I)) {
+      auto &c = registry.get<CameraComponent>(avatar);
+      c.offset.z -= 0.01f;
+      std::cout << "Camera z: " << c.offset.z << std::endl;
+    }*/
     // render
     updateSystems(&registry, dt);
 

@@ -9,6 +9,7 @@
 #include <physics_component.hpp>
 #include <projectile_component.hpp>
 #include <transform_component.hpp>
+#include "model_component.hpp"
 
 namespace ability_controller {
 
@@ -98,7 +99,7 @@ void CreateCannonBallEntity(entt::registry& registry) {
     registry.assign<TransformComponent>(cannonball, glm::vec3(tc.position + cc.offset), glm::vec3(0, 0, 0), glm::vec3(.3f, .3f, .3f));
     registry.assign<physics::Sphere>(cannonball, glm::vec3(tc.position + cc.offset), .3f);
     registry.assign<ProjectileComponent>(cannonball, CANNON_BALL);
-    registry.assign<glob::ModelHandle>(cannonball,
+    registry.assign<ModelComponent>(cannonball,
                                        glob::GetModel("assets/Ball/Ball.fbx"));
   }
 }
