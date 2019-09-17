@@ -69,6 +69,24 @@ void UpdateCollisions(entt::registry& registry) {
         //std::cout << "collision" << std::endl;
         float dot_val = glm::dot(ball_physics.velocity, normal);
         ball_physics.velocity = ball_physics.velocity - normal * dot_val * 2.f;
+
+        if (normal.x > 0) {
+          ball_transform.position.x = arena_hitbox.xmin + ball_hitbox.radius;
+        } else if (normal.x < 0) {
+          ball_transform.position.x = arena_hitbox.xmax - ball_hitbox.radius;
+        }
+
+        if (normal.y > 0) {
+          ball_transform.position.y = arena_hitbox.ymin + ball_hitbox.radius;
+        } else if (normal.y < 0) {
+          ball_transform.position.y = arena_hitbox.ymax - ball_hitbox.radius;
+        }
+
+        if (normal.z > 0) {
+          ball_transform.position.z = arena_hitbox.zmin + ball_hitbox.radius;
+        } else if (normal.z < 0) {
+          ball_transform.position.z = arena_hitbox.zmax - ball_hitbox.radius;
+        }
       } else {
         //std::cout << "no collision" << std::endl;
       }

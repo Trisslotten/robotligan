@@ -71,14 +71,14 @@ int main(unsigned argc, char **argv) {
   registry.assign<PhysicsComponent>(entity, glm::vec3(1.0f, 0.0f, 0.0f), true, 0.0f);
   registry.assign<physics::Sphere>(entity, glm::vec3(0.0f, 0.0f, 0.0f), 1.0f);
   registry.assign<glob::ModelHandle>(entity, model_h2);
-  registry.assign<TransformComponent>(entity, glm::vec3(0.f), glm::vec3(0.f), glm::vec3(1.f));
+  registry.assign<TransformComponent>(entity, glm::vec3(5.f, 0.f, 0.f), glm::vec3(0.f), glm::vec3(1.f));
   registry.assign<WireframeComponent>(entity, glm::vec3(1.f));
 
-
+  // Create the map
   entity = registry.create();
   // Scale on the hitbox for the map
   float v1 = 7.171f;
-  float v2 = 13.596f;
+  float v2 = 10.6859;  // 13.596f;
   float v3 = 5.723f;
   registry.assign<physics::Arena>(entity, -v2, v2, -v3, v3, -v1, v1);
   registry.assign<glob::ModelHandle>(entity, model_h3);
@@ -87,37 +87,42 @@ int main(unsigned argc, char **argv) {
   registry.assign<WireframeComponent>(entity, glm::vec3(v2, v3, v1));
  
 
+  glm::vec3 scale_character = glm::vec3(.1f, .1f, .1f);
 
   auto avatar = registry.create();  // this is the player avatar
+  registry.assign<glob::ModelHandle>(avatar, model_h);
   registry.assign<CameraComponent>(
       avatar, (Camera *)glob::GetCamera(),
       glm::vec3(0, 1, 0));  // get the camera pointer from glob renderer
   registry.assign<PlayerComponent>(avatar);
   registry.assign<TransformComponent>(avatar, glm::vec3(-9.f, 4.f, 0.f),
-                                      glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
-  registry.assign<PhysicsComponent>(avatar, glm::vec3(.0f, .0f, .0f));
+                                      glm::vec3(0, 0, 0), scale_character);
+  registry.assign<PhysicsComponent>(avatar, glm::vec3(.0f, .0f, .0f), true, 0.f);
  
   registry.assign<physics::OBB>(    avatar, glm::vec3(5.0f, 1.0f, 0.0f), glm::vec3(1.0f, 0.f, 0.f),
       glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
   registry.assign<AbilityComponent>(avatar, NULL_ABILITY, false, 0.0f, NULL_ABILITY, false, false, 0.0f);
+  registry.assign<WireframeComponent>(
+      avatar,
+      glm::vec3(11.223f - (-0.205f), 8.159f - (-10.316f), 10.206f - (-1.196f)) *
+          0.5f * scale_character);
   // opponent
-  glm::vec3 scale = glm::vec3(.1f, .1f, .1f);
   entity = registry.create();
   registry.assign<glob::ModelHandle>(entity, model_h);
-  
+  registry.assign<PhysicsComponent>(entity, glm::vec3(0), true, 0.f);
   registry.assign<physics::OBB>(
-      entity, glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f) * scale,
+      entity, glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f) * scale_character,
       glm::vec3(1.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f),
-       glm::vec3(0.f, 0.f, 1.f),
-      (11.223f - (-0.205f)) * scale.x / 2.f, (8.159f - (-10.316f)) * scale.y / 2.f,
-       (10.206f - (-1.196f)) * scale.z / 2.f);
+       glm::vec3(0.f, 0.f, 1.f), (11.223f - (-0.205f)) * scale_character.x / 2.f,
+      (8.159f - (-10.316f)) * scale_character.y / 2.f,
+      (10.206f - (-1.196f)) * scale_character.z / 2.f);
   registry.assign<WireframeComponent>(
       entity,
       glm::vec3(11.223f - (-0.205f), 8.159f - (-10.316f), 10.206f - (-1.196f)) *
-          0.5f * scale);
+          0.5f * scale_character);
   registry.assign<TransformComponent>(
       entity, glm::vec3(0.f,0.f,0.f),
-                                      glm::vec3(0, 0, 0), scale);
+                                      glm::vec3(0, 0, 0), scale_character);
 
 
   timer.Restart();
@@ -126,27 +131,13 @@ int main(unsigned argc, char **argv) {
     dt = timer.Restart();
     Input::Reset();
     // tick
+    if (Input::IsKeyDown(GLFW_KEY_K)) {
+      auto& c = registry.get<CameraComponent>(avatar);
+      c.offset.x += 0.01f;
+      std::cout << "Camera: " << c.offset.x << std::endl;
+    }
     // render
-
-    //glob::Submit(model_h, glm::translate(glm::vec3(0)) *
-    //                          glm::rotate(0.5f, glm::vec3(0, 1, 0)));
-
-    // Render ball
-    //auto view_ball =
-    //    registry.view<BallComponent, physics::Sphere, TransformComponent>();
-    //
-    //glm::vec3 t;
-    //for (auto entity : view_ball) {
-    //  auto& ref = view_ball.get<physics::Sphere>(entity);
-    //  auto &tra = view_ball.get<TransformComponent>(entity);
-    //  t = ref.center;
-    //  tra.position = t;
-    //  //glob::Submit(model_h2, glm::translate(t));
-    //  //glob::SubmitCube(glm::translate(t) * glm::scale(glm::vec3(1.f, 1.f, 1.f)));
-    //  //glob::SubmitCube(glm::scale(glm::vec3(v2, v3, v1)));
-    //}
-    //glob::Submit(model_h3, glm::translate(glm::vec3(0)));
-    updateSystems(&registry, 0.01f);
+    updateSystems(&registry, dt);
 
     glob::Render();
     glob::window::Update();
