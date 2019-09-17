@@ -101,21 +101,28 @@ int main(unsigned argc, char **argv) {
     net_loop_accum += dt;
     while (net_loop_accum > net_ticktime) {
       net_loop_accum -= net_ticktime;
-      auto packet = tcp_client.Recieve();
-      if (!packet.IsEmpty()) {
-        size_t arrsize = 0;
-        packet >> arrsize;
-        positions.resize(arrsize);
-        packet.Remove(positions.data(), arrsize);
+      {
+        auto packet = tcp_client.Recieve();
+        if (!packet.IsEmpty()) {
+          size_t arrsize = 0;
+          packet >> arrsize;
+          positions.resize(arrsize);
+          packet.Remove(positions.data(), arrsize);
+        }
       }
 
-      int actionflag = 0;
-      if (Input::IsKeyDown(GLFW_KEY_UP)) actionflag |= 1;
-      if (Input::IsKeyDown(GLFW_KEY_DOWN)) actionflag |= 2;
-      if (Input::IsKeyDown(GLFW_KEY_LEFT)) actionflag |= 4;
-      if (Input::IsKeyDown(GLFW_KEY_RIGHT)) actionflag |= 8;
+      {
+        NetAPI::Common::Packet packet;
+        int actionflag = 0;
+        if (Input::IsKeyDown(GLFW_KEY_UP)) actionflag |= 1;
+        if (Input::IsKeyDown(GLFW_KEY_DOWN)) actionflag |= 2;
+        if (Input::IsKeyDown(GLFW_KEY_LEFT)) actionflag |= 4;
+        if (Input::IsKeyDown(GLFW_KEY_RIGHT)) actionflag |= 8;
 
-      tcp_client.Send((char *)&actionflag, sizeof(int));
+        packet << actionflag;
+
+        tcp_client.Send(packet);
+      }
 
       net_numframes++;
     }
