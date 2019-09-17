@@ -79,7 +79,7 @@ int main(unsigned argc, char **argv) {
   double net_numframes = 0;
   double render_numframes = 0;
   Timer debugTimer;
-  double net_tickrate = 30.0;
+  double net_tickrate = 5;
   double net_ticktime = 1.0 / net_tickrate;
   double net_loop_accum = 0.0;
   NetAPI::Socket::TcpClient tcp_client;
@@ -101,26 +101,13 @@ int main(unsigned argc, char **argv) {
     net_loop_accum += dt;
     while (net_loop_accum > net_ticktime) {
       net_loop_accum -= net_ticktime;
-
-      auto buffer = tcp_client.Recive();
-      size_t len = tcp_client.GetLastRecvLen();
-
-      if (strcmp(buffer, NetAPI::Common::kNoDataAvailable) == 0 ||
-          strcmp(buffer, NetAPI::Common::kFailedToRecieve) == 0) {
-        // inte data
-
-      } else {
-        size_t phsize = sizeof(NetAPI::Common::PacketHeader);
-        size_t arrlen = 0;
-        memcpy(&arrlen, buffer + phsize, sizeof(size_t));
-        int diff = arrlen - positions.size();
-        for (int i = 0; i < diff; i++) {
-          positions.push_back(glm::vec3(0));
-        }
-        memcpy(positions.data(), buffer + phsize + sizeof(size_t),
-               sizeof(glm::vec3) * arrlen);
+      auto packet = tcp_client.Recieve();
+      if (!packet.IsEmpty()) {
+        size_t arrsize = 0;
+        packet >> arrsize;
+        positions.resize(arrsize);
+        packet.Remove(positions.data(), arrsize);
       }
-      byte id = tcp_client.GetID();
 
       int actionflag = 0;
       if (Input::IsKeyDown(GLFW_KEY_UP)) actionflag |= 1;
@@ -137,6 +124,9 @@ int main(unsigned argc, char **argv) {
       double elapsed = debugTimer.Restart();
       // std::cout << "Net rate:    " << net_numframes / elapsed << "\n";
       // std::cout << "Render rate: " << render_numframes / elapsed << "\n\n";
+      for (auto &p : positions) {
+        std::cout << p.x << "\n";
+      }
       net_numframes = 0;
       render_numframes = 0;
     }
