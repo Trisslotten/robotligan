@@ -40,13 +40,13 @@ class EXPORT TcpClient {
 
  private:
   byte ID_ = 0;
-  size_t last_buff_len_ = 0;
+  int last_buff_len_ = 0;
   timeval timeout_ = {};
   fd_set read_set_ = {};
   bool blocking_ = false;
   int error_ = 0;
   bool connected_ = false;
-  unsigned buffer_size_ = 512;
+  unsigned buffer_size_ = Common::kNumPacketBytes;
   char* rec_buffer_ = nullptr;
   SOCKET send_socket_ = INVALID_SOCKET;
 };

@@ -1,8 +1,6 @@
 #include <NetAPI/socket/tcpclient.hpp>
 #include <string>
 NetAPI::Socket::TcpClient::TcpClient() {
-  buffer_size_ = 512;
-
   rec_buffer_ = new char[buffer_size_];
   timeout_.tv_sec = 0;
   timeout_.tv_usec = 500;
