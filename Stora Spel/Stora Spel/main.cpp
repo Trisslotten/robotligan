@@ -57,8 +57,6 @@ int main(unsigned argc, char **argv) {
   registry.assign<physics::Arena>(entity, -10.f, 10.f, 0.f, 5.f, -10.f, 10.f);
   registry.assign<VelocityComponent>(entity, glm::vec3(.0f, .0f, .0f));
 
-  glob::window::Create();
-  glob::Init();
   init();  // Initialize everything
 
   glob::ModelHandle ball_h = glob::GetModel("assets/Ball/Ball.fbx");
@@ -140,6 +138,10 @@ int main(unsigned argc, char **argv) {
     }
 
     updateSystems(&registry, dt);
+
+    Camera* cam = (Camera*)glob::GetCamera();
+    cam->SetPosition(glm::vec3(-1, 30, 0));
+    cam->LookAtPoint(glm::vec3(0, 0, 0));
 
     for (const auto &p : positions) {
       glob::Submit(ball_h, p);
