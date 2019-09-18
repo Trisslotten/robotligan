@@ -7,7 +7,7 @@ namespace NetAPI {
 namespace Common {
 struct EXPORT PacketHeader {
   unsigned short PacketAction[10];
-  unsigned short Reciever = NetAPI::Socket::EVERYONE;
+  unsigned short Receiver = NetAPI::Socket::EVERYONE;
   unsigned PacketID = 0;
 };
 

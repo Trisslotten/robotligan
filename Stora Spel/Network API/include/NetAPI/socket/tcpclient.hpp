@@ -15,6 +15,8 @@ namespace Socket {
 class EXPORT TcpClient {
  public:
   TcpClient();
+  TcpClient(const TcpClient& other);
+  TcpClient& operator=(const TcpClient& other);
   ~TcpClient();
   void SetBufferSize(unsigned size);  // Unknown behaviour
   unsigned GetBufferSize() { return buffer_size_; }
