@@ -98,8 +98,8 @@ bool NetAPI::Socket::TcpListener::Bind(const unsigned short port) {
   }
   char on = 1;
   // error = setsockopt(listensocket, SOL_SOCKET, SO_REUSEADDR, &on,
-  // sizeof(on)); error = setsockopt(listensocket, IPPROTO_TCP, TCP_NODELAY, &on,
-  // sizeof(on));
+  // sizeof(on)); error = setsockopt(listensocket, IPPROTO_TCP, TCP_NODELAY,
+  // &on, sizeof(on));
   error_ = 0;
   setup_ = true;
   return setup_;
