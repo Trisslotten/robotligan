@@ -4,15 +4,14 @@
 //#include <position.h>
 #include <../util/global_settings.hpp>
 #include <ability_component.hpp>
+#include <ball_component.hpp>
 #include <boundingboxes.hpp>
 #include <camera_component.hpp>
 #include <model_component.hpp>
-#include <player_component.hpp>
 #include <physics_component.hpp>
 #include <player_component.hpp>
 #include <projectile_component.hpp>
 #include <transform_component.hpp>
-#include <ball_component.hpp>
 
 namespace ability_controller {
 
@@ -64,7 +63,7 @@ void Update(entt::registry &registry, float dt) {
             ability_component.shoot_cooldown <= 0.0f) {
           CreateCannonBallEntity(registry);
           ability_component.shoot_cooldown = 1.0f;
-		}
+        }
         ability_component.shoot = false;
       });
 }
@@ -87,9 +86,11 @@ bool TriggerAbility(entt::registry &registry, AbilityID in_a_id) {
       break;
     case MISSILE:
       CreateMissileEntity(registry);
+      return true;
       break;
     case SUPER_STRIKE:
       DoSuperStrike(registry);
+      return true;
       break;
     case SWITCH_GOALS:
       break;
@@ -112,6 +113,8 @@ void DoSuperStrike(entt::registry &registry) {
   // NTS: The logic of this function assumes that there is only one
   // entity with a PlayerComponent and that is the entity representing
   // the player on this client
+
+  GlobalSettings::Access()->WriteError("Just", "Saying", "Hai");
 
   // Get the player and some other useful components
   auto player_view =
@@ -160,7 +163,8 @@ void DoSuperStrike(entt::registry &registry) {
             camera_c.LookDirection() + glm::vec3(0, player_c.kick_pitch, 0);
 
         // Apply the force of the kick to the ball's velocity
-        physics_c_ball.velocity += kick_dir * GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_FORCE");
+        physics_c_ball.velocity += kick_dir * GlobalSettings::Access()->ValueOf(
+                                                  "ABILITY_SUPER_STRIKE_FORCE");
       }
     }
   }
@@ -179,11 +183,14 @@ void CreateCannonBallEntity(entt::registry &registry) {
     auto cannonball = registry.create();
     registry.assign<PhysicsComponent>(
         cannonball, glm::vec3(cc.LookDirection() * speed), true, 0.0f);
-    registry.assign<TransformComponent>(cannonball, glm::vec3(tc.position + cc.offset), glm::vec3(0, 0, 0), glm::vec3(.3f, .3f, .3f));
-    registry.assign<physics::Sphere>(cannonball, glm::vec3(tc.position + cc.offset), .3f);
+    registry.assign<TransformComponent>(
+        cannonball, glm::vec3(tc.position + cc.offset), glm::vec3(0, 0, 0),
+        glm::vec3(.3f, .3f, .3f));
+    registry.assign<physics::Sphere>(cannonball,
+                                     glm::vec3(tc.position + cc.offset), .3f);
     registry.assign<ProjectileComponent>(cannonball, CANNON_BALL);
     registry.assign<ModelComponent>(cannonball,
-                                       glob::GetModel("assets/Ball/Ball.fbx"));
+                                    glob::GetModel("assets/Ball/Ball.fbx"));
   }
 }
 
