@@ -133,7 +133,7 @@ void Update(entt::registry& registry, float dt) {
       ability_c.use_primary = true;
     }
     if (Input::IsKeyDown(GLFW_KEY_E)) {
-      ability_c.use_primary = true;
+      ability_c.use_secondary = true;
     }
 
     //std::cout << "pos: " << trans_c.position.x << " " << trans_c.position.y
