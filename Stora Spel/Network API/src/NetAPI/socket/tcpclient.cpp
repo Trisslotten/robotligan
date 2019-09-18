@@ -8,6 +8,20 @@ NetAPI::Socket::TcpClient::TcpClient() {
   timeout_.tv_usec = 500;
 }
 
+NetAPI::Socket::TcpClient::TcpClient(const TcpClient& other) {
+  rec_buffer_ = new char[other.buffer_size_];
+  memcpy(rec_buffer_, other.rec_buffer_, other.buffer_size_);
+  buffer_size_ = other.buffer_size_;
+  connected_ = other.connected_;
+  ID_ = other.ID_;
+  send_socket_ = other.send_socket_;
+  blocking_ = other.blocking_;
+  error_ = other.error_;
+  last_buff_len_ = other.last_buff_len_;
+  read_set_ = other.read_set_;
+  timeout_ = other.timeout_;
+}
+
 void NetAPI::Socket::TcpClient::SetBufferSize(unsigned size) {
   buffer_size_ = size;
   delete rec_buffer_;
@@ -120,7 +134,22 @@ void NetAPI::Socket::TcpClient::operator=(const SOCKET& other) {
   connected_ = true;
   send_socket_ = other;
 }
-// Potentiell memoryleak?
+NetAPI::Socket::TcpClient& NetAPI::Socket::TcpClient::operator=(
+    const TcpClient& other) {
+  rec_buffer_ = new char[other.buffer_size_];
+  memcpy(rec_buffer_, other.rec_buffer_, other.buffer_size_);
+  buffer_size_ = other.buffer_size_;
+  connected_ = other.connected_;
+  ID_ = other.ID_;
+  send_socket_ = other.send_socket_;
+  blocking_ = other.blocking_;
+  error_ = other.error_;
+  last_buff_len_ = other.last_buff_len_;
+  read_set_ = other.read_set_;
+  timeout_ = other.timeout_;
+  return *this;
+}
 NetAPI::Socket::TcpClient::~TcpClient() {
+  delete[] this->rec_buffer_;
   error_ = shutdown(send_socket_, SD_SEND);
 }

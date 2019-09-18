@@ -11,6 +11,8 @@ namespace Socket {
 class EXPORT TcpListener {
  public:
   TcpListener();
+  TcpListener(const TcpListener& other) = delete;
+  TcpListener& operator=(const TcpListener& other) = delete;
   ~TcpListener();
   bool Bind(const unsigned short port);
   bool Accept(NetAPI::Socket::TcpClient* cli);

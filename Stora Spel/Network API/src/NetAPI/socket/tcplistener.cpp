@@ -8,7 +8,7 @@ NetAPI::Socket::TcpListener::TcpListener() {
 }
 NetAPI::Socket::TcpListener::~TcpListener() {
   error_ = shutdown(listen_socket_, SD_RECEIVE);
-  delete rec_buffer_;
+  delete[] rec_buffer_;
 }
 bool NetAPI::Socket::TcpListener::Accept(NetAPI::Socket::TcpClient* cli) {
   FD_ZERO(&read_set_);
@@ -28,6 +28,7 @@ bool NetAPI::Socket::TcpListener::Accept(NetAPI::Socket::TcpClient* cli) {
   } else {
     return false;
   }
+  return true;  // Fuck off VS.
 }
 const char* NetAPI::Socket::TcpListener::Recv(SOCKET& cli) {
   FD_ZERO(&read_set_);
@@ -97,10 +98,10 @@ bool NetAPI::Socket::TcpListener::Bind(const unsigned short port) {
     return false;
   }
   char on = 1;
-  // error = setsockopt(listensocket, SOL_SOCKET, SO_REUSEADDR, &on,
-  // sizeof(on)); error = setsockopt(listensocket, IPPROTO_TCP, TCP_NODELAY, &on,
-  // sizeof(on));
-  error_ = 0;
+  error_ =
+      setsockopt(listen_socket_, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
+  error_ =
+      setsockopt(listen_socket_, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on));
   setup_ = true;
   return setup_;
 }
