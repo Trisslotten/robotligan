@@ -24,7 +24,7 @@ bool NetAPI::Socket::Server::Update() {
 
       NetAPI::Common::Packet p;
       NetAPI::Common::PacketHeader h;
-      h.Reciever = connectedplayers_;
+      h.Receiver = connectedplayers_;
       /*p << h;
        p << init;
    clients_.at(connectedplayers_)->Send(init.c_str(), init.length());
@@ -44,12 +44,12 @@ bool NetAPI::Socket::Server::Update() {
   NetAPI::Common::PacketHeader header;
   for (auto& d : datatosend_) {
     d >> header;
-    if (header.Reciever == EVERYONE) {
+    if (header.Receiver == EVERYONE) {
       for (auto& cli : clients_) {
         cli->Send(d);
       }
     } else {
-      clients_.at(header.Reciever)->Send(d);
+      clients_.at(header.Receiver)->Send(d);
     }
   }
   datatosend_.clear();
@@ -67,7 +67,7 @@ void NetAPI::Socket::Server::SendToAll(NetAPI::Common::Packet& p) {
 void NetAPI::Socket::Server::Send(unsigned id, const char* data, size_t len) {
   NetAPI::Common::Packet p(data, len);
   NetAPI::Common::PacketHeader h;
-  h.Reciever = id;
+  h.Receiver = id;
   p << h;
   Send(p);
 }
