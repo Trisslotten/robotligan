@@ -104,8 +104,10 @@ int main(unsigned argc, char **argv) {
         if (!packet.IsEmpty()) {
           int arrsize = 0;
           packet >> arrsize;
-          positions.resize(arrsize);
-          packet.Remove(positions.data(), arrsize);
+          if (arrsize < 10 && arrsize > 0) {
+            positions.resize(arrsize);
+            packet.Remove(positions.data(), arrsize);
+          }
         }
       }
 

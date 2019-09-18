@@ -18,6 +18,7 @@ class GameServer {
   entt::registry registry_;
 
   std::vector<glm::vec3> positions_;
+  std::vector<glm::vec3> vs_;
 
   Timer global_timer;
 };

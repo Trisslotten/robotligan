@@ -16,10 +16,13 @@ void GameServer::Update(float dt) {
   int diff = server_.GetConnectedPlayers() - positions_.size();
   for (int i = 0; i < diff; i++) {
     positions_.push_back(glm::vec3(0));
+    vs_.push_back(glm::vec3(0));
   }
 
   for (short i = 0; i < server_.GetConnectedPlayers(); i++) {
     auto packet = server_[i];
+
+    glm::vec3 target_vel{0};
 
     if (!packet.IsEmpty()) {
       int actionflag = 0;
@@ -32,10 +35,12 @@ void GameServer::Update(float dt) {
       if ((actionflag & 8) == 8) vel += glm::vec3(0, 0, 1);
       if (length(vel) > 0.0001f) vel = normalize(vel);
 
-      positions_[i] += 5.f * vel * dt;
-
+      target_vel = 10.f * vel;
       // std::cout << "actionflag=" << actionflag << "\n";
     }
+    float t = 0.02f;
+    vs_[i] = glm::mix(vs_[i], target_vel, 1.f - glm::pow(t, dt));
+    positions_[i] += vs_[i] * dt;
   }
   for (auto& p : positions_) {
     std::cout << p.x << "\n";
