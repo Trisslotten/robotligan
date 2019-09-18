@@ -16,8 +16,8 @@
 
 #include "Font/Font2D.hpp"
 
-#include <msdfgen/msdfgen.h>
 #include <msdfgen/msdfgen-ext.h>
+#include <msdfgen/msdfgen.h>
 
 namespace glob {
 namespace {
@@ -27,10 +27,19 @@ struct RenderItem {
   glm::mat4 transform;
 };
 
+struct TextItem {
+  Font2D font;
+  glm::vec2 pos;
+  unsigned int size;
+  std::string text;
+};
+
 ShaderProgram test_shader;
 ShaderProgram model_shader;
+ShaderProgram text_shader;
 
 GLuint triangle_vbo, triangle_vao;
+GLuint quad_vbo, quad_vao;
 
 Camera camera{
     glm::vec3(25, 5, 0), glm::vec3(0, 3, 0), 90, 16.f / 9.f, 0.1f, 100.f};
@@ -49,6 +58,7 @@ std::unordered_map<std::string, Font2DHandle> font_2D_handles;
 std::unordered_map<Font2DHandle, Font2D> fonts;
 
 std::vector<RenderItem> items_to_render;
+std::vector<TextItem> text_to_render;
 
 void DrawFullscreenQuad() {
   glBindVertexArray(triangle_vao);
@@ -67,6 +77,10 @@ void Init() {
   model_shader.add("modelshader.frag");
   model_shader.compile();
 
+  text_shader.add("text2Dshader.vert");
+  text_shader.add("text2Dshader.frag");
+  text_shader.compile();
+
   glGenVertexArrays(1, &triangle_vao);
   glBindVertexArray(triangle_vao);
   std::vector<glm::vec3> vertices{
@@ -81,6 +95,20 @@ void Init() {
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
                         (GLvoid *)0);
+
+  std::vector<glm::vec3> quad_vertices{
+      {-1, -1, 0}, {1, -1, 0}, {-1, 1, 0}, {1, 1, 0}};
+  glGenVertexArrays(1, &quad_vao);
+  glBindVertexArray(quad_vao);
+  glGenBuffers(1, &quad_vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, quad_vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * quad_vertices.size(),
+               quad_vertices.data(), GL_STATIC_DRAW);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
+                        (GLvoid *)0);
+
+  glBindVertexArray(0);
 }
 
 // H=Handle, A=Asset
@@ -118,9 +146,7 @@ ModelHandle GetModel(const std::string &filepath) {
                                       filepath);
 }
 Font2DHandle GetFont(const std::string &filepath) {
-  return GetAsset(font_2D_handles, fonts, current_font_guid,
-                                      filepath);
-	return Font2DHandle();
+  return GetAsset(font_2D_handles, fonts, current_font_guid, filepath);
 }
 /*
 TextureHandle GetTexture(const std::string &filepath) {
@@ -151,6 +177,22 @@ void Submit(ModelHandle model_h, glm::mat4 transform) {
   items_to_render.push_back(to_render);
 }
 
+void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
+            std::string text) {
+  auto find_res = fonts.find(font_h);
+  if (find_res == fonts.end()) {
+    std::cout << "ERROR graphics.cpp: could not find submitted model\n";
+    return;
+  }
+
+  TextItem to_render;
+  to_render.font = find_res->second;
+  to_render.pos = pos;
+  to_render.size = size;
+  to_render.text = text;
+  text_to_render.push_back(to_render);
+}
+
 void Render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -163,6 +205,13 @@ void Render() {
     render_item.model->Draw(model_shader);
   }
   items_to_render.clear();
-}
 
+  glBindVertexArray(quad_vao);
+  text_shader.use();
+  for (auto &text_item : text_to_render) {
+    text_item.font.Draw(text_shader, text_item.pos, text_item.size,
+                        text_item.text);
+  }
+  text_to_render.clear();
+}
 }  // namespace glob

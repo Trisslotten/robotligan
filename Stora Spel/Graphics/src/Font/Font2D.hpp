@@ -12,7 +12,11 @@ class Font2D {
  private:
   std::vector<unsigned char> font_texture_;
 
+  GLuint tex_id;
+
   std::string directory_ = "";
+
+
 
   bool is_loaded_ = false;
 
@@ -20,6 +24,10 @@ class Font2D {
                         const std::string& output_path);
 
   std::string GenerateFontDirectoryPath(const std::string* path);
+
+  msdfgen::FontHandle* font;
+
+  std::vector<msdfgen::Shape> shapes;
 
  public:
   Font2D();
@@ -29,7 +37,8 @@ class Font2D {
   bool LoadFromFile(const std::string& path);
   bool IsLoaded() { return is_loaded_; };
 
-  void Draw(ShaderProgram& shader);
+  void Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
+            std::string text);
 };
 
 }  // namespace glob

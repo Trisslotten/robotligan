@@ -27,10 +27,9 @@ int main(unsigned argc, char **argv) {
 
   glob::ModelHandle model_h =
       glob::GetModel("assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
-  glob::ModelHandle model_h2 = glob::GetModel("assets/Mech/Ball.obj");
 
   glob::Font2DHandle font_test =
-      glob::GetFont("assets/fonts/fonts/comic.ttf");
+      glob::GetFont("assets/fonts/fonts/ariblk.ttf");
 
   float time = 0.f;
   while (!glob::window::ShouldClose()) {
@@ -38,10 +37,8 @@ int main(unsigned argc, char **argv) {
     time += 1.f / 60.f;
     // render
 
-    glob::Submit(model_h, glm::translate(glm::vec3(0)) *
-                              glm::rotate(time * 0.5f, glm::vec3(0, 1, 0)));
-    glob::Submit(model_h2,
-                 glm::translate(glm::vec3(0, 9, 3.f * glm::sin(time))));
+   
+	glob::Submit(font_test, glm::vec2(100, 200), 64, "SKRIVER. !COOL!");
 
     glob::Render();
     glob::window::Update();

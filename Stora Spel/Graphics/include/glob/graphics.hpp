@@ -46,6 +46,9 @@ EXPORT TextureHandle GetTexture(const std::string& filepath);
 EXPORT void Submit(ModelHandle model_h, glm::vec3 pos);
 EXPORT void Submit(ModelHandle model_h, glm::mat4 transform);
 
+EXPORT void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
+                   std::string text);
+
 /*
  * Render all items submitted this frame
  */
