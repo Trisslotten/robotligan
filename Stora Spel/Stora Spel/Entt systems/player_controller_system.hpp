@@ -139,7 +139,7 @@ void Update(entt::registry& registry, float dt) {
     //std::cout << "pos: " << trans_c.position.x << " " << trans_c.position.y
     //          << " " << trans_c.position.z << "\n";
 
-	std::cout << "stam: " << player_c.energy_current << "\n";
+	//std::cout << "stam: " << player_c.energy_current << "\n";
 
     // kick ball
     if (Input::IsButtonPressed(GLFW_MOUSE_BUTTON_1)) {
