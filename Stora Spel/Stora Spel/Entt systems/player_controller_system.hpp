@@ -129,10 +129,10 @@ void Update(entt::registry& registry, float dt) {
     }
 
     // Ability buttons
-    if (Input::IsKeyDown(GLFW_KEY_Q)) {
+    if (Input::IsKeyPressed(GLFW_KEY_Q)) {
       ability_c.use_primary = true;
-    }
-    if (Input::IsKeyDown(GLFW_KEY_E)) {
+	}
+    if (Input::IsKeyPressed(GLFW_KEY_E)) {
       ability_c.use_secondary = true;
     }
 

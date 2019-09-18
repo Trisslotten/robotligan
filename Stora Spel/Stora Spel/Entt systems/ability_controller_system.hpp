@@ -48,9 +48,9 @@ void Update(entt::registry &registry, float dt) {
             ability_component.cooldown_remaining =
                 ability_component.cooldown_max;
           }
-          // When finished set primary ability to not activated
-          ability_component.use_primary = false;
         }
+        // When finished set primary ability to not activated
+        ability_component.use_primary = false;
 
         // Then check if secondary ability is being used
         if (ability_component.use_secondary) {
@@ -60,9 +60,9 @@ void Update(entt::registry &registry, float dt) {
             // slotted secondary ability
             ability_component.secondary_ability = NULL_ABILITY;
           }
-          // When finished set secondary ability to not activated
-          ability_component.use_secondary = false;
         }
+        // When finished set secondary ability to not activated
+        ability_component.use_secondary = false;
 
         // Check if the player should shoot
         if (ability_component.shoot &&
@@ -120,8 +120,6 @@ void DoSuperStrike(entt::registry &registry) {
   // entity with a PlayerComponent and that is the entity representing
   // the player on this client
 
-  GlobalSettings::Access()->WriteError("Just", "Saying", "Hai");
-
   // Get the player and some other useful components
   auto player_view =
       registry.view<CameraComponent, PlayerComponent, TransformComponent>();
@@ -132,21 +130,22 @@ void DoSuperStrike(entt::registry &registry) {
 
   // Loop through all player entities (should only be one)
   for (auto player_entity : player_view) {
-    CameraComponent& camera_c = player_view.get<CameraComponent>(player_entity);
-    PlayerComponent& player_c = player_view.get<PlayerComponent>(player_entity);
-    TransformComponent& trans_c_player =
+    CameraComponent &camera_c = player_view.get<CameraComponent>(player_entity);
+    PlayerComponent &player_c = player_view.get<PlayerComponent>(player_entity);
+    TransformComponent &trans_c_player =
         player_view.get<TransformComponent>(player_entity);
 
     // Loop through all ball entities
     for (auto ball_entity : ball_view) {
       // BallComponent &ball_c = ball_view.get<BallComponent>(ball_entity);
-      PhysicsComponent& physics_c_ball =
+      PhysicsComponent &physics_c_ball =
           ball_view.get<PhysicsComponent>(ball_entity);
-      TransformComponent& trans_c_ball =
+      TransformComponent &trans_c_ball =
           ball_view.get<TransformComponent>(ball_entity);
 
       // Calculate the vector from the player to the ball
-      glm::vec3 player_ball_vec = trans_c_ball.position - trans_c_ball.position;
+      glm::vec3 player_ball_vec =
+          trans_c_ball.position - trans_c_player.position;
 
       // Normalize the vector to get a directional vector
       glm::vec3 player_ball_dir = glm::normalize(player_ball_vec);
