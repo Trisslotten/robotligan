@@ -46,6 +46,16 @@ void updateSystems(entt::registry *reg, float dt) {
  
   UpdatePhysics(*reg, dt);
   UpdateCollisions(*reg);
+
+  auto view = reg->view<CameraComponent, TransformComponent>();
+  for (auto v : view) {
+    auto &cam_c = reg->get<CameraComponent>(v);
+    auto &trans_c = reg->get<TransformComponent>(v);
+    cam_c.cam->SetPosition(trans_c.position +
+                         glm::rotate(cam_c.offset, -trans_c.rotation.y,
+                                     glm::vec3(0.0f, 1.0f, 0.0f)));
+  }
+
   Render(*reg);
 }
 
@@ -75,10 +85,10 @@ int main(unsigned argc, char **argv) {
   // Create ball
   auto entity = registry.create();
   registry.assign<BallComponent>(entity, true, true);
-  registry.assign<PhysicsComponent>(entity, glm::vec3(1.0f, 0.0f, 0.0f), true, 0.0f);
+  registry.assign<PhysicsComponent>(entity, glm::vec3(0.0f, 0.0f, 0.0f), true, 0.0f);
   registry.assign<physics::Sphere>(entity, glm::vec3(0.0f, 0.0f, 0.0f), 1.0f);
   registry.assign<ModelComponent>(entity, model_h2);
-  registry.assign<TransformComponent>(entity, glm::vec3(5.f, 0.f, 0.f), glm::vec3(0.f), glm::vec3(1.f));
+  registry.assign<TransformComponent>(entity, glm::vec3(4.f, 0.f, 0.f), glm::vec3(0.f), glm::vec3(1.f));
 
   // Create the map
   entity = registry.create();
@@ -151,6 +161,7 @@ int main(unsigned argc, char **argv) {
   float dt = 0.0f;
   while (!glob::window::ShouldClose()) {
     dt = timer.Restart();
+    //std::cout << 1.0f / dt << std::endl;
     Input::Reset();
     // tick
     /*if (Input::IsKeyDown(GLFW_KEY_K)) {

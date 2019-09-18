@@ -105,27 +105,27 @@ void UpdateCollisions(entt::registry& registry) {
           ball_physics.velocity = dir * 20.0f;
           ball_physics.is_airborne = true;
           registry.destroy(projectile);
-		} else {
-          registry.destroy(projectile);
-          registry.destroy(ball_entity);
-		}
+	  	  } else {
+              registry.destroy(projectile);
+              registry.destroy(ball_entity);
+	  	  }
+	    }
 	  }
-	}
   }
 
   // collision with arena and projectiles
   for (auto arena : view_arena) {
     auto& arena_hitbox = view_arena.get(arena);
-	for (auto projectile : view_projectile) {
-	  auto& proj_hitbox = view_projectile.get<physics::Sphere>(projectile);
-	  auto& id = view_projectile.get<ProjectileComponent>(projectile);
-      glm::vec3 normal;
-      if (Intersect(arena_hitbox, proj_hitbox, &normal)) {
-        if (id.projectile_id == CANNON_BALL) {
-          registry.destroy(projectile);
-        }
+	  for (auto projectile : view_projectile) {
+	    auto& proj_hitbox = view_projectile.get<physics::Sphere>(projectile);
+	    auto& id = view_projectile.get<ProjectileComponent>(projectile);
+        glm::vec3 normal;
+        if (Intersect(arena_hitbox, proj_hitbox, &normal)) {
+          if (id.projectile_id == CANNON_BALL) {
+            registry.destroy(projectile);
+          }
+	    }
 	  }
-	}
   }
 
   // check player collision
@@ -134,6 +134,7 @@ void UpdateCollisions(entt::registry& registry) {
     auto player = *it;
     auto& player_hitbox = view_player.get<physics::OBB>(player);
     auto& physics_c = view_player.get<PhysicsComponent>(player);
+    auto& transform_c = view_player.get<TransformComponent>(player);
 
     // Collision between Player and Arena
     for (auto arena : view_arena) {
@@ -141,7 +142,6 @@ void UpdateCollisions(entt::registry& registry) {
       glm::vec3 move_vector;
       if (Intersect(a, player_hitbox, &move_vector)) {
         player_hitbox.center += move_vector;
-        auto& transform_c = view_player.get<TransformComponent>(player);
         transform_c.position = player_hitbox.center;
         if (move_vector.y > 0.0f) {
           physics_c.is_airborne = false;
@@ -154,9 +154,29 @@ void UpdateCollisions(entt::registry& registry) {
     for (auto it2 = std::next(it, 1); it2 != view_player.end(); ++it2) {
       auto p2 = *it2;
       auto& player2_hitbox = view_player.get<physics::OBB>(p2);
+      auto& physics_c2 = view_player.get<PhysicsComponent>(p2);
+      auto& transform_c2 = view_player.get<TransformComponent>(p2);
       if (physics::Intersect(player_hitbox, player2_hitbox)) {
-        player_hitbox.center += glm::vec3(1.f, 0.f, 0.f);
-        player2_hitbox.center -= glm::vec3(1.f, 0.f, 0.f);
+        glm::vec3 vel = physics_c.velocity + physics_c2.velocity;
+        player_hitbox.center += vel * 0.01f; //glm::vec3(1.f, 0.f, 0.f);
+        player2_hitbox.center -= vel * 0.01f;  // glm::vec3(1.f, 0.f, 0.f);
+
+        transform_c.position = player_hitbox.center;
+        transform_c2.position = player2_hitbox.center;
+      }
+    }
+
+    // Collision between player and projectile
+    for (auto projectile : view_projectile) {
+      auto& proj_hitbox = view_projectile.get<physics::Sphere>(projectile);
+      auto& id = view_projectile.get<ProjectileComponent>(projectile);
+      glm::vec3 normal;
+      if (Intersect(proj_hitbox, player_hitbox, &normal)) {
+        std::cout << "normal: " << normal.x << " " << normal.y << " " << normal.z
+                  << std::endl;
+        if (id.projectile_id == CANNON_BALL) {
+          registry.destroy(projectile);
+        }
       }
     }
   }
