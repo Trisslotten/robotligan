@@ -12,6 +12,7 @@
 #include <player_component.hpp>
 #include <projectile_component.hpp>
 #include <transform_component.hpp>
+#include <ball_component.hpp>
 
 namespace ability_controller {
 
