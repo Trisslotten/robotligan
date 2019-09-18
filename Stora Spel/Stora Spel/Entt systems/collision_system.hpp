@@ -27,6 +27,8 @@ void UpdateOBB(entt::registry& registry) {
     auto& hitbox = view_moveable.get<physics::OBB>(object);
     auto& transform = view_moveable.get<TransformComponent>(object);
     hitbox.center = transform.position;
+
+    // TODO: rotate hitbox
   }
 }
 
@@ -143,6 +145,7 @@ void UpdateCollisions(entt::registry& registry) {
         transform_c.position = player_hitbox.center;
         if (move_vector.y > 0.0f) {
           physics_c.is_airborne = false;
+          physics_c.velocity.y = 0.f;
         }
       }
     }

@@ -73,7 +73,6 @@ int main(unsigned argc, char **argv) {
   registry.assign<physics::Sphere>(entity, glm::vec3(0.0f, 0.0f, 0.0f), 1.0f);
   registry.assign<ModelComponent>(entity, model_h2);
   registry.assign<TransformComponent>(entity, glm::vec3(5.f, 0.f, 0.f), glm::vec3(0.f), glm::vec3(1.f));
-  registry.assign<WireframeComponent>(entity, glm::vec3(1.f));
 
   // Create the map
   entity = registry.create();
@@ -85,7 +84,6 @@ int main(unsigned argc, char **argv) {
   registry.assign<ModelComponent>(entity, model_h3);
   registry.assign<TransformComponent>(entity, glm::vec3(0.f), glm::vec3(0.f),
                                       glm::vec3(1.f));
-  registry.assign<WireframeComponent>(entity, glm::vec3(v2, v3, v1));
  
 
   glm::vec3 scale_character = glm::vec3(.1f, .1f, .1f);
@@ -112,10 +110,7 @@ int main(unsigned argc, char **argv) {
       (8.159f - (-10.316f)) * scale_character.y / 2.f,
       (10.206f - (-1.196f)) * scale_character.z / 2.f);
   registry.assign<AbilityComponent>(avatar, NULL_ABILITY, false, 0.0f, NULL_ABILITY, false, false, 0.0f);
-  registry.assign<WireframeComponent>(
-      avatar,
-      glm::vec3(11.223f - (-0.205f), 8.159f - (-10.316f), 10.206f - (-1.196f)) *
-          0.5f * scale_character);
+  
   // opponent
   entity = registry.create();
   registry.assign<ModelComponent>(
@@ -129,10 +124,6 @@ int main(unsigned argc, char **argv) {
        glm::vec3(0.f, 0.f, 1.f), (11.223f - (-0.205f)) * scale_character.x / 2.f,
       (8.159f - (-10.316f)) * scale_character.y / 2.f,
       (10.206f - (-1.196f)) * scale_character.z / 2.f);
-  registry.assign<WireframeComponent>(
-      entity,
-      glm::vec3(11.223f - (-0.205f), 8.159f - (-10.316f), 10.206f - (-1.196f)) *
-          0.5f * scale_character);
   registry.assign<TransformComponent>(
       entity, glm::vec3(0.f,0.f,0.f),
                                       glm::vec3(0, 0, 0), scale_character);
