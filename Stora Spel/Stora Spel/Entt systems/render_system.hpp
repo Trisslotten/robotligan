@@ -11,7 +11,7 @@
 #include "transform_component.hpp"
 
 // temp variable
-bool render_wireframe = true;
+bool render_wireframe = false;
 
 void Render(entt::registry& registry) {
   auto view_model = registry.view<ModelComponent, TransformComponent>();
@@ -27,17 +27,19 @@ void Render(entt::registry& registry) {
 
 
   // Render wireframes
-  auto view_wireframe_obb = registry.view<physics::OBB>();
+  auto view_wireframe_obb = registry.view<physics::OBB, TransformComponent>();
   auto view_wireframe_sphere = registry.view<physics::Sphere>();
   auto view_wireframe_arena = registry.view<physics::Arena>();
   if (render_wireframe) {
     for (auto& w : view_wireframe_obb) {
-      auto& obb = view_wireframe_obb.get(w);
-      glob::SubmitCube(glm::translate(obb.center) * glm::scale(glm::vec3(obb.extents[0],
+      auto& obb = view_wireframe_obb.get<physics::OBB>(w);
+      auto& transform = view_wireframe_obb.get<TransformComponent>(w);
+      glob::SubmitCube(glm::translate(obb.center) *
+                       glm::rotate(-transform.rotation.y, glm::vec3(0.f, 1.f, 0.f)) *
+                       glm::scale(glm::vec3(obb.extents[0],
                                                                obb.extents[1],
                                                                obb.extents[2])));
     }
-
     for (auto& w : view_wireframe_sphere) {
       auto& sphere = view_wireframe_sphere.get(w);
       glob::SubmitCube(glm::translate(sphere.center) * glm::scale(glm::vec3(sphere.radius)));

@@ -28,7 +28,10 @@ void UpdateOBB(entt::registry& registry) {
     auto& transform = view_moveable.get<TransformComponent>(object);
     hitbox.center = transform.position;
 
-    // TODO: rotate hitbox
+    // Rotate OBB
+    auto mat_rot = glm::rotate(-transform.rotation.y, glm::vec3(0.f, 1.f, 0.f));
+    hitbox.normals[0] = mat_rot * glm::vec4(1.0f, 0.f, 0.f, 0.f);
+    hitbox.normals[2] = mat_rot * glm::vec4(0.0f, 0.f, 1.f, 0.f);
   }
 }
 
@@ -55,11 +58,14 @@ void UpdateCollisions(entt::registry& registry) {
       glm::vec3 normal;
       if (Intersect(ball_hitbox, player_hitbox, &normal)) {
         //std::cout << "collision" << std::endl;
-        float dot_val = glm::dot(ball_physics.velocity, normal);
-        if (dot_val < 0)
-          ball_physics.velocity = ball_physics.velocity - normal * dot_val * 2.f;
-      } else {
-        //std::cout << "no collision" << std::endl;
+        float ball_speed = glm::length(ball_physics.velocity);
+        if (ball_speed < 7.0f) {
+          ball_physics.velocity = normal * 7.f;
+        } else {
+          float dot_val = glm::dot(ball_physics.velocity, normal);
+          if (dot_val < 0)
+            ball_physics.velocity = ball_physics.velocity - normal * dot_val * 0.8f * 2.f;
+        }
       }
     }
 
@@ -70,8 +76,20 @@ void UpdateCollisions(entt::registry& registry) {
       glm::vec3 normal;
       if (Intersect(arena_hitbox, ball_hitbox, &normal)) {
         //std::cout << "collision" << std::endl;
-        float dot_val = glm::dot(ball_physics.velocity, normal);
-        ball_physics.velocity = ball_physics.velocity - normal * dot_val * 0.8f * 2.f;
+
+        glm::vec3 temp_normal = glm::vec3(normal.x, 0.f, 0.f);
+        float dot_val = glm::dot(ball_physics.velocity, temp_normal);
+        ball_physics.velocity = ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
+
+        temp_normal = glm::vec3(0.f, normal.y, 0.f);
+        dot_val = glm::dot(ball_physics.velocity, temp_normal);
+        ball_physics.velocity =
+            ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
+
+        temp_normal = glm::vec3(0.f, 0.f, normal.z);
+        dot_val = glm::dot(ball_physics.velocity, temp_normal);
+        ball_physics.velocity =
+            ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
 
         if (normal.x > 0) {
           ball_transform.position.x = arena_hitbox.xmin + ball_hitbox.radius;
@@ -80,7 +98,12 @@ void UpdateCollisions(entt::registry& registry) {
         }
 
         if (normal.y > 0) {
+          // Ball hits the ground
           ball_transform.position.y = arena_hitbox.ymin + ball_hitbox.radius;
+          if (ball_physics.velocity.y < 3.f) {
+            ball_physics.velocity.y = 0.f;
+            //ball_physics.is_airborne = false;
+          } 
         } else if (normal.y < 0) {
           ball_transform.position.y = arena_hitbox.ymax - ball_hitbox.radius;
         }
@@ -158,6 +181,7 @@ void UpdateCollisions(entt::registry& registry) {
       auto& transform_c2 = view_player.get<TransformComponent>(p2);
       if (physics::Intersect(player_hitbox, player2_hitbox)) {
         glm::vec3 vel = physics_c.velocity + physics_c2.velocity;
+        vel.y = 0.f;
         player_hitbox.center += vel * 0.01f; //glm::vec3(1.f, 0.f, 0.f);
         player2_hitbox.center -= vel * 0.01f;  // glm::vec3(1.f, 0.f, 0.f);
 
