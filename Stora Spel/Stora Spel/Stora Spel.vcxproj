@@ -164,7 +164,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src\input.cpp" />
+    <ClCompile Include="util\global_settings.cpp" />
+    <ClCompile Include="util\input.cpp" />
     <ClCompile Include="util\timer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -184,6 +185,7 @@
     <ClInclude Include="Entt systems\player_controller_system.hpp" />
     <ClInclude Include="Entt systems\ability_controller_system.hpp" />
     <ClInclude Include="Entt systems\print_position_system.hpp" />
+    <ClInclude Include="util\global_settings.hpp" />
     <ClInclude Include="Entt systems\render_system.hpp" />
     <ClInclude Include="util\input.hpp" />
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
@@ -211,6 +213,10 @@
     <None Include="Assets\shaders\wireframe.frag" />
     <None Include="shaders\testshader.frag" />
     <None Include="shaders\testshader.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="util\errorlog.txt" />
+    <Text Include="util\settings.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
