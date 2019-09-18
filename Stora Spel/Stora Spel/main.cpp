@@ -22,11 +22,13 @@
 #include "transform_component.hpp"
 
 #include "collision_temp_debug_system.h"
-#include <GLFW/glfw3.h>
+#include <GLFW/glfw3.h> //NTS: This one must be included after certain other things
 #include "util/input.hpp"
 #include "util/meminfo.hpp"
 #include "util/timer.hpp"
 #include "util/meminfo.hpp"
+
+#include "util/global_settings.hpp"
 
 #include <thread>
 #include <chrono>
@@ -52,6 +54,10 @@ int main(unsigned argc, char **argv) {
   glob::Init();
   init();  // Initialize everything
   Timer timer;
+
+  //Tell the GlobalSettings class to do a first read from the settings file
+  //NTS: Do this in init()? Why is init not first in main()?
+  GlobalSettings::Access()->UpdateValuesFromFile();
 
   std::cout << "Hello World!*!!!111\n";
 
@@ -111,7 +117,19 @@ int main(unsigned argc, char **argv) {
       glm::vec3(0.f, 0.f, 1.f), (11.223f - (-0.205f)) * scale_character.x / 2.f,
       (8.159f - (-10.316f)) * scale_character.y / 2.f,
       (10.206f - (-1.196f)) * scale_character.z / 2.f);
-  registry.assign<AbilityComponent>(avatar, NULL_ABILITY, false, 0.0f, NULL_ABILITY, false, false, 0.0f);
+  // registry.assign<AbilityComponent>(avatar);
+  registry.assign<AbilityComponent>(
+      avatar,        // Entity
+      SUPER_STRIKE,  // Primary abiliy id
+      false,         // Use primary ability
+      GlobalSettings::Access()->ValueOf(
+          "ABILITY_SUPER_STRIKE_COOLDOWN"),  // Primary ability cooldown
+      0.0f,                                  // Remaining cooldown
+      NULL_ABILITY,                          // Secondary ability
+      false,                                 // Use secondary ability
+      false,                                 // Shoot
+      0.0f                                   // Remaining shoot cooldown
+  );
   registry.assign<WireframeComponent>(
       avatar,
       glm::vec3(11.223f - (-0.205f), 8.159f - (-10.316f), 10.206f - (-1.196f)) *
@@ -175,6 +193,16 @@ int main(unsigned argc, char **argv) {
       std::cout << "Camera z: " << c.offset.z << std::endl;
     }*/
     // render
+
+	//Check if the keys for global settings are pressed
+    if (Input::IsKeyPressed(GLFW_KEY_U)) {
+      // Update contents of GlobalSettings from file
+      GlobalSettings::Access()->UpdateValuesFromFile();
+      // Write contents of GlobalSettings to console
+      GlobalSettings::Access()->WriteMapToConsole();
+    }
+
+    
     updateSystems(&registry, dt);
 
     glob::Render();

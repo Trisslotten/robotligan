@@ -13,14 +13,15 @@ enum AbilityID {
   SUPER_STRIKE,
   SWITCH_GOALS,
   TELEPORT,
-  // Fill with more ability and passive boosts
+  // Fill with more abilities and passive boosts
   NUM_OF_ABILITY_IDS
 };
 
 struct AbilityComponent {
   AbilityID primary_ability = NULL_ABILITY;
   bool use_primary = false;
-  float cooldown = 0.0f;
+  float cooldown_max = 0.0f;
+  float cooldown_remaining = 0.0f;
 
   AbilityID secondary_ability = NULL_ABILITY;
   bool use_secondary = false;
