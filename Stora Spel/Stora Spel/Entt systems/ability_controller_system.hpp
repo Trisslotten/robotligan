@@ -109,7 +109,7 @@ void DoSuperStrike(entt::registry &registry) {
   // entity with a PlayerComponent and that is the entity representing
   // the player on this client
 
-  // Get the player and some other useful componets
+  // Get the player and some other useful components
   auto player_view =
       registry.view<CameraComponent, PlayerComponent, TransformComponent>();
 
