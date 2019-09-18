@@ -22,7 +22,7 @@ NetAPI::Socket::TcpClient::TcpClient(const TcpClient& other) {
 
 void NetAPI::Socket::TcpClient::SetBufferSize(unsigned size) {
   buffer_size_ = size;
-  delete rec_buffer_;
+  delete[] rec_buffer_;
   rec_buffer_ = new char[buffer_size_];
 }
 void NetAPI::Socket::TcpClient::FlushBuffers() {
