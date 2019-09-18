@@ -26,7 +26,10 @@ NetAPI::Common::Packet& NetAPI::Common::Packet::operator=(const Packet& other) {
 
 NetAPI::Common::Packet::Packet(const char* in_buffer, size_t in_size) {
   data_ = new char[kNumPacketBytes];
-  memcpy(data_, in_buffer, kNumPacketBytes);
+  if (in_size > 0)
+  {
+	  memcpy(data_, in_buffer, kNumPacketBytes);
+  }
   size_of_data_ = in_size;
 }
 

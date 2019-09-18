@@ -35,10 +35,14 @@ bool NetAPI::Socket::Server::Update() {
   unsigned removed = 0;
   for (short i = 0; i < connectedplayers_; i++) {
     if (clients_[i]->IsConnected()) {
-      clientdata_[i] = clients_[i]->Recieve();
       if (!clients_[i]->IsConnected()) {
         clients_[i]->Disconnect();
+        auto client = clients_[i];
+        clients_.erase(clients_.begin() + i);
+        clients_.push_back(client);
+        connectedplayers_--;
       }
+      clientdata_[i] = clients_[i]->Recieve();
     }
   }
   NetAPI::Common::PacketHeader header;

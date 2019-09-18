@@ -111,7 +111,7 @@ NetAPI::Common::Packet NetAPI::Socket::TcpClient::Recieve() {
     if (last_buff_len_ > 0) {
       return NetAPI::Common::Packet(rec_buffer_, last_buff_len_);
     }
-    if (last_buff_len_ == 0) {
+    if (last_buff_len_ == 0 || WSAGetLastError() == 10054) {
       connected_ = false;
       return NetAPI::Common::Packet(nullptr, 0);
     } else {
