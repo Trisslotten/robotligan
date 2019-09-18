@@ -44,7 +44,7 @@ bool NetAPI::Socket::Server::Update() {
   NetAPI::Common::PacketHeader header;
   for (auto& d : datatosend_) {
     d >> header;
-    if (header.Reciever == EVERYONE) {
+    if (header.Receiver == EVERYONE) {
       for (auto& cli : clients_) {
         cli->Send(d);
       }
