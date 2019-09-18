@@ -30,11 +30,17 @@ void Update(entt::registry &registry, float dt) {
         // Update cooldowns
         ability_component.cooldown_remaining -= dt;
         ability_component.shoot_cooldown -= dt;
+        if (ability_component.cooldown_remaining < 0.0f) {
+          ability_component.cooldown_remaining == 0.0f;
+        }
+        if (ability_component.shoot_cooldown < 0.0f) {
+          ability_component.shoot_cooldown == 0.0f;
+        }
 
         // First check if primary ability is being used
         // AND ability is not on cooldown
         if (ability_component.use_primary &&
-            !(ability_component.cooldown_remaining > 0)) {
+            !(ability_component.cooldown_remaining > 0.0f)) {
           // Trigger the ability
           if (TriggerAbility(registry, ability_component.primary_ability)) {
             // If ability triggered successfully set the
@@ -126,17 +132,17 @@ void DoSuperStrike(entt::registry &registry) {
 
   // Loop through all player entities (should only be one)
   for (auto player_entity : player_view) {
-    CameraComponent &camera_c = player_view.get<CameraComponent>(player_entity);
-    PlayerComponent &player_c = player_view.get<PlayerComponent>(player_entity);
-    TransformComponent &trans_c_player =
+    CameraComponent& camera_c = player_view.get<CameraComponent>(player_entity);
+    PlayerComponent& player_c = player_view.get<PlayerComponent>(player_entity);
+    TransformComponent& trans_c_player =
         player_view.get<TransformComponent>(player_entity);
 
     // Loop through all ball entities
     for (auto ball_entity : ball_view) {
       // BallComponent &ball_c = ball_view.get<BallComponent>(ball_entity);
-      PhysicsComponent &physics_c_ball =
+      PhysicsComponent& physics_c_ball =
           ball_view.get<PhysicsComponent>(ball_entity);
-      TransformComponent &trans_c_ball =
+      TransformComponent& trans_c_ball =
           ball_view.get<TransformComponent>(ball_entity);
 
       // Calculate the vector from the player to the ball
