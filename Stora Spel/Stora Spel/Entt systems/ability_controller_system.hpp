@@ -170,6 +170,7 @@ void DoSuperStrike(entt::registry &registry) {
         // Apply the force of the kick to the ball's velocity
         physics_c_ball.velocity += kick_dir * GlobalSettings::Access()->ValueOf(
                                                   "ABILITY_SUPER_STRIKE_FORCE");
+        physics_c_ball.is_airborne = true;
       }
     }
   }
