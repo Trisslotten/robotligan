@@ -20,7 +20,6 @@ class GameServer {
   std::vector<glm::vec3> positions_;
   std::vector<glm::vec3> vs_;
 
-  Timer global_timer;
 };
 
 #endif  // GAME_SERVER_HPP_

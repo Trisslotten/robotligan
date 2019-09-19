@@ -42,10 +42,6 @@ void GameServer::Update(float dt) {
     vs_[i] = glm::mix(vs_[i], target_vel, 1.f - glm::pow(t, dt));
     positions_[i] += vs_[i] * dt;
   }
-  for (auto& p : positions_) {
-    std::cout << p.x << "\n";
-  }
-  std::cout << "\n";
 
   if (positions_.size() > 0) {
     NetAPI::Common::Packet packet;
