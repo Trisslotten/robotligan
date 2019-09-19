@@ -70,8 +70,6 @@ void updateSystems(entt::registry *reg, float dt) {
 }
 
 int main(unsigned argc, char **argv) {
-  glob::window::Create();
-  glob::Init();
   init();  // Initialize everything
   Timer timer;
 
@@ -94,12 +92,6 @@ int main(unsigned argc, char **argv) {
   light = registry.create();
   registry.assign<LightComponent>(light, glm::vec3(1.f, 0.3f, 0.3f), 15.f, 0.f);
   registry.assign<TransformComponent>(light, glm::vec3(-12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
-
-
-
- 
-
-
 
   glob::Font2DHandle font_test =
       glob::GetFont("assets/fonts/fonts/comic.ttf");
@@ -239,7 +231,7 @@ void AddBallComponents(entt::registry& registry, entt::entity& entity,
   // Prepare hard-coded values
   bool ball_is_real = true;
   bool ball_is_airborne = true;
-  float ball_friction = 0.0f;
+  float ball_friction = 1.0f;
   float ball_radius = 1.0f;
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 ball_scale = glm::vec3(1.0f);
