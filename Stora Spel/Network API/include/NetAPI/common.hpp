@@ -12,6 +12,7 @@ struct EXPORT netcommands {};
 static const char* kSocketNotConnected = "!socket_not_connected!";
 static const char* kFailedToRecieve = "!FAILED_TO_RECIEVE!";
 static const char* kNoDataAvailable = "!NO_DATA_AVAILABLE!";
+static const size_t kNumPacketBytes = 512;
 constexpr short kMaxPlayers = 6;
 }  // namespace Common
 namespace Socket {
@@ -26,7 +27,7 @@ struct EXPORT Data {
     this->ID = id;
   }
 };
-constexpr byte EVERYONE = 255;
+constexpr unsigned short EVERYONE = 255;
 }  // namespace Socket
 }  // namespace NetAPI
 #endif  // !COMMON_H

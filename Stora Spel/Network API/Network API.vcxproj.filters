@@ -39,6 +39,9 @@
     <ClInclude Include="include\NetAPI\networkTest.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\NetAPI\packet.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -60,6 +63,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\NetAPI\socket\server.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\NetAPI\packet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
