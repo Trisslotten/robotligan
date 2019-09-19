@@ -52,7 +52,7 @@ bool physics::Intersect(const physics::Sphere& s1, const physics::Sphere& s2) {
 }
 
 bool physics::Intersect(const physics::Sphere& s, const physics::OBB& o,
-               glm::vec3* normal) {
+               glm::vec3* normal, float* move_distance) {
   glm::vec3 retPt = o.center;
   glm::vec3 d = s.center - o.center;
 
@@ -78,20 +78,21 @@ bool physics::Intersect(const physics::Sphere& s, const physics::OBB& o,
         dot_val = -dot_val;
         temp_normal *= -1;
       }
-      float temp = o.extents[0] - dot_val;
+      float temp = o.extents[i] - dot_val;
       if (temp < gap) {
         gap = temp;
         impact_normal = temp_normal;
       } 
     }
-
+    *move_distance = s.radius - glm::length(retPt - s.center);
     *normal = impact_normal;
   }
 
   return intersect;
 }
 
-bool physics::Intersect(const physics::OBB& o1, const physics::OBB& o2) {
+bool physics::Intersect(const physics::OBB& o1, const physics::OBB& o2,
+                        glm::vec3* normal, float* distance) {
   Corners c1 = GetCorners(o1);
   Corners c2 = GetCorners(o2);
 
@@ -106,6 +107,8 @@ bool physics::Intersect(const physics::OBB& o1, const physics::OBB& o2) {
     }
   }
 
+  glm::vec3 collision_normal(0.f);
+  float min_dist = 1000.f;
   for (int i = 0; i < test_normals.size(); ++i) {
     float min1, max1, min2, max2;
     SatTest(test_normals[i], c1, &min1, &max1);
@@ -114,43 +117,63 @@ bool physics::Intersect(const physics::OBB& o1, const physics::OBB& o2) {
     if (!Overlaps(min1, max1, min2, max2)) {
       return false;
     }
+
+    if (glm::length(test_normals[i]) > 0.f) {
+      if ((max2 - min1) / glm::length(test_normals[i]) < min_dist) {
+        min_dist = (max2 - min1) / glm::length(test_normals[i]);
+        collision_normal = test_normals[i];
+      }
+      if ((max1 - min2) / glm::length(test_normals[i]) < min_dist) {
+        min_dist = (max1 - min2) / glm::length(test_normals[i]);
+        collision_normal = -test_normals[i];
+      }
+    }
   }
+
+  *normal = collision_normal;
+  *distance = min_dist;
 
   return true;
 }
 
 bool physics::Intersect(const physics::Arena& a, const physics::Sphere& s,
                glm::vec3* normal) {
+  bool intersect = false;
+  glm::vec3 n = glm::vec3(0.f);
   if (s.center.x + s.radius >= a.xmax) {
-    *normal = glm::vec3(-1.f, 0.f, 0.f);
-    return true;
+    n += glm::vec3(-1.f, 0.f, 0.f);
+    intersect = true;
   }
   if (s.center.x - s.radius <= a.xmin) {
-    *normal = glm::vec3(1.f, 0.f, 0.f);
-    return true;
+    n += glm::vec3(1.f, 0.f, 0.f);
+    intersect = true;
   }
   if (s.center.y + s.radius >= a.ymax) {
-    *normal = glm::vec3(0.f, -1.f, 0.f);
-    return true;
+    n += glm::vec3(0.f, -1.f, 0.f);
+    intersect = true;
   }
   if (s.center.y - s.radius <= a.ymin) {
-    *normal = glm::vec3(0.f, 1.f, 0.f);
-    return true;
+    n += glm::vec3(0.f, 1.f, 0.f);
+    intersect = true;
   }
   if (s.center.z + s.radius >= a.zmax) {
-    *normal = glm::vec3(0.f, 0.f, -1.f);
-    return true;
+    n += glm::vec3(0.f, 0.f, -1.f);
+    intersect = true;
   }
   if (s.center.z - s.radius <= a.zmin) {
-    *normal = glm::vec3(0.f, 0.f, 1.f);
-    return true;
+    n += glm::vec3(0.f, 0.f, 1.f);
+    intersect = true;
   }
 
-  return false;
+  if (intersect) {
+    *normal = n; 
+  }
+
+  return intersect;
 }
 
 bool physics::Intersect(const physics::Arena& a, const physics::OBB& o,
-                        glm::vec3* pos) {
+                        glm::vec3* move_vector) {
   Corners c = GetCorners(o);
   glm::vec3 move = {};
 
@@ -169,7 +192,7 @@ bool physics::Intersect(const physics::Arena& a, const physics::OBB& o,
       move.z = a.zmin - c.corners[i].z;
   }
 
-  *pos = o.center + move;
+  *move_vector = move;
 
   return move.x || move.y || move.z;
  }
