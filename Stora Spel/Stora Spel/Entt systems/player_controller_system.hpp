@@ -42,7 +42,7 @@ void Update(entt::registry& registry, float dt) {
     }
     // Caputre keyboard input and apply velocity
 
-    glm::vec3 final_velocity = physics_c.velocity;  //(0, 0, 0);
+    glm::vec3 final_velocity = glm::vec3(0.f, physics_c.velocity.y, 0.f);  //(0, 0, 0);
     glm::vec3 accum_velocity = glm::vec3(0.f);
 
     // base movement direction on camera orientation.
@@ -69,16 +69,16 @@ void Update(entt::registry& registry, float dt) {
 
     if (true){//abs(accum_velocity.length()) < player_c.walkspeed * 4) {
       if (Input::IsKeyDown(GLFW_KEY_W)) {
-        accum_velocity += frwd * player_c.walkspeed * dt;
+        accum_velocity += frwd * player_c.walkspeed;
       }
       if (Input::IsKeyDown(GLFW_KEY_S)) {
-        accum_velocity -= frwd * player_c.walkspeed * dt;
+        accum_velocity -= frwd * player_c.walkspeed;
       }
       if (Input::IsKeyDown(GLFW_KEY_D)) {
-        accum_velocity += right * player_c.walkspeed * dt;
+        accum_velocity += right * player_c.walkspeed;
       }
       if (Input::IsKeyDown(GLFW_KEY_A)) {
-        accum_velocity -= right * player_c.walkspeed * dt;
+        accum_velocity -= right * player_c.walkspeed;
       }
 
       if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT) && player_c.energy_current > player_c.cost_sprint) {
@@ -129,11 +129,11 @@ void Update(entt::registry& registry, float dt) {
     }
 
     // Ability buttons
-    if (Input::IsKeyDown(GLFW_KEY_Q)) {
+    if (Input::IsKeyPressed(GLFW_KEY_Q)) {
       ability_c.use_primary = true;
-    }
-    if (Input::IsKeyDown(GLFW_KEY_E)) {
-      ability_c.use_primary = true;
+	}
+    if (Input::IsKeyPressed(GLFW_KEY_E)) {
+      ability_c.use_secondary = true;
     }
 
     //std::cout << "pos: " << trans_c.position.x << " " << trans_c.position.y

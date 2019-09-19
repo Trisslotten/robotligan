@@ -22,11 +22,13 @@
 #include "transform_component.hpp"
 
 #include "collision_temp_debug_system.h"
-#include <GLFW/glfw3.h>
+#include <GLFW/glfw3.h> //NTS: This one must be included after certain other things
 #include "util/input.hpp"
 #include "util/meminfo.hpp"
 #include "util/timer.hpp"
 #include "util/meminfo.hpp"
+
+#include "util/global_settings.hpp"
 
 #include <thread>
 #include <chrono>
@@ -44,6 +46,16 @@ void updateSystems(entt::registry *reg, float dt) {
  
   UpdatePhysics(*reg, dt);
   UpdateCollisions(*reg);
+
+  auto view = reg->view<CameraComponent, TransformComponent>();
+  for (auto v : view) {
+    auto &cam_c = reg->get<CameraComponent>(v);
+    auto &trans_c = reg->get<TransformComponent>(v);
+    cam_c.cam->SetPosition(trans_c.position +
+                         glm::rotate(cam_c.offset, -trans_c.rotation.y,
+                                     glm::vec3(0.0f, 1.0f, 0.0f)));
+  }
+
   Render(*reg);
 }
 
@@ -52,6 +64,10 @@ int main(unsigned argc, char **argv) {
   glob::Init();
   init();  // Initialize everything
   Timer timer;
+
+  //Tell the GlobalSettings class to do a first read from the settings file
+  //NTS: Do this in init()? Why is init not first in main()?
+  GlobalSettings::Access()->UpdateValuesFromFile();
 
   std::cout << "Hello World!*!!!111\n";
 
@@ -69,23 +85,23 @@ int main(unsigned argc, char **argv) {
   // Create ball
   auto entity = registry.create();
   registry.assign<BallComponent>(entity, true, true);
-  registry.assign<PhysicsComponent>(entity, glm::vec3(1.0f, 0.0f, 0.0f), true, 0.0f);
+  registry.assign<PhysicsComponent>(entity, glm::vec3(0.0f, 0.0f, 0.0f), true, 2.f);
   registry.assign<physics::Sphere>(entity, glm::vec3(0.0f, 0.0f, 0.0f), 1.0f);
   registry.assign<ModelComponent>(entity, model_h2);
-  registry.assign<TransformComponent>(entity, glm::vec3(5.f, 0.f, 0.f), glm::vec3(0.f), glm::vec3(1.f));
-  registry.assign<WireframeComponent>(entity, glm::vec3(1.f));
+  registry.assign<TransformComponent>(entity, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f), glm::vec3(1.f));
+  auto ball = entity;
 
   // Create the map
   entity = registry.create();
   // Scale on the hitbox for the map
-  float v1 = 7.171f;
-  float v2 = 10.6859;  // 13.596f;
-  float v3 = 5.723f;
+  glm::vec3 scale_arena(1.872f);
+  float v1 = 7.171f * scale_arena.z;
+  float v2 = 10.6859 * scale_arena.x;  // 13.596f;
+  float v3 = 5.723f * scale_arena.y;
   registry.assign<physics::Arena>(entity, -v2, v2, -v3, v3, -v1, v1);
   registry.assign<ModelComponent>(entity, model_h3);
   registry.assign<TransformComponent>(entity, glm::vec3(0.f), glm::vec3(0.f),
-                                      glm::vec3(1.f));
-  registry.assign<WireframeComponent>(entity, glm::vec3(v2, v3, v1));
+                                      scale_arena);
  
 
   glm::vec3 scale_character = glm::vec3(.1f, .1f, .1f);
@@ -99,7 +115,7 @@ int main(unsigned argc, char **argv) {
       avatar, (Camera *)glob::GetCamera(),
       glm::vec3(0.38f, 0.62f, -0.06f));  // get the camera pointer from glob renderer
   registry.assign<PlayerComponent>(avatar);
-  registry.assign<TransformComponent>(avatar, glm::vec3(-9.f, 4.f, 0.f),
+  registry.assign<TransformComponent>(avatar, glm::vec3(-4.f, -10.f, 0.f),
                                       glm::vec3(0, 0, 0), scale_character);
   registry.assign<PhysicsComponent>(avatar, glm::vec3(.0f, .0f, .0f), true, 0.f);
  
@@ -111,11 +127,20 @@ int main(unsigned argc, char **argv) {
       glm::vec3(0.f, 0.f, 1.f), (11.223f - (-0.205f)) * scale_character.x / 2.f,
       (8.159f - (-10.316f)) * scale_character.y / 2.f,
       (10.206f - (-1.196f)) * scale_character.z / 2.f);
-  registry.assign<AbilityComponent>(avatar, NULL_ABILITY, false, 0.0f, NULL_ABILITY, false, false, 0.0f);
-  registry.assign<WireframeComponent>(
-      avatar,
-      glm::vec3(11.223f - (-0.205f), 8.159f - (-10.316f), 10.206f - (-1.196f)) *
-          0.5f * scale_character);
+  // registry.assign<AbilityComponent>(avatar);
+  registry.assign<AbilityComponent>(
+      avatar,        // Entity
+      SUPER_STRIKE,  // Primary abiliy id
+      false,         // Use primary ability
+      GlobalSettings::Access()->ValueOf(
+          "ABILITY_SUPER_STRIKE_COOLDOWN"),  // Primary ability cooldown
+      0.0f,                                  // Remaining cooldown
+      NULL_ABILITY,                          // Secondary ability
+      false,                                 // Use secondary ability
+      false,                                 // Shoot
+      0.0f                                   // Remaining shoot cooldown
+  );
+  
   // opponent
   entity = registry.create();
   registry.assign<ModelComponent>(
@@ -129,12 +154,8 @@ int main(unsigned argc, char **argv) {
        glm::vec3(0.f, 0.f, 1.f), (11.223f - (-0.205f)) * scale_character.x / 2.f,
       (8.159f - (-10.316f)) * scale_character.y / 2.f,
       (10.206f - (-1.196f)) * scale_character.z / 2.f);
-  registry.assign<WireframeComponent>(
-      entity,
-      glm::vec3(11.223f - (-0.205f), 8.159f - (-10.316f), 10.206f - (-1.196f)) *
-          0.5f * scale_character);
   registry.assign<TransformComponent>(
-      entity, glm::vec3(0.f,0.f,0.f),
+      entity, glm::vec3(4.f,-10.f,0.f),
                                       glm::vec3(0, 0, 0), scale_character);
 
 
@@ -142,39 +163,54 @@ int main(unsigned argc, char **argv) {
   float dt = 0.0f;
   while (!glob::window::ShouldClose()) {
     dt = timer.Restart();
+    //std::cout << 1.0f / dt << std::endl;
     Input::Reset();
     // tick
-    /*if (Input::IsKeyDown(GLFW_KEY_K)) {
-      auto& c = registry.get<CameraComponent>(avatar);
-      c.offset.x += 0.01f;
-      std::cout << "Camera: " << c.offset.x << std::endl;
-    }
-    if (Input::IsKeyDown(GLFW_KEY_L)) {
-      auto &c = registry.get<CameraComponent>(avatar);
-      c.offset.x -= 0.01f;
-      std::cout << "Camera: " << c.offset.x << std::endl;
-    }
-    if (Input::IsKeyDown(GLFW_KEY_O)) {
-      auto &c = registry.get<CameraComponent>(avatar);
-      c.offset.y += 0.01f;
-      std::cout << "Camera y: " << c.offset.y << std::endl;
-    }
-    if (Input::IsKeyDown(GLFW_KEY_P)) {
-      auto &c = registry.get<CameraComponent>(avatar);
-      c.offset.y -= 0.01f;
-      std::cout << "Camera y: " << c.offset.y << std::endl;
-    }
-    if (Input::IsKeyDown(GLFW_KEY_U)) {
-      auto &c = registry.get<CameraComponent>(avatar);
-      c.offset.z += 0.01f;
-      std::cout << "Camera z: " << c.offset.z << std::endl;
-    }
-    if (Input::IsKeyDown(GLFW_KEY_I)) {
-      auto &c = registry.get<CameraComponent>(avatar);
-      c.offset.z -= 0.01f;
-      std::cout << "Camera z: " << c.offset.z << std::endl;
-    }*/
+    //if (Input::IsKeyDown(GLFW_KEY_K)) {
+    //  //auto& c = registry.get<CameraComponent>(avatar);
+    //  //c.offset.x += 0.01f;
+    //  //std::cout << "Camera: " << c.offset.x << std::endl;
+    //  registry.get<PhysicsComponent>(ball).velocity.x += 10;
+    //  std::cout << registry.get<PhysicsComponent>(ball).velocity.x << std::endl;
+    //}
+    //if (Input::IsKeyDown(GLFW_KEY_L)) {
+    //  //auto &c = registry.get<CameraComponent>(avatar);
+    //  //c.offset.x -= 0.01f;
+    //  //std::cout << "Camera: " << c.offset.x << std::endl;
+    //  registry.get<PhysicsComponent>(ball).is_airborne = false;
+    //  registry.get<TransformComponent>(ball).position.y += 0.1f;
+    //}
+    //if (Input::IsKeyDown(GLFW_KEY_O)) {
+    //  auto &c = registry.get<CameraComponent>(avatar);
+    //  c.offset.y += 0.01f;
+    //  std::cout << "Camera y: " << c.offset.y << std::endl;
+    //}
+    //if (Input::IsKeyDown(GLFW_KEY_P)) {
+    //  auto &c = registry.get<CameraComponent>(avatar);
+    //  c.offset.y -= 0.01f;
+    //  std::cout << "Camera y: " << c.offset.y << std::endl;
+    //}
+    //if (Input::IsKeyDown(GLFW_KEY_U)) {
+    //  auto &c = registry.get<CameraComponent>(avatar);
+    //  c.offset.z += 0.01f;
+    //  std::cout << "Camera z: " << c.offset.z << std::endl;
+    //}
+    //if (Input::IsKeyDown(GLFW_KEY_I)) {
+    //  auto &c = registry.get<CameraComponent>(avatar);
+    //  c.offset.z -= 0.01f;
+    //  std::cout << "Camera z: " << c.offset.z << std::endl;
+    //}
     // render
+
+	//Check if the keys for global settings are pressed
+    if (Input::IsKeyPressed(GLFW_KEY_U)) {
+      // Update contents of GlobalSettings from file
+      GlobalSettings::Access()->UpdateValuesFromFile();
+      // Write contents of GlobalSettings to console
+      GlobalSettings::Access()->WriteMapToConsole();
+    }
+
+    
     updateSystems(&registry, dt);
 
     glob::Render();

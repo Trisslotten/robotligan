@@ -9,7 +9,6 @@
 #include "collision.hpp"
 #include "model_component.hpp"
 #include "transform_component.hpp"
-#include "wireframe_component.hpp"
 
 // temp variable
 bool render_wireframe = false;
@@ -28,26 +27,26 @@ void Render(entt::registry& registry) {
 
 
   // Render wireframes
-  auto view_wireframe = registry.view<WireframeComponent, physics::OBB>();
-  auto view_wireframe_s = registry.view<WireframeComponent, physics::Sphere, TransformComponent>();
-  auto view_wireframe_a =
-      registry.view<WireframeComponent, physics::Arena, TransformComponent>();
+  auto view_wireframe_obb = registry.view<physics::OBB, TransformComponent>();
+  auto view_wireframe_sphere = registry.view<physics::Sphere>();
+  auto view_wireframe_arena = registry.view<physics::Arena>();
   if (render_wireframe) {
-    for (auto& w : view_wireframe) {
-      auto& wc = view_wireframe.get<WireframeComponent>(w);
-      auto& o = view_wireframe.get<physics::OBB>(w);
-      glob::SubmitCube(glm::translate(o.center) * glm::scale(wc.scale));
+    for (auto& w : view_wireframe_obb) {
+      auto& obb = view_wireframe_obb.get<physics::OBB>(w);
+      auto& transform = view_wireframe_obb.get<TransformComponent>(w);
+      glob::SubmitCube(glm::translate(obb.center) *
+                       glm::rotate(-transform.rotation.y, glm::vec3(0.f, 1.f, 0.f)) *
+                       glm::scale(glm::vec3(obb.extents[0],
+                                                               obb.extents[1],
+                                                               obb.extents[2])));
     }
-
-    for (auto& w : view_wireframe_s) {
-      auto& wc = view_wireframe_s.get<WireframeComponent>(w);
-      auto& o = view_wireframe_s.get<TransformComponent>(w);
-      glob::SubmitCube(glm::translate(o.position) * glm::scale(wc.scale));
+    for (auto& w : view_wireframe_sphere) {
+      auto& sphere = view_wireframe_sphere.get(w);
+      glob::SubmitCube(glm::translate(sphere.center) * glm::scale(glm::vec3(sphere.radius)));
     }
-    for (auto& w : view_wireframe_a) {
-      auto& wc = view_wireframe_a.get<WireframeComponent>(w);
-      auto& o = view_wireframe_a.get<TransformComponent>(w);
-      glob::SubmitCube(glm::translate(o.position) * glm::scale(wc.scale));
+    for (auto& w : view_wireframe_arena) {
+      auto& arena = view_wireframe_arena.get(w);
+      glob::SubmitCube(glm::scale(glm::vec3(arena.xmax-arena.xmin, arena.ymax-arena.ymin, arena.zmax-arena.zmin) * 0.5f));
     }
   }
 }

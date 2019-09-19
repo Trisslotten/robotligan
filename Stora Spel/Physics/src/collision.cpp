@@ -78,7 +78,7 @@ bool physics::Intersect(const physics::Sphere& s, const physics::OBB& o,
         dot_val = -dot_val;
         temp_normal *= -1;
       }
-      float temp = o.extents[0] - dot_val;
+      float temp = o.extents[i] - dot_val;
       if (temp < gap) {
         gap = temp;
         impact_normal = temp_normal;
@@ -149,7 +149,7 @@ bool physics::Intersect(const physics::Arena& a, const physics::Sphere& s,
   }
 
   if (intersect) {
-    *normal = glm::normalize(n); 
+    *normal = n; 
   }
 
   return intersect;
