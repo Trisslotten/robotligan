@@ -52,7 +52,7 @@ bool physics::Intersect(const physics::Sphere& s1, const physics::Sphere& s2) {
 }
 
 bool physics::Intersect(const physics::Sphere& s, const physics::OBB& o,
-               glm::vec3* normal) {
+               glm::vec3* normal, float* move_distance) {
   glm::vec3 retPt = o.center;
   glm::vec3 d = s.center - o.center;
 
@@ -84,14 +84,15 @@ bool physics::Intersect(const physics::Sphere& s, const physics::OBB& o,
         impact_normal = temp_normal;
       } 
     }
-
+    *move_distance = s.radius - glm::length(retPt - s.center);
     *normal = impact_normal;
   }
 
   return intersect;
 }
 
-bool physics::Intersect(const physics::OBB& o1, const physics::OBB& o2) {
+bool physics::Intersect(const physics::OBB& o1, const physics::OBB& o2,
+                        glm::vec3* normal, float* distance) {
   Corners c1 = GetCorners(o1);
   Corners c2 = GetCorners(o2);
 
@@ -106,6 +107,8 @@ bool physics::Intersect(const physics::OBB& o1, const physics::OBB& o2) {
     }
   }
 
+  glm::vec3 collision_normal(0.f);
+  float min_dist = 1000.f;
   for (int i = 0; i < test_normals.size(); ++i) {
     float min1, max1, min2, max2;
     SatTest(test_normals[i], c1, &min1, &max1);
@@ -114,7 +117,21 @@ bool physics::Intersect(const physics::OBB& o1, const physics::OBB& o2) {
     if (!Overlaps(min1, max1, min2, max2)) {
       return false;
     }
+
+    if (glm::length(test_normals[i]) > 0.f) {
+      if ((max2 - min1) / glm::length(test_normals[i]) < min_dist) {
+        min_dist = (max2 - min1) / glm::length(test_normals[i]);
+        collision_normal = test_normals[i];
+      }
+      if ((max1 - min2) / glm::length(test_normals[i]) < min_dist) {
+        min_dist = (max1 - min2) / glm::length(test_normals[i]);
+        collision_normal = -test_normals[i];
+      }
+    }
   }
+
+  *normal = collision_normal;
+  *distance = min_dist;
 
   return true;
 }

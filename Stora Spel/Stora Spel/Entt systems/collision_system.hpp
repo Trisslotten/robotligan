@@ -54,13 +54,17 @@ void UpdateCollisions(entt::registry& registry) {
     // Collision between ball and players
     for (auto player : view_player) {
       auto& player_hitbox = view_player.get<physics::OBB>(player);
+      auto& player_physics = view_player.get<PhysicsComponent>(player);
 
       glm::vec3 normal;
-      if (Intersect(ball_hitbox, player_hitbox, &normal)) {
+      float move_distance;
+      if (Intersect(ball_hitbox, player_hitbox, &normal, &move_distance)) {
         //std::cout << "collision" << std::endl;
+        ball_transform.position += normal * move_distance;
         float ball_speed = glm::length(ball_physics.velocity);
-        if (ball_speed < 7.0f) {
-          ball_physics.velocity = normal * 7.f;
+        float player_speed = glm::length(player_physics.velocity);
+        if (ball_speed < player_speed) {
+          ball_physics.velocity = normal * (glm::dot(player_physics.velocity, normal) + 1.f);
         } else {
           float dot_val = glm::dot(ball_physics.velocity, normal);
           if (dot_val < 0)
@@ -76,6 +80,12 @@ void UpdateCollisions(entt::registry& registry) {
       glm::vec3 normal;
       if (Intersect(arena_hitbox, ball_hitbox, &normal)) {
         //std::cout << "collision" << std::endl;
+
+        // Temp code to not collide with empty goal
+        //auto& pos = ball_transform.position;
+        //if (pos.y < -1.58 && pos.z > -6.823 && pos.z < 6.823 &&
+        //    abs(pos.x) > 10 * 1.872f)
+        //  continue;
 
         glm::vec3 temp_normal = glm::vec3(normal.x, 0.f, 0.f);
         float dot_val = glm::dot(ball_physics.velocity, temp_normal);
@@ -102,7 +112,7 @@ void UpdateCollisions(entt::registry& registry) {
           ball_transform.position.y = arena_hitbox.ymin + ball_hitbox.radius;
           if (ball_physics.velocity.y < 3.f) {
             ball_physics.velocity.y = 0.f;
-            //ball_physics.is_airborne = false;
+            ball_physics.is_airborne = false;
           } 
         } else if (normal.y < 0) {
           ball_transform.position.y = arena_hitbox.ymax - ball_hitbox.radius;
@@ -179,11 +189,21 @@ void UpdateCollisions(entt::registry& registry) {
       auto& player2_hitbox = view_player.get<physics::OBB>(p2);
       auto& physics_c2 = view_player.get<PhysicsComponent>(p2);
       auto& transform_c2 = view_player.get<TransformComponent>(p2);
-      if (physics::Intersect(player_hitbox, player2_hitbox)) {
+
+      glm::vec3 collision_normal;
+      float distance;
+      if (physics::Intersect(player_hitbox, player2_hitbox, &collision_normal, &distance)) {
+        player2_hitbox.center += -collision_normal * distance;
+        if (glm::dot(glm::vec3(0.f, 1.f, 0.f), collision_normal) < 0.f) {
+          physics_c2.velocity.y = 0.f;
+        }
+        //std::cout << "normal: " << collision_normal.x << " "
+        //          << collision_normal.y << " " << collision_normal.z << " " << distance
+        //          << std::endl;
         glm::vec3 vel = physics_c.velocity + physics_c2.velocity;
         vel.y = 0.f;
-        player_hitbox.center += vel * 0.01f; //glm::vec3(1.f, 0.f, 0.f);
-        player2_hitbox.center -= vel * 0.01f;  // glm::vec3(1.f, 0.f, 0.f);
+        //player_hitbox.center += vel * 0.01f; //glm::vec3(1.f, 0.f, 0.f);
+        //player2_hitbox.center -= vel * 0.01f;  // glm::vec3(1.f, 0.f, 0.f);
 
         transform_c.position = player_hitbox.center;
         transform_c2.position = player2_hitbox.center;
@@ -195,7 +215,8 @@ void UpdateCollisions(entt::registry& registry) {
       auto& proj_hitbox = view_projectile.get<physics::Sphere>(projectile);
       auto& id = view_projectile.get<ProjectileComponent>(projectile);
       glm::vec3 normal;
-      if (Intersect(proj_hitbox, player_hitbox, &normal)) {
+      float dummy;
+      if (Intersect(proj_hitbox, player_hitbox, &normal, &dummy)) {
         std::cout << "normal: " << normal.x << " " << normal.y << " " << normal.z
                   << std::endl;
         if (id.projectile_id == CANNON_BALL) {

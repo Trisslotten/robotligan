@@ -69,18 +69,19 @@ void Update(entt::registry& registry, float dt) {
 
     if (true){//abs(accum_velocity.length()) < player_c.walkspeed * 4) {
       if (Input::IsKeyDown(GLFW_KEY_W)) {
-        accum_velocity += frwd * player_c.walkspeed;
+        accum_velocity += frwd;
       }
       if (Input::IsKeyDown(GLFW_KEY_S)) {
-        accum_velocity -= frwd * player_c.walkspeed;
+        accum_velocity -= frwd;
       }
       if (Input::IsKeyDown(GLFW_KEY_D)) {
-        accum_velocity += right * player_c.walkspeed;
+        accum_velocity += right;
       }
       if (Input::IsKeyDown(GLFW_KEY_A)) {
-        accum_velocity -= right * player_c.walkspeed;
+        accum_velocity -= right;
       }
-
+      if (glm::length(accum_velocity) > 0.f)
+        accum_velocity = glm::normalize(accum_velocity) * player_c.walkspeed;
       if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT) && player_c.energy_current > player_c.cost_sprint) {
         accum_velocity *= 2.f;
         player_c.energy_current -= player_c.cost_sprint;
@@ -165,6 +166,7 @@ void Update(entt::registry& registry, float dt) {
                                         // looking at it
           // perform kick
           ball_physics_c.velocity += kick_dir * player_c.kick_force;
+          ball_physics_c.is_airborne = true;
         }
       }
     }
