@@ -18,11 +18,10 @@ class EXPORT TcpClient {
   TcpClient(const TcpClient& other);
   TcpClient& operator=(const TcpClient& other);
   ~TcpClient();
-  void SetBufferSize(unsigned size);  // Unknown behaviour
+  void SetBufferSize(unsigned size);
   unsigned GetBufferSize() { return buffer_size_; }
-  void FlushBuffers();  // Unknown behaviour
+  void FlushBuffers();
   bool Connect(const char* addr, unsigned short port);
-  int bytes = 1;
   bool Send(const char* data, size_t length);
   bool Send(NetAPI::Common::Packet& p);
   const char* Recive();
