@@ -1,5 +1,8 @@
 #pragma warning(push)
 #pragma warning(disable : 4251)
+#ifndef SERVER_HPP_
+#define SERVER_HPP_
+
 #include <NetAPI/common.hpp>
 #include <NetAPI/socket/tcplistener.hpp>
 #include <vector>
@@ -10,9 +13,9 @@ class EXPORT Server {
   bool Setup(unsigned short port);
   bool Update();
   void SendToAll(const char* data, size_t len);
-  void SendToAll(Data& d);
+  void SendToAll(NetAPI::Common::Packet& p);
   void Send(unsigned id, const char* data, size_t len);
-  void Send(Data& d);
+  void Send(NetAPI::Common::Packet& p);
   bool SocketDisconnected(Data& d) {
     return (strcmp(d.buffer, NetAPI::Common::kSocketNotConnected) == 0);
   }
@@ -24,7 +27,7 @@ class EXPORT Server {
     return true;
   }
   short GetConnectedPlayers() { return connectedplayers_; }
-  Data operator[](short ID) { return clientdata_.at(ID); }
+  NetAPI::Common::Packet& operator[](short ID) { return clientdata_.at(ID); }
   void Cleanup() {
     for (auto ptr : clients_) {
       delete ptr;
@@ -36,9 +39,10 @@ class EXPORT Server {
   bool setup_ = false;
   short connectedplayers_ = 0;
   std::vector<TcpClient*> clients_ = std::vector<TcpClient*>();
-  std::vector<Data> datatosend_;
-  std::vector<NetAPI::Socket::Data> clientdata_;
+  std::vector<NetAPI::Common::Packet> datatosend_;
+  std::vector<NetAPI::Common::Packet> clientdata_;
 };
 
 }  // namespace Socket
 }  // namespace NetAPI
+#endif  // SERVER_HPP_

@@ -1,16 +1,28 @@
 #include <NetAPI/socket/tcpclient.hpp>
 #include <string>
 NetAPI::Socket::TcpClient::TcpClient() {
-  buffer_size_ = 512;
-
   rec_buffer_ = new char[buffer_size_];
   timeout_.tv_sec = 0;
   timeout_.tv_usec = 500;
 }
 
+NetAPI::Socket::TcpClient::TcpClient(const TcpClient& other) {
+  rec_buffer_ = new char[other.buffer_size_];
+  memcpy(rec_buffer_, other.rec_buffer_, other.buffer_size_);
+  buffer_size_ = other.buffer_size_;
+  connected_ = other.connected_;
+  ID_ = other.ID_;
+  send_socket_ = other.send_socket_;
+  blocking_ = other.blocking_;
+  error_ = other.error_;
+  last_buff_len_ = other.last_buff_len_;
+  read_set_ = other.read_set_;
+  timeout_ = other.timeout_;
+}
+
 void NetAPI::Socket::TcpClient::SetBufferSize(unsigned size) {
   buffer_size_ = size;
-  delete rec_buffer_;
+  delete[] rec_buffer_;
   rec_buffer_ = new char[buffer_size_];
 }
 void NetAPI::Socket::TcpClient::FlushBuffers() {
@@ -60,6 +72,14 @@ bool NetAPI::Socket::TcpClient::Send(const char* data, size_t length) {
   }
   return true;
 }
+bool NetAPI::Socket::TcpClient::Send(NetAPI::Common::Packet& p) {
+  error_ = send(send_socket_, p.GetRaw(), (int)p.GetPacketSize(), 0);
+  if (error_ == SOCKET_ERROR) {
+    error_ = WSAGetLastError();
+    return false;
+  }
+  return true;
+}
 const char* NetAPI::Socket::TcpClient::Recive() {
   // Implement blocking? meeh
   int bytes = 1;
@@ -82,6 +102,26 @@ const char* NetAPI::Socket::TcpClient::Recive() {
     return NetAPI::Common::kNoDataAvailable;
   }
 }
+NetAPI::Common::Packet NetAPI::Socket::TcpClient::Recieve() {
+  int bytes = 1;
+  FD_ZERO(&read_set_);
+  FD_SET(send_socket_, &read_set_);
+  if (select(send_socket_, &read_set_, NULL, NULL, &timeout_) == 1) {
+    last_buff_len_ = recv(send_socket_, rec_buffer_, buffer_size_, 0);
+    if (last_buff_len_ > 0) {
+      return NetAPI::Common::Packet(rec_buffer_, last_buff_len_);
+    }
+    if (last_buff_len_ == 0 || WSAGetLastError() == 10054) {
+      connected_ = false;
+      return NetAPI::Common::Packet(nullptr, 0);
+    } else {
+      error_ = WSAGetLastError();
+      return NetAPI::Common::Packet(nullptr, 0);
+    }
+  } else {
+    return NetAPI::Common::Packet(rec_buffer_, last_buff_len_);
+  }
+}
 void NetAPI::Socket::TcpClient::Disconnect() {
   if (connected_ && send_socket_ != INVALID_SOCKET) {
     connected_ = false;
@@ -92,7 +132,22 @@ void NetAPI::Socket::TcpClient::operator=(const SOCKET& other) {
   connected_ = true;
   send_socket_ = other;
 }
-// Potentiell memoryleak?
+NetAPI::Socket::TcpClient& NetAPI::Socket::TcpClient::operator=(
+    const TcpClient& other) {
+  rec_buffer_ = new char[other.buffer_size_];
+  memcpy(rec_buffer_, other.rec_buffer_, other.buffer_size_);
+  buffer_size_ = other.buffer_size_;
+  connected_ = other.connected_;
+  ID_ = other.ID_;
+  send_socket_ = other.send_socket_;
+  blocking_ = other.blocking_;
+  error_ = other.error_;
+  last_buff_len_ = other.last_buff_len_;
+  read_set_ = other.read_set_;
+  timeout_ = other.timeout_;
+  return *this;
+}
 NetAPI::Socket::TcpClient::~TcpClient() {
+  delete[] this->rec_buffer_;
   error_ = shutdown(send_socket_, SD_SEND);
 }

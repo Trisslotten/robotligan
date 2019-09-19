@@ -1,16 +1,18 @@
 #define WIN32_LEAN_AND_MEAN
-#ifndef TCPLISTENER_H
-#define TCPLISTENER_H
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <windows.h>
+#ifndef TCPLISTENER_HPP_
+#define TCPLISTENER_HPP_
 #include <NetAPI/common.hpp>
 #include <NetAPI/socket/tcpclient.hpp>
+#include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 namespace NetAPI {
 namespace Socket {
 class EXPORT TcpListener {
  public:
   TcpListener();
+  TcpListener(const TcpListener& other) = delete;
+  TcpListener& operator=(const TcpListener& other) = delete;
   ~TcpListener();
   bool Bind(const unsigned short port);
   bool Accept(NetAPI::Socket::TcpClient* cli);
