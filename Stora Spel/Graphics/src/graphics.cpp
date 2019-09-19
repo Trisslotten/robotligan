@@ -28,7 +28,7 @@ struct RenderItem {
 };
 
 struct TextItem {
-  Font2D font;
+  Font2D *font;
   glm::vec2 pos;
   unsigned int size;
   std::string text;
@@ -50,6 +50,8 @@ ShaderProgram wireframe_shader;
 GLuint triangle_vbo, triangle_vao;
 GLuint cube_vbo, cube_vao;
 GLuint quad_vbo, quad_vao;
+
+float num_frames = 0;
 
 Camera camera{
     glm::vec3(25, 5, 0), glm::vec3(0, 3, 0), 90, 16.f / 9.f, 0.1f, 100.f};
@@ -255,7 +257,7 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
   }
 
   TextItem to_render;
-  to_render.font = find_res->second;
+  to_render.font = &find_res->second;
   to_render.pos = pos;
   to_render.size = size;
   to_render.text = text;
@@ -282,6 +284,7 @@ void Render() {
   model_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
 
   model_shader.uniform("cam_transform", cam_transform);
+  model_shader.uniform("num_frames", num_frames);
   for (auto &render_item : items_to_render) {
     model_shader.uniform("model_transform", render_item.transform);
     render_item.model->Draw(model_shader);
@@ -290,17 +293,18 @@ void Render() {
   // render wireframe cubes
   for (auto &m : cubes) DrawCube(m);
 
-  lights_to_render.clear();
-  items_to_render.clear();
-
   glBindVertexArray(quad_vao);
   text_shader.use();
   for (auto &text_item : text_to_render) {
-    text_item.font.Draw(text_shader, text_item.pos, text_item.size,
+    text_item.font->Draw(text_shader, text_item.pos, text_item.size,
                         text_item.text, text_item.color);
   }
+  lights_to_render.clear();
+  items_to_render.clear();
   text_to_render.clear();
   cubes.clear();
+
+  num_frames++;
 }
 
 void* GetCamera() { return (void*)&camera; }

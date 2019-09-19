@@ -21,6 +21,8 @@ class Font2D {
  private:
   std::vector<unsigned char> font_texture_;
 
+  std::vector<double> advances_;
+
   GLuint tex_id;
 
   std::string directory_ = "";
