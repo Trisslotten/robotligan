@@ -39,9 +39,6 @@
     <ClInclude Include="include\glob\graphics.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\2D\text_renderer.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="external\include\msdfgen\msdfgen.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -87,9 +84,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Model\model.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\2D\text_renderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\tinyxml2.cpp">

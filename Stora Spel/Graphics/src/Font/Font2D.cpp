@@ -7,8 +7,8 @@
 #include <msdfgen/ext/import-font.h>
 
 #include <direct.h>
-#include <lodepng.hpp>
 #include <stdlib.h>
+#include <lodepng.hpp>
 
 #include "Font2D.hpp"
 
@@ -63,7 +63,7 @@ void glob::Font2D::GenerateMsdfFont(const std::string& font_path,
 
       for (int i = 0; i < num_chars; i++) {
         if (loadGlyph(shape, font, start_char + i)) {
-          //shape.normalize();
+          // shape.normalize();
           shapes.push_back(shape);
           double l = 0, r = 0, t = 0, b = 0;
           shape.bounds(l, b, r, t);
@@ -109,9 +109,9 @@ void glob::Font2D::GenerateMsdfFont(const std::string& font_path,
       texture_width_ = width_ * side_dim_;
       texture_height_ = height_ * side_dim_;
 
-      //destroyFont(font);
+      // destroyFont(font);
     }
-    //deinitializeFreetype(ft);
+    // deinitializeFreetype(ft);
   }
 }
 
@@ -206,24 +206,23 @@ void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
 
     FT_Face face = font->face;
 
-	FT_Set_Char_Size(face, 32, 32, 1280, 720);
+    FT_Set_Char_Size(face, 32, 32, 1280, 720);
 
-	if (FT_Error Error = FT_Load_Char(face, cur, FT_LOAD_RENDER)) {
-      std::cout << "Failed to load aaaaaaaaaaGlyph: " << cur
-                << " Error: " << Error << "\n";
+    if (FT_Error Error = FT_Load_Char(face, cur, FT_LOAD_RENDER)) {
+      std::cout << "Failed to load Glyph: " << cur << " Error: " << Error
+                << "\n";
       continue;
     }
 
-   // FT_Load_Char(face, (FT_ULong)cur, FT_LOAD_RENDER);
+    // FT_Load_Char(face, (FT_ULong)cur, FT_LOAD_RENDER);
     // double kerning = 0;
     // if (i + 1 < len) msdfgen::getKerning(kerning, font, cur, chars[i + 1]);
 
-	double berit = face->glyph->bitmap_left;
+    double berit = face->glyph->bitmap_left;
 
     // shader.uniform("character", (GLint)cur);
     shader.uniform("character", cur);
-    shader.uniform("t_pos",
-                   pos + glm::vec2(offset_accum + berit, 0));
+    shader.uniform("t_pos", pos + glm::vec2(offset_accum + berit, 0));
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     // std::cout << "Char: " << (char)cur << " " << l << ", " << r << "\n";
@@ -236,9 +235,9 @@ void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
       offset_accum += size / 3;
     } else {
       double r = 0;
-      //r= face->glyph->advance.x;
+      // r= face->glyph->advance.x;
       r = (face->glyph->advance.x >> 6);
-      offset_accum += r*.03*double(size);
+      offset_accum += r * .03 * double(size);
     }
     // std::cout << offset_accum << "\n";
   }
