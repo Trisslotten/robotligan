@@ -207,6 +207,8 @@
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />
     <None Include="assets\shaders\modelshader.vert" />
+    <None Include="Assets\shaders\text2Dshader.frag" />
+    <None Include="Assets\shaders\text2Dshader.vert" />
     <None Include="Assets\shaders\wireframe.frag" />
     <None Include="shaders\testshader.frag" />
     <None Include="shaders\testshader.vert" />

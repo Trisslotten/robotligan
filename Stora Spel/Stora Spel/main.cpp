@@ -122,7 +122,14 @@ int main(unsigned argc, char **argv) {
       entity, glm::vec3(0.f,0.f,0.f),
                                       glm::vec3(0, 0, 0), scale);
 
+  glob::ModelHandle model_h =
+      glob::GetModel("assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
 
+  glob::Font2DHandle font_test =
+      glob::GetFont("assets/fonts/fonts/comic.ttf");
+  glob::Font2DHandle font_test2 = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+
+  float time = 0.f;
   timer.Restart();
   float dt = 0.0f;
   while (!glob::window::ShouldClose()) {
@@ -150,6 +157,10 @@ int main(unsigned argc, char **argv) {
     }
     //glob::Submit(model_h3, glm::translate(glm::vec3(0)));
     updateSystems(&registry, 0.01f);
+   
+	glob::Submit(font_test, glm::vec2(100, 200), 73, "Det här är Comic Sans MS jahoo!", glm::vec4(1,1,1,1));
+    glob::Submit(font_test, glm::vec2(101,198), 72,
+                 "Det här är Comic Sans MS jahoo!", glm::vec4(0,1,0,1));
 
     glob::Render();
     glob::window::Update();
