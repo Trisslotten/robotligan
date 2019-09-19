@@ -51,7 +51,7 @@ std::unordered_map<TextureHandle, Texture> textures;
 */
 
 ModelHandle current_model_guid = 1;
-ModelHandle current_font_guid = 1;
+Font2DHandle current_font_guid = 1;
 std::unordered_map<std::string, ModelHandle> model_handles;
 std::unordered_map<ModelHandle, Model> models;
 std::unordered_map<std::string, Font2DHandle> font_2D_handles;
@@ -121,7 +121,7 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
   auto item = handles.find(filepath);
   if (item == handles.end()) {
     std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";
-    A &asset = assets[current_model_guid];
+    A &asset = assets[guid];
     asset.LoadFromFile(filepath);
     if (asset.IsLoaded()) {
       handles[filepath] = guid;
@@ -146,7 +146,7 @@ ModelHandle GetModel(const std::string &filepath) {
                                       filepath);
 }
 Font2DHandle GetFont(const std::string &filepath) {
-  return GetAsset(font_2D_handles, fonts, current_font_guid, filepath);
+  return GetAsset<Font2DHandle, Font2D>(font_2D_handles, fonts, current_font_guid, filepath);
 }
 /*
 TextureHandle GetTexture(const std::string &filepath) {
@@ -181,7 +181,7 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
             std::string text) {
   auto find_res = fonts.find(font_h);
   if (find_res == fonts.end()) {
-    std::cout << "ERROR graphics.cpp: could not find submitted model\n";
+    std::cout << "ERROR graphics.cpp: could not find submitted font! \n";
     return;
   }
 

@@ -29,7 +29,8 @@ int main(unsigned argc, char **argv) {
       glob::GetModel("assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
 
   glob::Font2DHandle font_test =
-      glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+      glob::GetFont("assets/fonts/fonts/comic.ttf");
+  glob::Font2DHandle font_test2 = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
 
   float time = 0.f;
   while (!glob::window::ShouldClose()) {
@@ -38,7 +39,9 @@ int main(unsigned argc, char **argv) {
     // render
 
    
-	glob::Submit(font_test, glm::vec2(100, 200), 64, "SKRIVER. !COOL!");
+	glob::Submit(font_test, glm::vec2(100, 200), 72, "Det här är Comic Sans MS jahoo!");
+    glob::Submit(font_test2, glm::vec2(300,350), 36,
+                 "Det här är Arial Black, PÅ ETT ANNAT STÄLLE!");
 
     glob::Render();
     glob::window::Update();

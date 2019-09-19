@@ -3,10 +3,19 @@
 
 #include <msdfgen/msdfgen-ext.h>
 #include <msdfgen/msdfgen.h>
-#include <string>
 #include <shader.hpp>
+#include <string>
+#include <ft2build.h>
+#include FT_FREETYPE_H
+
+class msdfgen::FontHandle {
+ public:
+  FT_Face face;
+};
 
 namespace glob {
+
+
 
 class Font2D {
  private:
@@ -16,14 +25,23 @@ class Font2D {
 
   std::string directory_ = "";
 
+  unsigned int width_ = 32;
+  unsigned int height_ = 32;
+  unsigned int side_dim_ = 16;
 
+  unsigned int texture_width_ = 32;
+  unsigned int texture_height_ = 32;
 
   bool is_loaded_ = false;
+
+  void GenerateMsdfShapes(const std::string& font_path);
 
   void GenerateMsdfFont(const std::string& font_path,
                         const std::string& output_path);
 
   std::string GenerateFontDirectoryPath(const std::string* path);
+
+  void CreateTexture();
 
   msdfgen::FontHandle* font;
 
