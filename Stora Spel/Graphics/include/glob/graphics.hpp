@@ -47,7 +47,7 @@ EXPORT void Submit(ModelHandle model_h, glm::vec3 pos);
 EXPORT void Submit(ModelHandle model_h, glm::mat4 transform);
 
 EXPORT void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
-                   std::string text);
+                   std::string text, glm::vec4 color = glm::vec4(1,1,1,1));
 
 /*
  * Render all items submitted this frame

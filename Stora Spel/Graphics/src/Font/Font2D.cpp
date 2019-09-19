@@ -182,15 +182,15 @@ bool glob::Font2D::LoadFromFile(const std::string& path) {
 }
 
 void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
-                        std::string text) {
+                        std::string text, glm::vec4 color) {
   const char* chars = text.c_str();
   unsigned int len = text.length();
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tex_id);
-  shader.uniform("pxRange", 2.5f);
+  shader.uniform("pxRange", 1.4f);
   shader.uniform("bgColor", glm::vec4(0, 0, 0, 0));
-  shader.uniform("fgColor", glm::vec4(0, 1, 0, 1));
+  shader.uniform("fgColor", color);
   shader.uniform("msdf", 0);
   shader.uniform("screen_dims", glm::vec2(1280, 720));
   shader.uniform("t_pos", pos);
@@ -209,7 +209,7 @@ void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
 	FT_Set_Char_Size(face, 32, 32, 1280, 720);
 
 	if (FT_Error Error = FT_Load_Char(face, cur, FT_LOAD_RENDER)) {
-      std::cout << "Failed to load Glyph: " << cur
+      std::cout << "Failed to load aaaaaaaaaaGlyph: " << cur
                 << " Error: " << Error << "\n";
       continue;
     }

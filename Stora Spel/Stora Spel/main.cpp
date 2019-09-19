@@ -39,9 +39,9 @@ int main(unsigned argc, char **argv) {
     // render
 
    
-	glob::Submit(font_test, glm::vec2(100, 200), 72, "Det här är Comic Sans MS jahoo!");
-    glob::Submit(font_test2, glm::vec2(300,350), 36,
-                 "Det här är Arial Black, PÅ ETT ANNAT STÄLLE!");
+	glob::Submit(font_test, glm::vec2(100, 200), 73, "Det här är Comic Sans MS jahoo!", glm::vec4(1,1,1,1));
+    glob::Submit(font_test, glm::vec2(101,198), 72,
+                 "Det här är Comic Sans MS jahoo!", glm::vec4(0,1,0,1));
 
     glob::Render();
     glob::window::Update();
