@@ -23,10 +23,15 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
     temp_vertex.position = vector_vertices;
     // Process texture
     
+    int tex_coord_index = 0;
+    // TODO: not use this hack
+    if (mesh->mTextureCoords[1]) {
+      tex_coord_index = 1;
+    }
     if (mesh->mTextureCoords[0]) {
       glm::vec2 vector_texture;
-      vector_texture.x = mesh->mTextureCoords[0][i].x;
-      vector_texture.y = mesh->mTextureCoords[0][i].y;
+      vector_texture.x = mesh->mTextureCoords[tex_coord_index][i].x;
+      vector_texture.y = mesh->mTextureCoords[tex_coord_index][i].y;
       temp_vertex.texture = vector_texture;
     } else {
       temp_vertex.texture = glm::vec2(0.0f, 0.0f);
