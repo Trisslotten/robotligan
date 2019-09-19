@@ -45,8 +45,8 @@ void updateSystems(entt::registry *reg, float dt) {
 }
 
 int main(unsigned argc, char **argv) {
-  glob::window::Create();
-  glob::Init();
+ // glob::window::Create();
+  //glob::Init();
   init();  // Initialize everything
   Timer timer;
 
@@ -122,8 +122,6 @@ int main(unsigned argc, char **argv) {
       entity, glm::vec3(0.f,0.f,0.f),
                                       glm::vec3(0, 0, 0), scale);
 
-  glob::ModelHandle model_h =
-      glob::GetModel("assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
 
   glob::Font2DHandle font_test =
       glob::GetFont("assets/fonts/fonts/comic.ttf");
@@ -155,12 +153,12 @@ int main(unsigned argc, char **argv) {
       //glob::SubmitCube(glm::translate(t) * glm::scale(glm::vec3(1.f, 1.f, 1.f)));
       //glob::SubmitCube(glm::scale(glm::vec3(v2, v3, v1)));
     }
-    //glob::Submit(model_h3, glm::translate(glm::vec3(0)));
+    glob::Submit(model_h3, glm::translate(glm::vec3(0)));
     updateSystems(&registry, 0.01f);
    
 	glob::Submit(font_test, glm::vec2(100, 200), 73, "Det här är Comic Sans MS jahoo!", glm::vec4(1,1,1,1));
     glob::Submit(font_test, glm::vec2(101,198), 72,
-                 "Det här är Comic Sans MS jahoo!", glm::vec4(0,1,0,1));
+                "Det här är Comic Sans MS jahoo!", glm::vec4(0,1,0,1));
 
     glob::Render();
     glob::window::Update();
