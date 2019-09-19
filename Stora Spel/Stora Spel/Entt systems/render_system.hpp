@@ -9,8 +9,6 @@
 #include "collision.hpp"
 #include "model_component.hpp"
 #include "transform_component.hpp"
-#include "velocity_component.hpp"
-#include "wireframe_component.hpp"
 #include "light_component.hpp"
 
 // temp variable
