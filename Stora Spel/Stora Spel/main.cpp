@@ -86,6 +86,26 @@ int main(unsigned argc, char **argv) {
   };
   CreateEntities(registry, start_positions, 3);
 
+  //Create light
+  auto light = registry.create();
+  registry.assign<LightComponent>(light, glm::vec3(0.3f, 0.3f, 1.0f), 15.f, 0.2f);
+  registry.assign<TransformComponent>(light, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
+
+  light = registry.create();
+  registry.assign<LightComponent>(light, glm::vec3(1.f, 0.3f, 0.3f), 15.f, 0.f);
+  registry.assign<TransformComponent>(light, glm::vec3(-12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
+
+
+
+ 
+
+
+
+  glob::Font2DHandle font_test =
+      glob::GetFont("assets/fonts/fonts/comic.ttf");
+  glob::Font2DHandle font_test2 = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+
+  float time = 0.f;
   timer.Restart();
   float dt = 0.0f;
   while (!glob::window::ShouldClose()) {
@@ -143,8 +163,22 @@ int main(unsigned argc, char **argv) {
       ResetEntities(registry, start_positions, 3);
     }
 
-    
+    glm::vec3 t;
+    for (auto entity : view_ball) {
+      auto& ref = view_ball.get<physics::Sphere>(entity);
+      auto &tra = view_ball.get<TransformComponent>(entity);
+      t = ref.center;
+      tra.position = t;
+      //glob::Submit(model_h2, glm::translate(t));
+      //glob::SubmitCube(glm::translate(t) * glm::scale(glm::vec3(1.f, 1.f, 1.f)));
+      //glob::SubmitCube(glm::scale(glm::vec3(v2, v3, v1)));
+    }
+    //glob::Submit(model_h3, glm::translate(glm::vec3(0)));
     updateSystems(&registry, dt);
+   
+	glob::Submit(font_test, glm::vec2(100, 200), 73, "Det här är Comic Sans MS jahoo!", glm::vec4(1,1,1,1));
+    glob::Submit(font_test, glm::vec2(101,198), 72,
+                 "Det här är Comic Sans MS jahoo!", glm::vec4(0,1,0,1));
 
     glob::Render();
     glob::window::Update();

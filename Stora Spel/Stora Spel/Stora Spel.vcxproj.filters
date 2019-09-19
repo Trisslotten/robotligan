@@ -57,6 +57,8 @@
     <None Include="shaders\testshader.frag" />
     <None Include="assets\shaders\modelshader.vert" />
     <None Include="assets\shaders\modelshader.frag" />
+    <None Include="Assets\shaders\text2Dshader.frag" />
+    <None Include="Assets\shaders\text2Dshader.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Components\projectile_component.hpp" />

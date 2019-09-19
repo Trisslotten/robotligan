@@ -9,6 +9,9 @@
 #include "collision.hpp"
 #include "model_component.hpp"
 #include "transform_component.hpp"
+#include "velocity_component.hpp"
+#include "wireframe_component.hpp"
+#include "light_component.hpp"
 
 // temp variable
 bool render_wireframe = false;
@@ -23,6 +26,18 @@ void Render(entt::registry& registry) {
                  glm::translate(t.position) *
                      glm::rotate(-t.rotation.y, glm::vec3(0.f, 1.f, 0.f)) *
                      glm::translate(-m.offset) * glm::scale(t.scale));
+  }
+
+  //submit lights
+  auto lights = registry.view<LightComponent, TransformComponent>();
+  for (auto& l : lights) {
+	  auto& transform = lights.get<TransformComponent>(l);
+	  auto& light = lights.get<LightComponent>(l);
+
+	  //glm::mat4 mat = glm::translate(transform.position) * glm::scale(transform.scale) * glm::mat4_cast(glm::quat(transform.rotation));
+	  glm::vec3 pos = transform.position;
+	  glm::vec3 dir = glm::quat(transform.rotation) * glm::vec3(1.f, 0.f, 0.f);
+	  glob::SubmitLightSource(pos, light.color, light.radius, light.ambient);
   }
 
 
