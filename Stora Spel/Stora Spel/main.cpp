@@ -34,7 +34,8 @@
 #include <chrono>
 
 // NTS: Move into game engine class once that exists
-void CreateEntities(entt::registry& registry);
+void CreateEntities(entt::registry& registry, glm::vec3* in_pos_arr, unsigned int in_num_pos);
+void ResetEntities(entt::registry& registry, glm::vec3* in_pos_arr, unsigned int in_num_pos);
 void AddBallComponents(entt::registry& registry, entt::entity& entity,
                        glm::vec3 in_pos, glm::vec3 in_vel);
 void AddArenaComponents(entt::registry& registry, entt::entity& entity);
@@ -69,7 +70,11 @@ int main(unsigned argc, char **argv) {
 
   //Create a registry and create some entities in it
   entt::registry registry;
-  CreateEntities(registry);
+  glm::vec3 start_positions[3] = {glm::vec3(5.f, 0.f, 0.f),		//Ball
+                                  glm::vec3(-9.f, 4.f, 0.f),	//Player
+                                  glm::vec3(0.f, 0.f, 0.f)		//Others
+  };
+  CreateEntities(registry, start_positions, 3);
 
   timer.Restart();
   float dt = 0.0f;
@@ -117,6 +122,12 @@ int main(unsigned argc, char **argv) {
       GlobalSettings::Access()->WriteMapToConsole();
     }
 
+	//Reset positions and velocities
+    if (Input::IsKeyPressed(GLFW_KEY_K)) {
+      //K as in kickoff
+      ResetEntities(registry, start_positions, 3);
+    }
+
     
     updateSystems(&registry, dt);
 
@@ -136,10 +147,11 @@ int main(unsigned argc, char **argv) {
   return EXIT_SUCCESS;
 }
 
-void CreateEntities(entt::registry& registry) {
+void CreateEntities(entt::registry& registry, glm::vec3* in_pos_arr,
+                    unsigned int in_num_pos) {
   // Create one ball entity and add components
   auto ball_entity = registry.create();
-  AddBallComponents(registry, ball_entity, glm::vec3(5.f, 0.f, 0.f), glm::vec3(0.0f));
+  AddBallComponents(registry, ball_entity, in_pos_arr[0], glm::vec3(0.0f));
 
   // Create one map entity and add components
   auto arena_entity = registry.create();
@@ -148,18 +160,47 @@ void CreateEntities(entt::registry& registry) {
   // Create one player entity and add components
   auto avatar_entity = registry.create();
   AddPlayerComponents(registry, avatar_entity);
-  AddRobotComponents(registry, avatar_entity, glm::vec3(-9.f, 4.f, 0.f));
+  AddRobotComponents(registry, avatar_entity, in_pos_arr[1]);
 
-  // Create one opponent with the default values
-  auto opponent_entity = registry.create();
-  AddRobotComponents(registry, opponent_entity, glm::vec3(0.f, 0.f, 0.f));
+  // Create other robots and add components
+  for (unsigned int i = 2; i < in_num_pos; i++) {
+    auto other_robot_entity = registry.create();
+    AddRobotComponents(registry, other_robot_entity, in_pos_arr[i]);
+  }
+}
 
+void ResetEntities(entt::registry& registry, glm::vec3* in_pos_arr,
+	unsigned int in_num_pos) {
+
+	//Get everything with a physics component and a transform component
+	auto reset_view = registry.view<PhysicsComponent, TransformComponent>();
+
+	unsigned int pos_counter = 0;
+
+	for (auto entity : reset_view) {
+          PhysicsComponent& physics_component =
+              reset_view.get<PhysicsComponent>(entity);
+          TransformComponent& transform_component =
+              reset_view.get<TransformComponent>(entity);
+
+		  physics_component.velocity = glm::vec3(0.0f);
+          physics_component.is_airborne = true;
+
+		  transform_component.position = in_pos_arr[pos_counter];
+          pos_counter++;
+
+		  if (pos_counter >= in_num_pos) {
+            GlobalSettings::Access()->WriteError("main.cpp","ResetEntities()","Counter out of scope");
+          }
+    }
 
 }
 
 void AddBallComponents(entt::registry& registry, entt::entity& entity,
                        glm::vec3 in_pos, glm::vec3 in_vel) {
   // Prepare hard-coded values
+  bool ball_is_real = true;
+  bool ball_is_airborne = true;
   float ball_friction = 0.0f;
   float ball_radius = 1.0f;
   glm::vec3 zero_vec = glm::vec3(0.0f);
@@ -167,9 +208,9 @@ void AddBallComponents(entt::registry& registry, entt::entity& entity,
   glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
 
   // Add components for a ball
-  registry.assign<BallComponent>(entity, true, true);
+  registry.assign<BallComponent>(entity, ball_is_real, ball_is_airborne);
   registry.assign<ModelComponent>(entity, model_ball);
-  registry.assign<PhysicsComponent>(entity, in_vel, true, ball_friction);
+  registry.assign<PhysicsComponent>(entity, in_vel, ball_is_airborne, ball_friction);
   registry.assign<TransformComponent>(entity, in_pos, zero_vec,
                                       ball_scale);
 
@@ -226,6 +267,7 @@ void AddPlayerComponents(entt::registry& registry, entt::entity& entity) {
 void AddRobotComponents(entt::registry& registry, entt::entity& entity,
                         glm::vec3 in_pos) {
   // Prepare hard-coded values
+  bool robot_is_airborne = true;
   float robot_friction = 0.0f;
   float coeff_x_side = (11.223f - (-0.205f));
   float coeff_y_side = (8.159f - (-10.316f));
@@ -240,7 +282,7 @@ void AddRobotComponents(entt::registry& registry, entt::entity& entity,
   // Add components for a robot
   registry.assign<ModelComponent>(
       entity, robot_model, alter_scale * character_scale);
-  registry.assign<PhysicsComponent>(entity, zero_vec, true,
+  registry.assign<PhysicsComponent>(entity, zero_vec, robot_is_airborne,
                                     robot_friction);
   registry.assign<TransformComponent>(entity, in_pos,
                                       zero_vec, character_scale);
