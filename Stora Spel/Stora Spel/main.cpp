@@ -157,9 +157,9 @@ int main(unsigned argc, char **argv) {
 
     updateSystems(&registry, dt);
    
-	glob::Submit(font_test, glm::vec2(100, 200), 73, "Det här är Comic Sans MS jahoo!", glm::vec4(1,1,1,1));
-    glob::Submit(font_test, glm::vec2(101,198), 72,
-                 "Det här är Comic Sans MS jahoo!", glm::vec4(0,1,0,1));
+	glob::Submit(font_test, glm::vec2(100, 200), 73, "Det här är Comic Sans MS jahoo!", glm::vec4(0,0,0,0.5));
+    glob::Submit(font_test, glm::vec2(98,202), 73,
+                 "Det här är Comic Sans MS jahoo!", glm::vec4(1,1,1,1));
 
     glob::Render();
     glob::window::Update();

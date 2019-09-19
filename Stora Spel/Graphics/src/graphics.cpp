@@ -284,7 +284,7 @@ void Render() {
   model_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
 
   model_shader.uniform("cam_transform", cam_transform);
-  model_shader.uniform("num_frames", num_frames);
+  //model_shader.uniform("num_frames", num_frames);
   for (auto &render_item : items_to_render) {
     model_shader.uniform("model_transform", render_item.transform);
     render_item.model->Draw(model_shader);
