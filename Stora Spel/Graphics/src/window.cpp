@@ -22,9 +22,13 @@ namespace glob {
 
 namespace window {
 
+unsigned int window_width = 1280;
+unsigned int window_height = 720;
+
 void Create() {
   if (glfw_window) {
-    std::cout << "WARNING window.cpp: Calling WindowCreate() when window already created"
+    std::cout << "WARNING window.cpp: Calling WindowCreate() when window "
+                 "already created"
               << std::endl;
     return;
   }
@@ -37,12 +41,10 @@ void Create() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 
-  int width = 1280;
-  int height = 720;
   const char* title_str = "Hello World";
 
   glfw_window =
-      glfwCreateWindow(width, height, title_str, NULL, NULL);
+      glfwCreateWindow(window_width, window_height, title_str, NULL, NULL);
 
   if (!glfw_window) {
     std::cout << "ERROR window.cpp: Could not create glfw window\n";
@@ -53,7 +55,8 @@ void Create() {
   glfwMakeContextCurrent(glfw_window);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-    std::cout << "ERROR window.cpp: Failed to initialize OpenGL context" << std::endl;
+    std::cout << "ERROR window.cpp: Failed to initialize OpenGL context"
+              << std::endl;
     assert(0);
   }
 
@@ -67,7 +70,6 @@ void Create() {
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   glDisable(GL_CULL_FACE);
-  
 
   initd = true;
   // glClear(GL_COLOR_BUFFER_BIT);
@@ -110,6 +112,17 @@ void SetMouseCallback(void (*key_callback)(GLFWwindow*, int, int, int)) {
   glfwSetMouseButtonCallback(glob::window::GetGlfwWindow(),
                              (GLFWmousebuttonfun)key_callback);
 }
+
+void SetMouseLocked(bool val) {
+  if (val) {
+    glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  }
+  else {
+    glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+  }
+}
+
+glm::vec2 GetWindowDimensions() { return glm::vec2(window_width, window_height); }
 
 bool KeyDown(int key) { return GLFW_PRESS == glfwGetKey(glfw_window, key); }
 

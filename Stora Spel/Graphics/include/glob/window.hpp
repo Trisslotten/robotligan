@@ -19,6 +19,8 @@ class GLFWwindow {};
 namespace glob {
 namespace window {
 
+
+
 EXPORT void Create();
 EXPORT bool ShouldClose();
 EXPORT void Update();
@@ -32,6 +34,8 @@ EXPORT bool MouseButtonDown(int button);
 EXPORT void SetKeyCallback(void (*GLFWkeyfun)(GLFWwindow*, int, int, int, int));
 EXPORT void SetMouseCallback(void (*GLFWmousebuttonfun)(GLFWwindow*, int, int,
                                                         int));
+EXPORT void SetMouseLocked(bool val);
+EXPORT glm::vec2 GetWindowDimensions();
 
 }  // namespace window
 }  // namespace glob
