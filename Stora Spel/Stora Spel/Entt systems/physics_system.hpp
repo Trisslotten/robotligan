@@ -23,7 +23,7 @@ void UpdatePhysics(entt::registry& registry, float dt) {
     po.position = trans_c.position;
     po.velocity = physics_c.velocity;
 
-	Update(&po, dt);
+    Update(&po, dt);
 
     trans_c.position = po.position;
     physics_c.velocity = po.velocity;

@@ -5,6 +5,8 @@
 
 #include <entity/registry.hpp>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
 
 #include "ball_component.hpp"
 #include "boundingboxes.hpp"
