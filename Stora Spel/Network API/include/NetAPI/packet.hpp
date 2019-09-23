@@ -54,12 +54,13 @@ class EXPORT Packet {
   }
   template <typename T>
   Packet& Remove(T* data, size_t size) {
-    size_of_data_ -= sizeof(T) * size;
+    size_of_data_ -= sizeof(T)*size;
     std::memcpy(data, data_ + size_of_data_, sizeof(T) * size);
     return *this;
   }
 
  private:
+   
   PacketHeader p_ = {};
   char* data_ = nullptr;
   size_t size_of_data_ = 0;
