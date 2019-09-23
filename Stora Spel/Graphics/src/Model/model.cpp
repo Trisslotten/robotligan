@@ -10,6 +10,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   std::vector<Vertex> vertex;
   std::vector<GLuint> indices;
   std::vector<Texture> textures;
+  std::vector<Joint> bones;
 
   // Process the mesh
 
@@ -130,6 +131,11 @@ void Model::LoadModel(std::string path) {
 
   directory_ = path.substr(0, path.find_last_of('/'));
   ProcessNode(scene->mRootNode, scene);
+  
+  if (scene->HasAnimations()) {
+	  std::cout << "Animations detected.n";
+	  //scene->
+  }
 
   is_loaded_ = true;
 }

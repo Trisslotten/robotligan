@@ -210,6 +210,11 @@ ModelHandle GetModel(const std::string &filepath) {
 Font2DHandle GetFont(const std::string &filepath) {
   return GetAsset<Font2DHandle, Font2D>(font_2D_handles, fonts, current_font_guid, filepath);
 }
+
+/*AnimationHandle GetAnimation(const std::string& filepath) {
+	//return GetAsset<AnimationHandle, Animation>()
+}*/
+
 /*
 TextureHandle GetTexture(const std::string &filepath) {
   return GetAsset<TextureHandle, Texture>(texture_handles, textures,

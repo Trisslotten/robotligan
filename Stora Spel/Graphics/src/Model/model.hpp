@@ -9,6 +9,14 @@
 
 namespace glob {
 
+
+struct Joint {
+	std::vector<Joint> Children;
+	glm::vec3 position;
+	glm::mat4 transform;
+	char id;
+};
+
 class Model {
  private:
   Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
@@ -25,6 +33,9 @@ class Model {
                                             std::string type_name);
 
   std::string directory_;
+
+  Joint root_joint_;
+  std::vector<glm::vec3> weights_;
 
   bool is_loaded_ = false;
 

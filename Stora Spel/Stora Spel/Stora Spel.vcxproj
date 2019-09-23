@@ -170,6 +170,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Components\ability_component.hpp" />
+    <ClInclude Include="Components\animation_component.hpp" />
     <ClInclude Include="Components\ball_component.hpp" />
     <ClInclude Include="Components\camera_component.hpp" />
     <ClInclude Include="Components\model_component.hpp" />

@@ -16,6 +16,7 @@ namespace glob {
 
 typedef unsigned long ModelHandle;
 typedef unsigned long Font2DHandle;
+typedef unsigned long AnimationHandle;
 //typedef unsigned long TextureHandle;
 
 /*
