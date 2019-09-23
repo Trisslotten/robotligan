@@ -187,6 +187,7 @@
     <ClInclude Include="include\glob\window.hpp" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="src\Font\Font2D.hpp" />
+    <ClInclude Include="src\GUI\gui.hpp" />
     <ClInclude Include="src\tinyxml2.hpp" />
     <ClInclude Include="src\shader.hpp" />
     <ClInclude Include="src\camera\camera.hpp" />
@@ -201,6 +202,7 @@
     <ClCompile Include="src\camera\camera.cpp" />
     <ClCompile Include="src\Font\Font2D.cpp" />
     <ClCompile Include="src\graphics.cpp" />
+    <ClCompile Include="src\GUI\gui.cpp" />
     <ClCompile Include="src\tinyxml2.cpp" />
     <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\window.cpp" />

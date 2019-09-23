@@ -208,6 +208,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="assets\shaders\guishader.frag" />
+    <None Include="assets\shaders\guishader.vert" />
     <None Include="assets\shaders\modelshader.frag" />
     <None Include="assets\shaders\modelshader.vert" />
     <None Include="Assets\shaders\text2Dshader.frag" />

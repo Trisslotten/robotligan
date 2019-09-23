@@ -3,7 +3,6 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="nettest.cpp" />
-    <ClCompile Include="src\input.cpp" />
     <ClCompile Include="util\timer.cpp" />
     <ClCompile Include="nettest.cpp" />
     <ClCompile Include="util\input.cpp" />
@@ -51,6 +50,8 @@
     <ClInclude Include="Entt systems\physics_system.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <None Include="assets\shaders\guishader.vert" />
+    <None Include="assets\shaders\guishader.frag" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />
