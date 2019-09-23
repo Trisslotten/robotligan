@@ -27,6 +27,13 @@ struct RenderItem {
   glm::mat4 transform;
 };
 
+struct GUIItem {
+  glm::vec2 pos;
+  unsigned int size;
+  glm::vec2 tex;
+
+};
+
 struct TextItem {
   Font2D *font;
   glm::vec2 pos;
