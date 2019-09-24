@@ -1,15 +1,19 @@
 #include <NetAPI/socket/server.hpp>
 #include <string>
+unsigned short getHashedID(char* addr, unsigned short port)
+{
+	unsigned short retval = 0;
+	for (unsigned short c = 0; addr[c] != '\0'; c++)
+	{
+			retval = retval + (unsigned short)(addr[c]);
+	}
+	return retval % sizeof(unsigned short);
+}
 bool NetAPI::Socket::Server::Setup(unsigned short port) {
   if (listener_.Bind(port)) {
     setup_ = true;
   }
-  clients_.resize(NetAPI::Common::kMaxPlayers);
-  for (auto& cli : clients_) {
-    cli = new TcpClient();
-  }
-  clientdata_.resize(NetAPI::Common::kMaxPlayers);
-
+  clientdata_.reserve(Common::kMaxPlayers);
   return setup_;
 }
 
@@ -17,43 +21,42 @@ bool NetAPI::Socket::Server::Update() {
   if (!setup_) {
     return false;
   }
+  //Accept client
   if (connectedplayers_ < NetAPI::Common::kMaxPlayers) {
-    auto s = listener_.Accept(clients_.at(connectedplayers_));
-    if (s) {
-      std::string init = std::to_string(connectedplayers_);
-
-      NetAPI::Common::Packet p;
-      NetAPI::Common::PacketHeader h;
-      h.Receiver = connectedplayers_;
-      /*p << h;
-       p << init;
-   clients_.at(connectedplayers_)->Send(init.c_str(), init.length());
-   */
-      connectedplayers_++;
-    }
+	  ClientData data;
+	  auto s = listener_.Accept(data.client.GetRaw());
+	  if (s)
+	  {
+		  sockaddr_in client_addr{};
+		  int size = sizeof(client_addr);
+		  auto ret = getpeername(data.client.GetRaw()->GetLowLevelSocket(), (sockaddr*)& client_addr, &size);
+		  auto addr = inet_ntoa(client_addr.sin_addr);
+		  auto port = ntohs(client_addr.sin_port);
+		  auto ID = getHashedID(addr, port);
+		  clientdata_[ID] = data;
+		  connectedplayers_++;
+	  }
   }
-  unsigned removed = 0;
-  for (short i = 0; i < connectedplayers_; i++) {
-    if (clients_[i]->IsConnected()) {
-      if (!clients_[i]->IsConnected()) {
-        clients_[i]->Disconnect();
-        auto client = clients_[i];
-        clients_.erase(clients_.begin() + i);
-        clients_.push_back(client);
-        connectedplayers_--;
-      }
-      clientdata_[i] = clients_[i]->Recieve();
-    }
+  //Recieve Data
+  for (auto& c : clientdata_)
+  {
+	  if (!c.second.client.IsConnected())
+	  {
+		  c.second.client.Disconnect();
+	  }
+	  c.second.packets.push_back(c.second.client.Receive());
+	  
   }
+  //Send Data
   NetAPI::Common::PacketHeader header;
   for (auto& d : datatosend_) {
     d >> header;
     if (header.Receiver == EVERYONE) {
-      for (auto& cli : clients_) {
-        cli->Send(d);
+      for (auto& cli : clientdata_) {
+        cli.second.client.Send(d);
       }
     } else {
-      clients_.at(header.Receiver)->Send(d);
+		clientdata_[header.Receiver].client.Send(d);
     }
   }
   datatosend_.clear();
