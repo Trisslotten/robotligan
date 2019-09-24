@@ -3,6 +3,7 @@
 #define TCPLISTENER_HPP_
 #include <NetAPI/common.hpp>
 #include <NetAPI/socket/tcpclient.hpp>
+#define NOMINMAX
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>

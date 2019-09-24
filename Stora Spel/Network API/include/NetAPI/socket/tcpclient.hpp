@@ -4,6 +4,7 @@
 #include <NetAPI/common.hpp>
 #include <NetAPI/helper/netinitialization.hpp>
 #include <NetAPI/packet.hpp>
+#define NOMINMAX
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>

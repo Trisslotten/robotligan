@@ -1,9 +1,8 @@
+#define NOMINMAX
 #include <NetAPI/networkTest.hpp>
 #include <NetAPI/packet.hpp>
 #include <NetAPI/socket/server.hpp>
 #include <NetAPI/socket/tcpclient.hpp>
-#undef min
-#undef max
 #include <glob/window.hpp>
 #include <iostream>
 

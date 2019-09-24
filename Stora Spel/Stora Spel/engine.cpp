@@ -6,33 +6,32 @@
 #include <glob/graphics.hpp>
 #include <iostream>
 
-#include <render_system.hpp>
 #include <ability_controller_system.hpp>
 #include <collision_system.hpp>
 #include <physics_system.hpp>
 #include <player_controller_system.hpp>
+#include <render_system.hpp>
 #include "Components/light_component.hpp"
 #include "Components/transform_component.hpp"
+#include "entitycreation.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
-#include "entitycreation.hpp"
 
 void Engine::Init() {
   glob::Init();
   Input::Initialize();
 
+  tcp_client_.Connect("192.168.1.47", 1337);
+
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
 
-
-   glm::vec3 start_positions[3] = {
+  glm::vec3 start_positions[3] = {
       glm::vec3(5.f, 0.f, 0.f),   // Ball
       glm::vec3(-9.f, 4.f, 0.f),  // Player
       glm::vec3(0.f, 0.f, 0.f)    // Others
   };
   CreateEntities(registry_, start_positions, 3);
-
-
 
   // Create light
   auto light = registry_.create();
@@ -68,6 +67,12 @@ void Engine::Update(float dt) {
     }
   }
 
+  std::cout << actions.to_ulong() << "\n";
+
+  NetAPI::Common::Packet packet;
+  //packet 
+
+
   UpdateSystems(dt);
 
   for (int i = 0; i < NUM_ACTIONS; i++) {
@@ -87,13 +92,12 @@ void Engine::Render() {
 
 void Engine::UpdateSystems(float dt) {
   // collision_debug::Update(*reg);
-  
+
   player_controller::Update(registry_, dt);
   ability_controller::Update(registry_, dt);
 
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);
-  
 
   auto view = registry_.view<CameraComponent, TransformComponent>();
   for (auto v : view) {

@@ -1,6 +1,7 @@
 #ifndef ENGINE_HPP_
 #define ENGINE_HPP_
 
+#include <NetAPI/socket/tcpclient.hpp>
 #include <entt.hpp>
 #include <unordered_map>
 #include <glob/graphics.hpp>
@@ -16,6 +17,8 @@ class Engine {
 
  private:
   void UpdateSystems(float dt);
+  
+  NetAPI::Socket::TcpClient tcp_client_;
 
   entt::registry registry_;
 
