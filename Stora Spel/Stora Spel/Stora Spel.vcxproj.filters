@@ -3,7 +3,6 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="nettest.cpp" />
-    <ClCompile Include="src\input.cpp" />
     <ClCompile Include="util\timer.cpp" />
     <ClCompile Include="nettest.cpp" />
     <ClCompile Include="util\input.cpp" />
@@ -32,6 +31,8 @@
     <ClInclude Include="util\timer.hpp" />
     <ClInclude Include="util\transform_helper.hpp" />
     <ClInclude Include="Components\model_component.hpp" />
+    <ClInclude Include="Components\button_component.hpp" />
+    <ClInclude Include="Entt systems\button_system.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

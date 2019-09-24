@@ -10,6 +10,7 @@
 #include "model_component.hpp"
 #include "transform_component.hpp"
 #include "light_component.hpp"
+#include "button_component.hpp"
 
 // temp variable
 bool render_wireframe = false;
@@ -26,18 +27,19 @@ void Render(entt::registry& registry) {
                      glm::translate(-m.offset) * glm::scale(t.scale));
   }
 
-  //submit lights
+  // submit lights
   auto lights = registry.view<LightComponent, TransformComponent>();
   for (auto& l : lights) {
-	  auto& transform = lights.get<TransformComponent>(l);
-	  auto& light = lights.get<LightComponent>(l);
+    auto& transform = lights.get<TransformComponent>(l);
+    auto& light = lights.get<LightComponent>(l);
 
-	  //glm::mat4 mat = glm::translate(transform.position) * glm::scale(transform.scale) * glm::mat4_cast(glm::quat(transform.rotation));
-	  glm::vec3 pos = transform.position;
-	  glm::vec3 dir = glm::quat(transform.rotation) * glm::vec3(1.f, 0.f, 0.f);
-	  glob::SubmitLightSource(pos, light.color, light.radius, light.ambient);
+    // glm::mat4 mat = glm::translate(transform.position) *
+    // glm::scale(transform.scale) *
+    // glm::mat4_cast(glm::quat(transform.rotation));
+    glm::vec3 pos = transform.position;
+    glm::vec3 dir = glm::quat(transform.rotation) * glm::vec3(1.f, 0.f, 0.f);
+    glob::SubmitLightSource(pos, light.color, light.radius, light.ambient);
   }
-
 
   // Render wireframes
   auto view_wireframe_obb = registry.view<physics::OBB, TransformComponent>();
@@ -47,20 +49,37 @@ void Render(entt::registry& registry) {
     for (auto& w : view_wireframe_obb) {
       auto& obb = view_wireframe_obb.get<physics::OBB>(w);
       auto& transform = view_wireframe_obb.get<TransformComponent>(w);
-      glob::SubmitCube(glm::translate(obb.center) *
-                       glm::rotate(-transform.rotation.y, glm::vec3(0.f, 1.f, 0.f)) *
-                       glm::scale(glm::vec3(obb.extents[0],
-                                                               obb.extents[1],
-                                                               obb.extents[2])));
+      glob::SubmitCube(
+          glm::translate(obb.center) *
+          glm::rotate(-transform.rotation.y, glm::vec3(0.f, 1.f, 0.f)) *
+          glm::scale(
+              glm::vec3(obb.extents[0], obb.extents[1], obb.extents[2])));
     }
     for (auto& w : view_wireframe_sphere) {
       auto& sphere = view_wireframe_sphere.get(w);
-      glob::SubmitCube(glm::translate(sphere.center) * glm::scale(glm::vec3(sphere.radius)));
+      glob::SubmitCube(glm::translate(sphere.center) *
+                       glm::scale(glm::vec3(sphere.radius)));
     }
     for (auto& w : view_wireframe_arena) {
       auto& arena = view_wireframe_arena.get(w);
-      glob::SubmitCube(glm::scale(glm::vec3(arena.xmax-arena.xmin, arena.ymax-arena.ymin, arena.zmax-arena.zmin) * 0.5f));
+      glob::SubmitCube(
+          glm::scale(glm::vec3(arena.xmax - arena.xmin, arena.ymax - arena.ymin,
+                               arena.zmax - arena.zmin) *
+                     0.5f));
     }
+  }
+
+  auto view_buttons = registry.view<ButtonComponent, TransformComponent>();
+
+  for (auto& button : view_buttons) {
+    ButtonComponent& button_c = view_buttons.get<ButtonComponent>(button);
+    TransformComponent& trans_c = view_buttons.get<TransformComponent>(button);
+
+	glm::vec2 button_pos = glm::vec2(trans_c.position.x, trans_c.position.y);
+
+	glob::Submit(button_c.f_handle, button_pos,
+                     button_c.font_size, button_c.text,
+                     button_c.text_current_color);
   }
 }
 #endif  // RENDER_SYSTEM_HPP_
