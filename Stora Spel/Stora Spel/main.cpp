@@ -23,7 +23,7 @@
 #include "transform_component.hpp"
 
 #include "collision_temp_debug_system.h"
-#include <GLFW/glfw3.h> //NTS: This one must be included after certain other things
+#include <GLFW/glfw3.h> //NTS: This one must be included after certain other things.
 #include "util/input.hpp"
 #include "util/meminfo.hpp"
 #include "util/timer.hpp"
