@@ -104,8 +104,12 @@ int main(unsigned argc, char** argv) {
       glob::GetFont("assets/fonts/fonts/ariblk.ttf");
 
   // Create 2D element
+  glob::E2DHandle e2D_test = glob::GetE2DItem("assets/GUI_elements/koncept_poäng_top.png");
+
+  // Create GUI element
   glob::GUIHandle gui_test =
       glob::GetGUIItem("assets/GUI_elements/Scoreboard_V1.png");
+
 
   float time = 0.f;
   timer.Restart();
@@ -168,15 +172,20 @@ int main(unsigned argc, char** argv) {
 
     updateSystems(&registry, dt);
 
+	// Submit 2D Element TEST
+    glob::Submit(e2D_test, glm::vec3(100, 200, 0), 2,
+                 glm::mat4(0));
+
+	// Show statistics TEST
+    if (Input::IsKeyDown(GLFW_KEY_TAB)) {
+      glob::Submit(gui_test, glm::vec2(285, 177), 0.6);
+    }
+
+	// Submit text TEST
     glob::Submit(font_test, glm::vec2(100, 200), 73,
                  "Det här är Comic Sans MS jahoo!", glm::vec4(0, 0, 0, 0.5));
     glob::Submit(font_test, glm::vec2(98, 202), 73,
                  "Det här är Comic Sans MS jahoo!", glm::vec4(1, 1, 1, 1));
-
-    // Show statistics TEST
-    if (Input::IsKeyDown(GLFW_KEY_TAB)) {
-      glob::Submit(gui_test, glm::vec2(285, 177), 0.6);
-    }
 
     glob::Render();
     glob::window::Update();

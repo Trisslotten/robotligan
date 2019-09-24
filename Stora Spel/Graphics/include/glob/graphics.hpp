@@ -17,6 +17,7 @@ namespace glob {
 typedef unsigned long ModelHandle;
 typedef unsigned long Font2DHandle;
 typedef unsigned long GUIHandle;
+typedef unsigned long E2DHandle;
 // typedef unsigned long TextureHandle;
 
 /*
@@ -35,6 +36,8 @@ EXPORT GUIHandle GetGUIItem(const std::string& filepath);
 
 EXPORT Font2DHandle GetFont(const std::string& filepath);
 
+EXPORT E2DHandle GetE2DItem(const std::string& filepath);
+
 /*
  * Returns a texture handle for the specified image file.
  * Skips loading if image is loaded.
@@ -51,8 +54,8 @@ EXPORT void Submit(ModelHandle model_h, glm::mat4 transform);
 EXPORT void SubmitCube(glm::mat4 t);
 EXPORT void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
                    std::string text, glm::vec4 color = glm::vec4(1, 1, 1, 1));
-EXPORT void Submit(GUIHandle gui_h, glm::vec2 pos, float size);
-
+EXPORT void Submit(GUIHandle gui_h, glm::vec2 pos, float scale);
+EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale, glm::mat4 rot);
     /*
      * Render all items submitted this frame
      */

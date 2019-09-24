@@ -75,27 +75,27 @@ void glob::Elements2D::DrawOnScreen(ShaderProgram& shader, glm::vec2 pos,
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-//void glob::Elements2D::DrawInWorld(ShaderProgram& shader, glm::vec3 pos,
-//                                   float scale) {
-//  glActiveTexture(GL_TEXTURE0);
-//  glBindTexture(GL_TEXTURE_2D, tex_id_);
-//
-//  shader.uniform("t_pos", pos);
-//  shader.uniform("t_scale", scale);
-//  shader.uniform("screen_dims", glm::vec2(1280, 720));
-//  shader.uniform("texture_dims", glm::vec2(texture_width_, texture_height_));
-//  shader.uniform("gui_element_texture", 0);
-//
-//  glDisable(GL_CULL_FACE);
-//  glEnable(GL_BLEND);
-//  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-//  glDepthFunc(GL_ALWAYS);
-//
-//  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-//
-//  glDepthFunc(GL_LESS);
-//  glDisable(GL_BLEND);
-//  glEnable(GL_CULL_FACE);
-//
-//  glBindTexture(GL_TEXTURE_2D, 0);
-//}
+void glob::Elements2D::DrawInWorld(ShaderProgram& shader, glm::vec3 pos,
+                                   float scale, glm::mat4 rot) {
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, tex_id_);
+
+  shader.uniform("t_pos", pos);
+  shader.uniform("t_scale", scale);
+  shader.uniform("t_rot", rot);
+  shader.uniform("texture_dims", glm::vec2(texture_width_, texture_height_));
+  shader.uniform("gui_element_texture", 0);
+
+  glDisable(GL_CULL_FACE);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glDepthFunc(GL_ALWAYS);
+
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  glDepthFunc(GL_LESS);
+  glDisable(GL_BLEND);
+  glEnable(GL_CULL_FACE);
+
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
