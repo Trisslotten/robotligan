@@ -13,10 +13,30 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{d5de8faf-420a-4690-bbb0-1cd20efc6b19}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\replay machine">
+      <UniqueIdentifier>{55790efa-e4fa-4f93-bcfd-c243f364b426}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="replay_machine.cpp">
+      <Filter>src\replay machine</Filter>
+    </ClCompile>
+    <ClCompile Include="bit_pack.cpp">
+      <Filter>src\replay machine</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="replay_machine.hpp">
+      <Filter>src\replay machine</Filter>
+    </ClInclude>
+    <ClInclude Include="bit_pack.hpp">
+      <Filter>src\replay machine</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

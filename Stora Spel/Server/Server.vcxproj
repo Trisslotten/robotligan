@@ -138,7 +138,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="bit_pack.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="replay_machine.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="bit_pack.hpp" />
+    <ClInclude Include="replay_machine.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
