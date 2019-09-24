@@ -13,6 +13,8 @@ class Engine {
 
   void Update(float dt);
 
+  void UpdateNetwork();
+
   void Render();
 
  private:

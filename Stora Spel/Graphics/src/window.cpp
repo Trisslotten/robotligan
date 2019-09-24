@@ -62,7 +62,7 @@ void Create() {
   glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   // vsync 1, off 0
-  glfwSwapInterval(0);
+  glfwSwapInterval(1);
 
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);

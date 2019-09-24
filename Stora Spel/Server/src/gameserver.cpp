@@ -6,6 +6,9 @@
 #include <iostream>
 #include <physics_system.hpp>
 #include <transform_component.hpp>
+#include <bitset>
+
+#include "shared.hpp";
 
 namespace {}  // namespace
 
@@ -24,6 +27,16 @@ void GameServer::Init() {
 
 void GameServer::Update(float dt) {
   server_.Update();
+
+  for (short i = 0; i < server_.GetConnectedPlayers(); i++) {
+    auto packet = server_[i];
+    if (!packet.IsEmpty()) {
+      std::bitset<PlayerAction::NUM_ACTIONS> actions;
+
+    }
+  }
+
+
 
   UpdateSystems(dt);
 

@@ -51,15 +51,19 @@ void Engine::Init() {
   font_test_ = glob::GetFont("assets/fonts/fonts/comic.ttf");
   font_test2_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
 
-  keybinds_[GLFW_KEY_W] = PlayerAction::WALK_FORWARD;
-  keybinds_[GLFW_KEY_S] = PlayerAction::WALK_BACKWARD;
-  keybinds_[GLFW_KEY_A] = PlayerAction::WALK_LEFT;
-  keybinds_[GLFW_KEY_D] = PlayerAction::WALK_RIGHT;
+  keybinds_[GLFW_KEY_UP]    = PlayerAction::WALK_FORWARD;
+  keybinds_[GLFW_KEY_DOWN]  = PlayerAction::WALK_BACKWARD;
+  keybinds_[GLFW_KEY_LEFT]  = PlayerAction::WALK_LEFT;
+  keybinds_[GLFW_KEY_RIGHT] = PlayerAction::WALK_RIGHT;
 }
 
 void Engine::Update(float dt) {
   Input::Reset();
 
+  UpdateSystems(dt);
+}
+
+void Engine::UpdateNetwork() {
   std::bitset<PlayerAction::NUM_ACTIONS> actions;
   for (auto const& [key, action] : keybinds_) {
     if (Input::IsKeyDown(key)) {
@@ -67,18 +71,12 @@ void Engine::Update(float dt) {
     }
   }
 
-  std::cout << actions.to_ulong() << "\n";
+  byte action_bits = actions.to_ulong();
 
   NetAPI::Common::Packet packet;
-  //packet 
+  packet << action_bits;
 
-
-  UpdateSystems(dt);
-
-  for (int i = 0; i < NUM_ACTIONS; i++) {
-    std::cout << (actions[i] ? 1 : 0);
-  }
-  std::cout << "\n";
+  tcp_client_.Send(packet);
 }
 
 void Engine::Render() {

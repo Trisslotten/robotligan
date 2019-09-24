@@ -9,14 +9,14 @@ int main(unsigned argc, char** argv) {
 
   Timer timer;
   double accum = 0;
-  double tickrate = 64;
-  double ticktime = 1.0 / tickrate;
+  double update_rate = 64;
+  double update_time = 1.0 / update_rate;
 
   GameServer server;
 
   server.Init();
 
-  int numframes = 0;
+  int num_frames = 0;
   Timer t;
   Timer sleep;
 
@@ -25,12 +25,12 @@ int main(unsigned argc, char** argv) {
     timer.Restart();
     // start tick
 
-    server.Update(ticktime);
+    server.Update(update_time);
 
     // end tick
-    numframes++;
+    num_frames++;
     double time = timer.Elapsed();
-    double time_left = ticktime - time;
+    double time_left = update_time - time;
     sleep.Restart();
     while (sleep.Elapsed() < time_left) {
       // busy wait lmao
@@ -38,8 +38,8 @@ int main(unsigned argc, char** argv) {
 
     if (t.Elapsed() > 1.0) {
       double elapsed = t.Restart();
-      std::cout << "DEBUG: Real Tickrate = " << numframes / elapsed << "\n";
-      numframes = 0;
+      std::cout << "DEBUG: Real Tickrate = " << num_frames / elapsed << "\n";
+      num_frames = 0;
     }
   }
 

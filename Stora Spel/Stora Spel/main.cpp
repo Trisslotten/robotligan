@@ -16,24 +16,48 @@
 #include <chrono>
 #include <thread>
 
-
 int main(unsigned argc, char** argv) {
   std::cout << "WSA is initialized? " << std::boolalpha
             << NetAPI::Initialization::WinsockInitialized() << std::endl;
-  
+
   glob::window::Create();
 
   Engine engine;
   engine.Init();
 
+  double net_update_rate = 30.0;
+  double net_update_time = 1.0 / net_update_rate;
+
+  Timer net_update_timer;
+  double net_update_accum = 0.0;
+  int num_net_updates = 0;
+
+  Timer debug_timer;
+
   Timer frame_timer;
   float dt = 1.f / 60.f;
   while (!glob::window::ShouldClose()) {
     engine.Update(dt);
+
+    if (net_update_accum > net_update_time) {
+      engine.UpdateNetwork();
+
+      num_net_updates++;
+      net_update_accum -= net_update_time;
+    }
+
+    if (debug_timer.Elapsed() > 1.f) {
+      double elapsed = debug_timer.Restart();
+      std::cout << "DEBUG: Network Update Rate = " << num_net_updates / elapsed
+                << " U/s\n";
+      num_net_updates = 0;
+    }
+
     engine.Render();
     glob::window::Update();
 
     dt = frame_timer.Restart();
+    net_update_accum += net_update_timer.Restart();
   }
 
   glob::window::Cleanup();
