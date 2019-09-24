@@ -29,7 +29,7 @@ void UpdateOBB(entt::registry& registry) {
     hitbox.center = transform.position;
 
     // Rotate OBB
-    auto mat_rot = glm::rotate(-transform.rotation.y, glm::vec3(0.f, 1.f, 0.f));
+    auto mat_rot = glm::toMat4(transform.rotation);
     hitbox.normals[0] = mat_rot * glm::vec4(1.0f, 0.f, 0.f, 0.f);
     hitbox.normals[2] = mat_rot * glm::vec4(0.0f, 0.f, 1.f, 0.f);
   }
@@ -113,8 +113,10 @@ void UpdateCollisions(entt::registry& registry) {
           if (ball_physics.velocity.y < 3.f) {
             ball_physics.velocity.y = 0.f;
             ball_physics.is_airborne = false;
-          } 
+            ball.rotation = glm::quat();
+          }
         } else if (normal.y < 0) {
+          // Ball hits the ceiling
           ball_transform.position.y = arena_hitbox.ymax - ball_hitbox.radius;
         }
 
@@ -123,6 +125,18 @@ void UpdateCollisions(entt::registry& registry) {
         } else if (normal.z < 0) {
           ball_transform.position.z = arena_hitbox.zmax - ball_hitbox.radius;
         }
+
+        // Rotate ball
+        glm::vec3 nn = glm::normalize(normal);
+        glm::vec3 dir =
+            ball_physics.velocity - glm::dot(ball_physics.velocity, nn) * nn;
+        
+        if (glm::length(dir) == 0) continue;
+        
+        glm::vec3 rotate = glm::normalize(glm::cross(nn, dir));
+        float amount = glm::length(dir);
+        amount *= 0.7;
+        ball.rotation = glm::quat(0, rotate * amount);
       } else {
         //std::cout << "no collision" << std::endl;
       }
