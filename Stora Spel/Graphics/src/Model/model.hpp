@@ -11,10 +11,11 @@ namespace glob {
 
 
 struct Joint {
-	std::vector<Joint> Children;
-	glm::vec3 position;
-	glm::mat4 transform;
+	std::vector<Joint*> Children;
+	glm::vec3 position = glm::vec3(0.f);
+	glm::mat4 transform = glm::mat4(0.f);
 	char id;
+	std::string name;
 };
 
 class Model {
@@ -25,6 +26,8 @@ class Model {
 
   void LoadModel(std::string path);
   void ProcessNode(aiNode* node, const aiScene* scene);
+  std::string printArmature(Joint* joint, int depth = 0);
+  Joint* makeArmature(aiNode* node, bool inside_armature);
 
   std::vector<Texture> texture_loaded_;
   std::vector<Mesh> mesh_;
@@ -34,8 +37,11 @@ class Model {
 
   std::string directory_;
 
-  Joint root_joint_;
+  Joint* root_joint_;
   std::vector<glm::vec3> weights_;
+  std::vector<Joint*> bones;
+  unsigned int num_bones_ = 0;
+  bool has_armature_ = false;
 
   bool is_loaded_ = false;
 

@@ -71,7 +71,9 @@ void updateSystems(entt::registry *reg, float dt) {
 }
 
 int main(unsigned argc, char **argv) {
+  std::cout << "Starting up...\n";
   init();  // Initialize everything
+  std::cout << "Initialized.\n";
   Timer timer;
 
   //Tell the GlobalSettings class to do a first read from the settings file
@@ -200,8 +202,8 @@ void CreateEntities(entt::registry& registry, glm::vec3* in_pos_arr,
 
   // Create other robots and add components
   for (unsigned int i = 2; i < in_num_pos; i++) {
-    auto other_robot_entity = registry.create();
-    AddRobotComponents(registry, other_robot_entity, in_pos_arr[i]);
+    //auto other_robot_entity = registry.create();
+    //AddRobotComponents(registry, other_robot_entity, in_pos_arr[i]);
   }
 }
 
@@ -308,17 +310,17 @@ void AddRobotComponents(entt::registry& registry, entt::entity& entity,
   float coeff_x_side = (11.223f - (-0.205f));
   float coeff_y_side = (8.159f - (-10.316f));
   float coeff_z_side = (10.206f - (-1.196f));
-  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glm::vec3 zero_vec = glm::vec3(0.f, 0.f, 0.f);
   glm::vec3 alter_scale =
       glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
-  glm::vec3 character_scale = glm::vec3(0.1f);
+  glm::vec3 character_scale = glm::vec3(0.0015f);
   glob::ModelHandle robot_model =
-      glob::GetModel("assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
+      glob::GetModel("assets/Mech/Mech.fbx");
 	
   // Add components for a robot
   registry.assign<ModelComponent>(
       entity, robot_model, alter_scale * character_scale);
-  registry.assign<PhysicsComponent>(entity, zero_vec, robot_is_airborne,
+  registry.assign<PhysicsComponent>(entity, glm::vec3(0.f), robot_is_airborne,
                                     robot_friction);
   registry.assign<TransformComponent>(entity, in_pos,
                                       zero_vec, character_scale);

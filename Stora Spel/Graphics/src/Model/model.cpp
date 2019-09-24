@@ -1,6 +1,7 @@
 #include "model.hpp"
 
 #include <iostream>
+#include <sstream>
 
 #include <lodepng.hpp>
 
@@ -13,7 +14,6 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   std::vector<Joint> bones;
 
   // Process the mesh
-
   for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
     Vertex temp_vertex;
     glm::vec3 vector_vertices;
@@ -131,27 +131,90 @@ void Model::LoadModel(std::string path) {
 
   directory_ = path.substr(0, path.find_last_of('/'));
   ProcessNode(scene->mRootNode, scene);
-  
+  Joint* r = makeArmature(scene->mRootNode, false);
+  if (r) {
+	  root_joint_ = r;
+	  std::cout << "Armature loaded, root bone set.\n";
+	  has_armature_ = true;
+	  //std::cout << (printArmature(r)) << "\n";
+  }
+  else {
+	  std::cout << "Mesh has no valid armature.\n";
+  }
+
   if (scene->HasAnimations()) {
-	  std::cout << "Animations detected.n";
-	  //scene->
+	  std::cout << "Animations detected.\n";
+	  int numAnimations = scene->mNumAnimations;
+	  std::cout << numAnimations << " animations detected.\n";
+	  for (int i = 0; i < numAnimations; i++) {
+		  std::cout  << "Name: " << scene->mAnimations[i]->mName.data << "\n";
+		  std::cout << "	Channels: " << scene->mAnimations[i]->mNumChannels << "\n";
+		  std::cout << "	Duration: " << scene->mAnimations[i]->mDuration << "\n";
+		  std::cout << "	TPS: " << scene->mAnimations[i]->mTicksPerSecond << "\n";
+		  for (int j = 0; j < scene->mAnimations[i]->mNumChannels; j++) {
+			  std::cout << "		Name: " << scene->mAnimations[i]->mChannels[j]->mNodeName.data << "\n";
+			  //bind to armature IDs
+			  //Lol how?
+		  }
+	  }
+
   }
 
   is_loaded_ = true;
 }
 
+std::string Model::printArmature(Joint* joint, int depth) {
+	std::stringstream ss;
+	ss << joint->name << "\n";
+	depth++;
+	for (auto j : joint->Children) {
+		for (int i = 0; i < depth; i++) {
+			ss << "-";
+		}
+		ss << printArmature(j, depth);
+	}
+	return ss.str();
+}
+
+Joint* Model::makeArmature(aiNode* node, bool inside_armature) {
+	bool rootNode = (node->mName.data == std::string("Root"));
+
+	if (inside_armature || rootNode) {
+		Joint* j = new Joint;
+		bones.push_back(j);
+		j->name = node->mName.data;
+		j->id = num_bones_;
+		num_bones_++;
+
+		for (unsigned int i = 0; i < node->mNumChildren; i++) {
+			std::string disallowed_ending = "_end";
+			bool endNode = std::equal(disallowed_ending.rbegin(), disallowed_ending.rend(), std::string(node->mChildren[i]->mName.data).rbegin());
+			if (!endNode) {
+				j->Children.push_back(makeArmature(node->mChildren[i], inside_armature || rootNode));
+			}
+		}
+
+		return j;
+	}
+	else {
+		for (unsigned int i = 0; i < node->mNumChildren; i++) {
+			Joint* ret = makeArmature(node->mChildren[i], false);
+			if (ret) {
+				return ret;
+			}
+		}
+	}
+	return nullptr;
+}
+
 // TODO: check if node transform fixes up-vector from blender export
 void Model::ProcessNode(aiNode* node, const aiScene* scene) {
   // Process all the nodes meshes
-
-  for (unsigned int i = 0; i < node->mNumMeshes; i++) {
-    aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-    mesh_.push_back(ProcessMesh(mesh, scene));
-  }
-
-
-  // Then process nodes children
-
+	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+		mesh_.push_back(ProcessMesh(mesh, scene));
+	}
+	// Then process nodes children
   for (unsigned int i = 0; i < node->mNumChildren; i++) {
     ProcessNode(node->mChildren[i], scene);
   }
@@ -192,7 +255,11 @@ std::vector<Texture> Model::LoadMaterielTextures(aiMaterial* material,
 Model::Model(const std::string& path) { LoadModel(path); }
 Model::Model() {}
 
-Model::~Model() {}
+Model::~Model() {
+	for (auto b : bones) {
+		delete b;
+	}
+}
 
 void Model::LoadFromFile(const std::string& path) { LoadModel(path); }
 
