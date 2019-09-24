@@ -7,6 +7,8 @@
     <ClCompile Include="nettest.cpp" />
     <ClCompile Include="util\input.cpp" />
     <ClCompile Include="util\global_settings.cpp" />
+    <ClCompile Include="engine.cpp" />
+    <ClCompile Include="entitycreation.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Components\ability_component.hpp" />
@@ -32,6 +34,9 @@
     <ClInclude Include="util\transform_helper.hpp" />
     <ClInclude Include="Components\model_component.hpp" />
     <ClInclude Include="Components\light_component.hpp" />
+    <ClInclude Include="shared\shared.hpp" />
+    <ClInclude Include="engine.hpp" />
+    <ClInclude Include="entitycreation.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

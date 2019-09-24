@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 
 namespace transform_helper {
-glm::vec3 DirVectorFromRadians(float yaw, float pitch) {
+inline glm::vec3 DirVectorFromRadians(float yaw, float pitch) {
   float x = cos(yaw) * cos(pitch);
   float y = sin(pitch);
   float z = sin(yaw) * cos(pitch);
