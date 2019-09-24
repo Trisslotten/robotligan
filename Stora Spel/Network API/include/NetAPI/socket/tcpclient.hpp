@@ -35,10 +35,10 @@ class EXPORT TcpClient {
   void operator=(const SOCKET& other);
   size_t GetLastRecvLen() { return last_buff_len_; }
   const char* GetBuffer() { return rec_buffer_; }
-  byte GetID() { return ID_; }
+  short GetID() { return ID_; }
 
  private:
-  byte ID_ = 0;
+  short ID_ = 0;
   int last_buff_len_ = 0;
   timeval timeout_ = {};
   fd_set read_set_ = {};

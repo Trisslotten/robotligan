@@ -7,6 +7,7 @@
 #include <NetAPI/common.hpp>
 #include <NetAPI/socket/Client.hpp>
 #include <NetAPI/socket/tcplistener.hpp>
+#include <NetAPI/socket/clientdata.hpp>
 #include <unordered_map>
 #include <vector>
 namespace NetAPI {

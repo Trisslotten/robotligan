@@ -19,7 +19,6 @@ class EXPORT Client {
   TcpClient* GetRaw() { return client_; }
 
  private:
-  ClientData clientdata_; // But why?
   unsigned short ID_ = 0;
   NetAPI::Socket::TcpClient* client_ = nullptr;
 };

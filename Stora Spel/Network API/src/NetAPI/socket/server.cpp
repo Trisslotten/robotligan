@@ -28,7 +28,9 @@ bool NetAPI::Socket::Server::Update() {
       int size = sizeof(client_addr);
       auto ret = getpeername(data.client.GetRaw()->GetLowLevelSocket(),
                              (sockaddr*)&client_addr, &size);
-      auto addr = inet_ntoa(client_addr.sin_addr);
+      char buffer[14];
+      inet_ntop(AF_INET, &client_addr.sin_addr, buffer, 14);
+      auto addr = buffer;
       auto port = ntohs(client_addr.sin_port);
       auto ID = getHashedID(addr, port);
       clientdata_[ID] = data;

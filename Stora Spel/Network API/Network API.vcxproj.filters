@@ -45,6 +45,9 @@
     <ClInclude Include="include\NetAPI\socket\Client.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\NetAPI\socket\clientdata.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">

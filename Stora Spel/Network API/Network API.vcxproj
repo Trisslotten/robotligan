@@ -173,6 +173,7 @@
     <ClInclude Include="include\NetAPI\common.hpp" />
     <ClInclude Include="include\NetAPI\helper\netinitialization.hpp" />
     <ClInclude Include="include\NetAPI\networkTest.hpp" />
+    <ClInclude Include="include\NetAPI\socket\clientdata.hpp" />
     <ClInclude Include="include\NetAPI\socket\tcpclient.hpp" />
     <ClInclude Include="include\NetAPI\socket\tcplistener.hpp" />
     <ClInclude Include="include\NetAPI\socket\server.hpp" />

@@ -6,6 +6,7 @@
 #define EXPORT __declspec(dllimport)
 #endif
 //typedef unsigned char byte;
+
 namespace NetAPI {
 namespace Common {
 struct EXPORT netcommands {};
@@ -16,11 +17,7 @@ static const size_t kNumPacketBytes = 1024;
 constexpr short kMaxPlayers = 6;
 }  // namespace Common
 namespace Socket {
-struct EXPORT ClientData {
-  unsigned short ID = 0;
-  Client client;
-  std::vector<Common::Packet> packets;
-};
+
 constexpr unsigned short EVERYONE = 255;
 }  // namespace Socket
 }  // namespace NetAPI
