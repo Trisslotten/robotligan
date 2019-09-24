@@ -1,13 +1,11 @@
 #include <NetAPI/socket/server.hpp>
 #include <string>
-unsigned short getHashedID(char* addr, unsigned short port)
-{
-	unsigned short retval = 0;
-	for (unsigned short c = 0; addr[c] != '\0'; c++)
-	{
-			retval = retval + (unsigned short)(addr[c]);
-	}
-	return retval % sizeof(unsigned short);
+unsigned short getHashedID(char* addr, unsigned short port) {
+  unsigned short retval = 0;
+  for (unsigned short c = 0; addr[c] != '\0'; c++) {
+    retval = retval + (unsigned short)(addr[c]);
+  }
+  return retval % sizeof(unsigned short);
 }
 bool NetAPI::Socket::Server::Setup(unsigned short port) {
   if (listener_.Bind(port)) {
@@ -21,33 +19,30 @@ bool NetAPI::Socket::Server::Update() {
   if (!setup_) {
     return false;
   }
-  //Accept client
+  // Accept client
   if (connectedplayers_ < NetAPI::Common::kMaxPlayers) {
-	  ClientData data;
-	  auto s = listener_.Accept(data.client.GetRaw());
-	  if (s)
-	  {
-		  sockaddr_in client_addr{};
-		  int size = sizeof(client_addr);
-		  auto ret = getpeername(data.client.GetRaw()->GetLowLevelSocket(), (sockaddr*)& client_addr, &size);
-		  auto addr = inet_ntoa(client_addr.sin_addr);
-		  auto port = ntohs(client_addr.sin_port);
-		  auto ID = getHashedID(addr, port);
-		  clientdata_[ID] = data;
-		  connectedplayers_++;
-	  }
+    ClientData data;
+    auto s = listener_.Accept(data.client.GetRaw());
+    if (s) {
+      sockaddr_in client_addr{};
+      int size = sizeof(client_addr);
+      auto ret = getpeername(data.client.GetRaw()->GetLowLevelSocket(),
+                             (sockaddr*)&client_addr, &size);
+      auto addr = inet_ntoa(client_addr.sin_addr);
+      auto port = ntohs(client_addr.sin_port);
+      auto ID = getHashedID(addr, port);
+      clientdata_[ID] = data;
+      connectedplayers_++;
+    }
   }
-  //Recieve Data
-  for (auto& c : clientdata_)
-  {
-	  if (!c.second.client.IsConnected())
-	  {
-		  c.second.client.Disconnect();
-	  }
-	  c.second.packets.push_back(c.second.client.Receive());
-	  
+  // Recieve Data
+  for (auto& c : clientdata_) {
+    if (!c.second.client.IsConnected()) {
+      c.second.client.Disconnect();
+    }
+    c.second.packets.push_back(c.second.client.Receive());
   }
-  //Send Data
+  // Send Data
   NetAPI::Common::PacketHeader header;
   for (auto& d : datatosend_) {
     d >> header;
@@ -56,7 +51,7 @@ bool NetAPI::Socket::Server::Update() {
         cli.second.client.Send(d);
       }
     } else {
-		clientdata_[header.Receiver].client.Send(d);
+      clientdata_[header.Receiver].client.Send(d);
     }
   }
   datatosend_.clear();
