@@ -15,7 +15,7 @@
 #include "shader.hpp"
 
 #include "Font/Font2D.hpp"
-#include "GUI/gui.hpp"
+#include "2D/elements2D.hpp"
 
 #include <msdfgen/msdfgen-ext.h>
 #include <msdfgen/msdfgen.h>
@@ -29,10 +29,9 @@ struct RenderItem {
 };
 
 struct GUIItem {
-  GUI *gui;
+  Elements2D * gui;
   glm::vec2 pos;
-  GLuint tex;
-  unsigned int size;
+  float scale;
 };
 
 struct TextItem {
@@ -73,10 +72,13 @@ std::unordered_map<TextureHandle, Texture> textures;
 
 ModelHandle current_model_guid = 1;
 Font2DHandle current_font_guid = 1;
+GUIHandle current_gui_guid = 1;
 std::unordered_map<std::string, ModelHandle> model_handles;
 std::unordered_map<ModelHandle, Model> models;
 std::unordered_map<std::string, Font2DHandle> font_2D_handles;
 std::unordered_map<Font2DHandle, Font2D> fonts;
+std::unordered_map<std::string, GUIHandle> gui_handles;
+std::unordered_map<GUIHandle, Elements2D> gui_elements;
 
 std::vector<RenderItem> items_to_render;
 std::vector<LightItem> lights_to_render;
@@ -122,6 +124,10 @@ void Init() {
   text_shader.add("text2Dshader.vert");
   text_shader.add("text2Dshader.frag");
   text_shader.compile();
+
+  gui_shader.add("guishader.vert");
+  gui_shader.add("guishader.frag");
+  gui_shader.compile();
 
   glGenVertexArrays(1, &triangle_vao);
   glBindVertexArray(triangle_vao);
@@ -177,7 +183,6 @@ void Init() {
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
                         (GLvoid *)0);
-
   glBindVertexArray(0);
 }
 
@@ -215,6 +220,11 @@ ModelHandle GetModel(const std::string &filepath) {
   return GetAsset<ModelHandle, Model>(model_handles, models, current_model_guid,
                                       filepath);
 }
+GUIHandle GetGUIItem(const std::string &filepath) {
+  return GetAsset<GUIHandle, Elements2D>(gui_handles, gui_elements, current_gui_guid,
+                                  filepath);
+}
+
 Font2DHandle GetFont(const std::string &filepath) {
   return GetAsset<Font2DHandle, Font2D>(font_2D_handles, fonts,
                                         current_font_guid, filepath);
@@ -275,12 +285,17 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
   text_to_render.push_back(to_render);
 }
 
-void Submit(GUI gui, glm::vec2 pos, GLuint tex, unsigned int size) {
+void Submit(GUIHandle gui_h, glm::vec2 pos, float scale) {
+  auto find_res = gui_elements.find(gui_h);
+  if (find_res == gui_elements.end()) {
+    std::cout << "ERROR graphics.cpp: could not find submitted gui element\n";
+    return;
+  }
+
   GUIItem to_render;
-  to_render.gui = &gui;		// ???
+  to_render.gui = &find_res->second;
   to_render.pos = pos;
-  to_render.tex = tex;
-  to_render.size = size;
+  to_render.scale = scale;
   gui_items_to_render.push_back(to_render);
 }
 
@@ -289,7 +304,6 @@ void SubmitCube(glm::mat4 t) { cubes.push_back(t); }
 void Render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
-
 
   // render models and light
   model_shader.use();
@@ -322,11 +336,10 @@ void Render() {
   glBindVertexArray(quad_vao);
 
   gui_shader.use();
-  // ----- INCOMPLETE -----
+  //gui_shader.uniform("cam_transform", cam_transform);
   for (auto &gui_item : gui_items_to_render) {
-    gui_item.gui->Draw(gui_shader, gui_item.pos, gui_item.tex, gui_item.size);
+    gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale);
   }
-  // ----- INCOMPLETE -----
 
   text_shader.use();
   for (auto &text_item : text_to_render) {
