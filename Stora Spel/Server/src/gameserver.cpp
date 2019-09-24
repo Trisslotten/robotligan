@@ -2,12 +2,15 @@
 
 #include <iostream>
 
+#include <ability_component.hpp>
+#include <bitset>
 #include <collision_system.hpp>
 #include <iostream>
 #include <physics_system.hpp>
 #include <transform_component.hpp>
-#include <bitset>
 
+#include <ecs\systems\player_controller_system.hpp>
+#include "ecs/components/player_component.hpp"
 #include "shared.hpp";
 
 namespace {}  // namespace
@@ -28,43 +31,33 @@ void GameServer::Init() {
 void GameServer::Update(float dt) {
   server_.Update();
 
+  int num_players = server_.GetConnectedPlayers();
+  std::unordered_map<int, uint16_t> players_actions;
   for (short i = 0; i < server_.GetConnectedPlayers(); i++) {
     auto packet = server_[i];
     if (!packet.IsEmpty()) {
-      std::bitset<PlayerAction::NUM_ACTIONS> actions;
-
+      // TODO: change to players network id
+      int id = i;
+      packet >> players_actions[id];
     }
   }
 
+  auto player_view = registry_.view<PlayerComponent>();
+
+  registry_.view<PlayerComponent>().each([&](auto entity, auto& player_c) {
+    player_c.actions = players_actions[player_c.id];
+  });
+
+  registry_.view<TransformComponent>().each([&](auto entity, auto& trans_c) { 
+    std::cout << trans_c.position.x << ", " << trans_c.position.y << ", "
+              << ", " << trans_c.position.z << "\n";
+  });
+  std::cout << std::endl;
 
 
   UpdateSystems(dt);
 
   /*
-  for (short i = 0; i < server_.GetConnectedPlayers(); i++) {
-    auto packet = server_[i];
-
-    glm::vec3 target_vel{0};
-
-    if (!packet.IsEmpty()) {
-      int actionflag = 0;
-      packet >> actionflag;
-
-      glm::vec3 vel{0};
-      if ((actionflag & 1) == 1) vel += glm::vec3(1, 0, 0);
-      if ((actionflag & 2) == 2) vel += glm::vec3(-1, 0, 0);
-      if ((actionflag & 4) == 4) vel += glm::vec3(0, 0, -1);
-      if ((actionflag & 8) == 8) vel += glm::vec3(0, 0, 1);
-      if (length(vel) > 0.0001f) vel = normalize(vel);
-
-      target_vel = 10.f * vel;
-      // std::cout << "actionflag=" << actionflag << "\n";
-    }
-    float t = 0.02f;
-    vs_[i] = glm::mix(vs_[i], target_vel, 1.f - glm::pow(t, dt));
-    positions_[i] += vs_[i] * dt;
-  }
-
   if (positions_.size() > 0) {
     NetAPI::Common::Packet packet;
     packet.Add(positions_.data(), positions_.size());
@@ -84,6 +77,8 @@ void GameServer::Update(float dt) {
 }
 
 void GameServer::UpdateSystems(float dt) {
+  player_controller::Update(registry_, dt);
+
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);
 }
@@ -100,7 +95,7 @@ void GameServer::CreateEntities(glm::vec3* in_pos_arr,
 
   // Create one player entity and add components
   auto avatar_entity = registry_.create();
-  // AddPlayerComponents( avatar_entity);
+  AddPlayerComponents(avatar_entity);
   AddRobotComponents(avatar_entity, in_pos_arr[1]);
 
   // Create other robots and add components
@@ -174,6 +169,31 @@ void GameServer::AddArenaComponents(entt::entity& entity) {
 
   // Add a hitbox
   registry_.assign<physics::Arena>(entity, -v2, v2, -v3, v3, -v1, v1);
+}
+
+void GameServer::AddPlayerComponents(entt::entity& entity) {
+  // Prepare hard-coded values
+  AbilityID primary_id = SUPER_STRIKE;
+  AbilityID secondary_id = NULL_ABILITY;
+  float primary_cooldown =
+      GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
+  glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
+
+  // Add components for a player
+  registry_.assign<AbilityComponent>(
+      entity,            // Entity
+      primary_id,        // Primary abiliy id
+      false,             // Use primary ability
+      primary_cooldown,  // Primary ability cooldown
+      0.0f,              // Remaining cooldown
+      secondary_id,      // Secondary ability
+      false,             // Use secondary ability
+      false,             // Shoot
+      0.0f               // Remaining shoot cooldown
+  );
+  auto player_component = registry_.assign<PlayerComponent>(entity);
+  player_component.id = test_player_guid;
+  test_player_guid++;
 }
 
 void GameServer::AddRobotComponents(entt::entity& entity, glm::vec3 in_pos) {

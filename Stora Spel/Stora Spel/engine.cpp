@@ -6,16 +6,19 @@
 #include <glob/graphics.hpp>
 #include <iostream>
 
-#include <ability_controller_system.hpp>
+#include <camera_component.hpp>
 #include <collision_system.hpp>
 #include <physics_system.hpp>
-#include <player_controller_system.hpp>
 #include <render_system.hpp>
 #include "Components/light_component.hpp"
 #include "Components/transform_component.hpp"
 #include "entitycreation.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
+
+Engine::Engine() {}
+
+Engine::~Engine() {}
 
 void Engine::Init() {
   glob::Init();
@@ -49,12 +52,17 @@ void Engine::Init() {
                                        glm::vec3(1.f));
 
   font_test_ = glob::GetFont("assets/fonts/fonts/comic.ttf");
-  font_test2_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
 
-  keybinds_[GLFW_KEY_UP]    = PlayerAction::WALK_FORWARD;
-  keybinds_[GLFW_KEY_DOWN]  = PlayerAction::WALK_BACKWARD;
-  keybinds_[GLFW_KEY_LEFT]  = PlayerAction::WALK_LEFT;
-  keybinds_[GLFW_KEY_RIGHT] = PlayerAction::WALK_RIGHT;
+  keybinds_[GLFW_KEY_W] = PlayerAction::WALK_FORWARD;
+  keybinds_[GLFW_KEY_S] = PlayerAction::WALK_BACKWARD;
+  keybinds_[GLFW_KEY_A] = PlayerAction::WALK_LEFT;
+  keybinds_[GLFW_KEY_D] = PlayerAction::WALK_RIGHT;
+  keybinds_[GLFW_KEY_LEFT_SHIFT] = PlayerAction::SPRINT;
+  keybinds_[GLFW_KEY_SPACE] = PlayerAction::JUMP;
+  keybinds_[GLFW_KEY_Q] = PlayerAction::ABILITY_PRIMARY;
+  keybinds_[GLFW_KEY_E] = PlayerAction::ABILITY_SECONDARY;
+  mousebinds_[GLFW_MOUSE_BUTTON_1] = PlayerAction::KICK;
+  mousebinds_[GLFW_MOUSE_BUTTON_2] = PlayerAction::SHOOT;
 }
 
 void Engine::Update(float dt) {
@@ -65,13 +73,14 @@ void Engine::Update(float dt) {
 
 void Engine::UpdateNetwork() {
   std::bitset<PlayerAction::NUM_ACTIONS> actions;
-  for (auto const& [key, action] : keybinds_) {
-    if (Input::IsKeyDown(key)) {
-      actions.set(action, true);
-    }
-  }
 
-  byte action_bits = actions.to_ulong();
+  for (auto const& [key, action] : keybinds_)
+    if (Input::IsKeyDown(key)) actions.set(action, true);
+
+  for (auto const& [button, action] : mousebinds_)
+    if (Input::IsMouseButtonDown(button)) actions.set(action, true);
+
+  uint16_t action_bits = actions.to_ulong();
 
   NetAPI::Common::Packet packet;
   packet << action_bits;
@@ -91,11 +100,11 @@ void Engine::Render() {
 void Engine::UpdateSystems(float dt) {
   // collision_debug::Update(*reg);
 
-  player_controller::Update(registry_, dt);
-  ability_controller::Update(registry_, dt);
+  // player_controller::Update(registry_, dt);
+  // ability_controller::Update(registry_, dt);
 
-  UpdatePhysics(registry_, dt);
-  UpdateCollisions(registry_);
+  //UpdatePhysics(registry_, dt);
+  //UpdateCollisions(registry_);
 
   auto view = registry_.view<CameraComponent, TransformComponent>();
   for (auto v : view) {

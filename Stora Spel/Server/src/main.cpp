@@ -9,7 +9,7 @@ int main(unsigned argc, char** argv) {
 
   Timer timer;
   double accum = 0;
-  double update_rate = 64;
+  double update_rate = 20;
   double update_time = 1.0 / update_rate;
 
   GameServer server;

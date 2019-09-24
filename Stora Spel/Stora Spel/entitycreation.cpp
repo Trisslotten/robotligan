@@ -8,7 +8,6 @@
 #include <ability_component.hpp>
 #include <boundingboxes.hpp>
 #include <glob\camera.hpp>
-#include <player_component.hpp>
 #include <camera_component.hpp>
 
 
@@ -25,7 +24,7 @@ void CreateEntities(entt::registry& registry, glm::vec3* in_pos_arr,
 
   // Create one player entity and add components
   auto avatar_entity = registry.create();
-  AddPlayerComponents(registry, avatar_entity);
+  //AddPlayerComponents(registry, avatar_entity);
   AddRobotComponents(registry, avatar_entity, in_pos_arr[1]);
 
   // Create other robots and add components
@@ -124,7 +123,7 @@ void AddPlayerComponents(entt::registry& registry, entt::entity& entity) {
   );
   registry.assign<CameraComponent>(entity, (Camera*)glob::GetCamera(),
                                    camera_offset);
-  registry.assign<PlayerComponent>(entity);
+  //registry.assign<PlayerComponent>(entity);
 }
 
 void AddRobotComponents(entt::registry& registry, entt::entity& entity,

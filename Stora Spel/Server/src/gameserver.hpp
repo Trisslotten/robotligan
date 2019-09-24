@@ -22,12 +22,13 @@ class GameServer {
   void AddBallComponents(entt::entity& entity, glm::vec3 in_pos,
                          glm::vec3 in_vel);
   void AddArenaComponents(entt::entity& entity);
-  // void AddPlayerComponents(entt::registry& registry, entt::entity& entity);
+  void AddPlayerComponents(entt::entity& entity);
   void AddRobotComponents(entt::entity& entity, glm::vec3 in_pos);
 
   NetAPI::Socket::Server server_;
-
   entt::registry registry_;
+
+  int test_player_guid = 0;
 };
 
 #endif  // GAME_SERVER_HPP_

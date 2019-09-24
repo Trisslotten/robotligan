@@ -1,10 +1,12 @@
 #ifndef PLAYER_COMPONENT_HPP_
 #define PLAYER_COMPONENT_HPP_
 
+#include <bitset>
+#include <shared.hpp>
 #include "..//util/global_settings.hpp"
 
 struct PlayerComponent {
-  int id = 0;
+  int id = -1;
   float walkspeed = GlobalSettings::Access()->ValueOf("PLAYER_SPEED_WALK");
   float jump_speed = GlobalSettings::Access()->ValueOf("PLAYER_SPEED_JUMP");
   bool no_clip = false;
@@ -23,6 +25,11 @@ struct PlayerComponent {
   float kick_reach = GlobalSettings::Access()->ValueOf("PLAYER_KICK_REACH");
   float kick_fov = GlobalSettings::Access()->ValueOf("PLAYER_KICK_FOV");
   float kick_force = GlobalSettings::Access()->ValueOf("PLAYER_KICK_FORCE");
+
+  // input from client
+  std::bitset<NUM_ACTIONS> actions;
+  float yaw = 0;
+  float pitch = 0;
 };
 
 #endif  // PLAYER_COMPONENT_H_

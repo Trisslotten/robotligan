@@ -9,6 +9,11 @@
 
 class Engine {
  public:
+  Engine();
+  ~Engine();
+  Engine(const Engine&) = delete;
+  Engine& operator=(const Engine&) = delete;
+
   void Init();
 
   void Update(float dt);
@@ -21,13 +26,12 @@ class Engine {
   void UpdateSystems(float dt);
   
   NetAPI::Socket::TcpClient tcp_client_;
-
   entt::registry registry_;
 
   std::unordered_map<int, PlayerAction> keybinds_;
+  std::unordered_map<int, PlayerAction> mousebinds_;
 
-  glob::Font2DHandle font_test_;
-  glob::Font2DHandle font_test2_;
+  glob::Font2DHandle font_test_ = 0;
 };
 
 #endif  // ENGINE_HPP_
