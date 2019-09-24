@@ -16,9 +16,6 @@ struct ButtonComponent {
   std::string back_texture;
   glm::vec2 bounds = glm::vec2(200, 50);
   std::function<void()> button_func;
-  //action, pass function or use enums and let system handle logic?
-
-
 };
 
 #endif  // !BUTTON_COMPONENT_HPP_

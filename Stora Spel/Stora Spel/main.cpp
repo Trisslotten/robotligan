@@ -48,7 +48,6 @@ void AddPlayerComponents(entt::registry& registry, entt::entity& entity);
 void AddRobotComponents(entt::registry& registry, entt::entity& entity,
                         glm::vec3 in_pos);
 
-void ResetWrapper();
 
 entt::registry registry;
 bool control = true;
@@ -186,9 +185,9 @@ int main(unsigned argc, char** argv) {
     updateSystems(&registry, dt);
 
     glob::Submit(font_test, glm::vec2(100, 200), 73,
+                 "Det här är Comic Sans MS jahoo!", glm::vec4(0, 0, 0, 0.5));
+    glob::Submit(font_test, glm::vec2(98, 202), 73,
                  "Det här är Comic Sans MS jahoo!", glm::vec4(1, 1, 1, 1));
-    glob::Submit(font_test, glm::vec2(101, 198), 72,
-                 "Det här är Comic Sans MS jahoo!", glm::vec4(0, 1, 0, 1));
 
     glob::Render();
     glob::window::Update();
@@ -243,15 +242,6 @@ void CreateEntities(entt::registry& registry, glm::vec3* in_pos_arr,
     };
     ResetEntities(registry, start_positions, 3);
   };
-}
-
-void ResetWrapper() {
-  glm::vec3 start_positions[3] = {
-      glm::vec3(5.f, 0.f, 0.f),   // Ball
-      glm::vec3(-9.f, 4.f, 0.f),  // Player
-      glm::vec3(0.f, 0.f, 0.f)    // Others
-  };
-  ResetEntities(registry, start_positions, 3);
 }
 
 void ResetEntities(entt::registry& registry, glm::vec3* in_pos_arr,
