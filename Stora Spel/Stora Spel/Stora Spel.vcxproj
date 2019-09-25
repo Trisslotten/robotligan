@@ -173,6 +173,7 @@
   <ItemGroup>
     <ClInclude Include="Components\ability_component.hpp" />
     <ClInclude Include="Components\ball_component.hpp" />
+    <ClInclude Include="Components\button_component.hpp" />
     <ClInclude Include="Components\camera_component.hpp" />
     <ClInclude Include="Components\light_component.hpp" />
     <ClInclude Include="Components\model_component.hpp" />
@@ -181,6 +182,7 @@
     <ClInclude Include="Components\projectile_component.hpp" />
     <ClInclude Include="Components\transform_component.hpp" />
     <ClInclude Include="Components\velocity.hpp" />
+    <ClInclude Include="Entt systems\button_system.hpp" />
     <ClInclude Include="entitycreation.hpp" />
     <ClInclude Include="Entt systems\collision_system.hpp" />
     <ClInclude Include="Entt systems\collision_temp_debug_system.h" />
@@ -211,6 +213,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="assets\shaders\e2Dshader.frag" />
+    <None Include="assets\shaders\e2Dshader.vert" />
+    <None Include="assets\shaders\guishader.frag" />
+    <None Include="assets\shaders\guishader.vert" />
     <None Include="assets\shaders\modelshader.frag" />
     <None Include="assets\shaders\modelshader.vert" />
     <None Include="Assets\shaders\text2Dshader.frag" />

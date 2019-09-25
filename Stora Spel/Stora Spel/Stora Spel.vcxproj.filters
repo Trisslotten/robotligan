@@ -30,6 +30,8 @@
     <ClInclude Include="util\timer.hpp" />
     <ClInclude Include="util\transform_helper.hpp" />
     <ClInclude Include="Components\model_component.hpp" />
+    <ClInclude Include="Components\button_component.hpp" />
+    <ClInclude Include="Entt systems\button_system.hpp" />
     <ClInclude Include="Components\light_component.hpp" />
     <ClInclude Include="shared\shared.hpp" />
     <ClInclude Include="engine.hpp" />
@@ -53,6 +55,10 @@
     <ClInclude Include="Entt systems\physics_system.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <None Include="assets\shaders\guishader.vert" />
+    <None Include="assets\shaders\guishader.frag" />
+    <None Include="assets\shaders\e2Dshader.vert" />
+    <None Include="assets\shaders\e2Dshader.frag" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />

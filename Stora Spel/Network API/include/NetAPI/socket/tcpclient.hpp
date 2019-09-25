@@ -25,8 +25,8 @@ class EXPORT TcpClient {
   bool Connect(const char* addr, unsigned short port);
   bool Send(const char* data, size_t length);
   bool Send(NetAPI::Common::Packet& p);
-  const char* Recive();
-  NetAPI::Common::Packet Recieve();
+  //const char* Receive(unsigned short timeout = 50);
+  NetAPI::Common::Packet Receive(unsigned short timeout = 50);
   int QuerryError() { return error_; }
   void SetBlocking(bool block = true) { blocking_ = block; }
   void SetActive(bool c = true) { connected_ = c; };
@@ -36,10 +36,10 @@ class EXPORT TcpClient {
   void operator=(const SOCKET& other);
   size_t GetLastRecvLen() { return last_buff_len_; }
   const char* GetBuffer() { return rec_buffer_; }
-  byte GetID() { return ID_; }
+  short GetID() { return ID_; }
 
  private:
-  byte ID_ = 0;
+  short ID_ = 0;
   int last_buff_len_ = 0;
   timeval timeout_ = {};
   fd_set read_set_ = {};

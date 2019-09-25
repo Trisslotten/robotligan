@@ -2,12 +2,13 @@
 #define TRANSFORM_COMPONENT_HPP_
 
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #include "../util/transform_helper.hpp"
 
 struct TransformComponent {
   glm::vec3 position;
-  glm::vec3 rotation;
+  glm::quat rotation;
   glm::vec3 scale;
 
   void SetRotation(glm::vec3 rot) {
@@ -16,12 +17,13 @@ struct TransformComponent {
   }
 
   void Rotate(glm::vec3 rot) {
-    rotation += rot;
+    rotation *= glm::quat(rot);
     //rotation = glm::clamp(rotation, -180.f, 180.f); 
   }
 
   glm::vec3 Forward() {
-	return transform_helper::DirVectorFromRadians(rotation.y, rotation.x);
+    return rotation * glm::vec3(1.f, 0.f, 0.f);  // transform_helper::DirVectorFromRadians(rotation.y,
+                                           // rotation.x);
   }
 };
 

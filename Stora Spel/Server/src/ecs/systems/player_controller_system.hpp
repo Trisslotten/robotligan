@@ -31,7 +31,7 @@ void Update(entt::registry& registry, float dt) {
     float pitch = rot.y;
 
     cam_c.AddAngles(yaw, pitch);
-    trans_c.Rotate(glm::vec3(0, yaw, 0));
+    trans_c.Rotate(glm::vec3(0, -yaw, 0));
 
     if (player_c.actions[SHOOT]) {
       ability_c.shoot = true;
@@ -152,10 +152,10 @@ void Update(entt::registry& registry, float dt) {
           registry.view<BallComponent, PhysicsComponent, TransformComponent>();
 
       for (auto entity : view_balls) {
-        PhysicsComponent& ball_physics_c =
-            view_balls.get<PhysicsComponent>(entity);
-        TransformComponent& ball_trans_c =
-            view_balls.get<TransformComponent>(entity);
+        auto& ball_physics_c = view_balls.get<PhysicsComponent>(entity);
+        auto& ball_trans_c = view_balls.get<TransformComponent>(entity);
+        auto& ball_c = view_balls.get<BallComponent>(entity);
+        
 
         glm::vec3 player_ball_vec = ball_trans_c.position - trans_c.position;
         glm::vec3 player_ball_dir = glm::normalize(player_ball_vec);
@@ -179,6 +179,7 @@ void Update(entt::registry& registry, float dt) {
                            glm::rotate(cam_c.offset, -trans_c.rotation.y,
                                        glm::vec3(0.0f, 1.0f, 0.0f)));
     */
+    //cam_c.cam->SetPosition(trans_c.position + glm::rotate(cam_c.offset, glm::angle(trans_c.rotation), glm::vec3(0.0f, 1.0f, 0.0f)));
   };
 }
 
