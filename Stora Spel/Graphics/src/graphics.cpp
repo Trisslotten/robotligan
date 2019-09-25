@@ -89,8 +89,11 @@ void DrawCube(glm::mat4 t) {
   wireframe_shader.uniform("model_transform", t);
   glBindVertexArray(cube_vao);
   glDisable(GL_DEPTH_TEST);
+  //glLineWidth(2);
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  glDisable(GL_CULL_FACE);
   glDrawArrays(GL_TRIANGLES, 0, 36);
+  glEnable(GL_CULL_FACE);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glEnable(GL_DEPTH_TEST);
   glBindVertexArray(0);

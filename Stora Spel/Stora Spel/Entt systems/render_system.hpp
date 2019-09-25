@@ -22,7 +22,7 @@ void Render(entt::registry& registry) {
     auto& m = view_model.get<ModelComponent>(model);
     glob::Submit(m.handle,
                  glm::translate(t.position) *
-                     glm::rotate(-t.rotation.y, glm::vec3(0.f, 1.f, 0.f)) *
+                     glm::toMat4(t.rotation) *
                      glm::translate(-m.offset) * glm::scale(t.scale));
   }
 
@@ -34,7 +34,7 @@ void Render(entt::registry& registry) {
 
 	  //glm::mat4 mat = glm::translate(transform.position) * glm::scale(transform.scale) * glm::mat4_cast(glm::quat(transform.rotation));
 	  glm::vec3 pos = transform.position;
-	  glm::vec3 dir = glm::quat(transform.rotation) * glm::vec3(1.f, 0.f, 0.f);
+	  glm::vec3 dir = transform.rotation * glm::vec3(1.f, 0.f, 0.f);
 	  glob::SubmitLightSource(pos, light.color, light.radius, light.ambient);
   }
 
@@ -47,8 +47,7 @@ void Render(entt::registry& registry) {
     for (auto& w : view_wireframe_obb) {
       auto& obb = view_wireframe_obb.get<physics::OBB>(w);
       auto& transform = view_wireframe_obb.get<TransformComponent>(w);
-      glob::SubmitCube(glm::translate(obb.center) *
-                       glm::rotate(-transform.rotation.y, glm::vec3(0.f, 1.f, 0.f)) *
+      glob::SubmitCube(glm::translate(obb.center) * glm::toMat4(transform.rotation) *
                        glm::scale(glm::vec3(obb.extents[0],
                                                                obb.extents[1],
                                                                obb.extents[2])));

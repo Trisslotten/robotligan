@@ -62,9 +62,7 @@ void updateSystems(entt::registry *reg, float dt) {
   for (auto v : view) {
     auto &cam_c = reg->get<CameraComponent>(v);
     auto &trans_c = reg->get<TransformComponent>(v);
-    cam_c.cam->SetPosition(trans_c.position +
-                         glm::rotate(cam_c.offset, -trans_c.rotation.y,
-                                     glm::vec3(0.0f, 1.0f, 0.0f)));
+    cam_c.cam->SetPosition(trans_c.position + trans_c.rotation*cam_c.offset);
   }
 
   Render(*reg);
@@ -106,40 +104,7 @@ int main(unsigned argc, char **argv) {
     //std::cout << 1.0f / dt << std::endl;
     Input::Reset();
     // tick
-    //if (Input::IsKeyDown(GLFW_KEY_K)) {
-    //  //auto& c = registry.get<CameraComponent>(avatar);
-    //  //c.offset.x += 0.01f;
-    //  //std::cout << "Camera: " << c.offset.x << std::endl;
-    //  registry.get<PhysicsComponent>(ball).velocity.x += 10;
-    //  std::cout << registry.get<PhysicsComponent>(ball).velocity.x << std::endl;
-    //}
-    //if (Input::IsKeyDown(GLFW_KEY_L)) {
-    //  //auto &c = registry.get<CameraComponent>(avatar);
-    //  //c.offset.x -= 0.01f;
-    //  //std::cout << "Camera: " << c.offset.x << std::endl;
-    //  registry.get<PhysicsComponent>(ball).is_airborne = false;
-    //  registry.get<TransformComponent>(ball).position.y += 0.1f;
-    //}
-    //if (Input::IsKeyDown(GLFW_KEY_O)) {
-    //  auto &c = registry.get<CameraComponent>(avatar);
-    //  c.offset.y += 0.01f;
-    //  std::cout << "Camera y: " << c.offset.y << std::endl;
-    //}
-    //if (Input::IsKeyDown(GLFW_KEY_P)) {
-    //  auto &c = registry.get<CameraComponent>(avatar);
-    //  c.offset.y -= 0.01f;
-    //  std::cout << "Camera y: " << c.offset.y << std::endl;
-    //}
-    //if (Input::IsKeyDown(GLFW_KEY_U)) {
-    //  auto &c = registry.get<CameraComponent>(avatar);
-    //  c.offset.z += 0.01f;
-    //  std::cout << "Camera z: " << c.offset.z << std::endl;
-    //}
-    //if (Input::IsKeyDown(GLFW_KEY_I)) {
-    //  auto &c = registry.get<CameraComponent>(avatar);
-    //  c.offset.z -= 0.01f;
-    //  std::cout << "Camera z: " << c.offset.z << std::endl;
-    //}
+    
     // render
 
 	//Check if the keys for global settings are pressed
