@@ -21,7 +21,8 @@ void Update(entt::registry& registry) {
 
     glm::vec2 button_pos = glm::vec2(trans_c.position.x, trans_c.position.y);
 
-	mouse_pos.y = glob::window::GetWindowDimensions().y - mouse_pos.y + button_c.font_size/2;
+    mouse_pos.y = glob::window::GetWindowDimensions().y - mouse_pos.y +
+                  button_c.font_size / 2;
     mouse_pos.x += button_c.font_size / 2;
 
     if (transform_helper::InsideBounds2D(mouse_pos, button_pos,
@@ -30,7 +31,7 @@ void Update(entt::registry& registry) {
       if (Input::IsButtonPressed(GLFW_MOUSE_BUTTON_1)) {
         printf("Clicked the button!\n");
         button_c.button_func();
-	  }
+      }
     } else {
       button_c.text_current_color = button_c.text_normal_color;
     }

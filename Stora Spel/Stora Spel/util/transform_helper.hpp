@@ -13,13 +13,13 @@ glm::vec3 DirVectorFromRadians(float yaw, float pitch) {
 }
 
 bool InsideBounds2D(glm::vec2 pos_varaible, glm::vec2 pos_entity,
-	glm::vec2 bounds) {
+                    glm::vec2 bounds) {
   if (pos_varaible.x >= pos_entity.x &&
       pos_varaible.x <= pos_entity.x + bounds.x) {
     if (pos_varaible.y >= pos_entity.y &&
         pos_varaible.y <= pos_entity.y + bounds.y) {
       return true;
-	}
+    }
   }
   return false;
 }

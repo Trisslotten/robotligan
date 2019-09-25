@@ -69,7 +69,7 @@ void Update(entt::registry &registry, float dt) {
         if (ability_component.shoot &&
             ability_component.shoot_cooldown <= 0.0f) {
           CreateCannonBallEntity(registry);
-          ability_component.shoot_cooldown = 0.0f;
+          ability_component.shoot_cooldown = 1.0f;
         }
         ability_component.shoot = false;
       });
