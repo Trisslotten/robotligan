@@ -42,10 +42,10 @@
     <ClInclude Include="include\NetAPI\packet.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NetAPI\socket\Client.hpp">
+    <ClInclude Include="include\NetAPI\socket\clientdata.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\NetAPI\socket\clientdata.hpp">
+    <ClInclude Include="include\NetAPI\socket\client.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -74,7 +74,7 @@
     <ClCompile Include="src\NetAPI\packet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\NetAPI\socket\Client.cpp">
+    <ClCompile Include="src\NetAPI\socket\client.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

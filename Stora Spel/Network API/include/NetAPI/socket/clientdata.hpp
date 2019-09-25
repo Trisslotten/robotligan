@@ -3,7 +3,7 @@
 #define CLIENTDATA_HPP_
 #include <NetAPI/common.hpp>
 #include <NetAPI/packet.hpp>
-#include <NetAPI/socket/Client.hpp>
+#include <NetAPI/socket/client.hpp>
 #include <vector>
 namespace NetAPI {
 namespace Socket {

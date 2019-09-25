@@ -1,4 +1,4 @@
-#include <NetAPI/socket/Client.hpp>
+#include <NetAPI/socket/client.hpp>
 namespace NetAPI {
 namespace Socket {
 bool Client::Connect(const char* addr, short port) {
