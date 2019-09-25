@@ -116,12 +116,10 @@ void UpdateCollisions(entt::registry& registry) {
             ball_physics.is_airborne = false;
             ball.rotation = glm::quat();
           }
-        } else if (normal.y < 0) {
-          // Ball hits the ceiling
-          ball_transform.position.y = arena_hitbox.ymax - ball_hitbox.radius;
         }
+
         // Rotate ball
-        glm::vec3 nn = glm::normalize(normal);
+        glm::vec3 nn = glm::normalize(data.normal);
         glm::vec3 dir =
             ball_physics.velocity - glm::dot(ball_physics.velocity, nn) * nn;
 
