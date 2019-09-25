@@ -37,14 +37,14 @@ class Camera {
   void UpdateViewMatrix();
 
  public:
-  Camera(glm::vec3 in_pos,     // Position where camera is created
+  EXPORT Camera(glm::vec3 in_pos,     // Position where camera is created
          glm::vec3 in_target,  // Point camera is looking
          float in_fov_deg,     // Field of view
          float in_aspect,      // Aspect ratio
          float in_nearplane,   // Near z-plane in view-space
          float in_farplane     // Far z-plane in view-space
   );
-  ~Camera();
+  EXPORT ~Camera();
 
   EXPORT glm::vec3 GetPosition() const;
   EXPORT glm::mat4 GetViewPerspectiveMatrix() const;

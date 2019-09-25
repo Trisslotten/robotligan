@@ -110,9 +110,11 @@ void Engine::UpdateSystems(float dt) {
   for (auto v : view) {
     auto& cam_c = registry_.get<CameraComponent>(v);
     auto& trans_c = registry_.get<TransformComponent>(v);
+    /*
     cam_c.cam->SetPosition(trans_c.position +
                            glm::rotate(cam_c.offset, -trans_c.rotation.y,
                                        glm::vec3(0.0f, 1.0f, 0.0f)));
+    */
   }
 
   RenderSystem(registry_);

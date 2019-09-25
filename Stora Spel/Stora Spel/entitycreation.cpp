@@ -121,8 +121,7 @@ void AddPlayerComponents(entt::registry& registry, entt::entity& entity) {
       false,             // Shoot
       0.0f               // Remaining shoot cooldown
   );
-  registry.assign<CameraComponent>(entity, (Camera*)glob::GetCamera(),
-                                   camera_offset);
+  registry.assign<CameraComponent>(entity, camera_offset);
   //registry.assign<PlayerComponent>(entity);
 }
 

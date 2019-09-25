@@ -19,8 +19,7 @@ void Update(entt::registry& registry, float dt) {
   for (auto entity : view_controller) {
     CameraComponent& cam_c = view_controller.get<CameraComponent>(entity);
     PlayerComponent& player_c = view_controller.get<PlayerComponent>(entity);
-    TransformComponent& trans_c =
-        view_controller.get<TransformComponent>(entity);
+    TransformComponent& trans_c = view_controller.get<TransformComponent>(entity);
     PhysicsComponent& physics_c = view_controller.get<PhysicsComponent>(entity);
     AbilityComponent& ability_c = view_controller.get<AbilityComponent>(entity);
 
@@ -176,10 +175,10 @@ void Update(entt::registry& registry, float dt) {
 
     /*
             NETWORK STUFF?
-    */
     cam_c.cam->SetPosition(trans_c.position +
                            glm::rotate(cam_c.offset, -trans_c.rotation.y,
                                        glm::vec3(0.0f, 1.0f, 0.0f)));
+    */
   };
 }
 

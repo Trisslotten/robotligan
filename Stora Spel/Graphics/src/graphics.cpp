@@ -63,9 +63,10 @@ std::unordered_map<TextureHandle, Texture> textures;
 */
 
 ModelHandle current_model_guid = 1;
-Font2DHandle current_font_guid = 1;
 std::unordered_map<std::string, ModelHandle> model_handles;
 std::unordered_map<ModelHandle, Model> models;
+
+Font2DHandle current_font_guid = 1;
 std::unordered_map<std::string, Font2DHandle> font_2D_handles;
 std::unordered_map<Font2DHandle, Font2D> fonts;
 
@@ -265,6 +266,8 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
   text_to_render.push_back(to_render);
 }
 
+void SetCamera(Camera cam) { camera = cam; }
+
 void SubmitCube(glm::mat4 t) { cubes.push_back(t); }
 
 void Render() {
@@ -307,6 +310,6 @@ void Render() {
   num_frames++;
 }
 
-void* GetCamera() { return (void*)&camera; }
+Camera GetCamera() { return camera; }
 
 }  // namespace glob

@@ -18,6 +18,8 @@ namespace {}  // namespace
 GameServer::~GameServer() { server_.Cleanup(); }
 
 void GameServer::Init() {
+  GlobalSettings::Access()->UpdateValuesFromFile();
+
   server_.Setup(1337);
 
   glm::vec3 start_positions[3] = {
@@ -46,14 +48,14 @@ void GameServer::Update(float dt) {
 
   registry_.view<PlayerComponent>().each([&](auto entity, auto& player_c) {
     player_c.actions = players_actions[player_c.id];
+    // std::cout << player_c.id << "\n";
   });
 
-  registry_.view<TransformComponent>().each([&](auto entity, auto& trans_c) { 
-    std::cout << trans_c.position.x << ", " << trans_c.position.y << ", "
-              << ", " << trans_c.position.z << "\n";
+  registry_.view<TransformComponent>().each([&](auto entity, auto& trans_c) {
+    glm::vec3 p = trans_c.position;
+    std::cout << p.x << ", " << p.y << ", " << p.z << "\n";
   });
   std::cout << std::endl;
-
 
   UpdateSystems(dt);
 
@@ -191,7 +193,8 @@ void GameServer::AddPlayerComponents(entt::entity& entity) {
       false,             // Shoot
       0.0f               // Remaining shoot cooldown
   );
-  auto player_component = registry_.assign<PlayerComponent>(entity);
+  registry_.assign<CameraComponent>(entity, camera_offset);
+  auto& player_component = registry_.assign<PlayerComponent>(entity);
   player_component.id = test_player_guid;
   test_player_guid++;
 }
