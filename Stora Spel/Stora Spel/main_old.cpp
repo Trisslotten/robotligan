@@ -135,10 +135,15 @@ int main(unsigned argc, char** argv) {
       glob::GetE2DItem("assets/GUI_elements/Scoreboard_V1.png");
 
 
-  // Create GUI element
+  // Create GUI elementds
   glob::GUIHandle gui_test =
       glob::GetGUIItem("assets/GUI_elements/Scoreboard_V1.png");
-
+  glob::GUIHandle gui_teamscore =
+      glob::GetGUIItem("assets/GUI_elements/koncept_poäng_top.png");
+  glob::GUIHandle gui_stamina =
+      glob::GetGUIItem("assets/GUI_elements/koncept_stamina.png");
+  glob::GUIHandle gui_quickslots =
+      glob::GetGUIItem("assets/GUI_elements/koncept_abilities.png");
 
   float time = 0.f;
   timer.Restart();
@@ -212,6 +217,10 @@ int main(unsigned argc, char** argv) {
     if (Input::IsKeyDown(GLFW_KEY_TAB)) {
       glob::Submit(gui_test, glm::vec2(285, 177), 0.6);
     }
+    // Show GUI TEST
+    glob::Submit(gui_stamina, glm::vec2(0, 5), 0.85);
+    glob::Submit(gui_quickslots, glm::vec2(7, 50), 0.3);
+    glob::Submit(gui_teamscore, glm::vec2(497, 648), 1);
 
 	// Submit text TEST
     glob::Submit(font_test, glm::vec2(100, 200), 73,
