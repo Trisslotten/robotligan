@@ -1,6 +1,8 @@
 #include "collision.hpp"
 
 #include <glm/glm.hpp>
+#include <cmath>
+#include <iostream>
 #include <vector>
 
 struct Corners {
@@ -355,7 +357,17 @@ physics::IntersectData physics::Intersect(const MeshHitbox& m,
     float dist = ComputeSquaredDistance(s.center, tri, &closest_point);
 
     if (dist <= rsqrt) {
-      data.normal += glm::normalize(glm::cross(tri.p1 - tri.p0, tri.p2 - tri.p0));
+      glm::vec3 temp = glm::normalize(glm::cross(tri.p1 - tri.p0, tri.p2 - tri.p0));
+      if (fabs(temp.x) < 0.05f && fabs(temp.x) > 0.0) {
+        temp.x = 0.f;
+      }
+      if (fabs(temp.y) < 0.05f && fabs(temp.y) > 0.0) {
+        temp.y = 0.f;
+      }
+      if (fabs(temp.z) < 0.05f && fabs(temp.z) > 0.0) {
+        temp.z = 0.f;
+      }
+      data.normal += temp;
       data.collision = true;
       data.move_vector = (rsqrt - dist) * data.normal;
 
