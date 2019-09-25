@@ -80,7 +80,8 @@ bool NetAPI::Socket::TcpClient::Send(NetAPI::Common::Packet& p) {
   }
   return true;
 }
-const char* NetAPI::Socket::TcpClient::Recive(unsigned short timeout) {
+/*
+const char* NetAPI::Socket::TcpClient::Receive(unsigned short timeout) {
   // Implement blocking? meeh
   int bytes = 1;
 
@@ -102,7 +103,7 @@ const char* NetAPI::Socket::TcpClient::Recive(unsigned short timeout) {
   } else {
     return NetAPI::Common::kNoDataAvailable;
   }
-}
+}*/
 NetAPI::Common::Packet NetAPI::Socket::TcpClient::Receive(
     unsigned short timeout) {
   int bytes = 1;
