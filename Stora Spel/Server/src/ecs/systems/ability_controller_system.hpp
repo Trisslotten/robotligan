@@ -2,16 +2,16 @@
 #define ABILITY_CONTROLLER_SYSTEM_HPP_
 
 //#include <position.h>
+#include <entt.hpp>
 #include <../util/global_settings.hpp>
 #include <ability_component.hpp>
 #include <ball_component.hpp>
 #include <boundingboxes.hpp>
 #include <camera_component.hpp>
-#include <model_component.hpp>
 #include <physics_component.hpp>
-#include <player_component.hpp>
 #include <projectile_component.hpp>
 #include <transform_component.hpp>
+#include "ecs/components/player_component.hpp"
 
 namespace ability_controller {
 
@@ -195,8 +195,7 @@ void CreateCannonBallEntity(entt::registry &registry) {
     registry.assign<physics::Sphere>(cannonball,
                                      glm::vec3(tc.position + cc.offset), .3f);
     registry.assign<ProjectileComponent>(cannonball, CANNON_BALL);
-    registry.assign<ModelComponent>(cannonball,
-                                    glob::GetModel("assets/Ball/Ball.fbx"));
+    //registry.assign<ModelComponent>(cannonball, glob::GetModel("assets/Ball/Ball.fbx"));
   }
 }
 
