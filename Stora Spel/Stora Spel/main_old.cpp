@@ -1,3 +1,12 @@
+/*
+
+
+HOW TO USE: 
+Set "Include in project" setting to FALSE for: engine.hpp, engine.cpp, main.cpp, entitycreation.hpp and entitycreation.cpp
+Set "Include in project" setting to TRUE for: main_old.cpp
+
+*/
+
 #include <NetAPI/networkTest.hpp>
 #include <NetAPI/socket/server.hpp>
 #include <NetAPI/socket/tcpclient.hpp>
