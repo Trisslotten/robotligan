@@ -11,11 +11,7 @@
 
 #include <GLFW/glfw3.h>  //NTS: This one must be included after certain other things
 #include "util/meminfo.hpp"
-#include "collision_temp_debug_system.h"
-#include <GLFW/glfw3.h> //NTS: This one must be included after certain other things.
-#include "util/input.hpp"
 #include "util/timer.hpp"
-#include "util/meminfo.hpp"
 
 #include "engine.hpp"
 
@@ -39,12 +35,7 @@ int main(unsigned argc, char** argv) {
   double net_update_accum = 0.0;
   int num_net_updates = 0;
 
-  //temporary
-  if (Input::IsKeyPressed(GLFW_KEY_M)) {
-    control = !control;
-    glob::window::SetMouseLocked(control);
-  }
-  //temporary
+  Timer debug_timer;
 
   Timer frame_timer;
   float dt = 1.f / 60.f;

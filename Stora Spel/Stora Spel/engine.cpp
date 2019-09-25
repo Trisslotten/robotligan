@@ -28,7 +28,7 @@ void Engine::Init() {
   glob::Init();
   Input::Initialize();
 
-  tcp_client_.Connect("192.168.1.47", 1337);
+  //tcp_client_.Connect("192.168.1.47", 1337);
 
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
