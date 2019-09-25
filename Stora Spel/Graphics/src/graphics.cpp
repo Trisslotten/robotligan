@@ -14,6 +14,7 @@
 #include "glob/camera.hpp"
 #include "shader.hpp"
 
+#include "2D/elements2D.hpp"
 #include "Font/Font2D.hpp"
 
 #include <msdfgen/msdfgen-ext.h>
@@ -27,6 +28,19 @@ struct RenderItem {
   glm::mat4 transform;
 };
 
+struct GUIItem {
+  Elements2D *gui;
+  glm::vec2 pos;
+  float scale;
+};
+
+struct E2DItem {
+  Elements2D *e2D;
+  glm::vec3 pos;
+  float scale;
+  glm::mat4 rot;
+};
+
 struct TextItem {
   Font2D *font;
   glm::vec2 pos;
@@ -36,16 +50,18 @@ struct TextItem {
 };
 
 struct LightItem {
-	glm::vec3 pos;
-	glm::vec3 color;
-	glm::float32 radius;
-	glm::float32 ambient;
+  glm::vec3 pos;
+  glm::vec3 color;
+  glm::float32 radius;
+  glm::float32 ambient;
 };
 
 ShaderProgram test_shader;
 ShaderProgram model_shader;
 ShaderProgram text_shader;
 ShaderProgram wireframe_shader;
+ShaderProgram gui_shader;
+ShaderProgram e2D_shader;
 
 GLuint triangle_vbo, triangle_vao;
 GLuint cube_vbo, cube_vao;
@@ -64,15 +80,23 @@ std::unordered_map<TextureHandle, Texture> textures;
 
 ModelHandle current_model_guid = 1;
 Font2DHandle current_font_guid = 1;
+GUIHandle current_gui_guid = 1;
+E2DHandle current_e2D_guid = 1;
 std::unordered_map<std::string, ModelHandle> model_handles;
 std::unordered_map<ModelHandle, Model> models;
 std::unordered_map<std::string, Font2DHandle> font_2D_handles;
 std::unordered_map<Font2DHandle, Font2D> fonts;
+std::unordered_map<std::string, GUIHandle> gui_handles;
+std::unordered_map<GUIHandle, Elements2D> gui_elements;
+std::unordered_map<std::string, E2DHandle> e2D_handles;
+std::unordered_map<E2DHandle, Elements2D> e2D_elements;
 
 std::vector<RenderItem> items_to_render;
 std::vector<LightItem> lights_to_render;
 std::vector<glm::mat4> cubes;
 std::vector<TextItem> text_to_render;
+std::vector<GUIItem> gui_items_to_render;
+std::vector<E2DItem> e2D_items_to_render;
 
 void DrawFullscreenQuad() {
   glBindVertexArray(triangle_vao);
@@ -116,6 +140,14 @@ void Init() {
   text_shader.add("text2Dshader.frag");
   text_shader.compile();
 
+  gui_shader.add("guishader.vert");
+  gui_shader.add("guishader.frag");
+  gui_shader.compile();
+
+  e2D_shader.add("e2Dshader.vert");
+  e2D_shader.add("e2Dshader.frag");
+  e2D_shader.compile();
+
   glGenVertexArrays(1, &triangle_vao);
   glBindVertexArray(triangle_vao);
   std::vector<glm::vec3> vertices{
@@ -131,28 +163,26 @@ void Init() {
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
                         (GLvoid *)0);
 
-
   glGenVertexArrays(1, &cube_vao);
   glBindVertexArray(cube_vao);
-  std::vector<glm::vec3> vertices_cube {
-      {1, 1, 1}, {1, -1, 1}, {-1, 1, 1}, // z+ face
-      {-1, -1, 1}, {1, -1, 1},  {-1, 1, 1},
+  std::vector<glm::vec3> vertices_cube{
+      {1, 1, 1},    {1, -1, 1},   {-1, 1, 1},  // z+ face
+      {-1, -1, 1},  {1, -1, 1},   {-1, 1, 1},
 
-      {1, 1, -1}, {1, -1, -1}, {1, -1, 1}, // x+ face
-      {1, 1, -1},  {1, 1, 1},  {1, -1, 1},
+      {1, 1, -1},   {1, -1, -1},  {1, -1, 1},  // x+ face
+      {1, 1, -1},   {1, 1, 1},    {1, -1, 1},
 
-      {-1, 1, -1}, {1, 1, -1},  {1, 1, 1}, // y+ face
+      {-1, 1, -1},  {1, 1, -1},   {1, 1, 1},  // y+ face
       {-1, 1, -1},  {1, 1, 1},    {-1, 1, 1},
 
-      {-1, -1, -1}, {1, 1, -1},  {-1, 1, -1}, // z- face
+      {-1, -1, -1}, {1, 1, -1},   {-1, 1, -1},  // z- face
       {1, 1, -1},   {-1, -1, -1}, {1, -1, -1},
 
-      {-1, -1, -1}, {1, -1, -1}, {1, -1, 1}, // y- face
-      {-1, -1, 1},  {1, -1, 1},  {1, -1, -1},
+      {-1, -1, -1}, {1, -1, -1},  {1, -1, 1},  // y- face
+      {-1, -1, 1},  {1, -1, 1},   {1, -1, -1},
 
-      {-1, -1, -1}, {-1, -1, 1}, {-1, 1, -1}, // x- face
-      {-1, -1, 1},  {-1, 1, -1}, {-1, 1, 1}
-  };
+      {-1, -1, -1}, {-1, -1, 1},  {-1, 1, -1},  // x- face
+      {-1, -1, 1},  {-1, 1, -1},  {-1, 1, 1}};
   glGenBuffers(1, &cube_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, cube_vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices_cube.size(),
@@ -172,7 +202,6 @@ void Init() {
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
                         (GLvoid *)0);
-
   glBindVertexArray(0);
 }
 
@@ -210,8 +239,18 @@ ModelHandle GetModel(const std::string &filepath) {
   return GetAsset<ModelHandle, Model>(model_handles, models, current_model_guid,
                                       filepath);
 }
+GUIHandle GetGUIItem(const std::string &filepath) {
+  return GetAsset<GUIHandle, Elements2D>(gui_handles, gui_elements,
+                                         current_gui_guid, filepath);
+}
+
 Font2DHandle GetFont(const std::string &filepath) {
-  return GetAsset<Font2DHandle, Font2D>(font_2D_handles, fonts, current_font_guid, filepath);
+  return GetAsset<Font2DHandle, Font2D>(font_2D_handles, fonts,
+                                        current_font_guid, filepath);
+}
+E2DHandle GetE2DItem(const std::string &filepath) {
+  return GetAsset<E2DHandle, Elements2D>(e2D_handles, e2D_elements,
+                                         current_e2D_guid, filepath);
 }
 /*
 TextureHandle GetTexture(const std::string &filepath) {
@@ -220,13 +259,14 @@ TextureHandle GetTexture(const std::string &filepath) {
 }
 */
 
-void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius, glm::float32 ambient) {
-	LightItem  item;
-	item.pos = pos;
-	item.color = color;
-	item.radius = radius;
-	item.ambient = ambient;
-	lights_to_render.push_back(item);
+void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
+                       glm::float32 ambient) {
+  LightItem item;
+  item.pos = pos;
+  item.color = color;
+  item.radius = radius;
+  item.ambient = ambient;
+  lights_to_render.push_back(item);
 }
 
 void Submit(ModelHandle model_h, glm::vec3 pos) {
@@ -268,26 +308,61 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
   text_to_render.push_back(to_render);
 }
 
+void Submit(GUIHandle gui_h, glm::vec2 pos, float scale) {
+  auto find_res = gui_elements.find(gui_h);
+  if (find_res == gui_elements.end()) {
+    std::cout << "ERROR graphics.cpp: could not find submitted gui element\n";
+    return;
+  }
+
+  GUIItem to_render;
+  to_render.gui = &find_res->second;
+  to_render.pos = pos;
+  to_render.scale = scale;
+  gui_items_to_render.push_back(to_render);
+}
+
+void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale, float rotDegrees,
+            glm::vec3 rotAxis) {
+  auto find_res = e2D_elements.find(e2D_h);
+  if (find_res == e2D_elements.end()) {
+    std::cout << "ERROR graphics.cpp: could not find submitted e2D item\n";
+    return;
+  }
+
+  E2DItem to_render;
+  to_render.e2D = &find_res->second;
+  to_render.pos = pos;
+  to_render.scale = scale;
+  to_render.rot = glm::rotate(glm::radians(rotDegrees), rotAxis);
+  e2D_items_to_render.push_back(to_render);
+}
+
 void SubmitCube(glm::mat4 t) { cubes.push_back(t); }
 
 void Render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
 
+  // render models and light
   model_shader.use();
 
   int lightNR = 0;
-  for (auto& light_item : lights_to_render) {
-	  model_shader.uniform("light_pos[" + std::to_string(lightNR) + "]", light_item.pos);
-	  model_shader.uniform("light_col[" + std::to_string(lightNR) + "]", light_item.color);
-	  model_shader.uniform("light_radius[" + std::to_string(lightNR) + "]", light_item.radius);
-	  model_shader.uniform("light_amb[" + std::to_string(lightNR) + "]", light_item.ambient);
-	  lightNR++;
+  for (auto &light_item : lights_to_render) {
+    model_shader.uniform("light_pos[" + std::to_string(lightNR) + "]",
+                         light_item.pos);
+    model_shader.uniform("light_col[" + std::to_string(lightNR) + "]",
+                         light_item.color);
+    model_shader.uniform("light_radius[" + std::to_string(lightNR) + "]",
+                         light_item.radius);
+    model_shader.uniform("light_amb[" + std::to_string(lightNR) + "]",
+                         light_item.ambient);
+    lightNR++;
   }
   model_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
 
   model_shader.uniform("cam_transform", cam_transform);
-  //model_shader.uniform("num_frames", num_frames);
+  // model_shader.uniform("num_frames", num_frames);
   for (auto &render_item : items_to_render) {
     model_shader.uniform("model_transform", render_item.transform);
     render_item.model->Draw(model_shader);
@@ -296,20 +371,38 @@ void Render() {
   // render wireframe cubes
   for (auto &m : cubes) DrawCube(m);
 
+  // render text and gui elements
   glBindVertexArray(quad_vao);
+
+  // render 2D elements
+  e2D_shader.use();
+  e2D_shader.uniform("cam_transform", cam_transform);
+  for (auto &e2D_item : e2D_items_to_render) {
+    e2D_item.e2D->DrawInWorld(e2D_shader, e2D_item.pos, e2D_item.scale,
+                              e2D_item.rot);
+  }
+
+  gui_shader.use();
+  for (auto &gui_item : gui_items_to_render) {
+    gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale);
+  }
+
   text_shader.use();
   for (auto &text_item : text_to_render) {
     text_item.font->Draw(text_shader, text_item.pos, text_item.size,
-                        text_item.text, text_item.color);
+                         text_item.text, text_item.color);
   }
+
   lights_to_render.clear();
   items_to_render.clear();
+  e2D_items_to_render.clear();
+  gui_items_to_render.clear();
   text_to_render.clear();
   cubes.clear();
 
   num_frames++;
 }
 
-void* GetCamera() { return (void*)&camera; }
+void *GetCamera() { return (void *)&camera; }
 
 }  // namespace glob

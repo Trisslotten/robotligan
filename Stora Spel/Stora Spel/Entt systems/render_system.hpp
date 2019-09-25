@@ -4,15 +4,14 @@
 #include <entity/registry.hpp>
 #include <glm/glm.hpp>
 
+#include "../util/global_settings.hpp"
 #include "ball_component.hpp"
 #include "boundingboxes.hpp"
 #include "collision.hpp"
+#include "light_component.hpp"
 #include "model_component.hpp"
 #include "transform_component.hpp"
-#include "light_component.hpp"
 
-// temp variable
-bool render_wireframe = false;
 
 void Render(entt::registry& registry) {
   auto view_model = registry.view<ModelComponent, TransformComponent>();
@@ -26,11 +25,11 @@ void Render(entt::registry& registry) {
                      glm::translate(-m.offset) * glm::scale(t.scale));
   }
 
-  //submit lights
+  // submit lights
   auto lights = registry.view<LightComponent, TransformComponent>();
   for (auto& l : lights) {
-	  auto& transform = lights.get<TransformComponent>(l);
-	  auto& light = lights.get<LightComponent>(l);
+    auto& transform = lights.get<TransformComponent>(l);
+    auto& light = lights.get<LightComponent>(l);
 
 	  //glm::mat4 mat = glm::translate(transform.position) * glm::scale(transform.scale) * glm::mat4_cast(glm::quat(transform.rotation));
 	  glm::vec3 pos = transform.position;
@@ -38,12 +37,11 @@ void Render(entt::registry& registry) {
 	  glob::SubmitLightSource(pos, light.color, light.radius, light.ambient);
   }
 
-
   // Render wireframes
   auto view_wireframe_obb = registry.view<physics::OBB, TransformComponent>();
   auto view_wireframe_sphere = registry.view<physics::Sphere>();
   auto view_wireframe_arena = registry.view<physics::Arena>();
-  if (render_wireframe) {
+  if (GlobalSettings::Access()->ValueOf("RENDER_WIREFRAME") == 1.0f) {
     for (auto& w : view_wireframe_obb) {
       auto& obb = view_wireframe_obb.get<physics::OBB>(w);
       auto& transform = view_wireframe_obb.get<TransformComponent>(w);
@@ -54,11 +52,15 @@ void Render(entt::registry& registry) {
     }
     for (auto& w : view_wireframe_sphere) {
       auto& sphere = view_wireframe_sphere.get(w);
-      glob::SubmitCube(glm::translate(sphere.center) * glm::scale(glm::vec3(sphere.radius)));
+      glob::SubmitCube(glm::translate(sphere.center) *
+                       glm::scale(glm::vec3(sphere.radius)));
     }
     for (auto& w : view_wireframe_arena) {
       auto& arena = view_wireframe_arena.get(w);
-      glob::SubmitCube(glm::scale(glm::vec3(arena.xmax-arena.xmin, arena.ymax-arena.ymin, arena.zmax-arena.zmin) * 0.5f));
+      glob::SubmitCube(
+          glm::scale(glm::vec3(arena.xmax - arena.xmin, arena.ymax - arena.ymin,
+                               arena.zmax - arena.zmin) *
+                     0.5f));
     }
   }
 }
