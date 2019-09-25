@@ -42,7 +42,7 @@ bool NetAPI::Socket::Server::Update() {
       client_data_[ID] = data;
     }
   }
-  // Recieve Data
+  // Receive Data
   for (auto& c : client_data_) {
     if (!c.second.client.IsConnected() ||
         c.second.client.GetRaw()->GetLastRecvLen() == 0) {

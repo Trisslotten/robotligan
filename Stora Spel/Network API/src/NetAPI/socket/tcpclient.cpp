@@ -103,7 +103,7 @@ const char* NetAPI::Socket::TcpClient::Recive(unsigned short timeout) {
     return NetAPI::Common::kNoDataAvailable;
   }
 }
-NetAPI::Common::Packet NetAPI::Socket::TcpClient::Recieve(
+NetAPI::Common::Packet NetAPI::Socket::TcpClient::Receive(
     unsigned short timeout) {
   int bytes = 1;
   FD_ZERO(&read_set_);

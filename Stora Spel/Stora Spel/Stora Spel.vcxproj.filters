@@ -3,12 +3,9 @@
   <ItemGroup>
     <ClCompile Include="src\input.cpp" />
     <ClCompile Include="util\timer.cpp" />
-    <ClCompile Include="nettest.cpp" />
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClInclude Include="Components\ability_component.hpp" />
     <ClInclude Include="Components\ball_component.hpp" />
     <ClInclude Include="Components\camera_component.hpp" />

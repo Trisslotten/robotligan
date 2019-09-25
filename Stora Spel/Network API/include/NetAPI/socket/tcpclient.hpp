@@ -25,7 +25,7 @@ class EXPORT TcpClient {
   bool Send(const char* data, size_t length);
   bool Send(NetAPI::Common::Packet& p);
   const char* Recive(unsigned short timeout = 50);
-  NetAPI::Common::Packet Recieve(unsigned short timeout = 50);
+  NetAPI::Common::Packet Receive(unsigned short timeout = 50);
   int QuerryError() { return error_; }
   void SetBlocking(bool block = true) { blocking_ = block; }
   void SetActive(bool c = true) { connected_ = c; };
