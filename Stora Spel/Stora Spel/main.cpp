@@ -30,6 +30,7 @@
 #include <GLFW/glfw3.h> //NTS: This one must be included after certain other things.
 #include "util/input.hpp"
 #include "util/timer.hpp"
+#include "util/meminfo.hpp"
 
 #include "util/global_settings.hpp"
 
@@ -65,6 +66,7 @@ void updateSystems(entt::registry* reg, float dt) {
 
   UpdatePhysics(*reg, dt);
   UpdateCollisions(*reg);
+  button_system::Update(*reg);
 
   auto view = reg->view<CameraComponent, TransformComponent>();
   for (auto v : view) {

@@ -13,6 +13,7 @@
 #include <projectile_component.hpp>
 #include <transform_component.hpp>
 #include <light_component.hpp>
+#include <entt.hpp>
 
 namespace ability_controller {
 

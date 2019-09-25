@@ -5,6 +5,8 @@
 
 #include <entity/registry.hpp>
 #include <glm/glm.hpp>
+#include <iostream>
+#include <glm/ext.hpp>
 
 #include "ball_component.hpp"
 #include "boundingboxes.hpp"
@@ -77,36 +79,42 @@ void UpdateCollisions(entt::registry& registry) {
       auto& arena_hitbox = view_arena_mesh.get(arena);
       physics::IntersectData data = Intersect(arena_hitbox, ball_hitbox);
       if (data.collision) {
-        std::cout << "mesh hitbox: " << data.normal.x << " " << data.normal.y << " " << data.normal.z
-                  << std::endl;
-        
+        std::cout << "mesh hitbox: " << data.normal.x << " " << data.normal.y
+                  << " " << data.normal.z << std::endl;
+
         ball_transform.position += data.move_vector;
-        
+
         if (data.normal.x) {
-          glm::vec3 temp_normal = glm::normalize(glm::vec3(data.normal.x, 0.f, 0.f));
+          glm::vec3 temp_normal =
+              glm::normalize(glm::vec3(data.normal.x, 0.f, 0.f));
           float dot_val = glm::dot(ball_physics.velocity, temp_normal);
           if (dot_val < 0.f)
-            ball_physics.velocity = ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
-        }
-        
-        if (data.normal.y) {
-          glm::vec3 temp_normal = glm::normalize(glm::vec3(0.f, data.normal.y, 0.f));
-          float dot_val = glm::dot(ball_physics.velocity, temp_normal);
-          if (dot_val < 0.f)
-            ball_physics.velocity = ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
-        }
-        
-        if (data.normal.z) {
-          glm::vec3 temp_normal = glm::normalize(glm::vec3(0.f, 0.f, data.normal.z));
-          float dot_val = glm::dot(ball_physics.velocity, temp_normal);
-          if (dot_val < 0.f)
-            ball_physics.velocity = ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
+            ball_physics.velocity =
+                ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
         }
 
-        //glm::vec3 temp_normal =
+        if (data.normal.y) {
+          glm::vec3 temp_normal =
+              glm::normalize(glm::vec3(0.f, data.normal.y, 0.f));
+          float dot_val = glm::dot(ball_physics.velocity, temp_normal);
+          if (dot_val < 0.f)
+            ball_physics.velocity =
+                ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
+        }
+
+        if (data.normal.z) {
+          glm::vec3 temp_normal =
+              glm::normalize(glm::vec3(0.f, 0.f, data.normal.z));
+          float dot_val = glm::dot(ball_physics.velocity, temp_normal);
+          if (dot_val < 0.f)
+            ball_physics.velocity =
+                ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
+        }
+
+        // glm::vec3 temp_normal =
         //    glm::normalize(data.normal);
-        //float dot_val = glm::dot(ball_physics.velocity, temp_normal);
-        //ball_physics.velocity =
+        // float dot_val = glm::dot(ball_physics.velocity, temp_normal);
+        // ball_physics.velocity =
         //    ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
 
         if (data.normal.y > 0.2f) {
@@ -116,12 +124,10 @@ void UpdateCollisions(entt::registry& registry) {
             ball_physics.is_airborne = false;
             ball.rotation = glm::quat();
           }
-        } else if (normal.y < 0) {
-          // Ball hits the ceiling
-          ball_transform.position.y = arena_hitbox.ymax - ball_hitbox.radius;
         }
+
         // Rotate ball
-        glm::vec3 nn = glm::normalize(normal);
+        glm::vec3 nn = glm::normalize(data.normal);
         glm::vec3 dir =
             ball_physics.velocity - glm::dot(ball_physics.velocity, nn) * nn;
 
