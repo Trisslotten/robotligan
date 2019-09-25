@@ -41,7 +41,7 @@ void Create() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 
-  const char* title_str = "Hello World";
+  const char* title_str = "Robotligan";
 
   glfw_window =
       glfwCreateWindow(window_width, window_height, title_str, NULL, NULL);

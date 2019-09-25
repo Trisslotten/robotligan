@@ -11,6 +11,7 @@
 #include <lodepng.hpp>
 
 #include "Font2D.hpp"
+#include "glob/window.hpp"
 
 bool FileAlreadyExists(const std::string& path) {
   struct stat buffer;
@@ -218,7 +219,7 @@ void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
   shader.uniform("bgColor", glm::vec4(0, 0, 0, 0));
   shader.uniform("fgColor", color);
   shader.uniform("msdf", 0);
-  shader.uniform("screen_dims", glm::vec2(1280, 720));
+  shader.uniform("screen_dims", glob::window::GetWindowDimensions());
   //shader.uniform("t_pos", pos);
   shader.uniform("size", size);
 

@@ -1,0 +1,18 @@
+#ifndef SHARED_HPP_
+#define SHARED_HPP_
+
+enum PlayerAction {
+  WALK_FORWARD = 0,
+  WALK_BACKWARD,
+  WALK_LEFT,
+  WALK_RIGHT,
+  ABILITY_PRIMARY,
+  ABILITY_SECONDARY,
+  SPRINT,
+  JUMP,
+  SHOOT,
+  KICK,
+  NUM_ACTIONS,
+};
+
+#endif  // SHARED_HPP_

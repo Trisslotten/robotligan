@@ -15,7 +15,7 @@
 #include "button_component.hpp"
 
 
-void Render(entt::registry& registry) {
+void RenderSystem(entt::registry& registry) {
   auto view_model = registry.view<ModelComponent, TransformComponent>();
 
   for (auto& model : view_model) {
