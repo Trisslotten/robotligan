@@ -24,19 +24,19 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="replay_machine.cpp">
-      <Filter>src\replay machine</Filter>
+    <ClCompile Include="src\replay machine\bit_pack.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="bit_pack.cpp">
-      <Filter>src\replay machine</Filter>
+    <ClCompile Include="src\replay machine\replay_machine.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="replay_machine.hpp">
-      <Filter>src\replay machine</Filter>
+    <ClInclude Include="src\replay machine\bit_pack.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="bit_pack.hpp">
-      <Filter>src\replay machine</Filter>
+    <ClInclude Include="src\replay machine\replay_machine.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
