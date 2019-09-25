@@ -1,18 +1,21 @@
-#include <iostream>
-#include <entt.hpp>
 #include <NetAPI/networkTest.hpp>
-#include <NetAPI/packet.hpp>
 #include <NetAPI/socket/server.hpp>
 #include <NetAPI/socket/tcpclient.hpp>
+#undef min
+#undef max
+#include <entity/registry.hpp>
+#include <entt.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glob/graphics.hpp>
 #include <glob/window.hpp>
+#include <iostream>
 
 #include <entity/registry.hpp>
+#include "ability_component.hpp"
 #include "ability_controller_system.hpp"
 #include "ball_component.hpp"
+#include "button_component.hpp"
 #include "collision.hpp"
-#include "ability_component.hpp"
 #include "collision_system.hpp"
 #include "model_component.hpp"
 #include "physics_system.hpp"
@@ -20,17 +23,18 @@
 #include "print_position_system.hpp"
 #include "render_system.hpp"
 #include "transform_component.hpp"
+#include "button_system.hpp"
 
+#include <GLFW/glfw3.h>  //NTS: This one must be included after certain other things
 #include "collision_temp_debug_system.h"
 #include <GLFW/glfw3.h> //NTS: This one must be included after certain other things.
 #include "util/input.hpp"
 #include "util/timer.hpp"
-#include "util/meminfo.hpp"
 
 #include "util/global_settings.hpp"
 
-#include <thread>
 #include <chrono>
+#include <thread>
 
 // NTS: Move into game engine class once that exists
 void CreateEntities(entt::registry& registry, glm::vec3* in_pos_arr,
@@ -43,6 +47,10 @@ void AddArenaComponents(entt::registry& registry, entt::entity& entity);
 void AddPlayerComponents(entt::registry& registry, entt::entity& entity);
 void AddRobotComponents(entt::registry& registry, entt::entity& entity,
                         glm::vec3 in_pos);
+
+
+entt::registry registry;
+bool control = true;
 
 void init() {
   glob::window::Create();
@@ -64,6 +72,13 @@ void updateSystems(entt::registry* reg, float dt) {
     auto &trans_c = reg->get<TransformComponent>(v);
     cam_c.cam->SetPosition(trans_c.position + trans_c.rotation*cam_c.offset);
   }
+
+  //temporary
+  if (Input::IsKeyPressed(GLFW_KEY_M)) {
+    control = !control;
+    glob::window::SetMouseLocked(control);
+  }
+  //temporary
 
   Render(*reg);
 }
@@ -120,7 +135,40 @@ int main(unsigned argc, char** argv) {
     // std::cout << 1.0f / dt << std::endl;
     Input::Reset();
     // tick
-    
+    //if (Input::IsKeyDown(GLFW_KEY_K)) {
+    //  //auto& c = registry.get<CameraComponent>(avatar);
+    //  //c.offset.x += 0.01f;
+    //  //std::cout << "Camera: " << c.offset.x << std::endl;
+    //  registry.get<PhysicsComponent>(ball).velocity.x += 10;
+    //  std::cout << registry.get<PhysicsComponent>(ball).velocity.x << std::endl;
+    //}
+    //if (Input::IsKeyDown(GLFW_KEY_L)) {
+    //  //auto &c = registry.get<CameraComponent>(avatar);
+    //  //c.offset.x -= 0.01f;
+    //  //std::cout << "Camera: " << c.offset.x << std::endl;
+    //  registry.get<PhysicsComponent>(ball).is_airborne = false;
+    //  registry.get<TransformComponent>(ball).position.y += 0.1f;
+    //}
+    //if (Input::IsKeyDown(GLFW_KEY_O)) {
+    //  auto &c = registry.get<CameraComponent>(avatar);
+    //  c.offset.y += 0.01f;
+    //  std::cout << "Camera y: " << c.offset.y << std::endl;
+    //}
+    //if (Input::IsKeyDown(GLFW_KEY_P)) {
+    //  auto &c = registry.get<CameraComponent>(avatar);
+    //  c.offset.y -= 0.01f;
+    //  std::cout << "Camera y: " << c.offset.y << std::endl;
+    //}
+    //if (Input::IsKeyDown(GLFW_KEY_U)) {
+    //  auto &c = registry.get<CameraComponent>(avatar);
+    //  c.offset.z += 0.01f;
+    //  std::cout << "Camera z: " << c.offset.z << std::endl;
+    //}
+    //if (Input::IsKeyDown(GLFW_KEY_I)) {
+    //  auto &c = registry.get<CameraComponent>(avatar);
+    //  c.offset.z -= 0.01f;
+    //  std::cout << "Camera z: " << c.offset.z << std::endl;
+    //}
     // render
 
     // Check if the keys for global settings are pressed
@@ -171,10 +219,6 @@ int main(unsigned argc, char** argv) {
   std::cout << "WSA is initialized? " << std::boolalpha
             << NetAPI::Initialization::WinsockInitialized() << std::endl;
 
-  std::cout << "RAM usage: " << util::MemoryInfo::GetInstance().GetUsedRAM()
-            << " MB\n";
-  std::cout << "VRAM usage: " << util::MemoryInfo::GetInstance().GetUsedVRAM()
-            << " MB\n";
   std::cin.ignore();
   return EXIT_SUCCESS;
 }
@@ -199,6 +243,22 @@ void CreateEntities(entt::registry& registry, glm::vec3* in_pos_arr,
     auto other_robot_entity = registry.create();
     AddRobotComponents(registry, other_robot_entity, in_pos_arr[i]);
   }
+
+  // test button
+  auto button_entity = registry.create();
+  registry.assign<ButtonComponent>(
+      button_entity, glob::GetFont("assets/fonts/fonts/Marvel-Regular.ttf"));
+  registry.assign<TransformComponent>(button_entity, glm::vec3(500, 500, 0));
+  ButtonComponent& b_c = registry.get<ButtonComponent>(button_entity);
+  b_c.text = "RESET";
+  b_c.button_func = [&]() {
+    glm::vec3 start_positions[3] = {
+        glm::vec3(5.f, 0.f, 0.f),   // Ball
+        glm::vec3(-9.f, 4.f, 0.f),  // Player
+        glm::vec3(0.f, 0.f, 0.f)    // Others
+    };
+    ResetEntities(registry, start_positions, 3);
+  };
 }
 
 void ResetEntities(entt::registry& registry, glm::vec3* in_pos_arr,
@@ -232,7 +292,7 @@ void AddBallComponents(entt::registry& registry, entt::entity& entity,
   // Prepare hard-coded values
   bool ball_is_real = true;
   bool ball_is_airborne = true;
-  float ball_friction = 1.0f;
+  float ball_friction = 0.0f;
   float ball_radius = 1.0f;
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 ball_scale = glm::vec3(1.0f);
@@ -300,6 +360,7 @@ void AddPlayerComponents(entt::registry& registry, entt::entity& entity) {
   registry.assign<CameraComponent>(entity, (Camera*)glob::GetCamera(),
                                    camera_offset);
   registry.assign<PlayerComponent>(entity);
+  registry.assign<LightComponent>(entity, glm::vec3(1, 1, 1), 3.f, 0.f);
 }
 
 void AddRobotComponents(entt::registry& registry, entt::entity& entity,

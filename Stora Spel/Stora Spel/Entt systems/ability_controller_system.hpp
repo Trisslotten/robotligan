@@ -12,6 +12,7 @@
 #include <player_component.hpp>
 #include <projectile_component.hpp>
 #include <transform_component.hpp>
+#include <light_component.hpp>
 
 namespace ability_controller {
 
@@ -185,7 +186,7 @@ void CreateCannonBallEntity(entt::registry &registry) {
     PlayerComponent &pc = view_controller.get<PlayerComponent>(entity);
     TransformComponent &tc = view_controller.get<TransformComponent>(entity);
 
-    float speed = 50.0f;
+    float speed = 0.0f;
     auto cannonball = registry.create();
     registry.assign<PhysicsComponent>(
         cannonball, glm::vec3(cc.LookDirection() * speed), false, 0.0f);
@@ -197,6 +198,8 @@ void CreateCannonBallEntity(entt::registry &registry) {
     registry.assign<ProjectileComponent>(cannonball, CANNON_BALL);
     registry.assign<ModelComponent>(cannonball,
                                     glob::GetModel("assets/Ball/Ball.fbx"));
+    registry.assign<LightComponent>(cannonball, glm::vec3(1, 0, 1), 3.f, 0.f);
+
   }
 }
 

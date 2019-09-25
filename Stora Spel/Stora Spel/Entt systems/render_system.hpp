@@ -11,6 +11,8 @@
 #include "light_component.hpp"
 #include "model_component.hpp"
 #include "transform_component.hpp"
+#include "light_component.hpp"
+#include "button_component.hpp"
 
 
 void Render(entt::registry& registry) {
@@ -31,10 +33,12 @@ void Render(entt::registry& registry) {
     auto& transform = lights.get<TransformComponent>(l);
     auto& light = lights.get<LightComponent>(l);
 
-	  //glm::mat4 mat = glm::translate(transform.position) * glm::scale(transform.scale) * glm::mat4_cast(glm::quat(transform.rotation));
-	  glm::vec3 pos = transform.position;
-	  glm::vec3 dir = transform.rotation * glm::vec3(1.f, 0.f, 0.f);
-	  glob::SubmitLightSource(pos, light.color, light.radius, light.ambient);
+    // glm::mat4 mat = glm::translate(transform.position) *
+    // glm::scale(transform.scale) *
+    // glm::mat4_cast(glm::quat(transform.rotation));
+    glm::vec3 pos = transform.position;
+    glm::vec3 dir = glm::quat(transform.rotation) * glm::vec3(1.f, 0.f, 0.f);
+    glob::SubmitLightSource(pos, light.color, light.radius, light.ambient);
   }
 
   // Render wireframes
@@ -64,10 +68,19 @@ void Render(entt::registry& registry) {
                                arena.zmax - arena.zmin) *
                      0.5f));
     }
-    for (auto& w : view_wireframe_mesh) {
-      auto& model = view_wireframe_mesh.get<ModelComponent>(w);
-      glob::SubmitWireframeMesh(model.handle);
-    }
+  }
+
+  auto view_buttons = registry.view<ButtonComponent, TransformComponent>();
+
+  for (auto& button : view_buttons) {
+    ButtonComponent& button_c = view_buttons.get<ButtonComponent>(button);
+    TransformComponent& trans_c = view_buttons.get<TransformComponent>(button);
+
+	glm::vec2 button_pos = glm::vec2(trans_c.position.x, trans_c.position.y);
+
+	glob::Submit(button_c.f_handle, button_pos,
+                     button_c.font_size, button_c.text,
+                     button_c.text_current_color);
   }
 }
 #endif  // RENDER_SYSTEM_HPP_
