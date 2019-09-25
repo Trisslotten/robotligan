@@ -187,6 +187,7 @@
     <ClInclude Include="include\glob\window.hpp" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="src\Font\Font2D.hpp" />
+    <ClInclude Include="include\glob\mesh_data.hpp" />
     <ClInclude Include="src\tinyxml2.hpp" />
     <ClInclude Include="src\shader.hpp" />
     <ClInclude Include="src\camera\camera.hpp" />

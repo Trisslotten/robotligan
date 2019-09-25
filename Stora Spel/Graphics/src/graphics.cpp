@@ -36,10 +36,10 @@ struct TextItem {
 };
 
 struct LightItem {
-	glm::vec3 pos;
-	glm::vec3 color;
-	glm::float32 radius;
-	glm::float32 ambient;
+  glm::vec3 pos;
+  glm::vec3 color;
+  glm::float32 radius;
+  glm::float32 ambient;
 };
 
 ShaderProgram test_shader;
@@ -69,9 +69,18 @@ std::unordered_map<ModelHandle, Model> models;
 std::unordered_map<std::string, Font2DHandle> font_2D_handles;
 std::unordered_map<Font2DHandle, Font2D> fonts;
 
+struct GLuintBuffers {
+  GLuint vao;
+  GLuint vbo;
+  GLuint ebo;
+  GLuint size;
+};
+std::unordered_map<ModelHandle, GLuintBuffers> wireframe_buffers;
+
 std::vector<RenderItem> items_to_render;
 std::vector<LightItem> lights_to_render;
 std::vector<glm::mat4> cubes;
+std::vector<ModelHandle> wireframe_meshes;
 std::vector<TextItem> text_to_render;
 
 void DrawFullscreenQuad() {
@@ -91,6 +100,29 @@ void DrawCube(glm::mat4 t) {
   glDisable(GL_DEPTH_TEST);
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   glDrawArrays(GL_TRIANGLES, 0, 36);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glEnable(GL_DEPTH_TEST);
+  glBindVertexArray(0);
+}
+
+void DrawWireFrameMeshes(ModelHandle model_h) {
+  auto find_res = wireframe_buffers.find(model_h);
+  if (find_res == wireframe_buffers.end()) {
+    return;
+  }
+
+  auto b = wireframe_buffers[model_h];
+  glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
+
+  wireframe_shader.use();
+  wireframe_shader.uniform("cam_transform", cam_transform);
+  wireframe_shader.uniform("model_transform", glm::identity<glm::mat4>());
+  glBindVertexArray(b.vao);
+  glDisable(GL_DEPTH_TEST);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  glDisable(GL_CULL_FACE);
+  glDrawElements(GL_TRIANGLES, b.size, GL_UNSIGNED_INT, 0);
+  glEnable(GL_CULL_FACE);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glEnable(GL_DEPTH_TEST);
   glBindVertexArray(0);
@@ -128,28 +160,26 @@ void Init() {
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
                         (GLvoid *)0);
 
-
   glGenVertexArrays(1, &cube_vao);
   glBindVertexArray(cube_vao);
-  std::vector<glm::vec3> vertices_cube {
-      {1, 1, 1}, {1, -1, 1}, {-1, 1, 1}, // z+ face
-      {-1, -1, 1}, {1, -1, 1},  {-1, 1, 1},
+  std::vector<glm::vec3> vertices_cube{
+      {1, 1, 1},    {1, -1, 1},   {-1, 1, 1},  // z+ face
+      {-1, -1, 1},  {1, -1, 1},   {-1, 1, 1},
 
-      {1, 1, -1}, {1, -1, -1}, {1, -1, 1}, // x+ face
-      {1, 1, -1},  {1, 1, 1},  {1, -1, 1},
+      {1, 1, -1},   {1, -1, -1},  {1, -1, 1},  // x+ face
+      {1, 1, -1},   {1, 1, 1},    {1, -1, 1},
 
-      {-1, 1, -1}, {1, 1, -1},  {1, 1, 1}, // y+ face
+      {-1, 1, -1},  {1, 1, -1},   {1, 1, 1},  // y+ face
       {-1, 1, -1},  {1, 1, 1},    {-1, 1, 1},
 
-      {-1, -1, -1}, {1, 1, -1},  {-1, 1, -1}, // z- face
+      {-1, -1, -1}, {1, 1, -1},   {-1, 1, -1},  // z- face
       {1, 1, -1},   {-1, -1, -1}, {1, -1, -1},
 
-      {-1, -1, -1}, {1, -1, -1}, {1, -1, 1}, // y- face
-      {-1, -1, 1},  {1, -1, 1},  {1, -1, -1},
+      {-1, -1, -1}, {1, -1, -1},  {1, -1, 1},  // y- face
+      {-1, -1, 1},  {1, -1, 1},   {1, -1, -1},
 
-      {-1, -1, -1}, {-1, -1, 1}, {-1, 1, -1}, // x- face
-      {-1, -1, 1},  {-1, 1, -1}, {-1, 1, 1}
-  };
+      {-1, -1, -1}, {-1, -1, 1},  {-1, 1, -1},  // x- face
+      {-1, -1, 1},  {-1, 1, -1},  {-1, 1, 1}};
   glGenBuffers(1, &cube_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, cube_vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * vertices_cube.size(),
@@ -208,22 +238,37 @@ ModelHandle GetModel(const std::string &filepath) {
                                       filepath);
 }
 Font2DHandle GetFont(const std::string &filepath) {
-  return GetAsset<Font2DHandle, Font2D>(font_2D_handles, fonts, current_font_guid, filepath);
+  return GetAsset<Font2DHandle, Font2D>(font_2D_handles, fonts,
+                                        current_font_guid, filepath);
 }
-/*
+
+MeshData GetMeshData(ModelHandle model_h) {
+  auto item = models.find(model_h);
+
+  if (item == models.end()) {
+    std::cout
+        << "DEBUG graphics.cpp: asset not found trying to get mesh hitbox\n";
+    return {};
+  } 
+
+  auto &model = models[model_h];
+  return model.GetMeshData();
+}
+    /*
 TextureHandle GetTexture(const std::string &filepath) {
   return GetAsset<TextureHandle, Texture>(texture_handles, textures,
                                           current_texture_guid, filepath);
 }
 */
 
-void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius, glm::float32 ambient) {
-	LightItem  item;
-	item.pos = pos;
-	item.color = color;
-	item.radius = radius;
-	item.ambient = ambient;
-	lights_to_render.push_back(item);
+void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
+                       glm::float32 ambient) {
+  LightItem item;
+  item.pos = pos;
+  item.color = color;
+  item.radius = radius;
+  item.ambient = ambient;
+  lights_to_render.push_back(item);
 }
 
 void Submit(ModelHandle model_h, glm::vec3 pos) {
@@ -267,6 +312,43 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
 
 void SubmitCube(glm::mat4 t) { cubes.push_back(t); }
 
+void SubmitWireframeMesh(ModelHandle model_h) {
+  wireframe_meshes.push_back(model_h);
+}
+
+void LoadWireframeMesh(ModelHandle model_h,
+  const std::vector<glm::vec3>& vertices,
+  const std::vector<unsigned int>& indices) {
+  
+  auto find_res = wireframe_buffers.find(model_h);
+  if (find_res == wireframe_buffers.end()) {
+    GLuintBuffers b;
+    b.size = indices.size();
+    /*---------------Generate needed buffers--------------*/
+    glGenVertexArrays(1, &b.vao);
+    glGenBuffers(1, &b.vbo);
+    glGenBuffers(1, &b.ebo);
+
+    /*---------------Binding vertex buffer---------------*/
+    glBindVertexArray(b.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, b.vbo);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3),
+                 &vertices[0], GL_STATIC_DRAW);
+
+    /*---------------Binding element buffer--------------*/
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, b.ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint),
+                 &indices[0], GL_STATIC_DRAW);
+
+    /*---------------Enable arrays----------------------*/
+    glEnableVertexAttribArray(0);  // Layout 0 for vertices
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
+                          (GLvoid *)0);
+
+    wireframe_buffers[model_h] = b;
+  }
+}
+
 void Render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
@@ -274,17 +356,21 @@ void Render() {
   model_shader.use();
 
   int lightNR = 0;
-  for (auto& light_item : lights_to_render) {
-	  model_shader.uniform("light_pos[" + std::to_string(lightNR) + "]", light_item.pos);
-	  model_shader.uniform("light_col[" + std::to_string(lightNR) + "]", light_item.color);
-	  model_shader.uniform("light_radius[" + std::to_string(lightNR) + "]", light_item.radius);
-	  model_shader.uniform("light_amb[" + std::to_string(lightNR) + "]", light_item.ambient);
-	  lightNR++;
+  for (auto &light_item : lights_to_render) {
+    model_shader.uniform("light_pos[" + std::to_string(lightNR) + "]",
+                         light_item.pos);
+    model_shader.uniform("light_col[" + std::to_string(lightNR) + "]",
+                         light_item.color);
+    model_shader.uniform("light_radius[" + std::to_string(lightNR) + "]",
+                         light_item.radius);
+    model_shader.uniform("light_amb[" + std::to_string(lightNR) + "]",
+                         light_item.ambient);
+    lightNR++;
   }
   model_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
 
   model_shader.uniform("cam_transform", cam_transform);
-  //model_shader.uniform("num_frames", num_frames);
+  // model_shader.uniform("num_frames", num_frames);
   for (auto &render_item : items_to_render) {
     model_shader.uniform("model_transform", render_item.transform);
     render_item.model->Draw(model_shader);
@@ -292,21 +378,24 @@ void Render() {
 
   // render wireframe cubes
   for (auto &m : cubes) DrawCube(m);
+  // render wireframe meshes
+  for (auto &m : wireframe_meshes) DrawWireFrameMeshes(m);
 
   glBindVertexArray(quad_vao);
   text_shader.use();
   for (auto &text_item : text_to_render) {
     text_item.font->Draw(text_shader, text_item.pos, text_item.size,
-                        text_item.text, text_item.color);
+                         text_item.text, text_item.color);
   }
   lights_to_render.clear();
   items_to_render.clear();
   text_to_render.clear();
   cubes.clear();
+  wireframe_meshes.clear();
 
   num_frames++;
 }
 
-void* GetCamera() { return (void*)&camera; }
+void *GetCamera() { return (void *)&camera; }
 
 }  // namespace glob
