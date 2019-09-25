@@ -15,6 +15,7 @@ ReplayMachine::~ReplayMachine() {
   if (this->input_log_ != nullptr) {
     delete this->input_log_;
   }
+
 }
 
 // Public----------------------------------------------------------------------
@@ -25,9 +26,9 @@ ReplayMachine* ReplayMachine::Access() {
 }
 
 
-void ReplayMachine::Init(unsigned int in_num_of_keys, unsigned int in_seconds) {
-  // Create a BitPack capable of holding all inputs
-  // we will allow logging (determines length of a replay).
+void ReplayMachine::Init(unsigned int in_seconds, unsigned int in_ticks_per_second) {
+  // Create a BitPack capable of holding the maximum
+  // number of keys we will allow logging
 
   //---
   //
@@ -94,14 +95,39 @@ void ReplayMachine::Init(unsigned int in_num_of_keys, unsigned int in_seconds) {
   //
   //	<<RESULT>>
   //	> For one controlled entity we will require at maximum
-  //	>	1 +  B * ceil(base2_log(N)) + 32 + 32
+  //	>	1 + B * ceil(base2_log(N)) + 32 + 32
   //	> bits per frame, where B (buttons pressed/released) is
   //	> equal to N (all buttons).
 
-  unsigned int max_num_of_frames = 20 * in_seconds;	//NTS: Tick rate is 20 frames ber second
-  unsigned int max_bits_per_frame = (unsigned int)(1 + in_num_of_keys * ceil(log(in_num_of_keys)/log(2)));
+  unsigned int num_of_keys = this->last_input_state_.size();	// Note that number of keys is defined by the
+																// static size we specified for the bitsets
+  this->bits_per_int_ = (unsigned int)ceil(log(num_of_keys) / log(2));
+  unsigned int max_num_of_frames =  in_ticks_per_second * in_seconds;
+  unsigned int max_bits_per_frame = (1 + num_of_keys * this->bits_per_int_);
   this->input_log_ = new BitPack(max_num_of_frames, max_bits_per_frame);
-  
+
+
+}
+
+void ReplayMachine::RecordKeys(const std::bitset<10>& in_bitset) {
+  // Loop over the bitset
+  for (unsigned int i = 0; i < in_bitset.size(); i++) {
+	// IF its bit is different from last input state's
+    if (in_bitset[i] != this->last_input_state_[i]) {
+	  // Write that there has been a change
+      this->input_log_->WriteBit(1);
+	  // At index
+      this->input_log_->WriteInt(i, this->bits_per_int_);
+	  // Then flip that bit in the local bitset
+      this->last_input_state_.flip(i);
+    } else {
+	  //Otherwise note that no change has been made
+      this->input_log_->WriteBit(0);
+    }
+  }
+  //
+  //	TBA: Support for saving a float
+  //
 }
 
 void ReplayMachine::TestFunction() {
