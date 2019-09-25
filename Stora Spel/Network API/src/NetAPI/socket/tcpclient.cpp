@@ -103,7 +103,8 @@ const char* NetAPI::Socket::TcpClient::Recive(unsigned short timeout) {
     return NetAPI::Common::kNoDataAvailable;
   }
 }
-NetAPI::Common::Packet NetAPI::Socket::TcpClient::Recieve(unsigned short timeout) {
+NetAPI::Common::Packet NetAPI::Socket::TcpClient::Recieve(
+    unsigned short timeout) {
   int bytes = 1;
   FD_ZERO(&read_set_);
   FD_SET(send_socket_, &read_set_);
@@ -115,6 +116,7 @@ NetAPI::Common::Packet NetAPI::Socket::TcpClient::Recieve(unsigned short timeout
     }
     if (last_buff_len_ == 0 || (WSAGetLastError() == WSAECONNRESET)) {
       connected_ = false;
+      this->Disconnect();
       return NetAPI::Common::Packet(nullptr, 0);
     } else {
       error_ = WSAGetLastError();
@@ -125,10 +127,9 @@ NetAPI::Common::Packet NetAPI::Socket::TcpClient::Recieve(unsigned short timeout
   }
 }
 void NetAPI::Socket::TcpClient::Disconnect() {
-  if (connected_ && send_socket_ != INVALID_SOCKET) {
-    connected_ = false;
-    closesocket(send_socket_);
-  }
+  connected_ = false;
+  closesocket(send_socket_);
+  send_socket_ = INVALID_SOCKET;
 }
 void NetAPI::Socket::TcpClient::operator=(const SOCKET& other) {
   connected_ = true;

@@ -1,15 +1,11 @@
 #include <NetAPI/socket/Client.hpp>
 namespace NetAPI {
 namespace Socket {
-int Client::Connect(const char* addr, short port) {
-  bool success = client_->Connect(addr, port);
-  return client_->QuerryError();
+bool Client::Connect(const char* addr, short port) {
+  return client_->Connect(addr, port);
 }
 
-int Client::Send(NetAPI::Common::Packet& p) {
-  bool success = client_->Send(p);
-  return client_->QuerryError();
-}
+bool Client::Send(NetAPI::Common::Packet& p) { return client_->Send(p); }
 
 NetAPI::Common::Packet Client::Receive(const short timeout) {
   return client_->Recieve(timeout);

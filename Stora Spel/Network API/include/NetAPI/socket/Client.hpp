@@ -10,8 +10,8 @@ class EXPORT Client {
  public:
   Client() { client_ = new NetAPI::Socket::TcpClient; }
   ~Client() { delete client_; }
-  int Connect(const char* addr, short port);
-  int Send(NetAPI::Common::Packet& p);
+  bool Connect(const char* addr, short port);
+  bool Send(NetAPI::Common::Packet& p);
   NetAPI::Common::Packet Receive(const short timeout = 50);
   unsigned short& GetID() { return ID_; }
   void Disconnect() { client_->Disconnect(); }

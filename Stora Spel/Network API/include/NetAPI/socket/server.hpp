@@ -6,8 +6,8 @@
 #include <NetAPI/Packet.hpp>
 #include <NetAPI/common.hpp>
 #include <NetAPI/socket/Client.hpp>
-#include <NetAPI/socket/tcplistener.hpp>
 #include <NetAPI/socket/clientdata.hpp>
+#include <NetAPI/socket/tcplistener.hpp>
 #include <unordered_map>
 #include <vector>
 namespace NetAPI {
@@ -20,15 +20,18 @@ class EXPORT Server {
   void SendToAll(NetAPI::Common::Packet& p);
   void Send(unsigned id, const char* data, size_t len);
   void Send(NetAPI::Common::Packet& p);
-  short GetConnectedPlayers() { return connectedplayers_; }
-  ClientData& operator[](short ID) { return clientdata_.at(ID); }
+  short GetConnectedPlayers() { return connected_players_; }
+  ClientData& operator[](short ID) { return client_data_.at(ID); }
+  std::unordered_map<unsigned short, ClientData>& GetClients() {
+    return client_data_;
+  }
 
  private:
-  std::unordered_map<unsigned short, ClientData> clientdata_;
-  std::vector<Common::Packet> datatosend_;
+  std::unordered_map<unsigned short, ClientData> client_data_;
+  std::vector<Common::Packet> data_to_send_;
   TcpListener listener_;
   bool setup_ = false;
-  short connectedplayers_ = 0;
+  short connected_players_ = 0;
 };
 
 }  // namespace Socket

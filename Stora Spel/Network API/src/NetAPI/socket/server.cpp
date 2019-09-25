@@ -2,16 +2,17 @@
 #include <string>
 unsigned short getHashedID(char* addr, unsigned short port) {
   unsigned short retval = 0;
-  for (unsigned short c = 0; addr[c] != '\0'; c++) {
-    retval = retval + (unsigned short)(addr[c]);
+  std::string s(addr);
+  for (auto c : s) {
+    retval += (unsigned int)c;
   }
-  return retval % sizeof(unsigned short);
+  return retval;
 }
 bool NetAPI::Socket::Server::Setup(unsigned short port) {
   if (listener_.Bind(port)) {
     setup_ = true;
   }
-  clientdata_.reserve(Common::kMaxPlayers);
+  client_data_.reserve(Common::kMaxPlayers);
   return setup_;
 }
 
@@ -20,7 +21,7 @@ bool NetAPI::Socket::Server::Update() {
     return false;
   }
   // Accept client
-  if (connectedplayers_ < NetAPI::Common::kMaxPlayers) {
+  if (connected_players_ < NetAPI::Common::kMaxPlayers) {
     ClientData data;
     auto s = listener_.Accept(data.client.GetRaw());
     if (s) {
@@ -33,39 +34,48 @@ bool NetAPI::Socket::Server::Update() {
       auto addr = buffer;
       auto port = ntohs(client_addr.sin_port);
       auto ID = getHashedID(addr, port);
-      clientdata_[ID] = data;
-      connectedplayers_++;
+      if (client_data_.find(ID) != client_data_.end()) {
+        client_data_[ID].client.Disconnect();
+      } else {
+        connected_players_++;
+      }
+      client_data_[ID] = data;
     }
   }
   // Recieve Data
-  for (auto& c : clientdata_) {
-    if (!c.second.client.IsConnected()) {
+  for (auto& c : client_data_) {
+    if (!c.second.client.IsConnected() ||
+        c.second.client.GetRaw()->GetLastRecvLen() == 0) {
       c.second.client.Disconnect();
+      connected_players_--;
     }
-    c.second.packets.push_back(c.second.client.Receive());
+    auto packet = c.second.client.Receive();
+    if (!packet.IsEmpty()) {
+      c.second.packets.push_back(packet);
+    }
   }
   // Send Data
   NetAPI::Common::PacketHeader header;
-  for (auto& d : datatosend_) {
+  for (auto& d : data_to_send_) {
     d >> header;
     if (header.Receiver == EVERYONE) {
-      for (auto& cli : clientdata_) {
+      for (auto& cli : client_data_) {
         cli.second.client.Send(d);
       }
     } else {
-      clientdata_[header.Receiver].client.Send(d);
+      client_data_[header.Receiver].client.Send(d);
     }
   }
-  datatosend_.clear();
+  data_to_send_.clear();
   return true;
 }
 
 void NetAPI::Socket::Server::SendToAll(const char* data, size_t len) {
-  datatosend_.push_back(NetAPI::Common::Packet(data, len));
+  data_to_send_.push_back(NetAPI::Common::Packet(data, len));
 }
 
 void NetAPI::Socket::Server::SendToAll(NetAPI::Common::Packet& p) {
-  datatosend_.push_back(p);
+  data_to_send_.push_back(p);
 }
 
 void NetAPI::Socket::Server::Send(unsigned id, const char* data, size_t len) {
@@ -77,5 +87,5 @@ void NetAPI::Socket::Server::Send(unsigned id, const char* data, size_t len) {
 }
 
 void NetAPI::Socket::Server::Send(NetAPI::Common::Packet& p) {
-  datatosend_.push_back(p);
+  data_to_send_.push_back(p);
 }
