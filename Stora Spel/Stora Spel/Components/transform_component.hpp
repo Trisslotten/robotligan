@@ -3,7 +3,7 @@
 
 #include <glm/glm.hpp>
 
-#include "../util/transform_helper.hpp"
+#include <../util/transform_helper.hpp>
 
 struct TransformComponent {
   glm::vec3 position;

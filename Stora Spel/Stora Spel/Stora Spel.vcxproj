@@ -152,18 +152,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="nettest.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="engine.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="entitycreation.cpp" />
     <ClCompile Include="util\global_settings.cpp" />
     <ClCompile Include="util\input.cpp" />
     <ClCompile Include="util\timer.cpp" />
@@ -180,6 +171,7 @@
     <ClInclude Include="Components\projectile_component.hpp" />
     <ClInclude Include="Components\transform_component.hpp" />
     <ClInclude Include="Components\velocity.hpp" />
+    <ClInclude Include="engine.hpp" />
     <ClInclude Include="Entt systems\button_system.hpp" />
     <ClInclude Include="Entt systems\collision_system.hpp" />
     <ClInclude Include="Entt systems\collision_temp_debug_system.h" />
@@ -187,6 +179,8 @@
     <ClInclude Include="Entt systems\player_controller_system.hpp" />
     <ClInclude Include="Entt systems\ability_controller_system.hpp" />
     <ClInclude Include="Entt systems\print_position_system.hpp" />
+    <ClInclude Include="entitycreation.hpp" />
+    <ClInclude Include="shared\shared.hpp" />
     <ClInclude Include="util\global_settings.hpp" />
     <ClInclude Include="Entt systems\render_system.hpp" />
     <ClInclude Include="util\input.hpp" />
