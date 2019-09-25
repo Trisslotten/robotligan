@@ -91,9 +91,18 @@ std::unordered_map<GUIHandle, Elements2D> gui_elements;
 std::unordered_map<std::string, E2DHandle> e2D_handles;
 std::unordered_map<E2DHandle, Elements2D> e2D_elements;
 
+struct GLuintBuffers {
+  GLuint vao;
+  GLuint vbo;
+  GLuint ebo;
+  GLuint size;
+};
+std::unordered_map<ModelHandle, GLuintBuffers> wireframe_buffers;
+
 std::vector<RenderItem> items_to_render;
 std::vector<LightItem> lights_to_render;
 std::vector<glm::mat4> cubes;
+std::vector<ModelHandle> wireframe_meshes;
 std::vector<TextItem> text_to_render;
 std::vector<GUIItem> gui_items_to_render;
 std::vector<E2DItem> e2D_items_to_render;
@@ -117,6 +126,29 @@ void DrawCube(glm::mat4 t) {
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   glDisable(GL_CULL_FACE);
   glDrawArrays(GL_TRIANGLES, 0, 36);
+  glEnable(GL_CULL_FACE);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glEnable(GL_DEPTH_TEST);
+  glBindVertexArray(0);
+}
+
+void DrawWireFrameMeshes(ModelHandle model_h) {
+  auto find_res = wireframe_buffers.find(model_h);
+  if (find_res == wireframe_buffers.end()) {
+    return;
+  }
+
+  auto b = wireframe_buffers[model_h];
+  glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
+
+  wireframe_shader.use();
+  wireframe_shader.uniform("cam_transform", cam_transform);
+  wireframe_shader.uniform("model_transform", glm::identity<glm::mat4>());
+  glBindVertexArray(b.vao);
+  glDisable(GL_DEPTH_TEST);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+  glDisable(GL_CULL_FACE);
+  glDrawElements(GL_TRIANGLES, b.size, GL_UNSIGNED_INT, 0);
   glEnable(GL_CULL_FACE);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glEnable(GL_DEPTH_TEST);
@@ -248,6 +280,19 @@ Font2DHandle GetFont(const std::string &filepath) {
   return GetAsset<Font2DHandle, Font2D>(font_2D_handles, fonts,
                                         current_font_guid, filepath);
 }
+
+MeshData GetMeshData(ModelHandle model_h) {
+  auto item = models.find(model_h);
+
+  if (item == models.end()) {
+    std::cout
+        << "DEBUG graphics.cpp: asset not found trying to get mesh hitbox\n";
+    return {};
+  } 
+
+  auto &model = models[model_h];
+  return model.GetMeshData();
+}
 E2DHandle GetE2DItem(const std::string &filepath) {
   return GetAsset<E2DHandle, Elements2D>(e2D_handles, e2D_elements,
                                          current_e2D_guid, filepath);
@@ -340,6 +385,43 @@ void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale, float rotDegrees,
 
 void SubmitCube(glm::mat4 t) { cubes.push_back(t); }
 
+void SubmitWireframeMesh(ModelHandle model_h) {
+  wireframe_meshes.push_back(model_h);
+}
+
+void LoadWireframeMesh(ModelHandle model_h,
+  const std::vector<glm::vec3>& vertices,
+  const std::vector<unsigned int>& indices) {
+  
+  auto find_res = wireframe_buffers.find(model_h);
+  if (find_res == wireframe_buffers.end()) {
+    GLuintBuffers b;
+    b.size = indices.size();
+    /*---------------Generate needed buffers--------------*/
+    glGenVertexArrays(1, &b.vao);
+    glGenBuffers(1, &b.vbo);
+    glGenBuffers(1, &b.ebo);
+
+    /*---------------Binding vertex buffer---------------*/
+    glBindVertexArray(b.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, b.vbo);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3),
+                 &vertices[0], GL_STATIC_DRAW);
+
+    /*---------------Binding element buffer--------------*/
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, b.ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint),
+                 &indices[0], GL_STATIC_DRAW);
+
+    /*---------------Enable arrays----------------------*/
+    glEnableVertexAttribArray(0);  // Layout 0 for vertices
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
+                          (GLvoid *)0);
+
+    wireframe_buffers[model_h] = b;
+  }
+}
+
 void Render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
@@ -370,6 +452,8 @@ void Render() {
 
   // render wireframe cubes
   for (auto &m : cubes) DrawCube(m);
+  // render wireframe meshes
+  for (auto &m : wireframe_meshes) DrawWireFrameMeshes(m);
 
   // render text and gui elements
   glBindVertexArray(quad_vao);
@@ -399,6 +483,7 @@ void Render() {
   gui_items_to_render.clear();
   text_to_render.clear();
   cubes.clear();
+  wireframe_meshes.clear();
 
   num_frames++;
 }

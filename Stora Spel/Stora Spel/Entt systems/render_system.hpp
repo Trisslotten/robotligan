@@ -41,6 +41,8 @@ void Render(entt::registry& registry) {
   auto view_wireframe_obb = registry.view<physics::OBB, TransformComponent>();
   auto view_wireframe_sphere = registry.view<physics::Sphere>();
   auto view_wireframe_arena = registry.view<physics::Arena>();
+  auto view_wireframe_mesh =
+      registry.view<physics::MeshHitbox, ModelComponent>();
   if (GlobalSettings::Access()->ValueOf("RENDER_WIREFRAME") == 1.0f) {
     for (auto& w : view_wireframe_obb) {
       auto& obb = view_wireframe_obb.get<physics::OBB>(w);
@@ -61,6 +63,10 @@ void Render(entt::registry& registry) {
           glm::scale(glm::vec3(arena.xmax - arena.xmin, arena.ymax - arena.ymin,
                                arena.zmax - arena.zmin) *
                      0.5f));
+    }
+    for (auto& w : view_wireframe_mesh) {
+      auto& model = view_wireframe_mesh.get<ModelComponent>(w);
+      glob::SubmitWireframeMesh(model.handle);
     }
   }
 }

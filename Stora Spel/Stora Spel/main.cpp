@@ -266,6 +266,15 @@ void AddArenaComponents(entt::registry& registry, entt::entity& entity) {
 
   // Add a hitbox
   registry.assign<physics::Arena>(entity, -v2, v2, -v3, v3, -v1, v1);
+  auto md = glob::GetMeshData(model_arena);
+  glm::mat4 matrix = glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f))
+          *glm::rotate(90.f * glm::pi<float>() / 180.f,
+                      glm::vec3(0.f, 0.f, 1.f));
+
+  for (auto& v : md.pos) v = matrix * glm::vec4(v,1.f);
+  auto& mh = registry.assign<physics::MeshHitbox>(entity, std::move(md.pos),
+                                       std::move(md.indices));
+  glob::LoadWireframeMesh(model_arena, mh.pos, mh.indices);
 }
 
 void AddPlayerComponents(entt::registry& registry, entt::entity& entity) {

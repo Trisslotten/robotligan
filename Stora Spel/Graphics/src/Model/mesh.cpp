@@ -58,4 +58,20 @@ void Mesh::Draw(ShaderProgram& shader) {
   glBindVertexArray(0);
 }
 
+MeshData Mesh::GetMeshData() {
+  MeshData mesh_data;
+  mesh_data.pos.reserve(vertices_.size());
+  mesh_data.indices.reserve(indices_.size());
+
+  for (auto& v : vertices_) {
+    mesh_data.pos.push_back(v.position);
+  }
+
+  for (auto& i : indices_) {
+    mesh_data.indices.push_back(i);
+  }
+
+  return mesh_data;
+}
+
 }  // namespace glob

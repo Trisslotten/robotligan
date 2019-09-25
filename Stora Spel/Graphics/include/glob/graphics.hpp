@@ -9,6 +9,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include "glob/mesh_data.hpp"
 
 #include <string>
 
@@ -38,6 +39,8 @@ EXPORT Font2DHandle GetFont(const std::string& filepath);
 
 EXPORT E2DHandle GetE2DItem(const std::string& filepath);
 
+EXPORT glob::MeshData GetMeshData(ModelHandle model_h);
+
 /*
  * Returns a texture handle for the specified image file.
  * Skips loading if image is loaded.
@@ -52,6 +55,11 @@ EXPORT void SubmitLightSource(glm::vec3 pos, glm::vec3 color,
 EXPORT void Submit(ModelHandle model_h, glm::vec3 pos);
 EXPORT void Submit(ModelHandle model_h, glm::mat4 transform);
 EXPORT void SubmitCube(glm::mat4 t);
+EXPORT void SubmitWireframeMesh(ModelHandle model_h);
+EXPORT void LoadWireframeMesh(ModelHandle model_h,
+                              const std::vector<glm::vec3>& vertices,
+                              const std::vector<unsigned int>& indices);
+
 EXPORT void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
                    std::string text, glm::vec4 color = glm::vec4(1, 1, 1, 1));
 EXPORT void Submit(GUIHandle gui_h, glm::vec2 pos, float scale);

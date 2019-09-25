@@ -6,6 +6,7 @@
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
 #include "../shader.hpp"
+#include "glob/mesh_data.hpp"
 
 namespace glob {
 
@@ -37,6 +38,8 @@ class Model {
   bool IsLoaded() { return is_loaded_; };
 
   void Draw(ShaderProgram& shader);
+
+  glob::MeshData GetMeshData();
 };
 
 }  // namespace glob

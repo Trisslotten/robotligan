@@ -1,10 +1,18 @@
 #include "collision.hpp"
 
 #include <glm/glm.hpp>
+#include <cmath>
+#include <iostream>
 #include <vector>
 
 struct Corners {
   glm::vec3 corners[8];
+};
+
+struct Triangle {
+  glm::vec3 p0;
+  glm::vec3 p1;
+  glm::vec3 p2;
 };
 
 Corners GetCorners(const physics::OBB& obb) {
@@ -45,14 +53,18 @@ bool Overlaps(float min1, float max1, float min2, float max2) {
   return IsBetween(min2, min1, max1) || IsBetween(min1, min2, max2);
 }
 
-bool physics::Intersect(const physics::Sphere& s1, const physics::Sphere& s2) {
-  float d = glm::distance(s1.center, s2.center);
+physics::IntersectData physics::Intersect(const physics::Sphere& s1, const physics::Sphere& s2) {
+  IntersectData data;
+  data.move_vector = s1.center - s2.center;
+  data.normal = data.move_vector;
+  data.collision = glm::length(data.move_vector) <= s1.radius + s2.radius;
 
-  return d <= (s1.radius + s2.radius);
+  return data;
 }
 
-bool physics::Intersect(const physics::Sphere& s, const physics::OBB& o,
-               glm::vec3* normal, float* move_distance) {
+physics::IntersectData physics::Intersect(const physics::Sphere& s,
+                                          const physics::OBB& o) {
+  IntersectData data;
   glm::vec3 retPt = o.center;
   glm::vec3 d = s.center - o.center;
 
@@ -64,9 +76,9 @@ bool physics::Intersect(const physics::Sphere& s, const physics::OBB& o,
   }
   glm::vec3 v = retPt - s.center;
 
-  bool intersect = glm::dot(v, v) <= s.radius * s.radius;
+  data.collision = glm::dot(v, v) <= s.radius * s.radius;
 
-  if (intersect) {
+  if (data.collision) {
     glm::vec3 impact_vector = retPt - o.center;
     glm::vec3 impact_normal;
     float gap = 1000000000.f;
@@ -84,15 +96,16 @@ bool physics::Intersect(const physics::Sphere& s, const physics::OBB& o,
         impact_normal = temp_normal;
       } 
     }
-    *move_distance = s.radius - glm::length(retPt - s.center);
-    *normal = impact_normal;
+    data.normal = impact_normal;
+    data.move_vector = (s.radius - glm::length(retPt - s.center)) * data.normal;
   }
 
-  return intersect;
+  return data;
 }
 
-bool physics::Intersect(const physics::OBB& o1, const physics::OBB& o2,
-                        glm::vec3* normal, float* distance) {
+physics::IntersectData physics::Intersect(const physics::OBB& o1,
+                                          const physics::OBB& o2) {
+  IntersectData data;
   Corners c1 = GetCorners(o1);
   Corners c2 = GetCorners(o2);
 
@@ -115,7 +128,8 @@ bool physics::Intersect(const physics::OBB& o1, const physics::OBB& o2,
     SatTest(test_normals[i], c2, &min2, &max2);
 
     if (!Overlaps(min1, max1, min2, max2)) {
-      return false;
+      data.collision = false;
+      return data;
     }
 
     if (glm::length(test_normals[i]) > 0.f) {
@@ -130,50 +144,52 @@ bool physics::Intersect(const physics::OBB& o1, const physics::OBB& o2,
     }
   }
 
-  *normal = collision_normal;
-  *distance = min_dist;
+  data.normal = collision_normal;
+  data.move_vector = min_dist * data.normal;
 
-  return true;
+  return data;
 }
 
-bool physics::Intersect(const physics::Arena& a, const physics::Sphere& s,
-               glm::vec3* normal) {
-  bool intersect = false;
+physics::IntersectData physics::Intersect(const physics::Arena& a,
+                                          const physics::Sphere& s) {
+  IntersectData data;
+  data.collision = false;
   glm::vec3 n = glm::vec3(0.f);
   if (s.center.x + s.radius >= a.xmax) {
     n += glm::vec3(-1.f, 0.f, 0.f);
-    intersect = true;
+    data.collision = true;
   }
   if (s.center.x - s.radius <= a.xmin) {
     n += glm::vec3(1.f, 0.f, 0.f);
-    intersect = true;
+    data.collision = true;
   }
   if (s.center.y + s.radius >= a.ymax) {
     n += glm::vec3(0.f, -1.f, 0.f);
-    intersect = true;
+    data.collision = true;
   }
-  if (s.center.y - s.radius <= a.ymin) {
+  if (s.center.y - s.radius < a.ymin) {
     n += glm::vec3(0.f, 1.f, 0.f);
-    intersect = true;
+    data.collision = true;
   }
   if (s.center.z + s.radius >= a.zmax) {
     n += glm::vec3(0.f, 0.f, -1.f);
-    intersect = true;
+    data.collision = true;
   }
   if (s.center.z - s.radius <= a.zmin) {
     n += glm::vec3(0.f, 0.f, 1.f);
-    intersect = true;
+    data.collision = true;
   }
 
-  if (intersect) {
-    *normal = n; 
+  if (data.collision) {
+    data.normal = n; 
   }
 
-  return intersect;
+  return data;
 }
 
-bool physics::Intersect(const physics::Arena& a, const physics::OBB& o,
-                        glm::vec3* move_vector) {
+physics::IntersectData physics::Intersect(const physics::Arena& a,
+                                          const physics::OBB& o) {
+  IntersectData data;
   Corners c = GetCorners(o);
   glm::vec3 move = {};
 
@@ -192,7 +208,174 @@ bool physics::Intersect(const physics::Arena& a, const physics::OBB& o,
       move.z = a.zmin - c.corners[i].z;
   }
 
-  *move_vector = move;
-
-  return move.x || move.y || move.z;
+  data.move_vector = move;
+  data.normal = glm::vec3(0.f);
+  data.collision = move.x || move.y || move.z;
+  return data;
  }
+
+// https://www.geometrictools.com/Documentation/DistancePoint3Triangle3.pdf
+float ComputeSquaredDistance(const glm::vec3& center, const Triangle& tri,
+  glm::vec3* closest_point) {
+   glm::vec3 edges[3] = {tri.p1 - tri.p0, tri.p2 - tri.p0, tri.p2 - tri.p1};
+
+   glm::vec3 D = tri.p0 - center;
+   float a = glm::dot(edges[0], edges[0]);
+   float b = glm::dot(edges[0], edges[1]);
+   float c = glm::dot(edges[1], edges[1]);
+   float d = glm::dot(edges[0], D);
+   float e = glm::dot(edges[1], D);
+   float f = glm::dot(D, D);
+   //float sigma = a * c - b * b;
+   //if (sigma < 0) sigma = -sigma;
+
+   float s = b * e - c * d;
+   float t = b * d - a * e;
+   float det = a * c - b * b;
+   if (det < 0) det = -det;
+
+   if (s + t <= det) {
+     if (s < 0) {
+       if (t < 0) {
+         // region 4
+         if (d < 0) {
+           t = 0;
+           if (-d >= a)
+             s = 1;
+           else
+             s = -d / a;
+         } else {
+           s = 0;
+           if (e >= 0)
+             t = 0;
+           else if (-e >= c)
+             t = 1;
+           else
+             t = -e / c;
+         }
+       } else {
+         // region 3
+         s = 0;
+         if (e >= 0)
+           t = 0;
+         else if (-e >= c)
+           t = 1;
+         else
+           t = -e / c;
+       }
+     } else if (t < 0) {
+       // region 5
+       t = 0;
+       if (d >= 0)
+         s = 0;
+       else if (-d >= a)
+         s = 1;
+       else
+         s = -d / a;
+     } else {
+       // region 0
+       s /= det;
+       t /= det;
+     }
+   } else {
+     if (s < 0) {
+       //region 2
+       float temp0 = b + d;
+       float temp1 = c + e;
+       if (temp1 > temp0) {
+         float numer = temp1 - temp0;
+         float denom = a - 2 * b + c;
+         if (numer >= denom)
+           s = 1;
+         else
+           s = numer / denom;
+
+         t = 1 - s;
+       } else {
+         s = 0;
+         if (temp1 <= 0)
+           t = 1;
+         else if (e >= 0)
+           t = 0;
+         else
+           t = -e / c;
+       }
+     } else if (t < 0) {
+       // region 6
+       float temp0 = b + e;
+       float temp1 = a + d;
+       if (temp1 > temp0) {
+         float numer = temp1 - temp0;
+         float denom = a - 2 * b + c;
+         if (numer >= denom)
+           t = 1;
+         else
+           t = numer / denom;
+
+         s = 1 - t;
+       } else {
+         t = 0;
+         if (temp1 <= 0)
+           s = 1;
+         else if (d >= 0)
+           s = 0;
+         else
+           s = -d / a;
+       }
+     } else {
+       // region 1
+       float numer = (c + e) - (b + d);
+       if (numer <= 0.f) {
+         s = 0;
+       } else {
+         float denom = a - 2 * b + c;
+         if (numer >= denom) {
+           s = 1;
+         } else {
+           s = numer / denom;
+         }
+       }
+
+       t = 1 - s;
+     }
+   }
+
+   *closest_point = tri.p0 + s * edges[0] + t * edges[1];
+   return a * s * s + 2 * b * s * t + c * t * t + 2 * d * s + 2 * e * t + f;
+ }
+
+physics::IntersectData physics::Intersect(const MeshHitbox& m,
+                                           const Sphere& s) {
+  IntersectData data;
+  data.normal = glm::vec3(0.f);
+  data.collision = false;
+  float rsqrt = sqrtf(s.radius);
+  glm::vec3 closest_point;
+  for (int i = 0; i < m.indices.size(); i += 3) {
+    Triangle tri{m.pos[m.indices[i]], m.pos[m.indices[i + 1]],
+                 m.pos[m.indices[i + 2]]};
+    float dist = ComputeSquaredDistance(s.center, tri, &closest_point);
+
+    if (dist <= rsqrt) {
+      glm::vec3 temp = glm::normalize(glm::cross(tri.p1 - tri.p0, tri.p2 - tri.p0));
+      if (fabs(temp.x) < 0.05f && fabs(temp.x) > 0.0) {
+        temp.x = 0.f;
+      }
+      if (fabs(temp.y) < 0.05f && fabs(temp.y) > 0.0) {
+        temp.y = 0.f;
+      }
+      if (fabs(temp.z) < 0.05f && fabs(temp.z) > 0.0) {
+        temp.z = 0.f;
+      }
+      data.normal += temp;
+      data.collision = true;
+      data.move_vector = (rsqrt - dist) * data.normal;
+
+      //return data;
+    }
+  }
+
+  data.normal = glm::normalize(data.normal);
+
+  return data;
+}

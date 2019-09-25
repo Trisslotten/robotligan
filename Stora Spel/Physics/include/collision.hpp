@@ -9,14 +9,20 @@
 #define EXPORT __declspec(dllimport)
 #endif
 
+
 namespace physics {
-EXPORT bool Intersect(const OBB& o1, const OBB& o2, glm::vec3* normal,
-                      float* distance);
-EXPORT bool Intersect(const Sphere& s1, const Sphere& s2);
-EXPORT bool Intersect(const Sphere& s, const OBB& o, glm::vec3* normal,
-                      float* move_distance);
-EXPORT bool Intersect(const Arena& a, const Sphere& s, glm::vec3* normal);
-EXPORT bool Intersect(const Arena& a, const OBB& o, glm::vec3* move_vector);
+struct IntersectData {
+  glm::vec3 normal;
+  glm::vec3 move_vector;
+  bool collision;
+};
+
+EXPORT IntersectData Intersect(const OBB& o1, const OBB& o2);
+EXPORT IntersectData Intersect(const Sphere& s1, const Sphere& s2);
+EXPORT IntersectData Intersect(const Sphere& s, const OBB& o);
+EXPORT IntersectData Intersect(const Arena& a, const Sphere& s);
+EXPORT IntersectData Intersect(const Arena& a, const OBB& o);
+EXPORT IntersectData Intersect(const MeshHitbox& m, const Sphere& s);
 }  // namespace physics
 
 #endif  // PHYSICS_INCLUDE_COLLISION_HPP_
