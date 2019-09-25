@@ -33,10 +33,10 @@ class Engine {
   void CreateSettingsMenu();
 
   NetAPI::Socket::TcpClient tcp_client_;
-  entt::registry registry_gameplay;
-  entt::registry registry_mainmenu;
-  entt::registry registry_settings;
-  entt::registry* registry_current;
+  entt::registry registry_gameplay_;
+  entt::registry registry_mainmenu_;
+  entt::registry registry_settings_;
+  entt::registry* registry_current_;
 
   std::unordered_map<int, PlayerAction> keybinds_;
   std::unordered_map<int, PlayerAction> mousebinds_;

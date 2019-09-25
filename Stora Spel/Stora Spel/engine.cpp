@@ -38,23 +38,23 @@ void Engine::Init() {
       glm::vec3(-9.f, 4.f, 0.f),  // Player
       glm::vec3(0.f, 0.f, 0.f)    // Others
   };
-  CreateEntities(registry_gameplay, start_positions, 3);
+  CreateEntities(registry_gameplay_, start_positions, 3);
   CreateMainMenu();
   CreateSettingsMenu();
-  registry_current = &registry_mainmenu;
+  registry_current_ = &registry_mainmenu_;
 
   // Create light
-  auto light = registry_gameplay.create();
-  registry_gameplay.assign<LightComponent>(light, glm::vec3(0.3f, 0.3f, 1.0f),
+  auto light = registry_gameplay_.create();
+  registry_gameplay_.assign<LightComponent>(light, glm::vec3(0.3f, 0.3f, 1.0f),
                                            15.f, 0.2f);
-  registry_gameplay.assign<TransformComponent>(
+  registry_gameplay_.assign<TransformComponent>(
       light, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
 
-  light = registry_gameplay.create();
-  registry_gameplay.assign<LightComponent>(light, glm::vec3(1.f, 0.3f, 0.3f),
+  light = registry_gameplay_.create();
+  registry_gameplay_.assign<LightComponent>(light, glm::vec3(1.f, 0.3f, 0.3f),
                                            15.f, 0.f);
-  registry_gameplay.assign<TransformComponent>(
+  registry_gameplay_.assign<TransformComponent>(
       light, glm::vec3(-12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
 
@@ -103,57 +103,57 @@ void Engine::Render() {
 }
 
 void Engine::SetCurrentRegistry(entt::registry* registry) {
-  this->registry_current = registry;
+  this->registry_current_ = registry;
 }
 
 void Engine::UpdateSystems(float dt) {
   // collision_debug::Update(*reg);
 
-  player_controller::Update(*registry_current, dt);
-  ability_controller::Update(*registry_current, dt);
+  player_controller::Update(*registry_current_, dt);
+  ability_controller::Update(*registry_current_, dt);
 
-  UpdatePhysics(*registry_current, dt);
-  UpdateCollisions(*registry_current);
+  UpdatePhysics(*registry_current_, dt);
+  UpdateCollisions(*registry_current_);
 
-  /*auto view = registry_gameplay.view<CameraComponent, TransformComponent>();
+  /*auto view = registry_gameplay_.view<CameraComponent, TransformComponent>();
   for (auto v : view) {
-    auto& cam_c = registry_gameplay.get<CameraComponent>(v);
-    auto& trans_c = registry_gameplay.get<TransformComponent>(v);
+    auto& cam_c = registry_gameplay_.get<CameraComponent>(v);
+    auto& trans_c = registry_gameplay_.get<TransformComponent>(v);
     cam_c.cam->SetPosition(trans_c.position +
                            glm::rotate(cam_c.offset, -trans_c.rotation.y,
                                        glm::vec3(0.0f, 1.0f, 0.0f)));
   }*/
 
-  button_system::Update(*registry_current);
-  RenderSystem(*registry_current);
+  button_system::Update(*registry_current_);
+  RenderSystem(*registry_current_);
 }
 
 void Engine::CreateMainMenu() {
   glob::window::SetMouseLocked(false);
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
 
-  // PLAY BUTTON - change registry to registry_gameplay
-  ButtonComponent* b_c = GenerateButtonEntity(registry_mainmenu, "PLAY",
+  // PLAY BUTTON - change registry to registry_gameplay_
+  ButtonComponent* b_c = GenerateButtonEntity(registry_mainmenu_, "PLAY",
                                               glm::vec2(100, 200), font_test_);
   b_c->button_func = [&]() {
-    this->SetCurrentRegistry(&registry_gameplay);
+    this->SetCurrentRegistry(&registry_gameplay_);
     glob::window::SetMouseLocked(true);
   };
 
-  // SETTINGS BUTTON - change registry to registry_settings
-  b_c = GenerateButtonEntity(registry_mainmenu, "SETTINGS", glm::vec2(100, 140),
+  // SETTINGS BUTTON - change registry to registry_settings_
+  b_c = GenerateButtonEntity(registry_mainmenu_, "SETTINGS", glm::vec2(100, 140),
                              font_test_);
-  b_c->button_func = [&]() { this->SetCurrentRegistry(&registry_settings); };
+  b_c->button_func = [&]() { this->SetCurrentRegistry(&registry_settings_); };
 
   // EXIT BUTTON - close the game
-  b_c = GenerateButtonEntity(registry_mainmenu, "EXIT", glm::vec2(100, 80),
+  b_c = GenerateButtonEntity(registry_mainmenu_, "EXIT", glm::vec2(100, 80),
                              font_test_);
   b_c->button_func = [&]() { exit(0); };
 }
 
 void Engine::CreateSettingsMenu() {
   // BACK BUTTON in SETTINGS - go back to main menu
-  ButtonComponent* b_c = GenerateButtonEntity(registry_settings, "BACK",
+  ButtonComponent* b_c = GenerateButtonEntity(registry_settings_, "BACK",
                                               glm::vec2(100, 200), font_test_);
-  b_c->button_func = [&]() { this->SetCurrentRegistry(&registry_mainmenu); };
+  b_c->button_func = [&]() { this->SetCurrentRegistry(&registry_mainmenu_); };
 }
