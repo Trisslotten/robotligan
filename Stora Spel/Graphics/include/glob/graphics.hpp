@@ -66,7 +66,6 @@ EXPORT void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
 EXPORT void Submit(GUIHandle gui_h, glm::vec2 pos, float scale);
 EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale,
                    float rotDegrees, glm::vec3 rotAxis);
-                   std::string text, glm::vec4 color = glm::vec4(1, 1, 1, 1));
 
 EXPORT Camera GetCamera();
 EXPORT void SetCamera(Camera camera);

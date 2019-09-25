@@ -17,7 +17,7 @@
 
 namespace {}  // namespace
 
-GameServer::~GameServer() { server_.Cleanup(); }
+GameServer::~GameServer() {}
 
 void GameServer::Init() {
   GlobalSettings::Access()->UpdateValuesFromFile();
@@ -34,6 +34,7 @@ void GameServer::Init() {
 
 void GameServer::Update(float dt) {
   server_.Update();
+
   int num_players = server_.GetConnectedPlayers();
 
   // TODO: change when working on lobby, this is only for testing
@@ -46,23 +47,21 @@ void GameServer::Update(float dt) {
 
     last_num_players_ = num_players;
   }
-
-  std::unordered_map<int, uint16_t> players_actions;
-  for (short i = 0; i < server_.GetConnectedPlayers(); i++) {
-    auto packet = server_[i];
-    if (!packet.IsEmpty()) {
-      // TODO: change to players network id
-      int id = i;
-      packet >> players_actions[id];
+  for (auto& [id, client_data] : server_.GetClients()) {
+    for (auto& packet : client_data.packets) {
+      while (!packet.IsEmpty()) {
+        PacketBlockAction(packet, id);
+      }
     }
   }
 
   auto player_view = registry_.view<PlayerComponent>();
 
   registry_.view<PlayerComponent>().each([&](auto entity, auto& player_c) {
-    player_c.actions = players_actions[player_c.id];
-    //std::cout << player_c.id << "\n";
+    player_c.actions = players_actions_[player_c.id];
+    // std::cout << player_c.id << "\n";
   });
+  players_actions_.clear();
 
   registry_.view<TransformComponent>().each([&](auto entity, auto& trans_c) {
     glm::vec3 p = trans_c.position;
@@ -99,13 +98,26 @@ void GameServer::UpdateSystems(float dt) {
   UpdateCollisions(registry_);
 }
 
+void GameServer::PacketBlockAction(NetAPI::Common::Packet& packet,
+                                   unsigned short id) {
+  int16_t packet_block_type = -1;
+  packet >> packet_block_type;
+  switch (packet_block_type) {
+    case PacketBlockType::INPUT:
+      uint16_t actions = 0;
+      packet >> actions;
+      players_actions_[id] = actions;
+      break;
+  }
+}
+
 void GameServer::CreatePlayer() {
   auto entity = registry_.create();
 
   // TODO: change with lobby and starting game
   glm::vec3 start_pos{-9.f, 4.f, 0.f};
-  start_pos.x += 2.f * glm::sin(20.f*float(test_player_guid));
-  start_pos.z += 2.f * glm::sin(30.f*float(test_player_guid)+2.f);
+  start_pos.x += 2.f * glm::sin(20.f * float(test_player_guid_));
+  start_pos.z += 2.f * glm::sin(30.f * float(test_player_guid_) + 2.f);
 
   // Prepare hard-coded values
   bool robot_is_airborne = true;
@@ -161,8 +173,8 @@ void GameServer::CreatePlayer() {
   );
   registry_.assign<CameraComponent>(entity, camera_offset);
   auto& player_component = registry_.assign<PlayerComponent>(entity);
-  player_component.id = test_player_guid;
-  test_player_guid++;
+  player_component.id = test_player_guid_;
+  test_player_guid_++;
 }
 
 void GameServer::CreateEntities(glm::vec3* in_pos_arr,
@@ -176,7 +188,7 @@ void GameServer::CreateEntities(glm::vec3* in_pos_arr,
   AddArenaComponents(arena_entity);
 
   // Create one player entity and add components
-  //CreatePlayer();
+  // CreatePlayer();
 }
 
 void GameServer::ResetEntities(glm::vec3* in_pos_arr, unsigned int in_num_pos) {

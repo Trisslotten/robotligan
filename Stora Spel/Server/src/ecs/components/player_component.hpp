@@ -27,7 +27,7 @@ struct PlayerComponent {
   float kick_force = GlobalSettings::Access()->ValueOf("PLAYER_KICK_FORCE");
 
   // input from client
-  std::bitset<NUM_ACTIONS> actions;
+  std::bitset<PlayerAction::NUM_ACTIONS> actions;
   float yaw = 0;
   float pitch = 0;
 };

@@ -24,7 +24,7 @@ void Engine::Init() {
   glob::Init();
   Input::Initialize();
 
-  tcp_client_.Connect("192.168.1.47", 1337);
+  client.Connect("192.168.1.47", 1337);
 
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
@@ -84,8 +84,9 @@ void Engine::UpdateNetwork() {
 
   NetAPI::Common::Packet packet;
   packet << action_bits;
+  packet << PacketBlockType::INPUT;
 
-  tcp_client_.Send(packet);
+  client.Send(packet);
 }
 
 void Engine::Render() {

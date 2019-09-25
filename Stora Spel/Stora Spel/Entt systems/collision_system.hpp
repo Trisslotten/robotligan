@@ -31,9 +31,8 @@ void UpdateOBB(entt::registry& registry) {
     hitbox.center = transform.position;
 
     // Rotate OBB
-    auto mat_rot = glm::toMat4(transform.rotation);
-    hitbox.normals[0] = mat_rot * glm::vec4(1.0f, 0.f, 0.f, 0.f);
-    hitbox.normals[2] = mat_rot * glm::vec4(0.0f, 0.f, 1.f, 0.f);
+    hitbox.normals[0] = transform.rotation * glm::vec3(1.0f, 0.f, 0.f);
+    hitbox.normals[2] = transform.rotation * glm::vec3(0.0f, 0.f, 1.f);
   }
 }
 

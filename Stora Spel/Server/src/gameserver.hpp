@@ -17,8 +17,9 @@ class GameServer {
  private:
   void UpdateSystems(float dt);
 
-  void CreatePlayer();
+  void PacketBlockAction(NetAPI::Common::Packet& packet, unsigned short id);
 
+  void CreatePlayer();
   void CreateEntities(glm::vec3* in_pos_arr, unsigned int in_num_pos);
   void ResetEntities(glm::vec3* in_pos_arr, unsigned int in_num_pos);
   void AddBallComponents(entt::entity& entity, glm::vec3 in_pos,
@@ -29,7 +30,9 @@ class GameServer {
   int last_num_players_ = 0;
   entt::registry registry_;
 
-  int test_player_guid = 0;
+  std::unordered_map<int, uint16_t> players_actions_;
+
+  int test_player_guid_ = 0;
 };
 
 #endif  // GAME_SERVER_HPP_

@@ -2,6 +2,7 @@
 #define ENGINE_HPP_
 
 #include <NetAPI/socket/tcpclient.hpp>
+#include <NetAPI/socket/Client.hpp>
 #include <entt.hpp>
 #include <unordered_map>
 #include <glob/graphics.hpp>
@@ -25,11 +26,11 @@ class Engine {
  private:
   void UpdateSystems(float dt);
   
-  NetAPI::Socket::TcpClient tcp_client_;
+  NetAPI::Socket::Client client;
   entt::registry registry_;
 
-  std::unordered_map<int, PlayerAction> keybinds_;
-  std::unordered_map<int, PlayerAction> mousebinds_;
+  std::unordered_map<int, int> keybinds_;
+  std::unordered_map<int, int> mousebinds_;
 
   glob::Font2DHandle font_test_ = 0;
 };

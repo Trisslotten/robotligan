@@ -33,7 +33,7 @@ void Update(entt::registry& registry, float dt) {
     cam_c.AddAngles(yaw, pitch);
     trans_c.Rotate(glm::vec3(0, -yaw, 0));
 
-    if (player_c.actions[SHOOT]) {
+    if (player_c.actions[PlayerAction::SHOOT]) {
       ability_c.shoot = true;
     }
     // Caputre keyboard input and apply velocity
@@ -67,21 +67,21 @@ void Update(entt::registry& registry, float dt) {
     glm::vec3 right = glm::normalize(glm::cross(frwd, up));
 
     if (true) {  // abs(accum_velocity.length()) < player_c.walkspeed * 4) {
-      if (player_c.actions[WALK_FORWARD]) {
+      if (player_c.actions[PlayerAction::WALK_FORWARD]) {
         accum_velocity += frwd;
       }
-      if (player_c.actions[WALK_BACKWARD]) {
+      if (player_c.actions[PlayerAction::WALK_BACKWARD]) {
         accum_velocity -= frwd;
       }
-      if (player_c.actions[WALK_RIGHT]) {
+      if (player_c.actions[PlayerAction::WALK_RIGHT]) {
         accum_velocity += right;
       }
-      if (player_c.actions[WALK_LEFT]) {
+      if (player_c.actions[PlayerAction::WALK_LEFT]) {
         accum_velocity -= right;
       }
       if (glm::length(accum_velocity) > 0.f)
         accum_velocity = glm::normalize(accum_velocity) * player_c.walkspeed;
-      if (player_c.actions[SPRINT] &&
+      if (player_c.actions[PlayerAction::SPRINT] &&
           player_c.energy_current > player_c.cost_sprint) {
         accum_velocity *= 2.f;
         player_c.energy_current -= player_c.cost_sprint;
@@ -99,7 +99,7 @@ void Update(entt::registry& registry, float dt) {
     // IF player is pressing space
     // AND is not airborne
     // AND has more enery than the cost for jumping
-    if (player_c.actions[JUMP] && !physics_c.is_airborne &&
+    if (player_c.actions[PlayerAction::JUMP] && !physics_c.is_airborne &&
         player_c.energy_current > player_c.cost_jump && !player_c.no_clip) {
       // Add velocity upwards
       final_velocity += up * player_c.jump_speed;
@@ -131,10 +131,10 @@ void Update(entt::registry& registry, float dt) {
     }
 
     // Ability buttons
-    if (player_c.actions[ABILITY_PRIMARY]) {
+    if (player_c.actions[PlayerAction::ABILITY_PRIMARY]) {
       ability_c.use_primary = true;
     }
-    if (player_c.actions[ABILITY_SECONDARY]) {
+    if (player_c.actions[PlayerAction::ABILITY_SECONDARY]) {
       ability_c.use_secondary = true;
     }
 
@@ -144,7 +144,7 @@ void Update(entt::registry& registry, float dt) {
     // std::cout << "stam: " << player_c.energy_current << "\n";
 
     // kick ball
-    if (player_c.actions[KICK]) {
+    if (player_c.actions[PlayerAction::KICK]) {
       glm::vec3 kick_dir =
           cam_c.LookDirection() + glm::vec3(0, player_c.kick_pitch, 0);
 

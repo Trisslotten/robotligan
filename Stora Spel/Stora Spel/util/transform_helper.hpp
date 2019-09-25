@@ -12,7 +12,7 @@ inline glm::vec3 DirVectorFromRadians(float yaw, float pitch) {
   return glm::normalize(glm::vec3(x, y, z));
 }
 
-bool InsideBounds2D(glm::vec2 pos_varaible, glm::vec2 pos_entity,
+inline bool InsideBounds2D(glm::vec2 pos_varaible, glm::vec2 pos_entity,
                     glm::vec2 bounds) {
   if (pos_varaible.x >= pos_entity.x &&
       pos_varaible.x <= pos_entity.x + bounds.x) {
