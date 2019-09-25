@@ -105,6 +105,9 @@ int main(unsigned argc, char** argv) {
 
   // Create 2D element
   glob::E2DHandle e2D_test = glob::GetE2DItem("assets/GUI_elements/koncept_poäng_top.png");
+  glob::E2DHandle e2D_test2 =
+      glob::GetE2DItem("assets/GUI_elements/Scoreboard_V1.png");
+
 
   // Create GUI element
   glob::GUIHandle gui_test =
@@ -173,8 +176,12 @@ int main(unsigned argc, char** argv) {
     updateSystems(&registry, dt);
 
 	// Submit 2D Element TEST
-    glob::Submit(e2D_test, glm::vec3(100, 200, 0), 2,
-                 glm::mat4(0));
+    glob::Submit(e2D_test, glm::vec3(10.5f, 1.0f, 0.0f), 2, -90.0f, glm::vec3(0, 1, 0));
+    glob::Submit(e2D_test, glm::vec3(-10.5f, 1.0f, 0.0f), 2, 90.0f,
+                 glm::vec3(0, 1, 0));
+    glob::Submit(e2D_test2, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f,
+                 glm::vec3(1));
+
 
 	// Show statistics TEST
     if (Input::IsKeyDown(GLFW_KEY_TAB)) {

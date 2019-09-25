@@ -55,11 +55,12 @@ EXPORT void SubmitCube(glm::mat4 t);
 EXPORT void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
                    std::string text, glm::vec4 color = glm::vec4(1, 1, 1, 1));
 EXPORT void Submit(GUIHandle gui_h, glm::vec2 pos, float scale);
-EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale, glm::mat4 rot);
-    /*
-     * Render all items submitted this frame
-     */
-    EXPORT void Render();
+EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale,
+                   float rotDegrees, glm::vec3 rotAxis);
+/*
+ * Render all items submitted this frame
+ */
+EXPORT void Render();
 
 EXPORT void* GetCamera();
 

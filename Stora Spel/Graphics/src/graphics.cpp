@@ -14,8 +14,8 @@
 #include "glob/camera.hpp"
 #include "shader.hpp"
 
-#include "Font/Font2D.hpp"
 #include "2D/elements2D.hpp"
+#include "Font/Font2D.hpp"
 
 #include <msdfgen/msdfgen-ext.h>
 #include <msdfgen/msdfgen.h>
@@ -237,8 +237,8 @@ ModelHandle GetModel(const std::string &filepath) {
                                       filepath);
 }
 GUIHandle GetGUIItem(const std::string &filepath) {
-  return GetAsset<GUIHandle, Elements2D>(gui_handles, gui_elements, current_gui_guid,
-                                  filepath);
+  return GetAsset<GUIHandle, Elements2D>(gui_handles, gui_elements,
+                                         current_gui_guid, filepath);
 }
 
 Font2DHandle GetFont(const std::string &filepath) {
@@ -319,7 +319,8 @@ void Submit(GUIHandle gui_h, glm::vec2 pos, float scale) {
   gui_items_to_render.push_back(to_render);
 }
 
-void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale, glm::mat4 rot) {
+void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale, float rotDegrees,
+            glm::vec3 rotAxis) {
   auto find_res = e2D_elements.find(e2D_h);
   if (find_res == e2D_elements.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted e2D item\n";
@@ -330,7 +331,7 @@ void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale, glm::mat4 rot) {
   to_render.e2D = &find_res->second;
   to_render.pos = pos;
   to_render.scale = scale;
-  to_render.rot = rot;
+  to_render.rot = glm::rotate(glm::radians(rotDegrees), rotAxis);
   e2D_items_to_render.push_back(to_render);
 }
 
@@ -379,7 +380,6 @@ void Render() {
   }
 
   gui_shader.use();
-  //gui_shader.uniform("cam_transform", cam_transform);
   for (auto &gui_item : gui_items_to_render) {
     gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale);
   }
