@@ -196,4 +196,19 @@ void Model::Draw(ShaderProgram& shader) {
   }
 }
 
+MeshData Model::GetMeshData() {
+  MeshData mesh_data;
+  for (unsigned int i = 0; i < mesh_.size(); i++) {
+    MeshData temp = mesh_[i].GetMeshData();
+
+    mesh_data.indices.reserve(mesh_data.indices.size() + temp.indices.size());
+    mesh_data.pos.reserve(mesh_data.pos.size() + temp.pos.size());
+    const unsigned int offset = mesh_data.pos.size();
+    for (auto& i : temp.indices) mesh_data.indices.push_back(i + offset);
+    for (auto& p : temp.pos) mesh_data.pos.push_back(p);
+  }
+
+  return mesh_data;
+}
+
 }  // namespace glob

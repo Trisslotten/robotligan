@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "../shader.hpp"
+#include "glob/mesh_data.hpp"
 
 namespace glob {
 
@@ -40,6 +41,8 @@ class Mesh {
   ~Mesh();
 
   void Draw(ShaderProgram& shader);
+
+  MeshData GetMeshData();
 };
 
 }  // namespace glob

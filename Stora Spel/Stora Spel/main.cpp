@@ -1,19 +1,21 @@
-#include <iostream>
-#include <entt.hpp>
 #include <NetAPI/networkTest.hpp>
-#include <NetAPI/packet.hpp>
 #include <NetAPI/socket/server.hpp>
 #include <NetAPI/socket/tcpclient.hpp>
+#undef min
+#undef max
+#include <entity/registry.hpp>
+#include <entt.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glob/graphics.hpp>
 #include <glob/window.hpp>
-#include <entity/registry.hpp>
+#include <iostream>
 
 #include <entity/registry.hpp>
+#include "ability_component.hpp"
 #include "ability_controller_system.hpp"
 #include "ball_component.hpp"
+#include "button_component.hpp"
 #include "collision.hpp"
-#include "ability_component.hpp"
 #include "collision_system.hpp"
 #include "model_component.hpp"
 #include "physics_system.hpp"
@@ -21,22 +23,25 @@
 #include "print_position_system.hpp"
 #include "render_system.hpp"
 #include "transform_component.hpp"
+#include "button_system.hpp"
 
+#include <GLFW/glfw3.h>  //NTS: This one must be included after certain other things
 #include "collision_temp_debug_system.h"
 #include <GLFW/glfw3.h> //NTS: This one must be included after certain other things.
 #include "util/input.hpp"
-#include "util/meminfo.hpp"
 #include "util/timer.hpp"
 #include "util/meminfo.hpp"
 
 #include "util/global_settings.hpp"
 
-#include <thread>
 #include <chrono>
+#include <thread>
 
 // NTS: Move into game engine class once that exists
-void CreateEntities(entt::registry& registry, glm::vec3* in_pos_arr, unsigned int in_num_pos);
-void ResetEntities(entt::registry& registry, glm::vec3* in_pos_arr, unsigned int in_num_pos);
+void CreateEntities(entt::registry& registry, glm::vec3* in_pos_arr,
+                    unsigned int in_num_pos);
+void ResetEntities(entt::registry& registry, glm::vec3* in_pos_arr,
+                   unsigned int in_num_pos);
 void AddBallComponents(entt::registry& registry, entt::entity& entity,
                        glm::vec3 in_pos, glm::vec3 in_vel);
 void AddArenaComponents(entt::registry& registry, entt::entity& entity);
@@ -44,19 +49,24 @@ void AddPlayerComponents(entt::registry& registry, entt::entity& entity);
 void AddRobotComponents(entt::registry& registry, entt::entity& entity,
                         glm::vec3 in_pos);
 
+
+entt::registry registry;
+bool control = true;
+
 void init() {
   glob::window::Create();
   glob::Init();
   Input::Initialize();
 }
 
-void updateSystems(entt::registry *reg, float dt) {
-  //collision_debug::Update(*reg);
+void updateSystems(entt::registry* reg, float dt) {
+  // collision_debug::Update(*reg);
   player_controller::Update(*reg, dt);
   ability_controller::Update(*reg, dt);
- 
+
   UpdatePhysics(*reg, dt);
   UpdateCollisions(*reg);
+  button_system::Update(*reg);
 
   auto view = reg->view<CameraComponent, TransformComponent>();
   for (auto v : view) {
@@ -65,49 +75,105 @@ void updateSystems(entt::registry *reg, float dt) {
     cam_c.cam->SetPosition(trans_c.position + trans_c.rotation*cam_c.offset);
   }
 
+  //temporary
+  if (Input::IsKeyPressed(GLFW_KEY_M)) {
+    control = !control;
+    glob::window::SetMouseLocked(control);
+  }
+  //temporary
+
   Render(*reg);
 }
 
-int main(unsigned argc, char **argv) {
+int main(unsigned argc, char** argv) {
   init();  // Initialize everything
   Timer timer;
 
-  //Tell the GlobalSettings class to do a first read from the settings file
+  // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
 
-  //Create a registry and create some entities in it
+  // Create a registry and create some entities in it
   entt::registry registry;
-  glm::vec3 start_positions[3] = {glm::vec3(5.f, 0.f, 0.f),		//Ball
-                                  glm::vec3(-9.f, 4.f, 0.f),	//Player
-                                  glm::vec3(0.f, 0.f, 0.f)		//Others
+  glm::vec3 start_positions[3] = {
+      glm::vec3(5.f, 0.f, 0.f),   // Ball
+      glm::vec3(-9.f, 4.f, 0.f),  // Player
+      glm::vec3(0.f, 0.f, 0.f)    // Others
   };
   CreateEntities(registry, start_positions, 3);
 
-  //Create light
+  // Create light
   auto light = registry.create();
-  registry.assign<LightComponent>(light, glm::vec3(0.3f, 0.3f, 1.0f), 15.f, 0.2f);
-  registry.assign<TransformComponent>(light, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
+  registry.assign<LightComponent>(light, glm::vec3(0.3f, 0.3f, 1.0f), 15.f,
+                                  0.2f);
+  registry.assign<TransformComponent>(light, glm::vec3(12.f, -4.f, 0.f),
+                                      glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
 
   light = registry.create();
   registry.assign<LightComponent>(light, glm::vec3(1.f, 0.3f, 0.3f), 15.f, 0.f);
-  registry.assign<TransformComponent>(light, glm::vec3(-12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
+  registry.assign<TransformComponent>(light, glm::vec3(-12.f, -4.f, 0.f),
+                                      glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
 
-  glob::Font2DHandle font_test =
-      glob::GetFont("assets/fonts/fonts/comic.ttf");
-  glob::Font2DHandle font_test2 = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+  // Create text
+  glob::Font2DHandle font_test = glob::GetFont("assets/fonts/fonts/comic.ttf");
+  glob::Font2DHandle font_test2 =
+      glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+
+  // Create 2D element
+  glob::E2DHandle e2D_test = glob::GetE2DItem("assets/GUI_elements/koncept_poäng_top.png");
+  glob::E2DHandle e2D_test2 =
+      glob::GetE2DItem("assets/GUI_elements/Scoreboard_V1.png");
+
+
+  // Create GUI element
+  glob::GUIHandle gui_test =
+      glob::GetGUIItem("assets/GUI_elements/Scoreboard_V1.png");
+
 
   float time = 0.f;
   timer.Restart();
   float dt = 0.0f;
   while (!glob::window::ShouldClose()) {
     dt = timer.Restart();
-    //std::cout << 1.0f / dt << std::endl;
+    // std::cout << 1.0f / dt << std::endl;
     Input::Reset();
     // tick
-    
+    //if (Input::IsKeyDown(GLFW_KEY_K)) {
+    //  //auto& c = registry.get<CameraComponent>(avatar);
+    //  //c.offset.x += 0.01f;
+    //  //std::cout << "Camera: " << c.offset.x << std::endl;
+    //  registry.get<PhysicsComponent>(ball).velocity.x += 10;
+    //  std::cout << registry.get<PhysicsComponent>(ball).velocity.x << std::endl;
+    //}
+    //if (Input::IsKeyDown(GLFW_KEY_L)) {
+    //  //auto &c = registry.get<CameraComponent>(avatar);
+    //  //c.offset.x -= 0.01f;
+    //  //std::cout << "Camera: " << c.offset.x << std::endl;
+    //  registry.get<PhysicsComponent>(ball).is_airborne = false;
+    //  registry.get<TransformComponent>(ball).position.y += 0.1f;
+    //}
+    //if (Input::IsKeyDown(GLFW_KEY_O)) {
+    //  auto &c = registry.get<CameraComponent>(avatar);
+    //  c.offset.y += 0.01f;
+    //  std::cout << "Camera y: " << c.offset.y << std::endl;
+    //}
+    //if (Input::IsKeyDown(GLFW_KEY_P)) {
+    //  auto &c = registry.get<CameraComponent>(avatar);
+    //  c.offset.y -= 0.01f;
+    //  std::cout << "Camera y: " << c.offset.y << std::endl;
+    //}
+    //if (Input::IsKeyDown(GLFW_KEY_U)) {
+    //  auto &c = registry.get<CameraComponent>(avatar);
+    //  c.offset.z += 0.01f;
+    //  std::cout << "Camera z: " << c.offset.z << std::endl;
+    //}
+    //if (Input::IsKeyDown(GLFW_KEY_I)) {
+    //  auto &c = registry.get<CameraComponent>(avatar);
+    //  c.offset.z -= 0.01f;
+    //  std::cout << "Camera z: " << c.offset.z << std::endl;
+    //}
     // render
 
-	//Check if the keys for global settings are pressed
+    // Check if the keys for global settings are pressed
     if (Input::IsKeyPressed(GLFW_KEY_U)) {
       // Update contents of GlobalSettings from file
       GlobalSettings::Access()->UpdateValuesFromFile();
@@ -115,17 +181,32 @@ int main(unsigned argc, char **argv) {
       GlobalSettings::Access()->WriteMapToConsole();
     }
 
-	//Reset positions and velocities
+    // Reset positions and velocities
     if (Input::IsKeyPressed(GLFW_KEY_K)) {
-      //K as in kickoff
+      // K as in kickoff
       ResetEntities(registry, start_positions, 3);
     }
 
     updateSystems(&registry, dt);
-   
-	glob::Submit(font_test, glm::vec2(100, 200), 73, "Det här är Comic Sans MS jahoo!", glm::vec4(0,0,0,0.5));
-    glob::Submit(font_test, glm::vec2(98,202), 73,
-                 "Det här är Comic Sans MS jahoo!", glm::vec4(1,1,1,1));
+
+	// Submit 2D Element TEST
+    glob::Submit(e2D_test, glm::vec3(10.5f, 1.0f, 0.0f), 2, -90.0f, glm::vec3(0, 1, 0));
+    glob::Submit(e2D_test, glm::vec3(-10.5f, 1.0f, 0.0f), 2, 90.0f,
+                 glm::vec3(0, 1, 0));
+    glob::Submit(e2D_test2, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f,
+                 glm::vec3(1));
+
+
+	// Show statistics TEST
+    if (Input::IsKeyDown(GLFW_KEY_TAB)) {
+      glob::Submit(gui_test, glm::vec2(285, 177), 0.6);
+    }
+
+	// Submit text TEST
+    glob::Submit(font_test, glm::vec2(100, 200), 73,
+                 "Det här är Comic Sans MS jahoo!", glm::vec4(0, 0, 0, 0.5));
+    glob::Submit(font_test, glm::vec2(98, 202), 73,
+                 "Det här är Comic Sans MS jahoo!", glm::vec4(1, 1, 1, 1));
 
     glob::Render();
     glob::window::Update();
@@ -140,10 +221,6 @@ int main(unsigned argc, char **argv) {
   std::cout << "WSA is initialized? " << std::boolalpha
             << NetAPI::Initialization::WinsockInitialized() << std::endl;
 
-  std::cout << "RAM usage: " << util::MemoryInfo::GetInstance().GetUsedRAM()
-            << " MB\n";
-  std::cout << "VRAM usage: " << util::MemoryInfo::GetInstance().GetUsedVRAM()
-            << " MB\n";
   std::cin.ignore();
   return EXIT_SUCCESS;
 }
@@ -168,33 +245,48 @@ void CreateEntities(entt::registry& registry, glm::vec3* in_pos_arr,
     auto other_robot_entity = registry.create();
     AddRobotComponents(registry, other_robot_entity, in_pos_arr[i]);
   }
+
+  // test button
+  auto button_entity = registry.create();
+  registry.assign<ButtonComponent>(
+      button_entity, glob::GetFont("assets/fonts/fonts/Marvel-Regular.ttf"));
+  registry.assign<TransformComponent>(button_entity, glm::vec3(500, 500, 0));
+  ButtonComponent& b_c = registry.get<ButtonComponent>(button_entity);
+  b_c.text = "RESET";
+  b_c.button_func = [&]() {
+    glm::vec3 start_positions[3] = {
+        glm::vec3(5.f, 0.f, 0.f),   // Ball
+        glm::vec3(-9.f, 4.f, 0.f),  // Player
+        glm::vec3(0.f, 0.f, 0.f)    // Others
+    };
+    ResetEntities(registry, start_positions, 3);
+  };
 }
 
 void ResetEntities(entt::registry& registry, glm::vec3* in_pos_arr,
-	unsigned int in_num_pos) {
+                   unsigned int in_num_pos) {
+  // Get everything with a physics component and a transform component
+  auto reset_view = registry.view<PhysicsComponent, TransformComponent>();
 
-	//Get everything with a physics component and a transform component
-	auto reset_view = registry.view<PhysicsComponent, TransformComponent>();
+  unsigned int pos_counter = 0;
 
-	unsigned int pos_counter = 0;
+  for (auto entity : reset_view) {
+    PhysicsComponent& physics_component =
+        reset_view.get<PhysicsComponent>(entity);
+    TransformComponent& transform_component =
+        reset_view.get<TransformComponent>(entity);
 
-	for (auto entity : reset_view) {
-          PhysicsComponent& physics_component =
-              reset_view.get<PhysicsComponent>(entity);
-          TransformComponent& transform_component =
-              reset_view.get<TransformComponent>(entity);
+    physics_component.velocity = glm::vec3(0.0f);
+    physics_component.is_airborne = true;
 
-		  physics_component.velocity = glm::vec3(0.0f);
-          physics_component.is_airborne = true;
+    transform_component.position = in_pos_arr[pos_counter];
+    pos_counter++;
 
-		  transform_component.position = in_pos_arr[pos_counter];
-          pos_counter++;
-
-		  if (pos_counter >= in_num_pos) {
-            GlobalSettings::Access()->WriteError("main.cpp","ResetEntities()","Counter out of scope");
-          }
+    if (pos_counter >= in_num_pos) {
+      GlobalSettings::Access()->WriteError("main.cpp", "ResetEntities()",
+                                           "Counter out of scope");
     }
-
+  }
 }
 
 void AddBallComponents(entt::registry& registry, entt::entity& entity,
@@ -202,7 +294,7 @@ void AddBallComponents(entt::registry& registry, entt::entity& entity,
   // Prepare hard-coded values
   bool ball_is_real = true;
   bool ball_is_airborne = true;
-  float ball_friction = 1.0f;
+  float ball_friction = 0.0f;
   float ball_radius = 1.0f;
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 ball_scale = glm::vec3(1.0f);
@@ -211,17 +303,16 @@ void AddBallComponents(entt::registry& registry, entt::entity& entity,
   // Add components for a ball
   registry.assign<BallComponent>(entity, ball_is_real, ball_is_airborne);
   registry.assign<ModelComponent>(entity, model_ball);
-  registry.assign<PhysicsComponent>(entity, in_vel, ball_is_airborne, ball_friction);
-  registry.assign<TransformComponent>(entity, in_pos, zero_vec,
-                                      ball_scale);
+  registry.assign<PhysicsComponent>(entity, in_vel, ball_is_airborne,
+                                    ball_friction);
+  registry.assign<TransformComponent>(entity, in_pos, zero_vec, ball_scale);
 
   // Add a hitbox
   registry.assign<physics::Sphere>(entity, zero_vec, ball_radius);
-
 }
 
 void AddArenaComponents(entt::registry& registry, entt::entity& entity) {
-  //Prepare hard-coded values
+  // Prepare hard-coded values
   // Scale on the hitbox for the map
   float v1 = 7.171f;
   float v2 = 10.6859;  // 13.596f;
@@ -233,11 +324,19 @@ void AddArenaComponents(entt::registry& registry, entt::entity& entity) {
 
   // Add components for an arena
   registry.assign<ModelComponent>(entity, model_arena);
-  registry.assign<TransformComponent>(entity, zero_vec, zero_vec,
-                                      arena_scale);
+  registry.assign<TransformComponent>(entity, zero_vec, zero_vec, arena_scale);
 
   // Add a hitbox
   registry.assign<physics::Arena>(entity, -v2, v2, -v3, v3, -v1, v1);
+  auto md = glob::GetMeshData(model_arena);
+  glm::mat4 matrix = glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f))
+          *glm::rotate(90.f * glm::pi<float>() / 180.f,
+                      glm::vec3(0.f, 0.f, 1.f));
+
+  for (auto& v : md.pos) v = matrix * glm::vec4(v,1.f);
+  auto& mh = registry.assign<physics::MeshHitbox>(entity, std::move(md.pos),
+                                       std::move(md.indices));
+  glob::LoadWireframeMesh(model_arena, mh.pos, mh.indices);
 }
 
 void AddPlayerComponents(entt::registry& registry, entt::entity& entity) {
@@ -263,6 +362,7 @@ void AddPlayerComponents(entt::registry& registry, entt::entity& entity) {
   registry.assign<CameraComponent>(entity, (Camera*)glob::GetCamera(),
                                    camera_offset);
   registry.assign<PlayerComponent>(entity);
+  registry.assign<LightComponent>(entity, glm::vec3(1, 1, 1), 3.f, 0.f);
 }
 
 void AddRobotComponents(entt::registry& registry, entt::entity& entity,
@@ -279,25 +379,24 @@ void AddRobotComponents(entt::registry& registry, entt::entity& entity,
   glm::vec3 character_scale = glm::vec3(0.1f);
   glob::ModelHandle robot_model =
       glob::GetModel("assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
-	
+
   // Add components for a robot
-  registry.assign<ModelComponent>(
-      entity, robot_model, alter_scale * character_scale);
+  registry.assign<ModelComponent>(entity, robot_model,
+                                  alter_scale * character_scale);
   registry.assign<PhysicsComponent>(entity, zero_vec, robot_is_airborne,
                                     robot_friction);
-  registry.assign<TransformComponent>(entity, in_pos,
-                                      zero_vec, character_scale);
-  
+  registry.assign<TransformComponent>(entity, in_pos, zero_vec,
+                                      character_scale);
+
   // Add a hitbox
   registry.assign<physics::OBB>(
       entity,
-      alter_scale * character_scale,	// Center
-      glm::vec3(1.f, 0.f, 0.f),			//
-	  glm::vec3(0.f, 1.f, 0.f),			// Normals
-      glm::vec3(0.f, 0.f, 1.f),			//
-	  coeff_x_side * character_scale.x * 0.5f,	//
+      alter_scale * character_scale,            // Center
+      glm::vec3(1.f, 0.f, 0.f),                 //
+      glm::vec3(0.f, 1.f, 0.f),                 // Normals
+      glm::vec3(0.f, 0.f, 1.f),                 //
+      coeff_x_side * character_scale.x * 0.5f,  //
       coeff_y_side * character_scale.y * 0.5f,  // Length of each plane
-      coeff_z_side * character_scale.z * 0.5f	//
-	  );
-  
+      coeff_z_side * character_scale.z * 0.5f   //
+  );
 }
