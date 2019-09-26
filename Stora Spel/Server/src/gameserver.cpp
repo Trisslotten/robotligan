@@ -9,9 +9,9 @@
 
 #include "ecs/components.hpp"
 #include "ecs/systems/ability_controller_system.hpp"
-#include "ecs/systems/player_controller_system.hpp"
 #include "ecs/systems/collision_system.hpp"
 #include "ecs/systems/physics_system.hpp"
+#include "ecs/systems/player_controller_system.hpp"
 
 #include "shared.hpp";
 
@@ -37,20 +37,11 @@ void GameServer::Init() {
 void GameServer::Update(float dt) {
   server_.Update();
 
-  int num_players = server_.GetConnectedPlayers();
-
-  std::cout << num_players << "\n";
-  // TODO: change when working on lobby, this is only for testing
-  if (last_num_players_ != num_players) {
-    int diff = num_players - last_num_players_;
-
-    for (int i = 0; i < diff; i++) {
-      std::cout << "DEBUG: Creating a player\n";
-      CreatePlayer();
-    }
-
-    last_num_players_ = num_players;
+  for (auto client_data : server_.GetNewlyConnected()) {
+    std::cout << "DEBUG: Creating a player\n";
+    CreatePlayer(client_data->ID);
   }
+
   for (auto& [id, client_data] : server_.GetClients()) {
     for (auto& packet : client_data->packets) {
       while (!packet.IsEmpty()) {
@@ -74,29 +65,38 @@ void GameServer::Update(float dt) {
 
   UpdateSystems(dt);
 
-
   for (auto& [id, client_data] : server_.GetClients()) {
     NetAPI::Common::Packet to_send;
     auto header = to_send.GetHeader();
     header->Receiver = id;
 
+    bool is_created = false;
     for (auto& created_id : created_players_) {
       if (id == created_id) {
         to_send << id;
         to_send << PacketBlockType::SET_CLIENT_PLAYER_ID;
+        is_created = true;
         break;
       }
     }
 
-    for (auto& created_id : created_players_) {
-      to_send << created_id;
-      to_send << PacketBlockType::PLAYER_JOIN;
-    }
-
-    std::string hej = "Test test asdasd";
-    to_send.Add(hej.data(), hej.size());
-    to_send << hej.size();
-    to_send << PacketBlockType::TEST_STRING;
+    if (is_created) {
+      for (auto& [id, client_data] : server_.GetClients()) {
+        to_send << id;
+        to_send << PacketBlockType::CREATE_PLAYER;
+	  }
+    } else {
+	  for (auto& created_id : created_players_) {
+		to_send << created_id;
+		to_send << PacketBlockType::CREATE_PLAYER;
+	  }
+	}
+    /*
+std::string hej = "Test test asdasd";
+to_send.Add(hej.data(), hej.size());
+to_send << hej.size();
+to_send << PacketBlockType::TEST_STRING;
+*/
 
     server_.Send(to_send);
   }
@@ -131,10 +131,10 @@ void GameServer::UpdateSystems(float dt) {
 
 void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
                                    unsigned short id) {
-  int16_t packet_block_type = -1;
-  packet >> packet_block_type;
-  switch (packet_block_type) {
-    case PacketBlockType::INPUT:
+  int16_t block_type = -1;
+  packet >> block_type;
+  switch (block_type) {
+    case PacketBlockType::INPUT: {
       uint16_t actions = 0;
       // TODO: put in player_actions then in PlayerComponent
       float pitch = 0.f;
@@ -143,11 +143,13 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       packet >> pitch;
       packet >> actions;
       players_actions_[id] = actions;
+      std::cout << "PACKET: INPUT, " << actions << ", " << yaw << ", " << pitch << "\n";
       break;
+    }
   }
 }
 
-void GameServer::CreatePlayer() {
+void GameServer::CreatePlayer(PlayerID id) {
   auto entity = registry_.create();
 
   // TODO: change with lobby and starting game
@@ -210,12 +212,10 @@ void GameServer::CreatePlayer() {
   registry_.assign<CameraComponent>(entity, camera_offset);
 
   auto& player_component = registry_.assign<PlayerComponent>(entity);
-  player_component.id = test_player_guid_;
-  created_players_.push_back(test_player_guid_);
+  player_component.id = id;
+  created_players_.push_back(id);
 
   std::cout << "DEBUG: Created player id: " << player_component.id << "\n";
-
-  test_player_guid_++;
 }
 
 void GameServer::CreateEntities(glm::vec3* in_pos_arr,

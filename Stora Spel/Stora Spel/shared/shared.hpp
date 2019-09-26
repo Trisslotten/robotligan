@@ -23,7 +23,7 @@ namespace PacketBlockType {
 enum : int16_t {
   INPUT = 0,
   SET_CLIENT_PLAYER_ID,
-  PLAYER_JOIN,
+  CREATE_PLAYER,
   TEST_STRING,
   NUM_BLOCK_TYPES,
 };

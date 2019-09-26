@@ -21,6 +21,8 @@ class Engine {
 
   void UpdateNetwork();
 
+  void HandlePacketBlock(NetAPI::Common::Packet& packet);
+
   void Render();
 
  private:
@@ -35,6 +37,10 @@ class Engine {
 
   std::unordered_map<int, int> keybinds_;
   std::unordered_map<int, int> mousebinds_;
+  std::unordered_map<int, int> key_presses_;
+  std::unordered_map<int, int> mouse_presses_;
+  float accum_yaw = 0.f;
+  float accum_pitch = 0.f;
 
   glob::Font2DHandle font_test_ = 0;
 };

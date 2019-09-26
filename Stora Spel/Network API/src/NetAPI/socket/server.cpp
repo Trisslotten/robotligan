@@ -1,6 +1,7 @@
 #include <NetAPI/socket/server.hpp>
 #include <iostream>
 #include <string>
+
 unsigned short getHashedID(char* addr, unsigned short port) {
   unsigned short retval = 0;
   std::string s(addr);
@@ -21,6 +22,8 @@ bool NetAPI::Socket::Server::Update() {
   if (!setup_) {
     return false;
   }
+  newly_connected_.clear();
+
   // Accept client
   if (connected_players_ < NetAPI::Common::kMaxPlayers) {
     ClientData* data = new ClientData();
@@ -35,40 +38,58 @@ bool NetAPI::Socket::Server::Update() {
       inet_ntop(AF_INET, &client_addr.sin_addr, buffer, 14);
       auto addr = buffer;
       auto port = ntohs(client_addr.sin_port);
-      auto ID = getHashedID(addr, port);
-      if (client_data_.find(ID) != client_data_.end()) {
-        client_data_[ID]->client.Disconnect();
-        delete client_data_[ID];
+      // auto ID = getHashedID(addr, port);
+      std::string address = addr;
+      auto find_res = ids_.find(address);
+      // if already found
+      if (find_res != ids_.end()) {
+        auto client_data = client_data_[find_res->second];
+        client_data->client.Disconnect();
+        delete client_data;
+        client_data_.erase(find_res->second);
+		std::cout << "DEBUG: Found existing client, overwriting\n";
       } else {
         std::cout << "DEBUG: adding new client\n";
         connected_players_++;
       }
-      client_data_[ID] = data;
+      data->address = address;
+      data->ID = current_client_guid_;
+      
+	  newly_connected_.push_back(data);
+
+	  ids_[address] = current_client_guid_;
+      client_data_[current_client_guid_] = data;
+
+      current_client_guid_++;
     }
   }
 
-  std::vector<unsigned short> to_remove;
+  std::vector<std::string> to_remove;
   // Receive Data
   for (auto& c : client_data_) {
-    if (!c.second->client.IsConnected() ||
-        c.second->client.GetRaw()->GetLastRecvLen() == 0) {
+    if (c.second  && (!c.second->client.IsConnected() ||
+        c.second->client.GetRaw()->GetLastRecvLen() == 0)) {
       std::cout << "DEBUG: removing client, lstrecvlen="
                 << c.second->client.GetRaw()->GetLastRecvLen()
                 << ", isConnected=" << c.second->client.IsConnected() << "\n";
       c.second->client.Disconnect();
       connected_players_--;
+      to_remove.push_back(c.second->address);
       delete c.second;
-      to_remove.push_back(c.first);
       continue;
     }
-    auto packet = c.second->client.Receive();
-    if (!packet.IsEmpty()) {
-      c.second->packets.push_back(packet);
+    if (c.second && c.second->client.IsConnected()) {
+      auto packet = c.second->client.Receive();
+      if (!packet.IsEmpty()) {
+        c.second->packets.push_back(packet);
+      }
     }
   }
 
-  for (auto& id : to_remove) {
+  for (auto& address : to_remove) {
+    auto id = ids_[address];
     client_data_.erase(id);
+    ids_.erase(address);
   }
 
   // Send Data

@@ -21,7 +21,7 @@ void Engine::Init() {
   glob::Init();
   Input::Initialize();
 
-  client.Connect("192.168.1.47", 1337);
+  client.Connect("localhost", 1337);
 
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
@@ -58,59 +58,80 @@ void Engine::Init() {
 void Engine::Update(float dt) {
   Input::Reset();
 
+  for (auto const& [key, action] : keybinds_)
+    if (Input::IsKeyDown(key)) key_presses_[key]++;
+  for (auto const& [button, action] : mousebinds_)
+    if (Input::IsMouseButtonDown(button)) mouse_presses_[button]++;
+
+  glm::vec2 mouse_movement = Input::MouseMov();
+  accum_yaw += mouse_movement.x;
+  accum_pitch += mouse_movement.y;
+
   UpdateSystems(dt);
 }
 
 void Engine::UpdateNetwork() {
   {
+    // get and send player input
     std::bitset<PlayerAction::NUM_ACTIONS> actions;
-
-    for (auto const& [key, action] : keybinds_)
-      if (Input::IsKeyDown(key)) actions.set(action, true);
-
-    for (auto const& [button, action] : mousebinds_)
-      if (Input::IsMouseButtonDown(button)) actions.set(action, true);
+    for (auto const& [key, action] : keybinds_) {
+      auto& presses = key_presses_[key];
+      if (presses > 0) actions.set(action, true);
+      presses = 0;
+    }
+    for (auto const& [button, action] : mousebinds_) {
+      auto& presses = mouse_presses_[button];
+      if (presses > 0) actions.set(action, true);
+      presses = 0;
+    }
 
     uint16_t action_bits = actions.to_ulong();
 
 
-    glm::vec2 mouse_movement = Input::MouseMov();
-    float delta_yaw = mouse_movement.x;
-    float delta_pitch = mouse_movement.y;
-
     NetAPI::Common::Packet packet;
     packet << action_bits;
-    packet << delta_pitch;
-    packet << delta_yaw;
+    packet << accum_pitch;
+    packet << accum_yaw;
     packet << PacketBlockType::INPUT;
 
     client.Send(packet);
+
+	accum_yaw = 0.f;
+    accum_pitch = 0.f;
   }
 
   {
+    // handle received data
     auto packet = client.Receive();
     while (!packet.IsEmpty()) {
-      int16_t block_type = -1;
-      packet >> block_type;
+      HandlePacketBlock(packet);
+    }
+  }
+}
+
+void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
+  int16_t block_type = -1;
+  packet >> block_type;
+  size_t strsize = 0;
+  switch (block_type) {
+    case PacketBlockType::CREATE_PLAYER: {
       PlayerID id = -1;
-      size_t strsize = 0;
-      switch (block_type) {
-        case PacketBlockType::PLAYER_JOIN:
-          packet >> id;
-          std::cout << "PACKET: PLAYER_JOIN, id=" << id << "\n";
-          CreatePlayer(id);
-          break;
-        case PacketBlockType::SET_CLIENT_PLAYER_ID:
-          packet >> my_id;
-          std::cout << "PACKET: SET_CLIENT_PLAYER_ID id=" << my_id << "\n";
-          break;
-        case PacketBlockType::TEST_STRING:
-          packet >> strsize;
-          std::string str;
-          str.resize(strsize);
-          packet.Remove(str.data(), strsize);
-          std::cout << "PACKET: TEST_STRING: '" << str << "'\n";
-      }
+      packet >> id;
+      //std::cout << "PACKET: CREATE_PLAYER, id=" << id << "\n";
+      CreatePlayer(id);
+      break;
+    }
+    case PacketBlockType::SET_CLIENT_PLAYER_ID: {
+      packet >> my_id;
+      std::cout << "PACKET: SET_CLIENT_PLAYER_ID id=" << my_id << "\n";
+      break;
+    }
+    case PacketBlockType::TEST_STRING: {
+      packet >> strsize;
+      std::string str;
+      str.resize(strsize);
+      packet.Remove(str.data(), strsize);
+      //std::cout << "PACKET: TEST_STRING: '" << str << "'\n";
     }
   }
 }

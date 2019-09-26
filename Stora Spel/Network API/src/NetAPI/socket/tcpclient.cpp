@@ -1,6 +1,6 @@
 #include <NetAPI/socket/tcpclient.hpp>
-#include <string>
 #include <iostream>
+#include <string>
 NetAPI::Socket::TcpClient::TcpClient() {
   rec_buffer_ = new char[buffer_size_];
   timeout_.tv_sec = 0;
@@ -113,7 +113,7 @@ NetAPI::Common::Packet NetAPI::Socket::TcpClient::Receive(
   timeout_.tv_usec = timeout;
   if (select(send_socket_, &read_set_, NULL, NULL, &timeout_) == 1) {
     last_buff_len_ = recv(send_socket_, rec_buffer_, buffer_size_, 0);
-    //std::cout << "last_buff_len_=" << last_buff_len_ << "\n";
+    // std::cout << "last_buff_len_=" << last_buff_len_ << "\n";
     if (last_buff_len_ > 0) {
       return NetAPI::Common::Packet(rec_buffer_, last_buff_len_);
     }
@@ -127,8 +127,8 @@ NetAPI::Common::Packet NetAPI::Socket::TcpClient::Receive(
       return NetAPI::Common::Packet(nullptr, 0);
     }
   } else {
-    last_buff_len_ = -1;
-    //std::cout << "else last_buff_len_=" << last_buff_len_ << "\n";
+	last_buff_len_ = -1;
+    // std::cout << "else last_buff_len_=" << last_buff_len_ << "\n";
     return NetAPI::Common::Packet(rec_buffer_, 0);
   }
 }

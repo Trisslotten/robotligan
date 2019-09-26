@@ -34,7 +34,7 @@ class EXPORT TcpClient {
   bool IsConnected() { return connected_; }
   void Disconnect();
   void operator=(const SOCKET& other);
-  size_t GetLastRecvLen() { return last_buff_len_; }
+  int GetLastRecvLen() { return last_buff_len_; }
   const char* GetBuffer() { return rec_buffer_; }
   short GetID() { return ID_; }
 

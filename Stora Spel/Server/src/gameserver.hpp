@@ -20,7 +20,7 @@ class GameServer {
 
   void HandlePacketBlock(NetAPI::Common::Packet& packet, unsigned short id);
 
-  void CreatePlayer();
+  void CreatePlayer(PlayerID id);
   void CreateEntities(glm::vec3* in_pos_arr, unsigned int in_num_pos);
   void ResetEntities(glm::vec3* in_pos_arr, unsigned int in_num_pos);
   void AddBallComponents(entt::entity& entity, glm::vec3 in_pos,

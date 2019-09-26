@@ -38,7 +38,7 @@ int main(unsigned argc, char** argv) {
 
     if (t.Elapsed() > 2.0) {
       double elapsed = t.Restart();
-      std::cout << "DEBUG: Real Tickrate = " << num_frames / elapsed << "\n";
+      std::cout << "DEBUG: update rate = " << num_frames / elapsed << " U/s\n";
       num_frames = 0;
     }
   }
