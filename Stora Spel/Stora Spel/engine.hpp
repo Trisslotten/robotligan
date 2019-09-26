@@ -25,9 +25,13 @@ class Engine {
 
  private:
   void UpdateSystems(float dt);
+
+  void CreatePlayer(PlayerID id);
   
   NetAPI::Socket::Client client;
   entt::registry registry_;
+
+  PlayerID my_id = -1;
 
   std::unordered_map<int, int> keybinds_;
   std::unordered_map<int, int> mousebinds_;

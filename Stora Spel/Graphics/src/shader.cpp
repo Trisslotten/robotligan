@@ -4,6 +4,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 #include <vector>
+#include "usegl.hpp"
 
 #define uniformDef(glFunc, glmtype, basetype)                                  \
   void ShaderProgram::uniformv(const std::string& name, GLuint count,          \
@@ -87,11 +88,16 @@ GLuint compileShader(GLenum type, const std::string& name) {
 ShaderProgram::ShaderProgram() { id = 0; }
 
 ShaderProgram::~ShaderProgram() {
-  for (auto& i : ids) {
-    glDeleteShader(i.second);
+  if (glob::kModelUseGL) {
+  
+    for (auto& i : ids) {
+      glDeleteShader(i.second);
+    }
+    glDeleteProgram(id);
+  
   }
-  glDeleteProgram(id);
 }
+
 void ShaderProgram::add(GLenum type, const std::string& path) {
   glDeleteShader(ids[type]);
   paths[type] = SHADERS_PATH + path;
@@ -104,15 +110,10 @@ void ShaderProgram::add(const std::string& path) {
   GLenum shaderType = GL_FRAGMENT_SHADER;
 
   if (extension == "vert") shaderType = GL_VERTEX_SHADER;
-
   if (extension == "tesc") shaderType = GL_TESS_CONTROL_SHADER;
-
   if (extension == "tese") shaderType = GL_TESS_EVALUATION_SHADER;
-
   if (extension == "geom") shaderType = GL_GEOMETRY_SHADER;
-
   if (extension == "frag") shaderType = GL_FRAGMENT_SHADER;
-
   if (extension == "comp") shaderType = GL_COMPUTE_SHADER;
 
   add(shaderType, path);

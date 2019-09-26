@@ -195,6 +195,7 @@
     <ClInclude Include="src\lodepng.hpp" />
     <ClInclude Include="src\Model\mesh.hpp" />
     <ClInclude Include="src\Model\model.hpp" />
+    <ClInclude Include="src\usegl.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />

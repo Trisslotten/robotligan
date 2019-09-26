@@ -1,6 +1,8 @@
 #ifndef SHARED_HPP_
 #define SHARED_HPP_
 
+typedef int PlayerID;
+
 namespace PlayerAction {
 enum : int16_t {
   WALK_FORWARD = 0,
@@ -20,7 +22,10 @@ enum : int16_t {
 namespace PacketBlockType {
 enum : int16_t {
   INPUT = 0,
-  NUM_PACKET_TYPES,
+  SET_CLIENT_PLAYER_ID,
+  PLAYER_JOIN,
+  TEST_STRING,
+  NUM_BLOCK_TYPES,
 };
 } // namespace PacketType
 

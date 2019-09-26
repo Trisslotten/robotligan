@@ -19,8 +19,6 @@ class GLFWwindow {};
 namespace glob {
 namespace window {
 
-
-
 EXPORT void Create();
 EXPORT bool ShouldClose();
 EXPORT void Update();

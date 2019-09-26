@@ -3,15 +3,9 @@
 
 //#include <position.h>
 #include <../util/global_settings.hpp>
-#include <ability_component.hpp>
-#include <ball_component.hpp>
 #include <boundingboxes.hpp>
+#include "ecs/components.hpp"
 #include <camera_component.hpp>
-#include <physics_component.hpp>
-#include <projectile_component.hpp>
-#include <transform_component.hpp>
-#include "ecs/components/player_component.hpp"
-#include <light_component.hpp>
 #include <entt.hpp>
 
 namespace ability_controller {
@@ -152,7 +146,7 @@ void DoSuperStrike(entt::registry &registry) {
       glm::vec3 player_ball_dir = glm::normalize(player_ball_vec);
 
       // Get the direction the player is looking
-      glm::vec3 player_look_dir = camera_c.LookDirection();
+      glm::vec3 player_look_dir = camera_c.GetLookDir();
 
       // Calculate the distance from player to ball
       float dist = length(player_ball_vec);
@@ -166,7 +160,7 @@ void DoSuperStrike(entt::registry &registry) {
       if (dist < player_c.kick_reach && dot > player_c.kick_fov) {
         // Calculate the direction the force should be applied in
         glm::vec3 kick_dir =
-            camera_c.LookDirection() + glm::vec3(0, player_c.kick_pitch, 0);
+            camera_c.GetLookDir() + glm::vec3(0, player_c.kick_pitch, 0);
 
         // Apply the force of the kick to the ball's velocity
         physics_c_ball.velocity += kick_dir * GlobalSettings::Access()->ValueOf(
@@ -189,9 +183,9 @@ void CreateCannonBallEntity(entt::registry &registry) {
     float speed = 0.0f;
     auto cannonball = registry.create();
     registry.assign<PhysicsComponent>(
-        cannonball, glm::vec3(cc.LookDirection() * speed), false, 0.0f);
+        cannonball, glm::vec3(cc.GetLookDir() * speed), false, 0.0f);
     registry.assign<TransformComponent>(
-        cannonball, glm::vec3(cc.LookDirection() * 1.5f + tc.position + cc.offset),
+        cannonball, glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),
         glm::vec3(0, 0, 0), glm::vec3(.3f, .3f, .3f));
     registry.assign<physics::Sphere>(cannonball,
                                      glm::vec3(tc.position + cc.offset), .3f);

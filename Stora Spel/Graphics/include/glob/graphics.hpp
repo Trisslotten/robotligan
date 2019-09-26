@@ -70,6 +70,8 @@ EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale,
 EXPORT Camera GetCamera();
 EXPORT void SetCamera(Camera camera);
 
+EXPORT void SetModelUseGL(bool use_gl);
+
 /*
  * Render all items submitted this frame
  */

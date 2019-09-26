@@ -8,7 +8,7 @@ namespace NetAPI {
 namespace Socket {
 class EXPORT Client {
  public:
-  Client() { client_ = new NetAPI::Socket::TcpClient; }
+  Client() { client_ = new NetAPI::Socket::TcpClient(); }
   ~Client() { delete client_; }
   bool Connect(const char* addr, short port);
   bool Send(NetAPI::Common::Packet& p);

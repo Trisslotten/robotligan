@@ -40,7 +40,7 @@ class EXPORT TcpClient {
 
  private:
   short ID_ = 0;
-  int last_buff_len_ = 0;
+  int last_buff_len_ = -1;
   timeval timeout_ = {};
   fd_set read_set_ = {};
   bool blocking_ = false;

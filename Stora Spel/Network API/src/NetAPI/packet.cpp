@@ -1,4 +1,5 @@
 #include <NetAPI/packet.hpp>
+#include <iostream>
 
 NetAPI::Common::Packet::Packet() {
   data_ = new char[kNumPacketBytes];
@@ -26,10 +27,12 @@ NetAPI::Common::Packet& NetAPI::Common::Packet::operator=(const Packet& other) {
 
 NetAPI::Common::Packet::Packet(const char* in_buffer, size_t in_size) {
   data_ = new char[kNumPacketBytes];
-  if (in_size > 0 && in_size < sizeof(int)) {
+  if (in_size > 0 && in_size <= kNumPacketBytes) {
     memcpy(data_, in_buffer, kNumPacketBytes);
     size_of_data_ = in_size;
   } else {
+    if (in_size > kNumPacketBytes)
+      std::cout << "ERROR: bad size in Packet buffer creation (" << in_size << " bytes)\n",
     memset(data_, 0, kNumPacketBytes);
     size_of_data_ = 0;
   }

@@ -6,6 +6,7 @@
 #include <entity/registry.hpp>
 #include <entt.hpp>
 #include <glm/glm.hpp>
+#include <shared.hpp>
 #include "util/timer.hpp"
 
 class GameServer {
@@ -17,7 +18,7 @@ class GameServer {
  private:
   void UpdateSystems(float dt);
 
-  void PacketBlockAction(NetAPI::Common::Packet& packet, unsigned short id);
+  void HandlePacketBlock(NetAPI::Common::Packet& packet, unsigned short id);
 
   void CreatePlayer();
   void CreateEntities(glm::vec3* in_pos_arr, unsigned int in_num_pos);
@@ -30,6 +31,7 @@ class GameServer {
   int last_num_players_ = 0;
   entt::registry registry_;
 
+  std::vector<PlayerID> created_players_;
   std::unordered_map<int, uint16_t> players_actions_;
 
   int test_player_guid_ = 0;

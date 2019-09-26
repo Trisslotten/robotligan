@@ -2,16 +2,16 @@
 
 #include <iostream>
 
-#include <ability_component.hpp>
 #include <bitset>
-#include <collision_system.hpp>
+#include <glob/graphics.hpp>
 #include <iostream>
-#include <physics_system.hpp>
 #include <transform_component.hpp>
 
-#include "ecs/components/player_component.hpp"
+#include "ecs/components.hpp"
 #include "ecs/systems/ability_controller_system.hpp"
 #include "ecs/systems/player_controller_system.hpp"
+#include "ecs/systems/collision_system.hpp"
+#include "ecs/systems/physics_system.hpp"
 
 #include "shared.hpp";
 
@@ -20,6 +20,8 @@ namespace {}  // namespace
 GameServer::~GameServer() {}
 
 void GameServer::Init() {
+  glob::SetModelUseGL(false);
+
   GlobalSettings::Access()->UpdateValuesFromFile();
 
   server_.Setup(1337);
@@ -37,40 +39,69 @@ void GameServer::Update(float dt) {
 
   int num_players = server_.GetConnectedPlayers();
 
+  std::cout << num_players << "\n";
   // TODO: change when working on lobby, this is only for testing
   if (last_num_players_ != num_players) {
     int diff = num_players - last_num_players_;
 
     for (int i = 0; i < diff; i++) {
+      std::cout << "DEBUG: Creating a player\n";
       CreatePlayer();
     }
 
     last_num_players_ = num_players;
   }
   for (auto& [id, client_data] : server_.GetClients()) {
-    for (auto& packet : client_data.packets) {
+    for (auto& packet : client_data->packets) {
       while (!packet.IsEmpty()) {
-        PacketBlockAction(packet, id);
+        HandlePacketBlock(packet, id);
       }
     }
   }
-
   auto player_view = registry_.view<PlayerComponent>();
-
   registry_.view<PlayerComponent>().each([&](auto entity, auto& player_c) {
     player_c.actions = players_actions_[player_c.id];
-    // std::cout << player_c.id << "\n";
   });
   players_actions_.clear();
 
+  /*
   registry_.view<TransformComponent>().each([&](auto entity, auto& trans_c) {
     glm::vec3 p = trans_c.position;
     std::cout << (int)p.x << ", " << (int)p.y << ", " << (int)p.z << "\n";
   });
   std::cout << std::endl;
+  */
 
   UpdateSystems(dt);
 
+
+  for (auto& [id, client_data] : server_.GetClients()) {
+    NetAPI::Common::Packet to_send;
+    auto header = to_send.GetHeader();
+    header->Receiver = id;
+
+    for (auto& created_id : created_players_) {
+      if (id == created_id) {
+        to_send << id;
+        to_send << PacketBlockType::SET_CLIENT_PLAYER_ID;
+        break;
+      }
+    }
+
+    for (auto& created_id : created_players_) {
+      to_send << created_id;
+      to_send << PacketBlockType::PLAYER_JOIN;
+    }
+
+    std::string hej = "Test test asdasd";
+    to_send.Add(hej.data(), hej.size());
+    to_send << hej.size();
+    to_send << PacketBlockType::TEST_STRING;
+
+    server_.Send(to_send);
+  }
+
+  created_players_.clear();
   /*
   if (positions_.size() > 0) {
     NetAPI::Common::Packet packet;
@@ -98,13 +129,18 @@ void GameServer::UpdateSystems(float dt) {
   UpdateCollisions(registry_);
 }
 
-void GameServer::PacketBlockAction(NetAPI::Common::Packet& packet,
+void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
                                    unsigned short id) {
   int16_t packet_block_type = -1;
   packet >> packet_block_type;
   switch (packet_block_type) {
     case PacketBlockType::INPUT:
       uint16_t actions = 0;
+      // TODO: put in player_actions then in PlayerComponent
+      float pitch = 0.f;
+      float yaw = 0.f;
+      packet >> yaw;
+      packet >> pitch;
       packet >> actions;
       players_actions_[id] = actions;
       break;
@@ -172,8 +208,13 @@ void GameServer::CreatePlayer() {
       0.0f               // Remaining shoot cooldown
   );
   registry_.assign<CameraComponent>(entity, camera_offset);
+
   auto& player_component = registry_.assign<PlayerComponent>(entity);
   player_component.id = test_player_guid_;
+  created_players_.push_back(test_player_guid_);
+
+  std::cout << "DEBUG: Created player id: " << player_component.id << "\n";
+
   test_player_guid_++;
 }
 
@@ -246,8 +287,8 @@ void GameServer::AddArenaComponents(entt::entity& entity) {
   float v3 = 5.723f;
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f);
-  // glob::ModelHandle model_arena =
-  // glob::GetModel("assets/Map_rectangular/map_rextangular.fbx");
+  glob::ModelHandle model_arena =
+      glob::GetModel("assets/Map_rectangular/map_rextangular.fbx");
 
   // Add components for an arena
   // registry_.assign<ModelComponent>(entity, model_arena);
@@ -255,4 +296,13 @@ void GameServer::AddArenaComponents(entt::entity& entity) {
 
   // Add a hitbox
   registry_.assign<physics::Arena>(entity, -v2, v2, -v3, v3, -v1, v1);
+  auto md = glob::GetMeshData(model_arena);
+  glm::mat4 matrix =
+      glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f)) *
+      glm::rotate(90.f * glm::pi<float>() / 180.f, glm::vec3(0.f, 0.f, 1.f));
+
+  for (auto& v : md.pos) v = matrix * glm::vec4(v, 1.f);
+  auto& mh = registry_.assign<physics::MeshHitbox>(entity, std::move(md.pos),
+                                                   std::move(md.indices));
+  // glob::LoadWireframeMesh(model_arena, mh.pos, mh.indices);
 }

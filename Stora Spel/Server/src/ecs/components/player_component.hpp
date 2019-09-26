@@ -6,19 +6,17 @@
 #include "..//util/global_settings.hpp"
 
 struct PlayerComponent {
-  int id = -1;
+  PlayerID id = -1;
   float walkspeed = GlobalSettings::Access()->ValueOf("PLAYER_SPEED_WALK");
   float jump_speed = GlobalSettings::Access()->ValueOf("PLAYER_SPEED_JUMP");
   bool no_clip = false;
 
   // "Stamina"
-  int energy_max = (int)GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_MAX");
-  int energy_current =
-      (int)GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_MAX");
-  int cost_jump = (int)GlobalSettings::Access()->ValueOf("PLAYER_COST_JUMP");
-  int cost_sprint = (int)GlobalSettings::Access()->ValueOf("PLAYER_COST_SPRINT");
-  int energy_regen_tick =
-      (int)GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_REGEN_TICK");
+  float energy_max = GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_MAX");
+  float energy_current =GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_MAX");
+  float cost_jump = GlobalSettings::Access()->ValueOf("PLAYER_COST_JUMP");
+  float cost_sprint = GlobalSettings::Access()->ValueOf("PLAYER_COST_SPRINT");
+  float energy_regen_tick = GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_REGEN_TICK");
 
   // Kicking values
   float kick_pitch = GlobalSettings::Access()->ValueOf("PLAYER_KICK_PITCH");

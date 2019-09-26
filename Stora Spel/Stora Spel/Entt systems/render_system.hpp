@@ -5,12 +5,12 @@
 #include <glm/glm.hpp>
 
 #include "../util/global_settings.hpp"
-#include "ball_component.hpp"
 #include "boundingboxes.hpp"
 #include "collision.hpp"
 #include "light_component.hpp"
 #include "model_component.hpp"
-#include "transform_component.hpp"
+#include "../shared/transform_component.hpp"
+#include "../shared/camera_component.hpp"
 #include "light_component.hpp"
 #include "button_component.hpp"
 

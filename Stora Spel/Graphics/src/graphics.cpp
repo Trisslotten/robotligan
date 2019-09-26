@@ -21,6 +21,9 @@
 #include <msdfgen/msdfgen.h>
 
 namespace glob {
+
+bool kModelUseGL = true;
+
 namespace {
 
 struct RenderItem {
@@ -122,7 +125,7 @@ void DrawCube(glm::mat4 t) {
   wireframe_shader.uniform("model_transform", t);
   glBindVertexArray(cube_vao);
   glDisable(GL_DEPTH_TEST);
-  //glLineWidth(2);
+  // glLineWidth(2);
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   glDisable(GL_CULL_FACE);
   glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -288,7 +291,7 @@ MeshData GetMeshData(ModelHandle model_h) {
     std::cout
         << "DEBUG graphics.cpp: asset not found trying to get mesh hitbox\n";
     return {};
-  } 
+  }
 
   auto &model = models[model_h];
   return model.GetMeshData();
@@ -355,6 +358,12 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
 
 void SetCamera(Camera cam) { camera = cam; }
 
+void SetModelUseGL(bool use_gl) {
+  std::cout << "Before "<< kModelUseGL << "\n";
+  kModelUseGL = use_gl;
+  std::cout << "after " << kModelUseGL << "\n";
+}
+
 void Submit(GUIHandle gui_h, glm::vec2 pos, float scale) {
   auto find_res = gui_elements.find(gui_h);
   if (find_res == gui_elements.end()) {
@@ -392,9 +401,8 @@ void SubmitWireframeMesh(ModelHandle model_h) {
 }
 
 void LoadWireframeMesh(ModelHandle model_h,
-  const std::vector<glm::vec3>& vertices,
-  const std::vector<unsigned int>& indices) {
-  
+                       const std::vector<glm::vec3> &vertices,
+                       const std::vector<unsigned int> &indices) {
   auto find_res = wireframe_buffers.find(model_h);
   if (find_res == wireframe_buffers.end()) {
     GLuintBuffers b;

@@ -152,7 +152,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="entitycreation.cpp" />
     <ClCompile Include="main.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
@@ -171,22 +170,13 @@
     <ClCompile Include="util\timer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Components\ability_component.hpp" />
-    <ClInclude Include="Components\ball_component.hpp" />
     <ClInclude Include="Components\button_component.hpp" />
-    <ClInclude Include="Components\camera_component.hpp" />
+    <ClInclude Include="Components\player_component.hpp" />
+    <ClInclude Include="shared\camera_component.hpp" />
     <ClInclude Include="Components\light_component.hpp" />
     <ClInclude Include="Components\model_component.hpp" />
-    <ClInclude Include="Components\position.hpp" />
-    <ClInclude Include="Components\physics_component.hpp" />
-    <ClInclude Include="Components\projectile_component.hpp" />
-    <ClInclude Include="Components\transform_component.hpp" />
-    <ClInclude Include="Components\velocity.hpp" />
+    <ClInclude Include="shared\transform_component.hpp" />
     <ClInclude Include="Entt systems\button_system.hpp" />
-    <ClInclude Include="entitycreation.hpp" />
-    <ClInclude Include="Entt systems\collision_system.hpp" />
-    <ClInclude Include="Entt systems\collision_temp_debug_system.h" />
-    <ClInclude Include="Entt systems\physics_system.hpp" />
     <ClInclude Include="Entt systems\print_position_system.hpp" />
     <ClInclude Include="engine.hpp" />
     <ClInclude Include="shared\shared.hpp" />

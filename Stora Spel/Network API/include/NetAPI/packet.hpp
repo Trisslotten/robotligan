@@ -45,7 +45,7 @@ class EXPORT Packet {
     return *this;
   }
   const char* GetRaw() { return data_; }
-  PacketHeader& GetHeader() { return p_; }
+  PacketHeader* GetHeader() { return (PacketHeader*)data_; }
   template <typename T>
   Packet& Add(T* data, size_t size) {
     std::memcpy(data_ + size_of_data_, data, sizeof(T) * size);

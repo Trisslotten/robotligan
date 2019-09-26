@@ -6,13 +6,10 @@
 #include <glob/graphics.hpp>
 #include <iostream>
 
-#include <camera_component.hpp>
-#include <collision_system.hpp>
-#include <physics_system.hpp>
 #include <render_system.hpp>
 #include "Components/light_component.hpp"
-#include "Components/transform_component.hpp"
-#include "entitycreation.hpp"
+#include "shared/camera_component.hpp"
+#include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
 
@@ -28,13 +25,6 @@ void Engine::Init() {
 
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
-
-  glm::vec3 start_positions[3] = {
-      glm::vec3(5.f, 0.f, 0.f),   // Ball
-      glm::vec3(-9.f, 4.f, 0.f),  // Player
-      glm::vec3(0.f, 0.f, 0.f)    // Others
-  };
-  CreateEntities(registry_, start_positions, 3);
 
   // Create light
   auto light = registry_.create();
@@ -72,21 +62,57 @@ void Engine::Update(float dt) {
 }
 
 void Engine::UpdateNetwork() {
-  std::bitset<PlayerAction::NUM_ACTIONS> actions;
+  {
+    std::bitset<PlayerAction::NUM_ACTIONS> actions;
 
-  for (auto const& [key, action] : keybinds_)
-    if (Input::IsKeyDown(key)) actions.set(action, true);
+    for (auto const& [key, action] : keybinds_)
+      if (Input::IsKeyDown(key)) actions.set(action, true);
 
-  for (auto const& [button, action] : mousebinds_)
-    if (Input::IsMouseButtonDown(button)) actions.set(action, true);
+    for (auto const& [button, action] : mousebinds_)
+      if (Input::IsMouseButtonDown(button)) actions.set(action, true);
 
-  uint16_t action_bits = actions.to_ulong();
+    uint16_t action_bits = actions.to_ulong();
 
-  NetAPI::Common::Packet packet;
-  packet << action_bits;
-  packet << PacketBlockType::INPUT;
 
-  client.Send(packet);
+    glm::vec2 mouse_movement = Input::MouseMov();
+    float delta_yaw = mouse_movement.x;
+    float delta_pitch = mouse_movement.y;
+
+    NetAPI::Common::Packet packet;
+    packet << action_bits;
+    packet << delta_pitch;
+    packet << delta_yaw;
+    packet << PacketBlockType::INPUT;
+
+    client.Send(packet);
+  }
+
+  {
+    auto packet = client.Receive();
+    while (!packet.IsEmpty()) {
+      int16_t block_type = -1;
+      packet >> block_type;
+      PlayerID id = -1;
+      size_t strsize = 0;
+      switch (block_type) {
+        case PacketBlockType::PLAYER_JOIN:
+          packet >> id;
+          std::cout << "PACKET: PLAYER_JOIN, id=" << id << "\n";
+          CreatePlayer(id);
+          break;
+        case PacketBlockType::SET_CLIENT_PLAYER_ID:
+          packet >> my_id;
+          std::cout << "PACKET: SET_CLIENT_PLAYER_ID id=" << my_id << "\n";
+          break;
+        case PacketBlockType::TEST_STRING:
+          packet >> strsize;
+          std::string str;
+          str.resize(strsize);
+          packet.Remove(str.data(), strsize);
+          std::cout << "PACKET: TEST_STRING: '" << str << "'\n";
+      }
+    }
+  }
 }
 
 void Engine::Render() {
@@ -104,8 +130,8 @@ void Engine::UpdateSystems(float dt) {
   // player_controller::Update(registry_, dt);
   // ability_controller::Update(registry_, dt);
 
-  //UpdatePhysics(registry_, dt);
-  //UpdateCollisions(registry_);
+  // UpdatePhysics(registry_, dt);
+  // UpdateCollisions(registry_);
 
   auto view = registry_.view<CameraComponent, TransformComponent>();
   for (auto v : view) {
@@ -119,4 +145,14 @@ void Engine::UpdateSystems(float dt) {
   }
 
   RenderSystem(registry_);
+}
+
+void Engine::CreatePlayer(PlayerID id) {
+  auto entity = registry_.create();
+  registry_.assign<TransformComponent>(entity);
+
+  glob::ModelHandle player_model =
+      glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
+
+  registry_.assign<ModelComponent>(entity, player_model);
 }

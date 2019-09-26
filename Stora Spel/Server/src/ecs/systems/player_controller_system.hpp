@@ -2,11 +2,13 @@
 #define PLAYER_CONTROLLER_SYSTEM_HPP_
 
 #include <camera_component.hpp>
-#include <ecs\components\player_component.hpp>
+#include "ecs/components/player_component.hpp"
+#include "ecs/components/physics_component.hpp"
+#include "ecs/components/player_component.hpp"
+#include "ecs/components/ability_component.hpp"
+#include <transform_component.hpp>
+#include <camera_component.hpp>
 #include <entt.hpp>
-#include "ability_component.hpp"
-#include "physics_component.hpp"
-#include "transform_component.hpp"
 #include <glm/gtx/rotate_vector.hpp>
 
 namespace player_controller {
@@ -19,7 +21,8 @@ void Update(entt::registry& registry, float dt) {
   for (auto entity : view_controller) {
     CameraComponent& cam_c = view_controller.get<CameraComponent>(entity);
     PlayerComponent& player_c = view_controller.get<PlayerComponent>(entity);
-    TransformComponent& trans_c = view_controller.get<TransformComponent>(entity);
+    TransformComponent& trans_c =
+        view_controller.get<TransformComponent>(entity);
     PhysicsComponent& physics_c = view_controller.get<PhysicsComponent>(entity);
     AbilityComponent& ability_c = view_controller.get<AbilityComponent>(entity);
 
@@ -27,24 +30,26 @@ void Update(entt::registry& registry, float dt) {
     float sensitivity = 0.003f;
     // rotation this frame from mouse move
     glm::vec2 rot{0};  // = Input::MouseMov() * sensitivity;
-    float yaw = rot.x;
-    float pitch = rot.y;
+    float delta_yaw = rot.x;
+    float delta_pitch = rot.y;
 
-    cam_c.AddAngles(yaw, pitch);
-    trans_c.Rotate(glm::vec3(0, -yaw, 0));
+    constexpr float pi = glm::pi<float>();
+    player_c.yaw =
+        glm::clamp(player_c.yaw + delta_yaw, -0.49f * pi, -0.49f * pi);
+    player_c.pitch = glm::mod(player_c.pitch + delta_pitch, 2.f * pi);
+    cam_c.orientation = glm::quat(glm::vec3(player_c.pitch, player_c.yaw, 0.f));
+    trans_c.Rotate(glm::vec3(0, -player_c.yaw, 0));
 
     if (player_c.actions[PlayerAction::SHOOT]) {
       ability_c.shoot = true;
     }
     // Caputre keyboard input and apply velocity
-
     glm::vec3 final_velocity =
         glm::vec3(0.f, physics_c.velocity.y, 0.f);  //(0, 0, 0);
     glm::vec3 accum_velocity = glm::vec3(0.f);
 
     // base movement direction on camera orientation.
-    glm::vec3 frwd = cam_c.LookDirection();
-    // transform_helper::DirVectorFromRadians(cam_c.yaw_, cam_c.pitch_);
+    glm::vec3 frwd = cam_c.GetLookDir();
 
     /*
     if (Input::IsKeyPressed(GLFW_KEY_N)) {
@@ -82,9 +87,9 @@ void Update(entt::registry& registry, float dt) {
       if (glm::length(accum_velocity) > 0.f)
         accum_velocity = glm::normalize(accum_velocity) * player_c.walkspeed;
       if (player_c.actions[PlayerAction::SPRINT] &&
-          player_c.energy_current > player_c.cost_sprint) {
+          player_c.energy_current > player_c.cost_sprint * dt) {
         accum_velocity *= 2.f;
-        player_c.energy_current -= player_c.cost_sprint;
+        player_c.energy_current -= player_c.cost_sprint * dt;
       }
     }
 
@@ -110,7 +115,7 @@ void Update(entt::registry& registry, float dt) {
     }
 
     player_c.energy_current =
-        std::min((player_c.energy_current + player_c.energy_regen_tick),
+        std::min((player_c.energy_current + player_c.energy_regen_tick * dt),
                  player_c.energy_max);
 
     // physics stuff, absolute atm, may need to change. Other
@@ -122,12 +127,10 @@ void Update(entt::registry& registry, float dt) {
         glm::vec3(physics_c.velocity.x, 0, physics_c.velocity.z);
     float cur_move_speed = glm::length(sidemov);
     if (cur_move_speed > 0.f) {
-      physics_c.velocity.x *= 0.95f;
-      physics_c.velocity.z *= 0.95f;
-    }
-    cur_move_speed = physics_c.velocity.length();
-    if (cur_move_speed < 0.1f) {
-      // physics_c.velocity = glm::vec3(0, 0, 0);
+      // movement "floatiness", lower value = less floaty
+      float t = 0.01f;
+      physics_c.velocity.x = glm::mix(physics_c.velocity.x, 0.f, 1.f - glm::pow(t, dt));
+      physics_c.velocity.z = glm::mix(physics_c.velocity.x, 0.f, 1.f - glm::pow(t, dt));
     }
 
     // Ability buttons
@@ -146,7 +149,7 @@ void Update(entt::registry& registry, float dt) {
     // kick ball
     if (player_c.actions[PlayerAction::KICK]) {
       glm::vec3 kick_dir =
-          cam_c.LookDirection() + glm::vec3(0, player_c.kick_pitch, 0);
+          cam_c.GetLookDir() + glm::vec3(0, player_c.kick_pitch, 0);
 
       auto view_balls =
           registry.view<BallComponent, PhysicsComponent, TransformComponent>();
@@ -155,7 +158,6 @@ void Update(entt::registry& registry, float dt) {
         auto& ball_physics_c = view_balls.get<PhysicsComponent>(entity);
         auto& ball_trans_c = view_balls.get<TransformComponent>(entity);
         auto& ball_c = view_balls.get<BallComponent>(entity);
-        
 
         glm::vec3 player_ball_vec = ball_trans_c.position - trans_c.position;
         glm::vec3 player_ball_dir = glm::normalize(player_ball_vec);
@@ -179,7 +181,8 @@ void Update(entt::registry& registry, float dt) {
                            glm::rotate(cam_c.offset, -trans_c.rotation.y,
                                        glm::vec3(0.0f, 1.0f, 0.0f)));
     */
-    //cam_c.cam->SetPosition(trans_c.position + glm::rotate(cam_c.offset, glm::angle(trans_c.rotation), glm::vec3(0.0f, 1.0f, 0.0f)));
+    // cam_c.cam->SetPosition(trans_c.position + glm::rotate(cam_c.offset,
+    // glm::angle(trans_c.rotation), glm::vec3(0.0f, 1.0f, 0.0f)));
   };
 }
 
