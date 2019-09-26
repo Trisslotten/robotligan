@@ -82,9 +82,9 @@ void Update(entt::registry& registry, float dt) {
       }
       if (glm::length(accum_velocity) > 0.f)
         accum_velocity = glm::normalize(accum_velocity) * player_c.walkspeed;
-      if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT) && player_c.energy_current > player_c.cost_sprint) {
+      if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT) && player_c.energy_current > player_c.cost_sprint * dt) {
         accum_velocity *= 2.f;
-        player_c.energy_current -= player_c.cost_sprint;
+        player_c.energy_current -= player_c.cost_sprint * dt;
       }
     }
 
@@ -110,7 +110,8 @@ void Update(entt::registry& registry, float dt) {
       player_c.energy_current -= player_c.cost_jump;
     }
 
-    player_c.energy_current = std::min((player_c.energy_current + player_c.energy_regen_tick), player_c.energy_max);
+    player_c.energy_current = glm::min((player_c.energy_current + player_c.energy_regen_tick * dt), (float)player_c.energy_max);
+    
 
     // physics stuff, absolute atm, may need to change. Other
     // systems may affect velocity. velocity of player object.
