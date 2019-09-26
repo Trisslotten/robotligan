@@ -154,29 +154,36 @@ physics::IntersectData physics::Intersect(const physics::Arena& a,
                                           const physics::Sphere& s) {
   IntersectData data;
   data.collision = false;
+  data.move_vector = glm::vec3(0.f);
   glm::vec3 n = glm::vec3(0.f);
-  if (s.center.x + s.radius >= a.xmax) {
+  if (s.center.x + s.radius > a.xmax) {
     n += glm::vec3(-1.f, 0.f, 0.f);
+    data.move_vector.x = a.xmax - (s.center.x + s.radius);
     data.collision = true;
   }
-  if (s.center.x - s.radius <= a.xmin) {
+  if (s.center.x - s.radius < a.xmin) {
     n += glm::vec3(1.f, 0.f, 0.f);
+    data.move_vector.x = a.xmin - (s.center.x - s.radius);
     data.collision = true;
   }
-  if (s.center.y + s.radius >= a.ymax) {
+  if (s.center.y + s.radius > a.ymax) {
     n += glm::vec3(0.f, -1.f, 0.f);
+    data.move_vector.y = a.ymax - (s.center.y + s.radius);
     data.collision = true;
   }
   if (s.center.y - s.radius < a.ymin) {
     n += glm::vec3(0.f, 1.f, 0.f);
+    data.move_vector.y = a.ymin - (s.center.y - s.radius);
     data.collision = true;
   }
-  if (s.center.z + s.radius >= a.zmax) {
+  if (s.center.z + s.radius > a.zmax) {
     n += glm::vec3(0.f, 0.f, -1.f);
+    data.move_vector.z = a.zmax - (s.center.z + s.radius);
     data.collision = true;
   }
-  if (s.center.z - s.radius <= a.zmin) {
+  if (s.center.z - s.radius < a.zmin) {
     n += glm::vec3(0.f, 0.f, 1.f);
+    data.move_vector.z = a.zmin - (s.center.z - s.radius);
     data.collision = true;
   }
 
@@ -351,7 +358,7 @@ physics::IntersectData physics::Intersect(const MeshHitbox& m,
   data.collision = false;
   float rsqrt = sqrtf(s.radius);
   glm::vec3 closest_point;
-  for (int i = 0; i < m.indices.size(); i += 3) {
+  for (size_t i = 0; i < m.indices.size(); i += 3) {
     Triangle tri{m.pos[m.indices[i]], m.pos[m.indices[i + 1]],
                  m.pos[m.indices[i + 2]]};
     float dist = ComputeSquaredDistance(s.center, tri, &closest_point);

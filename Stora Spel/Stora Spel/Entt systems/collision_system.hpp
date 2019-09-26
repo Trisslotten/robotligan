@@ -61,6 +61,8 @@ void UpdateCollisions(entt::registry& registry) {
   auto view_arena_mesh = registry.view<physics::MeshHitbox>();
   auto view_projectile = registry.view<physics::Sphere, ProjectileComponent>();
 
+  entt::entity A;
+
   int nr_of_balls = view_ball.size();
   CollisionList* ball_collisions = new CollisionList[nr_of_balls];
   int ball_counter = 0;
@@ -97,6 +99,7 @@ void UpdateCollisions(entt::registry& registry) {
 
     // Collision between ball and arena mesh
     for (auto arena : view_arena_mesh) {
+      A = arena;
       auto& arena_hitbox = view_arena_mesh.get(arena);
       physics::IntersectData data = Intersect(arena_hitbox, ball_hitbox);
       if (data.collision) {
@@ -320,16 +323,17 @@ void UpdateCollisions(entt::registry& registry) {
 
   for (int i = 0; i < nr_of_balls; ++i) {
     auto& ball_transform =
-        view_ball.get<TransformComponent>(ball_collisions[i].entity);
+        registry.get<TransformComponent>(ball_collisions[i].entity);
     auto& ball_physics =
-        view_ball.get<PhysicsComponent>(ball_collisions[i].entity);
+        registry.get<PhysicsComponent>(ball_collisions[i].entity);
     auto& ball_hitbox =
-        view_ball.get<physics::Sphere>(ball_collisions[i].entity);
+        registry.get<physics::Sphere>(ball_collisions[i].entity);
     if (ball_collisions[i].collision_list.size() == 1) {
       auto& object = ball_collisions[i].collision_list[0];
       if (ball_collisions[i].collision_list[0].tag == PLAYER) {  // the only object colliding with the ball is a player
-        auto& player_physics = view_player.get<PhysicsComponent>(object.entity);
+        auto& player_physics = registry.get<PhysicsComponent>(object.entity);
         ball_transform.position += object.move_vector;
+        ball_hitbox.center = ball_transform.position;
          float ball_speed = glm::length(ball_physics.velocity);
          float player_speed = glm::length(player_physics.velocity);
          if (ball_speed < player_speed) {
@@ -339,8 +343,21 @@ void UpdateCollisions(entt::registry& registry) {
           if (dot_val < 0)
             ball_physics.velocity = ball_physics.velocity - object.normal * dot_val * 0.8f * 2.f;
         }
+        physics::IntersectData data =
+            Intersect(registry.get<physics::MeshHitbox>(A), ball_hitbox);
+        if (data.collision) {
+          ball_transform.position += data.move_vector;
+          ball_hitbox.center = ball_transform.position;
+
+          auto& p_hitbox = registry.get<physics::OBB>(object.entity);
+          data = Intersect(ball_hitbox, p_hitbox);
+          if (data.collision) {
+            auto& player_pos = registry.get<TransformComponent>(object.entity);
+            player_pos.position -= data.move_vector;
+          }
+        }
       } else if (ball_collisions[i].collision_list[0].tag == ARENA) {  // the only object colliding with the ball is the arena
-        auto& ball = view_ball.get<BallComponent>(ball_collisions[i].entity);
+        auto& ball = registry.get<BallComponent>(ball_collisions[i].entity);
         ball_transform.position += object.move_vector;
 
         if (object.normal.x) {
@@ -392,22 +409,27 @@ void UpdateCollisions(entt::registry& registry) {
         ball.rotation = glm::quat(0, rotate * amount);
       }
     } else {
+      UpdateSphere(registry);
+      UpdateOBB(registry);
       // std::cout << ball_collisions.size() << std::endl;
       for (auto obj : ball_collisions[i].collision_list) {
         if (obj.tag == ARENA) {
           ball_transform.position += obj.move_vector;
-          ball_physics.velocity = glm::vec3(0.f);
+          //ball_physics.velocity = glm::vec3(0.f);
           break;
         }
       }
+      UpdateSphere(registry);
+      UpdateOBB(registry);
       for (auto obj : ball_collisions[i].collision_list) {
         if (obj.tag == PLAYER) {
-          auto& player_hitbox = view_player.get<physics::OBB>(obj.entity);
-          auto& player_transform = view_player.get<TransformComponent>(obj.entity);
+          auto& player_hitbox = registry.get<physics::OBB>(obj.entity);
+          auto& player_transform = registry.get<TransformComponent>(obj.entity);
           physics::IntersectData data = Intersect(ball_hitbox, player_hitbox);
 
-		  if (data.collision)
-          player_transform.position -= data.move_vector;
+		      if (data.collision) {
+            player_transform.position -= data.move_vector; 
+          }
         }
       }
     }
