@@ -6,6 +6,7 @@ ReplayMachine::ReplayMachine() {
   // H
   // I
   this->input_log_ = nullptr;
+  this->bits_per_int_ = 0;
 }
 
 ReplayMachine::~ReplayMachine() {
@@ -103,13 +104,14 @@ void ReplayMachine::Init(unsigned int in_seconds, unsigned int in_ticks_per_seco
 																// static size we specified for the bitsets
   this->bits_per_int_ = (unsigned int)ceil(log(num_of_keys) / log(2));
   unsigned int max_num_of_frames =  in_ticks_per_second * in_seconds;
-  unsigned int max_bits_per_frame = (1 + num_of_keys * this->bits_per_int_);
+  unsigned int max_bits_per_frame = (1 + num_of_keys * this->bits_per_int_);  //NTS: Add floats
   this->input_log_ = new BitPack(max_num_of_frames, max_bits_per_frame);
 
 
 }
 
-void ReplayMachine::RecordKeys(const std::bitset<10>& in_bitset) {
+void ReplayMachine::RecordKeys(const std::bitset<10>& in_bitset,
+                               const float in_x_value, const float in_y_value) {
   // Loop over the bitset
   for (unsigned int i = 0; i < in_bitset.size(); i++) {
 	// IF its bit is different from last input state's
@@ -125,9 +127,11 @@ void ReplayMachine::RecordKeys(const std::bitset<10>& in_bitset) {
       this->input_log_->WriteBit(0);
     }
   }
-  //
-  //	TBA: Support for saving a float
-  //
+  
+  // The float values that indicate angle/offset(?)
+  // for mouse movements are always stored.
+  this->input_log_->WriteFloat32(in_x_value);
+  this->input_log_->WriteFloat32(in_y_value);
 }
 
 void ReplayMachine::TestFunction() {
@@ -207,6 +211,29 @@ void ReplayMachine::TestFunction() {
   // Read the contents as a 12 bit int (4095 expected)
   unsigned int numD = test_pack->ReadInt(12);
   std::cout << "Exp: 4095, Got: " << std::to_string(numD) << "\n";
+
+  //---
+
+  // Delete old pack
+  // Create a new one that can hold at least 32 bits (a float)
+  delete test_pack;
+  test_pack = new BitPack(1, 32);
+
+  this->TestFunctionB('g', test_pack->WriteFloat32(1024.6));
+  test_pack->ResetWrite();
+  this->TestFunctionB('h', test_pack->WriteFloat32(1024.625));
+  test_pack->ResetWrite();
+  this->TestFunctionB('i', test_pack->WriteFloat32(1024.62533));
+  test_pack->ResetWrite();
+
+  // NTS: As we can see from the interior log-messages
+  // from the WriteFloat32() function the modf() does not
+  // make a clean cut and the binary write ends up writeing
+  // two different values as the same.
+  // NTS: Log-messages and the like are noted with //TEMP
+  // in the BitPack-class for easy removel later.
+
+  //---
 
   // Once done testing, pretend it never happened
   delete test_pack;

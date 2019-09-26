@@ -3,8 +3,8 @@
 
 #include <math.h>
 #include <bitset>
-#include <string>	//TEMP: For testing
-#include <iostream>	//TEMP: For testing
+#include <iostream>  //TEMP: For testing
+#include <string>    //TEMP: For testing
 
 #include "bit_pack.hpp"
 
@@ -27,7 +27,8 @@ class ReplayMachine {
 
   static ReplayMachine* Access();
   void Init(unsigned int in_seconds, unsigned int in_ticks_per_second);
-  void RecordKeys(const std::bitset<10>& in_bitset);
+  void RecordKeys(const std::bitset<10>& in_bitset, const float in_x_value,
+                  const float in_y_value);
 
   void TestFunction();
   void TestFunctionB(char in_char, bool in_bool);

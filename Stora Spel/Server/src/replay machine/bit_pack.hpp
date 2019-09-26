@@ -20,8 +20,10 @@ class BitPack {
   void ResetRead();
   bool WriteBit(bool in_bit);
   bool WriteInt(unsigned int in_int, unsigned int in_bit_count);
+  bool WriteFloat32(float in_float);
   bool ReadBit();
   unsigned int ReadInt(unsigned int in_bit_count);
+  float ReadFloat32(float in_float);
   bool SaveToFile(std::string in_path);
   bool LoadFromFile(std::string in_path);
 
