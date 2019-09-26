@@ -42,6 +42,8 @@ void UpdatePhysics(entt::registry& registry, float dt) {
     TransformComponent& trans_c = view_ball.get<TransformComponent>(entity);
     
     if (physics_c.is_airborne == false) {
+      if (physics_c.velocity.x == 0.f && physics_c.velocity.z == 0.f) continue;
+
       physics::Sphere& sphere_c = view_ball.get<physics::Sphere>(entity);
       float distance = glm::length(physics_c.velocity);
       float radians = distance / sphere_c.radius;
