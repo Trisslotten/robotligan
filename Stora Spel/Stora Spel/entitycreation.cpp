@@ -14,8 +14,7 @@
 ButtonComponent* GenerateButtonEntity(
     entt::registry& reg, std::string text, glm::vec2 pos,
     glob::Font2DHandle f_handle, unsigned int font_size,
-    glm::vec4 normal_color,
-    glm::vec4 hover_color) {
+    glm::vec4 normal_color, glm::vec4 hover_color) {
   auto button = reg.create();
   reg.assign<ButtonComponent>(button);
   reg.assign<TransformComponent>(button, glm::vec3(pos.x, pos.y, 0));

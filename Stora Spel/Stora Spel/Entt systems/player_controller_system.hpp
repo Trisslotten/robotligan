@@ -13,6 +13,9 @@ namespace player_controller {
 
 void foo() {}
 
+// In activate player controller
+void InActivatePlayerController() { std::cout << "Escaped pressed\n"; }
+
 void Update(entt::registry& registry, float dt) {
   foo();
 
@@ -42,7 +45,8 @@ void Update(entt::registry& registry, float dt) {
     }
     // Caputre keyboard input and apply velocity
 
-    glm::vec3 final_velocity = glm::vec3(0.f, physics_c.velocity.y, 0.f);  //(0, 0, 0);
+    glm::vec3 final_velocity =
+        glm::vec3(0.f, physics_c.velocity.y, 0.f);  //(0, 0, 0);
     glm::vec3 accum_velocity = glm::vec3(0.f);
 
     // base movement direction on camera orientation.
@@ -67,7 +71,7 @@ void Update(entt::registry& registry, float dt) {
     glm::vec3 up(0, 1, 0);
     glm::vec3 right = glm::normalize(glm::cross(frwd, up));
 
-    if (true){//abs(accum_velocity.length()) < player_c.walkspeed * 4) {
+    if (true) {  // abs(accum_velocity.length()) < player_c.walkspeed * 4) {
       if (Input::IsKeyDown(GLFW_KEY_W)) {
         accum_velocity += frwd;
       }
@@ -82,13 +86,14 @@ void Update(entt::registry& registry, float dt) {
       }
       if (glm::length(accum_velocity) > 0.f)
         accum_velocity = glm::normalize(accum_velocity) * player_c.walkspeed;
-      if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT) && player_c.energy_current > player_c.cost_sprint) {
+      if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT) &&
+          player_c.energy_current > player_c.cost_sprint) {
         accum_velocity *= 2.f;
         player_c.energy_current -= player_c.cost_sprint;
       }
     }
 
-	// physics stuff
+    // physics stuff
 
     final_velocity += accum_velocity;
 
@@ -96,7 +101,6 @@ void Update(entt::registry& registry, float dt) {
 
     glm::vec3 cur_move_dir = glm::normalize(physics_c.velocity);
 
-    
     // IF player is pressing space
     // AND is not airborne
     // AND has more enery than the cost for jumping
@@ -110,13 +114,15 @@ void Update(entt::registry& registry, float dt) {
       player_c.energy_current -= player_c.cost_jump;
     }
 
-    player_c.energy_current = std::min((player_c.energy_current + player_c.energy_regen_tick), player_c.energy_max);
+    player_c.energy_current =
+        std::min((player_c.energy_current + player_c.energy_regen_tick),
+                 player_c.energy_max);
 
     // physics stuff, absolute atm, may need to change. Other
     // systems may affect velocity. velocity of player object.
     physics_c.velocity = final_velocity;
 
-	// slowdown
+    // slowdown
     glm::vec3 sidemov =
         glm::vec3(physics_c.velocity.x, 0, physics_c.velocity.z);
     float cur_move_speed = glm::length(sidemov);
@@ -126,21 +132,21 @@ void Update(entt::registry& registry, float dt) {
     }
     cur_move_speed = physics_c.velocity.length();
     if (cur_move_speed < 0.1f) {
-      //physics_c.velocity = glm::vec3(0, 0, 0);
+      // physics_c.velocity = glm::vec3(0, 0, 0);
     }
 
     // Ability buttons
     if (Input::IsKeyPressed(GLFW_KEY_Q)) {
       ability_c.use_primary = true;
-	}
+    }
     if (Input::IsKeyPressed(GLFW_KEY_E)) {
       ability_c.use_secondary = true;
     }
 
-    //std::cout << "pos: " << trans_c.position.x << " " << trans_c.position.y
+    // std::cout << "pos: " << trans_c.position.x << " " << trans_c.position.y
     //          << " " << trans_c.position.z << "\n";
 
-	//std::cout << "stam: " << player_c.energy_current << "\n";
+    // std::cout << "stam: " << player_c.energy_current << "\n";
 
     // kick ball
     if (Input::IsButtonPressed(GLFW_MOUSE_BUTTON_1)) {
@@ -154,7 +160,6 @@ void Update(entt::registry& registry, float dt) {
         auto& ball_physics_c = view_balls.get<PhysicsComponent>(entity);
         auto& ball_trans_c = view_balls.get<TransformComponent>(entity);
         auto& ball_c = view_balls.get<BallComponent>(entity);
-        
 
         glm::vec3 player_ball_vec = ball_trans_c.position - trans_c.position;
         glm::vec3 player_ball_dir = glm::normalize(player_ball_vec);
@@ -171,10 +176,16 @@ void Update(entt::registry& registry, float dt) {
       }
     }
 
+	//In game menu logic
+    if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
+      InActivatePlayerController();
+    }
+
     /*
             NETWORK STUFF?
     */
-    //cam_c.cam->SetPosition(trans_c.position + glm::rotate(cam_c.offset, glm::angle(trans_c.rotation), glm::vec3(0.0f, 1.0f, 0.0f)));
+    // cam_c.cam->SetPosition(trans_c.position + glm::rotate(cam_c.offset,
+    // glm::angle(trans_c.rotation), glm::vec3(0.0f, 1.0f, 0.0f)));
   };
 }
 

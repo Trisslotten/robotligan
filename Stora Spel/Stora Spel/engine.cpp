@@ -28,7 +28,7 @@ void Engine::Init() {
   glob::Init();
   Input::Initialize();
 
-  //tcp_client_.Connect("192.168.1.47", 1337);
+  // tcp_client_.Connect("192.168.1.47", 1337);
 
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
@@ -41,19 +41,20 @@ void Engine::Init() {
   CreateEntities(registry_gameplay_, start_positions, 3);
   CreateMainMenu();
   CreateSettingsMenu();
+  CreateInGameMenu();
   registry_current_ = &registry_mainmenu_;
 
   // Create light
   auto light = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(light, glm::vec3(0.3f, 0.3f, 1.0f),
-                                           15.f, 0.2f);
+                                            15.f, 0.2f);
   registry_gameplay_.assign<TransformComponent>(
       light, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
 
   light = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(light, glm::vec3(1.f, 0.3f, 0.3f),
-                                           15.f, 0.f);
+                                            15.f, 0.f);
   registry_gameplay_.assign<TransformComponent>(
       light, glm::vec3(-12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
@@ -66,6 +67,8 @@ void Engine::Init() {
   keybinds_[GLFW_KEY_SPACE] = PlayerAction::JUMP;
   keybinds_[GLFW_KEY_Q] = PlayerAction::ABILITY_PRIMARY;
   keybinds_[GLFW_KEY_E] = PlayerAction::ABILITY_SECONDARY;
+  // Temp
+  keybinds_[GLFW_KEY_ESCAPE] = PlayerAction::IN_GAME_MENU;
   mousebinds_[GLFW_MOUSE_BUTTON_1] = PlayerAction::KICK;
   mousebinds_[GLFW_MOUSE_BUTTON_2] = PlayerAction::SHOOT;
 }
@@ -106,8 +109,26 @@ void Engine::SetCurrentRegistry(entt::registry* registry) {
   this->registry_current_ = registry;
 }
 
+void Engine::SetPriorRegistry(entt::registry* registry) {
+  registry_prior_to_ = registry;
+}
+
 void Engine::UpdateSystems(float dt) {
   // collision_debug::Update(*reg);
+
+  // Temp until player controller works
+  /*if (registry_current_ == &registry_gameplay_ &&
+      Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
+    glob::window::SetMouseLocked(false);
+    SetCurrentRegistry(&registry_in_game_menu_);
+  }*/
+
+	// Test
+  if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
+    mouse_locked_ = !mouse_locked_;
+    glob::window::SetMouseLocked(mouse_locked_);
+  }
+
 
   player_controller::Update(*registry_current_, dt);
   ability_controller::Update(*registry_current_, dt);
@@ -141,9 +162,12 @@ void Engine::CreateMainMenu() {
   };
 
   // SETTINGS BUTTON - change registry to registry_settings_
-  b_c = GenerateButtonEntity(registry_mainmenu_, "SETTINGS", glm::vec2(100, 140),
-                             font_test_);
-  b_c->button_func = [&]() { this->SetCurrentRegistry(&registry_settings_); };
+  b_c = GenerateButtonEntity(registry_mainmenu_, "SETTINGS",
+                             glm::vec2(100, 140), font_test_);
+  b_c->button_func = [&]() {
+    SetPriorRegistry(&registry_mainmenu_);
+    this->SetCurrentRegistry(&registry_settings_);
+  };
 
   // EXIT BUTTON - close the game
   b_c = GenerateButtonEntity(registry_mainmenu_, "EXIT", glm::vec2(100, 80),
@@ -155,5 +179,44 @@ void Engine::CreateSettingsMenu() {
   // BACK BUTTON in SETTINGS - go back to main menu
   ButtonComponent* b_c = GenerateButtonEntity(registry_settings_, "BACK",
                                               glm::vec2(100, 200), font_test_);
-  b_c->button_func = [&]() { this->SetCurrentRegistry(&registry_mainmenu_); };
+  b_c->button_func = [&]() {
+    if (registry_prior_to_ == &registry_in_game_menu_) {
+      SetCurrentRegistry(&registry_in_game_menu_);
+    } else {
+      this->SetCurrentRegistry(&registry_mainmenu_);
+    }
+  };
+}
+
+void Engine::CreateInGameMenu() {
+  // Test
+
+  ButtonComponent* b_c = GenerateButtonEntity(registry_gameplay_, "Test",
+                                              glm::vec2(560, 460), font_test_);
+  b_c->button_func = [&] { exit(0); };
+
+  //// CONTINUE BUTTON -- change registry to registry_gameplay_
+  // ButtonComponent* b_c = GenerateButtonEntity(
+  //    registry_gameplay_, "CONTINUE", glm::vec2(560, 460), font_test_);
+  // b_c->button_func = [&]() {
+  //  SetCurrentRegistry(&registry_gameplay_);
+  //  glob::window::SetMouseLocked(true);
+  //};
+  //// SETTINGS BUTTON -- change registry to registry_settings_
+  // b_c = GenerateButtonEntity(registry_gameplay_, "SETTINGS",
+  //                           glm::vec2(560, 400), font_test_);
+
+  // b_c->button_func = [&] {
+  //  SetPriorRegistry(&registry_in_game_menu_);
+  //  SetCurrentRegistry(&registry_settings_);
+  //};
+
+  //// END GAME -- change registry to registry_mainmenu_
+  //// NTS: Should be back to lobby later
+  // b_c = GenerateButtonEntity(registry_gameplay_, "END GAME",
+  //                           glm::vec2(560, 340), font_test_);
+  // b_c->button_func = [&] {
+  //  SetPriorRegistry(&registry_in_game_menu_);
+  //  SetCurrentRegistry(&registry_mainmenu_);
+  //};
 }

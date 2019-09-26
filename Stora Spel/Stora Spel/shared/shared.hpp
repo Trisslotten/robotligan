@@ -12,7 +12,8 @@ enum PlayerAction {
   JUMP,
   SHOOT,
   KICK,
+  IN_GAME_MENU,
   NUM_ACTIONS,
 };
 
-#endif  // SHARED_HPP_
+#endif  // SHARED_HPP_  
