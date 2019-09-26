@@ -128,17 +128,27 @@ int main(unsigned argc, char** argv) {
   glob::Font2DHandle font_test = glob::GetFont("assets/fonts/fonts/comic.ttf");
   glob::Font2DHandle font_test2 =
       glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+  glob::Font2DHandle font_test3 =
+      glob::GetFont("assets/fonts/fonts/OCRAEXT_2.TTF");
 
   // Create 2D element
-  glob::E2DHandle e2D_test = glob::GetE2DItem("assets/GUI_elements/koncept_poäng_top.png");
+  glob::E2DHandle e2D_test = glob::GetE2DItem("assets/GUI_elements/point_table.png");
   glob::E2DHandle e2D_test2 =
       glob::GetE2DItem("assets/GUI_elements/Scoreboard_V1.png");
 
-
-  // Create GUI element
+  // Create GUI elementds
   glob::GUIHandle gui_test =
       glob::GetGUIItem("assets/GUI_elements/Scoreboard_V1.png");
-
+  glob::GUIHandle gui_teamscore =
+      glob::GetGUIItem("assets/GUI_elements/point_table.png");
+  glob::GUIHandle gui_stamina_base =
+      glob::GetGUIItem("assets/GUI_elements/stamina_bar_base.png");
+  glob::GUIHandle gui_stamina_fill =
+      glob::GetGUIItem("assets/GUI_elements/stamina_bar_fill.png");
+  glob::GUIHandle gui_stamina_icon =
+      glob::GetGUIItem("assets/GUI_elements/stamina_bar_icon.png");
+  glob::GUIHandle gui_quickslots =
+      glob::GetGUIItem("assets/GUI_elements/koncept_abilities.png");
 
   float time = 0.f;
   timer.Restart();
@@ -207,17 +217,31 @@ int main(unsigned argc, char** argv) {
     glob::Submit(e2D_test2, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f,
                  glm::vec3(1));
 
-
 	// Show statistics TEST
     if (Input::IsKeyDown(GLFW_KEY_TAB)) {
-      glob::Submit(gui_test, glm::vec2(285, 177), 0.6);
+      glob::Submit(gui_test, glm::vec2(285, 177), 0.6, 100);
     }
 
+    // Show GUI TEST
+	// Temp Update of stamina bar
+    float stam_len = 0.0f;
+    registry.view<PlayerComponent>().each(
+        [&](auto entity, PlayerComponent& player_c) {
+          stam_len = player_c.energy_current;
+        });
+    glob::Submit(gui_stamina_base, glm::vec2(0, 5), 0.85, 100);
+    glob::Submit(gui_stamina_fill, glm::vec2(7, 12), 0.85, stam_len);
+    glob::Submit(gui_stamina_icon, glm::vec2(0, 5), 0.85, 100);
+    glob::Submit(gui_quickslots, glm::vec2(7, 50), 0.3, 100);
+    glob::Submit(gui_teamscore, glm::vec2(497, 648), 1, 100);
+
 	// Submit text TEST
-    glob::Submit(font_test, glm::vec2(100, 200), 73,
-                 "Det här är Comic Sans MS jahoo!", glm::vec4(0, 0, 0, 0.5));
-    glob::Submit(font_test, glm::vec2(98, 202), 73,
-                 "Det här är Comic Sans MS jahoo!", glm::vec4(1, 1, 1, 1));
+    glob::Submit(font_test3, glm::vec2(626, 695), 36, "5:33",		// Replace string w/ actual match time
+                 glm::vec4(0.89, 0.82, 0.21, 1));
+    glob::Submit(font_test3, glm::vec2(582, 705), 72, "0",			// Replace string with Red team's actual score
+                 glm::vec4(0, 0.26, 1, 1));
+    glob::Submit(font_test3, glm::vec2(705, 705), 72, "12",			// Replace string with Blue team's actual score
+                 glm::vec4(1, 0, 0, 1));
 
     glob::Render();
     glob::window::Update();

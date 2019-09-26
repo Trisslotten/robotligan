@@ -32,6 +32,7 @@ struct GUIItem {
   Elements2D *gui;
   glm::vec2 pos;
   float scale;
+  float scale_x;
 };
 
 struct E2DItem {
@@ -353,7 +354,7 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
   text_to_render.push_back(to_render);
 }
 
-void Submit(GUIHandle gui_h, glm::vec2 pos, float scale) {
+void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x) {
   auto find_res = gui_elements.find(gui_h);
   if (find_res == gui_elements.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted gui element\n";
@@ -364,6 +365,7 @@ void Submit(GUIHandle gui_h, glm::vec2 pos, float scale) {
   to_render.gui = &find_res->second;
   to_render.pos = pos;
   to_render.scale = scale;
+  to_render.scale_x = scale_x;
   gui_items_to_render.push_back(to_render);
 }
 
@@ -468,7 +470,7 @@ void Render() {
 
   gui_shader.use();
   for (auto &gui_item : gui_items_to_render) {
-    gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale);
+    gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale, gui_item.scale_x);
   }
 
   text_shader.use();

@@ -4,9 +4,7 @@
     <ClCompile Include="util\timer.cpp" />
     <ClCompile Include="util\input.cpp" />
     <ClCompile Include="util\global_settings.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="engine.cpp" />
-    <ClCompile Include="entitycreation.cpp" />
+    <ClCompile Include="main_old.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Components\ability_component.hpp" />
@@ -34,8 +32,6 @@
     <ClInclude Include="Components\button_component.hpp" />
     <ClInclude Include="Entt systems\button_system.hpp" />
     <ClInclude Include="shared\shared.hpp" />
-    <ClInclude Include="entitycreation.hpp" />
-    <ClInclude Include="engine.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />
