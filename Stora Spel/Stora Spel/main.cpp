@@ -25,7 +25,7 @@ int main(unsigned argc, char** argv) {
   Engine engine;
   engine.Init();
 
-  double net_update_rate = 30.0;
+  double net_update_rate = 60.0;
   double net_update_time = 1.0 / net_update_rate;
 
   Timer net_update_timer;
@@ -39,7 +39,7 @@ int main(unsigned argc, char** argv) {
   while (!glob::window::ShouldClose()) {
     engine.Update(dt);
 
-    if (net_update_accum > net_update_time) {
+    while (net_update_accum > net_update_time) {
       engine.UpdateNetwork();
 
       num_net_updates++;
