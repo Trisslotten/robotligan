@@ -69,6 +69,10 @@ bool NetAPI::Socket::TcpClient::Send(const char* data, size_t length) {
   error_ = send(send_socket_, data, (int)length, 0);
   if (error_ == SOCKET_ERROR) {
     error_ = WSAGetLastError();
+    if (error_ == WSAECONNRESET || error_ == WSAECONNABORTED ||
+        error_ == WSAENETRESET || error_ == WSAENOTCONN) {
+      this->Disconnect();
+    }
     return false;
   }
   return true;
@@ -77,6 +81,10 @@ bool NetAPI::Socket::TcpClient::Send(NetAPI::Common::Packet& p) {
   error_ = send(send_socket_, p.GetRaw(), (int)p.GetPacketSize(), 0);
   if (error_ == SOCKET_ERROR) {
     error_ = WSAGetLastError();
+    if (error_ == WSAECONNRESET || error_ == WSAECONNABORTED ||
+        error_ == WSAENETRESET || error_ == WSAENOTCONN) {
+      this->Disconnect();
+    }
     return false;
   }
   return true;
@@ -96,6 +104,7 @@ const char* NetAPI::Socket::TcpClient::Receive(unsigned short timeout) {
     }
     if (last_buff_len_ == 0) {
       connected_ = false;
+      this->Disconnect();
       return NetAPI::Common::kSocketNotConnected;
     } else {
       error_ = WSAGetLastError();
@@ -127,8 +136,8 @@ NetAPI::Common::Packet NetAPI::Socket::TcpClient::Receive(
       return NetAPI::Common::Packet(nullptr, 0);
     }
   } else {
-    // std::cout << "else last_buff_len_=" << last_buff_len_ << "\n";
-    return NetAPI::Common::Packet(rec_buffer_, 0);
+    return NetAPI::Common::Packet(NetAPI::Common::kNoDataAvailable,
+                                  strlen(NetAPI::Common::kNoDataAvailable));
   }
 }
 void NetAPI::Socket::TcpClient::Disconnect() {
@@ -157,5 +166,6 @@ NetAPI::Socket::TcpClient& NetAPI::Socket::TcpClient::operator=(
 }
 NetAPI::Socket::TcpClient::~TcpClient() {
   delete[] this->rec_buffer_;
-  error_ = shutdown(send_socket_, SD_SEND);
+  closesocket(send_socket_);
+  send_socket_ = INVALID_SOCKET;
 }

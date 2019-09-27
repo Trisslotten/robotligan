@@ -31,7 +31,7 @@ class EXPORT TcpClient {
   void SetBlocking(bool block = true) { blocking_ = block; }
   void SetActive(bool c = true) { connected_ = c; };
   SOCKET& GetLowLevelSocket() { return send_socket_; }
-  bool IsConnected() { return connected_; }
+  bool IsConnected() { return connected_ && (send_socket_ != INVALID_SOCKET); }
   void Disconnect();
   void operator=(const SOCKET& other);
   int GetLastRecvLen() { return last_buff_len_; }
