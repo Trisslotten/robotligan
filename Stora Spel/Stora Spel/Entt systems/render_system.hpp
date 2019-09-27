@@ -23,8 +23,7 @@ void RenderSystem(entt::registry& registry) {
     
     Camera result = glob::GetCamera();
     glm::vec3 position = trans_c.position + glm::quat(trans_c.rotation) * cam_c.offset;
-    glm::vec3 euler_angles = glm::eulerAngles(cam_c.orientation);
-    result.SetAnglesViaRadians(euler_angles.y, euler_angles.x);
+	result.SetOrientation(cam_c.orientation);
     result.SetPosition(position);
     glob::SetCamera(result);
   }

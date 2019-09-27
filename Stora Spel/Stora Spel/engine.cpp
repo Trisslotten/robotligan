@@ -66,7 +66,7 @@ void Engine::Update(float dt) {
   float mouse_sensitivity = 0.003f;
   glm::vec2 mouse_movement = mouse_sensitivity * Input::MouseMov();
   accum_yaw_ -= mouse_movement.x;
-  accum_pitch_ += mouse_movement.y;
+  accum_pitch_ -= mouse_movement.y;
 
   UpdateSystems(dt);
 }
