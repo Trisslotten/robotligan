@@ -15,6 +15,7 @@ struct ButtonComponent {
   glm::vec4 text_current_color = glm::vec4(1, 1, 1, 1);
   std::string back_texture;
   glm::vec2 bounds = glm::vec2(200, 50);
+  bool visible = true;
   std::function<void()> button_func;
 };
 

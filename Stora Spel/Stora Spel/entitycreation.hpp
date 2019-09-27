@@ -8,7 +8,8 @@
 
 ButtonComponent* GenerateButtonEntity(
     entt::registry& reg, std::string text, glm::vec2 pos,
-    glob::Font2DHandle f_handle, unsigned int font_size = 72,
+    glob::Font2DHandle f_handle, bool visible = true,
+    unsigned int font_size = 72,
     glm::vec4 normal_color = glm::vec4(.9, .9, .9, 1),
     glm::vec4 hover_color = glm::vec4(0, 1, 1, 1));
 
