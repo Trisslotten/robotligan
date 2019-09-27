@@ -26,18 +26,12 @@ void Update(entt::registry& registry, float dt) {
     PhysicsComponent& physics_c = view_controller.get<PhysicsComponent>(entity);
     AbilityComponent& ability_c = view_controller.get<AbilityComponent>(entity);
 
-    // rotation
-    float sensitivity = 0.003f;
-    // rotation this frame from mouse move
-    glm::vec2 rot{0};  // = Input::MouseMov() * sensitivity;
-    float delta_yaw = rot.x;
-    float delta_pitch = rot.y;
-
     constexpr float pi = glm::pi<float>();
-    player_c.yaw =
-        glm::clamp(player_c.yaw + delta_yaw, -0.49f * pi, -0.49f * pi);
-    player_c.pitch = glm::mod(player_c.pitch + delta_pitch, 2.f * pi);
-    cam_c.orientation = glm::quat(glm::vec3(player_c.pitch, player_c.yaw, 0.f));
+    player_c.pitch = glm::clamp(player_c.pitch, -0.49f * pi, 0.49f * pi);
+    //player_c.pitch = glm::mod(player_c.pitch + delta_pitch, 2.f * pi);
+    //player_c.pitch += delta_pitch;
+    cam_c.orientation = glm::quat(glm::vec3(player_c.pitch, player_c.yaw, 0));
+    cam_c.orientation = glm::normalize(cam_c.orientation);
     trans_c.Rotate(glm::vec3(0, -player_c.yaw, 0));
 
     if (player_c.actions[PlayerAction::SHOOT]) {
@@ -130,7 +124,7 @@ void Update(entt::registry& registry, float dt) {
       // movement "floatiness", lower value = less floaty
       float t = 0.01f;
       physics_c.velocity.x = glm::mix(physics_c.velocity.x, 0.f, 1.f - glm::pow(t, dt));
-      physics_c.velocity.z = glm::mix(physics_c.velocity.x, 0.f, 1.f - glm::pow(t, dt));
+      physics_c.velocity.z = glm::mix(physics_c.velocity.z, 0.f, 1.f - glm::pow(t, dt));
     }
 
     // Ability buttons

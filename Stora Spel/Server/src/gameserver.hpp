@@ -32,7 +32,7 @@ class GameServer {
   entt::registry registry_;
 
   std::vector<PlayerID> created_players_;
-  std::unordered_map<int, uint16_t> players_actions_;
+  std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
 
   int test_player_guid_ = 0;
 };

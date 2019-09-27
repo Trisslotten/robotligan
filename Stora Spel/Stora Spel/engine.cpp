@@ -9,6 +9,7 @@
 #include <render_system.hpp>
 #include "Components/ball_component.hpp"
 #include "Components/light_component.hpp"
+#include "Components/player_component.hpp"
 #include "shared/camera_component.hpp"
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
@@ -62,8 +63,9 @@ void Engine::Update(float dt) {
   for (auto const& [button, action] : mousebinds_)
     if (Input::IsMouseButtonDown(button)) mouse_presses_[button]++;
 
-  glm::vec2 mouse_movement = Input::MouseMov();
-  accum_yaw_ += mouse_movement.x;
+  float mouse_sensitivity = 0.003f;
+  glm::vec2 mouse_movement = mouse_sensitivity * Input::MouseMov();
+  accum_yaw_ -= mouse_movement.x;
   accum_pitch_ += mouse_movement.y;
 
   UpdateSystems(dt);
@@ -90,12 +92,9 @@ void Engine::UpdateNetwork() {
     packet << action_bits;
     packet << accum_pitch_;
     packet << accum_yaw_;
-    packet << counter;
     packet << PacketBlockType::INPUT;
     if (client.IsConnected()) {
       client.Send(packet);
-      counter++;
-      std::cout << "Counter: " << counter << "\n";
     } else {
       // TODO: go to main menu or something
     }
@@ -111,6 +110,16 @@ void Engine::UpdateNetwork() {
         HandlePacketBlock(packet);
       }
     }
+
+    auto view_players = registry_.view<TransformComponent, PlayerComponent>();
+    for (auto player : view_players) {
+      auto& trans_c = view_players.get<TransformComponent>(player);
+      auto& player_c = view_players.get<PlayerComponent>(player);
+      auto trans = transforms[player_c.id];
+      trans_c.position = trans.first;
+      trans_c.rotation = trans.second;
+    }
+    transforms.clear();
   }
 }
 
@@ -127,6 +136,14 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
     case PacketBlockType::SET_CLIENT_PLAYER_ID: {
       packet >> my_id;
+      auto view = registry_.view<const PlayerComponent>();
+      for (auto& players : view) {
+        auto& player_c = view.get(players);
+        if (player_c.id == my_id) {
+          registry_.assign<CameraComponent>(players);
+          break;
+        }
+      }
       std::cout << "PACKET: SET_CLIENT_PLAYER_ID id=" << my_id << "\n";
       break;
     }
@@ -145,7 +162,30 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
           [&](auto entity, auto& trans_c, auto ball) {
             trans_c.position = ball_pos;
           });
-      std::cout << "Ball pos.y=" << ball_pos.y << "\n";
+      // std::cout << "Ball pos.y=" << ball_pos.y << "\n";
+      break;
+    }
+    case PacketBlockType::PLAYERS_TRANSFORMS: {
+      int size = -1;
+      packet >> size;
+      for (int i = 0; i < size; i++) {
+        PlayerID id;
+        glm::vec3 position;
+        glm::quat orientation;
+        packet >> id;
+        packet >> position;
+        packet >> orientation;
+        transforms[id] = std::make_pair(position, orientation);
+      }
+      break;
+    }
+    case PacketBlockType::CAMERA_TRANSFORM: {
+      glm::quat orientation;
+      packet >> orientation;
+      registry_.view<CameraComponent>().each(
+          [&](auto entity, CameraComponent& cam_c) {
+            cam_c.orientation = orientation;
+          });
       break;
     }
   }
@@ -204,6 +244,7 @@ void Engine::CreatePlayer(PlayerID id) {
       glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
 
   registry_.assign<ModelComponent>(entity, player_model);
+  registry_.assign<PlayerComponent>(entity, id);
 }
 
 void Engine::TestCreateLights() {

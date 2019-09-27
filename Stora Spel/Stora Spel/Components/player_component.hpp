@@ -5,8 +5,6 @@
 
 struct PlayerComponent {
   PlayerID id = -1;
-  float pitch = 0.f;
-  float yaw = 0.f;
 };
 
 #endif  // PLAYER_COMPONENT_HPP_

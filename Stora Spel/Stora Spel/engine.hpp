@@ -1,11 +1,11 @@
 #ifndef ENGINE_HPP_
 #define ENGINE_HPP_
 
-#include <NetAPI/socket/tcpclient.hpp>
 #include <NetAPI/socket/Client.hpp>
+#include <NetAPI/socket/tcpclient.hpp>
 #include <entt.hpp>
-#include <unordered_map>
 #include <glob/graphics.hpp>
+#include <unordered_map>
 #include "shared/shared.hpp"
 
 class Engine {
@@ -32,13 +32,14 @@ class Engine {
   void HandlePacketBlock(NetAPI::Common::Packet& packet);
 
   void CreatePlayer(PlayerID id);
-
-  
   void TestCreateLights();
+
   NetAPI::Socket::Client client;
   entt::registry registry_;
 
   PlayerID my_id = -1;
+
+  std::unordered_map<PlayerID, std::pair<glm::vec3, glm::quat>> transforms;
 
   std::unordered_map<int, int> keybinds_;
   std::unordered_map<int, int> mousebinds_;
@@ -46,8 +47,6 @@ class Engine {
   std::unordered_map<int, int> mouse_presses_;
   float accum_yaw_ = 0.f;
   float accum_pitch_ = 0.f;
-
-  int counter = 0;
 
   glob::Font2DHandle font_test_ = 0;
 };
