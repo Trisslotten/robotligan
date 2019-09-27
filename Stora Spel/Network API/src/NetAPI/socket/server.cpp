@@ -42,7 +42,7 @@ bool NetAPI::Socket::Server::Update() {
       auto addr = buffer;
       auto port = ntohs(client_addr.sin_port);
       // auto ID = getHashedID(addr, port);
-      std::string address = addr;
+      std::string address = addr + (":" + std::to_string(port));
       auto find_res = ids_.find(address);
       // if already found
       if (find_res != ids_.end()) {

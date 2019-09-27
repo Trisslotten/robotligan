@@ -99,9 +99,14 @@ std::vector<NetAPI::Common::Packet> NetAPI::Socket::TcpClient::Receive(
       int offset = 0;
       while (buff_left > 0) {
         auto packet_size = big_packet.GetHeader()->packet_size;
-        NetAPI::Common::Packet packet(rec_buffer_+offset, packet_size);
+        NetAPI::Common::Packet packet(rec_buffer_ + offset, packet_size);
 
         result.push_back(packet);
+
+        if (result.size() > 20) {
+		  // something wrong
+          break;
+		}
 
         offset += packet_size;
         buff_left -= packet_size;

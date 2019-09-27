@@ -10,7 +10,7 @@ int main(unsigned argc, char** argv) {
   Timer timer;
   double accum_ms = 0;
   // max around 200'000 on home computer
-  double update_rate = 153.6;
+  double update_rate = 72;
   double update_time = 1.0 / update_rate;
   double update_time_ms = update_time * 1000.0;
 

@@ -25,7 +25,7 @@ int main(unsigned argc, char** argv) {
   Engine engine;
   engine.Init();
 
-  double net_update_rate = 153.6;
+  double net_update_rate = 72;
   double net_update_time = 1.0 / net_update_rate;
 
   Timer net_update_timer;
@@ -57,7 +57,8 @@ int main(unsigned argc, char** argv) {
     glob::window::Update();
 
     dt = frame_timer.Restart();
-    net_update_accum += net_update_timer.Restart();
+    double frame_time = net_update_timer.Restart();
+    net_update_accum += glm::min(frame_time, net_update_time * 4);
   }
 
   glob::window::Cleanup();
