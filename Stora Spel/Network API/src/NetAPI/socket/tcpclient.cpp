@@ -143,7 +143,7 @@ NetAPI::Common::Packet NetAPI::Socket::TcpClient::Receive(
 void NetAPI::Socket::TcpClient::Disconnect() {
   connected_ = false;
   closesocket(send_socket_);
-  send_socket_ = INVALID_SOCKET;
+  shutdown(send_socket_, SD_BOTH);
 }
 void NetAPI::Socket::TcpClient::operator=(const SOCKET& other) {
   connected_ = true;
@@ -167,5 +167,4 @@ NetAPI::Socket::TcpClient& NetAPI::Socket::TcpClient::operator=(
 NetAPI::Socket::TcpClient::~TcpClient() {
   delete[] this->rec_buffer_;
   closesocket(send_socket_);
-  send_socket_ = INVALID_SOCKET;
 }
