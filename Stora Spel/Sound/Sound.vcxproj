@@ -72,7 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir)Externals\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)Externals\include;$(ProjectDir)Include\slob;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)Externals\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -87,7 +87,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)Externals\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)Externals\include;$(ProjectDir)Include\slob;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)Externals\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -168,11 +168,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
-    <ClInclude Include="Header files\testSound.h" />
+    <ClInclude Include="include\slob\sound_engine.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="testSound.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\sound_engine.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
