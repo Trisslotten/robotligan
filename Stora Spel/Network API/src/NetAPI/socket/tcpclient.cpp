@@ -1,6 +1,7 @@
 #include <NetAPI/socket/tcpclient.hpp>
 #include <iostream>
 #include <string>
+#include <vector>
 NetAPI::Socket::TcpClient::TcpClient() {
   rec_buffer_ = new char[buffer_size_];
   timeout_.tv_sec = 0;
@@ -65,19 +66,10 @@ bool NetAPI::Socket::TcpClient::Connect(const char* addr, unsigned short port) {
   connected_ = true;
   return true;
 }
-bool NetAPI::Socket::TcpClient::Send(const char* data, size_t length) {
-  error_ = send(send_socket_, data, (int)length, 0);
-  if (error_ == SOCKET_ERROR) {
-    error_ = WSAGetLastError();
-    if (error_ == WSAECONNRESET || error_ == WSAECONNABORTED ||
-        error_ == WSAENETRESET || error_ == WSAENOTCONN) {
-      this->Disconnect();
-    }
-    return false;
-  }
-  return true;
-}
 bool NetAPI::Socket::TcpClient::Send(NetAPI::Common::Packet& p) {
+  auto h = p.GetHeader();
+  h->packet_size = p.GetPacketSize();
+
   error_ = send(send_socket_, p.GetRaw(), (int)p.GetPacketSize(), 0);
   if (error_ == SOCKET_ERROR) {
     error_ = WSAGetLastError();
@@ -89,56 +81,47 @@ bool NetAPI::Socket::TcpClient::Send(NetAPI::Common::Packet& p) {
   }
   return true;
 }
-/*
-const char* NetAPI::Socket::TcpClient::Receive(unsigned short timeout) {
-  // Implement blocking? meeh
-  int bytes = 1;
-
-  FD_ZERO(&read_set_);
-  FD_SET(send_socket_, &read_set_);
-  timeout_.tv_usec = timeout;
-  if (select(send_socket_, &read_set_, NULL, NULL, &timeout_) == 1) {
-    last_buff_len_ = recv(send_socket_, rec_buffer_, buffer_size_, 0);
-    if (last_buff_len_ > 0) {
-      return rec_buffer_;
-    }
-    if (last_buff_len_ == 0) {
-      connected_ = false;
-      this->Disconnect();
-      return NetAPI::Common::kSocketNotConnected;
-    } else {
-      error_ = WSAGetLastError();
-      return nullptr;
-    }
-  } else {
-    return NetAPI::Common::kNoDataAvailable;
-  }
-}*/
-NetAPI::Common::Packet NetAPI::Socket::TcpClient::Receive(
+std::vector<NetAPI::Common::Packet> NetAPI::Socket::TcpClient::Receive(
     unsigned short timeout) {
   int bytes = 1;
   FD_ZERO(&read_set_);
   FD_SET(send_socket_, &read_set_);
   timeout_.tv_usec = timeout;
+
+  std::vector<NetAPI::Common::Packet> result;
+
   if (select(send_socket_, &read_set_, NULL, NULL, &timeout_) == 1) {
     last_buff_len_ = recv(send_socket_, rec_buffer_, buffer_size_, 0);
     // std::cout << "last_buff_len_=" << last_buff_len_ << "\n";
     if (last_buff_len_ > 0) {
-      return NetAPI::Common::Packet(rec_buffer_, last_buff_len_);
+      NetAPI::Common::Packet big_packet(rec_buffer_, last_buff_len_);
+      int buff_left = last_buff_len_;
+      int offset = 0;
+      while (buff_left > 0) {
+        auto packet_size = big_packet.GetHeader()->packet_size;
+        NetAPI::Common::Packet packet(rec_buffer_+offset, packet_size);
+
+        result.push_back(packet);
+
+        offset += packet_size;
+        buff_left -= packet_size;
+        big_packet = NetAPI::Common::Packet(rec_buffer_ + offset, buff_left);
+      }
+      return result;
     }
     if (last_buff_len_ == 0 || (WSAGetLastError() == WSAECONNRESET)) {
       connected_ = false;
       this->Disconnect();
-      return NetAPI::Common::Packet(nullptr, 0);
+      return result;
     } else {
       error_ = WSAGetLastError();
       std::cout << "ERROR: Network error code: " << error_ << "\n";
-      return NetAPI::Common::Packet(nullptr, 0);
+      return result;
     }
   } else {
-    return NetAPI::Common::Packet(NetAPI::Common::kNoDataAvailable,
-                                  strlen(NetAPI::Common::kNoDataAvailable));
+    return result;
   }
+  return result;
 }
 void NetAPI::Socket::TcpClient::Disconnect() {
   connected_ = false;

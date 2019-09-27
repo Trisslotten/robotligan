@@ -9,6 +9,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
+#include <vector>
 #include <thread>
 
 namespace NetAPI {
@@ -23,10 +24,8 @@ class EXPORT TcpClient {
   unsigned GetBufferSize() { return buffer_size_; }
   void FlushBuffers();
   bool Connect(const char* addr, unsigned short port);
-  bool Send(const char* data, size_t length);
   bool Send(NetAPI::Common::Packet& p);
-  //const char* Receive(unsigned short timeout = 50);
-  NetAPI::Common::Packet Receive(unsigned short timeout = 50);
+  std::vector<NetAPI::Common::Packet> Receive(unsigned short timeout = 50);
   int QuerryError() { return error_; }
   void SetBlocking(bool block = true) { blocking_ = block; }
   void SetActive(bool c = true) { connected_ = c; };

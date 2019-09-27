@@ -6,9 +6,9 @@
 namespace NetAPI {
 namespace Common {
 struct EXPORT PacketHeader {
-  unsigned short PacketAction[10];
-  unsigned short Receiver = NetAPI::Socket::EVERYONE;
-  unsigned PacketID = 0;
+  unsigned short packet_size = 0;
+  unsigned short receiver = NetAPI::Socket::EVERYONE;
+  unsigned packet_id = 0;
 };
 
 class EXPORT Packet {
@@ -21,8 +21,8 @@ class EXPORT Packet {
   ~Packet();
   size_t& GetPacketSize() { return size_of_data_; }
   bool IsEmpty() {
-    return (size_of_data_ <= sizeof(p_) ||
-            (strcmp(data_ + sizeof(p_), kNoDataAvailable) == 0));
+    return (size_of_data_ <= sizeof(PacketHeader) ||
+            (strcmp(data_ + sizeof(PacketHeader), kNoDataAvailable) == 0));
   }
   template <typename T>
   Packet& operator<<(T data) {
@@ -60,8 +60,6 @@ class EXPORT Packet {
   }
 
  private:
-   
-  PacketHeader p_ = {};
   char* data_ = nullptr;
   size_t size_of_data_ = 0;
 };

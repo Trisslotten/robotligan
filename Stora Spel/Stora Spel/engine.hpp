@@ -19,8 +19,6 @@ class Engine {
 
   void CreateInitalEntities();
 
-
-
   void Update(float dt);
 
   void UpdateNetwork();
@@ -46,8 +44,10 @@ class Engine {
   std::unordered_map<int, int> mousebinds_;
   std::unordered_map<int, int> key_presses_;
   std::unordered_map<int, int> mouse_presses_;
-  float accum_yaw = 0.f;
-  float accum_pitch = 0.f;
+  float accum_yaw_ = 0.f;
+  float accum_pitch_ = 0.f;
+
+  int counter = 0;
 
   glob::Font2DHandle font_test_ = 0;
 };

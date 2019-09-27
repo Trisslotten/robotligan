@@ -3,15 +3,15 @@
 
 NetAPI::Common::Packet::Packet() {
   data_ = new char[kNumPacketBytes];
-  memcpy(data_, &p_, sizeof(p_));
-  size_of_data_ = sizeof(p_);
+  PacketHeader p{};
+  memcpy(data_, &p, sizeof(PacketHeader));
+  size_of_data_ = sizeof(PacketHeader);
 }
 
 NetAPI::Common::Packet::Packet(const Packet& other) {
   data_ = new char[kNumPacketBytes];
   memcpy(data_, other.data_, kNumPacketBytes);
   size_of_data_ = other.size_of_data_;
-  p_ = other.p_;
 }
 
 NetAPI::Common::Packet& NetAPI::Common::Packet::operator=(const Packet& other) {
@@ -20,7 +20,6 @@ NetAPI::Common::Packet& NetAPI::Common::Packet::operator=(const Packet& other) {
   data_ = new char[kNumPacketBytes];
   memcpy(data_, other.data_, kNumPacketBytes);
   size_of_data_ = other.size_of_data_;
-  p_ = other.p_;
 
   return *this;
 }

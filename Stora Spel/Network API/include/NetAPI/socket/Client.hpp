@@ -12,7 +12,7 @@ class EXPORT Client {
   ~Client() { delete client_; }
   bool Connect(const char* addr, short port);
   bool Send(NetAPI::Common::Packet& p);
-  NetAPI::Common::Packet Receive(const short timeout = 50);
+  std::vector<NetAPI::Common::Packet> Receive(const short timeout = 50);
   unsigned short& GetID() { return ID_; }
 
   void Disconnect() { client_->Disconnect(); }

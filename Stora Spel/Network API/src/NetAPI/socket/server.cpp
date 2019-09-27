@@ -76,9 +76,12 @@ bool NetAPI::Socket::Server::Update() {
       continue;
     }
     if (c.second && c.second->client.IsConnected()) {
-      auto packet = c.second->client.Receive();
-      if (!packet.IsEmpty()) {
-        c.second->packets.push_back(packet);
+      int num_packets = 0;
+      for (auto packet : c.second->client.Receive()) {
+        num_packets++;
+        if (!packet.IsEmpty()) {
+          c.second->packets.push_back(packet);
+        }
       }
     }
   }
@@ -87,14 +90,14 @@ bool NetAPI::Socket::Server::Update() {
   NetAPI::Common::PacketHeader header;
   for (auto& d : data_to_send_) {
     d >> header;
-    if (header.Receiver == EVERYONE) {
+    if (header.receiver == EVERYONE) {
       for (auto& cli : client_data_) {
         cli.second->client.Send(d);
       }
     } else {
-      auto result = client_data_.find(header.Receiver);
+      auto result = client_data_.find(header.receiver);
       if (result != client_data_.end()) {
-        client_data_[header.Receiver]->client.Send(d);
+        client_data_[header.receiver]->client.Send(d);
       }
     }
   }
@@ -113,7 +116,7 @@ void NetAPI::Socket::Server::SendToAll(NetAPI::Common::Packet& p) {
 void NetAPI::Socket::Server::Send(unsigned id, const char* data, size_t len) {
   NetAPI::Common::Packet p(data, len);
   NetAPI::Common::PacketHeader h;
-  h.Receiver = id;
+  h.receiver = id;
   p << h;
   Send(p);
 }

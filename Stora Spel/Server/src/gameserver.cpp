@@ -68,7 +68,7 @@ void GameServer::Update(float dt) {
   for (auto& [id, client_data] : server_.GetClients()) {
     NetAPI::Common::Packet to_send;
     auto header = to_send.GetHeader();
-    header->Receiver = id;
+    header->receiver = id;
 
     glm::vec3 ball_pos{0};
     registry_.view<TransformComponent, BallComponent>().each(
@@ -147,11 +147,13 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       // TODO: put in player_actions then in PlayerComponent
       float pitch = 0.f;
       float yaw = 0.f;
+      int counter;
+      packet >> counter;
       packet >> yaw;
       packet >> pitch;
       packet >> actions;
       players_actions_[id] = actions;
-      std::cout << "PACKET: INPUT, " << actions << ", " << yaw << ", " << pitch
+      std::cout << "PACKET: INPUT, " << counter << ", " << actions << ", " << yaw << ", " << pitch
                 << "\n";
 
       std::bitset<PlayerAction::NUM_ACTIONS> asd = actions;

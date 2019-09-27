@@ -22,7 +22,6 @@ void Engine::Init() {
   glob::Init();
   Input::Initialize();
 
-
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
 
@@ -64,8 +63,8 @@ void Engine::Update(float dt) {
     if (Input::IsMouseButtonDown(button)) mouse_presses_[button]++;
 
   glm::vec2 mouse_movement = Input::MouseMov();
-  accum_yaw += mouse_movement.x;
-  accum_pitch += mouse_movement.y;
+  accum_yaw_ += mouse_movement.x;
+  accum_pitch_ += mouse_movement.y;
 
   UpdateSystems(dt);
 }
@@ -89,21 +88,28 @@ void Engine::UpdateNetwork() {
 
     NetAPI::Common::Packet packet;
     packet << action_bits;
-    packet << accum_pitch;
-    packet << accum_yaw;
+    packet << accum_pitch_;
+    packet << accum_yaw_;
+    packet << counter;
     packet << PacketBlockType::INPUT;
+    if (client.IsConnected()) {
+      client.Send(packet);
+      counter++;
+      std::cout << "Counter: " << counter << "\n";
+    } else {
+      // TODO: go to main menu or something
+    }
 
-    client.Send(packet);
-
-    accum_yaw = 0.f;
-    accum_pitch = 0.f;
+    accum_yaw_ = 0.f;
+    accum_pitch_ = 0.f;
   }
 
   {
     // handle received data
-    auto packet = client.Receive();
-    while (!packet.IsEmpty()) {
-      HandlePacketBlock(packet);
+    for (auto& packet : client.Receive()) {
+      while (!packet.IsEmpty()) {
+        HandlePacketBlock(packet);
+      }
     }
   }
 }
