@@ -22,13 +22,11 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action,
                  int mods) {
   if (action == GLFW_PRESS) {
     pre_keys[key]++;
-    std::cout << key << "\n";
   }
 }
 void MouseCallback(GLFWwindow* window, int button, int action, int mods) {
   if (action == GLFW_PRESS) {
     pre_buttons[button]++;
-    std::cout << button << "\n";
   }
 }
 }  // namespace

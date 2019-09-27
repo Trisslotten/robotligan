@@ -28,7 +28,7 @@ class EXPORT TcpListener {
   timeval timeout_ = {};
   bool setup_ = false;
   int error_ = 0;
-  unsigned buffer_size_ = 512;
+  unsigned buffer_size_ = Common::kNumPacketBytes;
   char* rec_buffer_;
   SOCKET listen_socket_ = INVALID_SOCKET;
 };

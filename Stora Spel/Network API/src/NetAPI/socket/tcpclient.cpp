@@ -1,9 +1,10 @@
 #include <NetAPI/socket/tcpclient.hpp>
+#include <iostream>
 #include <string>
 NetAPI::Socket::TcpClient::TcpClient() {
   rec_buffer_ = new char[buffer_size_];
   timeout_.tv_sec = 0;
-  timeout_.tv_usec = 500;
+  timeout_.tv_usec = 50;
 }
 
 NetAPI::Socket::TcpClient::TcpClient(const TcpClient& other) {
@@ -88,12 +89,14 @@ bool NetAPI::Socket::TcpClient::Send(NetAPI::Common::Packet& p) {
   }
   return true;
 }
-const char* NetAPI::Socket::TcpClient::Recive() {
+/*
+const char* NetAPI::Socket::TcpClient::Receive(unsigned short timeout) {
   // Implement blocking? meeh
   int bytes = 1;
 
   FD_ZERO(&read_set_);
   FD_SET(send_socket_, &read_set_);
+  timeout_.tv_usec = timeout;
   if (select(send_socket_, &read_set_, NULL, NULL, &timeout_) == 1) {
     last_buff_len_ = recv(send_socket_, rec_buffer_, buffer_size_, 0);
     if (last_buff_len_ > 0) {
@@ -110,22 +113,26 @@ const char* NetAPI::Socket::TcpClient::Recive() {
   } else {
     return NetAPI::Common::kNoDataAvailable;
   }
-}
-NetAPI::Common::Packet NetAPI::Socket::TcpClient::Recieve() {
+}*/
+NetAPI::Common::Packet NetAPI::Socket::TcpClient::Receive(
+    unsigned short timeout) {
   int bytes = 1;
   FD_ZERO(&read_set_);
   FD_SET(send_socket_, &read_set_);
+  timeout_.tv_usec = timeout;
   if (select(send_socket_, &read_set_, NULL, NULL, &timeout_) == 1) {
     last_buff_len_ = recv(send_socket_, rec_buffer_, buffer_size_, 0);
+    // std::cout << "last_buff_len_=" << last_buff_len_ << "\n";
     if (last_buff_len_ > 0) {
       return NetAPI::Common::Packet(rec_buffer_, last_buff_len_);
     }
-    if (last_buff_len_ == 0 || WSAGetLastError() == 10054) {
-      this->Disconnect();
+    if (last_buff_len_ == 0 || (WSAGetLastError() == WSAECONNRESET)) {
       connected_ = false;
+      this->Disconnect();
       return NetAPI::Common::Packet(nullptr, 0);
     } else {
       error_ = WSAGetLastError();
+      std::cout << "ERROR: Network error code: " << error_ << "\n";
       return NetAPI::Common::Packet(nullptr, 0);
     }
   } else {

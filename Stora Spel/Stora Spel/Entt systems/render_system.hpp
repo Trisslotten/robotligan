@@ -4,15 +4,16 @@
 #include <entity/registry.hpp>
 #include <glm/glm.hpp>
 
-#include "ball_component.hpp"
+#include "../util/global_settings.hpp"
 #include "boundingboxes.hpp"
 #include "collision.hpp"
 #include "light_component.hpp"
 #include "model_component.hpp"
-#include "transform_component.hpp"
+#include "../shared/transform_component.hpp"
+#include "../shared/camera_component.hpp"
+#include "light_component.hpp"
+#include "button_component.hpp"
 
-// temp variable
-bool render_wireframe = false;
 
 void RenderSystem(entt::registry& registry) {
   auto view_cam = registry.view<CameraComponent, TransformComponent>();
@@ -35,7 +36,7 @@ void RenderSystem(entt::registry& registry) {
     auto& m = view_model.get<ModelComponent>(model);
     glob::Submit(m.handle,
                  glm::translate(t.position) *
-                     glm::rotate(-t.rotation.y, glm::vec3(0.f, 1.f, 0.f)) *
+                     glm::toMat4(t.rotation) *
                      glm::translate(-m.offset) * glm::scale(t.scale));
   }
 
@@ -57,15 +58,16 @@ void RenderSystem(entt::registry& registry) {
   auto view_wireframe_obb = registry.view<physics::OBB, TransformComponent>();
   auto view_wireframe_sphere = registry.view<physics::Sphere>();
   auto view_wireframe_arena = registry.view<physics::Arena>();
-  if (render_wireframe) {
+  auto view_wireframe_mesh =
+      registry.view<physics::MeshHitbox, ModelComponent>();
+  if (GlobalSettings::Access()->ValueOf("RENDER_WIREFRAME") == 1.0f) {
     for (auto& w : view_wireframe_obb) {
       auto& obb = view_wireframe_obb.get<physics::OBB>(w);
       auto& transform = view_wireframe_obb.get<TransformComponent>(w);
-      glob::SubmitCube(
-          glm::translate(obb.center) *
-          glm::rotate(-transform.rotation.y, glm::vec3(0.f, 1.f, 0.f)) *
-          glm::scale(
-              glm::vec3(obb.extents[0], obb.extents[1], obb.extents[2])));
+      glob::SubmitCube(glm::translate(obb.center) * glm::toMat4(transform.rotation) *
+                       glm::scale(glm::vec3(obb.extents[0],
+                                                               obb.extents[1],
+                                                               obb.extents[2])));
     }
     for (auto& w : view_wireframe_sphere) {
       auto& sphere = view_wireframe_sphere.get(w);
@@ -79,6 +81,19 @@ void RenderSystem(entt::registry& registry) {
                                arena.zmax - arena.zmin) *
                      0.5f));
     }
+  }
+
+  auto view_buttons = registry.view<ButtonComponent, TransformComponent>();
+
+  for (auto& button : view_buttons) {
+    ButtonComponent& button_c = view_buttons.get<ButtonComponent>(button);
+    TransformComponent& trans_c = view_buttons.get<TransformComponent>(button);
+
+	glm::vec2 button_pos = glm::vec2(trans_c.position.x, trans_c.position.y);
+
+	glob::Submit(button_c.f_handle, button_pos,
+                     button_c.font_size, button_c.text,
+                     button_c.text_current_color);
   }
 }
 #endif  // RENDER_SYSTEM_HPP_

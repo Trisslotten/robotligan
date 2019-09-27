@@ -2,6 +2,7 @@
 #define ENGINE_HPP_
 
 #include <NetAPI/socket/tcpclient.hpp>
+#include <NetAPI/socket/Client.hpp>
 #include <entt.hpp>
 #include <unordered_map>
 #include <glob/graphics.hpp>
@@ -16,6 +17,10 @@ class Engine {
 
   void Init();
 
+  void CreateInitalEntities();
+
+
+
   void Update(float dt);
 
   void UpdateNetwork();
@@ -23,13 +28,26 @@ class Engine {
   void Render();
 
  private:
+  void SetKeybinds();
+
   void UpdateSystems(float dt);
+  void HandlePacketBlock(NetAPI::Common::Packet& packet);
+
+  void CreatePlayer(PlayerID id);
+
   
-  NetAPI::Socket::TcpClient tcp_client_;
+  void TestCreateLights();
+  NetAPI::Socket::Client client;
   entt::registry registry_;
 
-  std::unordered_map<int, PlayerAction> keybinds_;
-  std::unordered_map<int, PlayerAction> mousebinds_;
+  PlayerID my_id = -1;
+
+  std::unordered_map<int, int> keybinds_;
+  std::unordered_map<int, int> mousebinds_;
+  std::unordered_map<int, int> key_presses_;
+  std::unordered_map<int, int> mouse_presses_;
+  float accum_yaw = 0.f;
+  float accum_pitch = 0.f;
 
   glob::Font2DHandle font_test_ = 0;
 };
