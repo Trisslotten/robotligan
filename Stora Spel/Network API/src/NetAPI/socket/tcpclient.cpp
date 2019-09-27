@@ -68,6 +68,10 @@ bool NetAPI::Socket::TcpClient::Send(const char* data, size_t length) {
   error_ = send(send_socket_, data, (int)length, 0);
   if (error_ == SOCKET_ERROR) {
     error_ = WSAGetLastError();
+    if (error_ == WSAECONNRESET || error_ == WSAECONNABORTED ||
+        error_ == WSAENETRESET || error_ == WSAENOTCONN) {
+      this->Disconnect();
+    }
     return false;
   }
   return true;
@@ -76,6 +80,10 @@ bool NetAPI::Socket::TcpClient::Send(NetAPI::Common::Packet& p) {
   error_ = send(send_socket_, p.GetRaw(), (int)p.GetPacketSize(), 0);
   if (error_ == SOCKET_ERROR) {
     error_ = WSAGetLastError();
+    if (error_ == WSAECONNRESET || error_ == WSAECONNABORTED ||
+        error_ == WSAENETRESET || error_ == WSAENOTCONN) {
+      this->Disconnect();
+    }
     return false;
   }
   return true;
@@ -93,6 +101,7 @@ const char* NetAPI::Socket::TcpClient::Recive() {
     }
     if (last_buff_len_ == 0) {
       connected_ = false;
+      this->Disconnect();
       return NetAPI::Common::kSocketNotConnected;
     } else {
       error_ = WSAGetLastError();
@@ -112,6 +121,7 @@ NetAPI::Common::Packet NetAPI::Socket::TcpClient::Recieve() {
       return NetAPI::Common::Packet(rec_buffer_, last_buff_len_);
     }
     if (last_buff_len_ == 0 || WSAGetLastError() == 10054) {
+      this->Disconnect();
       connected_ = false;
       return NetAPI::Common::Packet(nullptr, 0);
     } else {
@@ -119,14 +129,14 @@ NetAPI::Common::Packet NetAPI::Socket::TcpClient::Recieve() {
       return NetAPI::Common::Packet(nullptr, 0);
     }
   } else {
-    return NetAPI::Common::Packet(rec_buffer_, last_buff_len_);
+    return NetAPI::Common::Packet(NetAPI::Common::kNoDataAvailable,
+                                  strlen(NetAPI::Common::kNoDataAvailable));
   }
 }
 void NetAPI::Socket::TcpClient::Disconnect() {
-  if (connected_ && send_socket_ != INVALID_SOCKET) {
-    connected_ = false;
-    closesocket(send_socket_);
-  }
+  connected_ = false;
+  closesocket(send_socket_);
+  send_socket_ = INVALID_SOCKET;
 }
 void NetAPI::Socket::TcpClient::operator=(const SOCKET& other) {
   connected_ = true;
