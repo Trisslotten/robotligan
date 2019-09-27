@@ -26,13 +26,16 @@ bool NetAPI::Socket::Server::Update() {
 
   // Accept client
   if (connected_players_ < NetAPI::Common::kMaxPlayers) {
-    ClientData* data = new ClientData();
-    auto s = listener_.Accept(data->client.GetRaw());
+    if (!connection_client_) {
+      connection_client_ = new ClientData();
+	}
+    auto s = listener_.Accept(connection_client_->client.GetRaw());
     if (s) {
       std::cout << "DEBUG: tcp connection opened\n";
       sockaddr_in client_addr{};
       int size = sizeof(client_addr);
-      auto ret = getpeername(data->client.GetRaw()->GetLowLevelSocket(),
+      auto ret =
+          getpeername(connection_client_->client.GetRaw()->GetLowLevelSocket(),
                              (sockaddr*)&client_addr, &size);
       char buffer[14];
       inet_ntop(AF_INET, &client_addr.sin_addr, buffer, 14);
@@ -46,22 +49,24 @@ bool NetAPI::Socket::Server::Update() {
         auto client_data = client_data_[find_res->second];
         client_data->client.Disconnect();
         delete client_data;
-        data->ID = find_res->second;
-        client_data_[find_res->second] = data;
+        connection_client_->ID = find_res->second;
+        client_data_[find_res->second] = connection_client_;
 
         std::cout << "DEBUG: Found existing client, overwriting\n";
       } else {
         std::cout << "DEBUG: adding new client\n";
 
-        data->ID = current_client_guid_;
+        connection_client_->ID = current_client_guid_;
         ids_[address] = current_client_guid_;
-        client_data_[current_client_guid_] = data;
+        client_data_[current_client_guid_] = connection_client_;
 
         connected_players_++;
         current_client_guid_++;
       }
-      data->address = address;
-      newly_connected_.push_back(data);
+      connection_client_->address = address;
+      newly_connected_.push_back(connection_client_);
+
+	  connection_client_ = nullptr;
     }
   }
   // Receive Data

@@ -57,9 +57,10 @@ void GameServer::Update(float dt) {
         player_c.actions = inputs.first;
         player_c.pitch += inputs.second.x;
         player_c.yaw += inputs.second.y;
-
+        /*
         std::cout << "Pitch: " << player_c.pitch << "\n";
         std::cout << "Yaw:   " << player_c.yaw << "\n\n";
+                */
       });
   players_inputs_.clear();
 

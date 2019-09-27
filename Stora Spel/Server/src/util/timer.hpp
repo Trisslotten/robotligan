@@ -20,6 +20,24 @@ class Timer {
     paused_ = false;
     return diff / 1000000000.0;
   }
+  double RestartNS() {
+    auto now = std::chrono::high_resolution_clock::now();
+    double diff = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(
+                      now - start_)
+                      .count();
+    start_ = std::chrono::high_resolution_clock::now();
+    paused_ = false;
+    return diff;
+  }
+  double RestartMS() {
+    auto now = std::chrono::high_resolution_clock::now();
+    double diff = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(
+                      now - start_)
+                      .count();
+    start_ = std::chrono::high_resolution_clock::now();
+    paused_ = false;
+    return diff / 1000000.0;
+  }
   double ElapsedMS() {
     auto now = std::chrono::high_resolution_clock::now();
     if (paused_) now = pause_time_;

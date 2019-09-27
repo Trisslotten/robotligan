@@ -9,6 +9,7 @@ NetAPI::Common::Packet::Packet() {
 }
 
 NetAPI::Common::Packet::Packet(const Packet& other) {
+  delete[] data_;
   data_ = new char[kNumPacketBytes];
   memcpy(data_, other.data_, kNumPacketBytes);
   size_of_data_ = other.size_of_data_;
@@ -16,6 +17,8 @@ NetAPI::Common::Packet::Packet(const Packet& other) {
 
 NetAPI::Common::Packet& NetAPI::Common::Packet::operator=(const Packet& other) {
   if (&other == this) return *this;
+
+  delete[] data_;
 
   data_ = new char[kNumPacketBytes];
   memcpy(data_, other.data_, kNumPacketBytes);

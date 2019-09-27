@@ -111,15 +111,24 @@ void Engine::UpdateNetwork() {
       }
     }
 
-    auto view_players = registry_.view<TransformComponent, PlayerComponent>();
-    for (auto player : view_players) {
-      auto& trans_c = view_players.get<TransformComponent>(player);
-      auto& player_c = view_players.get<PlayerComponent>(player);
-      auto trans = transforms[player_c.id];
-      trans_c.position = trans.first;
-      trans_c.rotation = trans.second;
-    }
-    transforms.clear();
+    if (!transforms.empty()) {
+	  auto view_players = registry_.view<TransformComponent, PlayerComponent>();
+	  for (auto player : view_players) {
+		auto& trans_c = view_players.get<TransformComponent>(player);
+		auto& player_c = view_players.get<PlayerComponent>(player);
+		auto trans = transforms[player_c.id];
+		trans_c.position = trans.first;
+		trans_c.rotation = trans.second;
+                /*
+		std::cout << trans_c.position.x << ", ";
+		std::cout << trans_c.position.y << ", ";
+		std::cout << trans_c.position.z << "\n";
+                */
+	  }
+	  //std::cout << "\n";
+	  transforms.clear();
+    
+	}
   }
 }
 
@@ -137,10 +146,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::SET_CLIENT_PLAYER_ID: {
       packet >> my_id;
       auto view = registry_.view<const PlayerComponent>();
-      for (auto& players : view) {
-        auto& player_c = view.get(players);
+      for (auto& player : view) {
+        auto& player_c = view.get(player);
         if (player_c.id == my_id) {
-          registry_.assign<CameraComponent>(players);
+          registry_.assign<CameraComponent>(player);
           break;
         }
       }
@@ -209,16 +218,16 @@ void Engine::UpdateSystems(float dt) {
   // UpdatePhysics(registry_, dt);
   // UpdateCollisions(registry_);
 
+  /*
   auto view = registry_.view<CameraComponent, TransformComponent>();
   for (auto v : view) {
     auto& cam_c = registry_.get<CameraComponent>(v);
     auto& trans_c = registry_.get<TransformComponent>(v);
-    /*
     cam_c.cam->SetPosition(trans_c.position +
                            glm::rotate(cam_c.offset, -trans_c.rotation.y,
                                        glm::vec3(0.0f, 1.0f, 0.0f)));
-    */
   }
+  */
 
   RenderSystem(registry_);
 }

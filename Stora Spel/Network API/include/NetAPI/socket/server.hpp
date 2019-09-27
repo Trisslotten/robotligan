@@ -30,6 +30,7 @@ class EXPORT Server {
   std::unordered_map<long, ClientData*> client_data_;
   std::vector<ClientData*> newly_connected_;
   std::vector<Common::Packet> data_to_send_;
+  ClientData* connection_client_ = nullptr;
   TcpListener listener_;
   bool setup_ = false;
   short connected_players_ = 0;

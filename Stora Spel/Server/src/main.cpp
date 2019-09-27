@@ -1,43 +1,42 @@
 #define NOMINMAX
 #include <iostream>
 
-#include "util/timer.hpp"
 #include "gameserver.hpp"
+#include "util/timer.hpp"
 
 int main(unsigned argc, char** argv) {
   std::cout << "DEBUG: Starting Server" << std::endl;
 
   Timer timer;
-  double accum = 0;
-  double update_rate = 64;
+  double accum_ms = 0;
+  // max around 200'000 on home computer
+  double update_rate = 144;
   double update_time = 1.0 / update_rate;
+  double update_time_ms = update_time * 1000.0;
 
   GameServer server;
 
   server.Init();
 
   int num_frames = 0;
-  Timer t;
-  Timer sleep;
+  Timer debug_timer;
 
   bool running = true;
   while (running) {
-    timer.Restart();
-    // start tick
+    accum_ms += timer.RestartMS();
 
-    server.Update(update_time);
-
-    // end tick
-    num_frames++;
-    double time = timer.Elapsed();
-    double time_left = update_time - time;
-    sleep.Restart();
-    while (sleep.Elapsed() < time_left) {
-      // busy wait lmao
+    while (accum_ms > update_time_ms) {
+      server.Update(update_time);
+      num_frames++;
+      accum_ms -= update_time_ms;
     }
 
-    if (t.Elapsed() > 5.0) {
-      double elapsed = t.Restart();
+    auto sleep_time =
+        std::chrono::microseconds((int)glm::min(1000.0, update_time_ms * 1000.0));
+    std::this_thread::sleep_for(sleep_time);
+
+    if (debug_timer.Elapsed() > 5.0) {
+      double elapsed = debug_timer.Restart();
       std::cout << "DEBUG: update rate = " << num_frames / elapsed << " U/s\n";
       num_frames = 0;
     }
