@@ -159,5 +159,6 @@ NetAPI::Socket::TcpClient& NetAPI::Socket::TcpClient::operator=(
 }
 NetAPI::Socket::TcpClient::~TcpClient() {
   delete[] this->rec_buffer_;
-  error_ = shutdown(send_socket_, SD_SEND);
+  closesocket(send_socket_);
+  send_socket_ = INVALID_SOCKET;
 }
