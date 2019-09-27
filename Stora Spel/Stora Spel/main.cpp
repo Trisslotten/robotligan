@@ -48,7 +48,7 @@ void AddArenaComponents(entt::registry& registry, entt::entity& entity);
 void AddPlayerComponents(entt::registry& registry, entt::entity& entity);
 void AddRobotComponents(entt::registry& registry, entt::entity& entity,
                         glm::vec3 in_pos);
-
+entt::entity p2;
 
 entt::registry registry;
 bool control = true;
@@ -137,30 +137,41 @@ int main(unsigned argc, char** argv) {
     // std::cout << 1.0f / dt << std::endl;
     Input::Reset();
     // tick
-    //if (Input::IsKeyDown(GLFW_KEY_K)) {
-    //  //auto& c = registry.get<CameraComponent>(avatar);
-    //  //c.offset.x += 0.01f;
-    //  //std::cout << "Camera: " << c.offset.x << std::endl;
-    //  registry.get<PhysicsComponent>(ball).velocity.x += 10;
-    //  std::cout << registry.get<PhysicsComponent>(ball).velocity.x << std::endl;
-    //}
-    //if (Input::IsKeyDown(GLFW_KEY_L)) {
-    //  //auto &c = registry.get<CameraComponent>(avatar);
-    //  //c.offset.x -= 0.01f;
-    //  //std::cout << "Camera: " << c.offset.x << std::endl;
-    //  registry.get<PhysicsComponent>(ball).is_airborne = false;
-    //  registry.get<TransformComponent>(ball).position.y += 0.1f;
-    //}
-    //if (Input::IsKeyDown(GLFW_KEY_O)) {
-    //  auto &c = registry.get<CameraComponent>(avatar);
-    //  c.offset.y += 0.01f;
-    //  std::cout << "Camera y: " << c.offset.y << std::endl;
-    //}
-    //if (Input::IsKeyDown(GLFW_KEY_P)) {
-    //  auto &c = registry.get<CameraComponent>(avatar);
-    //  c.offset.y -= 0.01f;
-    //  std::cout << "Camera y: " << c.offset.y << std::endl;
-    //}
+    auto& phys = registry.get<PhysicsComponent>(p2);
+    glm::vec3 final_velocity =
+        glm::vec3(0.f, phys.velocity.y, 0.f);  //(0, 0, 0);
+    glm::vec3 accum_velocity = glm::vec3(0.f);
+
+    // base movement direction on camera orientation.
+    glm::vec3 frwd = glm::vec3(1.f,0.f,0.f);
+    // transform_helper::DirVectorFromRadians(cam_c.yaw_, cam_c.pitch_);
+
+
+    glm::vec3 up(0, 1, 0);
+    glm::vec3 right = glm::normalize(glm::cross(frwd, up));
+
+    if (true) {  // abs(accum_velocity.length()) < player_c.walkspeed * 4) {
+      if (Input::IsKeyDown(GLFW_KEY_UP)) {
+        accum_velocity += frwd;
+      }
+      if (Input::IsKeyDown(GLFW_KEY_DOWN)) {
+        accum_velocity -= frwd;
+      }
+      if (Input::IsKeyDown(GLFW_KEY_RIGHT)) {
+        accum_velocity += right;
+      }
+      if (Input::IsKeyDown(GLFW_KEY_LEFT)) {
+        accum_velocity -= right;
+      }
+      if (glm::length(accum_velocity) > 0.f)
+        accum_velocity = glm::normalize(accum_velocity) * 2.f;
+    }
+
+    // physics stuff
+
+    final_velocity += accum_velocity;
+
+    phys.velocity = final_velocity;
     //if (Input::IsKeyDown(GLFW_KEY_U)) {
     //  auto &c = registry.get<CameraComponent>(avatar);
     //  c.offset.z += 0.01f;
@@ -243,6 +254,7 @@ void CreateEntities(entt::registry& registry, glm::vec3* in_pos_arr,
   // Create other robots and add components
   for (unsigned int i = 2; i < in_num_pos; i++) {
     auto other_robot_entity = registry.create();
+    p2 = other_robot_entity;
     AddRobotComponents(registry, other_robot_entity, in_pos_arr[i]);
   }
 

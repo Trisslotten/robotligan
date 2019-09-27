@@ -5,6 +5,10 @@
 #include <iostream>
 #include <vector>
 
+std::ostream& operator<<(std::ostream& o, glm::vec3 v) {
+  return o << v.x << " " << v.y << " " << v.z;
+}
+
 struct Corners {
   glm::vec3 corners[8];
 };

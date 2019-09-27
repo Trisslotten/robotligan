@@ -16,6 +16,10 @@
 #include "physics_component.hpp"
 #include "transform_component.hpp"
 
+std::ostream& operator<<(std::ostream& o, glm::vec3 v) {
+  return o << v.x << " " << v.y << " " << v.z;
+}
+
 enum ObjectTag { PLAYER, BALL, ARENA, PROJECTLIE };
 struct CollisionObject {
   entt::entity entity;
@@ -38,6 +42,7 @@ void PlayerProjectileCollision(entt::registry& registry);
 void PlayerArenaCollision(entt::registry& registry);
 void ProjectileBallCollision(entt::registry& registry, entt::entity ball);
 void ProjectileArenaCollision(entt::registry& registry);
+void BallCollision(PhysicsComponent* ball, glm::vec3 normal);
 void UpdateSphere(entt::registry& registry);
 void UpdateOBB(entt::registry& registry);
 void UpdateTransform(entt::registry& registry);
@@ -130,6 +135,8 @@ void HandleMultiBallCollision(entt::registry& registry, const CollisionList& lis
     if (obj.tag == ARENA) {
       ball_hitbox.center += obj.move_vector;
       //ball_physics.velocity = glm::vec3(0.f);
+      BallCollision(&ball_physics, obj.normal);
+
       break;
     }
   }
@@ -143,6 +150,8 @@ void HandleMultiBallCollision(entt::registry& registry, const CollisionList& lis
       if (data.collision) {
         player_hitbox.center -= data.move_vector;
         if (data.move_vector.y < 0.f) player_physics.velocity.y = 0.f;
+
+        BallCollision(&ball_physics, data.normal);
       }
     }
   }
@@ -162,11 +171,9 @@ void PlayerBallCollision(entt::registry& registry, const CollisionObject& object
   float player_speed = glm::length(player_physics.velocity);
   if (ball_speed < player_speed) {
     ball_physics.velocity = object.normal * (glm::dot(player_physics.velocity, object.normal) + 1.f);
+    
   } else {
-    float dot_val = glm::dot(ball_physics.velocity, object.normal);
-
-    if (dot_val < 0)
-      ball_physics.velocity = ball_physics.velocity - object.normal * dot_val * 0.6f * 2.f;
+    BallCollision(&ball_physics, object.normal);  // player_physics.velocity);
   }
 
   physics::IntersectData data = Intersect(registry.get<physics::MeshHitbox>(arena), ball_hitbox);
@@ -180,6 +187,8 @@ void PlayerBallCollision(entt::registry& registry, const CollisionObject& object
       auto& player_physics = registry.get<PhysicsComponent>(object.entity);
 
       if (data.move_vector.y < 0.f) player_physics.velocity.y = 0.f;
+
+      BallCollision(&ball_physics, object.normal);
     }
   }
 
@@ -280,13 +289,36 @@ void PlayerPlayerCollision(entt::registry& registry) {
         auto& physics_c1 = registry.get<PhysicsComponent>(player1);
         auto& physics_c2 = registry.get<PhysicsComponent>(player2);
 
-        player2_hitbox.center += -data.normal * glm::length(data.move_vector);
+        float dot_val1 = glm::dot(physics_c1.velocity, data.normal);
+        float dot_val2 = glm::dot(physics_c2.velocity, data.normal);
+        if (dot_val1 == 0.f && dot_val2 == 0.f) continue;
+
+        // running the same direction
+        if ((dot_val1 > 0.f && dot_val2 > 0.f) ||
+            (dot_val1 > 0.f && dot_val2 > 0.f)) {
+          if (glm::dot(data.normal, player1_hitbox.center - player2_hitbox.center) > 0.f) {
+            dot_val1 = 0.f;
+            std::cout << "move player 2\n";
+          } else {
+            dot_val2 = 0.f;
+            std::cout << "move player 1\n";
+          }
+        } else if (dot_val1 == 0.f) {
+          dot_val2 = 1.f;
+        } else if (dot_val2 == 0.f) {
+          dot_val1 = -1.f;
+        }
+
+        glm::vec3 p1_move =
+            data.move_vector * dot_val1 / (fabs(dot_val1) + fabs(dot_val2));
+        glm::vec3 p2_move =
+            data.move_vector * dot_val2 / (fabs(dot_val1) + fabs(dot_val2));
+        player1_hitbox.center -= p1_move;
+        player2_hitbox.center -= p2_move;
+        
         if (glm::dot(glm::vec3(0.f, 1.f, 0.f), data.normal) < 0.f) {
           physics_c2.velocity.y = 0.f;
         }
-
-        glm::vec3 vel = physics_c1.velocity + physics_c2.velocity;
-        vel.y = 0.f;
       }
     }
   }
@@ -362,6 +394,12 @@ void ProjectileArenaCollision(entt::registry& registry) {
   }
 
   return;
+}
+
+void BallCollision(PhysicsComponent* ball, glm::vec3 normal) {
+  float dot_val = glm::dot(ball->velocity, normal);
+  if (dot_val < 0.f)
+    ball->velocity = ball->velocity - normal * dot_val * 0.8f * 2.f;
 }
 
 void UpdateSphere(entt::registry& registry) {
