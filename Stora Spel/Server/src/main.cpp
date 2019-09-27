@@ -9,7 +9,7 @@ int main(unsigned argc, char** argv) {
 
   Timer timer;
   double accum = 0;
-  double update_rate = 2;
+  double update_rate = 30;
   double update_time = 1.0 / update_rate;
 
   GameServer server;
@@ -36,7 +36,7 @@ int main(unsigned argc, char** argv) {
       // busy wait lmao
     }
 
-    if (t.Elapsed() > 2.0) {
+    if (t.Elapsed() > 5.0) {
       double elapsed = t.Restart();
       std::cout << "DEBUG: update rate = " << num_frames / elapsed << " U/s\n";
       num_frames = 0;

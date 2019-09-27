@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include <render_system.hpp>
+#include "Components/ball_component.hpp"
 #include "Components/light_component.hpp"
 #include "shared/camera_component.hpp"
 #include "shared/transform_component.hpp"
@@ -21,38 +22,37 @@ void Engine::Init() {
   glob::Init();
   Input::Initialize();
 
-  client.Connect("localhost", 1337);
 
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
 
-  // Create light
-  auto light = registry_.create();
-  registry_.assign<LightComponent>(light, glm::vec3(0.3f, 0.3f, 1.0f), 15.f,
-                                   0.2f);
-  registry_.assign<TransformComponent>(light, glm::vec3(12.f, -4.f, 0.f),
-                                       glm::vec3(0.f, 0.f, 1.f),
-                                       glm::vec3(1.f));
-
-  light = registry_.create();
-  registry_.assign<LightComponent>(light, glm::vec3(1.f, 0.3f, 0.3f), 15.f,
-                                   0.f);
-  registry_.assign<TransformComponent>(light, glm::vec3(-12.f, -4.f, 0.f),
-                                       glm::vec3(0.f, 0.f, 1.f),
-                                       glm::vec3(1.f));
+  TestCreateLights();
 
   font_test_ = glob::GetFont("assets/fonts/fonts/comic.ttf");
+  glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
 
-  keybinds_[GLFW_KEY_W] = PlayerAction::WALK_FORWARD;
-  keybinds_[GLFW_KEY_S] = PlayerAction::WALK_BACKWARD;
-  keybinds_[GLFW_KEY_A] = PlayerAction::WALK_LEFT;
-  keybinds_[GLFW_KEY_D] = PlayerAction::WALK_RIGHT;
-  keybinds_[GLFW_KEY_LEFT_SHIFT] = PlayerAction::SPRINT;
-  keybinds_[GLFW_KEY_SPACE] = PlayerAction::JUMP;
-  keybinds_[GLFW_KEY_Q] = PlayerAction::ABILITY_PRIMARY;
-  keybinds_[GLFW_KEY_E] = PlayerAction::ABILITY_SECONDARY;
-  mousebinds_[GLFW_MOUSE_BUTTON_1] = PlayerAction::KICK;
-  mousebinds_[GLFW_MOUSE_BUTTON_2] = PlayerAction::SHOOT;
+  CreateInitalEntities();
+
+  SetKeybinds();
+
+  client.Connect("localhost", 1337);
+}
+
+void Engine::CreateInitalEntities() {
+  auto arena = registry_.create();
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glm::vec3 arena_scale = glm::vec3(1.0f);
+  glob::ModelHandle model_arena =
+      glob::GetModel("assets/Map_rectangular/map_rextangular.fbx");
+  registry_.assign<ModelComponent>(arena, model_arena);
+  registry_.assign<TransformComponent>(arena, zero_vec, zero_vec, arena_scale);
+
+  auto ball = registry_.create();
+  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  registry_.assign<ModelComponent>(ball, model_ball);
+  registry_.assign<TransformComponent>(ball, zero_vec, zero_vec,
+                                       glm::vec3(1.0f));
+  registry_.assign<BallComponent>(ball);
 }
 
 void Engine::Update(float dt) {
@@ -87,7 +87,6 @@ void Engine::UpdateNetwork() {
 
     uint16_t action_bits = actions.to_ulong();
 
-
     NetAPI::Common::Packet packet;
     packet << action_bits;
     packet << accum_pitch;
@@ -96,7 +95,7 @@ void Engine::UpdateNetwork() {
 
     client.Send(packet);
 
-	accum_yaw = 0.f;
+    accum_yaw = 0.f;
     accum_pitch = 0.f;
   }
 
@@ -112,12 +111,11 @@ void Engine::UpdateNetwork() {
 void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
   int16_t block_type = -1;
   packet >> block_type;
-  size_t strsize = 0;
   switch (block_type) {
     case PacketBlockType::CREATE_PLAYER: {
       PlayerID id = -1;
       packet >> id;
-      //std::cout << "PACKET: CREATE_PLAYER, id=" << id << "\n";
+      std::cout << "PACKET: CREATE_PLAYER, id=" << id << "\n";
       CreatePlayer(id);
       break;
     }
@@ -127,11 +125,22 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::TEST_STRING: {
+      size_t strsize = 0;
       packet >> strsize;
       std::string str;
       str.resize(strsize);
       packet.Remove(str.data(), strsize);
-      //std::cout << "PACKET: TEST_STRING: '" << str << "'\n";
+      std::cout << "PACKET: TEST_STRING: '" << str << "'\n";
+    }
+    case PacketBlockType::TEST_BALL_POS: {
+      glm::vec3 ball_pos;
+      packet >> ball_pos;
+      registry_.view<TransformComponent, BallComponent>().each(
+          [&](auto entity, auto& trans_c, auto ball) {
+            trans_c.position = ball_pos;
+          });
+      std::cout << "Ball pos.y=" << ball_pos.y << "\n";
+      break;
     }
   }
 }
@@ -168,6 +177,19 @@ void Engine::UpdateSystems(float dt) {
   RenderSystem(registry_);
 }
 
+void Engine::SetKeybinds() {
+  keybinds_[GLFW_KEY_W] = PlayerAction::WALK_FORWARD;
+  keybinds_[GLFW_KEY_S] = PlayerAction::WALK_BACKWARD;
+  keybinds_[GLFW_KEY_A] = PlayerAction::WALK_LEFT;
+  keybinds_[GLFW_KEY_D] = PlayerAction::WALK_RIGHT;
+  keybinds_[GLFW_KEY_LEFT_SHIFT] = PlayerAction::SPRINT;
+  keybinds_[GLFW_KEY_SPACE] = PlayerAction::JUMP;
+  keybinds_[GLFW_KEY_Q] = PlayerAction::ABILITY_PRIMARY;
+  keybinds_[GLFW_KEY_E] = PlayerAction::ABILITY_SECONDARY;
+  mousebinds_[GLFW_MOUSE_BUTTON_1] = PlayerAction::KICK;
+  mousebinds_[GLFW_MOUSE_BUTTON_2] = PlayerAction::SHOOT;
+}
+
 void Engine::CreatePlayer(PlayerID id) {
   auto entity = registry_.create();
   registry_.assign<TransformComponent>(entity);
@@ -176,4 +198,21 @@ void Engine::CreatePlayer(PlayerID id) {
       glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
 
   registry_.assign<ModelComponent>(entity, player_model);
+}
+
+void Engine::TestCreateLights() {
+  // Create light
+  auto light = registry_.create();
+  registry_.assign<LightComponent>(light, glm::vec3(0.3f, 0.3f, 1.0f), 15.f,
+                                   0.2f);
+  registry_.assign<TransformComponent>(light, glm::vec3(12.f, -4.f, 0.f),
+                                       glm::vec3(0.f, 0.f, 1.f),
+                                       glm::vec3(1.f));
+
+  light = registry_.create();
+  registry_.assign<LightComponent>(light, glm::vec3(1.f, 0.3f, 0.3f), 15.f,
+                                   0.f);
+  registry_.assign<TransformComponent>(light, glm::vec3(-12.f, -4.f, 0.f),
+                                       glm::vec3(0.f, 0.f, 1.f),
+                                       glm::vec3(1.f));
 }

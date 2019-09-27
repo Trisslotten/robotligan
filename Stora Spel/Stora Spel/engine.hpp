@@ -17,19 +17,26 @@ class Engine {
 
   void Init();
 
+  void CreateInitalEntities();
+
+
+
   void Update(float dt);
 
   void UpdateNetwork();
 
-  void HandlePacketBlock(NetAPI::Common::Packet& packet);
-
   void Render();
 
  private:
+  void SetKeybinds();
+
   void UpdateSystems(float dt);
+  void HandlePacketBlock(NetAPI::Common::Packet& packet);
 
   void CreatePlayer(PlayerID id);
+
   
+  void TestCreateLights();
   NetAPI::Socket::Client client;
   entt::registry registry_;
 

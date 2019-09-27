@@ -48,6 +48,7 @@ void GameServer::Update(float dt) {
         HandlePacketBlock(packet, id);
       }
     }
+    client_data->packets.clear();
   }
   auto player_view = registry_.view<PlayerComponent>();
   registry_.view<PlayerComponent>().each([&](auto entity, auto& player_c) {
@@ -58,9 +59,8 @@ void GameServer::Update(float dt) {
   /*
   registry_.view<TransformComponent>().each([&](auto entity, auto& trans_c) {
     glm::vec3 p = trans_c.position;
-    std::cout << (int)p.x << ", " << (int)p.y << ", " << (int)p.z << "\n";
+    //std::cout << (int)p.x << ", " << (int)p.y << ", " << (int)p.z << "\n";
   });
-  std::cout << std::endl;
   */
 
   UpdateSystems(dt);
@@ -69,6 +69,14 @@ void GameServer::Update(float dt) {
     NetAPI::Common::Packet to_send;
     auto header = to_send.GetHeader();
     header->Receiver = id;
+
+    glm::vec3 ball_pos{0};
+    registry_.view<TransformComponent, BallComponent>().each(
+        [&](auto entity, auto& trans_c, auto& ball) {
+          ball_pos = trans_c.position;
+        });
+    to_send << ball_pos;
+    to_send << PacketBlockType::TEST_BALL_POS;
 
     bool is_created = false;
     for (auto& created_id : created_players_) {
@@ -84,13 +92,13 @@ void GameServer::Update(float dt) {
       for (auto& [id, client_data] : server_.GetClients()) {
         to_send << id;
         to_send << PacketBlockType::CREATE_PLAYER;
-	  }
+      }
     } else {
-	  for (auto& created_id : created_players_) {
-		to_send << created_id;
-		to_send << PacketBlockType::CREATE_PLAYER;
-	  }
-	}
+      for (auto& created_id : created_players_) {
+        to_send << created_id;
+        to_send << PacketBlockType::CREATE_PLAYER;
+      }
+    }
     /*
 std::string hej = "Test test asdasd";
 to_send.Add(hej.data(), hej.size());
@@ -143,7 +151,25 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       packet >> pitch;
       packet >> actions;
       players_actions_[id] = actions;
-      std::cout << "PACKET: INPUT, " << actions << ", " << yaw << ", " << pitch << "\n";
+      std::cout << "PACKET: INPUT, " << actions << ", " << yaw << ", " << pitch
+                << "\n";
+
+      std::bitset<PlayerAction::NUM_ACTIONS> asd = actions;
+      glm::vec3 vel{0};
+
+      if (asd[PlayerAction::WALK_FORWARD]) vel += glm::vec3(-1, 0, 0);
+      if (asd[PlayerAction::WALK_BACKWARD]) vel += glm::vec3(1, 0, 0);
+      if (asd[PlayerAction::WALK_LEFT]) vel += glm::vec3(0, 0, 1);
+      if (asd[PlayerAction::WALK_RIGHT]) vel += glm::vec3(0, 0, -1);
+      vel *= 0.5f;
+      if (asd[PlayerAction::SPRINT]) vel *= 2.f;
+      if (asd[PlayerAction::JUMP]) vel += glm::vec3(0, 2, 0);
+      registry_.view<PhysicsComponent, BallComponent>().each(
+          [&](auto entity, PhysicsComponent& physics_c, auto& ball) {
+            physics_c.velocity += vel;
+            physics_c.is_airborne = true;
+          });
+
       break;
     }
   }

@@ -26,6 +26,7 @@
     <ClInclude Include="shared\transform_component.hpp" />
     <ClInclude Include="shared\camera_component.hpp" />
     <ClInclude Include="Components\player_component.hpp" />
+    <ClInclude Include="Components\ball_component.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

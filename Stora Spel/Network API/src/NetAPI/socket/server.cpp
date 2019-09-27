@@ -46,36 +46,33 @@ bool NetAPI::Socket::Server::Update() {
         auto client_data = client_data_[find_res->second];
         client_data->client.Disconnect();
         delete client_data;
-        client_data_.erase(find_res->second);
-		std::cout << "DEBUG: Found existing client, overwriting\n";
+        data->ID = find_res->second;
+        client_data_[find_res->second] = data;
+
+        std::cout << "DEBUG: Found existing client, overwriting\n";
       } else {
         std::cout << "DEBUG: adding new client\n";
+
+        data->ID = current_client_guid_;
+        ids_[address] = current_client_guid_;
+        client_data_[current_client_guid_] = data;
+
         connected_players_++;
+        current_client_guid_++;
       }
       data->address = address;
-      data->ID = current_client_guid_;
-      
-	  newly_connected_.push_back(data);
-
-	  ids_[address] = current_client_guid_;
-      client_data_[current_client_guid_] = data;
-
-      current_client_guid_++;
+      newly_connected_.push_back(data);
     }
   }
-
-  std::vector<std::string> to_remove;
   // Receive Data
   for (auto& c : client_data_) {
-    if (c.second  && (!c.second->client.IsConnected() ||
-        c.second->client.GetRaw()->GetLastRecvLen() == 0)) {
+    if (c.second && !c.second->client.IsConnected() && c.second->is_active) {
       std::cout << "DEBUG: removing client, lstrecvlen="
                 << c.second->client.GetRaw()->GetLastRecvLen()
                 << ", isConnected=" << c.second->client.IsConnected() << "\n";
       c.second->client.Disconnect();
+      c.second->is_active = false;
       connected_players_--;
-      to_remove.push_back(c.second->address);
-      delete c.second;
       continue;
     }
     if (c.second && c.second->client.IsConnected()) {
@@ -84,12 +81,6 @@ bool NetAPI::Socket::Server::Update() {
         c.second->packets.push_back(packet);
       }
     }
-  }
-
-  for (auto& address : to_remove) {
-    auto id = ids_[address];
-    client_data_.erase(id);
-    ids_.erase(address);
   }
 
   // Send Data

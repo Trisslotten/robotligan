@@ -13,6 +13,7 @@ struct EXPORT ClientData {
   Client client;
   std::vector<Common::Packet> packets;
   std::string address;
+  bool is_active = false;
 };
 }  // namespace Socket
 }  // namespace NetAPI

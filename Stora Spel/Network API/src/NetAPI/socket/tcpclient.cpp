@@ -127,7 +127,6 @@ NetAPI::Common::Packet NetAPI::Socket::TcpClient::Receive(
       return NetAPI::Common::Packet(nullptr, 0);
     }
   } else {
-	last_buff_len_ = -1;
     // std::cout << "else last_buff_len_=" << last_buff_len_ << "\n";
     return NetAPI::Common::Packet(rec_buffer_, 0);
   }

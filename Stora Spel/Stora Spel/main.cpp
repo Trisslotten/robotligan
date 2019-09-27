@@ -25,7 +25,7 @@ int main(unsigned argc, char** argv) {
   Engine engine;
   engine.Init();
 
-  double net_update_rate = 2.0;
+  double net_update_rate = 30.0;
   double net_update_time = 1.0 / net_update_rate;
 
   Timer net_update_timer;
@@ -46,7 +46,7 @@ int main(unsigned argc, char** argv) {
       net_update_accum -= net_update_time;
     }
 
-    if (debug_timer.Elapsed() > 2.f) {
+    if (debug_timer.Elapsed() > 5.0) {
       double elapsed = debug_timer.Restart();
       std::cout << "DEBUG: Network Update Rate = " << num_net_updates / elapsed
                 << " U/s\n";
