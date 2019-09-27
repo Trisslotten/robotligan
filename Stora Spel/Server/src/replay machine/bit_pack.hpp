@@ -23,7 +23,7 @@ class BitPack {
   bool WriteFloat32(float in_float);
   bool ReadBit();
   unsigned int ReadInt(unsigned int in_bit_count);
-  float ReadFloat32(float in_float);
+  float ReadFloat32();
   bool SaveToFile(std::string in_path);
   bool LoadFromFile(std::string in_path);
 

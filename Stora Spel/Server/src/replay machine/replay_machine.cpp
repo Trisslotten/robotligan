@@ -219,19 +219,36 @@ void ReplayMachine::TestFunction() {
   delete test_pack;
   test_pack = new BitPack(1, 32);
 
-  this->TestFunctionB('g', test_pack->WriteFloat32(1024.6));
+  std::cout << std::fixed;
+  std::cout << "\n";
+
+  float temp_float = 1024.6;
+  this->TestFunctionB('g', test_pack->WriteFloat32(temp_float));
+  std::cout << "Exp: " << temp_float << "\nGot: " << test_pack->ReadFloat32()
+	        << "\n\n";
   test_pack->ResetWrite();
-  this->TestFunctionB('h', test_pack->WriteFloat32(1024.625));
+  test_pack->ResetRead();
+
+  temp_float = 1024.625;
+  this->TestFunctionB('h', test_pack->WriteFloat32(temp_float));
+  std::cout << "Exp: " << temp_float << "\nGot: " << test_pack->ReadFloat32()
+            << "\n\n";
   test_pack->ResetWrite();
-  this->TestFunctionB('i', test_pack->WriteFloat32(1024.62533));
+  test_pack->ResetRead();
+
+  temp_float = 1024.62533;
+  this->TestFunctionB('i', test_pack->WriteFloat32(temp_float));
+  std::cout << "Exp: " << temp_float << "\nGot: " << test_pack->ReadFloat32()
+            << "\n\n";
   test_pack->ResetWrite();
+  test_pack->ResetRead();
 
   // NTS: As we can see from the interior log-messages
   // from the WriteFloat32() function the modf() does not
   // make a clean cut and the binary write ends up writeing
   // two different values as the same.
   // NTS: Log-messages and the like are noted with //TEMP
-  // in the BitPack-class for easy removel later.
+  // in the BitPack-class for easy removal later.
 
   //---
 
