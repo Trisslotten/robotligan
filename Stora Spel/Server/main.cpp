@@ -2,5 +2,5 @@
 
 int main(void) {
   // HAI FFS
-  ReplayMachine::Access()->TestFunction();
+  ReplayMachine::Access()->TestFunctionB();
 }
