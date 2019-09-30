@@ -108,8 +108,7 @@ void UpdateCollisions(entt::registry& registry) {
 
   // HANDLE BALL COLLISIONS
   for (int i = 0; i < ball_collisions.size(); ++i) {
-    // Dosen't work ??
-    // HandleBallCollisions(registry, ball_collisions[i], arena_entity);
+    HandleBallCollisions(registry, ball_collisions[i], arena_entity);
   }
 
   // NEEDS TO BE CALLED LAST

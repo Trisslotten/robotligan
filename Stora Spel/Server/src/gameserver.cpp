@@ -103,7 +103,7 @@ void GameServer::Update(float dt) {
     for (auto ball : view_ball) {
       //auto& ball_c = view_cam.get<BallComponent>(ball);
       auto& trans_c = view_ball.get<TransformComponent>(ball);
-      if (length(trans_c.position) > 100.f) trans_c.position = glm::vec3(0);
+      
       to_send << trans_c.rotation;
       to_send << trans_c.position;
       break;
