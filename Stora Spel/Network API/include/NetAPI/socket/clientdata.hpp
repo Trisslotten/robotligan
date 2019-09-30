@@ -5,12 +5,15 @@
 #include <NetAPI/packet.hpp>
 #include <NetAPI/socket/client.hpp>
 #include <vector>
+#include <string>
 namespace NetAPI {
 namespace Socket {
 struct EXPORT ClientData {
   unsigned short ID = 0;
   Client client;
   std::vector<Common::Packet> packets;
+  std::string address;
+  bool is_active = false;
 };
 }  // namespace Socket
 }  // namespace NetAPI

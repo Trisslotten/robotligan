@@ -1,9 +1,8 @@
 #ifndef ENGINE_HPP_
 #define ENGINE_HPP_
 
+#include <NetAPI/socket/Client.hpp>
 #include <NetAPI/socket/tcpclient.hpp>
-#undef min
-#undef max
 #include <entt.hpp>
 #include <glob/graphics.hpp>
 #include <unordered_map>
@@ -18,33 +17,38 @@ class Engine {
 
   void Init();
 
+  void CreateInitalEntities();
+
   void Update(float dt);
 
   void UpdateNetwork();
 
   void Render();
 
-  void SetCurrentRegistry(entt::registry* registry);
  private:
+  void SetKeybinds();
+
   void UpdateSystems(float dt);
+  void HandlePacketBlock(NetAPI::Common::Packet& packet);
 
-  void CreateMainMenu();
-  void CreateSettingsMenu();
-  void CreateInGameMenu();
-  void UpdateInGameMenu(bool show_menu);
-  
-  NetAPI::Socket::TcpClient tcp_client_;
-  entt::registry registry_gameplay_;
-  entt::registry registry_mainmenu_;
-  entt::registry registry_settings_;
-  entt::registry* registry_current_;
+  void CreatePlayer(PlayerID player_id, EntityID entity_id);
+  void TestCreateLights();
 
-  std::unordered_map<int, PlayerAction> keybinds_;
-  std::unordered_map<int, PlayerAction> mousebinds_;
+  NetAPI::Socket::Client client;
+  entt::registry registry_;
+
+  PlayerID my_id = -1;
+
+  std::unordered_map<PlayerID, std::pair<glm::vec3, glm::quat>> transforms;
+
+  std::unordered_map<int, int> keybinds_;
+  std::unordered_map<int, int> mousebinds_;
+  std::unordered_map<int, int> key_presses_;
+  std::unordered_map<int, int> mouse_presses_;
+  float accum_yaw_ = 0.f;
+  float accum_pitch_ = 0.f;
 
   glob::Font2DHandle font_test_ = 0;
-  glob::GUIHandle in_game_menu_gui_ = 0;
-  bool show_in_game_menu_buttons_ = false;
 };
 
 #endif  // ENGINE_HPP_

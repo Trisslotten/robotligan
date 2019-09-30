@@ -1,5 +1,7 @@
 #include "../util/input.hpp"
 
+#include <GLFW/glfw3.h>
+
 #include <iostream>
 #include <unordered_map>
 

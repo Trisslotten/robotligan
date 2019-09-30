@@ -1,6 +1,7 @@
 #include "mesh.hpp"
 
 #include <iostream>
+#include "../usegl.hpp"
 
 namespace glob {
 
@@ -40,7 +41,8 @@ Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indic
   indices_ = indices;
   textures_ = textures;
 
-  SetupMesh();
+  if (glob::kModelUseGL)
+    SetupMesh();
 }
 
 Mesh::~Mesh() {}

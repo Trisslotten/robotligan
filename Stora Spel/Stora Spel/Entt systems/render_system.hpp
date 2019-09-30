@@ -5,15 +5,30 @@
 #include <glm/glm.hpp>
 
 #include "../util/global_settings.hpp"
-#include "ball_component.hpp"
 #include "boundingboxes.hpp"
 #include "button_component.hpp"
 #include "collision.hpp"
 #include "light_component.hpp"
 #include "model_component.hpp"
-#include "transform_component.hpp"
+#include "../shared/transform_component.hpp"
+#include "../shared/camera_component.hpp"
+#include "light_component.hpp"
+#include "button_component.hpp"
+
 
 void RenderSystem(entt::registry& registry) {
+  auto view_cam = registry.view<CameraComponent, TransformComponent>();
+  for (auto& cam_entity : view_cam) {
+    auto& cam_c = view_cam.get<CameraComponent>(cam_entity);
+    auto& trans_c = view_cam.get<TransformComponent>(cam_entity);
+    
+    Camera result = glob::GetCamera();
+    glm::vec3 position = trans_c.position + glm::quat(trans_c.rotation) * cam_c.offset;
+	result.SetOrientation(cam_c.orientation);
+    result.SetPosition(position);
+    glob::SetCamera(result);
+  }
+
   auto view_model = registry.view<ModelComponent, TransformComponent>();
 
   for (auto& model : view_model) {

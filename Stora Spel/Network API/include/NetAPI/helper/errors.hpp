@@ -1,3 +1,4 @@
+#define NOMINMAX
 #include <windows.h>
 #include <NetAPI/common.hpp>
 #include <string>

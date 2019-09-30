@@ -2,6 +2,7 @@
 #define WIN32_LEAN_MEAN
 #ifndef MEMORYINFO_H
 #define MEMORYINFO_H
+#define NOMINMAX
 #include <windows.h>
 #include <Psapi.h>
 #include <atlbase.h>

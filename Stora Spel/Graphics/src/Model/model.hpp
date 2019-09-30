@@ -29,6 +29,7 @@ class Model {
 
   bool is_loaded_ = false;
 
+  bool use_gl_ = true;
  public:
   Model();
   Model(const std::string& path);

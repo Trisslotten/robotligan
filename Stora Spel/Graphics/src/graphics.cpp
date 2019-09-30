@@ -21,6 +21,9 @@
 #include <msdfgen/msdfgen.h>
 
 namespace glob {
+
+bool kModelUseGL = true;
+
 namespace {
 
 struct RenderItem {
@@ -356,6 +359,14 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
   text_to_render.push_back(to_render);
 }
 
+void SetCamera(Camera cam) { camera = cam; }
+
+void SetModelUseGL(bool use_gl) {
+  std::cout << "Before "<< kModelUseGL << "\n";
+  kModelUseGL = use_gl;
+  std::cout << "after " << kModelUseGL << "\n";
+}
+
 void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x) {
   auto find_res = gui_elements.find(gui_h);
   if (find_res == gui_elements.end()) {
@@ -493,6 +504,6 @@ void Render() {
   num_frames++;
 }
 
-void *GetCamera() { return (void *)&camera; }
+Camera GetCamera() { return camera; }
 
 }  // namespace glob
