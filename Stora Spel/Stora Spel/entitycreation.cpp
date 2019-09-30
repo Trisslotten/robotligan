@@ -11,11 +11,12 @@
 #include <transform_component.hpp>
 #include "engine.hpp"
 
-ButtonComponent* GenerateButtonEntity(
-    entt::registry& reg, std::string text, glm::vec2 pos,
-    glob::Font2DHandle f_handle, unsigned int font_size,
-    glm::vec4 normal_color,
-    glm::vec4 hover_color) {
+ButtonComponent* GenerateButtonEntity(entt::registry& reg, std::string text,
+                                      glm::vec2 pos,
+                                      glob::Font2DHandle f_handle, bool visible,
+                                      unsigned int font_size,
+                                      glm::vec4 normal_color,
+                                      glm::vec4 hover_color) {
   auto button = reg.create();
   reg.assign<ButtonComponent>(button);
   reg.assign<TransformComponent>(button, glm::vec3(pos.x, pos.y, 0));
@@ -26,6 +27,7 @@ ButtonComponent* GenerateButtonEntity(
   b_c.font_size = font_size;  // menu_settings::font_size;
   b_c.bounds = glm::vec2(b_c.font_size * b_c.text.size() / 2, b_c.font_size);
   b_c.f_handle = f_handle;
+  b_c.visible = visible;
   return &reg.get<ButtonComponent>(button);
 }
 

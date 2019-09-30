@@ -48,6 +48,7 @@ struct TextItem {
   unsigned int size;
   std::string text;
   glm::vec4 color;
+  bool visible;
 };
 
 struct LightItem {
@@ -123,7 +124,7 @@ void DrawCube(glm::mat4 t) {
   wireframe_shader.uniform("model_transform", t);
   glBindVertexArray(cube_vao);
   glDisable(GL_DEPTH_TEST);
-  //glLineWidth(2);
+  // glLineWidth(2);
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   glDisable(GL_CULL_FACE);
   glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -289,7 +290,7 @@ MeshData GetMeshData(ModelHandle model_h) {
     std::cout
         << "DEBUG graphics.cpp: asset not found trying to get mesh hitbox\n";
     return {};
-  } 
+  }
 
   auto &model = models[model_h];
   return model.GetMeshData();
@@ -338,7 +339,7 @@ void Submit(ModelHandle model_h, glm::mat4 transform) {
 }
 
 void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
-            std::string text, glm::vec4 color) {
+            std::string text, bool visible, glm::vec4 color) {
   auto find_res = fonts.find(font_h);
   if (find_res == fonts.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted font! \n";
@@ -351,6 +352,7 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
   to_render.size = size;
   to_render.text = text;
   to_render.color = color;
+  to_render.visible = visible;
   text_to_render.push_back(to_render);
 }
 
@@ -392,9 +394,8 @@ void SubmitWireframeMesh(ModelHandle model_h) {
 }
 
 void LoadWireframeMesh(ModelHandle model_h,
-  const std::vector<glm::vec3>& vertices,
-  const std::vector<unsigned int>& indices) {
-  
+                       const std::vector<glm::vec3> &vertices,
+                       const std::vector<unsigned int> &indices) {
   auto find_res = wireframe_buffers.find(model_h);
   if (find_res == wireframe_buffers.end()) {
     GLuintBuffers b;
@@ -475,8 +476,10 @@ void Render() {
 
   text_shader.use();
   for (auto &text_item : text_to_render) {
-    text_item.font->Draw(text_shader, text_item.pos, text_item.size,
-                         text_item.text, text_item.color);
+    if (text_item.visible) {
+      text_item.font->Draw(text_shader, text_item.pos, text_item.size,
+                           text_item.text, text_item.color);
+    }
   }
 
   lights_to_render.clear();

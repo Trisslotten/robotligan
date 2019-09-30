@@ -15,4 +15,4 @@ enum PlayerAction {
   NUM_ACTIONS,
 };
 
-#endif  // SHARED_HPP_
+#endif  // SHARED_HPP_  

@@ -28,7 +28,7 @@ void Engine::Init() {
   glob::Init();
   Input::Initialize();
 
-  //tcp_client_.Connect("192.168.1.47", 1337);
+  // tcp_client_.Connect("192.168.1.47", 1337);
 
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
@@ -41,22 +41,27 @@ void Engine::Init() {
   CreateEntities(registry_gameplay_, start_positions, 3);
   CreateMainMenu();
   CreateSettingsMenu();
+  CreateInGameMenu();
   registry_current_ = &registry_mainmenu_;
 
   // Create light
   auto light = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(light, glm::vec3(0.3f, 0.3f, 1.0f),
-                                           15.f, 0.2f);
+                                            15.f, 0.2f);
   registry_gameplay_.assign<TransformComponent>(
       light, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
 
   light = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(light, glm::vec3(1.f, 0.3f, 0.3f),
-                                           15.f, 0.f);
+                                            15.f, 0.f);
   registry_gameplay_.assign<TransformComponent>(
       light, glm::vec3(-12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
+
+  // Create in-game menu background
+  in_game_menu_gui_ =
+      glob::GetGUIItem("Assets/GUI_elements/ingame_menu_V1.png");
 
   keybinds_[GLFW_KEY_W] = PlayerAction::WALK_FORWARD;
   keybinds_[GLFW_KEY_S] = PlayerAction::WALK_BACKWARD;
@@ -98,7 +103,9 @@ void Engine::Render() {
   //         "Det här är Comic Sans MS jahoo!", glm::vec4(0, 0, 0, 0.5));
   // glob::Submit(font_test_, glm::vec2(98, 202), 73,
   //           "Det här är Comic Sans MS jahoo!", glm::vec4(1, 1, 1, 1));
-
+  if (show_in_game_menu_buttons_) {
+    glob::Submit(in_game_menu_gui_, glm::vec2(491, 152), 1.0f);
+  }
   glob::Render();
 }
 
@@ -108,6 +115,18 @@ void Engine::SetCurrentRegistry(entt::registry* registry) {
 
 void Engine::UpdateSystems(float dt) {
   // collision_debug::Update(*reg);
+
+  // Test
+  if (Input::IsKeyPressed(GLFW_KEY_ESCAPE) && !show_in_game_menu_buttons_) {
+    glob::window::SetMouseLocked(false);
+    show_in_game_menu_buttons_ = true;
+    UpdateInGameMenu(show_in_game_menu_buttons_);
+  } else if (Input::IsKeyPressed(GLFW_KEY_ESCAPE) &&
+             show_in_game_menu_buttons_) {
+    glob::window::SetMouseLocked(true);
+    show_in_game_menu_buttons_ = false;
+    UpdateInGameMenu(show_in_game_menu_buttons_);
+  }
 
   player_controller::Update(*registry_current_, dt);
   ability_controller::Update(*registry_current_, dt);
@@ -141,8 +160,8 @@ void Engine::CreateMainMenu() {
   };
 
   // SETTINGS BUTTON - change registry to registry_settings_
-  b_c = GenerateButtonEntity(registry_mainmenu_, "SETTINGS", glm::vec2(100, 140),
-                             font_test_);
+  b_c = GenerateButtonEntity(registry_mainmenu_, "SETTINGS",
+                             glm::vec2(100, 140), font_test_);
   b_c->button_func = [&]() { this->SetCurrentRegistry(&registry_settings_); };
 
   // EXIT BUTTON - close the game
@@ -156,4 +175,40 @@ void Engine::CreateSettingsMenu() {
   ButtonComponent* b_c = GenerateButtonEntity(registry_settings_, "BACK",
                                               glm::vec2(100, 200), font_test_);
   b_c->button_func = [&]() { this->SetCurrentRegistry(&registry_mainmenu_); };
+}
+
+void Engine::CreateInGameMenu() {
+  // CONTINUE BUTTON -- change registry to registry_gameplay_
+  ButtonComponent* in_game_buttons_ = GenerateButtonEntity(
+      registry_gameplay_, "CONTINUE", glm::vec2(550, 430), font_test_, false);
+  in_game_buttons_->button_func = [&]() {
+    // All the logic here
+  };
+  // SETTINGS BUTTON -- change registry to registry_settings_
+  in_game_buttons_ = GenerateButtonEntity(
+      registry_gameplay_, "SETTINGS", glm::vec2(550, 360), font_test_, false);
+
+  in_game_buttons_->button_func = [&] {
+    // All the logic here
+  };
+
+  // END GAME -- change registry to registry_mainmenu_
+  in_game_buttons_ = GenerateButtonEntity(
+      registry_gameplay_, "TO LOBBY", glm::vec2(550, 290), font_test_, false);
+  in_game_buttons_->button_func = [&] {
+    // All the logic here
+  };
+
+  in_game_buttons_ = GenerateButtonEntity(
+      registry_gameplay_, "EXIT", glm::vec2(550, 220), font_test_, false);
+  in_game_buttons_->button_func = [&] { exit(0); };
+}
+
+void Engine::UpdateInGameMenu(bool show_menu) {
+  // Set in_game buttons visibility
+  auto view = registry_gameplay_.view<ButtonComponent, TransformComponent>();
+  for (auto v : view) {
+    auto& button_c = registry_gameplay_.get<ButtonComponent>(v);
+    button_c.visible = show_menu;
+  }
 }
