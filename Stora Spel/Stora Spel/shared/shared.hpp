@@ -12,7 +12,6 @@ enum PlayerAction {
   JUMP,
   SHOOT,
   KICK,
-  IN_GAME_MENU,
   NUM_ACTIONS,
 };
 

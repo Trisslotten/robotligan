@@ -71,8 +71,6 @@ void Engine::Init() {
   keybinds_[GLFW_KEY_SPACE] = PlayerAction::JUMP;
   keybinds_[GLFW_KEY_Q] = PlayerAction::ABILITY_PRIMARY;
   keybinds_[GLFW_KEY_E] = PlayerAction::ABILITY_SECONDARY;
-  // Temp
-  keybinds_[GLFW_KEY_ESCAPE] = PlayerAction::IN_GAME_MENU;
   mousebinds_[GLFW_MOUSE_BUTTON_1] = PlayerAction::KICK;
   mousebinds_[GLFW_MOUSE_BUTTON_2] = PlayerAction::SHOOT;
 }
