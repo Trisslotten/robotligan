@@ -112,23 +112,22 @@ void Engine::UpdateNetwork() {
     }
 
     if (!transforms.empty()) {
-	  auto view_players = registry_.view<TransformComponent, PlayerComponent>();
-	  for (auto player : view_players) {
-		auto& trans_c = view_players.get<TransformComponent>(player);
-		auto& player_c = view_players.get<PlayerComponent>(player);
-		auto trans = transforms[player_c.id];
-		trans_c.position = trans.first;
-		trans_c.rotation = trans.second;
-                /*
-		std::cout << trans_c.position.x << ", ";
-		std::cout << trans_c.position.y << ", ";
-		std::cout << trans_c.position.z << "\n";
-                */
-	  }
-	  //std::cout << "\n";
-	  transforms.clear();
-    
-	}
+      auto view_players = registry_.view<TransformComponent, PlayerComponent>();
+      for (auto player : view_players) {
+        auto& trans_c = view_players.get<TransformComponent>(player);
+        auto& player_c = view_players.get<PlayerComponent>(player);
+        auto trans = transforms[player_c.id];
+        trans_c.position = trans.first;
+        trans_c.rotation = trans.second;
+        /*
+        std::cout << trans_c.position.x << ", ";
+        std::cout << trans_c.position.y << ", ";
+        std::cout << trans_c.position.z << "\n";
+        */
+      }
+      // std::cout << "\n";
+      transforms.clear();
+    }
   }
 }
 
@@ -149,7 +148,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       for (auto& player : view) {
         auto& player_c = view.get(player);
         if (player_c.id == my_id) {
-          registry_.assign<CameraComponent>(player);
+          glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
+          registry_.assign<CameraComponent>(player, camera_offset);
           break;
         }
       }
@@ -164,12 +164,11 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet.Remove(str.data(), strsize);
       std::cout << "PACKET: TEST_STRING: '" << str << "'\n";
     }
-    case PacketBlockType::TEST_BALL_POS: {
-      glm::vec3 ball_pos;
-      packet >> ball_pos;
+    case PacketBlockType::BALL_TRANSFORM: {
       registry_.view<TransformComponent, BallComponent>().each(
-          [&](auto entity, auto& trans_c, auto ball) {
-            trans_c.position = ball_pos;
+          [&](auto entity, TransformComponent& trans_c, auto ball) {
+            packet >> trans_c.position;
+            packet >> trans_c.rotation;
           });
       // std::cout << "Ball pos.y=" << ball_pos.y << "\n";
       break;
@@ -247,13 +246,19 @@ void Engine::SetKeybinds() {
 
 void Engine::CreatePlayer(PlayerID id) {
   auto entity = registry_.create();
-  registry_.assign<TransformComponent>(entity);
+
+  glm::vec3 alter_scale =
+      glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
+  glm::vec3 character_scale = glm::vec3(0.1f);
 
   glob::ModelHandle player_model =
       glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
 
-  registry_.assign<ModelComponent>(entity, player_model);
   registry_.assign<PlayerComponent>(entity, id);
+  registry_.assign<TransformComponent>(entity, glm::vec3(), glm::quat(),
+                                       character_scale);
+  registry_.assign<ModelComponent>(entity, player_model,
+                                   alter_scale * character_scale);
 }
 
 void Engine::TestCreateLights() {

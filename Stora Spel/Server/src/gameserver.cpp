@@ -98,6 +98,18 @@ void GameServer::Update(float dt) {
     }
     to_send << PacketBlockType::CAMERA_TRANSFORM;
 
+
+	auto view_ball = registry_.view<BallComponent, TransformComponent>();
+    for (auto ball : view_ball) {
+      //auto& ball_c = view_cam.get<BallComponent>(ball);
+      auto& trans_c = view_ball.get<TransformComponent>(ball);
+      if (length(trans_c.position) > 100.f) trans_c.position = glm::vec3(0);
+      to_send << trans_c.rotation;
+      to_send << trans_c.position;
+      break;
+    }
+	to_send << PacketBlockType::BALL_TRANSFORM;
+
     auto view_players = registry_.view<TransformComponent, PlayerComponent>();
     int num_players = view_players.size();
     for (auto player : view_players) {
@@ -194,9 +206,9 @@ void GameServer::CreatePlayer(PlayerID id) {
   auto entity = registry_.create();
 
   // TODO: change with lobby and starting game
-  glm::vec3 start_pos{-9.f, 4.f, 0.f};
-  start_pos.x += 2.f * glm::sin(20.f * float(test_player_guid_));
-  start_pos.z += 2.f * glm::sin(30.f * float(test_player_guid_) + 2.f);
+  glm::vec3 start_pos{-2.f, 4.f, 0.f};
+  start_pos.x += 3.f * glm::sin(20.f * float(test_player_guid_));
+  start_pos.z += 3.f * glm::sin(30.f * float(test_player_guid_) + 2.f);
 
   // Prepare hard-coded values
   bool robot_is_airborne = true;

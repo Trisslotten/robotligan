@@ -29,9 +29,9 @@ void Update(entt::registry& registry, float dt) {
     // player_c.pitch = glm::mod(player_c.pitch + delta_pitch, 2.f * pi);
     // player_c.pitch += delta_pitch;
     cam_c.orientation =
-        glm::quat(glm::vec3(player_c.pitch, player_c.yaw + pi / 2, 0));
+        glm::quat(glm::vec3(player_c.pitch, player_c.yaw, 0));
     cam_c.orientation = glm::normalize(cam_c.orientation);
-    trans_c.Rotate(glm::vec3(0, -player_c.yaw, 0));
+    trans_c.SetRotation(glm::vec3(0, player_c.yaw, 0));
 
     if (player_c.actions[PlayerAction::SHOOT]) {
       ability_c.shoot = true;
