@@ -7,6 +7,7 @@ ReplayMachine::ReplayMachine() {
   // I
   this->input_log_ = nullptr;
   this->bits_per_int_ = 0;
+  this->registry_log_ = nullptr;
 }
 
 ReplayMachine::~ReplayMachine() {
@@ -16,21 +17,26 @@ ReplayMachine::~ReplayMachine() {
   if (this->input_log_ != nullptr) {
     delete this->input_log_;
   }
+  if (this->registry_log_ != nullptr) {
+    delete this->registry_log_;
+  }
 
 }
 
-void ReplayMachine::WriteKeyFrame(const std::bitset<10>& in_bitset,
+void ReplayMachine::WriteInputFrame(const std::bitset<10>& in_bitset,
                                     const float& in_x_value,
                                     const float& in_y_value) {
 
 	// Format:	
-	//	{			: (for every change 1+X bits are stored)
-	//		1 bit	: 1, indicating a change
-	//		X bits	: index int
+	//	{			:	(for every change 1+X bits are stored,
+	//					where X is the number of bits needed
+	//					to represent the largest index in binary)
+	//		1 bit	:	1, indicating a change
+	//		X bits	:	index int
 	//	}
-	//	1 bit	: 0, indicating the end of the first section
-	//	32 bits	: x_value float
-    //	32 bits	: y_value float
+	//	1 bit	:	0, indicating the end of the first section
+	//	32 bits	:	x_value float
+    //	32 bits	:	y_value float
 
   // Loop over the bitset
   for (unsigned int i = 0; i < in_bitset.size(); i++) {
@@ -57,7 +63,7 @@ void ReplayMachine::WriteKeyFrame(const std::bitset<10>& in_bitset,
   this->input_log_->WriteFloat32(in_y_value);
 }
 
-void ReplayMachine::ReadKeyFrame(std::bitset<10>& in_bitset,
+void ReplayMachine::ReadInputFrame(std::bitset<10>& in_bitset,
                                     float& in_x_value, float& in_y_value) {
   // Read the first bit. If it is 1 a change has occured
   // and the following bits specify the index in the bitset.
@@ -83,6 +89,21 @@ void ReplayMachine::ReadKeyFrame(std::bitset<10>& in_bitset,
   in_y_value = y_float;
 }
 
+void ReplayMachine::OverwriteRegistry(entt::registry& in_source,
+                                  entt::registry& in_target) {
+  // Clone the source registry into the target registry
+  in_target = in_source.clone();
+}
+
+void ReplayMachine::SaveRegistrySnapshot(entt::registry& in_registry) {
+  // NTS: Rather then doing this, use the entt snapshot function?
+  this->OverwriteRegistry(in_registry, *(this->registry_log_));
+}
+
+void ReplayMachine::LoadRegistrySnapshot(entt::registry& in_registry) {
+  // NTS: Rather then doing this, use the entt snapshot function?
+  this->OverwriteRegistry(*(this->registry_log_), in_registry);
+}
 
 // Public----------------------------------------------------------------------
 ReplayMachine* ReplayMachine::Access() {
@@ -105,7 +126,7 @@ void ReplayMachine::Init(unsigned int in_seconds, unsigned int in_ticks_per_seco
   //
   //	<<STORING KEY PRESSES ALT 1>>
   //	> Store if a key has been pressed and its index
-  //	> This section can vary in total size from 1 to 1+ceil(base2_log(N)) bits
+  //	> This section can vary in total size from 1 to 1+ceil(base2_log(N))+1 bits
   //	+ Can store any number of keys easily
   //	+ Only stores the keys changed, not wasting space on unchanged keys
   //	- 
@@ -160,7 +181,7 @@ void ReplayMachine::Init(unsigned int in_seconds, unsigned int in_ticks_per_seco
   //
   //	<<RESULT>>
   //	> For one controlled entity we will require at maximum
-  //	>	1 + B * ceil(base2_log(N)) + 32 + 32
+  //	>	1 + B * (ceil(base2_log(N))+1) + 32 + 32
   //	> bits per frame, where B (buttons pressed/released) is
   //	> equal to N (all buttons).
 
@@ -168,11 +189,13 @@ void ReplayMachine::Init(unsigned int in_seconds, unsigned int in_ticks_per_seco
 																// static size we specified for the bitsets
   this->bits_per_int_ = (unsigned int)ceil(log(num_of_keys) / log(2));
   unsigned int max_num_of_frames =  in_ticks_per_second * in_seconds;
-  unsigned int max_bits_per_frame = (1 + num_of_keys * this->bits_per_int_ + 64);
+  unsigned int max_bits_per_frame = (1 + num_of_keys * (this->bits_per_int_ + 1) + 64);
   this->input_log_ = new BitPack(max_num_of_frames, max_bits_per_frame);
 
   this->last_input_state_ = std::bitset<10>("0000000000");
   this->last_output_state_ = std::bitset<10>("0000000000");
+
+  this->registry_log_ = new entt::registry;
 }
 
 void ReplayMachine::TestFunctionA() {
@@ -327,7 +350,7 @@ void ReplayMachine::TestFunctionB() {
 
   // Input the five dummy frames to the log
   for (unsigned int i = 0; i < 5; i++) {
-    this->WriteKeyFrame(frame_bits[i], frame_floats[2*i], frame_floats[(2*i)+1]);
+    this->WriteInputFrame(frame_bits[i], frame_floats[2*i], frame_floats[(2*i)+1]);
   }
 
   std::cout << "---------\n\n";
@@ -338,7 +361,7 @@ void ReplayMachine::TestFunctionB() {
   float retriever_floats[2] = {0, 0};
   
   for (unsigned int i = 0; i < 5; i++) {
-    this->ReadKeyFrame(retriever_bits, retriever_floats[0], retriever_floats[1]);
+    this->ReadInputFrame(retriever_bits, retriever_floats[0], retriever_floats[1]);
     std::cout << "I: " << frame_bits[i] << "\n";
     std::cout << "O: " << retriever_bits << "\n";
     std::cout << "I: " << frame_floats[2*i] << " : " << frame_floats[2*i+1] << "\n";
@@ -350,4 +373,23 @@ void ReplayMachine::TestFunctionB() {
   // Once done testing, pretend it never happened
   delete this->input_log_;
   this->input_log_ = nullptr;
+}
+
+entt::registry ReplayMachine::TestFunctionC(entt::registry& in_registry) {
+  // Take a registry from outside
+  // Note that his class knows of no components
+  
+  // Initiate
+  this->Init(1, 1);
+  
+  // Clone the registry into the local 
+  this->SaveRegistrySnapshot(in_registry);
+
+  // Create an empty register locally
+  // and load the stored data into it
+  entt::registry loc_reg;
+  this->LoadRegistrySnapshot(in_registry);
+
+  //Return the registry
+  return loc_reg;
 }

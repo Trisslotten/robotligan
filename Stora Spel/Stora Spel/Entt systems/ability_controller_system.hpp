@@ -31,10 +31,10 @@ void Update(entt::registry &registry, float dt) {
         ability_component.cooldown_remaining -= dt;
         ability_component.shoot_cooldown -= dt;
         if (ability_component.cooldown_remaining < 0.0f) {
-          ability_component.cooldown_remaining == 0.0f;
+          ability_component.cooldown_remaining = 0.0f;
         }
         if (ability_component.shoot_cooldown < 0.0f) {
-          ability_component.shoot_cooldown == 0.0f;
+          ability_component.shoot_cooldown = 0.0f;
         }
 
         // First check if primary ability is being used
