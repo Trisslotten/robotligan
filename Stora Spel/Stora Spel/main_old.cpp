@@ -236,12 +236,12 @@ int main(unsigned argc, char** argv) {
     glob::Submit(gui_teamscore, glm::vec2(497, 648), 1, 100);
 
 	// Submit text TEST
-    glob::Submit(font_test3, glm::vec2(626, 695), 36, "5:33",		// Replace string w/ actual match time
-                 glm::vec4(0.89, 0.82, 0.21, 1));
-    glob::Submit(font_test3, glm::vec2(582, 705), 72, "0",			// Replace string with Red team's actual score
-                 glm::vec4(0, 0.26, 1, 1));
-    glob::Submit(font_test3, glm::vec2(705, 705), 72, "12",			// Replace string with Blue team's actual score
-                 glm::vec4(1, 0, 0, 1));
+    //glob::Submit(font_test3, glm::vec2(626, 695), 36, "5:33",		// Replace string w/ actual match time
+    //             glm::vec4(0.89, 0.82, 0.21, 1));
+    //glob::Submit(font_test3, glm::vec2(582, 705), 72, "0",			// Replace string with Red team's actual score
+    //             glm::vec4(0, 0.26, 1, 1));
+    //glob::Submit(font_test3, glm::vec2(705, 705), 72, "12",			// Replace string with Blue team's actual score
+    //             glm::vec4(1, 0, 0, 1));
 
     glob::Render();
     glob::window::Update();

@@ -152,7 +152,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main_old.cpp" />
+    <ClCompile Include="engine.cpp" />
+    <ClCompile Include="entitycreation.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="util\global_settings.cpp" />
     <ClCompile Include="util\input.cpp" />
     <ClCompile Include="util\timer.cpp" />
@@ -169,6 +171,8 @@
     <ClInclude Include="Components\projectile_component.hpp" />
     <ClInclude Include="Components\transform_component.hpp" />
     <ClInclude Include="Components\velocity.hpp" />
+    <ClInclude Include="engine.hpp" />
+    <ClInclude Include="entitycreation.hpp" />
     <ClInclude Include="Entt systems\button_system.hpp" />
     <ClInclude Include="Entt systems\collision_system.hpp" />
     <ClInclude Include="Entt systems\collision_temp_debug_system.h" />
