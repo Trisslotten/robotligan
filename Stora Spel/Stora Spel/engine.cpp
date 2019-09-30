@@ -139,7 +139,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::CREATE_PLAYER: {
       PlayerID player_id = -1;
       EntityID entity_id = -1;
-      packet >> entity_id;
+      //packet >> entity_id;
       packet >> player_id;
       std::cout << "PACKET: CREATE_PLAYER, player_id=" << player_id
                 << ", entity_id=" << entity_id << "\n";

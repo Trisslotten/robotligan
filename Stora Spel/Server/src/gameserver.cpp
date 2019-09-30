@@ -143,34 +143,11 @@ void GameServer::Update(float dt) {
         to_send << PacketBlockType::CREATE_PLAYER;
       }
     }
-    /*
-std::string hej = "Test test asdasd";
-to_send.Add(hej.data(), hej.size());
-to_send << hej.size();
-to_send << PacketBlockType::TEST_STRING;
-*/
 
     server_.Send(to_send);
   }
 
   created_players_.clear();
-  /*
-  if (positions_.size() > 0) {
-    NetAPI::Common::Packet packet;
-    packet.Add(positions_.data(), positions_.size());
-    packet << (int)positions_.size();
-
-    server_.Send(packet);
-  }
-  */
-
-  /*
-  // Reset positions and velocities
-  if (Input::IsKeyPressed(GLFW_KEY_K)) {
-    // K as in kickoff
-    ResetEntities( start_positions, 3);
-  }
-  */
 }
 
 void GameServer::UpdateSystems(float dt) {
