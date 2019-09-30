@@ -10,6 +10,7 @@
 #include "ecs/components.hpp"
 #include "ecs/systems/ability_controller_system.hpp"
 #include "ecs/systems/collision_system.hpp"
+#include "ecs/systems/goal_system.hpp"
 #include "ecs/systems/physics_system.hpp"
 #include "ecs/systems/player_controller_system.hpp"
 
@@ -32,6 +33,7 @@ void GameServer::Init() {
       glm::vec3(0.f, 0.f, 0.f)    // Others
   };
   CreateEntities(start_positions, 3);
+  CreateGoals();
 }
 
 void GameServer::Update(float dt) {
@@ -98,17 +100,16 @@ void GameServer::Update(float dt) {
     }
     to_send << PacketBlockType::CAMERA_TRANSFORM;
 
-
-	auto view_ball = registry_.view<BallComponent, TransformComponent>();
+    auto view_ball = registry_.view<BallComponent, TransformComponent>();
     for (auto ball : view_ball) {
-      //auto& ball_c = view_cam.get<BallComponent>(ball);
+      // auto& ball_c = view_cam.get<BallComponent>(ball);
       auto& trans_c = view_ball.get<TransformComponent>(ball);
-      
+
       to_send << trans_c.rotation;
       to_send << trans_c.position;
       break;
     }
-	to_send << PacketBlockType::BALL_TRANSFORM;
+    to_send << PacketBlockType::BALL_TRANSFORM;
 
     auto view_players = registry_.view<TransformComponent, PlayerComponent>();
     int num_players = view_players.size();
@@ -150,9 +151,16 @@ void GameServer::Update(float dt) {
   created_players_.clear();
 }
 
+void GameServer::AddScore(unsigned int team) {
+  this->scores[team]++;
+  std::cout << "NEW GOAL! Scores: " << scores[TEAM_RED] << " "
+            << scores[TEAM_BLUE] << "\n";
+}
+
 void GameServer::UpdateSystems(float dt) {
   player_controller::Update(registry_, dt);
   ability_controller::Update(registry_, dt);
+  goal_system::Update(registry_, (goal_system::GameServer*)this);
 
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);
@@ -335,4 +343,24 @@ void GameServer::AddArenaComponents(entt::entity& entity) {
   auto& mh = registry_.assign<physics::MeshHitbox>(entity, std::move(md.pos),
                                                    std::move(md.indices));
   // glob::LoadWireframeMesh(model_arena, mh.pos, mh.indices);
+}
+
+void GameServer::CreateGoals() {
+  // blue goal
+  auto enttiy = registry_.create();
+  registry_.assign<physics::OBB>(enttiy, glm::vec3(0, 0, 0), glm::vec3(1, 0, 0),
+                                 glm::vec3(0, 1, 0), glm::vec3(0, 0, 1), 3.f,
+                                 2.f, 2.f);
+  registry_.assign<TeamCoponent>(enttiy, TEAM_BLUE);
+  auto& trans_comp = registry_.assign<TransformComponent>(enttiy);
+  trans_comp.position = glm::vec3(0, 0, 10);
+
+  // red goal
+  enttiy = registry_.create();
+  registry_.assign<physics::OBB>(enttiy, glm::vec3(0, 0, 0), glm::vec3(1, 0, 0),
+                                 glm::vec3(0, 1, 0), glm::vec3(0, 0, 1), 3.f,
+                                 2.f, 2.f);
+  registry_.assign<TeamCoponent>(enttiy, TEAM_RED);
+  trans_comp = registry_.assign<TransformComponent>(enttiy);
+  trans_comp.position = glm::vec3(0, 0, -10);
 }
