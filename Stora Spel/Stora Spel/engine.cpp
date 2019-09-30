@@ -11,6 +11,7 @@
 #include <render_system.hpp>
 #include "Components/ball_component.hpp"
 #include "Components/light_component.hpp"
+#include "Components/pick_up_component.hpp"
 #include "Components/player_component.hpp"
 #include "entitycreation.hpp"
 #include "shared/camera_component.hpp"
@@ -45,8 +46,7 @@ void Engine::Init() {
       glob::GetGUIItem("Assets/GUI_elements/ingame_menu_V1.png");
   // Create 2D element
   e2D_test_ = glob::GetE2DItem("assets/GUI_elements/point_table.png");
-  e2D_test2_ =
-      glob::GetE2DItem("assets/GUI_elements/Scoreboard_V1.png");
+  e2D_test2_ = glob::GetE2DItem("assets/GUI_elements/Scoreboard_V1.png");
 
   // Create GUI elementds
   gui_test_ = glob::GetGUIItem("assets/GUI_elements/Scoreboard_V1.png");
@@ -72,10 +72,11 @@ void Engine::Init() {
 
   SetKeybinds();
 
-  client.Connect("192.168.1.47", 1337);
+  client.Connect("localhost", 1337);
 }
 
 void Engine::CreateInitalEntities() {
+  // Arena
   auto arena = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f);
@@ -85,12 +86,23 @@ void Engine::CreateInitalEntities() {
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                 arena_scale);
 
+  // Ball
   auto ball = registry_gameplay_.create();
   glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
   registry_gameplay_.assign<ModelComponent>(ball, model_ball);
   registry_gameplay_.assign<TransformComponent>(ball, zero_vec, zero_vec,
                                                 glm::vec3(1.0f));
   registry_gameplay_.assign<BallComponent>(ball);
+
+  // Pick-up
+  auto pick_up = registry_gameplay_.create();
+  glob::ModelHandle model_pick_up =
+      glob::GetModel("assets/lowpolydeer/deer.obj");  // Replace with real model
+  registry_gameplay_.assign<ModelComponent>(pick_up, model_pick_up);
+  registry_gameplay_.assign<TransformComponent>(
+      pick_up, glm::vec3(5.0f, -5.6f, 0.0f), glm::vec3(0.0f, 0.0f, -1.6f),
+      glm::vec3(0.002f));
+  registry_gameplay_.assign<PickUpComponent>(pick_up);
 }
 
 void Engine::Update(float dt) {
