@@ -73,6 +73,19 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
     textures.insert(textures.end(), specular_maps.begin(), specular_maps.end());
   }
 
+  if (mesh->HasBones()) {
+	  std::cout << "Mesh bones: " << mesh->mNumBones << "\n";
+	  for (int i = 0; i < mesh->mNumBones; i++) {
+		Joint* j = new Joint();
+		j->id = i;
+		j->name = mesh->mBones[i]->mName.data;
+		//std::cout << j->name << "\n";
+		bones_.push_back(j);
+	  }
+
+	  std::cout << "Node bones: " << bones_.size() << "\n";
+  }
+
   return Mesh(vertex, indices, textures);
 }
 
@@ -130,32 +143,55 @@ void Model::LoadModel(std::string path) {
   }
 
   directory_ = path.substr(0, path.find_last_of('/'));
+
   ProcessNode(scene->mRootNode, scene);
-  Joint* r = makeArmature(scene->mRootNode, false);
-  if (r) {
-	  root_joint_ = r;
-	  std::cout << "Armature loaded, root bone set.\n";
-	  has_armature_ = true;
-	  //std::cout << (printArmature(r)) << "\n";
-  }
-  else {
-	  std::cout << "Mesh has no valid armature.\n";
-  }
+
+  MakeArmature(scene->mRootNode);
+  std::cout << PrintArmature() << "\n";
 
   if (scene->HasAnimations()) {
-	  std::cout << "Animations detected.\n";
 	  int numAnimations = scene->mNumAnimations;
 	  std::cout << numAnimations << " animations detected.\n";
 	  for (int i = 0; i < numAnimations; i++) {
-		  std::cout  << "Name: " << scene->mAnimations[i]->mName.data << "\n";
-		  std::cout << "	Channels: " << scene->mAnimations[i]->mNumChannels << "\n";
-		  std::cout << "	Duration: " << scene->mAnimations[i]->mDuration << "\n";
-		  std::cout << "	TPS: " << scene->mAnimations[i]->mTicksPerSecond << "\n";
+		  Animation anim;
+		  anim.name_ = scene->mAnimations[i]->mName.data;
+		  anim.duration_ = scene->mAnimations[i]->mDuration;
+		  anim.tick_per_second_ = scene->mAnimations[i]->mTicksPerSecond;
+
+		  //std::cout  << "Name: " << anim.name_ << "\n";
+		  //std::cout << "  Duration: " << anim.duration_ << "\n";
+		  //std::cout << "  TPS: " << anim.tick_per_second_ << "\n";
+
 		  for (int j = 0; j < scene->mAnimations[i]->mNumChannels; j++) {
-			  std::cout << "		Name: " << scene->mAnimations[i]->mChannels[j]->mNodeName.data << "\n";
-			  //bind to armature IDs
-			  //Lol how?
+			  std::string jointName = scene->mAnimations[i]->mChannels[j]->mNodeName.data;
+			  //std::cout << "    Name: " << jointName << "\n";
+			  Channel channel;
+			  for (int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumPositionKeys; k++) {
+				  channel.positionKeys.push_back(scene->mAnimations[i]->mChannels[j]->mPositionKeys[k]);
+			  }
+			  for (int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumRotationKeys; k++) {
+				  channel.rotationKeys.push_back(scene->mAnimations[i]->mChannels[j]->mRotationKeys[k]);
+			  }
+			  for (int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumScalingKeys; k++) {
+				  channel.scalingKeys.push_back(scene->mAnimations[i]->mChannels[j]->mScalingKeys[k]);
+			  }
+
+
+			  //find appropriate bone
+			  char id = 0;
+			  for (auto j : bones_) {
+				  if (j->name == jointName) {
+					  id = j->id;
+					  //std::cout << jointName << "\n";
+				  }
+			  }
+
+			  channel.boneID = id;
+
+			  anim.channels_.push_back(channel);
 		  }
+
+		  animations_.push_back(anim);
 	  }
 
   }
@@ -163,46 +199,34 @@ void Model::LoadModel(std::string path) {
   is_loaded_ = true;
 }
 
-std::string Model::printArmature(Joint* joint, int depth) {
+std::string Model::PrintArmature() {
 	std::stringstream ss;
-	ss << joint->name << "\n";
-	depth++;
-	for (auto j : joint->Children) {
-		for (int i = 0; i < depth; i++) {
-			ss << "-";
+	for (auto b : bones_) {
+		ss << b->name << "\n";
+		for (auto c : b->Children) {
+			ss << "-" << c->name << "\n";
 		}
-		ss << printArmature(j, depth);
 	}
 	return ss.str();
 }
 
-Joint* Model::makeArmature(aiNode* node, bool inside_armature) {
+Joint* Model::MakeArmature(aiNode* node) {
 	bool rootNode = (node->mName.data == std::string("Root"));
 
-	if (inside_armature || rootNode) {
-		Joint* j = new Joint;
-		bones.push_back(j);
-		j->name = node->mName.data;
-		j->id = num_bones_;
-		num_bones_++;
-
-		for (unsigned int i = 0; i < node->mNumChildren; i++) {
-			std::string disallowed_ending = "_end";
-			bool endNode = std::equal(disallowed_ending.rbegin(), disallowed_ending.rend(), std::string(node->mChildren[i]->mName.data).rbegin());
-			if (!endNode) {
-				j->Children.push_back(makeArmature(node->mChildren[i], inside_armature || rootNode));
+	for (auto b : bones_) {
+		if (node->mName.data == b->name) {//node is known bone
+			for (int n = 0; n < node->mNumChildren; n++) {
+				for (auto PCB : bones_) {
+					if (node->mChildren[n]->mName.data == PCB->name) {//found child
+						b->Children.push_back(PCB);
+					}
+				}
 			}
 		}
-
-		return j;
 	}
-	else {
-		for (unsigned int i = 0; i < node->mNumChildren; i++) {
-			Joint* ret = makeArmature(node->mChildren[i], false);
-			if (ret) {
-				return ret;
-			}
-		}
+
+	for (int i = 0; i < node->mNumChildren; i++) {
+		MakeArmature(node->mChildren[i]);
 	}
 	return nullptr;
 }
@@ -256,7 +280,7 @@ Model::Model(const std::string& path) { LoadModel(path); }
 Model::Model() {}
 
 Model::~Model() {
-	for (auto b : bones) {
+	for (auto b : bones_) {
 		delete b;
 	}
 }

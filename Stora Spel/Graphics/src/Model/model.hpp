@@ -6,6 +6,7 @@
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
 #include "../shader.hpp"
+#include "../Animation.hpp"
 
 namespace glob {
 
@@ -16,6 +17,7 @@ struct Joint {
 	glm::mat4 transform = glm::mat4(0.f);
 	char id;
 	std::string name;
+	std::vector<int> weights;
 };
 
 class Model {
@@ -26,8 +28,8 @@ class Model {
 
   void LoadModel(std::string path);
   void ProcessNode(aiNode* node, const aiScene* scene);
-  std::string printArmature(Joint* joint, int depth = 0);
-  Joint* makeArmature(aiNode* node, bool inside_armature);
+  std::string PrintArmature();
+  Joint* MakeArmature(aiNode* node);
 
   std::vector<Texture> texture_loaded_;
   std::vector<Mesh> mesh_;
@@ -37,11 +39,17 @@ class Model {
 
   std::string directory_;
 
-  Joint* root_joint_;
-  std::vector<glm::vec3> weights_;
-  std::vector<Joint*> bones;
+  std::vector<float> weights_;
+  std::vector<char> bone_index_;
+  std::vector<char> num_inf_bones_;
+
+  std::vector<Joint*> bones_;
   unsigned int num_bones_ = 0;
+
   bool has_armature_ = false;
+
+  std::vector<Animation> animations_;
+
 
   bool is_loaded_ = false;
 
