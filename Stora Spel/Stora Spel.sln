@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.29215.179
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Client", "Stora Spel\Stora Spel.vcxproj", "{DFB6BCD0-1A53-4360-946D-A40E869411A7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{BB8A9F98-A7E1-4DA9-97B0-177BA1DA1368} = {BB8A9F98-A7E1-4DA9-97B0-177BA1DA1368}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Server", "Server\Server.vcxproj", "{BB8A9F98-A7E1-4DA9-97B0-177BA1DA1368}"
 	ProjectSection(ProjectDependencies) = postProject

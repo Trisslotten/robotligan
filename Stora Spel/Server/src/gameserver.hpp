@@ -38,7 +38,6 @@ class GameServer {
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
 
   int test_player_guid_ = 0;
-  void CreateGoals();
 
   std::vector<unsigned int> scores;
 };
