@@ -35,7 +35,7 @@ void Engine::Init() {
 
   SetKeybinds();
 
-  client.Connect("localhost", 1337);
+  client.Connect("192.168.1.47", 1337);
 }
 
 void Engine::CreateInitalEntities() {
