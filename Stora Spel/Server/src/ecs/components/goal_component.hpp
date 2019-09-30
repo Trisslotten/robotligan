@@ -1,0 +1,4 @@
+#ifndef GOAL_COMPONENT_HPP_
+#define GOAL_COMPONENT_HPP_
+
+#endif // !GOAL_COMPONENT_HPP_

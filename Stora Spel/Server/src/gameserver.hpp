@@ -4,6 +4,7 @@
 #define NOMINMAX
 #include <NetAPI/socket/server.hpp>
 #include <entity/registry.hpp>
+#include <vector>
 #include <entt.hpp>
 #include <glm/glm.hpp>
 #include <shared.hpp>
@@ -14,6 +15,7 @@ class GameServer {
   ~GameServer();
   void Init();
   void Update(float dt);
+  void AddScore(unsigned int team);
 
  private:
   void UpdateSystems(float dt);
@@ -26,6 +28,7 @@ class GameServer {
   void AddBallComponents(entt::entity& entity, glm::vec3 in_pos,
                          glm::vec3 in_vel);
   void AddArenaComponents(entt::entity& entity);
+  void CreateGoals();
 
   NetAPI::Socket::Server server_;
   int last_num_players_ = 0;
@@ -35,6 +38,8 @@ class GameServer {
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
 
   int test_player_guid_ = 0;
+
+  std::vector<unsigned int> scores;
 };
 
 #endif  // GAME_SERVER_HPP_
