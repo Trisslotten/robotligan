@@ -39,14 +39,12 @@ class Model {
 
   std::string directory_;
 
-  std::vector<float> weights_;
-  std::vector<char> bone_index_;
-  std::vector<char> num_inf_bones_;
+  std::vector<glm::vec4> weights_;
+  std::vector<glm::ivec4> bone_index_;
 
   std::vector<Joint*> bones_;
   unsigned int num_bones_ = 0;
 
-  bool has_armature_ = false;
 
   std::vector<Animation> animations_;
 

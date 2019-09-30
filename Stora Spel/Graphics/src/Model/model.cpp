@@ -15,6 +15,10 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
 
   // Process the mesh
   for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+	//create weight objects
+	weights_.push_back(glm::vec4(0.f));
+	bone_index_.push_back(glm::ivec4(-1));
+
     Vertex temp_vertex;
     glm::vec3 vector_vertices;
     // Process vertices
@@ -81,9 +85,39 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
 		j->name = mesh->mBones[i]->mName.data;
 		//std::cout << j->name << "\n";
 		bones_.push_back(j);
+
+		for (int w = 0; w < mesh->mBones[i]->mNumWeights; w++){
+			int boneIndexLength = 0;
+			for (int bil = 0; bil < 4; bil++) {//find suitable position for the bone id
+				if (bone_index_.at(w)[bil] == -1) {
+					boneIndexLength = bil;
+					break;
+				}
+			}
+			bone_index_.at(mesh->mBones[i]->mWeights[w].mVertexId)[boneIndexLength] = j->id;
+			weights_.at(mesh->mBones[i]->mWeights[w].mVertexId)[boneIndexLength] = mesh->mBones[i]->mWeights[w].mWeight;
+			//std::cout << mesh->mBones[i]->mWeights[w].mVertexId << " : " << bone_index_.at(mesh->mBones[i]->mWeights[w].mVertexId)[boneIndexLength] << " : " << weights_.at(mesh->mBones[i]->mWeights[w].mVertexId)[boneIndexLength] << "\n";
+		}
 	  }
 
 	  std::cout << "Node bones: " << bones_.size() << "\n";
+
+	  for (int i = 0; i < mesh->mNumVertices; i++) {
+		  for (int w = 0; w < 4; w++) {
+			  std::cout << bone_index_.at(i)[w];
+			  if (w != 3) {
+				  std::cout << ", ";
+			  }
+		  }
+		  std::cout << " | ";
+		  for (int w = 0; w < 4; w++) {
+			  std::cout << weights_.at(i)[w];
+			  if (w != 3) {
+				  std::cout << ", ";
+			  }
+		  }
+		  std::cout << "\n";
+	  }
   }
 
   return Mesh(vertex, indices, textures);
