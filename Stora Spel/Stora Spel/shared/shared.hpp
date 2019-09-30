@@ -2,6 +2,7 @@
 #define SHARED_HPP_
 
 typedef int PlayerID;
+typedef int EntityID;
 
 namespace PlayerAction {
 enum : int16_t {

@@ -176,6 +176,7 @@
     <ClInclude Include="shared\camera_component.hpp" />
     <ClInclude Include="Components\light_component.hpp" />
     <ClInclude Include="Components\model_component.hpp" />
+    <ClInclude Include="shared\id_component.hpp" />
     <ClInclude Include="shared\transform_component.hpp" />
     <ClInclude Include="Entt systems\button_system.hpp" />
     <ClInclude Include="Entt systems\print_position_system.hpp" />

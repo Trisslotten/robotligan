@@ -27,6 +27,7 @@
     <ClInclude Include="shared\camera_component.hpp" />
     <ClInclude Include="Components\ball_component.hpp" />
     <ClInclude Include="Components\player_component.hpp" />
+    <ClInclude Include="shared\id_component.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />
@@ -35,15 +36,6 @@
     <None Include="shaders\testshader.frag" />
     <None Include="shaders\testshader.vert" />
     <ClInclude Include="Components\ball_component.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Components\physics_component.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Entt systems\collision_system.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Entt systems\physics_system.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <None Include="assets\shaders\guishader.vert" />
@@ -60,12 +52,10 @@
     <None Include="Assets\shaders\text2Dshader.vert" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Components\projectile_component.hpp" />
     <ClInclude Include="util\global_settings.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="util\settings.txt" />
     <Text Include="util\errorlog.txt" />
-    <ClInclude Include="Entt systems\collision_temp_debug_system.h" />
   </ItemGroup>
 </Project>

@@ -31,7 +31,7 @@ class Engine {
   void UpdateSystems(float dt);
   void HandlePacketBlock(NetAPI::Common::Packet& packet);
 
-  void CreatePlayer(PlayerID id);
+  void CreatePlayer(PlayerID player_id, EntityID entity_id);
   void TestCreateLights();
 
   NetAPI::Socket::Client client;

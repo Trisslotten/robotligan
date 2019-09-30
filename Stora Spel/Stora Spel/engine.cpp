@@ -11,6 +11,7 @@
 #include "Components/light_component.hpp"
 #include "Components/player_component.hpp"
 #include "shared/camera_component.hpp"
+#include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
@@ -136,10 +137,13 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
   packet >> block_type;
   switch (block_type) {
     case PacketBlockType::CREATE_PLAYER: {
-      PlayerID id = -1;
-      packet >> id;
-      std::cout << "PACKET: CREATE_PLAYER, id=" << id << "\n";
-      CreatePlayer(id);
+      PlayerID player_id = -1;
+      EntityID entity_id = -1;
+      packet >> entity_id;
+      packet >> player_id;
+      std::cout << "PACKET: CREATE_PLAYER, player_id=" << player_id
+                << ", entity_id=" << entity_id << "\n";
+      CreatePlayer(player_id, entity_id);
       break;
     }
     case PacketBlockType::SET_CLIENT_PLAYER_ID: {
@@ -244,7 +248,7 @@ void Engine::SetKeybinds() {
   mousebinds_[GLFW_MOUSE_BUTTON_2] = PlayerAction::SHOOT;
 }
 
-void Engine::CreatePlayer(PlayerID id) {
+void Engine::CreatePlayer(PlayerID player_id, EntityID entity_id) {
   auto entity = registry_.create();
 
   glm::vec3 alter_scale =
@@ -254,7 +258,8 @@ void Engine::CreatePlayer(PlayerID id) {
   glob::ModelHandle player_model =
       glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
 
-  registry_.assign<PlayerComponent>(entity, id);
+  registry_.assign<IDComponent>(entity, entity_id);
+  registry_.assign<PlayerComponent>(entity, player_id);
   registry_.assign<TransformComponent>(entity, glm::vec3(), glm::quat(),
                                        character_scale);
   registry_.assign<ModelComponent>(entity, player_model,
