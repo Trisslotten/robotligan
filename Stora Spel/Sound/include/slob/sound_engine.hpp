@@ -7,22 +7,27 @@
 #define EXPORT __declspec(dllimport)
 #endif
 
-#include <fmod_api_core_inc/fmod.hpp>
-#include <fmod_api_core_inc/fmod_errors.h>
+#include <string>
 
 namespace slob {
+
+typedef unsigned long SoundHandle;
 
 class EXPORT SoundEngine {
  public:
   SoundEngine();
   ~SoundEngine();
   void Init();
-  FMOD::System* GetSystem() { return system_; }
+  SoundHandle GetSound(const std::string& path);
+  void PlaySound(SoundHandle);
 
  private:
-  FMOD::System* system_ = nullptr;
+  struct Impl;
+  Impl* impl_;
 };
 
 }  // namespace slob
+
+
 
 #endif  // SLOB_SOUND_HPP_

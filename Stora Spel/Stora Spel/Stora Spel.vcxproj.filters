@@ -5,6 +5,7 @@
     <ClCompile Include="util\input.cpp" />
     <ClCompile Include="util\global_settings.cpp" />
     <ClCompile Include="main_old.cpp" />
+    <ClCompile Include="sound_main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Components\ability_component.hpp" />
