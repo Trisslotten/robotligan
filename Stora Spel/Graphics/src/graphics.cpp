@@ -51,7 +51,6 @@ struct TextItem {
   unsigned int size;
   std::string text;
   glm::vec4 color;
-  bool visible;
 };
 
 struct LightItem {
@@ -342,7 +341,7 @@ void Submit(ModelHandle model_h, glm::mat4 transform) {
 }
 
 void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
-            std::string text, bool visible, glm::vec4 color) {
+            std::string text, glm::vec4 color) {
   auto find_res = fonts.find(font_h);
   if (find_res == fonts.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted font! \n";
@@ -355,14 +354,13 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
   to_render.size = size;
   to_render.text = text;
   to_render.color = color;
-  to_render.visible = visible;
   text_to_render.push_back(to_render);
 }
 
 void SetCamera(Camera cam) { camera = cam; }
 
 void SetModelUseGL(bool use_gl) {
-  std::cout << "Before "<< kModelUseGL << "\n";
+  std::cout << "Before " << kModelUseGL << "\n";
   kModelUseGL = use_gl;
   std::cout << "after " << kModelUseGL << "\n";
 }
@@ -482,15 +480,14 @@ void Render() {
 
   gui_shader.use();
   for (auto &gui_item : gui_items_to_render) {
-    gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale, gui_item.scale_x);
+    gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale,
+                               gui_item.scale_x);
   }
 
   text_shader.use();
   for (auto &text_item : text_to_render) {
-    if (text_item.visible) {
-      text_item.font->Draw(text_shader, text_item.pos, text_item.size,
-                           text_item.text, text_item.color);
-    }
+    text_item.font->Draw(text_shader, text_item.pos, text_item.size,
+                         text_item.text, text_item.color);
   }
 
   lights_to_render.clear();

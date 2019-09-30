@@ -165,9 +165,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="engine.cpp" />
-    <ClCompile Include="engine.cpp" />
     <ClCompile Include="entitycreation.cpp" />
-    <ClCompile Include="main.cpp" />
     <ClCompile Include="util\global_settings.cpp" />
     <ClCompile Include="util\input.cpp" />
     <ClCompile Include="util\timer.cpp" />
@@ -190,8 +188,6 @@
     <ClInclude Include="entitycreation.hpp" />
     <ClInclude Include="Entt systems\button_system.hpp" />
     <ClInclude Include="Entt systems\print_position_system.hpp" />
-    <ClInclude Include="engine.hpp" />
-    <ClInclude Include="shared\shared.hpp" />
     <ClInclude Include="shared\shared.hpp" />
     <ClInclude Include="util\global_settings.hpp" />
     <ClInclude Include="Entt systems\render_system.hpp" />

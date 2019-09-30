@@ -175,11 +175,6 @@ void Update(entt::registry& registry, float dt) {
       }
     }
 
-	//In game menu logic
-    if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
-      InActivatePlayerController();
-    }
-
     /*
             NETWORK STUFF?
     cam_c.cam->SetPosition(trans_c.position +

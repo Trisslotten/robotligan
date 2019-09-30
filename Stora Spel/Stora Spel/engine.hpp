@@ -25,17 +25,27 @@ class Engine {
 
   void Render();
 
+  void SetCurrentRegistry(entt::registry* registry);
  private:
   void SetKeybinds();
 
   void UpdateSystems(float dt);
   void HandlePacketBlock(NetAPI::Common::Packet& packet);
 
+  void CreateMainMenu();
+  void CreateSettingsMenu();
+  void CreateInGameMenu();
+  void UpdateInGameMenu(bool show_menu);
+
   void CreatePlayer(PlayerID player_id, EntityID entity_id);
   void TestCreateLights();
 
   NetAPI::Socket::Client client;
-  entt::registry registry_;
+
+  entt::registry registry_gameplay_;
+  entt::registry registry_mainmenu_;
+  entt::registry registry_settings_;
+  entt::registry* registry_current_;
 
   PlayerID my_id = -1;
 
@@ -49,6 +59,13 @@ class Engine {
   float accum_pitch_ = 0.f;
 
   glob::Font2DHandle font_test_ = 0;
+  glob::Font2DHandle font_test2_ = 0;
+  glob::Font2DHandle font_test3_ = 0;
+  glob::E2DHandle e2D_test_, e2D_test2_;
+  glob::GUIHandle in_game_menu_gui_ = 0;
+  glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
+      gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_;
+  bool show_in_game_menu_buttons_ = false;
 };
 
 #endif  // ENGINE_HPP_

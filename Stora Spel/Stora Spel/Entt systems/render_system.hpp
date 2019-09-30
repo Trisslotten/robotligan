@@ -90,8 +90,10 @@ void RenderSystem(entt::registry& registry) {
 
     glm::vec2 button_pos = glm::vec2(trans_c.position.x, trans_c.position.y);
 
-    glob::Submit(button_c.f_handle, button_pos, button_c.font_size,
-                 button_c.text, button_c.visible, button_c.text_current_color);
+	if (button_c.visible) {
+	  glob::Submit(button_c.f_handle, button_pos, button_c.font_size,
+                 button_c.text, button_c.text_current_color);
+    }
   }
 }
 #endif  // RENDER_SYSTEM_HPP_

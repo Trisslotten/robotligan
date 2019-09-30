@@ -11,8 +11,8 @@
 
 #include "boundingboxes.hpp"
 #include "collision.hpp"
-#include "physics_component.hpp"
-#include "projectile_component.hpp"
+#include "ecs/components/physics_component.hpp"
+#include "ecs/components/projectile_component.hpp"
 #include "transform_component.hpp"
 
 std::ostream& operator<<(std::ostream& o, glm::vec3 v) {

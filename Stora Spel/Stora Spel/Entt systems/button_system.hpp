@@ -3,7 +3,7 @@
 
 #include <entt.hpp>
 #include "button_component.hpp"
-#include "transform_component.hpp"
+#include "shared/transform_component.hpp"
 
 #include "../util/transform_helper.hpp"
 #include "../util/input.hpp"
