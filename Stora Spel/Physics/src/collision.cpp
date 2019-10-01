@@ -249,6 +249,7 @@ float ComputeSquaredDistance(const glm::vec3& center, const Triangle& tri,
      if (s < 0) {
        if (t < 0) {
          // region 4
+         return 1000.f;
          if (d < 0) {
            t = 0;
            if (-d >= a)
@@ -266,6 +267,7 @@ float ComputeSquaredDistance(const glm::vec3& center, const Triangle& tri,
          }
        } else {
          // region 3
+         return 1000.f;
          s = 0;
          if (e >= 0)
            t = 0;
@@ -276,6 +278,7 @@ float ComputeSquaredDistance(const glm::vec3& center, const Triangle& tri,
        }
      } else if (t < 0) {
        // region 5
+       return 1000.f;
        t = 0;
        if (d >= 0)
          s = 0;
@@ -291,6 +294,7 @@ float ComputeSquaredDistance(const glm::vec3& center, const Triangle& tri,
    } else {
      if (s < 0) {
        //region 2
+       return 1000.f;
        float temp0 = b + d;
        float temp1 = c + e;
        if (temp1 > temp0) {
@@ -313,6 +317,7 @@ float ComputeSquaredDistance(const glm::vec3& center, const Triangle& tri,
        }
      } else if (t < 0) {
        // region 6
+       return 1000.f;
        float temp0 = b + e;
        float temp1 = a + d;
        if (temp1 > temp0) {
@@ -335,6 +340,7 @@ float ComputeSquaredDistance(const glm::vec3& center, const Triangle& tri,
        }
      } else {
        // region 1
+       return 1000.f;
        float numer = (c + e) - (b + d);
        if (numer <= 0.f) {
          s = 0;

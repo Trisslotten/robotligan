@@ -224,7 +224,7 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
     float dot_val = glm::dot(ball_physics.velocity, temp_normal);
     if (dot_val < 0.f)
       ball_physics.velocity =
-          ball_physics.velocity - temp_normal * dot_val * 0.6f * 2.f;
+          ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
   }
 
   if (object.normal.y) {
@@ -233,7 +233,7 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
     float dot_val = glm::dot(ball_physics.velocity, temp_normal);
     if (dot_val < 0.f)
       ball_physics.velocity =
-          ball_physics.velocity - temp_normal * dot_val * 0.6f * 2.f;
+          ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
   }
 
   if (object.normal.z) {
@@ -242,12 +242,12 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
     float dot_val = glm::dot(ball_physics.velocity, temp_normal);
     if (dot_val < 0.f)
       ball_physics.velocity =
-          ball_physics.velocity - temp_normal * dot_val * 0.6f * 2.f;
+          ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
   }
 
   if (object.normal.y > 0.2f) {
     // Ball hits the ground
-    if (ball_physics.velocity.y < 3.f) {
+    if (ball_physics.velocity.y < 0.8f) {
       ball_physics.velocity.y = 0.f;
       ball_physics.is_airborne = false;
       ball_c.rotation = glm::quat();

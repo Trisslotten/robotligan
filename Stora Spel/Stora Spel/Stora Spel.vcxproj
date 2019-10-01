@@ -168,6 +168,7 @@
     <ClCompile Include="entitycreation.cpp" />
     <ClCompile Include="util\global_settings.cpp" />
     <ClCompile Include="util\input.cpp" />
+    <ClCompile Include="util\player_settings.cpp" />
     <ClCompile Include="util\timer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -194,6 +195,7 @@
     <ClInclude Include="util\input.hpp" />
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
     <ClInclude Include="util\meminfo.hpp" />
+    <ClInclude Include="util\player_settings.hpp" />
     <ClInclude Include="util\timer.hpp" />
     <ClInclude Include="util\transform_helper.hpp" />
   </ItemGroup>
@@ -226,6 +228,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="util\errorlog.txt" />
+    <Text Include="util\player_settings.txt" />
     <Text Include="util\settings.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

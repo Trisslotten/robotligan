@@ -7,6 +7,8 @@
     <ClCompile Include="engine.cpp" />
     <ClCompile Include="entitycreation.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="nettest.cpp" />
+    <ClCompile Include="util\player_settings.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entt systems\print_position_system.hpp" />
@@ -28,6 +30,12 @@
     <ClInclude Include="Components\player_component.hpp" />
     <ClInclude Include="shared\id_component.hpp" />
     <ClInclude Include="entitycreation.hpp" />
+    <ClInclude Include="Components\position.hpp" />
+    <ClInclude Include="Components\physics_component.hpp" />
+    <ClInclude Include="Components\projectile_component.hpp" />
+    <ClInclude Include="Components\transform_component.hpp" />
+    <ClInclude Include="Components\velocity.hpp" />
+    <ClInclude Include="util\player_settings.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />
@@ -57,5 +65,6 @@
   <ItemGroup>
     <Text Include="util\settings.txt" />
     <Text Include="util\errorlog.txt" />
+    <Text Include="util\player_settings.txt" />
   </ItemGroup>
 </Project>

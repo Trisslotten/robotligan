@@ -18,6 +18,7 @@
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
+#include "util/player_settings.hpp"
 
 Engine::Engine() {}
 
@@ -29,6 +30,7 @@ void Engine::Init() {
 
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
+  PlayerSettings::Access()->UpdateValuesFromFile();
 
   TestCreateLights();
 

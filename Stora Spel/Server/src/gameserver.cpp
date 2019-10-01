@@ -26,12 +26,7 @@ void GameServer::Init() {
 
   server_.Setup(1337);
 
-  glm::vec3 start_positions[3] = {
-      glm::vec3(5.f, 0.f, 0.f),   // Ball
-      glm::vec3(-9.f, 4.f, 0.f),  // Player
-      glm::vec3(0.f, 0.f, 0.f)    // Others
-  };
-  CreateEntities(start_positions, 3);
+  CreateEntities();
 }
 
 void GameServer::Update(float dt) {
@@ -246,13 +241,13 @@ void GameServer::CreatePlayer(PlayerID id) {
   created_players_.push_back(id);
 
   std::cout << "DEBUG: Created player id: " << player_component.id << "\n";
+  ResetEntities();
 }
 
-void GameServer::CreateEntities(glm::vec3* in_pos_arr,
-                                unsigned int in_num_pos) {
+void GameServer::CreateEntities() {
   // Create one ball entity and add components
   auto ball_entity = registry_.create();
-  AddBallComponents(ball_entity, in_pos_arr[0], glm::vec3(0.0f));
+  AddBallComponents(ball_entity, glm::vec3(0.f), glm::vec3(0.0f));
 
   // Create one map entity and add components
   auto arena_entity = registry_.create();
@@ -260,30 +255,77 @@ void GameServer::CreateEntities(glm::vec3* in_pos_arr,
 
   // Create one player entity and add components
   // CreatePlayer();
+
+  ResetEntities();
 }
 
-void GameServer::ResetEntities(glm::vec3* in_pos_arr, unsigned int in_num_pos) {
-  // Get everything with a physics component and a transform component
-  auto reset_view = registry_.view<PhysicsComponent, TransformComponent>();
+void GameServer::ResetEntities() {
+  // Set rotation
+  auto rotation_view = registry_.view<TransformComponent>();
+  for (auto entity : rotation_view) {
+    auto& t = rotation_view.get(entity);
+    t.rotation = glm::quat(glm::vec3(0, glm::pi<float>(), 0));
+  }
+
+  glm::vec3 player_pos[3];
+  for (int i = 0; i < 3; ++i) {
+    player_pos[i].x = GlobalSettings::Access()->ValueOf(
+      std::string("PLAYERPOSITION") + std::to_string(i) + "X");
+    player_pos[i].y = GlobalSettings::Access()->ValueOf(
+        std::string("PLAYERPOSITION") + std::to_string(i) + "Y");
+    player_pos[i].z = GlobalSettings::Access()->ValueOf(
+        std::string("PLAYERPOSITION") + std::to_string(i) + "Z");
+  }
 
   unsigned int pos_counter = 0;
-
-  for (auto entity : reset_view) {
+  auto player_view = registry_.view<PlayerComponent, PhysicsComponent, TransformComponent>();
+  for (auto entity : player_view) {
     PhysicsComponent& physics_component =
-        reset_view.get<PhysicsComponent>(entity);
+        player_view.get<PhysicsComponent>(entity);
     TransformComponent& transform_component =
-        reset_view.get<TransformComponent>(entity);
+        player_view.get<TransformComponent>(entity);
 
     physics_component.velocity = glm::vec3(0.0f);
     physics_component.is_airborne = true;
 
-    transform_component.position = in_pos_arr[pos_counter];
+    transform_component.position = player_pos[pos_counter];
     pos_counter++;
 
-    if (pos_counter >= in_num_pos) {
+    if (pos_counter >= 3) {
+      player_pos[0].x *= -1.f;
+      player_pos[1].x *= -1.f;
+      player_pos[2].x *= -1.f;
+      pos_counter = 0;
       // GlobalSettings::Access()->WriteError("main.cpp", "ResetEntities()",
       // "Counter out of scope");
     }
+
+    // TODO: reset pick-up
+  }
+
+  auto ball_view =
+      registry_.view<BallComponent, PhysicsComponent, TransformComponent>();
+  for (auto entity : ball_view) {
+    BallComponent& ball_component = ball_view.get<BallComponent>(entity);
+
+    if (ball_component.is_real == false) {
+      registry_.destroy(entity);
+      continue;
+    }
+
+    PhysicsComponent& physics_component =
+        ball_view.get<PhysicsComponent>(entity);
+    TransformComponent& transform_component =
+        ball_view.get<TransformComponent>(entity);
+
+    physics_component.velocity = glm::vec3(0.0f);
+    physics_component.is_airborne = true;
+
+    glm::vec3 pos;
+    pos.x = GlobalSettings::Access()->ValueOf("BALLPOSITIONX");
+    pos.y = GlobalSettings::Access()->ValueOf("BALLPOSITIONY");
+    pos.z = GlobalSettings::Access()->ValueOf("BALLPOSITIONZ");
+    transform_component.position = pos;
   }
 }
 
