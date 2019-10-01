@@ -119,9 +119,6 @@ void GameServer::Update(float dt) {
       to_send << trans_c.rotation;
       to_send << trans_c.position;
       to_send << player_c.id;
-
-      // printf("Player position: %f %f %f \n", trans_c.position.x,
-      //     trans_c.position.y, trans_c.position.z);
     }
     to_send << num_players;
     to_send << PacketBlockType::PLAYERS_TRANSFORMS;
@@ -148,12 +145,12 @@ void GameServer::Update(float dt) {
       }
     }
 
-    auto view_goals = registry_.view<GoalComponenet, TeamCoponent>();
+    auto view_goals = registry_.view<GoalComponenet, TeamComponent>();
 
     entt::entity blue_goal;
     for (auto goal : view_goals) {
       GoalComponenet& goal_goal_c = registry_.get<GoalComponenet>(goal);
-      TeamCoponent& goal_team_c = registry_.get<TeamCoponent>(goal);
+      TeamComponent& goal_team_c = registry_.get<TeamComponent>(goal);
       to_send << goal_team_c;
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
@@ -360,7 +357,7 @@ void GameServer::CreateGoals() {
   registry_.assign<physics::OBB>(entity_blue, glm::vec3(0.f, 0.f, 0.f),
                                  glm::vec3(1, 0, 0), glm::vec3(0, 1, 0),
                                  glm::vec3(0, 0, 1), 1.f, 1.f, 2.f);
-  registry_.assign<TeamCoponent>(entity_blue, TEAM_BLUE);
+  registry_.assign<TeamComponent>(entity_blue, TEAM_BLUE);
   registry_.assign<GoalComponenet>(entity_blue);
   auto& trans_comp = registry_.assign<TransformComponent>(entity_blue);
   trans_comp.position = glm::vec3(-12.f, -4.f, 0.f);
@@ -370,7 +367,7 @@ void GameServer::CreateGoals() {
   registry_.assign<physics::OBB>(entity_red, glm::vec3(0.f, 0.f, 0.f),
                                  glm::vec3(1, 0, 0), glm::vec3(0, 1, 0),
                                  glm::vec3(0, 0, 1), 1.f, 1.f, 2.f);
-  registry_.assign<TeamCoponent>(entity_red, TEAM_RED);
+  registry_.assign<TeamComponent>(entity_red, TEAM_RED);
   registry_.assign<GoalComponenet>(entity_red);
   auto& trans_comp2 = registry_.assign<TransformComponent>(entity_red);
   trans_comp2.position = glm::vec3(12.f, -4.f, 0.f);

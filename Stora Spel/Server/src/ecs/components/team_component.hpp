@@ -5,7 +5,7 @@
 
 
 
-struct TeamCoponent {
+struct TeamComponent {
   unsigned int team = TEAM_RED;
 };
 
