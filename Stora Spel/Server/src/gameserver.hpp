@@ -35,6 +35,7 @@ class GameServer {
 
   std::vector<PlayerID> created_players_;
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
+  std::vector<std::string> messages;
 
   int test_player_guid_ = 0;
 };

@@ -1,6 +1,7 @@
 #ifndef INPUT_HPP_
 #define INPUT_HPP_
 
+#include <string>
 #include "../../glm/glm/common.hpp"
 #include "../../glm/glm/vec2.hpp"
 
@@ -12,6 +13,7 @@ class Input {
   static bool IsMouseButtonDown(int button);
   static bool IsButtonPressed(int button);
   static bool IsKeyPressed(int key);
+  static std::string GetCharacters();
   static void Reset();
   static glm::vec2 MouseMov();
   static glm::vec2 MousePos();
