@@ -222,7 +222,9 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet.Remove(str.data(), strsize);
       chat.AddMessage(str);
       chat.SetShowChat();
-      chat.CloseChat();
+      if (chat.IsClosing == true) {
+		chat.CloseChat();
+	  }
       break;
     }
     case PacketBlockType::BALL_TRANSFORM: {
