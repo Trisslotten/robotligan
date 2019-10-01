@@ -1,6 +1,7 @@
 #include "mesh.hpp"
 
 #include <iostream>
+#include "../usegl.hpp"
 
 namespace glob {
 
@@ -40,7 +41,8 @@ Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indic
   indices_ = indices;
   textures_ = textures;
 
-  SetupMesh();
+  if (glob::kModelUseGL)
+    SetupMesh();
 }
 
 Mesh::~Mesh() {}
@@ -56,6 +58,22 @@ void Mesh::Draw(ShaderProgram& shader) {
   glBindVertexArray(vertex_array_object_);
   glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_INT, 0);
   glBindVertexArray(0);
+}
+
+MeshData Mesh::GetMeshData() {
+  MeshData mesh_data;
+  mesh_data.pos.reserve(vertices_.size());
+  mesh_data.indices.reserve(indices_.size());
+
+  for (auto& v : vertices_) {
+    mesh_data.pos.push_back(v.position);
+  }
+
+  for (auto& i : indices_) {
+    mesh_data.indices.push_back(i);
+  }
+
+  return mesh_data;
 }
 
 }  // namespace glob

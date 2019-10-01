@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <lodepng.hpp>
+#include "../usegl.hpp"
 
 namespace glob {
 
@@ -22,7 +23,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
     vector_vertices.z = mesh->mVertices[i].z;
     temp_vertex.position = vector_vertices;
     // Process texture
-    
+
     int tex_coord_index = 0;
     // TODO: not use this hack
     if (mesh->mTextureCoords[1]) {
@@ -56,21 +57,28 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
     }
   }
 
-  // Process materials
-  if (mesh->mMaterialIndex >= 0) {
-    aiMaterial* temp_material = scene->mMaterials[mesh->mMaterialIndex];
-    std::vector<Texture> diffuse_maps =
-        LoadMaterielTextures(temp_material, aiTextureType_DIFFUSE,
-                             "texture_diffuse"  // Make sure this in glsl
-        );
-    textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
 
-    std::vector<Texture> specular_maps =
-        LoadMaterielTextures(temp_material, aiTextureType_SPECULAR,
-                             "texture_specular"  // Make sure this in glsl
-        );
-    textures.insert(textures.end(), specular_maps.begin(), specular_maps.end());
+  std::cout << "glob::kModelUseGL: " << glob::kModelUseGL << "\n";
+  if (glob::kModelUseGL) {
+
+    // Process materials
+    if (mesh->mMaterialIndex >= 0) {
+      aiMaterial* temp_material = scene->mMaterials[mesh->mMaterialIndex];
+      std::vector<Texture> diffuse_maps =
+          LoadMaterielTextures(temp_material, aiTextureType_DIFFUSE,
+                               "texture_diffuse"  // Make sure this in glsl
+          );
+      textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
+
+      std::vector<Texture> specular_maps =
+          LoadMaterielTextures(temp_material, aiTextureType_SPECULAR,
+                               "texture_specular"  // Make sure this in glsl
+          );
+      textures.insert(textures.end(), specular_maps.begin(), specular_maps.end());
+    }  
+
   }
+
 
   return Mesh(vertex, indices, textures);
 }
@@ -118,8 +126,7 @@ void Model::LoadModel(std::string path) {
   flags |= aiProcess_Triangulate;
   flags |= aiProcess_FlipUVs;
 
-  const aiScene* scene =
-      import.ReadFile(path, flags);
+  const aiScene* scene = import.ReadFile(path, flags);
 
   if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
       !scene->mRootNode) {
@@ -142,7 +149,6 @@ void Model::ProcessNode(aiNode* node, const aiScene* scene) {
     aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
     mesh_.push_back(ProcessMesh(mesh, scene));
   }
-
 
   // Then process nodes children
 
@@ -194,6 +200,21 @@ void Model::Draw(ShaderProgram& shader) {
   for (unsigned int i = 0; i < mesh_.size(); i++) {
     mesh_[i].Draw(shader);
   }
+}
+
+MeshData Model::GetMeshData() {
+  MeshData mesh_data;
+  for (unsigned int i = 0; i < mesh_.size(); i++) {
+    MeshData temp = mesh_[i].GetMeshData();
+
+    mesh_data.indices.reserve(mesh_data.indices.size() + temp.indices.size());
+    mesh_data.pos.reserve(mesh_data.pos.size() + temp.pos.size());
+    const unsigned int offset = mesh_data.pos.size();
+    for (auto& i : temp.indices) mesh_data.indices.push_back(i + offset);
+    for (auto& p : temp.pos) mesh_data.pos.push_back(p);
+  }
+
+  return mesh_data;
 }
 
 }  // namespace glob
