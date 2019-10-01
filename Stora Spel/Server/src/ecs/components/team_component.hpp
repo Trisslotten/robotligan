@@ -3,10 +3,9 @@
 
 #include <entt.hpp>
 
-#define TEAM_RED (unsigned int)0
-#define TEAM_BLUE (unsigned int)1
 
-struct TeamCoponent {
+
+struct TeamComponent {
   unsigned int team = TEAM_RED;
 };
 

@@ -1,6 +1,9 @@
 #ifndef SHARED_HPP_
 #define SHARED_HPP_
 
+#define TEAM_RED (unsigned int)0
+#define TEAM_BLUE (unsigned int)1
+
 typedef int PlayerID;
 typedef int EntityID;
 
@@ -29,6 +32,7 @@ enum : int16_t {
   CAMERA_TRANSFORM,
   BALL_TRANSFORM,
   TEST_STRING,
+  TEAM_SCORE,
   NUM_BLOCK_TYPES,
 };
 } // namespace PacketType

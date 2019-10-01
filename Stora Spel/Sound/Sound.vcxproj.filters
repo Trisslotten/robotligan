@@ -18,7 +18,7 @@
     <ClInclude Include="framework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Header files\testSound.h">
+    <ClInclude Include="include\slob\sound_engine.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -26,7 +26,7 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="testSound.cpp">
+    <ClCompile Include="src\sound_engine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

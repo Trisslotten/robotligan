@@ -73,6 +73,9 @@ void Engine::Init() {
   SetKeybinds();
 
   client.Connect("localhost", 1337);
+  scores.reserve(2);
+  scores[0] = 0;
+  scores[1] = 0;
 }
 
 void Engine::CreateInitalEntities() {
@@ -117,6 +120,10 @@ void Engine::Update(float dt) {
   glm::vec2 mouse_movement = mouse_sensitivity * Input::MouseMov();
   accum_yaw_ -= mouse_movement.x;
   accum_pitch_ -= mouse_movement.y;
+
+  glob::Submit(font_test3_, glm::vec2(582, 705), 72, std::to_string(scores[1]), glm::vec4(0, 0.26, 1, 1));
+  glob::Submit(font_test3_, glm::vec2(705, 705), 72, std::to_string(scores[0]),
+               glm::vec4(1, 0, 0, 1));
 
   UpdateSystems(dt);
 }
@@ -249,6 +256,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
             cam_c.orientation = orientation;
           });
       break;
+    }
+    case PacketBlockType::TEAM_SCORE: {
+      unsigned int score, team;
+      packet >> score;
+      packet >> team;
+      scores[team] = score;
     }
   }
 }
