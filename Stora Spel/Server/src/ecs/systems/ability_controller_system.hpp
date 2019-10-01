@@ -201,7 +201,6 @@ void CreateCannonBallEntity(entt::registry &registry) {
 }
 
 void DoSwitchGoals(entt::registry &registry) {
-  // sdas
   auto view_goals = registry.view<GoalComponenet, TeamComponent>();
   GoalComponenet *first_goal_comp = nullptr;
   GoalComponenet *second_goal_comp = nullptr;
