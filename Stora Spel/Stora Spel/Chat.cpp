@@ -76,6 +76,6 @@ void Chat::CloseChat() {
 
 std::string Chat::GetCurrentMessage() { return current_message_; }
 
-bool Chat::ShowChat() { return show_chat_; }
+bool Chat::IsVisable() { return show_chat_; }
 
 bool Chat::IsClosing() { return close_chat_;}

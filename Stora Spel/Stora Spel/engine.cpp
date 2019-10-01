@@ -221,10 +221,14 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       str.resize(strsize);
       packet.Remove(str.data(), strsize);
       chat.AddMessage(str);
-      chat.SetShowChat();
-      if (chat.IsClosing() == true) {
-		chat.CloseChat();
+      if (chat.IsVisable() == false) {
+		chat.SetShowChat();
+        chat.CloseChat();
+      } else if (chat.IsClosing() == true) {
+		//resets the closing timer
+        chat.CloseChat();
 	  }
+      
       break;
     }
     case PacketBlockType::BALL_TRANSFORM: {
@@ -284,7 +288,7 @@ void Engine::UpdateSystems(float dt) {
 	  glob::Submit(in_game_menu_gui_, glm::vec2(491, 152), 1.0f);
 	}
 	//chat code
-    if (chat.ShowChat()) {
+    if (chat.IsVisable()) {
       if (Input::IsKeyPressed(GLFW_KEY_ENTER)) {
         if (chat.IsClosing() == true) {
           chat.SetShowChat();
@@ -299,7 +303,7 @@ void Engine::UpdateSystems(float dt) {
       glob::Submit(font_test2_, glm::vec2(200.f, 200.f), 200, "TEST",
                    glm::vec4(0, 1, 1, 1));
     }
-    if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat.ShowChat()) {
+    if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat.IsVisable()) {
       //glob::window::SetMouseLocked(false);
       chat.SetShowChat();
     }

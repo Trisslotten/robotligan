@@ -23,7 +23,7 @@ class Chat {
   void SetSendMessage(bool send);
   void CloseChat();
   std::string GetCurrentMessage();
-  bool ShowChat();
+  bool IsVisable();
   bool IsClosing();
 };
 
