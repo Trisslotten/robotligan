@@ -80,11 +80,13 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>..\Network API\include;$(IncludePath)</IncludePath>
-    <IncludePath>$(SolutionDir)Graphics\external\include;$(SolutionDir)glm;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Graphics\external\include;$(SolutionDir)glm;$(SolutionDir)Sound\include;$(SolutionDir)Sound\Externals\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)Sound\Externals\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>..\Network API\include;$(IncludePath)</IncludePath>
-    <IncludePath>$(SolutionDir)Graphics\external\include;$(SolutionDir)glm;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Graphics\external\include;$(SolutionDir)glm;$(SolutionDir)Sound\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(SolutionDir)Sound\Externals\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -166,6 +168,7 @@
     </ClCompile>
     <ClCompile Include="engine.cpp" />
     <ClCompile Include="entitycreation.cpp" />
+    <ClCompile Include="sound_main.cpp" />
     <ClCompile Include="util\global_settings.cpp" />
     <ClCompile Include="util\input.cpp" />
     <ClCompile Include="util\timer.cpp" />
