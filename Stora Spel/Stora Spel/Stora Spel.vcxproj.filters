@@ -8,7 +8,6 @@
     <ClCompile Include="entitycreation.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="nettest.cpp" />
-    <ClCompile Include="sound_main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Entt systems\print_position_system.hpp" />
