@@ -28,7 +28,7 @@ void Chat::AddMessage(std::string text) {
 
 void Chat::Update(float dt) {
   if (send_message_ == true) {
-    AddMessage(current_message_);
+    //AddMessage(current_message_);
     current_message_ = "";
     send_message_ = false;
   }

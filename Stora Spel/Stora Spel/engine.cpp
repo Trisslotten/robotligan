@@ -221,6 +221,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       str.resize(strsize);
       packet.Remove(str.data(), strsize);
       chat.AddMessage(str);
+      chat.SetShowChat();
+      chat.CloseChat();
       break;
     }
     case PacketBlockType::BALL_TRANSFORM: {
