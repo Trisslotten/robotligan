@@ -15,7 +15,7 @@
 
 
 namespace goal_system {
-void Update(entt::registry& registry) {
+bool Update(entt::registry& registry) {
   auto view_balls =
       registry.view<BallComponent, TransformComponent, physics::Sphere, PhysicsComponent>();
 
@@ -41,15 +41,19 @@ void Update(entt::registry& registry) {
         if (data.collision) {
           // each team "owns" the goal where to score. 
           printf("Team %i scored a goal!\n", goal_team_c.team);
-          ball_trans_c.position = glm::vec3(0.f, 0.f, 0.f);
-          //ball_ball_c.is_airborne = true;
-          ball_physics_c.is_airborne = true;
-          ball_physics_c.velocity = glm::vec3(0, 0, 0);
+          //ball_trans_c.position = glm::vec3(0.f, 0.f, 0.f);
+          ////ball_ball_c.is_airborne = true;
+          //ball_physics_c.is_airborne = true;
+          //ball_physics_c.velocity = glm::vec3(0, 0, 0);
           goal_goal_c.goals++;
+
+          return true;
         }
       }
     }
   }
+
+  return false;
 }
 }  // namespace goal_system
 #endif  // GOAL_SYSTEM_HPP_

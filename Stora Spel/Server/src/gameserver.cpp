@@ -172,7 +172,9 @@ void GameServer::UpdateSystems(float dt) {
 
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);
-  goal_system::Update(registry_);
+  if (goal_system::Update(registry_)) {
+    ResetEntities();
+  }
 }
 
 void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
@@ -351,6 +353,8 @@ void GameServer::ResetEntities() {
     pos.y = GlobalSettings::Access()->ValueOf("BALLPOSITIONY");
     pos.z = GlobalSettings::Access()->ValueOf("BALLPOSITIONZ");
     transform_component.position = pos;
+
+    ball_component.rotation = glm::vec3(0.f);
   }
 }
 
