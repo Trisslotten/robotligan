@@ -94,15 +94,17 @@ void Engine::CreateInitalEntities() {
 }
 
 void Engine::Update(float dt) {
-  for (auto const& [key, action] : keybinds_)
-    if (Input::IsKeyDown(key)) key_presses_[key]++;
-  for (auto const& [button, action] : mousebinds_)
-    if (Input::IsMouseButtonDown(button)) mouse_presses_[button]++;
+  if (take_game_input_ == true) {
+	for (auto const& [key, action] : keybinds_)
+	  if (Input::IsKeyDown(key)) key_presses_[key]++;
+	for (auto const& [button, action] : mousebinds_)
+	  if (Input::IsMouseButtonDown(button)) mouse_presses_[button]++;
 
-  float mouse_sensitivity = 0.003f;
-  glm::vec2 mouse_movement = mouse_sensitivity * Input::MouseMov();
-  accum_yaw_ -= mouse_movement.x;
-  accum_pitch_ -= mouse_movement.y;
+	float mouse_sensitivity = 0.003f;
+	glm::vec2 mouse_movement = mouse_sensitivity * Input::MouseMov();
+	accum_yaw_ -= mouse_movement.x;
+	accum_pitch_ -= mouse_movement.y;
+  }
 
   UpdateSystems(dt);
   Input::Reset();
@@ -300,13 +302,15 @@ void Engine::UpdateSystems(float dt) {
       }
       chat.Update(dt);
       chat.SubmitText(font_test2_);
-      glob::Submit(font_test2_, glm::vec2(200.f, 200.f), 200, "TEST",
-                   glm::vec4(0, 1, 1, 1));
+	  if (chat.IsTakingChatInput() == true && chat.GetCurrentMessage().size() == 0)
+        glob::Submit(font_test2_, glm::vec2(50.f, 600.f), 20,
+                     "Enter message", glm::vec4(0, 1, 1, 1));
     }
     if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat.IsVisable()) {
       //glob::window::SetMouseLocked(false);
       chat.SetShowChat();
     }
+    take_game_input_ = !chat.IsTakingChatInput() && !show_in_game_menu_buttons_;
 
 	
 	// Submit 2D Element TEST

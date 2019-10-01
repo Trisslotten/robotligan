@@ -25,6 +25,7 @@ class Chat {
   std::string GetCurrentMessage();
   bool IsVisable();
   bool IsClosing();
+  bool IsTakingChatInput();
 };
 
 #endif  // CHAT_HPP_
