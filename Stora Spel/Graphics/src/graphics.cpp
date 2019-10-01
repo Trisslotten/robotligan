@@ -44,6 +44,7 @@ struct LightItem {
 
 ShaderProgram test_shader;
 ShaderProgram model_shader;
+ShaderProgram animated_model_shader;
 ShaderProgram text_shader;
 ShaderProgram wireframe_shader;
 
@@ -102,6 +103,10 @@ void Init() {
   test_shader.compile();
 
   model_shader.add("modelshader.vert");
+  model_shader.add("modelshader.frag");
+  model_shader.compile();
+
+  model_shader.add("animatedmodelshader.vert");
   model_shader.add("modelshader.frag");
   model_shader.compile();
 
@@ -211,10 +216,42 @@ Font2DHandle GetFont(const std::string &filepath) {
   return GetAsset<Font2DHandle, Font2D>(font_2D_handles, fonts, current_font_guid, filepath);
 }
 
-/*AnimationHandle GetAnimation(const std::string& filepath) {
-	//return GetAsset<AnimationHandle, Animation>()
-}*/
+void GetAnimationData(ModelHandle handle) {
+	auto res = models.find(handle);
+	animData data;
+	if (res == models.end()) {
+		std::cout << "ERROR graphics.cpp: could not find submitted model\n";
+		return;
+	}
 
+	glob::Model model = res->second;
+
+	//copy armature
+	for (auto source : model.bones_) {
+		glob::Joint* j = new Joint();
+		j->id = source->id;
+		j->name = source->name;
+		j->position = source->position;
+		j->transform = source->transform;
+		for (auto c : source->children) {
+			j->children.push_back(source->children.at(c));
+		}
+		data.bones.push_back(j);
+	}
+
+	//copy animations
+	for (auto source : model.animations_) {
+		glob::Animation* a = new glob::Animation();
+		a->name_ = source->name_;
+		a->duration_ = source->duration_;
+		a->current_frame_time_ = source->current_frame_time_;
+		a->tick_per_second_ = source->tick_per_second_;
+		a->channels_ = source->channels_;
+		data.animations.push_back(a);
+	}
+
+	return;
+}
 /*
 TextureHandle GetTexture(const std::string &filepath) {
   return GetAsset<TextureHandle, Texture>(texture_handles, textures,
@@ -229,6 +266,10 @@ void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius, glm:
 	item.radius = radius;
 	item.ambient = ambient;
 	lights_to_render.push_back(item);
+}
+
+void SubmitBAM(ModelHandle model_h, glm::mat4 transform, std::vector<glm::mat2> bone_orientation_quat) {//Submit Bone Animated Mesh
+
 }
 
 void Submit(ModelHandle model_h, glm::vec3 pos) {

@@ -79,30 +79,35 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
 
   if (mesh->HasBones()) {
 	  std::cout << "Mesh bones: " << mesh->mNumBones << "\n";
+	  //find and store bones (no children assigned)
 	  for (int i = 0; i < mesh->mNumBones; i++) {
 		Joint* j = new Joint();
 		j->id = i;
 		j->name = mesh->mBones[i]->mName.data;
-		//std::cout << j->name << "\n";
 		bones_.push_back(j);
 
+		//set vec4 arrays for weight and bone index (influencing bone)
 		for (int w = 0; w < mesh->mBones[i]->mNumWeights; w++){
-			int boneIndexLength = 0;
-			for (int bil = 0; bil < 4; bil++) {//find suitable position for the bone id
-				if (bone_index_.at(w)[bil] == -1) {
-					boneIndexLength = bil;
-					break;
+			if (mesh->mBones[i]->mWeights[w].mWeight > 0.01f) {//cull bones with very small weights (optimization)
+				int boneIndexLength = 0;
+				for (int bil = 0; bil < 4; bil++) {//find suitable position for the bone id within the vec4, the vec is initialized with -1 so anything above that is already claimed
+					if (bone_index_.at(mesh->mBones[i]->mWeights[w].mVertexId)[bil] < 0) {
+						boneIndexLength = bil;
+						bil = 4;
+					}
 				}
+				bone_index_.at(mesh->mBones[i]->mWeights[w].mVertexId)[boneIndexLength] = j->id;
+				weights_.at(mesh->mBones[i]->mWeights[w].mVertexId)[boneIndexLength] = mesh->mBones[i]->mWeights[w].mWeight;
 			}
-			bone_index_.at(mesh->mBones[i]->mWeights[w].mVertexId)[boneIndexLength] = j->id;
-			weights_.at(mesh->mBones[i]->mWeights[w].mVertexId)[boneIndexLength] = mesh->mBones[i]->mWeights[w].mWeight;
-			//std::cout << mesh->mBones[i]->mWeights[w].mVertexId << " : " << bone_index_.at(mesh->mBones[i]->mWeights[w].mVertexId)[boneIndexLength] << " : " << weights_.at(mesh->mBones[i]->mWeights[w].mVertexId)[boneIndexLength] << "\n";
 		}
 	  }
 
-	  std::cout << "Node bones: " << bones_.size() << "\n";
+	  //std::cout << "Node bones: " << bones_.size() << "\n";
 
+	  //vertice weight printer
+	  /*
 	  for (int i = 0; i < mesh->mNumVertices; i++) {
+		  std::cout << i << " | ";
 		  for (int w = 0; w < 4; w++) {
 			  std::cout << bone_index_.at(i)[w];
 			  if (w != 3) {
@@ -118,6 +123,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
 		  }
 		  std::cout << "\n";
 	  }
+	  */
   }
 
   return Mesh(vertex, indices, textures);
@@ -184,52 +190,44 @@ void Model::LoadModel(std::string path) {
   std::cout << PrintArmature() << "\n";
 
   if (scene->HasAnimations()) {
+	  //load animations
 	  int numAnimations = scene->mNumAnimations;
 	  std::cout << numAnimations << " animations detected.\n";
 	  for (int i = 0; i < numAnimations; i++) {
-		  Animation anim;
-		  anim.name_ = scene->mAnimations[i]->mName.data;
-		  anim.duration_ = scene->mAnimations[i]->mDuration;
-		  anim.tick_per_second_ = scene->mAnimations[i]->mTicksPerSecond;
+		  Animation* anim = new Animation();
+		  anim->name_ = scene->mAnimations[i]->mName.data;
+		  anim->duration_ = scene->mAnimations[i]->mDuration;
+		  anim->tick_per_second_ = scene->mAnimations[i]->mTicksPerSecond;
 
 		  //std::cout  << "Name: " << anim.name_ << "\n";
-		  //std::cout << "  Duration: " << anim.duration_ << "\n";
-		  //std::cout << "  TPS: " << anim.tick_per_second_ << "\n";
 
+		  //load channels
 		  for (int j = 0; j < scene->mAnimations[i]->mNumChannels; j++) {
 			  std::string jointName = scene->mAnimations[i]->mChannels[j]->mNodeName.data;
-			  //std::cout << "    Name: " << jointName << "\n";
 			  Channel channel;
 			  for (int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumPositionKeys; k++) {
-				  channel.positionKeys.push_back(scene->mAnimations[i]->mChannels[j]->mPositionKeys[k]);
+				  channel.position_keys.push_back(scene->mAnimations[i]->mChannels[j]->mPositionKeys[k]);
 			  }
 			  for (int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumRotationKeys; k++) {
-				  channel.rotationKeys.push_back(scene->mAnimations[i]->mChannels[j]->mRotationKeys[k]);
+				  channel.rotation_keys.push_back(scene->mAnimations[i]->mChannels[j]->mRotationKeys[k]);
 			  }
 			  for (int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumScalingKeys; k++) {
-				  channel.scalingKeys.push_back(scene->mAnimations[i]->mChannels[j]->mScalingKeys[k]);
+				  channel.scaling_keys.push_back(scene->mAnimations[i]->mChannels[j]->mScalingKeys[k]);
 			  }
 
-
-			  //find appropriate bone
+			  //find relevant bone for channel
 			  char id = 0;
 			  for (auto j : bones_) {
 				  if (j->name == jointName) {
 					  id = j->id;
-					  //std::cout << jointName << "\n";
 				  }
 			  }
-
 			  channel.boneID = id;
-
-			  anim.channels_.push_back(channel);
+			  anim->channels_.push_back(channel);
 		  }
-
 		  animations_.push_back(anim);
 	  }
-
   }
-
   is_loaded_ = true;
 }
 
@@ -237,14 +235,23 @@ std::string Model::PrintArmature() {
 	std::stringstream ss;
 	for (auto b : bones_) {
 		ss << b->name << "\n";
-		for (auto c : b->Children) {
-			ss << "-" << c->name << "\n";
+		for (auto c : b->children) {
+			for (auto ab : bones_) {
+				if (ab->id == c) {
+					for (int ib = 0; ib < bones_.size(); ib++) {
+						if (bones_.at(ib)->id == bones_.at(c)->id) {
+							ss << "-" << bones_.at(c)->name << "\n";
+						}
+					}
+				}
+			}
 		}
 	}
 	return ss.str();
 }
 
 Joint* Model::MakeArmature(aiNode* node) {
+	//Takes all known bones from the bones_ vector and structures it (assigns children)
 	bool rootNode = (node->mName.data == std::string("Root"));
 
 	for (auto b : bones_) {
@@ -252,7 +259,7 @@ Joint* Model::MakeArmature(aiNode* node) {
 			for (int n = 0; n < node->mNumChildren; n++) {
 				for (auto PCB : bones_) {
 					if (node->mChildren[n]->mName.data == PCB->name) {//found child
-						b->Children.push_back(PCB);
+						b->children.push_back(PCB->id);//may god forgive me for stacking so many for-loops
 					}
 				}
 			}
@@ -316,6 +323,9 @@ Model::Model() {}
 Model::~Model() {
 	for (auto b : bones_) {
 		delete b;
+	}
+	for (auto a : animations_) {
+		delete a;
 	}
 }
 

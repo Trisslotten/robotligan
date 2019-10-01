@@ -51,6 +51,7 @@
     <ClInclude Include="Entt systems\physics_system.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <None Include="Assets\shaders\animatedmodelshader.vert" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />

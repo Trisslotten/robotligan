@@ -6,19 +6,10 @@
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
 #include "../shader.hpp"
-#include "../Animation.hpp"
+#include "glob/Animation.hpp"
+#include "glob/joint.hpp"
 
 namespace glob {
-
-
-struct Joint {
-	std::vector<Joint*> Children;
-	glm::vec3 position = glm::vec3(0.f);
-	glm::mat4 transform = glm::mat4(0.f);
-	char id;
-	std::string name;
-	std::vector<int> weights;
-};
 
 class Model {
  private:
@@ -39,15 +30,6 @@ class Model {
 
   std::string directory_;
 
-  std::vector<glm::vec4> weights_;
-  std::vector<glm::ivec4> bone_index_;
-
-  std::vector<Joint*> bones_;
-  unsigned int num_bones_ = 0;
-
-
-  std::vector<Animation> animations_;
-
 
   bool is_loaded_ = false;
 
@@ -60,6 +42,11 @@ class Model {
   bool IsLoaded() { return is_loaded_; };
 
   void Draw(ShaderProgram& shader);
+
+  std::vector<glm::vec4> weights_;
+  std::vector<glm::ivec4> bone_index_;
+  std::vector<Joint*> bones_;
+  std::vector<Animation*> animations_;
 };
 
 }  // namespace glob

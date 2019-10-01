@@ -9,14 +9,20 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include "joint.hpp"
+#include "animation.hpp"
 
 #include <string>
 
 namespace glob {
 
+	struct animData {
+		std::vector<Joint*> bones;
+		std::vector<Animation*> animations;
+	};
+
 typedef unsigned long ModelHandle;
 typedef unsigned long Font2DHandle;
-typedef unsigned long AnimationHandle;
 //typedef unsigned long TextureHandle;
 
 /*
@@ -31,9 +37,14 @@ EXPORT void Init();
  */
 EXPORT ModelHandle GetModel(const std::string& filepath);
 
-
-
 EXPORT Font2DHandle GetFont(const std::string& filepath);
+
+/*
+*Get model information relevant to the animation component
+*
+*/
+
+EXPORT void GetAnimationData(ModelHandle handle);
 
 /*
  * Returns a texture handle for the specified image file.
@@ -45,6 +56,7 @@ EXPORT TextureHandle GetTexture(const std::string& filepath);
  * Submit a model to be rendered.
  */
 EXPORT void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius, glm::float32 ambient);
+EXPORT void SubmitBAM(ModelHandle model_h, glm::mat4 transform, std::vector<glm::mat2> bone_orientation_quat); //Submit Bone Animated Mesh
 EXPORT void Submit(ModelHandle model_h, glm::vec3 pos);
 EXPORT void Submit(ModelHandle model_h, glm::mat4 transform);
 EXPORT void SubmitCube(glm::mat4 t);

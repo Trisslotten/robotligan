@@ -13,9 +13,10 @@ namespace glob {
 	struct Channel {
 		char boneID = 0;
 
-		std::vector <aiVectorKey> positionKeys;
-		std::vector <aiQuatKey> rotationKeys;
-		std::vector <aiVectorKey> scalingKeys;
+		std::vector <aiVectorKey> position_keys;
+		std::vector <aiQuatKey> rotation_keys;
+		std::vector <aiVectorKey> scaling_keys;
+
 	};
 
 	class Animation {

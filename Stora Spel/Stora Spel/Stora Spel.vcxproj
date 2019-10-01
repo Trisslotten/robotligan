@@ -209,6 +209,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\shaders\animatedmodelshader.vert" />
     <None Include="assets\shaders\modelshader.frag" />
     <None Include="assets\shaders\modelshader.vert" />
     <None Include="Assets\shaders\text2Dshader.frag" />
