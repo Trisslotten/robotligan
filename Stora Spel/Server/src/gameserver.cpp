@@ -119,6 +119,9 @@ void GameServer::Update(float dt) {
       to_send << trans_c.rotation;
       to_send << trans_c.position;
       to_send << player_c.id;
+
+      // printf("Player position: %f %f %f \n", trans_c.position.x,
+      //     trans_c.position.y, trans_c.position.z);
     }
     to_send << num_players;
     to_send << PacketBlockType::PLAYERS_TRANSFORMS;
@@ -145,25 +148,31 @@ void GameServer::Update(float dt) {
       }
     }
 
+    auto view_goals = registry_.view<GoalComponenet, TeamCoponent>();
+
+    entt::entity blue_goal;
+    for (auto goal : view_goals) {
+      GoalComponenet& goal_goal_c = registry_.get<GoalComponenet>(goal);
+      TeamCoponent& goal_team_c = registry_.get<TeamCoponent>(goal);
+      to_send << goal_team_c;
+      to_send << goal_goal_c.goals;
+      to_send << PacketBlockType::TEAM_SCORE;
+    }
+
+    
     server_.Send(to_send);
   }
 
   created_players_.clear();
 }
 
-void GameServer::AddScore(unsigned int team) {
-  this->scores[team]++;
-  std::cout << "NEW GOAL! Scores: " << scores[TEAM_RED] << " "
-            << scores[TEAM_BLUE] << "\n";
-}
-
 void GameServer::UpdateSystems(float dt) {
   player_controller::Update(registry_, dt);
   ability_controller::Update(registry_, dt);
-  goal_system::Update(registry_, (goal_system::GameServer*)this);
 
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);
+  goal_system::Update(registry_);
 }
 
 void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
@@ -346,21 +355,23 @@ void GameServer::AddArenaComponents(entt::entity& entity) {
 }
 
 void GameServer::CreateGoals() {
-  // blue goal
-  auto enttiy = registry_.create();
-  registry_.assign<physics::OBB>(enttiy, glm::vec3(0, 0, 0), glm::vec3(1, 0, 0),
-                                 glm::vec3(0, 1, 0), glm::vec3(0, 0, 1), 3.f,
-                                 2.f, 2.f);
-  registry_.assign<TeamCoponent>(enttiy, TEAM_BLUE);
-  auto& trans_comp = registry_.assign<TransformComponent>(enttiy);
-  trans_comp.position = glm::vec3(0, 0, 10);
+  // blue team's goal, place at red goal in world
+  auto entity_blue = registry_.create();
+  registry_.assign<physics::OBB>(entity_blue, glm::vec3(0.f, 0.f, 0.f),
+                                 glm::vec3(1, 0, 0), glm::vec3(0, 1, 0),
+                                 glm::vec3(0, 0, 1), 1.f, 1.f, 2.f);
+  registry_.assign<TeamCoponent>(entity_blue, TEAM_BLUE);
+  registry_.assign<GoalComponenet>(entity_blue);
+  auto& trans_comp = registry_.assign<TransformComponent>(entity_blue);
+  trans_comp.position = glm::vec3(-12.f, -4.f, 0.f);
 
-  // red goal
-  enttiy = registry_.create();
-  registry_.assign<physics::OBB>(enttiy, glm::vec3(0, 0, 0), glm::vec3(1, 0, 0),
-                                 glm::vec3(0, 1, 0), glm::vec3(0, 0, 1), 3.f,
-                                 2.f, 2.f);
-  registry_.assign<TeamCoponent>(enttiy, TEAM_RED);
-  trans_comp = registry_.assign<TransformComponent>(enttiy);
-  trans_comp.position = glm::vec3(0, 0, -10);
+  // red team's goal, place at blue goal in world
+  auto entity_red = registry_.create();
+  registry_.assign<physics::OBB>(entity_red, glm::vec3(0.f, 0.f, 0.f),
+                                 glm::vec3(1, 0, 0), glm::vec3(0, 1, 0),
+                                 glm::vec3(0, 0, 1), 1.f, 1.f, 2.f);
+  registry_.assign<TeamCoponent>(entity_red, TEAM_RED);
+  registry_.assign<GoalComponenet>(entity_red);
+  auto& trans_comp2 = registry_.assign<TransformComponent>(entity_red);
+  trans_comp2.position = glm::vec3(12.f, -4.f, 0.f);
 }

@@ -66,6 +66,8 @@ class Engine {
   glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
       gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_;
   bool show_in_game_menu_buttons_ = false;
+
+  std::vector<unsigned int> scores;
 };
 
 #endif  // ENGINE_HPP_

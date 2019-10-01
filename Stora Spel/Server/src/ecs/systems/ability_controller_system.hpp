@@ -180,7 +180,7 @@ void CreateCannonBallEntity(entt::registry &registry) {
     PlayerComponent &pc = view_controller.get<PlayerComponent>(entity);
     TransformComponent &tc = view_controller.get<TransformComponent>(entity);
 
-    float speed = 0.0f;
+    float speed = 20.0f;
     auto cannonball = registry.create();
     registry.assign<PhysicsComponent>(
         cannonball, glm::vec3(cc.GetLookDir() * speed), false, 0.0f);
