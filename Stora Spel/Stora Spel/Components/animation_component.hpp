@@ -13,6 +13,8 @@ struct AnimationComponent {
 
 	std::vector<glob::Animation> active_animations;
 
+	std::vector<glm::mat4> bone_transforms;
+
 	void init(glob::ModelHandle model) {
 		
 	}

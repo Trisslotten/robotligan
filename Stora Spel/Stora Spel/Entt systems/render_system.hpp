@@ -2,6 +2,7 @@
 #define RENDER_SYSTEM_HPP_
 
 #include <entity/registry.hpp>
+#include <entity/utility.hpp>
 #include <glm/glm.hpp>
 
 #include "ball_component.hpp"
@@ -10,20 +11,35 @@
 #include "model_component.hpp"
 #include "transform_component.hpp"
 #include "light_component.hpp"
+#include "animation_component.hpp"
 
 // temp variable
 bool render_wireframe = false;
 
 void Render(entt::registry& registry) {
-  auto view_model = registry.view<ModelComponent, TransformComponent>();
+  auto view_model = registry.group<ModelComponent, TransformComponent>(entt::exclude<AnimationComponent>);
 
   for (auto& model : view_model) {
     auto& t = view_model.get<TransformComponent>(model);
     auto& m = view_model.get<ModelComponent>(model);
+
     glob::Submit(m.handle,
                  glm::translate(t.position) *
                      glm::rotate(-t.rotation.y, glm::vec3(0.f, 1.f, 0.f)) *
                      glm::translate(-m.offset) * glm::scale(t.scale));
+  }
+
+  auto animated_models = registry.group<ModelComponent, TransformComponent, AnimationComponent>();
+  for (auto& model : animated_models) {
+	  auto& t = animated_models.get<TransformComponent>(model);
+	  auto& m = animated_models.get<ModelComponent>(model);
+	  auto& a = animated_models.get<AnimationComponent>(model);
+
+	  glob::SubmitBAM(m.handle,
+					  glm::translate(t.position) * 
+						  glm::rotate(-t.rotation.y, glm::vec3(0.f, 1.f, 0.f)) *
+						  glm::translate(-m.offset) * glm::scale(t.scale),
+							  a.bone_transforms);
   }
 
   //submit lights

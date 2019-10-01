@@ -32,6 +32,7 @@
     <ClInclude Include="util\transform_helper.hpp" />
     <ClInclude Include="Components\model_component.hpp" />
     <ClInclude Include="Components\animation_component.hpp" />
+    <ClInclude Include="Entt systems\animation_system.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

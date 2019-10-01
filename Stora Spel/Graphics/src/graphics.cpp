@@ -27,6 +27,12 @@ struct RenderItem {
   glm::mat4 transform;
 };
 
+struct BoneAnimatedRenderItem {
+	Model* model;
+	glm::mat4 transform;
+	std::vector<glm::mat4> bone_transforms;//may be a performance bottleneck, pointer instead?
+};
+
 struct TextItem {
   Font2D *font;
   glm::vec2 pos;
@@ -268,8 +274,22 @@ void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius, glm:
 	lights_to_render.push_back(item);
 }
 
-void SubmitBAM(ModelHandle model_h, glm::mat4 transform, std::vector<glm::mat2> bone_orientation_quat) {//Submit Bone Animated Mesh
+void SubmitBAM(ModelHandle model_h, glm::mat4 transform, std::vector<glm::mat4> bone_transforms) {//Submit Bone Animated Mesh
+	BoneAnimatedRenderItem BARI;
 
+	auto find_res = models.find(model_h);
+	if (find_res == models.end()) {
+		std::cout << "ERROR graphics.cpp: could not find submitted model\n";
+		return;
+	}
+	BARI.model = &find_res->second;
+	BARI.bone_transforms = bone_transforms;
+
+	const glm::mat4 pre_rotation =
+		glm::rotate(glm::pi<float>() / 2.f, glm::vec3(0, 1, 0)) *
+		glm::rotate(-glm::pi<float>() / 2.f, glm::vec3(1, 0, 0));
+
+	BARI.transform = transform * pre_rotation;
 }
 
 void Submit(ModelHandle model_h, glm::vec3 pos) {
