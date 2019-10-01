@@ -27,6 +27,7 @@ int main(void) {
 
   entt::registry test_reg_B = ReplayMachine::Access()->TestFunctionC(test_reg_A);
 
+  std::cout << "\n";
   auto test_view = test_reg_B.view<TestComponent>();
   for (auto entity : test_view) {
         
