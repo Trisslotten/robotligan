@@ -29,10 +29,10 @@ void Update(entt::registry& registry) {
     // if ball is real, get all goals
     if (ball_ball_c.is_real) {
       auto view_goals =
-          registry.view<physics::OBB, TeamCoponent, TransformComponent, GoalComponenet>();
+          registry.view<physics::OBB, TeamComponent, TransformComponent, GoalComponenet>();
       for (auto goal : view_goals) {
         physics::OBB& goal_OBB_c = registry.get<physics::OBB>(goal);
-        TeamCoponent goal_team_c = registry.get<TeamCoponent>(goal);
+        TeamComponent goal_team_c = registry.get<TeamComponent>(goal);
         TransformComponent& goal_trans_c =
             registry.get<TransformComponent>(goal);
         GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);

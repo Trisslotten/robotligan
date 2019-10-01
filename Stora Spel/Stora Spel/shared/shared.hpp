@@ -33,6 +33,7 @@ enum : int16_t {
   BALL_TRANSFORM,
   TEST_STRING,
   TEAM_SCORE,
+  SWITCH_GOALS,
   NUM_BLOCK_TYPES,
 };
 } // namespace PacketType

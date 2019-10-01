@@ -148,18 +148,26 @@ void GameServer::Update(float dt) {
       }
     }
 
-    auto view_goals = registry_.view<GoalComponenet, TeamCoponent>();
+    auto view_goals = registry_.view<GoalComponenet, TeamComponent>();
 
     entt::entity blue_goal;
+
+    bool sent_switch = false;
     for (auto goal : view_goals) {
       GoalComponenet& goal_goal_c = registry_.get<GoalComponenet>(goal);
-      TeamCoponent& goal_team_c = registry_.get<TeamCoponent>(goal);
+      TeamComponent& goal_team_c = registry_.get<TeamComponent>(goal);
       to_send << goal_team_c;
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
+      if (goal_goal_c.switched_this_tick) {
+        if (!sent_switch) {
+          to_send << PacketBlockType::SWITCH_GOALS;
+          sent_switch = true;
+        }
+        goal_goal_c.switched_this_tick = false;
+      }
     }
 
-    
     server_.Send(to_send);
   }
 
@@ -238,8 +246,8 @@ void GameServer::CreatePlayer(PlayerID id) {
   );
 
   // Prepare hard-coded values
-  AbilityID primary_id = SUPER_STRIKE;
-  AbilityID secondary_id = NULL_ABILITY;
+  AbilityID primary_id = SWITCH_GOALS;
+  AbilityID secondary_id = SWITCH_GOALS;
   float primary_cooldown =
       GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
   glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
@@ -360,7 +368,7 @@ void GameServer::CreateGoals() {
   registry_.assign<physics::OBB>(entity_blue, glm::vec3(0.f, 0.f, 0.f),
                                  glm::vec3(1, 0, 0), glm::vec3(0, 1, 0),
                                  glm::vec3(0, 0, 1), 1.f, 1.f, 2.f);
-  registry_.assign<TeamCoponent>(entity_blue, TEAM_BLUE);
+  registry_.assign<TeamComponent>(entity_blue, TEAM_BLUE);
   registry_.assign<GoalComponenet>(entity_blue);
   auto& trans_comp = registry_.assign<TransformComponent>(entity_blue);
   trans_comp.position = glm::vec3(-12.f, -4.f, 0.f);
@@ -370,7 +378,7 @@ void GameServer::CreateGoals() {
   registry_.assign<physics::OBB>(entity_red, glm::vec3(0.f, 0.f, 0.f),
                                  glm::vec3(1, 0, 0), glm::vec3(0, 1, 0),
                                  glm::vec3(0, 0, 1), 1.f, 1.f, 2.f);
-  registry_.assign<TeamCoponent>(entity_red, TEAM_RED);
+  registry_.assign<TeamComponent>(entity_red, TEAM_RED);
   registry_.assign<GoalComponenet>(entity_red);
   auto& trans_comp2 = registry_.assign<TransformComponent>(entity_red);
   trans_comp2.position = glm::vec3(12.f, -4.f, 0.f);
