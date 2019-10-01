@@ -4,7 +4,7 @@
 #include <entity/registry.hpp>
 
 struct TestComponent {
-  unsigned int a;
+  int a;
   float b;
   char c;
 };
@@ -12,7 +12,7 @@ struct TestComponent {
 int main(void) {
   // HAI FFS
 
-  //ReplayMachine::Access()->TestFunctionB();
+  ReplayMachine::Access()->TestFunctionB();
 
   
   entt::registry test_reg_A;
@@ -25,8 +25,7 @@ int main(void) {
   test_reg_A.assign<TestComponent>(test_ent_C, 3, 1.0f, 'C');
   test_reg_A.assign<TestComponent>(test_ent_D, 4, 2.0f, 'D');
 
-  entt::registry test_reg_B =
-  ReplayMachine::Access()->TestFunctionC(test_reg_A);
+  entt::registry test_reg_B = ReplayMachine::Access()->TestFunctionC(test_reg_A);
 
   auto test_view = test_reg_B.view<TestComponent>();
   for (auto entity : test_view) {

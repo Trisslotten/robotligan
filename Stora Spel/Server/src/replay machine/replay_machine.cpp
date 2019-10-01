@@ -89,21 +89,6 @@ void ReplayMachine::ReadInputFrame(std::bitset<10>& in_bitset,
   in_y_value = y_float;
 }
 
-void ReplayMachine::OverwriteRegistry(entt::registry& in_source,
-                                  entt::registry& in_target) {
-  // Clone the source registry into the target registry
-  in_target = in_source.clone();
-}
-
-void ReplayMachine::SaveRegistrySnapshot(entt::registry& in_registry) {
-  // NTS: Rather then doing this, use the entt snapshot function?
-  this->OverwriteRegistry(in_registry, *(this->registry_log_));
-}
-
-void ReplayMachine::LoadRegistrySnapshot(entt::registry& in_registry) {
-  // NTS: Rather then doing this, use the entt snapshot function?
-  this->OverwriteRegistry(*(this->registry_log_), in_registry);
-}
 
 // Public----------------------------------------------------------------------
 ReplayMachine* ReplayMachine::Access() {
@@ -112,7 +97,9 @@ ReplayMachine* ReplayMachine::Access() {
   return &instance;
 }
 
-void ReplayMachine::Init(unsigned int in_seconds, unsigned int in_ticks_per_second) {
+void ReplayMachine::Init(unsigned int in_seconds,
+                         unsigned int in_ticks_per_second,
+                         int in_snapshot_interval_seconds) {
   // Create a BitPack capable of holding the maximum
   // number of keys we will allow logging
 
@@ -185,17 +172,38 @@ void ReplayMachine::Init(unsigned int in_seconds, unsigned int in_ticks_per_seco
   //	> bits per frame, where B (buttons pressed/released) is
   //	> equal to N (all buttons).
 
+  //---
+
+  // Calculate number of frame that will be recorded
+  // as well as the number of bits each frame might need
   unsigned int num_of_keys = this->last_input_state_.size();	// Note that number of keys is defined by the
 																// static size we specified for the bitsets
   this->bits_per_int_ = (unsigned int)ceil(log(num_of_keys) / log(2));
   unsigned int max_num_of_frames =  in_ticks_per_second * in_seconds;
   unsigned int max_bits_per_frame = (1 + num_of_keys * (this->bits_per_int_ + 1) + 64);
+  
+  // Allocate space for the input log
   this->input_log_ = new BitPack(max_num_of_frames, max_bits_per_frame);
 
+  // Set the values of the two helper bitsets
   this->last_input_state_ = std::bitset<10>("0000000000");
   this->last_output_state_ = std::bitset<10>("0000000000");
 
-  this->registry_log_ = new entt::registry;
+  //---
+
+  // Do not bother doing any of this if the supplied value
+  // is negative
+  if (in_snapshot_interval_seconds < 0) {
+    return;
+  }
+
+  // Calculate how many snapshots we will be able to squeeze in
+  // based on seconds the replay records and interval of snapshots
+  // Allocate space for one extra, the last frame of the game
+  unsigned int num_of_snapshots_ = (in_seconds / in_snapshot_interval_seconds) + 1;
+
+  // Allocate space for the snapshots
+  this->registry_log_ = new RegPack(num_of_snapshots_);
 }
 
 void ReplayMachine::TestFunctionA() {
@@ -378,17 +386,18 @@ void ReplayMachine::TestFunctionB() {
 entt::registry ReplayMachine::TestFunctionC(entt::registry& in_registry) {
   // Take a registry from outside
   // Note that his class knows of no components
+  // so to properly test it define a component outside
   
   // Initiate
-  this->Init(1, 1);
+  this->Init(1, 1, 1);
   
-  // Clone the registry into the local 
-  this->SaveRegistrySnapshot(in_registry);
+  // Clone the registry into the local
+  this->registry_log_->WriteSnapshot(in_registry);
 
   // Create an empty register locally
   // and load the stored data into it
   entt::registry loc_reg;
-  this->LoadRegistrySnapshot(in_registry);
+  this->registry_log_->ReadSnapshot(loc_reg);
 
   //Return the registry
   return loc_reg;
