@@ -74,8 +74,8 @@ void Engine::Init() {
 
   client.Connect("localhost", 1337);
   scores.reserve(2);
-  scores[0] = 0;
-  scores[1] = 0;
+  scores.push_back(0);
+  scores.push_back(0);
 }
 
 void Engine::CreateInitalEntities() {
@@ -121,7 +121,8 @@ void Engine::Update(float dt) {
   accum_yaw_ -= mouse_movement.x;
   accum_pitch_ -= mouse_movement.y;
 
-  glob::Submit(font_test3_, glm::vec2(582, 705), 72, std::to_string(scores[1]), glm::vec4(0, 0.26, 1, 1));
+  glob::Submit(font_test3_, glm::vec2(582, 705), 72, std::to_string(scores[1]),
+               glm::vec4(0, 0.26, 1, 1));
   glob::Submit(font_test3_, glm::vec2(705, 705), 72, std::to_string(scores[0]),
                glm::vec4(1, 0, 0, 1));
 
@@ -262,6 +263,17 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> score;
       packet >> team;
       scores[team] = score;
+      break;
+    }
+    case PacketBlockType::SWITCH_GOALS: {
+      TransformComponent& blue_light_trans_c =
+          registry_gameplay_.get<TransformComponent>(blue_goal_light);
+      TransformComponent& red_light_trans_c =
+          registry_gameplay_.get<TransformComponent>(red_goal_light);
+      glm::vec3 blue_light_pos = blue_light_trans_c.position;
+      blue_light_trans_c.position = red_light_trans_c.position;
+      red_light_trans_c.position = blue_light_pos;
+      break;
     }
   }
 }
@@ -351,18 +363,18 @@ void Engine::CreatePlayer(PlayerID player_id, EntityID entity_id) {
 
 void Engine::TestCreateLights() {
   // Create light
-  auto light = registry_gameplay_.create();
-  registry_gameplay_.assign<LightComponent>(light, glm::vec3(0.3f, 0.3f, 1.0f),
-                                            15.f, 0.2f);
+  blue_goal_light = registry_gameplay_.create();
+  registry_gameplay_.assign<LightComponent>(
+      blue_goal_light, glm::vec3(0.1f, 0.1f, 1.0f), 15.f, 0.2f);
   registry_gameplay_.assign<TransformComponent>(
-      light, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      blue_goal_light, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
 
-  light = registry_gameplay_.create();
-  registry_gameplay_.assign<LightComponent>(light, glm::vec3(1.f, 0.3f, 0.3f),
-                                            15.f, 0.f);
+  red_goal_light = registry_gameplay_.create();
+  registry_gameplay_.assign<LightComponent>(
+      red_goal_light, glm::vec3(1.f, 0.1f, 0.1f), 15.f, 0.f);
   registry_gameplay_.assign<TransformComponent>(
-      light, glm::vec3(-12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      red_goal_light, glm::vec3(-12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
 }
 

@@ -68,6 +68,9 @@ class Engine {
   bool show_in_game_menu_buttons_ = false;
 
   std::vector<unsigned int> scores;
+
+  entt::entity blue_goal_light;
+  entt::entity red_goal_light;
 };
 
 #endif  // ENGINE_HPP_

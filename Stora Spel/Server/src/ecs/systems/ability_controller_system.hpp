@@ -4,9 +4,9 @@
 //#include <position.h>
 #include <../util/global_settings.hpp>
 #include <boundingboxes.hpp>
-#include "ecs/components.hpp"
 #include <camera_component.hpp>
 #include <entt.hpp>
+#include "ecs/components.hpp"
 
 namespace ability_controller {
 
@@ -14,6 +14,7 @@ bool TriggerAbility(entt::registry &registry, AbilityID in_a_id);
 void CreateMissileEntity(entt::registry &registry);
 void DoSuperStrike(entt::registry &registry);
 void CreateCannonBallEntity(entt::registry &registry);
+void DoSwitchGoals(entt::registry &registry);
 
 void Update(entt::registry &registry, float dt) {
   registry.view<PlayerComponent, AbilityComponent>().each(
@@ -94,6 +95,8 @@ bool TriggerAbility(entt::registry &registry, AbilityID in_a_id) {
       return true;
       break;
     case SWITCH_GOALS:
+      DoSwitchGoals(registry);
+      return true;
       break;
     case TELEPORT:
       break;
@@ -190,10 +193,40 @@ void CreateCannonBallEntity(entt::registry &registry) {
     registry.assign<physics::Sphere>(cannonball,
                                      glm::vec3(tc.position + cc.offset), .3f);
     registry.assign<ProjectileComponent>(cannonball, CANNON_BALL);
-    //registry.assign<ModelComponent>(cannonball,
+    // registry.assign<ModelComponent>(cannonball,
     //                                glob::GetModel("assets/Ball/Ball.fbx"));
-    //registry.assign<LightComponent>(cannonball, glm::vec3(1, 0, 1), 3.f, 0.f);
+    // registry.assign<LightComponent>(cannonball, glm::vec3(1, 0, 1), 3.f,
+    // 0.f);
+  }
+}
 
+void DoSwitchGoals(entt::registry &registry) {
+  auto view_goals = registry.view<GoalComponenet, TeamComponent>();
+  GoalComponenet *first_goal_comp = nullptr;
+  GoalComponenet *second_goal_comp = nullptr;
+  bool got_first = false;
+  for (auto goal : view_goals) {
+    TeamComponent &goal_team_c = registry.get<TeamComponent>(goal);
+    GoalComponenet &goal_goal_c = registry.get<GoalComponenet>(goal);
+
+    if (goal_team_c.team == TEAM_RED) {
+      goal_team_c.team = TEAM_BLUE;
+      goal_goal_c.switched_this_tick = true;
+    } else {
+      goal_team_c.team = TEAM_RED;
+      goal_goal_c.switched_this_tick = true;
+    }
+    if (!got_first) {
+      first_goal_comp = &goal_goal_c;
+      got_first = true;
+    } else {
+      second_goal_comp = &goal_goal_c;
+    }
+  }
+  if (first_goal_comp != nullptr && second_goal_comp != nullptr) {
+    unsigned int first_goals = first_goal_comp->goals;
+    first_goal_comp->goals = second_goal_comp->goals;
+    second_goal_comp->goals = first_goals;
   }
 }
 

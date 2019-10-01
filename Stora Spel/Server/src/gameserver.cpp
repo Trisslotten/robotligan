@@ -148,15 +148,23 @@ void GameServer::Update(float dt) {
     auto view_goals = registry_.view<GoalComponenet, TeamComponent>();
 
     entt::entity blue_goal;
+
+    bool sent_switch = false;
     for (auto goal : view_goals) {
       GoalComponenet& goal_goal_c = registry_.get<GoalComponenet>(goal);
       TeamComponent& goal_team_c = registry_.get<TeamComponent>(goal);
       to_send << goal_team_c;
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
+      if (goal_goal_c.switched_this_tick) {
+        if (!sent_switch) {
+          to_send << PacketBlockType::SWITCH_GOALS;
+          sent_switch = true;
+        }
+        goal_goal_c.switched_this_tick = false;
+      }
     }
 
-    
     server_.Send(to_send);
   }
 
@@ -235,8 +243,8 @@ void GameServer::CreatePlayer(PlayerID id) {
   );
 
   // Prepare hard-coded values
-  AbilityID primary_id = SUPER_STRIKE;
-  AbilityID secondary_id = NULL_ABILITY;
+  AbilityID primary_id = SWITCH_GOALS;
+  AbilityID secondary_id = SWITCH_GOALS;
   float primary_cooldown =
       GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
   glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
