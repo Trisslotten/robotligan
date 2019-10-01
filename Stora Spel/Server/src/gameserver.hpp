@@ -15,7 +15,6 @@ class GameServer {
   ~GameServer();
   void Init();
   void Update(float dt);
-  void AddScore(unsigned int team);
 
  private:
   void UpdateSystems(float dt);
@@ -38,8 +37,6 @@ class GameServer {
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
 
   int test_player_guid_ = 0;
-
-  std::vector<unsigned int> scores;
 };
 
 #endif  // GAME_SERVER_HPP_
