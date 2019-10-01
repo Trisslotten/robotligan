@@ -7,6 +7,7 @@
 #include <glob/graphics.hpp>
 #include <unordered_map>
 #include "shared/shared.hpp"
+#include "Chat.hpp"
 
 class Engine {
  public:
@@ -71,6 +72,9 @@ class Engine {
 
   entt::entity blue_goal_light;
   entt::entity red_goal_light;
+  bool take_game_input_ = true;
+  Chat chat;
+  std::string message_ = "";
 };
 
 #endif  // ENGINE_HPP_
