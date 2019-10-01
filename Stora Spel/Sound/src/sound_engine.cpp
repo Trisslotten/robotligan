@@ -44,14 +44,14 @@ class EXPORT Sound {
 };
 
 struct SoundEngine::Impl {
-  std::unordered_map<std::string, SoundHandle> sound_handles_;
-  std::unordered_map<SoundHandle, Sound> sounds_;
-  FMOD::System* system_ = nullptr;
-  FMOD::ChannelGroup* channel_group_ = nullptr;
+  std::unordered_map<std::string, SoundHandle> sound_handles;
+  std::unordered_map<SoundHandle, Sound> sounds;
+  FMOD::System* system = nullptr;
+  FMOD::ChannelGroup* channel_group = nullptr;
   std::vector<SoundPlayer*> sound_players;
-  float master_volume_ = 1.0f;
+  float master_volume = 1.0f;
 
-  SoundHandle sound_handle_guid_ = 0;
+  SoundHandle sound_handle_guid = 0;
 };
 
 // H=Handle, A=Asset
@@ -97,13 +97,13 @@ void SoundEngine::Init() {
   FMOD_RESULT result;
 
   result =
-      FMOD::System_Create(&impl_->system_);  // Create the main system object.
+      FMOD::System_Create(&impl_->system);  // Create the main system object.
   if (result != FMOD_OK) {
     printf("FMOD error! (%d) %s\n", result, FMOD_ErrorString(result));
     exit(-1);
   }
 
-  result = impl_->system_->init(512, FMOD_INIT_NORMAL, 0);  // Initialize FMOD.
+  result = impl_->system->init(512, FMOD_INIT_NORMAL, 0);  // Initialize FMOD.
   if (result != FMOD_OK) {
     printf("FMOD error! (%d) %s\n", result, FMOD_ErrorString(result));
     exit(-1);
@@ -113,22 +113,22 @@ void SoundEngine::Init() {
   FMOD_VECTOR listener_up{0.0f, 1.0f, 0.0f};
   FMOD_VECTOR listener_vel{0.0f, 0.0f, 0.0f};
 
-  impl_->system_->set3DSettings(1.f, 1.0f, 1.0f);
-  impl_->system_->set3DListenerAttributes(0, &listener_pos, &listener_vel,
+  impl_->system->set3DSettings(1.f, 1.0f, 1.0f);
+  impl_->system->set3DListenerAttributes(0, &listener_pos, &listener_vel,
                                           &listener_forward, &listener_up);
 
 }
 
-void SoundEngine::Update() { impl_->system_->update(); }
+void SoundEngine::Update() { impl_->system->update(); }
 
 SoundHandle SoundEngine::GetSound(const std::string& path) {
-  return GetAsset(impl_->sound_handles_, impl_->sounds_,
-                  impl_->sound_handle_guid_, path, impl_->system_);
+  return GetAsset(impl_->sound_handles, impl_->sounds,
+                  impl_->sound_handle_guid, path, impl_->system);
 }
 
-void SoundEngine::SetMasterVolume(float vol) { impl_->master_volume_ = vol;
+void SoundEngine::SetMasterVolume(float vol) { impl_->master_volume = vol;
   FMOD::ChannelGroup* master_group = nullptr;
-  impl_->system_->getMasterChannelGroup(&master_group);
+  impl_->system->getMasterChannelGroup(&master_group);
   master_group->setVolume(vol);
 }
 
@@ -136,7 +136,7 @@ void SoundEngine::SetListenerAttributes(glm::vec3 pos, glm::quat orientation,
                                         glm::vec3 vel) {
   glm::vec3 forward = orientation * glm::vec3(1, 0, 0);
   glm::vec3 up = orientation * glm::vec3(0, 1, 0);
-  impl_->system_->set3DListenerAttributes(
+  impl_->system->set3DListenerAttributes(
       0, (FMOD_VECTOR*)&pos, (FMOD_VECTOR*)&vel, (FMOD_VECTOR*)&forward,
       (FMOD_VECTOR*)&up);
 }
@@ -155,15 +155,15 @@ struct SoundPlayer::Impl {
 SoundPlayer::SoundPlayer(void* engine_impl) {
   i_ = new Impl();
   i_->sound_engine = (SoundEngine::Impl*)engine_impl;
-  i_->sound_engine->system_->createChannelGroup(nullptr, &i_->group);
+  i_->sound_engine->system->createChannelGroup(nullptr, &i_->group);
   i_->group->setMode(FMOD_3D);
 }
 SoundPlayer::~SoundPlayer() { delete i_; }
 
 void SoundPlayer::Play(SoundHandle handle, int loop_count) {
-  auto iter = i_->sound_engine->sounds_.find(handle);
-  if (iter != i_->sound_engine->sounds_.end()) {
-    iter->second.Play(i_->sound_engine->system_, i_->group, loop_count);
+  auto iter = i_->sound_engine->sounds.find(handle);
+  if (iter != i_->sound_engine->sounds.end()) {
+    iter->second.Play(i_->sound_engine->system, i_->group, loop_count);
   }
 }
 
