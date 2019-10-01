@@ -2,6 +2,7 @@
 
 #include <GLFW/glfw3.h>
 
+#include <string>
 #include <iostream>
 #include <unordered_map>
 
@@ -16,6 +17,8 @@ static std::unordered_map<int, int> pre_keys;
 static std::unordered_map<int, int> buttons;
 static std::unordered_map<int, int> pre_buttons;
 
+static std::string characters;
+
 float axis_threshold = 0.2;
 
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action,
@@ -29,6 +32,9 @@ void MouseCallback(GLFWwindow* window, int button, int action, int mods) {
     pre_buttons[button]++;
   }
 }
+void CharacterCallback(GLFWwindow* window, unsigned int codepoint) {
+  characters += codepoint;
+}
 }  // namespace
 bool Input::Initialize() {
   if (!glob::window::IsInitialized() || inititalized) {
@@ -36,6 +42,7 @@ bool Input::Initialize() {
   }
   glob::window::SetKeyCallback((GLFWkeyfun)KeyCallback);
   glob::window::SetMouseCallback((GLFWmousebuttonfun)MouseCallback);
+  glob::window::SetCharacterCallback((GLFWcharfun)CharacterCallback);
   inititalized = true;
   return true;
 }
@@ -62,11 +69,13 @@ bool Input::IsKeyPressed(int key) {
   }
 }
 
+std::string Input::GetCharacters() { return characters; }
 void Input::Reset() {
   keys = pre_keys;
   pre_keys.clear();
   buttons = pre_buttons;
   pre_buttons.clear();
+  characters = "";
 }
 
 glm::vec2 Input::MouseMov() { return glob::window::MouseMovement(); }

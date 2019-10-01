@@ -144,10 +144,18 @@ void GameServer::Update(float dt) {
       }
     }
 
+	//send messages
+    for (auto m : messages) {
+      to_send.Add(m.c_str(), m.size());
+      to_send << m.size();
+      to_send << PacketBlockType::MESSAGE;
+	}
+
     server_.Send(to_send);
   }
 
   created_players_.clear();
+  messages.clear();
 }
 
 void GameServer::UpdateSystems(float dt) {
@@ -174,6 +182,15 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       players_inputs_[id] = std::make_pair(actions, glm::vec2(pitch, yaw));
       // std::cout << "PACKET: INPUT, " << actions << ", " << yaw << ", " <<
       // pitch << "\n";
+      break;
+    }
+    case PacketBlockType::MESSAGE: {
+      size_t strsize = 0;
+      packet >> strsize;
+      std::string str;
+      str.resize(strsize);
+      packet.Remove(str.data(), strsize);
+      messages.push_back(str);
       break;
     }
   }

@@ -152,6 +152,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Chat.cpp" />
     <ClCompile Include="main.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
@@ -171,6 +172,7 @@
     <ClCompile Include="util\timer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Chat.hpp" />
     <ClInclude Include="Components\ball_component.hpp" />
     <ClInclude Include="Components\button_component.hpp" />
     <ClInclude Include="Components\player_component.hpp" />

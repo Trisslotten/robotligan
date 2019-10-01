@@ -113,6 +113,10 @@ void SetMouseCallback(void (*key_callback)(GLFWwindow*, int, int, int)) {
                              (GLFWmousebuttonfun)key_callback);
 }
 
+void SetCharacterCallback(void (*key_callback)(GLFWwindow*, unsigned int)) {
+  glfwSetCharCallback(glob::window::GetGlfwWindow(), (GLFWcharfun)key_callback);
+}
+
 void SetMouseLocked(bool val) {
   if (val) {
     glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);

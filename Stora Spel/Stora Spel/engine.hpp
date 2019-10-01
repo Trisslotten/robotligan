@@ -7,6 +7,7 @@
 #include <glob/graphics.hpp>
 #include <unordered_map>
 #include "shared/shared.hpp"
+#include "Chat.hpp"
 
 class Engine {
  public:
@@ -66,6 +67,8 @@ class Engine {
   glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
       gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_;
   bool show_in_game_menu_buttons_ = false;
+  Chat chat;
+  std::string message_ = "";
 };
 
 #endif  // ENGINE_HPP_

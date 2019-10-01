@@ -94,8 +94,6 @@ void Engine::CreateInitalEntities() {
 }
 
 void Engine::Update(float dt) {
-  Input::Reset();
-
   for (auto const& [key, action] : keybinds_)
     if (Input::IsKeyDown(key)) key_presses_[key]++;
   for (auto const& [button, action] : mousebinds_)
@@ -107,6 +105,7 @@ void Engine::Update(float dt) {
   accum_pitch_ -= mouse_movement.y;
 
   UpdateSystems(dt);
+  Input::Reset();
 }
 
 void Engine::UpdateNetwork() {
@@ -131,6 +130,13 @@ void Engine::UpdateNetwork() {
     packet << accum_pitch_;
     packet << accum_yaw_;
     packet << PacketBlockType::INPUT;
+
+	//message
+    if (message_.size() > 0) {
+      packet.Add(message_.c_str(), message_.size());
+      packet << message_.size();
+      packet << PacketBlockType::MESSAGE;
+	}
     if (client.IsConnected()) {
       client.Send(packet);
     } else {
@@ -205,6 +211,16 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       str.resize(strsize);
       packet.Remove(str.data(), strsize);
       std::cout << "PACKET: TEST_STRING: '" << str << "'\n";
+      break;
+    }
+    case PacketBlockType::MESSAGE: {
+      size_t strsize = 0;
+      packet >> strsize;
+      std::string str;
+      str.resize(strsize);
+      packet.Remove(str.data(), strsize);
+      chat.AddMessage(str);
+      break;
     }
     case PacketBlockType::BALL_TRANSFORM: {
       registry_gameplay_.view<TransformComponent, BallComponent>().each(
@@ -248,48 +264,71 @@ void Engine::SetCurrentRegistry(entt::registry* registry) {
 }
 
 void Engine::UpdateSystems(float dt) {
-  if (Input::IsKeyPressed(GLFW_KEY_ESCAPE) && !show_in_game_menu_buttons_) {
-    glob::window::SetMouseLocked(false);
-    show_in_game_menu_buttons_ = true;
-    UpdateInGameMenu(show_in_game_menu_buttons_);
-  } else if (Input::IsKeyPressed(GLFW_KEY_ESCAPE) &&
-             show_in_game_menu_buttons_) {
-    glob::window::SetMouseLocked(true);
-    show_in_game_menu_buttons_ = false;
-    UpdateInGameMenu(show_in_game_menu_buttons_);
-  }
-  if (show_in_game_menu_buttons_) {
-    glob::Submit(in_game_menu_gui_, glm::vec2(491, 152), 1.0f);
-  }
-  // Submit 2D Element TEST
-  glob::Submit(e2D_test_, glm::vec3(10.5f, 1.0f, 0.0f), 2, -90.0f,
-               glm::vec3(0, 1, 0));
-  glob::Submit(e2D_test_, glm::vec3(-10.5f, 1.0f, 0.0f), 2, 90.0f,
-               glm::vec3(0, 1, 0));
-  glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
+  if (registry_current_ == &registry_gameplay_) { //true if the player is in game
+	if (Input::IsKeyPressed(GLFW_KEY_ESCAPE) && !show_in_game_menu_buttons_) {
+	  glob::window::SetMouseLocked(false);
+	  show_in_game_menu_buttons_ = true;
+	  UpdateInGameMenu(show_in_game_menu_buttons_);
+	} else if (Input::IsKeyPressed(GLFW_KEY_ESCAPE) &&
+	           show_in_game_menu_buttons_) {
+	  glob::window::SetMouseLocked(true);
+	  show_in_game_menu_buttons_ = false;
+	  UpdateInGameMenu(show_in_game_menu_buttons_);
+	}
+	if (show_in_game_menu_buttons_) {
+	  glob::Submit(in_game_menu_gui_, glm::vec2(491, 152), 1.0f);
+	}
+	//chat code
+    if (chat.ShowChat()) {
+      if (Input::IsKeyPressed(GLFW_KEY_ENTER)) {
+        if (chat.IsClosing() == true) {
+          chat.SetShowChat();
+		} else {
+			chat.SetSendMessage(true);
+			message_ = chat.GetCurrentMessage();
+            chat.CloseChat();
+		}
+      }
+      chat.Update(dt);
+      chat.SubmitText(font_test2_);
+      glob::Submit(font_test2_, glm::vec2(200.f, 200.f), 200, "TEST",
+                   glm::vec4(0, 1, 1, 1));
+    }
+    if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat.ShowChat()) {
+      //glob::window::SetMouseLocked(false);
+      chat.SetShowChat();
+    }
 
-  // Show statistics TEST
-  if (Input::IsKeyDown(GLFW_KEY_TAB)) {
-    glob::Submit(gui_test_, glm::vec2(285, 177), 0.6, 100);
-  }
+	
+	// Submit 2D Element TEST
+	glob::Submit(e2D_test_, glm::vec3(10.5f, 1.0f, 0.0f), 2, -90.0f,
+	             glm::vec3(0, 1, 0));
+	glob::Submit(e2D_test_, glm::vec3(-10.5f, 1.0f, 0.0f), 2, 90.0f,
+	             glm::vec3(0, 1, 0));
+	glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
 
-  // Show GUI TEST
-  // Temp Update of stamina bar
-  float stam_len = 0.0f;
-  /*
-  registry_gameplay_.view<PlayerComponent>().each(
-      [&](auto entity, PlayerComponent& player_c) {
-        stam_len = player_c.energy_current;
-      });
-          */
-  glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
-  glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, stam_len);
-  glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
-  glob::Submit(gui_quickslots_, glm::vec2(7, 50), 0.3, 100);
-  glob::Submit(gui_teamscore_, glm::vec2(497, 648), 1, 100);
+	// Show statistics TEST
+	if (Input::IsKeyDown(GLFW_KEY_TAB)) {
+	  glob::Submit(gui_test_, glm::vec2(285, 177), 0.6, 100);
+	}
+
+	// Show GUI TEST
+	// Temp Update of stamina bar
+	float stam_len = 0.0f;
+	/*
+	registry_gameplay_.view<PlayerComponent>().each(
+	    [&](auto entity, PlayerComponent& player_c) {
+	      stam_len = player_c.energy_current;
+	    });
+	        */
+	glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
+	glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, stam_len);
+	glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
+	glob::Submit(gui_quickslots_, glm::vec2(7, 50), 0.3, 100);
+	glob::Submit(gui_teamscore_, glm::vec2(497, 648), 1, 100);
+  }
 
   button_system::Update(*registry_current_);
-
   RenderSystem(*registry_current_);
 }
 
