@@ -6,6 +6,7 @@
 #include <entity/registry.hpp>
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
+#include <glm/ext/quaternion_common.hpp>
 #include <iostream>
 #include <vector>
 

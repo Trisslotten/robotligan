@@ -1,7 +1,8 @@
 #ifndef BALL_COMPONENT_HPP_
 #define BALL_COMPONENT_HPP_
 
-#include <glm/ext/quaternion_common.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 struct BallComponent {
   bool is_real;

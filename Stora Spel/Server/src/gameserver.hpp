@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 #include <shared.hpp>
 #include "util/timer.hpp"
+#include "state.hpp"
 
 class GameServer {
  public:
@@ -31,10 +32,13 @@ class GameServer {
   int last_num_players_ = 0;
   entt::registry registry_;
 
-  std::vector<PlayerID> created_players_;
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
-
+ 
+  State *current_state_ = nullptr;
+  PlayState play_state_;
+  LobbyState lobby_state_;
   int test_player_guid_ = 0;
+
 };
 
 #endif  // GAME_SERVER_HPP_

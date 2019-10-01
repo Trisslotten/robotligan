@@ -32,15 +32,13 @@ void GameServer::Init() {
       glm::vec3(0.f, 0.f, 0.f)    // Others
   };
   CreateEntities(start_positions, 3);
+  lobby_state_.Init(registry_, server_);
+  current_state_ = &lobby_state_;
 }
 
 void GameServer::Update(float dt) {
   server_.Update();
 
-  for (auto client_data : server_.GetNewlyConnected()) {
-    std::cout << "DEBUG: Creating a player\n";
-    CreatePlayer(client_data->ID);
-  }
 
   for (auto& [id, client_data] : server_.GetClients()) {
     for (auto& packet : client_data->packets) {
@@ -70,84 +68,9 @@ void GameServer::Update(float dt) {
     //std::cout << (int)p.x << ", " << (int)p.y << ", " << (int)p.z << "\n";
   });
   */
-
+  current_state_->Update(registry_, server_);
   UpdateSystems(dt);
 
-  for (auto& [id, client_data] : server_.GetClients()) {
-    NetAPI::Common::Packet to_send;
-    auto header = to_send.GetHeader();
-    header->receiver = id;
-
-    /*
-    glm::vec3 ball_pos{0};
-    registry_.view<TransformComponent, BallComponent>().each(
-        [&](auto entity, auto& trans_c, auto& ball) {
-          ball_pos = trans_c.position;
-        });
-    to_send << ball_pos;
-    to_send << PacketBlockType::TEST_BALL_P;
-    */
-    auto view_cam = registry_.view<CameraComponent, PlayerComponent>();
-    for (auto cam : view_cam) {
-      auto& cam_c = view_cam.get<CameraComponent>(cam);
-      auto& player_c = view_cam.get<PlayerComponent>(cam);
-      if (id == player_c.id) {
-        to_send << cam_c.orientation;
-        break;
-      }
-    }
-    to_send << PacketBlockType::CAMERA_TRANSFORM;
-
-
-	auto view_ball = registry_.view<BallComponent, TransformComponent>();
-    for (auto ball : view_ball) {
-      //auto& ball_c = view_cam.get<BallComponent>(ball);
-      auto& trans_c = view_ball.get<TransformComponent>(ball);
-      
-      to_send << trans_c.rotation;
-      to_send << trans_c.position;
-      break;
-    }
-	to_send << PacketBlockType::BALL_TRANSFORM;
-
-    auto view_players = registry_.view<TransformComponent, PlayerComponent>();
-    int num_players = view_players.size();
-    for (auto player : view_players) {
-      auto& trans_c = view_players.get<TransformComponent>(player);
-      auto& player_c = view_players.get<PlayerComponent>(player);
-      to_send << trans_c.rotation;
-      to_send << trans_c.position;
-      to_send << player_c.id;
-    }
-    to_send << num_players;
-    to_send << PacketBlockType::PLAYERS_TRANSFORMS;
-
-    bool is_created = false;
-    for (auto& created_id : created_players_) {
-      if (id == created_id) {
-        to_send << id;
-        to_send << PacketBlockType::SET_CLIENT_PLAYER_ID;
-        is_created = true;
-        break;
-      }
-    }
-
-    if (is_created) {
-      for (auto& [id, client_data] : server_.GetClients()) {
-        to_send << id;
-        to_send << PacketBlockType::CREATE_PLAYER;
-      }
-    } else {
-      for (auto& created_id : created_players_) {
-        to_send << created_id;
-        to_send << PacketBlockType::CREATE_PLAYER;
-      }
-    }
-
-    server_.Send(to_send);
-  }
-
-  created_players_.clear();
 }
 
 void GameServer::UpdateSystems(float dt) {
@@ -243,7 +166,6 @@ void GameServer::CreatePlayer(PlayerID id) {
 
   auto& player_component = registry_.assign<PlayerComponent>(entity);
   player_component.id = id;
-  created_players_.push_back(id);
 
   std::cout << "DEBUG: Created player id: " << player_component.id << "\n";
 }

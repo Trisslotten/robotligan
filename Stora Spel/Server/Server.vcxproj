@@ -147,6 +147,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\gameserver.cpp" />
     <ClCompile Include="src\util\global_settings.cpp" />
+    <ClCompile Include="src\state.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ecs\components.hpp" />
@@ -163,6 +164,7 @@
     <ClInclude Include="src\gameserver.hpp" />
     <ClInclude Include="src\util\global_settings.hpp" />
     <ClInclude Include="src\util\timer.hpp" />
+    <ClInclude Include="src\state.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
