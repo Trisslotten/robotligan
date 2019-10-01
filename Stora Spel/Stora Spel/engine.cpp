@@ -136,6 +136,7 @@ void Engine::UpdateNetwork() {
       packet.Add(message_.c_str(), message_.size());
       packet << message_.size();
       packet << PacketBlockType::MESSAGE;
+      message_.clear();
 	}
     if (client.IsConnected()) {
       client.Send(packet);
