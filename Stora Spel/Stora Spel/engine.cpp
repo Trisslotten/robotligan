@@ -222,7 +222,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet.Remove(str.data(), strsize);
       chat.AddMessage(str);
       chat.SetShowChat();
-      if (chat.IsClosing == true) {
+      if (chat.IsClosing() == true) {
 		chat.CloseChat();
 	  }
       break;
