@@ -260,13 +260,14 @@ void GameServer::CreateEntities() {
 }
 
 void GameServer::ResetEntities() {
-  // Set rotation
+  // Reset Rotation
   auto rotation_view = registry_.view<TransformComponent>();
   for (auto entity : rotation_view) {
     auto& t = rotation_view.get(entity);
     t.rotation = glm::quat(glm::vec3(0, glm::pi<float>(), 0));
   }
 
+  // Reset Players
   glm::vec3 player_pos[3];
   for (int i = 0; i < 3; ++i) {
     player_pos[i].x = GlobalSettings::Access()->ValueOf(
@@ -299,10 +300,12 @@ void GameServer::ResetEntities() {
       // GlobalSettings::Access()->WriteError("main.cpp", "ResetEntities()",
       // "Counter out of scope");
     }
-
-    // TODO: reset pick-up
   }
+  
+  // TODO: reset pick-up
 
+
+  // Reset Balls
   auto ball_view =
       registry_.view<BallComponent, PhysicsComponent, TransformComponent>();
   for (auto entity : ball_view) {
