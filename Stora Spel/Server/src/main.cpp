@@ -25,7 +25,7 @@ int main(unsigned argc, char** argv) {
   while (running) {
     accum_ms += timer.RestartMS();
 
-    while (accum_ms > update_time_ms) {
+    while (accum_ms >= update_time_ms) {
       server.Update(update_time);
       num_frames++;
       accum_ms -= update_time_ms;

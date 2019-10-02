@@ -6,10 +6,10 @@
 #include <glob/graphics.hpp>
 #include <iostream>
 
-#include "ecs/systems/button_system.hpp"
 #include <glob\window.hpp>
-#include "ecs/systems/render_system.hpp"
 #include "ecs/components.hpp"
+#include "ecs/systems/button_system.hpp"
+#include "ecs/systems/render_system.hpp"
 #include "entitycreation.hpp"
 #include "shared/camera_component.hpp"
 #include "shared/id_component.hpp"
@@ -36,11 +36,13 @@ void Engine::Init() {
   lobby_state_.SetEngine(this);
   play_state_.SetEngine(this);
 
+  main_menu_state_.Startup();
+  lobby_state_.Startup();
+  play_state_.Startup();
+
   main_menu_state_.Init();
   current_state_ = &main_menu_state_;
   wanted_state_type_ = StateType::MAIN_MENU;
-
-  // client.Connect("localhost", 1337);
 }
 
 void Engine::Update(float dt) {
@@ -86,47 +88,37 @@ void Engine::Update(float dt) {
 }
 
 void Engine::UpdateNetwork() {
-  {
-    // get and send player input
-    std::bitset<PlayerAction::NUM_ACTIONS> actions;
-    for (auto const& [key, action] : keybinds_) {
-      auto& presses = key_presses_[key];
-      if (presses > 0) actions.set(action, true);
-      presses = 0;
-    }
-    for (auto const& [button, action] : mousebinds_) {
-      auto& presses = mouse_presses_[button];
-      if (presses > 0) actions.set(action, true);
-      presses = 0;
-    }
-
-    uint16_t action_bits = actions.to_ulong();
-
-    NetAPI::Common::Packet packet;
-
-    packet << action_bits;
-    packet << accum_pitch_;
-    packet << accum_yaw_;
-    packet << PacketBlockType::INPUT;
-
-    if (actions[PlayerAction::KICK]) {
-      packet << PacketBlockType::CLIENT_READY;
-    } else if (actions[PlayerAction::SHOOT]) {
-      packet << PacketBlockType::CLIENT_NOT_READY;
-    }
-
-    if (client.IsConnected()) {
-      client.Send(packet);
-    } else {
-      // TODO: go to main menu or something
-    }
-    accum_yaw_ = 0.f;
-    accum_pitch_ = 0.f;
+  // get and send player input
+  std::bitset<PlayerAction::NUM_ACTIONS> actions;
+  for (auto const& [key, action] : keybinds_) {
+    auto& presses = key_presses_[key];
+    if (presses > 0) actions.set(action, true);
+    presses = 0;
+  }
+  for (auto const& [button, action] : mousebinds_) {
+    auto& presses = mouse_presses_[button];
+    if (presses > 0) actions.set(action, true);
+    presses = 0;
   }
 
-  {
-    // handle received data
-    auto packets = client.Receive();
+  uint16_t action_bits = actions.to_ulong();
+
+  NetAPI::Common::Packet packet;
+
+  packet << action_bits;
+  packet << accum_pitch_;
+  packet << accum_yaw_;
+  packet << PacketBlockType::INPUT;
+
+  if (client_.IsConnected()) {
+    client_.Send(packet);
+  }
+  accum_yaw_ = 0.f;
+  accum_pitch_ = 0.f;
+
+  // handle received data
+  if (client_.IsConnected()) {
+    auto packets = client_.Receive();
     // std::cout <<"Num recevied packets: "<< packets.size() << "\n";
     for (auto& packet : packets) {
       while (!packet.IsEmpty()) {
@@ -149,7 +141,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> player_id;
       std::cout << "PACKET: CREATE_PLAYER, player_id=" << player_id
                 << ", entity_id=" << entity_id << "\n";
-      //CreatePlayer(player_id, entity_id);
+      // CreatePlayer(player_id, entity_id);
       break;
     }
     /*
@@ -199,7 +191,6 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::GAME_START: {
-      
       break;
     }
   }

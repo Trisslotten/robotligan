@@ -166,6 +166,9 @@
     <ClInclude Include="src\util\timer.hpp" />
     <ClInclude Include="src\state.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="util\settings.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

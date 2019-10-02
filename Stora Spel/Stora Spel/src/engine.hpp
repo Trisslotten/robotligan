@@ -17,16 +17,16 @@ class Engine {
   Engine& operator=(const Engine&) = delete;
 
   void Init();
-
   void Update(float dt);
-
   void UpdateNetwork();
-
   void Render();
 
   void SetCurrentRegistry(entt::registry* registry);
   void ChangeState(StateType state) {
-    
+    wanted_state_type_ = state;
+  }
+  NetAPI::Socket::Client& getClient() {
+    return client_;
   }
 
  private:
@@ -35,7 +35,7 @@ class Engine {
   void UpdateSystems(float dt);
   void HandlePacketBlock(NetAPI::Common::Packet& packet);
 
-  NetAPI::Socket::Client client;
+  NetAPI::Socket::Client client_;
 
   StateType wanted_state_type_ = StateType::MAIN_MENU;
   State* current_state_ = nullptr;

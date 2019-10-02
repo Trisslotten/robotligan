@@ -28,6 +28,8 @@ int main(unsigned argc, char** argv) {
   double net_update_rate = 20.0;
   double net_update_time = 1.0 / net_update_rate;
 
+  int num_render_updates = 0;
+
   Timer net_update_timer;
   double net_update_accum = 0.0;
   int num_net_updates = 0;
@@ -39,7 +41,7 @@ int main(unsigned argc, char** argv) {
   while (!glob::window::ShouldClose()) {
     engine.Update(dt);
 
-    while (net_update_accum > net_update_time) {
+    while (net_update_accum >= net_update_time) {
       engine.UpdateNetwork();
 
       num_net_updates++;
@@ -48,13 +50,17 @@ int main(unsigned argc, char** argv) {
 
     if (debug_timer.Elapsed() > 5.0) {
       double elapsed = debug_timer.Restart();
-      std::cout << "DEBUG: Network Update Rate = " << num_net_updates / elapsed
-                << " U/s\n";
+      std::cout << "DEBUG:    net update rate = " << num_net_updates / elapsed
+                << " U/s\n       render update rate = "
+                << num_render_updates / elapsed << " U/s\n";
       num_net_updates = 0;
+      num_render_updates = 0;
     }
 
     engine.Render();
     glob::window::Update();
+
+    num_render_updates++;
 
     dt = frame_timer.Restart();
     double frame_time = net_update_timer.Restart();

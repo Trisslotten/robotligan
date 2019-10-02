@@ -1,8 +1,8 @@
 #include "state.hpp"
 
 #include <glob/window.hpp>
-#include "../engine.hpp"
-#include "../entitycreation.hpp"
+#include "engine.hpp"
+#include "entitycreation.hpp"
 
 void MainMenuState::Startup() {
   CreateMainMenu();

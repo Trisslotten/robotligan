@@ -22,7 +22,7 @@ void GlobalSettings::UpdateValuesFromFile() {
   this->settings_map_.clear();
 
   // Open a file stream
-  std::ifstream settings_file("settings.txt");
+  std::ifstream settings_file("util/settings.txt");
 
   // If the file isn't able to be opened, write error
   if (!settings_file.is_open()) {
