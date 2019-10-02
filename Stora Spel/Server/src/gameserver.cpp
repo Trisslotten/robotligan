@@ -32,13 +32,12 @@ void GameServer::Init() {
       glm::vec3(0.f, 0.f, 0.f)    // Others
   };
   CreateEntities(start_positions, 3);
-  lobby_state_.Init(registry_, server_);
+  lobby_state_.Init(*this);
   current_state_ = &lobby_state_;
 }
 
 void GameServer::Update(float dt) {
   server_.Update();
-
 
   for (auto& [id, client_data] : server_.GetClients()) {
     for (auto& packet : client_data->packets) {
@@ -48,6 +47,7 @@ void GameServer::Update(float dt) {
     }
     client_data->packets.clear();
   }
+
   auto player_view = registry_.view<PlayerComponent>();
   registry_.view<PlayerComponent>().each(
       [&](auto entity, PlayerComponent& player_c) {
@@ -68,9 +68,28 @@ void GameServer::Update(float dt) {
     //std::cout << (int)p.x << ", " << (int)p.y << ", " << (int)p.z << "\n";
   });
   */
-  current_state_->Update(registry_, server_);
+  current_state_->Update(*this);
+
   UpdateSystems(dt);
 
+  if (wanted_state_type_ != current_state_type_) {
+    current_state_type_ = wanted_state_type_;
+
+	current_state_->Cleanup(*this);
+
+    switch (wanted_state_type_) {
+      case StateType::LOBBY: 
+		std::cout << "Change Server State: LOBBY\n";
+        current_state_ = &lobby_state_;
+        break;
+      case StateType::PLAY: 
+		std::cout << "Change Server State: PLAY\n";
+        current_state_ = &play_state_;
+        break;
+	}
+
+	current_state_->Init(*this);
+  }
 }
 
 void GameServer::UpdateSystems(float dt) {

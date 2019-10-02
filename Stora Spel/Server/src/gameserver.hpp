@@ -7,14 +7,25 @@
 #include <entt.hpp>
 #include <glm/glm.hpp>
 #include <shared.hpp>
-#include "util/timer.hpp"
 #include "state.hpp"
+#include "util/timer.hpp"
+
+enum class StateType {
+  LOBBY = 0,
+  PLAY,
+  NUM_STATES,
+};
 
 class GameServer {
  public:
   ~GameServer();
   void Init();
   void Update(float dt);
+
+  void ChangeState(StateType state) { wanted_state_type_ = state; }
+
+  NetAPI::Socket::Server& getServer(){ return server_; }
+  entt::registry& getRegistry() { return registry_; }
 
  private:
   void UpdateSystems(float dt);
@@ -33,12 +44,14 @@ class GameServer {
   entt::registry registry_;
 
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
- 
-  State *current_state_ = nullptr;
+
+  State* current_state_ = nullptr;
   PlayState play_state_;
   LobbyState lobby_state_;
-  int test_player_guid_ = 0;
+  StateType wanted_state_type_ = StateType::LOBBY;
+  StateType current_state_type_ = StateType::LOBBY;
 
+  int test_player_guid_ = 0;
 };
 
 #endif  // GAME_SERVER_HPP_

@@ -143,8 +143,11 @@ void Engine::UpdateNetwork() {
 
   {
     // handle received data
-    for (auto& packet : client.Receive()) {
+	auto packets = client.Receive();
+	//std::cout <<"Num recevied packets: "<< packets.size() << "\n";
+    for (auto& packet : packets) {
       while (!packet.IsEmpty()) {
+		//std::cout << "Remaining packet size: " << packet.GetPacketSize() << "\n";
         HandlePacketBlock(packet);
       }
     }
@@ -203,8 +206,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> strsize;
       std::string str;
       str.resize(strsize);
+	  std::cout << "Packet Size: " << packet.GetPacketSize() << "\n";
       packet.Remove(str.data(), strsize);
       std::cout << "PACKET: TEST_STRING: '" << str << "'\n";
+	  break;
     }
     case PacketBlockType::BALL_TRANSFORM: {
       registry_gameplay_.view<TransformComponent, BallComponent>().each(

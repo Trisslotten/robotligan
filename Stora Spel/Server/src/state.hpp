@@ -4,32 +4,40 @@
 #include <entity/registry.hpp>
 #include <entt.hpp>
 #include "ecs/components.hpp"
-class State
-{
-public:
-	virtual void Init(entt::registry& registry, NetAPI::Socket::Server& server) = 0;
-	virtual void Update(entt::registry& registry, NetAPI::Socket::Server& server) = 0;
-	State() = default;
-	~State() {}
-private:
-};
-class LobbyState : public State
-{
-public:
-	void Init(entt::registry& registry, NetAPI::Socket::Server& server);
-	void Update(entt::registry& registry, NetAPI::Socket::Server& server);
-	LobbyState() = default;
-	~LobbyState() {}
-private:
+#include "util/timer.hpp"
 
+class GameServer;
+
+class State {
+ public:
+  virtual void Init(GameServer& game_server) = 0;
+  virtual void Update(GameServer& game_server) = 0;
+  virtual void Cleanup(GameServer& game_server) = 0;
+
+  State() = default;
+  ~State() {}
+
+ private:
 };
-class PlayState : public State
-{
-public:
-	virtual void Init(entt::registry& registry, NetAPI::Socket::Server& server);
-	virtual void Update(entt::registry& registry, NetAPI::Socket::Server& server);
-	PlayState() = default;
-	~PlayState() { }
-private:
+class LobbyState : public State {
+ public:
+  void Init(GameServer& game_server);
+  void Update(GameServer& game_server);
+  virtual void Cleanup(GameServer& game_server);
+  LobbyState() = default;
+  ~LobbyState() {}
+
+ private:
+  Timer start_game_timer;
 };
-#endif // !STATE_HPP_
+class PlayState : public State {
+ public:
+  virtual void Init(GameServer& game_server);
+  virtual void Update(GameServer& game_server);
+  virtual void Cleanup(GameServer& game_server);
+  PlayState() = default;
+  ~PlayState() {}
+
+ private:
+};
+#endif  // !STATE_HPP_

@@ -70,6 +70,8 @@ bool NetAPI::Socket::TcpClient::Send(NetAPI::Common::Packet& p) {
   auto h = p.GetHeader();
   h->packet_size = p.GetPacketSize();
 
+  //std::cout << "Network: send packet size=" << p.GetPacketSize() << "\n";
+
   error_ = send(send_socket_, p.GetRaw(), (int)p.GetPacketSize(), 0);
   if (error_ == SOCKET_ERROR) {
     error_ = WSAGetLastError();
@@ -97,6 +99,9 @@ std::vector<NetAPI::Common::Packet> NetAPI::Socket::TcpClient::Receive(
       NetAPI::Common::Packet big_packet(rec_buffer_, last_buff_len_);
       int buff_left = last_buff_len_;
       int offset = 0;
+
+	  //std::cout << "Network: last_buff_len=" << last_buff_len_ << "\n";
+
       while (buff_left > 0) {
         auto packet_size = big_packet.GetHeader()->packet_size;
         NetAPI::Common::Packet packet(rec_buffer_ + offset, packet_size);
@@ -120,7 +125,7 @@ std::vector<NetAPI::Common::Packet> NetAPI::Socket::TcpClient::Receive(
       return result;
     } else {
       error_ = WSAGetLastError();
-      std::cout << "ERROR: Network error code: " << error_ << "\n";
+      std::cout << "ERROR: Network WSA error: " << error_ << "\n";
       return result;
     }
   } else {
