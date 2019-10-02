@@ -102,7 +102,7 @@ void Engine::CreateInitalEntities() {
   // Pick-up
   auto pick_up = registry_gameplay_.create();
   glob::ModelHandle model_pick_up =
-      glob::GetModel("assets/lowpolydeer/deer.obj");  // Replace with real model
+      glob::GetModel("assets/lowpolydeer/deer.fbx");  // Replace with real model
   registry_gameplay_.assign<ModelComponent>(pick_up, model_pick_up);
   registry_gameplay_.assign<TransformComponent>(
       pick_up, glm::vec3(5.0f, -5.6f, 0.0f), glm::vec3(0.0f, 0.0f, -1.6f),
