@@ -13,7 +13,7 @@ enum AbilityID {
   SUPER_STRIKE,
   SWITCH_GOALS,
   TELEPORT,
-  // Fill with more abilities and passive boosts
+  // Fill with more abilities
   NUM_OF_ABILITY_IDS
 };
 
