@@ -3,8 +3,6 @@
 
 #include <math.h>
 #include <bitset>
-#include <iostream>  //TEMP: For testing
-#include <string>    //TEMP: For testing
 
 #include <entity/registry.hpp>
 #include <entity/snapshot.hpp>
@@ -51,11 +49,6 @@ class ReplayMachine {
                        const float& in_dt);
   bool LoadReplayFrame(std::bitset<10>& in_bitset, float& in_x_value,
                        float& in_y_value, entt::registry& in_registry);
-
-  void TestFunctionA();
-  void TestFunctionA2(char in_char, bool in_bool);
-  void TestFunctionB();
-  entt::registry TestFunctionC(entt::registry& in_registry);
 };
 
 #endif  // !REPLAY_MACHINE_HPP_

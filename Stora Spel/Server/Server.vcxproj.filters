@@ -72,9 +72,6 @@
     <ClInclude Include="src\ecs\components\team_component.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\replay machine\replay_machine_test.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">

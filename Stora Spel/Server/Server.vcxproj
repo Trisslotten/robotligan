@@ -166,7 +166,6 @@
     <ClInclude Include="src\ecs\systems\physics_system.hpp" />
     <ClInclude Include="src\ecs\systems\player_controller_system.hpp" />
     <ClInclude Include="src\gameserver.hpp" />
-    <ClInclude Include="src\replay machine\replay_machine_test.hpp" />
     <ClInclude Include="src\util\global_settings.hpp" />
     <ClInclude Include="src\util\timer.hpp" />
     <ClCompile Include="src\replay machine\bit_pack.cpp" />
