@@ -97,6 +97,7 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
     }
     case PacketBlockType::CLIENT_READY: {
       lobby_state_.SetClientIsReady(client_id, true);
+      std::cout << "PACKET: CLIENT_READY: " << client_id << "\n";
       break;
     }
     case PacketBlockType::CLIENT_NOT_READY: {

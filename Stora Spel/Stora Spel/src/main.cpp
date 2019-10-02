@@ -48,7 +48,8 @@ int main(unsigned argc, char** argv) {
       net_update_accum -= net_update_time;
     }
 
-    if (debug_timer.Elapsed() > 5.0) {
+    /*
+    if (debug_timer.Elapsed() > 5.0 && false) {
       double elapsed = debug_timer.Restart();
       std::cout << "DEBUG:    net update rate = " << num_net_updates / elapsed
                 << " U/s\n       render update rate = "
@@ -56,6 +57,7 @@ int main(unsigned argc, char** argv) {
       num_net_updates = 0;
       num_render_updates = 0;
     }
+    */
 
     engine.Render();
     glob::window::Update();

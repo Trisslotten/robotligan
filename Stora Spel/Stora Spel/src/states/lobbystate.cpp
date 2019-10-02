@@ -8,7 +8,8 @@ void LobbyState::Startup() {
   ButtonComponent* button_c = GenerateButtonEntity(registry_lobby_, "READY",
                                               glm::vec2(100, 200), font_test_);
   button_c->button_func = [&]() { 
-    
+    auto& packet = engine_->GetPacket();
+    packet << PacketBlockType::CLIENT_READY;
   }; 
 }
 

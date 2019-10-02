@@ -81,7 +81,6 @@ void Engine::Update(float dt) {
         current_state_ = &play_state_;
         break;
     }
-
     // init new state
     current_state_->Init();
   }
@@ -199,6 +198,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::GAME_START: {
+      std::cout << "PACKET: GAME_START\n";
+      ChangeState(StateType::PLAY);
       break;
     }
   }

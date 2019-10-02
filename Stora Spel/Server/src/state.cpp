@@ -11,7 +11,8 @@ void LobbyState::Init(GameServer& game_server) {
 }
 
 void LobbyState::Update(GameServer& game_server) {
-  bool can_start = clients_ready_.size() >= 2;
+  int min_players = 1;
+  bool can_start = clients_ready_.size() >= min_players;
   for (auto ready : clients_ready_) {
     can_start = can_start && ready.second;
   }
@@ -25,7 +26,7 @@ void LobbyState::Update(GameServer& game_server) {
     starting = false;
   }
 
-  if (starting && start_game_timer.Elapsed() > 10.f) {
+  if (starting && start_game_timer.Elapsed() > 5.f) {
     std::cout << "DEBUG: Start game countdown is zero\n";
     game_server.ChangeState(StateType::PLAY);
   }

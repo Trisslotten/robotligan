@@ -20,7 +20,7 @@ void MainMenuState::Update() {
 }
 
 void MainMenuState::UpdateNetwork() {
-
+  //
 }
 
 void MainMenuState::Cleanup() {
