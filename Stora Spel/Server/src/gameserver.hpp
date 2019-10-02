@@ -6,7 +6,7 @@
 #include <entity/registry.hpp>
 #include <entt.hpp>
 #include <glm/glm.hpp>
-#include <shared.hpp>
+#include <shared/shared.hpp>
 #include "state.hpp"
 #include "util/timer.hpp"
 

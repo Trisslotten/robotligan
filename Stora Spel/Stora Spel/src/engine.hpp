@@ -7,7 +7,7 @@
 #include <glob/graphics.hpp>
 #include <unordered_map>
 #include "shared/shared.hpp"
-#include "state.hpp"
+#include "states/state.hpp"
 
 class Engine {
  public:
@@ -17,8 +17,6 @@ class Engine {
   Engine& operator=(const Engine&) = delete;
 
   void Init();
-
-  void CreateInitalEntities();
 
   void Update(float dt);
 
@@ -37,14 +35,6 @@ class Engine {
   void UpdateSystems(float dt);
   void HandlePacketBlock(NetAPI::Common::Packet& packet);
 
-  void CreateMainMenu();
-  void CreateSettingsMenu();
-  void CreateInGameMenu();
-  void UpdateInGameMenu(bool show_menu);
-
-  void CreatePlayer(PlayerID player_id, EntityID entity_id);
-  void TestCreateLights();
-
   NetAPI::Socket::Client client;
 
   StateType wanted_state_type_ = StateType::MAIN_MENU;
@@ -57,8 +47,6 @@ class Engine {
 
   PlayerID my_id = -1;
 
-  std::unordered_map<PlayerID, std::pair<glm::vec3, glm::quat>> transforms;
-
   std::unordered_map<int, int> keybinds_;
   std::unordered_map<int, int> mousebinds_;
   std::unordered_map<int, int> key_presses_;
@@ -69,11 +57,6 @@ class Engine {
   glob::Font2DHandle font_test_ = 0;
   glob::Font2DHandle font_test2_ = 0;
   glob::Font2DHandle font_test3_ = 0;
-  glob::E2DHandle e2D_test_, e2D_test2_;
-  glob::GUIHandle in_game_menu_gui_ = 0;
-  glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
-      gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_;
-  bool show_in_game_menu_buttons_ = false;
 };
 
 #endif  // ENGINE_HPP_

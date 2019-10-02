@@ -1,7 +1,7 @@
 #ifndef ENTITY_CREATION_HPP_
 #define ENTITY_CREATION_HPP_
 
-#include <button_component.hpp>
+#include "ecs/components/button_component.hpp"
 #include <entt.hpp>
 #include <glm/glm.hpp>
 #include <glob/graphics.hpp>

@@ -2,6 +2,9 @@
 #define STATE_HPP_
 
 #include <entt.hpp>
+#include "shared/shared.hpp"
+#include <glob/graphics.hpp>
+#include <glm/glm.hpp>
 
 class Engine;
 
@@ -13,20 +16,30 @@ enum class StateType {
 
 class State {
  public:
+  // run when program starts
   virtual void Startup() = 0;
+
+  // run when state changed to this state
   virtual void Init() = 0;
+
+  // run every tick
   virtual void Update() = 0;
+
+  // run when state becomes inactive
   virtual void Cleanup() = 0;
+
+  // the type of state
   virtual StateType Type() = 0;
 
   void SetEngine(Engine* engine) { engine_ = engine; }
-  Engine* GetEngine() { return engine_; }
 
   State() = default;
   ~State() {}
 
- private:
+ protected:
   Engine* engine_ = nullptr;
+
+ private:
 };
 
 class MainMenuState : public State {
@@ -70,14 +83,32 @@ class PlayState : public State {
   void Update() override;
   void Cleanup() override;
 
+
   StateType Type() { return StateType::PLAY; }
 
+  void AddSetEntityTransform(EntityID player_id, glm::vec3 pos,
+                          glm::quat orientation);
+  void SetCameraOrientation(glm::quat orientation);
+
  private:
+  void CreateInitalEntities();
   void CreateInGameMenu();
+
+  void TestCreateLights();
+
+  void UpdateInGameMenu(bool show_menu);
 
   entt::registry registry_gameplay_;
 
-   glob::Font2DHandle font_test_ = 0;
+  std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> transforms_;
+
+  glob::Font2DHandle font_test_ = 0;
+  glob::E2DHandle e2D_test_, e2D_test2_;
+  glob::GUIHandle in_game_menu_gui_ = 0;
+  glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
+      gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_;
+
+  bool show_in_game_menu_buttons_ = false;
 };
 
 #endif  // STATE_HPP_

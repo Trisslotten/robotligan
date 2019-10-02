@@ -1,10 +1,10 @@
 #ifndef PLAYER_CONTROLLER_SYSTEM_HPP_
 #define PLAYER_CONTROLLER_SYSTEM_HPP_
 
-#include <camera_component.hpp>
+#include "shared/camera_component.hpp"
 #include <entt.hpp>
 #include <glm/gtx/rotate_vector.hpp>
-#include <transform_component.hpp>
+#include "shared/transform_component.hpp"
 #include "ecs/components/ability_component.hpp"
 #include "ecs/components/physics_component.hpp"
 #include "ecs/components/player_component.hpp"

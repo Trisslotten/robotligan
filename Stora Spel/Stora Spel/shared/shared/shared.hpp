@@ -25,12 +25,11 @@ enum : int16_t {
   INPUT = 0,
   SET_CLIENT_PLAYER_ID,
   CREATE_PLAYER,
-  PLAYERS_TRANSFORMS,
+  ENTITY_TRANSFORMS,
   CAMERA_TRANSFORM,
-  BALL_TRANSFORM,
   CLIENT_READY,          // client is ready in lobby
   CLIENT_NOT_READY,      // client is not ready in lobby
-  GAME_START,            // game starts
+  GAME_START,            // game start after lobby
   TEST_STRING,
   NUM_BLOCK_TYPES,
 };

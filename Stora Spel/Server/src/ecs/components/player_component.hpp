@@ -2,8 +2,8 @@
 #define PLAYER_COMPONENT_HPP_
 
 #include <bitset>
-#include <shared.hpp>
-#include "..//util/global_settings.hpp"
+#include <shared/shared.hpp>
+#include "util/global_settings.hpp"
 
 struct PlayerComponent {
   PlayerID id = -1;

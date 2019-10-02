@@ -4,27 +4,23 @@
 #include <entity/registry.hpp>
 #include <glm/glm.hpp>
 
-#include "../util/global_settings.hpp"
 #include "boundingboxes.hpp"
-#include "button_component.hpp"
 #include "collision.hpp"
-#include "light_component.hpp"
-#include "model_component.hpp"
-#include "../shared/transform_component.hpp"
-#include "../shared/camera_component.hpp"
-#include "light_component.hpp"
-#include "button_component.hpp"
-
+#include "ecs/components.hpp"
+#include "shared/camera_component.hpp"
+#include "shared/transform_component.hpp"
+#include "util/global_settings.hpp"
 
 void RenderSystem(entt::registry& registry) {
   auto view_cam = registry.view<CameraComponent, TransformComponent>();
   for (auto& cam_entity : view_cam) {
     auto& cam_c = view_cam.get<CameraComponent>(cam_entity);
     auto& trans_c = view_cam.get<TransformComponent>(cam_entity);
-    
+
     Camera result = glob::GetCamera();
-    glm::vec3 position = trans_c.position + glm::quat(trans_c.rotation) * cam_c.offset;
-	result.SetOrientation(cam_c.orientation);
+    glm::vec3 position =
+        trans_c.position + glm::quat(trans_c.rotation) * cam_c.offset;
+    result.SetOrientation(cam_c.orientation);
     result.SetPosition(position);
     glob::SetCamera(result);
   }
@@ -90,9 +86,9 @@ void RenderSystem(entt::registry& registry) {
 
     glm::vec2 button_pos = glm::vec2(trans_c.position.x, trans_c.position.y);
 
-	if (button_c.visible) {
-	  glob::Submit(button_c.f_handle, button_pos, button_c.font_size,
-                 button_c.text, button_c.text_current_color);
+    if (button_c.visible) {
+      glob::Submit(button_c.f_handle, button_pos, button_c.font_size,
+                   button_c.text, button_c.text_current_color);
     }
   }
 }

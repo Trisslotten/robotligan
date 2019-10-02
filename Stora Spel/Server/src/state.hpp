@@ -3,7 +3,7 @@
 #include <NetAPI/socket/server.hpp>
 #include <entity/registry.hpp>
 #include <entt.hpp>
-#include <shared.hpp>
+#include "shared/shared.hpp"
 #include "ecs/components.hpp"
 #include "util/timer.hpp"
 

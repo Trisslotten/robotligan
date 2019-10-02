@@ -1,6 +1,8 @@
 #include "state.hpp"
-#include <camera_component.hpp>
-#include <transform_component.hpp>
+
+#include "shared/camera_component.hpp"
+#include "shared/transform_component.hpp"
+
 #include "ecs/components/player_component.hpp"
 #include "gameserver.hpp"
 

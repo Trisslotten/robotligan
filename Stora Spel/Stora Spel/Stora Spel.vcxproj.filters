@@ -1,41 +1,52 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="util\timer.cpp" />
-    <ClCompile Include="util\input.cpp" />
-    <ClCompile Include="util\global_settings.cpp" />
-    <ClCompile Include="engine.cpp" />
-    <ClCompile Include="entitycreation.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="nettest.cpp" />
-    <ClCompile Include="state.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\engine.cpp" />
+    <ClCompile Include="src\entitycreation.cpp" />
+    <ClCompile Include="src\util\global_settings.cpp" />
+    <ClCompile Include="src\util\input.cpp" />
+    <ClCompile Include="src\util\timer.cpp" />
+    <ClCompile Include="src\states\lobbystate.cpp" />
+    <ClCompile Include="src\states\mainmenustate.cpp" />
+    <ClCompile Include="src\states\playstate.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Entt systems\print_position_system.hpp" />
-    <ClInclude Include="Entt systems\render_system.hpp" />
-    <ClInclude Include="util\input.hpp" />
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
-    <ClInclude Include="util\meminfo.hpp" />
-    <ClInclude Include="util\timer.hpp" />
-    <ClInclude Include="util\transform_helper.hpp" />
-    <ClInclude Include="Components\model_component.hpp" />
-    <ClInclude Include="Components\button_component.hpp" />
-    <ClInclude Include="Entt systems\button_system.hpp" />
-    <ClInclude Include="Components\light_component.hpp" />
-    <ClInclude Include="shared\shared.hpp" />
-    <ClInclude Include="engine.hpp" />
-    <ClInclude Include="shared\transform_component.hpp" />
-    <ClInclude Include="shared\camera_component.hpp" />
-    <ClInclude Include="Components\ball_component.hpp" />
-    <ClInclude Include="Components\player_component.hpp" />
-    <ClInclude Include="shared\id_component.hpp" />
-    <ClInclude Include="entitycreation.hpp" />
     <ClInclude Include="Components\position.hpp" />
     <ClInclude Include="Components\physics_component.hpp" />
     <ClInclude Include="Components\projectile_component.hpp" />
     <ClInclude Include="Components\transform_component.hpp" />
     <ClInclude Include="Components\velocity.hpp" />
-    <ClInclude Include="state.hpp" />
+    <ClInclude Include="ecs\components\ball_component.hpp" />
+    <ClInclude Include="ecs\components\button_component.hpp" />
+    <ClInclude Include="ecs\components\light_component.hpp" />
+    <ClInclude Include="ecs\components\model_component.hpp" />
+    <ClInclude Include="ecs\components\player_component.hpp" />
+    <ClInclude Include="ecs\systems\button_system.hpp" />
+    <ClInclude Include="ecs\systems\print_position_system.hpp" />
+    <ClInclude Include="ecs\systems\render_system.hpp" />
+    <ClInclude Include="src\engine.hpp" />
+    <ClInclude Include="src\entitycreation.hpp" />
+    <ClInclude Include="src\util\global_settings.hpp" />
+    <ClInclude Include="src\util\input.hpp" />
+    <ClInclude Include="src\util\meminfo.hpp" />
+    <ClInclude Include="src\util\timer.hpp" />
+    <ClInclude Include="src\util\transform_helper.hpp" />
+    <ClInclude Include="src\states\state.hpp" />
+    <ClInclude Include="src\ecs\components\ball_component.hpp" />
+    <ClInclude Include="src\ecs\components\button_component.hpp" />
+    <ClInclude Include="src\ecs\components\light_component.hpp" />
+    <ClInclude Include="src\ecs\components\model_component.hpp" />
+    <ClInclude Include="src\ecs\components\player_component.hpp" />
+    <ClInclude Include="src\ecs\systems\button_system.hpp" />
+    <ClInclude Include="src\ecs\systems\print_position_system.hpp" />
+    <ClInclude Include="src\ecs\systems\render_system.hpp" />
+    <ClInclude Include="shared\shared\transform_component.hpp" />
+    <ClInclude Include="shared\shared\camera_component.hpp" />
+    <ClInclude Include="shared\shared\id_component.hpp" />
+    <ClInclude Include="shared\shared\shared.hpp" />
+    <ClInclude Include="src\ecs\components.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />
@@ -43,9 +54,6 @@
     <None Include="Assets\shaders\wireframe.frag" />
     <None Include="shaders\testshader.frag" />
     <None Include="shaders\testshader.vert" />
-    <ClInclude Include="Components\ball_component.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <None Include="assets\shaders\guishader.vert" />
     <None Include="assets\shaders\guishader.frag" />
     <None Include="assets\shaders\e2Dshader.vert" />
@@ -60,10 +68,7 @@
     <None Include="Assets\shaders\text2Dshader.vert" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="util\global_settings.hpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="util\settings.txt" />
-    <Text Include="util\errorlog.txt" />
+    <Text Include="src\util\errorlog.txt" />
+    <Text Include="src\util\settings.txt" />
   </ItemGroup>
 </Project>

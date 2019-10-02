@@ -9,7 +9,7 @@
 #include "boundingboxes.hpp"
 #include "collision.hpp"
 #include "physics.hpp"
-#include "transform_component.hpp"
+#include "shared/transform_component.hpp"
 
 void UpdatePhysics(entt::registry& registry, float dt) {
   auto view_moveable = registry.view<TransformComponent, PhysicsComponent>();

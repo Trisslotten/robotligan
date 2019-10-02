@@ -1,10 +1,9 @@
 #include "entitycreation.hpp"
 
-#include <ball_component.hpp>
+#include "ecs/components.hpp"
 #include <boundingboxes.hpp>
 #include <glob/graphics.hpp>
 #include <glob\camera.hpp>
-#include <model_component.hpp>
 #include "shared/transform_component.hpp"
 #include "engine.hpp"
 

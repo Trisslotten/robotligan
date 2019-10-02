@@ -5,15 +5,15 @@
 #include <bitset>
 #include <glob/graphics.hpp>
 #include <iostream>
-#include <transform_component.hpp>
+
+#include "shared/shared.hpp";
+#include "shared/transform_component.hpp"
 
 #include "ecs/components.hpp"
 #include "ecs/systems/ability_controller_system.hpp"
 #include "ecs/systems/collision_system.hpp"
 #include "ecs/systems/physics_system.hpp"
 #include "ecs/systems/player_controller_system.hpp"
-
-#include "shared.hpp";
 
 namespace {}  // namespace
 
