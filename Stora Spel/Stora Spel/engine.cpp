@@ -45,8 +45,7 @@ void Engine::Init() {
       glob::GetGUIItem("Assets/GUI_elements/ingame_menu_V1.png");
   // Create 2D element
   e2D_test_ = glob::GetE2DItem("assets/GUI_elements/point_table.png");
-  e2D_test2_ =
-      glob::GetE2DItem("assets/GUI_elements/Scoreboard_V1.png");
+  e2D_test2_ = glob::GetE2DItem("assets/GUI_elements/Scoreboard_V1.png");
 
   // Create GUI elementds
   gui_test_ = glob::GetGUIItem("assets/GUI_elements/Scoreboard_V1.png");
@@ -63,16 +62,18 @@ void Engine::Init() {
   // \TO BE MOVED
   ///////////////////////////////////////////////////////////////
 
-  CreateMainMenu();
-  CreateSettingsMenu();
   CreateInGameMenu();
-  registry_current_ = &registry_mainmenu_;
+  //registry_current_ = &registry_mainmenu_;
 
-  CreateInitalEntities();
+  // CreateInitalEntities();
 
   SetKeybinds();
 
-  client.Connect("localhost", 1337);
+  main_menu_state_.Init(*this);
+  current_state_ = &main_menu_state_;
+  wanted_state_type_ = StateType::MAIN_MENU;
+
+  // client.Connect("localhost", 1337);
 }
 
 void Engine::CreateInitalEntities() {
@@ -96,17 +97,43 @@ void Engine::CreateInitalEntities() {
 void Engine::Update(float dt) {
   Input::Reset();
 
+  // accumulate key presses
   for (auto const& [key, action] : keybinds_)
     if (Input::IsKeyDown(key)) key_presses_[key]++;
   for (auto const& [button, action] : mousebinds_)
     if (Input::IsMouseButtonDown(button)) mouse_presses_[button]++;
 
+  // accumulate mouse movement
   float mouse_sensitivity = 0.003f;
   glm::vec2 mouse_movement = mouse_sensitivity * Input::MouseMov();
   accum_yaw_ -= mouse_movement.x;
   accum_pitch_ -= mouse_movement.y;
 
+  current_state_->Update(*this);
+
   UpdateSystems(dt);
+
+  // check if state changed
+  if (wanted_state_type_ != current_state_->Type()) {
+    // cleanup old state
+    current_state_->Cleanup(*this);
+
+    // set new state
+    switch (wanted_state_type_) {
+      case StateType::MAIN_MENU:
+        current_state_ = &main_menu_state_;
+        break;
+      case StateType::LOBBY:
+        current_state_ = &lobby_state_;
+        break;
+      case StateType::PLAY:
+        current_state_ = &play_state_;
+        break;
+    }
+
+    // init new state
+    current_state_->Init(*this);
+  }
 }
 
 void Engine::UpdateNetwork() {
@@ -127,27 +154,35 @@ void Engine::UpdateNetwork() {
     uint16_t action_bits = actions.to_ulong();
 
     NetAPI::Common::Packet packet;
+
     packet << action_bits;
     packet << accum_pitch_;
     packet << accum_yaw_;
     packet << PacketBlockType::INPUT;
+
+    if (actions[PlayerAction::KICK]) {
+      packet << PacketBlockType::CLIENT_READY;
+    } else if (actions[PlayerAction::SHOOT]) {
+      packet << PacketBlockType::CLIENT_NOT_READY;
+    }
+
     if (client.IsConnected()) {
       client.Send(packet);
     } else {
       // TODO: go to main menu or something
     }
-
     accum_yaw_ = 0.f;
     accum_pitch_ = 0.f;
   }
 
   {
     // handle received data
-	auto packets = client.Receive();
-	//std::cout <<"Num recevied packets: "<< packets.size() << "\n";
+    auto packets = client.Receive();
+    // std::cout <<"Num recevied packets: "<< packets.size() << "\n";
     for (auto& packet : packets) {
       while (!packet.IsEmpty()) {
-		//std::cout << "Remaining packet size: " << packet.GetPacketSize() << "\n";
+        // std::cout << "Remaining packet size: " << packet.GetPacketSize() <<
+        // "\n";
         HandlePacketBlock(packet);
       }
     }
@@ -206,10 +241,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> strsize;
       std::string str;
       str.resize(strsize);
-	  std::cout << "Packet Size: " << packet.GetPacketSize() << "\n";
+      std::cout << "Packet Size: " << packet.GetPacketSize() << "\n";
       packet.Remove(str.data(), strsize);
       std::cout << "PACKET: TEST_STRING: '" << str << "'\n";
-	  break;
+      break;
     }
     case PacketBlockType::BALL_TRANSFORM: {
       registry_gameplay_.view<TransformComponent, BallComponent>().each(
@@ -241,6 +276,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
           [&](auto entity, CameraComponent& cam_c) {
             cam_c.orientation = orientation;
           });
+      break;
+    }
+    case PacketBlockType::GAME_START: {
+      SetCurrentRegistry(&registry_gameplay_);
       break;
     }
   }
@@ -346,62 +385,6 @@ void Engine::TestCreateLights() {
       glm::vec3(1.f));
 }
 
-void Engine::CreateMainMenu() {
-  glob::window::SetMouseLocked(false);
-  font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
-
-  // PLAY BUTTON - change registry to registry_gameplay_
-  ButtonComponent* b_c = GenerateButtonEntity(registry_mainmenu_, "PLAY",
-                                              glm::vec2(100, 200), font_test_);
-  b_c->button_func = [&]() {
-    this->SetCurrentRegistry(&registry_gameplay_);
-    glob::window::SetMouseLocked(true);
-  };
-
-  // SETTINGS BUTTON - change registry to registry_settings_
-  b_c = GenerateButtonEntity(registry_mainmenu_, "SETTINGS",
-                             glm::vec2(100, 140), font_test_);
-  b_c->button_func = [&]() { this->SetCurrentRegistry(&registry_settings_); };
-
-  // EXIT BUTTON - close the game
-  b_c = GenerateButtonEntity(registry_mainmenu_, "EXIT", glm::vec2(100, 80),
-                             font_test_);
-  b_c->button_func = [&]() { exit(0); };
-}
-
-void Engine::CreateSettingsMenu() {
-  // BACK BUTTON in SETTINGS - go back to main menu
-  ButtonComponent* b_c = GenerateButtonEntity(registry_settings_, "BACK",
-                                              glm::vec2(100, 200), font_test_);
-  b_c->button_func = [&]() { this->SetCurrentRegistry(&registry_mainmenu_); };
-}
-
-void Engine::CreateInGameMenu() {
-  // CONTINUE BUTTON -- change registry to registry_gameplay_
-  ButtonComponent* in_game_buttons_ = GenerateButtonEntity(
-      registry_gameplay_, "CONTINUE", glm::vec2(550, 430), font_test_, false);
-  in_game_buttons_->button_func = [&]() {
-    // All the logic here
-  };
-  // SETTINGS BUTTON -- change registry to registry_settings_
-  in_game_buttons_ = GenerateButtonEntity(
-      registry_gameplay_, "SETTINGS", glm::vec2(550, 360), font_test_, false);
-
-  in_game_buttons_->button_func = [&] {
-    // All the logic here
-  };
-
-  // END GAME -- change registry to registry_mainmenu_
-  in_game_buttons_ = GenerateButtonEntity(
-      registry_gameplay_, "TO LOBBY", glm::vec2(550, 290), font_test_, false);
-  in_game_buttons_->button_func = [&] {
-    // All the logic here
-  };
-
-  in_game_buttons_ = GenerateButtonEntity(
-      registry_gameplay_, "EXIT", glm::vec2(550, 220), font_test_, false);
-  in_game_buttons_->button_func = [&] { exit(0); };
-}
 
 void Engine::UpdateInGameMenu(bool show_menu) {
   // Set in_game buttons visibility

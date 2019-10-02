@@ -42,25 +42,13 @@ void GameServer::Update(float dt) {
   for (auto& [id, client_data] : server_.GetClients()) {
     for (auto& packet : client_data->packets) {
       while (!packet.IsEmpty()) {
-        HandlePacketBlock(packet, id);
+        int16_t block_type = -1;
+        packet >> block_type;
+        HandlePacketBlock(packet, block_type, id);
       }
     }
     client_data->packets.clear();
   }
-
-  auto player_view = registry_.view<PlayerComponent>();
-  registry_.view<PlayerComponent>().each(
-      [&](auto entity, PlayerComponent& player_c) {
-        auto inputs = players_inputs_[player_c.id];
-        player_c.actions = inputs.first;
-        player_c.pitch += inputs.second.x;
-        player_c.yaw += inputs.second.y;
-        /*
-        std::cout << "Pitch: " << player_c.pitch << "\n";
-        std::cout << "Yaw:   " << player_c.yaw << "\n\n";
-                */
-      });
-  players_inputs_.clear();
 
   /*
   registry_.view<TransformComponent>().each([&](auto entity, auto& trans_c) {
@@ -75,20 +63,50 @@ void GameServer::Update(float dt) {
   if (wanted_state_type_ != current_state_type_) {
     current_state_type_ = wanted_state_type_;
 
-	current_state_->Cleanup(*this);
+    current_state_->Cleanup(*this);
 
     switch (wanted_state_type_) {
-      case StateType::LOBBY: 
-		std::cout << "Change Server State: LOBBY\n";
+      case StateType::LOBBY:
+        std::cout << "Change Server State: LOBBY\n";
         current_state_ = &lobby_state_;
         break;
-      case StateType::PLAY: 
-		std::cout << "Change Server State: PLAY\n";
+      case StateType::PLAY:
+        std::cout << "Change Server State: PLAY\n";
         current_state_ = &play_state_;
         break;
-	}
+    }
 
-	current_state_->Init(*this);
+    current_state_->Init(*this);
+  }
+}
+
+void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
+                                   int16_t block_type, int client_id) {
+  switch (block_type) {
+    case PacketBlockType::INPUT: {
+      uint16_t actions = 0;
+      float pitch = 0.f;
+      float yaw = 0.f;
+      packet >> yaw;
+      packet >> pitch;
+      packet >> actions;
+      play_state_.SetPlayerInput(client_id, actions, pitch, yaw);
+      // std::cout << "PACKET: INPUT, " << actions << ", " << yaw << ", " <<
+      // pitch << "\n";
+      break;
+    }
+    case PacketBlockType::CLIENT_READY: {
+      lobby_state_.SetClientIsReady(client_id, true);
+      break;
+    }
+    case PacketBlockType::CLIENT_NOT_READY: {
+      lobby_state_.SetClientIsReady(client_id, false);
+      break;
+    }
+    default: {
+      std::cout << "ERROR: unexpected PacketBlockType: " << block_type << "\n";
+      break;
+    }
   }
 }
 
@@ -98,27 +116,6 @@ void GameServer::UpdateSystems(float dt) {
 
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);
-}
-
-void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
-                                   unsigned short id) {
-  int16_t block_type = -1;
-  packet >> block_type;
-  switch (block_type) {
-    case PacketBlockType::INPUT: {
-      uint16_t actions = 0;
-      // TODO: put in player_actions then in PlayerComponent
-      float pitch = 0.f;
-      float yaw = 0.f;
-      packet >> yaw;
-      packet >> pitch;
-      packet >> actions;
-      players_inputs_[id] = std::make_pair(actions, glm::vec2(pitch, yaw));
-      // std::cout << "PACKET: INPUT, " << actions << ", " << yaw << ", " <<
-      // pitch << "\n";
-      break;
-    }
-  }
 }
 
 void GameServer::CreatePlayer(PlayerID id) {

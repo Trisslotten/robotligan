@@ -55,15 +55,15 @@ class EXPORT Packet {
 
   template <typename T>
   Packet& operator>>(T& data) {
-    if (size_of_data_ - (long)sizeof(T) < sizeof(PacketHeader)) {
+    if (size_of_data_ - (long)sizeof(T) < (long)sizeof(PacketHeader)) {
       std::cout << "ERROR: packet empty: currsize=" << size_of_data_
                 << ", min=" << sizeof(PacketHeader)
                 << "\n\ttried getting a '" << typeid(T).name() << "' ("
                 << sizeof(T) << " bytes) \n";
-    }
-    size_of_data_ -= sizeof(T);
-    std::memcpy(&data, data_ + size_of_data_, sizeof(data));
-
+    } else {
+	  size_of_data_ -= sizeof(T);
+	  std::memcpy(&data, data_ + size_of_data_, sizeof(data));
+	}
     // std::cout << ">> size_of_data_=" << size_of_data_ << "\n";
 
     return *this;
@@ -83,7 +83,7 @@ class EXPORT Packet {
 
   template <typename T>
   Packet& Add(T* data, long size) {
-    if (size_of_data_ + sizeof(T) * size > kNumPacketBytes) {
+    if (size_of_data_ + (long)sizeof(T) * size > kNumPacketBytes) {
       std::cout << "ERROR: packet full, currsize=" << size_of_data_
                 << ", max=" << kNumPacketBytes << "\n\ttried adding: " << size
                 << " '" << typeid(T).name() << "'s (" << sizeof(T) * size

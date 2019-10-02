@@ -7,6 +7,7 @@
 #include <glob/graphics.hpp>
 #include <unordered_map>
 #include "shared/shared.hpp"
+#include "state.hpp"
 
 class Engine {
  public:
@@ -26,6 +27,10 @@ class Engine {
   void Render();
 
   void SetCurrentRegistry(entt::registry* registry);
+  void ChangeState(StateType state) {
+    
+  }
+
  private:
   void SetKeybinds();
 
@@ -42,9 +47,12 @@ class Engine {
 
   NetAPI::Socket::Client client;
 
-  entt::registry registry_gameplay_;
-  entt::registry registry_mainmenu_;
-  entt::registry registry_settings_;
+  StateType wanted_state_type_ = StateType::MAIN_MENU;
+  State* current_state_ = nullptr;
+  MainMenuState main_menu_state_;
+  LobbyState lobby_state_;
+  PlayState play_state_;
+
   entt::registry* registry_current_;
 
   PlayerID my_id = -1;

@@ -28,9 +28,13 @@ enum : int16_t {
   PLAYERS_TRANSFORMS,
   CAMERA_TRANSFORM,
   BALL_TRANSFORM,
+  CLIENT_READY,          // client is ready in lobby
+  CLIENT_NOT_READY,      // client is not ready in lobby
+  GAME_START,            // game starts
   TEST_STRING,
   NUM_BLOCK_TYPES,
 };
+
 } // namespace PacketType
 
 #endif  // SHARED_HPP_

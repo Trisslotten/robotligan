@@ -5,17 +5,33 @@
 #include "gameserver.hpp"
 
 void LobbyState::Init(GameServer& game_server) {
-  // a
-  start_game_timer.Restart();
+  //
 }
 
 void LobbyState::Update(GameServer& game_server) {
-  if (start_game_timer.Elapsed() > 5.f) {
+  bool can_start = clients_ready_.size() >= 2;
+  for (auto ready : clients_ready_) {
+    can_start = can_start && ready.second;
+  }
+
+  if (can_start && !starting) {
+    std::cout << "DEBUG: Start game countdown\n";
+    start_game_timer.Restart();
+    starting = true;
+  }
+  if (!can_start) {
+    starting = false;
+  }
+
+  if (starting && start_game_timer.Elapsed() > 10.f) {
+    std::cout << "DEBUG: Start game countdown is zero\n";
     game_server.ChangeState(StateType::PLAY);
   }
 }
 
-void LobbyState::Cleanup(GameServer& game_server) {}
+void LobbyState::Cleanup(GameServer& game_server) {
+  //
+}
 
 void PlayState::Init(GameServer& game_server) {
   auto& server = game_server.getServer();
@@ -26,11 +42,7 @@ void PlayState::Init(GameServer& game_server) {
     auto header = to_send.GetHeader();
     header->receiver = id;
 
-    std::string message = "Game Started!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!";
-
-    to_send.Add(message.data(), message.size());
-    to_send << message.size();
-	to_send << PacketBlockType::TEST_STRING;
+    to_send << PacketBlockType::GAME_START;
 
     server.Send(to_send);
   }
@@ -39,6 +51,19 @@ void PlayState::Init(GameServer& game_server) {
 void PlayState::Update(GameServer& game_server) {
   auto& server = game_server.getServer();
   auto& registry = game_server.getRegistry();
+
+  registry.view<PlayerComponent>().each(
+      [&](auto entity, PlayerComponent& player_c) {
+        auto inputs = players_inputs_[player_c.id];
+        player_c.actions = inputs.first;
+        player_c.pitch += inputs.second.x;
+        player_c.yaw += inputs.second.y;
+        /*
+        std::cout << "Pitch: " << player_c.pitch << "\n";
+        std::cout << "Yaw:   " << player_c.yaw << "\n\n";
+                */
+      });
+  players_inputs_.clear();
 
   /*
   for (auto& [id, client_data] : server.GetClients()) {
@@ -85,4 +110,6 @@ void PlayState::Update(GameServer& game_server) {
   */
 }
 
-void PlayState::Cleanup(GameServer& game_server) {}
+void PlayState::Cleanup(GameServer& game_server) {
+  //
+}

@@ -10,12 +10,6 @@
 #include "state.hpp"
 #include "util/timer.hpp"
 
-enum class StateType {
-  LOBBY = 0,
-  PLAY,
-  NUM_STATES,
-};
-
 class GameServer {
  public:
   ~GameServer();
@@ -24,13 +18,11 @@ class GameServer {
 
   void ChangeState(StateType state) { wanted_state_type_ = state; }
 
-  NetAPI::Socket::Server& getServer(){ return server_; }
+  NetAPI::Socket::Server& getServer() { return server_; }
   entt::registry& getRegistry() { return registry_; }
 
  private:
   void UpdateSystems(float dt);
-
-  void HandlePacketBlock(NetAPI::Common::Packet& packet, unsigned short id);
 
   void CreatePlayer(PlayerID id);
   void CreateEntities(glm::vec3* in_pos_arr, unsigned int in_num_pos);
@@ -38,12 +30,12 @@ class GameServer {
   void AddBallComponents(entt::entity& entity, glm::vec3 in_pos,
                          glm::vec3 in_vel);
   void AddArenaComponents(entt::entity& entity);
+  void HandlePacketBlock(NetAPI::Common::Packet& packet, int16_t block_type,
+                         int client_id);
 
   NetAPI::Socket::Server server_;
   int last_num_players_ = 0;
   entt::registry registry_;
-
-  std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
 
   State* current_state_ = nullptr;
   PlayState play_state_;

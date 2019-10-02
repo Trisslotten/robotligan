@@ -28,21 +28,24 @@ bool NetAPI::Socket::Server::Update() {
   if (connected_players_ < NetAPI::Common::kMaxPlayers) {
     if (!connection_client_) {
       connection_client_ = new ClientData();
-	}
+    }
     auto s = listener_.Accept(connection_client_->client.GetRaw());
     if (s) {
-      std::cout << "DEBUG: tcp connection opened\n";
       sockaddr_in client_addr{};
       int size = sizeof(client_addr);
       auto ret =
           getpeername(connection_client_->client.GetRaw()->GetLowLevelSocket(),
-                             (sockaddr*)&client_addr, &size);
+                      (sockaddr*)&client_addr, &size);
       char buffer[14];
       inet_ntop(AF_INET, &client_addr.sin_addr, buffer, 14);
       auto addr = buffer;
       auto port = ntohs(client_addr.sin_port);
       // auto ID = getHashedID(addr, port);
       std::string address = addr + (":" + std::to_string(port));
+
+      std::cout << "DEBUG: tcp connection accepted: "
+                << addr + (":" + std::to_string(port)) << "\n";
+
       auto find_res = ids_.find(address);
       // if already found
       if (find_res != ids_.end()) {
@@ -66,7 +69,7 @@ bool NetAPI::Socket::Server::Update() {
       connection_client_->address = address;
       newly_connected_.push_back(connection_client_);
 
-	  connection_client_ = nullptr;
+      connection_client_ = nullptr;
     }
   }
   // Receive Data
