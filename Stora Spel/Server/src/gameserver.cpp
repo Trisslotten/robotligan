@@ -162,8 +162,11 @@ void GameServer::Update(float dt) {
 
 	//send messages
     for (auto m : messages) {
-      to_send.Add(m.c_str(), m.size());
-      to_send << m.size();
+      to_send.Add(m.name.c_str(), m.name.size());
+      to_send << m.name.size();
+      to_send.Add(m.message.c_str(), m.message.size());
+      to_send << m.message.size();
+      to_send << m.message_from;
       to_send << PacketBlockType::MESSAGE;
 	}
 
@@ -209,7 +212,20 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       std::string str;
       str.resize(strsize);
       packet.Remove(str.data(), strsize);
-      messages.push_back(str);
+      int player_id = id + 1;
+      Message message;
+      message.name = "player " + std::to_string(player_id) + ": ";
+      message.message = str;
+      auto view_player = registry_.view<TeamComponent, PlayerComponent>();
+      for (auto player : view_player) {
+        auto& team_c = view_player.get<TeamComponent>(player);
+        auto& player_c = view_player.get<PlayerComponent>(player);
+        if (id == player_c.id) {
+          message.message_from = team_c.team;
+          break;
+        }
+      }
+      messages.push_back(message);
       break;
     }
   }
