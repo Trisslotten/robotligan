@@ -16,6 +16,8 @@ class RegPack {
   RegPack(unsigned int in_num_of_snapshots);
   ~RegPack();
 
+  unsigned int GetNextWrittenSnapshotIndex() const;
+
   void ResetWrite();
   void ResetRead();
 

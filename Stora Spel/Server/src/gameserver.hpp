@@ -4,16 +4,19 @@
 #define NOMINMAX
 #include <NetAPI/socket/server.hpp>
 #include <entity/registry.hpp>
-#include <vector>
 #include <entt.hpp>
 #include <glm/glm.hpp>
 #include <shared.hpp>
+#include <vector>
+
+#include "replay machine/replay_machine.hpp"
+#include "util/global_settings.hpp"
 #include "util/timer.hpp"
 
 class GameServer {
  public:
   ~GameServer();
-  void Init();
+  void Init(double in_update_rate);
   void Update(float dt);
   void AddScore(unsigned int team);
 
@@ -30,6 +33,13 @@ class GameServer {
   void AddArenaComponents(entt::entity& entity);
   void CreateGoals();
 
+  // Replay stuff---
+  bool StartRecording(unsigned int in_replay_length_seconds);
+  void Record(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value,
+              const float& in_dt);
+  void Replay(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value);
+  //---
+
   NetAPI::Socket::Server server_;
   int last_num_players_ = 0;
   entt::registry registry_;
@@ -40,6 +50,13 @@ class GameServer {
   int test_player_guid_ = 0;
 
   std::vector<unsigned int> scores;
+
+  // Replay stuff ---
+  ReplayMachine* replay_machine_ = nullptr;
+  double update_rate_ = 0.0f;
+  bool record_ = false;
+  bool replay_ = false;
+  //---
 };
 
 #endif  // GAME_SERVER_HPP_

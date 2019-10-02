@@ -18,6 +18,10 @@ class BitPack {
 
   void ResetWrite();
   void ResetRead();
+  bool IsWriteAtEnd();
+  bool IsReadAtEnd();
+  unsigned int GetNextWrittenBitIndex() const;
+  unsigned int GetNextReadBitIndex() const;
   bool WriteBit(bool in_bit);
   bool WriteInt(unsigned int in_int, unsigned int in_bit_count);
   bool WriteFloat32(float in_float);

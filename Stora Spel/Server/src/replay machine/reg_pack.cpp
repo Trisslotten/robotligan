@@ -22,6 +22,11 @@ RegPack::~RegPack() {
   delete[] this->snapshots_;
 }
 
+unsigned int RegPack::GetNextWrittenSnapshotIndex() const {
+  // Send back the index of the last snapshot that was written
+  return this->next_snapshot_to_write_;
+}
+
 void RegPack::ResetWrite() {
   // Sets the writing index back to 0.
   this->next_snapshot_to_write_ = 0;

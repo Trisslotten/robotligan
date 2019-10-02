@@ -2,27 +2,6 @@
 
 // Private---------------------------------------------------------------------
 
-ReplayMachine::ReplayMachine() {
-  // H
-  // I
-  this->input_log_ = nullptr;
-  this->bits_per_int_ = 0;
-  this->registry_log_ = nullptr;
-}
-
-ReplayMachine::~ReplayMachine() {
-  // B
-  // Y
-  // E
-  if (this->input_log_ != nullptr) {
-    delete this->input_log_;
-  }
-  if (this->registry_log_ != nullptr) {
-    delete this->registry_log_;
-  }
-
-}
-
 void ReplayMachine::WriteInputFrame(const std::bitset<10>& in_bitset,
                                     const float& in_x_value,
                                     const float& in_y_value) {
@@ -91,15 +70,36 @@ void ReplayMachine::ReadInputFrame(std::bitset<10>& in_bitset,
 
 
 // Public----------------------------------------------------------------------
-ReplayMachine* ReplayMachine::Access() {
-  // Return a pointer to this GlobalSettings object
-  static ReplayMachine instance;
-  return &instance;
+ReplayMachine::ReplayMachine() {
+  // H
+  // I
+  this->input_log_ = nullptr;
+  this->bits_per_int_ = 0;
+  this->registry_log_ = nullptr;
+  this->snapshot_interval_seconds_ = 0.0f;
+  this->time_since_last_snapshot_ = 0.0f;
+  this->frame_indices_ = nullptr;
+  this->curr_snapshot_index_ = 0;
+}
+
+ReplayMachine::~ReplayMachine() {
+  // B
+  // Y
+  // E
+  if (this->input_log_ != nullptr) {
+    delete this->input_log_;
+  }
+  if (this->registry_log_ != nullptr) {
+    delete this->registry_log_;
+  }
+  if (this->frame_indices_ != nullptr) {
+    delete[] this->frame_indices_;
+  }
 }
 
 void ReplayMachine::Init(unsigned int in_seconds,
                          unsigned int in_ticks_per_second,
-                         int in_snapshot_interval_seconds) {
+                         float in_snapshot_interval_seconds) {
   // Create a BitPack capable of holding the maximum
   // number of keys we will allow logging
 
@@ -191,19 +191,70 @@ void ReplayMachine::Init(unsigned int in_seconds,
 
   //---
 
-  // Do not bother doing any of this if the supplied value
-  // is negative
-  if (in_snapshot_interval_seconds < 0) {
-    return;
-  }
-
   // Calculate how many snapshots we will be able to squeeze in
   // based on seconds the replay records and interval of snapshots
   // Allocate space for one extra, the last frame of the game
   unsigned int num_of_snapshots_ = (in_seconds / in_snapshot_interval_seconds) + 1;
+  this->snapshot_interval_seconds_ = in_snapshot_interval_seconds;
+  this->time_since_last_snapshot_ = in_snapshot_interval_seconds;
 
   // Allocate space for the snapshots
   this->registry_log_ = new RegPack(num_of_snapshots_);
+
+  // Allocate space for the array linking bit and snapshot
+  // indices together
+  this->frame_indices_ = new unsigned int[num_of_snapshots_];
+}
+
+bool ReplayMachine::SaveReplayFrame(std::bitset<10>& in_bitset,
+                                    float& in_x_value, float& in_y_value,
+                                    entt::registry& in_registry,
+                                    const float& in_dt) {
+  // Returns true if end if buffer was reached
+
+  //SNAPSHOT
+  // Write regitry snapshot at certain intervals
+  this->time_since_last_snapshot_ += in_dt;
+  if (this->time_since_last_snapshot_ >= this->snapshot_interval_seconds_) {
+    // If a snapshot was written we want to
+    // couple it with the index from the bitpack
+    unsigned int snapshot_index =
+        this->registry_log_->GetNextWrittenSnapshotIndex();
+    this->frame_indices_[snapshot_index] =
+        this->input_log_->GetNextWrittenBitIndex();
+
+	// Write the snapshot  
+	this->registry_log_->WriteSnapshot(in_registry);
+    this->time_since_last_snapshot_ = 0.0f;
+  }
+  
+  //BITPACK
+  // Write input to bitpack each each frame
+  this->WriteInputFrame(in_bitset, in_x_value, in_y_value);
+
+  return this->input_log_->IsWriteAtEnd();
+}
+
+bool ReplayMachine::LoadReplayFrame(std::bitset<10>& in_bitset,
+                                    float& in_x_value, float& in_y_value,
+                                    entt::registry& in_registry) {
+  // Returns true if end if buffer was reached
+
+  // Get what bit index is about to be read from
+  unsigned int next_bit_index = this->input_log_->GetNextReadBitIndex();
+
+  // If the read bit index corresponds to the one saved
+  // in the array, read a registry snapshot
+  if (next_bit_index == this->frame_indices_[this->curr_snapshot_index_]) {
+    this->registry_log_->ReadSnapshot(in_registry);
+    this->curr_snapshot_index_++;
+  }
+
+  // Get replay data and put it into the given references
+  // Read the bitpack each frame
+  this->ReadInputFrame(in_bitset, in_x_value, in_y_value);
+
+  return this->input_log_->IsReadAtEnd();
 }
 
 void ReplayMachine::TestFunctionA() {
@@ -339,7 +390,7 @@ void ReplayMachine::TestFunctionB() {
   if (this->input_log_ != nullptr) {
     delete this->input_log_;
   }
-  this->Init(1, 5);
+  this->Init(1, 5, 1);
 
   // Create some dummy input values
   std::bitset<10> frame_bits[5];

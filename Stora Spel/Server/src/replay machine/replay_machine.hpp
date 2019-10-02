@@ -22,11 +22,12 @@ class ReplayMachine {
 
   // Variables : Saving the state
   RegPack* registry_log_;
+  float snapshot_interval_seconds_;
+  float time_since_last_snapshot_;
 
-  // NTS:	Constructor and destructor
-  //		both private members
-  ReplayMachine();
-  ~ReplayMachine();
+  // Variables : translating between bits and snapshots
+  unsigned int* frame_indices_;
+  unsigned int curr_snapshot_index_;
 
   void WriteInputFrame(const std::bitset<10>& in_bitset,
                        const float& in_x_value, const float& in_y_value);
@@ -34,14 +35,22 @@ class ReplayMachine {
                       float& in_y_value);
 
  public:
+  ReplayMachine();
+  ~ReplayMachine();
+
   // NTS:	Delete copy constructor
   //		and assignment operator
   ReplayMachine(ReplayMachine&) = delete;
   void operator=(ReplayMachine const&) = delete;
 
-  static ReplayMachine* Access();
   void Init(unsigned int in_seconds, unsigned int in_ticks_per_second,
-            int in_snapshot_interval_seconds = -1);
+            float in_snapshot_interval_seconds);
+
+  bool SaveReplayFrame(std::bitset<10>& in_bitset, float& in_x_value,
+                       float& in_y_value, entt::registry& in_registry,
+                       const float& in_dt);
+  bool LoadReplayFrame(std::bitset<10>& in_bitset, float& in_x_value,
+                       float& in_y_value, entt::registry& in_registry);
 
   void TestFunctionA();
   void TestFunctionA2(char in_char, bool in_bool);

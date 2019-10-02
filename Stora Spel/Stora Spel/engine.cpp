@@ -143,6 +143,13 @@ void Engine::UpdateNetwork() {
     packet << accum_pitch_;
     packet << accum_yaw_;
     packet << PacketBlockType::INPUT;
+
+	//TEMP: Start recording replay
+    bool temp = Input::IsKeyPressed(GLFW_KEY_P);
+    packet << temp;
+    packet << PacketBlockType::TEST_REPLAY_KEYS;
+	//TEMP
+
     if (client.IsConnected()) {
       client.Send(packet);
     } else {

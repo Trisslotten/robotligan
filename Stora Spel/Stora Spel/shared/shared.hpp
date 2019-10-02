@@ -29,6 +29,7 @@ enum : int16_t {
   CAMERA_TRANSFORM,
   BALL_TRANSFORM,
   TEST_STRING,
+  TEST_REPLAY_KEYS,
   NUM_BLOCK_TYPES,
 };
 } // namespace PacketType

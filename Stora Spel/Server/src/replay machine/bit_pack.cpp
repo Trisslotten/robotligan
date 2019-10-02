@@ -55,12 +55,32 @@ void BitPack::ResetRead() {
   this->next_bit_to_read_ = 0;
 }
 
+bool BitPack::IsWriteAtEnd() {
+  // Return true if the end has been reached
+  return (this->next_bit_to_write_ == this->num_of_bits_);
+}
+
+bool BitPack::IsReadAtEnd() {
+  // Return true if the end has been reached
+  return (this->next_bit_to_read_ == this->num_of_bits_);
+}
+
+unsigned int BitPack::GetNextWrittenBitIndex() const {
+  // Send back the index of the last bit that was written
+  return this->next_bit_to_write_;
+}
+
+unsigned int BitPack::GetNextReadBitIndex() const {
+  // Send back the index of the last bit that was read
+  return this->next_bit_to_read_;
+}
+
 bool BitPack::WriteBit(bool in_bit) {
   // Returns true if write successful.
   // Returns false if write failed (buffer end reached)
 
   // If end has been reached, do not write, return false
-  if (this->next_bit_to_write_ >= this->num_of_bits_) {
+  if (this->next_bit_to_write_ == this->num_of_bits_) {
     return false;
   }
 
@@ -134,9 +154,9 @@ bool BitPack::ReadBit() {
   // at the buffers current read position
 
   // If reading counter would start going out of bounds
-  // set it to the valid last bit in the sequence
-  if (this->next_bit_to_read_ >= this->num_of_bits_) {
-    this->next_bit_to_read_ = this->num_of_bits_ - 1;
+  // return 0 instead of continuing
+  if (this->next_bit_to_read_ == this->num_of_bits_) {
+    return false;
   }
 
   // Create an Integer 1	:	000000...00001
