@@ -1,7 +1,7 @@
 #include "gameserver.hpp"
 
 #include <iostream>
-
+#include <algorithm>
 #include <bitset>
 #include <glob/graphics.hpp>
 #include <iostream>
@@ -175,13 +175,20 @@ void GameServer::Update(float dt) {
       to_send.Add(m.c_str(), m.size());
       to_send << m.size();
       to_send << PacketBlockType::MESSAGE;
-	}
+	  }
+    // send new teams
+    for (auto& p : new_teams_) {
+      to_send << p.second;
+      to_send << p.first;
+      to_send << PacketBlockType::CHOOSE_TEAM;
+    }
 
     server_.Send(to_send);
   }
 
   created_players_.clear();
   messages.clear();
+  new_teams_.clear();
 }
 
 void GameServer::UpdateSystems(float dt) {
@@ -222,7 +229,24 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       messages.push_back(str);
       break;
     }
+    case PacketBlockType::CHOOSE_TEAM: {
+      PlayerID pid;
+      unsigned int team;
+      packet >> pid;
+      packet >> team;
+
+      new_teams_.push_back({pid, team});
+    }
   }
+}
+
+void GameServer::HandleNewTeam() {
+  // TODO: logic for swapping team
+  new_teams_.erase(std::remove_if(new_teams_.begin(), new_teams_.end(),
+                                  [](std::pair<PlayerID, unsigned int> pair) {
+                                    if (pair.second < 2) return false;
+                                    return true;
+    }));
 }
 
 void GameServer::CreatePlayer(PlayerID id) {

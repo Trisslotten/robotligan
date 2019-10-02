@@ -5,6 +5,7 @@
 #include <NetAPI/socket/tcpclient.hpp>
 #include <entt.hpp>
 #include <glob/graphics.hpp>
+#include <limits>
 #include <unordered_map>
 #include "shared/shared.hpp"
 #include "Chat.hpp"
@@ -76,6 +77,7 @@ class Engine {
   bool take_game_input_ = true;
   Chat chat;
   std::string message_ = "";
+  unsigned int new_team_ = std::numeric_limits<unsigned int>::max();
 };
 
 #endif  // ENGINE_HPP_

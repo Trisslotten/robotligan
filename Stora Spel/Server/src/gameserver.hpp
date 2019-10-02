@@ -21,6 +21,8 @@ class GameServer {
 
   void HandlePacketBlock(NetAPI::Common::Packet& packet, unsigned short id);
 
+  void HandleNewTeam();
+
   void CreatePlayer(PlayerID id);
   void CreateEntities();
   void ResetEntities();
@@ -34,6 +36,7 @@ class GameServer {
   entt::registry registry_;
 
   std::vector<PlayerID> created_players_;
+  std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
   std::vector<std::string> messages;
 
