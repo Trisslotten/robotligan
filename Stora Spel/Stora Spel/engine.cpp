@@ -102,7 +102,7 @@ void Engine::CreateInitalEntities() {
   // Pick-up
   auto pick_up = registry_gameplay_.create();
   glob::ModelHandle model_pick_up =
-      glob::GetModel("assets/lowpolydeer/deer.obj");  // Replace with real model
+      glob::GetModel("assets/lowpolydeer/deer.fbx");  // Replace with real model
   registry_gameplay_.assign<ModelComponent>(pick_up, model_pick_up);
   registry_gameplay_.assign<TransformComponent>(
       pick_up, glm::vec3(5.0f, -5.6f, 0.0f), glm::vec3(0.0f, 0.0f, -1.6f),
@@ -287,6 +287,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
           });
       break;
     }
+    case PacketBlockType::PLAYER_STAMINA: {
+      packet >> stamina_current_;
+      break;
+    }
     case PacketBlockType::TEAM_SCORE: {
       unsigned int score, team;
       packet >> score;
@@ -365,16 +369,8 @@ void Engine::UpdateSystems(float dt) {
 	}
 
 	// Show GUI TEST
-	// Temp Update of stamina bar
-	float stam_len = 0.0f;
-	/*
-	registry_gameplay_.view<PlayerComponent>().each(
-	    [&](auto entity, PlayerComponent& player_c) {
-	      stam_len = player_c.energy_current;
-	    });
-	        */
 	glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
-	glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, stam_len);
+  glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, stamina_current_);
 	glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
 	glob::Submit(gui_quickslots_, glm::vec2(7, 50), 0.3, 100);
 	glob::Submit(gui_teamscore_, glm::vec2(497, 648), 1, 100);

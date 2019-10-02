@@ -95,6 +95,16 @@ void GameServer::Update(float dt) {
     }
     to_send << PacketBlockType::CAMERA_TRANSFORM;
 
+    auto view_player = registry_.view<PlayerComponent>();
+    for (auto player : view_player) {
+      auto& player_c = view_player.get(player);
+      if (id == player_c.id) {
+        to_send << player_c.energy_current;
+        break;
+      }
+    }
+    to_send << PacketBlockType::PLAYER_STAMINA;
+
     auto view_ball = registry_.view<BallComponent, TransformComponent>();
     for (auto ball : view_ball) {
       // auto& ball_c = view_cam.get<BallComponent>(ball);
