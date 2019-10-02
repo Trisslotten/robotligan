@@ -5,19 +5,11 @@
 #include "glob/Animation.hpp"
 
 struct AnimationComponent {
-	std::vector<glob::Joint> armature;
-	std::vector<glob::Animation> animations;
-
-	std::vector<glm::vec4> weights_;
-	std::vector<glm::ivec4> bone_index_;
+	glob::animData model_data;
 
 	std::vector<glob::Animation> active_animations;
 
 	std::vector<glm::mat4> bone_transforms;
-
-	void init(glob::ModelHandle model) {
-		
-	}
 };
 
 #endif  // ANIMATION_COMPONENT_HPP_

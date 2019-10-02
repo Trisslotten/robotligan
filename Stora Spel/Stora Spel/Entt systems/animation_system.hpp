@@ -2,34 +2,48 @@
 #define ANIMATION_SYSTEM_HPP_
 
 #include <entity/registry.hpp>
+#include <entity/utility.hpp>
+#include <iostream>
 
-#include "ball_component.hpp"
-#include "boundingboxes.hpp"
-#include "collision.hpp"
-#include "physics.hpp"
-#include "physics_component.hpp"
-#include "transform_component.hpp"
+#include "glob/joint.hpp"
+#include "glob/Animation.hpp"
 
-void UpdatePhysics(entt::registry& registry, float dt) {
-	auto view_moveable = registry.view<TransformComponent, PhysicsComponent>();
+#include "animation_component.hpp"
+#include "player_component.hpp"
 
-	for (auto entity : view_moveable) {
-		TransformComponent& trans_c = view_moveable.get<TransformComponent>(entity);
-		PhysicsComponent& physics_c = view_moveable.get<PhysicsComponent>(entity);
+void UpdateAnimations(entt::registry& registry, float dt) {
 
-		physics::PhysicsObject po;
-		po.airborne = physics_c.is_airborne;
-		po.friction = physics_c.friction;
-		po.position = trans_c.position;
-		po.velocity = physics_c.velocity;
+	auto animation_entities = registry.view<AnimationComponent>();
+	for (auto& entity : animation_entities) {
+		auto& a = animation_entities.get(entity);
 
-		Update(&po, dt);
+		std::vector<glm::mat4> boneTransforms;
+		for (int i = 0; i < a.model_data.bones.size(); i++) {
+			boneTransforms.push_back(glm::mat4(1.f));
+		}
 
-		trans_c.position = po.position;
-		physics_c.velocity = po.velocity;
+		//std::cout << a.model_data.bones.size() << "\n";
+		for (auto bone : a.model_data.bones) {
+			/*for (int i = 0; i < 16; i++) {
+				std::cout << bone.transform[(i / 4) % 4][i % 4] << " : ";
+			}*/
+			int id = bone.id;
+			boneTransforms.at(id) = bone.transform;
+		}
+		a.bone_transforms = boneTransforms;
 
-		// trans_c.position += physics_c.velocity;
+		for (int i = 0; i < a.active_animations.size(); i++) {
+			/*if (a.active_animations.at(i).current_frame_time_ >= a.active_animations.at(i).duration_) {
+				a.active_animations.erase(a.active_animations.begin() + i);
+				i--;//think this works?
+			} else {*/
+				a.active_animations.at(i).current_frame_time_ = a.active_animations.at(i).tick_per_second_ * dt;
+			//} //re-implement later
+
+			//hell (aka bone rotation update)
+
+		}
 	}
 }
 
-#endif  // PHYSICS_SYSTEM_HPP_
+#endif  // ANIMATION_SYSTEM_HPP_

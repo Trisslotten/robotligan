@@ -31,6 +31,7 @@ struct BoneAnimatedRenderItem {
 	Model* model;
 	glm::mat4 transform;
 	std::vector<glm::mat4> bone_transforms;//may be a performance bottleneck, pointer instead?
+	int numBones;
 };
 
 struct TextItem {
@@ -53,6 +54,8 @@ ShaderProgram model_shader;
 ShaderProgram animated_model_shader;
 ShaderProgram text_shader;
 ShaderProgram wireframe_shader;
+
+std::vector<ShaderProgram*> mesh_render_group;
 
 GLuint triangle_vbo, triangle_vao;
 GLuint cube_vbo, cube_vao;
@@ -78,6 +81,7 @@ std::unordered_map<Font2DHandle, Font2D> fonts;
 
 std::vector<RenderItem> items_to_render;
 std::vector<LightItem> lights_to_render;
+std::vector<BoneAnimatedRenderItem> bone_animated_items_to_render;
 std::vector<glm::mat4> cubes;
 std::vector<TextItem> text_to_render;
 
@@ -104,6 +108,8 @@ void DrawCube(glm::mat4 t) {
 }
 
 void Init() {
+//std::cout << "Max uniform size: " << MAX_VERTEX_UNIFORM_COMPONENTS_ARB << "\n";
+
   test_shader.add("testshader.frag");
   test_shader.add("testshader.vert");
   test_shader.compile();
@@ -112,9 +118,12 @@ void Init() {
   model_shader.add("modelshader.frag");
   model_shader.compile();
 
-  model_shader.add("animatedmodelshader.vert");
-  model_shader.add("modelshader.frag");
-  model_shader.compile();
+  animated_model_shader.add("animatedmodelshader.vert");
+  animated_model_shader.add("modelshader.frag");
+  animated_model_shader.compile();
+
+  mesh_render_group.push_back(&animated_model_shader);
+  mesh_render_group.push_back(&model_shader);
 
   wireframe_shader.add("modelshader.vert");
   wireframe_shader.add("wireframe.frag");
@@ -222,41 +231,42 @@ Font2DHandle GetFont(const std::string &filepath) {
   return GetAsset<Font2DHandle, Font2D>(font_2D_handles, fonts, current_font_guid, filepath);
 }
 
-void GetAnimationData(ModelHandle handle) {
+animData GetAnimationData(ModelHandle handle) {
 	auto res = models.find(handle);
 	animData data;
 	if (res == models.end()) {
 		std::cout << "ERROR graphics.cpp: could not find submitted model\n";
-		return;
+		return data;
 	}
 
-	glob::Model model = res->second;
+	glob::Model* model = &res->second;
 
 	//copy armature
-	for (auto source : model.bones_) {
-		glob::Joint* j = new Joint();
-		j->id = source->id;
-		j->name = source->name;
-		j->position = source->position;
-		j->transform = source->transform;
+	for (auto source : model->bones_) {
+		glob::Joint j;
+		j.id = source->id;
+		j.name = source->name;
+		j.position = source->position;
+		j.transform = source->transform;
 		for (auto c : source->children) {
-			j->children.push_back(source->children.at(c));
+			std::cout << c << "\n";
+			j.children.push_back(c);
 		}
 		data.bones.push_back(j);
 	}
 
 	//copy animations
-	for (auto source : model.animations_) {
-		glob::Animation* a = new glob::Animation();
-		a->name_ = source->name_;
-		a->duration_ = source->duration_;
-		a->current_frame_time_ = source->current_frame_time_;
-		a->tick_per_second_ = source->tick_per_second_;
-		a->channels_ = source->channels_;
+	for (auto source : model->animations_) {
+		glob::Animation a;
+		a.name_ = source->name_;
+		a.duration_ = source->duration_;
+		a.current_frame_time_ = source->current_frame_time_;
+		a.tick_per_second_ = source->tick_per_second_;
+		a.channels_ = source->channels_;
 		data.animations.push_back(a);
 	}
 
-	return;
+	return data;
 }
 /*
 TextureHandle GetTexture(const std::string &filepath) {
@@ -290,6 +300,8 @@ void SubmitBAM(ModelHandle model_h, glm::mat4 transform, std::vector<glm::mat4> 
 		glm::rotate(-glm::pi<float>() / 2.f, glm::vec3(1, 0, 0));
 
 	BARI.transform = transform * pre_rotation;
+	BARI.numBones = BARI.bone_transforms.size();
+	bone_animated_items_to_render.push_back(BARI);
 }
 
 void Submit(ModelHandle model_h, glm::vec3 pos) {
@@ -337,23 +349,40 @@ void Render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
 
-  model_shader.use();
+  int lightNR;
+  for (auto& shader : mesh_render_group) {
+	lightNR = 0;
+	shader->use();
+	for (auto& light_item : lights_to_render) {
+		  shader->uniform("light_pos[" + std::to_string(lightNR) + "]", light_item.pos);
+		  shader->uniform("light_col[" + std::to_string(lightNR) + "]", light_item.color);
+		  shader->uniform("light_radius[" + std::to_string(lightNR) + "]", light_item.radius);
+		  shader->uniform("light_amb[" + std::to_string(lightNR) + "]", light_item.ambient);
+		  lightNR++;
+	  }
+	shader->uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
 
-  int lightNR = 0;
-  for (auto& light_item : lights_to_render) {
-	  model_shader.uniform("light_pos[" + std::to_string(lightNR) + "]", light_item.pos);
-	  model_shader.uniform("light_col[" + std::to_string(lightNR) + "]", light_item.color);
-	  model_shader.uniform("light_radius[" + std::to_string(lightNR) + "]", light_item.radius);
-	  model_shader.uniform("light_amb[" + std::to_string(lightNR) + "]", light_item.ambient);
-	  lightNR++;
+	shader->uniform("cam_transform", cam_transform);
   }
-  model_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
 
-  model_shader.uniform("cam_transform", cam_transform);
+  model_shader.use();
   //model_shader.uniform("num_frames", num_frames);
   for (auto &render_item : items_to_render) {
     model_shader.uniform("model_transform", render_item.transform);
     render_item.model->Draw(model_shader);
+  }
+
+  animated_model_shader.use();
+  //render bone animated items
+  for (auto& BARI : bone_animated_items_to_render) {
+	  animated_model_shader.uniform("model_transform", BARI.transform);
+	  int numBones = 0;
+	  for (auto& bone : BARI.bone_transforms) {
+		  animated_model_shader.uniform("bone_transform[" + std::to_string(numBones) + "]", bone);
+		  numBones++;
+	  }
+	  //animated_model_shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
+	  BARI.model->Draw(animated_model_shader);
   }
 
   // render wireframe cubes
@@ -367,6 +396,7 @@ void Render() {
   }
   lights_to_render.clear();
   items_to_render.clear();
+  bone_animated_items_to_render.clear();
   text_to_render.clear();
   cubes.clear();
 

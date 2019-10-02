@@ -29,7 +29,8 @@ void Render(entt::registry& registry) {
                      glm::translate(-m.offset) * glm::scale(t.scale));
   }
 
-  auto animated_models = registry.group<ModelComponent, TransformComponent, AnimationComponent>();
+  
+  auto animated_models = registry.view<ModelComponent, TransformComponent, AnimationComponent>();
   for (auto& model : animated_models) {
 	  auto& t = animated_models.get<TransformComponent>(model);
 	  auto& m = animated_models.get<ModelComponent>(model);
@@ -41,6 +42,7 @@ void Render(entt::registry& registry) {
 						  glm::translate(-m.offset) * glm::scale(t.scale),
 							  a.bone_transforms);
   }
+  
 
   //submit lights
   auto lights = registry.view<LightComponent, TransformComponent>();

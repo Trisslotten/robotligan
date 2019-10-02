@@ -17,8 +17,8 @@
 namespace glob {
 
 	struct animData {
-		std::vector<Joint*> bones;
-		std::vector<Animation*> animations;
+		std::vector<Joint> bones;
+		std::vector<Animation> animations;
 	};
 
 typedef unsigned long ModelHandle;
@@ -44,7 +44,7 @@ EXPORT Font2DHandle GetFont(const std::string& filepath);
 *
 */
 
-EXPORT void GetAnimationData(ModelHandle handle);
+EXPORT animData GetAnimationData(ModelHandle handle);
 
 /*
  * Returns a texture handle for the specified image file.

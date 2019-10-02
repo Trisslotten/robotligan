@@ -21,6 +21,7 @@
 #include "print_position_system.hpp"
 #include "render_system.hpp"
 #include "transform_component.hpp"
+#include "animation_system.hpp"
 
 #include "collision_temp_debug_system.h"
 #include <GLFW/glfw3.h> //NTS: This one must be included after certain other things
@@ -56,6 +57,7 @@ void updateSystems(entt::registry *reg, float dt) {
   ability_controller::Update(*reg, dt);
  
   UpdatePhysics(*reg, dt);
+  UpdateAnimations(*reg, dt);
   UpdateCollisions(*reg);
 
   auto view = reg->view<CameraComponent, TransformComponent>();
@@ -202,8 +204,8 @@ void CreateEntities(entt::registry& registry, glm::vec3* in_pos_arr,
 
   // Create other robots and add components
   for (unsigned int i = 2; i < in_num_pos; i++) {
-    //auto other_robot_entity = registry.create();
-    //AddRobotComponents(registry, other_robot_entity, in_pos_arr[i]);
+    auto other_robot_entity = registry.create();
+    AddRobotComponents(registry, other_robot_entity, in_pos_arr[i]);
   }
 }
 
@@ -324,6 +326,7 @@ void AddRobotComponents(entt::registry& registry, entt::entity& entity,
                                     robot_friction);
   registry.assign<TransformComponent>(entity, in_pos,
                                       zero_vec, character_scale);
+  registry.assign<AnimationComponent>(entity, glob::GetAnimationData(glob::GetModel("assets/Mech/Mech.fbx")));
   
   // Add a hitbox
   registry.assign<physics::OBB>(

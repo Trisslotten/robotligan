@@ -12,12 +12,15 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   std::vector<GLuint> indices;
   std::vector<Texture> textures;
   std::vector<Joint> bones;
+  std::vector<glm::vec4> weights;
+  std::vector<glm::ivec4> boneIndex;
 
   // Process the mesh
   for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
 	//create weight objects
-	weights_.push_back(glm::vec4(0.f));
-	bone_index_.push_back(glm::ivec4(-1));
+
+	weights.push_back(glm::vec4(0.f));
+	boneIndex.push_back(glm::ivec4(-1));
 
     Vertex temp_vertex;
     glm::vec3 vector_vertices;
@@ -91,13 +94,13 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
 			if (mesh->mBones[i]->mWeights[w].mWeight > 0.01f) {//cull bones with very small weights (optimization)
 				int boneIndexLength = 0;
 				for (int bil = 0; bil < 4; bil++) {//find suitable position for the bone id within the vec4, the vec is initialized with -1 so anything above that is already claimed
-					if (bone_index_.at(mesh->mBones[i]->mWeights[w].mVertexId)[bil] < 0) {
+					if (boneIndex.at(mesh->mBones[i]->mWeights[w].mVertexId)[bil] < 0) {
 						boneIndexLength = bil;
 						bil = 4;
 					}
 				}
-				bone_index_.at(mesh->mBones[i]->mWeights[w].mVertexId)[boneIndexLength] = j->id;
-				weights_.at(mesh->mBones[i]->mWeights[w].mVertexId)[boneIndexLength] = mesh->mBones[i]->mWeights[w].mWeight;
+				boneIndex.at(mesh->mBones[i]->mWeights[w].mVertexId)[boneIndexLength] = j->id;
+				weights.at(mesh->mBones[i]->mWeights[w].mVertexId)[boneIndexLength] = mesh->mBones[i]->mWeights[w].mWeight;
 			}
 		}
 	  }
@@ -124,6 +127,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
 		  std::cout << "\n";
 	  }
 	  */
+	  return Mesh(vertex, indices, textures, weights, boneIndex);
   }
 
   return Mesh(vertex, indices, textures);
@@ -254,8 +258,13 @@ Joint* Model::MakeArmature(aiNode* node) {
 	//Takes all known bones from the bones_ vector and structures it (assigns children)
 	bool rootNode = (node->mName.data == std::string("Root"));
 
-	for (auto b : bones_) {
+	for (auto& b : bones_) {
 		if (node->mName.data == b->name) {//node is known bone
+			b->transform = convertToGLM(node->mTransformation);
+			for (int i = 0; i < 16; i++) {
+				std::cout << b->transform[(i / 4) % 4][i % 4] << " : ";
+			}
+			std::cout << "\n";
 			for (int n = 0; n < node->mNumChildren; n++) {
 				for (auto PCB : bones_) {
 					if (node->mChildren[n]->mName.data == PCB->name) {//found child
