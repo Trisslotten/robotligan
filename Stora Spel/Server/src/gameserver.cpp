@@ -27,6 +27,8 @@ void GameServer::Init() {
 
   server_.Setup(1337);
 
+  srand(time(NULL));
+
   CreateEntities();
   CreateGoals();
 }
@@ -140,10 +142,9 @@ void GameServer::Update(float dt) {
       }
     }
 
+    // send team socres and switch goal ability
     auto view_goals = registry_.view<GoalComponenet, TeamComponent>();
-
     entt::entity blue_goal;
-
     bool sent_switch = false;
     for (auto goal : view_goals) {
       GoalComponenet& goal_goal_c = registry_.get<GoalComponenet>(goal);
@@ -151,23 +152,52 @@ void GameServer::Update(float dt) {
       to_send << goal_team_c;
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
-      if (goal_goal_c.switched_this_tick) {
+      if (goal_goal_c
+              .switched_this_tick) {  // MAY NEED TO CHANGE, NOT A GOOD SOLUTION
         if (!sent_switch) {
           to_send << PacketBlockType::SWITCH_GOALS;
           sent_switch = true;
         }
-        goal_goal_c.switched_this_tick = false;
       }
     }
 
-	//send messages
+    // send individual player scores
+    auto view_players2 =
+        registry_.view<PlayerComponent, TeamComponent, PointsComponent>();
+
+    for (auto player : view_players2) {
+      auto& player_player_c = registry_.get<PlayerComponent>(player);
+      auto& player_points_c = registry_.get<PointsComponent>(player);
+      auto& player_team_c = registry_.get<TeamComponent>(player);
+
+      if (player_points_c.changed) {
+        to_send << player_team_c.team;
+        to_send << player_player_c.id;
+        to_send << player_points_c.GetPoints();
+        to_send << player_points_c.GetGoals();
+        to_send << PacketBlockType::UPDATE_POINTS;
+      }
+    }
+
+    // send messages
     for (auto m : messages) {
       to_send.Add(m.c_str(), m.size());
       to_send << m.size();
       to_send << PacketBlockType::MESSAGE;
-	}
+    }
 
     server_.Send(to_send);
+  }
+
+  // reset switched_this_tick bool
+  // NOT A GOOD SOLUTION, MAYBE CHANGE LATER
+  auto view_goals = registry_.view<GoalComponenet, TeamComponent>();
+  for (auto goal : view_goals) {
+    GoalComponenet& goal_goal_c = registry_.get<GoalComponenet>(goal);
+    TeamComponent& goal_team_c = registry_.get<TeamComponent>(goal);
+    if (goal_goal_c.switched_this_tick) {
+      goal_goal_c.switched_this_tick = false;
+    }
   }
 
   created_players_.clear();
@@ -277,6 +307,17 @@ void GameServer::CreatePlayer(PlayerID id) {
   );
   registry_.assign<CameraComponent>(entity, camera_offset);
 
+  if (last_spawned_team_ == 1) {
+    registry_.assign<TeamComponent>(entity, TEAM_BLUE);
+    last_spawned_team_ = 0;
+  } else {
+    registry_.assign<TeamComponent>(entity, TEAM_RED);
+    last_spawned_team_ = 1;
+  }
+ 
+
+  registry_.assign<PointsComponent>(entity);
+
   auto& player_component = registry_.assign<PlayerComponent>(entity);
   player_component.id = id;
   created_players_.push_back(id);
@@ -312,39 +353,73 @@ void GameServer::ResetEntities() {
   glm::vec3 player_pos[3];
   for (int i = 0; i < 3; ++i) {
     player_pos[i].x = GlobalSettings::Access()->ValueOf(
-      std::string("PLAYERPOSITION") + std::to_string(i) + "X");
+        std::string("PLAYERPOSITION") + std::to_string(i) + "X");
     player_pos[i].y = GlobalSettings::Access()->ValueOf(
         std::string("PLAYERPOSITION") + std::to_string(i) + "Y");
     player_pos[i].z = GlobalSettings::Access()->ValueOf(
         std::string("PLAYERPOSITION") + std::to_string(i) + "Z");
   }
 
+  // blue players
   unsigned int pos_counter = 0;
-  auto player_view = registry_.view<PlayerComponent, PhysicsComponent, TransformComponent>();
+  auto player_view = registry_.view<PlayerComponent, PhysicsComponent,
+                                    TeamComponent, TransformComponent>();
   for (auto entity : player_view) {
     PhysicsComponent& physics_component =
         player_view.get<PhysicsComponent>(entity);
     TransformComponent& transform_component =
         player_view.get<TransformComponent>(entity);
+    TeamComponent& player_team_c = player_view.get<TeamComponent>(entity);
+    if (player_team_c.team == TEAM_BLUE) {
+      physics_component.velocity = glm::vec3(0.0f);
+      physics_component.is_airborne = true;
 
-    physics_component.velocity = glm::vec3(0.0f);
-    physics_component.is_airborne = true;
+      transform_component.position = player_pos[pos_counter];
+      pos_counter++;
 
-    transform_component.position = player_pos[pos_counter];
-    pos_counter++;
-
-    if (pos_counter >= 3) {
-      player_pos[0].x *= -1.f;
-      player_pos[1].x *= -1.f;
-      player_pos[2].x *= -1.f;
-      pos_counter = 0;
-      // GlobalSettings::Access()->WriteError("main.cpp", "ResetEntities()",
-      // "Counter out of scope");
+      if (pos_counter >= 3) {
+        player_pos[0].x *= -1.f;
+        player_pos[1].x *= -1.f;
+        player_pos[2].x *= -1.f;
+        pos_counter = 0;
+        // GlobalSettings::Access()->WriteError("main.cpp", "ResetEntities()",
+        // "Counter out of scope");
+      }
     }
   }
-  
-  // TODO: reset pick-up
 
+  // red players
+  pos_counter = 0;
+  auto player_view2 = registry_.view<PlayerComponent, PhysicsComponent,
+                                     TeamComponent, TransformComponent>();
+  for (auto entity : player_view2) {
+    PhysicsComponent& physics_component =
+        player_view.get<PhysicsComponent>(entity);
+    TransformComponent& transform_component =
+        player_view.get<TransformComponent>(entity);
+    TeamComponent& player_team_c = player_view.get<TeamComponent>(entity);
+    if (player_team_c.team == TEAM_RED) {
+      physics_component.velocity = glm::vec3(0.0f);
+      physics_component.is_airborne = true;
+
+      glm::vec3 red_player_pos = player_pos[pos_counter];
+      red_player_pos.x *= -1;
+
+      transform_component.position = red_player_pos;
+      pos_counter++;
+
+      if (pos_counter >= 3) {
+        player_pos[0].x += -1.f;
+        player_pos[1].x += -1.f;
+        player_pos[2].x += -1.f;
+        pos_counter = 0;
+        // GlobalSettings::Access()->WriteError("main.cpp", "ResetEntities()",
+        // "Counter out of scope");
+      }
+    }
+  }
+
+  // TODO: reset pick-up
 
   // Reset Balls
   auto ball_view =

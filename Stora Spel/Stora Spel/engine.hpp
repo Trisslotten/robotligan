@@ -9,6 +9,12 @@
 #include "shared/shared.hpp"
 #include "Chat.hpp"
 
+struct PlayerScoreBoardInfo {
+  int points = 0;
+  int goals = 0;
+  unsigned int team = TEAM_RED;
+};
+
 class Engine {
  public:
   Engine();
@@ -64,17 +70,21 @@ class Engine {
   glob::Font2DHandle font_test3_ = 0;
   glob::E2DHandle e2D_test_, e2D_test2_;
   glob::GUIHandle in_game_menu_gui_ = 0;
-  glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
+  glob::GUIHandle gui_scoreboard_back_, gui_teamscore_, gui_stamina_base_,
       gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_;
   bool show_in_game_menu_buttons_ = false;
 
-  std::vector<unsigned int> scores;
+  std::vector<unsigned int> scores_;
 
-  entt::entity blue_goal_light;
-  entt::entity red_goal_light;
+  entt::entity blue_goal_light_;
+  entt::entity red_goal_light_;
   bool take_game_input_ = true;
   Chat chat;
   std::string message_ = "";
+
+  std::unordered_map<PlayerID, PlayerScoreBoardInfo> player_scores_;
+  std::unordered_map<PlayerID, std::string> player_names_;
+  void DrawScoreboard();
 };
 
 #endif  // ENGINE_HPP_

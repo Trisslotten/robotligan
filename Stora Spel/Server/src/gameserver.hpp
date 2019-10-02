@@ -38,6 +38,8 @@ class GameServer {
   std::vector<std::string> messages;
 
   int test_player_guid_ = 0;
+
+  int last_spawned_team_ = 1;
 };
 
 #endif  // GAME_SERVER_HPP_

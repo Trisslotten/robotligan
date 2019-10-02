@@ -4,6 +4,10 @@
 #define TEAM_RED (unsigned int)0
 #define TEAM_BLUE (unsigned int)1
 
+#define POINTS_GOAL		10
+#define POINTS_ASSIST	2
+#define POINTS_SAVE		4
+
 typedef int PlayerID;
 typedef int EntityID;
 
@@ -34,8 +38,9 @@ enum : int16_t {
   TEST_STRING,
   TEAM_SCORE,
   SWITCH_GOALS,
-  NUM_BLOCK_TYPES,
   MESSAGE,
+  UPDATE_POINTS,
+  NUM_BLOCK_TYPES,
 };
 } // namespace PacketType
 

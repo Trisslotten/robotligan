@@ -8,5 +8,6 @@
 #include "components/projectile_component.hpp"
 #include "components/team_component.hpp"
 #include "components/goal_component.hpp"
+#include "components/points_component.hpp"
 
 #endif  // COMPONENTS_HPP_
