@@ -5,9 +5,16 @@
 #include <string>
 #include <vector>
 
+struct RowMessage {
+  std::string name = "";
+  unsigned int message_from;
+  std::string message = "";
+  float offset = 0.f;
+};
+
 class Chat {
  private:
-  std::vector<std::string> messages_;
+  std::vector<RowMessage> messages_;
   std::string current_message_;
   float close_timer_;
   int row_length_ = 50;
@@ -15,7 +22,7 @@ class Chat {
   bool send_message_ = false;
   bool close_chat_ = false;
   public : 
-  void AddMessage(std::string text);
+  void AddMessage(std::string name, std::string text, unsigned int message_from);
   //void AddToCurrentMessage(std::string text);
   void Update(float dt);
   void SubmitText(glob::Font2DHandle font);

@@ -239,12 +239,19 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::MESSAGE: {
+      unsigned int message_from;
+      packet >> message_from;
       size_t strsize = 0;
       packet >> strsize;
-      std::string str;
-      str.resize(strsize);
-      packet.Remove(str.data(), strsize);
-      chat.AddMessage(str);
+      std::string message;
+      message.resize(strsize);
+      packet.Remove(message.data(), strsize);
+      packet >> strsize;
+      std::string name;
+      name.resize(strsize);
+      packet.Remove(name.data(), strsize);
+
+      chat.AddMessage(name, message, message_from);
       if (chat.IsVisable() == false) {
 		chat.SetShowChat();
         chat.CloseChat();
@@ -347,7 +354,7 @@ void Engine::UpdateSystems(float dt) {
       chat.SubmitText(font_test2_);
 	  if (chat.IsTakingChatInput() == true && chat.GetCurrentMessage().size() == 0)
         glob::Submit(font_test2_, glm::vec2(50.f, 600.f), 20,
-                     "Enter message", glm::vec4(0, 1, 1, 1));
+                     "Enter message", glm::vec4(1, 1, 1, 1));
     }
     if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat.IsVisable()) {
       //glob::window::SetMouseLocked(false);
