@@ -13,6 +13,7 @@
 #include "collision.hpp"
 #include "ecs/components/physics_component.hpp"
 #include "ecs/components/projectile_component.hpp"
+#include "ecs/components/pick_up_event.hpp"
 #include "transform_component.hpp"
 
 std::ostream& operator<<(std::ostream& o, glm::vec3 v) {
@@ -46,6 +47,7 @@ void PlayerProjectileCollision(entt::registry& registry);
 void PlayerArenaCollision(entt::registry& registry);
 void ProjectileBallCollision(entt::registry& registry, entt::entity ball);
 void ProjectileArenaCollision(entt::registry& registry);
+void PickUpPlayerCollision(entt::registry& registry);
 void BallCollision(PhysicsComponent* ball, glm::vec3 normal);
 void UpdateSphere(entt::registry& registry);
 void UpdateOBB(entt::registry& registry);
@@ -105,6 +107,8 @@ void UpdateCollisions(entt::registry& registry) {
   PlayerArenaCollision(registry);
   // Collision between player and projectile
   PlayerProjectileCollision(registry);
+  // Collision between player and pic-up
+  PickUpPlayerCollision(registry);
 
   // HANDLE BALL COLLISIONS
   for (int i = 0; i < ball_collisions.size(); ++i) {
@@ -412,6 +416,36 @@ void ProjectileArenaCollision(entt::registry& registry) {
         if (id.projectile_id == CANNON_BALL) {
           registry.destroy(projectile);
         }
+      }
+    }
+  }
+
+  return;
+}
+
+void PickUpPlayerCollision(entt::registry& registry) {
+  auto pick_up_view = registry.view<PickUpComponent, physics::OBB>();
+  auto view_player =
+      registry.view<physics::OBB, PhysicsComponent, PlayerComponent, AbilityComponent>();
+
+  for (auto pick_up : pick_up_view) {
+    auto& pick_up_obb = pick_up_view.get<physics::OBB>(pick_up);
+
+    for (auto player : view_player) {
+      auto& player_obb = view_player.get<physics::OBB>(player);
+
+      auto data = Intersect(pick_up_obb, player_obb);
+      if (data.collision) {
+        auto entity = registry.create();
+        registry.assign<PickUpEvent>(
+            entity, pick_up_view.get<PickUpComponent>(pick_up).id,
+            view_player.get<PlayerComponent>(player).id,
+            AbilityID::SWITCH_GOALS);
+
+        auto& ability_c = view_player.get<AbilityComponent>(player);
+        ability_c.secondary_ability = AbilityID::SWITCH_GOALS;
+
+        registry.destroy(pick_up);
       }
     }
   }

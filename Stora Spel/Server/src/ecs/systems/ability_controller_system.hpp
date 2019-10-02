@@ -54,7 +54,7 @@ void Update(entt::registry &registry, float dt) {
           if (TriggerAbility(registry, ability_component.secondary_ability)) {
             // If ability triggered successfully, remove the
             // slotted secondary ability
-            ability_component.secondary_ability = NULL_ABILITY;
+            ability_component.secondary_ability = AbilityID::NULL_ABILITY;
           }
         }
         // When finished set secondary ability to not activated
@@ -72,33 +72,33 @@ void Update(entt::registry &registry, float dt) {
 
 bool TriggerAbility(entt::registry &registry, AbilityID in_a_id) {
   switch (in_a_id) {
-    case NULL_ABILITY:
+    case AbilityID::NULL_ABILITY:
       break;
-    case BUILD_WALL:
+    case AbilityID::BUILD_WALL:
       break;
-    case FAKE_BALL:
+    case AbilityID::FAKE_BALL:
       break;
-    case FORCE_PUSH:
+    case AbilityID::FORCE_PUSH:
       break;
-    case GRAVITY_CHANGE:
+    case AbilityID::GRAVITY_CHANGE:
       break;
-    case HOMING_BALL:
+    case AbilityID::HOMING_BALL:
       break;
-    case INVISIBILITY:
+    case AbilityID::INVISIBILITY:
       break;
-    case MISSILE:
+    case AbilityID::MISSILE:
       CreateMissileEntity(registry);
       return true;
       break;
-    case SUPER_STRIKE:
+    case AbilityID::SUPER_STRIKE:
       DoSuperStrike(registry);
       return true;
       break;
-    case SWITCH_GOALS:
+    case AbilityID::SWITCH_GOALS:
       DoSwitchGoals(registry);
       return true;
       break;
-    case TELEPORT:
+    case AbilityID::TELEPORT:
       break;
     default:
       return false;

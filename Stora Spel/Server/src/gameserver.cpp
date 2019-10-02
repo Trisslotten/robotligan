@@ -6,6 +6,7 @@
 #include <glob/graphics.hpp>
 #include <iostream>
 #include <transform_component.hpp>
+#include <pick_up_component.hpp>
 
 #include "ecs/components.hpp"
 #include "ecs/systems/ability_controller_system.hpp"
@@ -70,6 +71,7 @@ void GameServer::Update(float dt) {
 
   UpdateSystems(dt);
 
+  auto pick_up_events = registry_.view<PickUpEvent>();
   for (auto& [id, client_data] : server_.GetClients()) {
     NetAPI::Common::Packet to_send;
     auto header = to_send.GetHeader();
@@ -150,6 +152,22 @@ void GameServer::Update(float dt) {
       }
     }
 
+    for (auto entity : pick_ups_) {
+      auto& t = registry_.get<TransformComponent>(entity);
+      to_send << t.position;
+      to_send << PacketBlockType::CREATE_PICK_UP;
+    }
+
+    for (auto entity : pick_up_events) {
+      auto& pick_event = pick_up_events.get(entity);
+      to_send << 0;
+      to_send << PacketBlockType::DESTROY_PICK_UP;
+    
+      if (id == pick_event.player_id) {
+        to_send << pick_event.ability_id;
+        to_send << PacketBlockType::RECEIVE_PICK_UP;
+      }
+    }
     auto view_goals = registry_.view<GoalComponenet, TeamComponent>();
 
     entt::entity blue_goal;
@@ -182,6 +200,11 @@ void GameServer::Update(float dt) {
 
   created_players_.clear();
   messages.clear();
+  pick_ups_.clear();
+
+  for (auto entity : pick_up_events) {
+    registry_.destroy(entity);
+  }
 }
 
 void GameServer::UpdateSystems(float dt) {
@@ -267,8 +290,8 @@ void GameServer::CreatePlayer(PlayerID id) {
   );
 
   // Prepare hard-coded values
-  AbilityID primary_id = SWITCH_GOALS;
-  AbilityID secondary_id = SWITCH_GOALS;
+  AbilityID primary_id = AbilityID::SWITCH_GOALS;
+  AbilityID secondary_id = AbilityID::SWITCH_GOALS;
   float primary_cooldown =
       GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
   glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
@@ -374,8 +397,11 @@ void GameServer::ResetEntities() {
     }
   }
   
-  // TODO: reset pick-up
+  // reset pick-up
+  auto pick_up_view = registry_.view<PickUpComponent>();
+  for (auto entity : pick_up_view) registry_.destroy(entity);
 
+  CreatePickUpComponents();
 
   // Reset Balls
   auto ball_view =
@@ -454,6 +480,20 @@ void GameServer::AddArenaComponents(entt::entity& entity) {
   auto& mh = registry_.assign<physics::MeshHitbox>(entity, std::move(md.pos),
                                                    std::move(md.indices));
   // glob::LoadWireframeMesh(model_arena, mh.pos, mh.indices);
+}
+
+void GameServer::CreatePickUpComponents() {
+  glm::vec3 pos = glm::vec3(3.f, -2.f, 3.f);
+  auto entity = registry_.create();
+  registry_.assign<TransformComponent>(entity, pos, glm::vec3(0.f),
+                                       glm::vec3(1.f));
+  registry_.assign<PickUpComponent>(entity);
+  registry_.assign<physics::OBB>(entity, pos, glm::vec3(1.f, 0.f, 0.f),
+                                 glm::vec3(0.f, 1.f, 0.f),
+                                 glm::vec3(0.f, 0.f, 1.f),
+                                  1.f, 1.f, 1.f);
+
+  pick_ups_.push_back(entity);
 }
 
 void GameServer::CreateGoals() {
