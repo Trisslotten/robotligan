@@ -8,19 +8,24 @@ void LobbyState::Startup() {
   ButtonComponent* button_c = GenerateButtonEntity(registry_lobby_, "READY",
                                               glm::vec2(100, 200), font_test_);
   button_c->button_func = [&]() { 
-    //
+    
   }; 
 }
 
 void LobbyState::Init() {
   //
+  engine_->SetSendInput(false);
   engine_->SetCurrentRegistry(&registry_lobby_);
 
-  engine_->getClient().Connect("localhost", 1337);
+  engine_->GetClient().Connect("localhost", 1337);
 }
 
 void LobbyState::Update() {
   //
+}
+
+void LobbyState::UpdateNetwork() {
+
 }
 
 void LobbyState::Cleanup() {

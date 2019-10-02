@@ -53,6 +53,25 @@ class EXPORT Packet {
     return *this;
   }
 
+  Packet& operator<<(const Packet& other) {
+    int size_without_head = other.size_of_data_ - (int)sizeof(PacketHeader);
+    if(size_without_head <= 0){
+      return *this;
+    }
+    if (size_of_data_ + size_without_head  > kNumPacketBytes) {
+      std::cout << "ERROR: packet full: currsize=" << size_of_data_
+                << ", max=" << kNumPacketBytes
+                << "\n\ttried adding another packet ("
+                << size_without_head << " bytes) \n";
+    } else {
+      std::memcpy(data_ + size_of_data_, other.data_+sizeof(PacketHeader), size_without_head);
+      size_of_data_ += size_without_head;
+      // std::cout << "<< size_of_data_=" << size_of_data_ << "\n";
+    }
+
+    return *this;
+  }
+
   template <typename T>
   Packet& operator>>(T& data) {
     if (size_of_data_ - (long)sizeof(T) < (long)sizeof(PacketHeader)) {

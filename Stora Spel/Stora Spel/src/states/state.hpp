@@ -16,16 +16,17 @@ enum class StateType {
 
 class State {
  public:
-  // run when program starts
+  // when program starts
   virtual void Startup() = 0;
 
-  // run when state changed to this state
+  // when state changed to this state
   virtual void Init() = 0;
 
-  // run every tick
   virtual void Update() = 0;
 
-  // run when state becomes inactive
+  virtual void UpdateNetwork() = 0;
+
+  // when state becomes inactive
   virtual void Cleanup() = 0;
 
   // the type of state
@@ -47,6 +48,7 @@ class MainMenuState : public State {
   void Startup() override;
   void Init() override;
   void Update() override;
+  void UpdateNetwork() override;
   void Cleanup() override;
 
   StateType Type() { return StateType::MAIN_MENU; }
@@ -68,6 +70,7 @@ class LobbyState : public State {
   void Startup() override;
   void Init() override;
   void Update() override;
+  void UpdateNetwork() override;
   void Cleanup() override;
 
   StateType Type() { return StateType::LOBBY; }
@@ -81,6 +84,7 @@ class PlayState : public State {
   void Startup() override;
   void Init() override;
   void Update() override;
+  void UpdateNetwork() override;
   void Cleanup() override;
 
 

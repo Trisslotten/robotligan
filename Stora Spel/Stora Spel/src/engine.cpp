@@ -88,6 +88,8 @@ void Engine::Update(float dt) {
 }
 
 void Engine::UpdateNetwork() {
+  current_state_->UpdateNetwork();
+
   // get and send player input
   std::bitset<PlayerAction::NUM_ACTIONS> actions;
   for (auto const& [key, action] : keybinds_) {
@@ -103,18 +105,24 @@ void Engine::UpdateNetwork() {
 
   uint16_t action_bits = actions.to_ulong();
 
-  NetAPI::Common::Packet packet;
+  NetAPI::Common::Packet to_send;
 
-  packet << action_bits;
-  packet << accum_pitch_;
-  packet << accum_yaw_;
-  packet << PacketBlockType::INPUT;
+  if(!packet_.IsEmpty()) {
+      to_send << packet_;
+  }
 
-  if (client_.IsConnected()) {
-    client_.Send(packet);
+  if(should_send_input_) {
+    to_send << action_bits;
+    to_send << accum_pitch_;
+    to_send << accum_yaw_;
+    to_send << PacketBlockType::INPUT;
+  }
+  if (client_.IsConnected() && !to_send.IsEmpty()) {
+    client_.Send(to_send);
   }
   accum_yaw_ = 0.f;
   accum_pitch_ = 0.f;
+  packet_ = NetAPI::Common::Packet();
 
   // handle received data
   if (client_.IsConnected()) {

@@ -11,12 +11,16 @@ void MainMenuState::Startup() {
 
 void MainMenuState::Init() {
   //
-
+  engine_->SetSendInput(false);
   engine_->SetCurrentRegistry(&registry_mainmenu_);
 }
 
 void MainMenuState::Update() {
   //
+}
+
+void MainMenuState::UpdateNetwork() {
+
 }
 
 void MainMenuState::Cleanup() {

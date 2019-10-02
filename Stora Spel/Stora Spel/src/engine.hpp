@@ -25,8 +25,14 @@ class Engine {
   void ChangeState(StateType state) {
     wanted_state_type_ = state;
   }
-  NetAPI::Socket::Client& getClient() {
+  NetAPI::Socket::Client& GetClient() {
     return client_;
+  }
+  NetAPI::Common::Packet& GetPacket() {
+    return packet_;
+  }
+  void SetSendInput(bool should_send) {
+    should_send_input_ =  should_send;
   }
 
  private:
@@ -36,6 +42,7 @@ class Engine {
   void HandlePacketBlock(NetAPI::Common::Packet& packet);
 
   NetAPI::Socket::Client client_;
+  NetAPI::Common::Packet packet_;
 
   StateType wanted_state_type_ = StateType::MAIN_MENU;
   State* current_state_ = nullptr;
@@ -45,7 +52,7 @@ class Engine {
 
   entt::registry* registry_current_;
 
-  PlayerID my_id = -1;
+  bool should_send_input_ = false;
 
   std::unordered_map<int, int> keybinds_;
   std::unordered_map<int, int> mousebinds_;

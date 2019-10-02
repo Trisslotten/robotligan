@@ -40,7 +40,7 @@ void PlayState::Startup() {
 }
 
 void PlayState::Init() {
-  //
+  engine_->SetSendInput(true);
 }
 
 void PlayState::Update() {
@@ -98,6 +98,8 @@ void PlayState::Update() {
   glob::Submit(gui_quickslots_, glm::vec2(7, 50), 0.3, 100);
   glob::Submit(gui_teamscore_, glm::vec2(497, 648), 1, 100);
 }
+
+void PlayState::UpdateNetwork() {}
 
 void PlayState::Cleanup() {
   //
