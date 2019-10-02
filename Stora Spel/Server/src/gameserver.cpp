@@ -314,7 +314,6 @@ void GameServer::CreatePlayer(PlayerID id) {
     registry_.assign<TeamComponent>(entity, TEAM_RED);
     last_spawned_team_ = 1;
   }
- 
 
   registry_.assign<PointsComponent>(entity);
 

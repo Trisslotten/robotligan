@@ -4,10 +4,10 @@
 #define NOMINMAX
 #include <NetAPI/socket/server.hpp>
 #include <entity/registry.hpp>
-#include <vector>
 #include <entt.hpp>
 #include <glm/glm.hpp>
 #include <shared.hpp>
+#include <vector>
 #include "util/timer.hpp"
 
 class GameServer {

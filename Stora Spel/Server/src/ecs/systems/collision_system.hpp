@@ -56,7 +56,8 @@ void UpdateCollisions(entt::registry& registry) {
   UpdateOBB(registry);
   auto view_ball =
       registry.view<BallComponent, physics::Sphere, PhysicsComponent>();
-  auto view_player = registry.view<physics::OBB, PhysicsComponent, PlayerComponent>();
+  auto view_player =
+      registry.view<physics::OBB, PhysicsComponent, PlayerComponent>();
   auto view_arena_mesh = registry.view<physics::MeshHitbox>();
 
   entt::entity arena_entity;
@@ -82,8 +83,7 @@ void UpdateCollisions(entt::registry& registry) {
         ball_collisions[ball_counter].collision_list.push_back(
             {player, data.normal, data.move_vector, PLAYER});
         ball_ball.last_touch = player_player.id;
-	  }
-       
+      }
     }
 
     // Collision between ball and arena

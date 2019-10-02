@@ -199,7 +199,7 @@ void CreateCannonBallEntity(entt::registry &registry, PlayerID id) {
       //                                glob::GetModel("assets/Ball/Ball.fbx"));
       // registry.assign<LightComponent>(cannonball, glm::vec3(1, 0, 1), 3.f,
       // 0.f);
-	}
+    }
   }
 }
 

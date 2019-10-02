@@ -6,8 +6,8 @@
 #include <entt.hpp>
 #include <glob/graphics.hpp>
 #include <unordered_map>
-#include "shared/shared.hpp"
 #include "Chat.hpp"
+#include "shared/shared.hpp"
 
 struct PlayerScoreBoardInfo {
   int points = 0;
@@ -33,6 +33,7 @@ class Engine {
   void Render();
 
   void SetCurrentRegistry(entt::registry* registry);
+
  private:
   void SetKeybinds();
 
