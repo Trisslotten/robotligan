@@ -216,7 +216,6 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       bool start_replay;
       packet >> start_replay;
       if (start_replay && !this->record_) {
-        std::cout << "P Pressed\n";
         this->StartRecording(10);
       }
       break;
@@ -405,6 +404,7 @@ void GameServer::CreateGoals() {
 // Replay stuff---
 bool GameServer::StartRecording(unsigned int in_replay_length_seconds) {
   // Initiate the Replay Machine
+  std::cout << "Recording...\n";
   this->replay_machine_->Init(in_replay_length_seconds, this->update_rate_, 1);
   this->record_ = true;
   return true;  // NTS: Return false if recording cannot start?
@@ -415,6 +415,7 @@ void GameServer::Record(std::bitset<10>& in_bitset, float& in_x_value,
   // Save the frame with the ReplayMachine
   if (this->replay_machine_->SaveReplayFrame(in_bitset, in_x_value, in_y_value,
                                              this->registry_, in_dt)) {
+    std::cout << "Replaying...\n";
     // If true is returned it means the internal
     // BitPack is fully written and there is no
     // more space to record on.
@@ -432,6 +433,7 @@ void GameServer::Replay(std::bitset<10>& in_bitset, float& in_x_value,
   // Read a frame with the ReplayMachine
   if (this->replay_machine_->LoadReplayFrame(in_bitset, in_x_value, in_y_value,
                                              this->registry_)) {
+    std::cout << "Finished.\n";
     // If true is returned it means the internal
     // BiPack has been fully read and there is no
     // more data to replay.
