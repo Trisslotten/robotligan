@@ -95,6 +95,16 @@ void GameServer::Update(float dt) {
     }
     to_send << PacketBlockType::CAMERA_TRANSFORM;
 
+    auto view_player = registry_.view<PlayerComponent>();
+    for (auto player : view_player) {
+      auto& player_c = view_player.get(player);
+      if (id == player_c.id) {
+        to_send << player_c.energy_current;
+        break;
+      }
+    }
+    to_send << PacketBlockType::PLAYER_STAMINA;
+
     auto view_ball = registry_.view<BallComponent, TransformComponent>();
     for (auto ball : view_ball) {
       // auto& ball_c = view_cam.get<BallComponent>(ball);
@@ -305,7 +315,7 @@ void GameServer::ResetEntities() {
   auto rotation_view = registry_.view<TransformComponent>();
   for (auto entity : rotation_view) {
     auto& t = rotation_view.get(entity);
-    t.rotation = glm::quat(glm::vec3(0, glm::pi<float>(), 0));
+    t.rotation = glm::vec3(0.f);
   }
 
   // Reset Players
@@ -319,27 +329,48 @@ void GameServer::ResetEntities() {
         std::string("PLAYERPOSITION") + std::to_string(i) + "Z");
   }
 
-  unsigned int pos_counter = 0;
-  auto player_view = registry_.view<PlayerComponent, PhysicsComponent, TransformComponent>();
+  unsigned int blue_counter = 0;
+  unsigned int red_counter = 0;
+  bool blue_team = true;
+  auto player_view = registry_.view<PlayerComponent, PhysicsComponent, TransformComponent, CameraComponent>();
   for (auto entity : player_view) {
     PhysicsComponent& physics_component =
         player_view.get<PhysicsComponent>(entity);
     TransformComponent& transform_component =
         player_view.get<TransformComponent>(entity);
+    PlayerComponent& player_component =
+        player_view.get<PlayerComponent>(entity);
+    CameraComponent& cam = player_view.get<CameraComponent>(entity);
 
+    if (registry_.has<TeamComponent>(entity)) {
+      TeamComponent& team = registry_.get<TeamComponent>(entity);
+      if (team.team == TEAM_RED) blue_team = false;
+    }
+    
+    float orientation_value = 0.f;
+    if (blue_team) orientation_value = glm::pi<float>();
+
+
+    cam.orientation = glm::vec3(0.f, orientation_value, 0.f);
+
+    player_component.pitch = 0.f;
+    player_component.yaw = orientation_value;
     physics_component.velocity = glm::vec3(0.0f);
     physics_component.is_airborne = true;
 
-    transform_component.position = player_pos[pos_counter];
-    pos_counter++;
+    transform_component.rotation = glm::vec3(0.f, orientation_value, 0.f);
 
-    if (pos_counter >= 3) {
-      player_pos[0].x *= -1.f;
-      player_pos[1].x *= -1.f;
-      player_pos[2].x *= -1.f;
-      pos_counter = 0;
-      // GlobalSettings::Access()->WriteError("main.cpp", "ResetEntities()",
-      // "Counter out of scope");
+    if (blue_team) {
+      transform_component.position = player_pos[blue_counter];
+      blue_counter++;
+
+      blue_counter %= 3; 
+    } else {
+      transform_component.position = player_pos[red_counter];
+      transform_component.position.x *= -1.f;
+      red_counter++;
+
+      red_counter %= 3;
     }
   }
   
