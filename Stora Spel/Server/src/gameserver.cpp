@@ -499,12 +499,6 @@ void GameServer::CreateEntities() {
 }
 
 void GameServer::ResetEntities() {
-  // Reset Rotation
-  auto rotation_view = registry_.view<TransformComponent>();
-  for (auto entity : rotation_view) {
-    auto& t = rotation_view.get(entity);
-    t.rotation = glm::vec3(0.f);
-  }
 
   // Reset Players
   glm::vec3 player_pos[3];

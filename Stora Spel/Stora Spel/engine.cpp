@@ -108,16 +108,6 @@ void Engine::CreateInitalEntities() {
   registry_gameplay_.assign<TransformComponent>(ball, zero_vec, zero_vec,
                                                 glm::vec3(1.0f));
   registry_gameplay_.assign<BallComponent>(ball);
-
-  // Pick-up
-  auto pick_up = registry_gameplay_.create();
-  glob::ModelHandle model_pick_up =
-      glob::GetModel("assets/lowpolydeer/deer.fbx");  // Replace with real model
-  registry_gameplay_.assign<ModelComponent>(pick_up, model_pick_up);
-  registry_gameplay_.assign<TransformComponent>(
-      pick_up, glm::vec3(5.0f, -5.6f, 0.0f), glm::vec3(0.0f, 0.0f, -1.6f),
-      glm::vec3(0.002f));
-  registry_gameplay_.assign<PickUpComponent>(pick_up);
 }
 
 void Engine::Update(float dt) {
