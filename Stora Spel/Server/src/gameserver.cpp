@@ -285,6 +285,7 @@ void GameServer::UpdateSystems(float dt) {
   if (goal_system::Update(registry_)) {
     ResetEntities();
   }
+  dispatcher.update<EventInfo>();
 }
 
 void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
@@ -519,7 +520,8 @@ void GameServer::ResetEntities() {
   unsigned int blue_counter = 0;
   unsigned int red_counter = 0;
   bool blue_team = true;
-  auto player_view = registry_.view<PlayerComponent, PhysicsComponent, TransformComponent, CameraComponent>();
+  auto player_view = registry_.view<PlayerComponent, PhysicsComponent,
+                                    TransformComponent, CameraComponent>();
   for (auto entity : player_view) {
     PhysicsComponent& physics_component =
         player_view.get<PhysicsComponent>(entity);
@@ -533,10 +535,9 @@ void GameServer::ResetEntities() {
       TeamComponent& team = registry_.get<TeamComponent>(entity);
       if (team.team == TEAM_RED) blue_team = false;
     }
-    
+
     float orientation_value = 0.f;
     if (blue_team) orientation_value = glm::pi<float>();
-
 
     cam.orientation = glm::vec3(0.f, orientation_value, 0.f);
 
@@ -551,7 +552,7 @@ void GameServer::ResetEntities() {
       transform_component.position = player_pos[blue_counter];
       blue_counter++;
 
-      blue_counter %= 3; 
+      blue_counter %= 3;
     } else {
       transform_component.position = player_pos[red_counter];
       transform_component.position.x *= -1.f;
@@ -724,3 +725,17 @@ void GameServer::Replay(std::bitset<10>& in_bitset, float& in_x_value,
   }
 }
 //---
+
+
+void GameServer::ReceiveEvent(const EventInfo& e) {
+  switch (e.event) {
+    case Event::DESTROY_ENTITY: {
+      break;
+    }
+    case Event::CREATE_CANNONBALL: {
+      break;
+	}
+    default:
+      break;
+  }
+}

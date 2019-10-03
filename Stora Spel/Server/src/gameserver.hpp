@@ -12,6 +12,7 @@
 #include "replay machine/replay_machine.hpp"
 #include "util/global_settings.hpp"
 
+#include "util/event.hpp"
 #include "../src/message.hpp"
 #include "util/timer.hpp"
 
@@ -20,6 +21,7 @@ class GameServer {
   ~GameServer();
   void Init(double in_update_rate);
   void Update(float dt);
+  void ReceiveEvent(const EventInfo& e);
 
  private:
   void UpdateSystems(float dt);

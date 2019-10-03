@@ -171,6 +171,7 @@
     <ClInclude Include="src\ecs\systems\player_controller_system.hpp" />
     <ClInclude Include="src\gameserver.hpp" />
     <ClInclude Include="src\message.hpp" />
+    <ClInclude Include="src\util\event.hpp" />
     <ClInclude Include="src\util\global_settings.hpp" />
     <ClInclude Include="src\util\timer.hpp" />
     <ClCompile Include="src\replay machine\bit_pack.cpp" />
