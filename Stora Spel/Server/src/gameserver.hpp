@@ -28,6 +28,7 @@ class GameServer {
   void AddBallComponents(entt::entity& entity, glm::vec3 in_pos,
                          glm::vec3 in_vel);
   void AddArenaComponents(entt::entity& entity);
+  void CreatePickUpComponents();
   void CreateGoals();
 
   NetAPI::Socket::Server server_;
@@ -36,6 +37,7 @@ class GameServer {
 
   std::vector<PlayerID> created_players_;
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
+  std::vector<entt::entity> pick_ups_;
   std::vector<Message> messages;
 
   int test_player_guid_ = 0;
