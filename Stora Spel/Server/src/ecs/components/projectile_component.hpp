@@ -3,7 +3,10 @@
 
 #include <shared.hpp>
 
-enum ProjectileID { CANNON_BALL };
+enum ProjectileID {
+  CANNON_BALL,
+  NUM_PROJECTILE_IDS,
+};
 
 struct ProjectileComponent {
   ProjectileID projectile_id;

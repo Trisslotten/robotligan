@@ -308,7 +308,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       TransformComponent& blue_light_trans_c =
           registry_gameplay_.get<TransformComponent>(blue_goal_light_);
       TransformComponent& red_light_trans_c =
-          registry_gameplay_.get<TransformComponent>(red_goal_light_);
+          registry_gameplay_.get<TransformComponent>(red_goal_light_); 
       glm::vec3 blue_light_pos = blue_light_trans_c.position;
       blue_light_trans_c.position = red_light_trans_c.position;
       red_light_trans_c.position = blue_light_pos;
