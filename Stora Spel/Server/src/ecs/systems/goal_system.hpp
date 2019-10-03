@@ -5,19 +5,18 @@
 #include <collision.hpp>
 #include <entt.hpp>
 #include <physics_object.hpp>
+#include <shared.hpp>
 #include <transform_component.hpp>
 
 #include "../components/ball_component.hpp"
-#include "../components/team_component.hpp"
-#include "../components/physics_component.hpp"
 #include "../components/goal_component.hpp"
-
-
+#include "../components/physics_component.hpp"
+#include "../components/team_component.hpp"
 
 namespace goal_system {
 bool Update(entt::registry& registry) {
-  auto view_balls =
-      registry.view<BallComponent, TransformComponent, physics::Sphere, PhysicsComponent>();
+  auto view_balls = registry.view<BallComponent, TransformComponent,
+                                  physics::Sphere, PhysicsComponent>();
 
   // get all balls
   for (auto ball : view_balls) {
@@ -28,8 +27,8 @@ bool Update(entt::registry& registry) {
 
     // if ball is real, get all goals
     if (ball_ball_c.is_real) {
-      auto view_goals =
-          registry.view<physics::OBB, TeamComponent, TransformComponent, GoalComponenet>();
+      auto view_goals = registry.view<physics::OBB, TeamComponent,
+                                      TransformComponent, GoalComponenet>();
       for (auto goal : view_goals) {
         physics::OBB& goal_OBB_c = registry.get<physics::OBB>(goal);
         TeamComponent goal_team_c = registry.get<TeamComponent>(goal);
@@ -39,13 +38,29 @@ bool Update(entt::registry& registry) {
 
         physics::IntersectData data = Intersect(ball_sphere_c, goal_OBB_c);
         if (data.collision) {
-          // each team "owns" the goal where to score. 
+          // each team "owns" the goal where to score.
           printf("Team %i scored a goal!\n", goal_team_c.team);
-          //ball_trans_c.position = glm::vec3(0.f, 0.f, 0.f);
-          ////ball_ball_c.is_airborne = true;
-          //ball_physics_c.is_airborne = true;
-          //ball_physics_c.velocity = glm::vec3(0, 0, 0);
           goal_goal_c.goals++;
+          auto view_players =
+              registry.view<PlayerComponent, TeamComponent, PointsComponent>();
+          // give the player who touched the ball last points
+          for (auto player : view_players) {
+            auto& player_player_c = registry.get<PlayerComponent>(player);
+            auto& player_team_c = registry.get<TeamComponent>(player);
+            auto& player_points_c = registry.get<PointsComponent>(player);
+
+            if (player_player_c.id == ball_ball_c.last_touch) {
+              if (goal_team_c.team == player_team_c.team) {
+                // if correct goal, add POINTS_GOAL points
+                player_points_c.AddPoints(POINTS_GOAL);
+                player_points_c.AddGoals(1);
+              } else {
+                // else, self goal, subtract POINTS_GOAL
+                player_points_c.AddPoints((int)(POINTS_GOAL) * -1);
+                player_points_c.AddGoals(-1);
+              }
+            }
+          }
 
           return true;
         }

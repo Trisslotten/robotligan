@@ -4,6 +4,10 @@
 #define TEAM_RED (unsigned int)0
 #define TEAM_BLUE (unsigned int)1
 
+#define POINTS_GOAL		10
+#define POINTS_ASSIST	2
+#define POINTS_SAVE		4
+
 typedef int PlayerID;
 typedef int EntityID;
 
@@ -36,6 +40,7 @@ enum : int16_t {
   TEAM_SCORE,
   SWITCH_GOALS,
   MESSAGE,
+  UPDATE_POINTS,
   CREATE_PICK_UP,
   DESTROY_PICK_UP,
   RECEIVE_PICK_UP,

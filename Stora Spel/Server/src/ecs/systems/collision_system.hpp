@@ -58,7 +58,8 @@ void UpdateCollisions(entt::registry& registry) {
   UpdateOBB(registry);
   auto view_ball =
       registry.view<BallComponent, physics::Sphere, PhysicsComponent>();
-  auto view_player = registry.view<physics::OBB, PhysicsComponent>();
+  auto view_player =
+      registry.view<physics::OBB, PhysicsComponent, PlayerComponent>();
   auto view_arena_mesh = registry.view<physics::MeshHitbox>();
 
   entt::entity arena_entity;
@@ -70,17 +71,21 @@ void UpdateCollisions(entt::registry& registry) {
   // Loop over all balls
   for (auto ball_entity : view_ball) {
     auto& ball_hitbox = view_ball.get<physics::Sphere>(ball_entity);
+    BallComponent& ball_ball = view_ball.get<BallComponent>(ball_entity);
 
     ball_collisions.push_back({});
     ball_collisions[ball_counter].entity = ball_entity;
     // Collision between ball and players
     for (auto player : view_player) {
       auto& player_hitbox = view_player.get<physics::OBB>(player);
+      PlayerComponent& player_player = view_player.get<PlayerComponent>(player);
 
       physics::IntersectData data = Intersect(ball_hitbox, player_hitbox);
-      if (data.collision)
+      if (data.collision) {
         ball_collisions[ball_counter].collision_list.push_back(
             {player, data.normal, data.move_vector, PLAYER});
+        ball_ball.last_touch = player_player.id;
+      }
     }
 
     // Collision between ball and arena
@@ -390,6 +395,7 @@ void ProjectileBallCollision(entt::registry& registry, entt::entity ball) {
         glm::vec3 dir = normalize(ball_hitbox.center - proj_hitbox.center);
         ball_physics.velocity = dir * 20.0f;
         ball_physics.is_airborne = true;
+        ball_c.last_touch = id.creator;
         registry.destroy(projectile);
       } else {
         registry.destroy(projectile);

@@ -4,10 +4,11 @@
 #define NOMINMAX
 #include <NetAPI/socket/server.hpp>
 #include <entity/registry.hpp>
-#include <vector>
 #include <entt.hpp>
 #include <glm/glm.hpp>
 #include <shared.hpp>
+#include <vector>
+
 #include "../src/message.hpp"
 #include "util/timer.hpp"
 
@@ -41,6 +42,8 @@ class GameServer {
   std::vector<Message> messages;
 
   int test_player_guid_ = 0;
+
+  int last_spawned_team_ = 1;
 };
 
 #endif  // GAME_SERVER_HPP_

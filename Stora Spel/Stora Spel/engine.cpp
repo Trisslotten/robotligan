@@ -48,10 +48,12 @@ void Engine::Init() {
       glob::GetGUIItem("Assets/GUI_elements/ingame_menu_V1.png");
   // Create 2D element
   e2D_test_ = glob::GetE2DItem("assets/GUI_elements/point_table.png");
-  e2D_test2_ = glob::GetE2DItem("assets/GUI_elements/Scoreboard_V1.png");
+  e2D_test2_ =
+      glob::GetE2DItem("assets/GUI_elements/Scoreboard_no_players.png");
 
   // Create GUI elementds
-  gui_test_ = glob::GetGUIItem("assets/GUI_elements/Scoreboard_V1.png");
+  gui_scoreboard_back_ =
+      glob::GetGUIItem("assets/GUI_elements/Scoreboard_no_players.png");
   gui_teamscore_ = glob::GetGUIItem("assets/GUI_elements/point_table.png");
   gui_stamina_base_ =
       glob::GetGUIItem("assets/GUI_elements/stamina_bar_base.png");
@@ -75,9 +77,17 @@ void Engine::Init() {
   SetKeybinds();
 
   client.Connect("localhost", 1337);
-  scores.reserve(2);
-  scores.push_back(0);
-  scores.push_back(0);
+  scores_.reserve(2);
+  scores_.push_back(0);
+  scores_.push_back(0);
+
+  std::vector<std::string> names = {"Bogdan",  "Smibel Gork", "Big King",
+                                    "Blorgon", "Thrall",      "Fisken",
+                                    "Snabel",  "BOI"};
+
+  for (int i = 0; i < names.size(); i++) {
+    player_names_[i] = names[i];
+  }
 }
 
 void Engine::CreateInitalEntities() {
@@ -98,6 +108,16 @@ void Engine::CreateInitalEntities() {
   registry_gameplay_.assign<TransformComponent>(ball, zero_vec, zero_vec,
                                                 glm::vec3(1.0f));
   registry_gameplay_.assign<BallComponent>(ball);
+
+  // Pick-up
+  auto pick_up = registry_gameplay_.create();
+  glob::ModelHandle model_pick_up =
+      glob::GetModel("assets/lowpolydeer/deer.fbx");  // Replace with real model
+  registry_gameplay_.assign<ModelComponent>(pick_up, model_pick_up);
+  registry_gameplay_.assign<TransformComponent>(
+      pick_up, glm::vec3(5.0f, -5.6f, 0.0f), glm::vec3(0.0f, 0.0f, -1.6f),
+      glm::vec3(0.002f));
+  registry_gameplay_.assign<PickUpComponent>(pick_up);
 }
 
 void Engine::Update(float dt) {
@@ -113,9 +133,9 @@ void Engine::Update(float dt) {
     accum_pitch_ -= mouse_movement.y;
   }
 
-  glob::Submit(font_test3_, glm::vec2(582, 705), 72, std::to_string(scores[1]),
+  glob::Submit(font_test3_, glm::vec2(582, 705), 72, std::to_string(scores_[1]),
                glm::vec4(0, 0.26, 1, 1));
-  glob::Submit(font_test3_, glm::vec2(705, 705), 72, std::to_string(scores[0]),
+  glob::Submit(font_test3_, glm::vec2(705, 705), 72, std::to_string(scores_[0]),
                glm::vec4(1, 0, 0, 1));
 
   UpdateSystems(dt);
@@ -292,17 +312,33 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       unsigned int score, team;
       packet >> score;
       packet >> team;
-      scores[team] = score;
+      scores_[team] = score;
       break;
     }
     case PacketBlockType::SWITCH_GOALS: {
       TransformComponent& blue_light_trans_c =
-          registry_gameplay_.get<TransformComponent>(blue_goal_light);
+          registry_gameplay_.get<TransformComponent>(blue_goal_light_);
       TransformComponent& red_light_trans_c =
-          registry_gameplay_.get<TransformComponent>(red_goal_light);
+          registry_gameplay_.get<TransformComponent>(red_goal_light_); 
       glm::vec3 blue_light_pos = blue_light_trans_c.position;
       blue_light_trans_c.position = red_light_trans_c.position;
       red_light_trans_c.position = blue_light_pos;
+      break;
+    }
+    case PacketBlockType::UPDATE_POINTS: {
+      PlayerID id;
+      int goals, points;
+      unsigned int team;
+      packet >> goals;
+      packet >> points;
+      packet >> id;
+      packet >> team;
+
+      PlayerScoreBoardInfo psbi;
+      psbi.goals = goals;
+      psbi.points = points;
+      psbi.team = team;
+      player_scores_[id] = psbi;
       break;
     }
     case PacketBlockType::CREATE_PICK_UP: {
@@ -338,30 +374,31 @@ void Engine::SetCurrentRegistry(entt::registry* registry) {
 }
 
 void Engine::UpdateSystems(float dt) {
-  if (registry_current_ == &registry_gameplay_) { //true if the player is in game
-	if (Input::IsKeyPressed(GLFW_KEY_ESCAPE) && !show_in_game_menu_buttons_) {
-	  glob::window::SetMouseLocked(false);
-	  show_in_game_menu_buttons_ = true;
-	  UpdateInGameMenu(show_in_game_menu_buttons_);
-	} else if (Input::IsKeyPressed(GLFW_KEY_ESCAPE) &&
-	           show_in_game_menu_buttons_) {
-	  glob::window::SetMouseLocked(true);
-	  show_in_game_menu_buttons_ = false;
-	  UpdateInGameMenu(show_in_game_menu_buttons_);
-	}
-	if (show_in_game_menu_buttons_) {
-	  glob::Submit(in_game_menu_gui_, glm::vec2(491, 152), 1.0f);
-	}
-	//chat code
+  if (registry_current_ ==
+      &registry_gameplay_) {  // true if the player is in game
+    if (Input::IsKeyPressed(GLFW_KEY_ESCAPE) && !show_in_game_menu_buttons_) {
+      glob::window::SetMouseLocked(false);
+      show_in_game_menu_buttons_ = true;
+      UpdateInGameMenu(show_in_game_menu_buttons_);
+    } else if (Input::IsKeyPressed(GLFW_KEY_ESCAPE) &&
+               show_in_game_menu_buttons_) {
+      glob::window::SetMouseLocked(true);
+      show_in_game_menu_buttons_ = false;
+      UpdateInGameMenu(show_in_game_menu_buttons_);
+    }
+    if (show_in_game_menu_buttons_) {
+      glob::Submit(in_game_menu_gui_, glm::vec2(491, 152), 1.0f);
+    }
+    // chat code
     if (chat.IsVisable()) {
       if (Input::IsKeyPressed(GLFW_KEY_ENTER)) {
         if (chat.IsClosing() == true) {
           chat.SetShowChat();
-		} else {
-			chat.SetSendMessage(true);
-			message_ = chat.GetCurrentMessage();
-            chat.CloseChat();
-		}
+        } else {
+          chat.SetSendMessage(true);
+          message_ = chat.GetCurrentMessage();
+          chat.CloseChat();
+        }
       }
       chat.Update(dt);
       chat.SubmitText(font_test2_);
@@ -370,23 +407,23 @@ void Engine::UpdateSystems(float dt) {
                      "Enter message", glm::vec4(1, 1, 1, 1));
     }
     if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat.IsVisable()) {
-      //glob::window::SetMouseLocked(false);
+      // glob::window::SetMouseLocked(false);
       chat.SetShowChat();
     }
     take_game_input_ = !chat.IsTakingChatInput() && !show_in_game_menu_buttons_;
 
-	
-	// Submit 2D Element TEST
-	glob::Submit(e2D_test_, glm::vec3(10.5f, 1.0f, 0.0f), 2, -90.0f,
-	             glm::vec3(0, 1, 0));
-	glob::Submit(e2D_test_, glm::vec3(-10.5f, 1.0f, 0.0f), 2, 90.0f,
-	             glm::vec3(0, 1, 0));
-	glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
+    // Submit 2D Element TEST
+    glob::Submit(e2D_test_, glm::vec3(10.5f, 1.0f, 0.0f), 2, -90.0f,
+                 glm::vec3(0, 1, 0));
+    glob::Submit(e2D_test_, glm::vec3(-10.5f, 1.0f, 0.0f), 2, 90.0f,
+                 glm::vec3(0, 1, 0));
+    glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f,
+                 glm::vec3(1));
 
-	// Show statistics TEST
-	if (Input::IsKeyDown(GLFW_KEY_TAB)) {
-	  glob::Submit(gui_test_, glm::vec2(285, 177), 0.6, 100);
-	}
+    // Show statistics
+    if (Input::IsKeyDown(GLFW_KEY_TAB)) {
+      DrawScoreboard();
+    }
 
 	// Show GUI TEST
 	glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
@@ -444,21 +481,55 @@ void Engine::CreatePickUp(glm::vec3 position) {
 
 void Engine::TestCreateLights() {
   // Create light
-  blue_goal_light = registry_gameplay_.create();
+  blue_goal_light_ = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(
-      blue_goal_light, glm::vec3(0.1f, 0.1f, 1.0f), 15.f, 0.2f);
+      blue_goal_light_, glm::vec3(0.1f, 0.1f, 1.0f), 15.f, 0.2f);
   registry_gameplay_.assign<TransformComponent>(
-      blue_goal_light, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      blue_goal_light_, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
 
-  red_goal_light = registry_gameplay_.create();
+  red_goal_light_ = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(
-      red_goal_light, glm::vec3(1.f, 0.1f, 0.1f), 15.f, 0.f);
+      red_goal_light_, glm::vec3(1.f, 0.1f, 0.1f), 15.f, 0.f);
   registry_gameplay_.assign<TransformComponent>(
-      red_goal_light, glm::vec3(-12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      red_goal_light_, glm::vec3(-12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
 }
 
+void Engine::DrawScoreboard() {
+  glob::Submit(gui_scoreboard_back_, glm::vec2(285, 177), 0.6, 100);
+  int red_count = 0;
+  int blue_count = 0;
+  int jump = -16;
+  glm::vec2 start_pos_blue = glm::vec2(320, 430);
+  glm::vec2 start_pos_red = glm::vec2(320, 320);
+  glm::vec2 offset_goals = glm::vec2(140, 0);
+  glm::vec2 offset_points = glm::vec2(300, 0);
+  for (auto& p_score : player_scores_) {
+    if (p_score.second.team == TEAM_BLUE) {
+      glm::vec2 text_pos = start_pos_blue + glm::vec2(0, blue_count * jump);
+      glob::Submit(font_test2_, text_pos, 32, player_names_[p_score.first],
+                   glm::vec4(0, 0, 1, 1));
+      glob::Submit(font_test2_, text_pos + offset_goals, 32,
+                   std::to_string(p_score.second.goals), glm::vec4(0, 0, 1, 1));
+      glob::Submit(font_test2_, text_pos + offset_points, 32,
+                   std::to_string(p_score.second.points),
+                   glm::vec4(0, 0, 1, 1));
+      blue_count++;
+    }
+    if (p_score.second.team == TEAM_RED) {
+      glm::vec2 text_pos = start_pos_red + glm::vec2(0, red_count * jump);
+      glob::Submit(font_test2_, text_pos, 32, player_names_[p_score.first],
+                   glm::vec4(1, 0, 0, 1));
+      glob::Submit(font_test2_, text_pos + offset_goals, 32,
+                   std::to_string(p_score.second.goals), glm::vec4(1, 0, 0, 1));
+      glob::Submit(font_test2_, text_pos + offset_points, 32,
+                   std::to_string(p_score.second.points),
+                   glm::vec4(1, 0, 0, 1));
+      red_count++;
+    }
+  }
+}
 void Engine::CreateMainMenu() {
   glob::window::SetMouseLocked(false);
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");

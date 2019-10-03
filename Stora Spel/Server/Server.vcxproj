@@ -157,6 +157,7 @@
     <ClInclude Include="src\ecs\components\physics_component.hpp" />
     <ClInclude Include="src\ecs\components\pick_up_event.hpp" />
     <ClInclude Include="src\ecs\components\player_component.hpp" />
+    <ClInclude Include="src\ecs\components\points_component.hpp" />
     <ClInclude Include="src\ecs\components\projectile_component.hpp" />
     <ClInclude Include="src\ecs\components\team_component.hpp" />
     <ClInclude Include="src\ecs\systems\ability_controller_system.hpp" />
