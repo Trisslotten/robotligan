@@ -5,6 +5,7 @@
 #include <glob/window.hpp>
 
 #include "shared/camera_component.hpp"
+#include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 
 #include "ecs/components.hpp"
@@ -40,17 +41,21 @@ void PlayState::Startup() {
 }
 
 void PlayState::Init() {
+  glob::window::SetMouseLocked(true);
   engine_->SetSendInput(true);
+  engine_->SetCurrentRegistry(&registry_gameplay_);
+
+  CreateInitialEntities();
 }
 
 void PlayState::Update() {
   if (!transforms_.empty()) {
-    auto view_players =
-        registry_gameplay_.view<TransformComponent, PlayerComponent>();
-    for (auto player : view_players) {
-      auto& trans_c = view_players.get<TransformComponent>(player);
-      auto& player_c = view_players.get<PlayerComponent>(player);
-      auto trans = transforms_[player_c.id];
+    auto view_entities =
+        registry_gameplay_.view<TransformComponent, IDComponent>();
+    for (auto entity : view_entities) {
+      auto& trans_c = view_entities.get<TransformComponent>(entity);
+      auto& id_c = view_entities.get<IDComponent>(entity);
+      auto trans = transforms_[id_c.id];
       trans_c.position = trans.first;
       trans_c.rotation = trans.second;
       /*
@@ -114,8 +119,8 @@ void PlayState::UpdateInGameMenu(bool show_menu) {
   }
 }
 
-void PlayState::AddSetEntityTransform(EntityID player_id, glm::vec3 pos,
-                                      glm::quat orientation) {
+void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,
+                                   glm::quat orientation) {
   transforms_[player_id] = std::make_pair(pos, orientation);
 }
 
@@ -126,7 +131,41 @@ void PlayState::SetCameraOrientation(glm::quat orientation) {
       });
 }
 
-void PlayState::CreateInitalEntities() {
+void PlayState::CreateInitialEntities() {
+  CreatePlayerEntities();
+  CreateArenaEntity();
+  CreateBallEntity();
+  TestCreateLights();
+}
+
+void PlayState::CreatePlayerEntities() {
+  std::cout << "DEBUG: playstate.cpp: Created "<< player_ids_.size() << " players\n";
+
+  for (auto entity_id : player_ids_) {
+    auto entity = registry_gameplay_.create();
+
+    glm::vec3 alter_scale =
+        glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
+    glm::vec3 character_scale = glm::vec3(0.1f);
+
+    glob::ModelHandle player_model =
+        glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
+
+    registry_gameplay_.assign<IDComponent>(entity, entity_id);
+    registry_gameplay_.assign<PlayerComponent>(entity);
+    registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(),
+                                                  glm::quat(), character_scale);
+    registry_gameplay_.assign<ModelComponent>(entity, player_model,
+                                              alter_scale * character_scale);
+
+    if (entity_id == my_id_) {
+      glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
+      registry_gameplay_.assign<CameraComponent>(entity, camera_offset);
+    }
+  }
+}
+
+void PlayState::CreateArenaEntity() {
   auto arena = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f);
@@ -135,13 +174,19 @@ void PlayState::CreateInitalEntities() {
   registry_gameplay_.assign<ModelComponent>(arena, model_arena);
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                 arena_scale);
+}
 
+void PlayState::CreateBallEntity() {
+  // Ball
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glm::vec3 arena_scale = glm::vec3(1.0f);
   auto ball = registry_gameplay_.create();
   glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
   registry_gameplay_.assign<ModelComponent>(ball, model_ball);
   registry_gameplay_.assign<TransformComponent>(ball, zero_vec, zero_vec,
                                                 glm::vec3(1.0f));
   registry_gameplay_.assign<BallComponent>(ball);
+  registry_gameplay_.assign<IDComponent>(ball, ball_id_);
 }
 
 void PlayState::CreateInGameMenu() {

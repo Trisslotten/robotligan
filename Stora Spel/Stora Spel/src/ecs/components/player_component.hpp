@@ -4,7 +4,7 @@
 #include "shared/shared.hpp"
 
 struct PlayerComponent {
-  PlayerID id = -1;
+  //PlayerID id = -1;
 };
 
 #endif  // PLAYER_COMPONENT_HPP_

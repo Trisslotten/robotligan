@@ -141,32 +141,6 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
   int16_t block_type = -1;
   packet >> block_type;
   switch (block_type) {
-    case PacketBlockType::CREATE_PLAYER: {
-      PlayerID player_id = -1;
-      EntityID entity_id = -1;
-      // packet >> entity_id;
-      packet >> player_id;
-      std::cout << "PACKET: CREATE_PLAYER, player_id=" << player_id
-                << ", entity_id=" << entity_id << "\n";
-      // CreatePlayer(player_id, entity_id);
-      break;
-    }
-    /*
-    case PacketBlockType::SET_CLIENT_PLAYER_ID: {
-      packet >> my_id;
-      auto view = registry_gameplay_.view<const PlayerComponent>();
-      for (auto& player : view) {
-        auto& player_c = view.get(player);
-        if (player_c.id == my_id) {
-          glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
-          registry_gameplay_.assign<CameraComponent>(player, camera_offset);
-          break;
-        }
-      }
-      std::cout << "PACKET: SET_CLIENT_PLAYER_ID id=" << my_id << "\n";
-      break;
-    }
-    */
     case PacketBlockType::TEST_STRING: {
       size_t strsize = 0;
       packet >> strsize;
@@ -187,7 +161,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         packet >> id;
         packet >> position;
         packet >> orientation;
-        play_state_.AddSetEntityTransform(id, position, orientation);
+        play_state_.SetEntityTransform(id, position, orientation);
       }
       break;
     }
@@ -198,8 +172,20 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::GAME_START: {
-      std::cout << "PACKET: GAME_START\n";
+      int num_players = -1;
+      std::vector<EntityID> player_ids;
+      EntityID my_id;
+      EntityID ball_id;
+      packet >> num_players;
+      player_ids.resize(num_players);
+      packet.Remove(player_ids.data(), player_ids.size());
+      packet >> my_id;
+      packet >> ball_id;
+
+      play_state_.SetEntityIDs(player_ids, my_id, ball_id);
+
       ChangeState(StateType::PLAY);
+      std::cout << "PACKET: GAME_START\n";
       break;
     }
   }

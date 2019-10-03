@@ -58,7 +58,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   }
 
 
-  std::cout << "glob::kModelUseGL: " << glob::kModelUseGL << "\n";
+  //std::cout << "glob::kModelUseGL: " << glob::kModelUseGL << "\n";
   if (glob::kModelUseGL) {
 
     // Process materials

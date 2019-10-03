@@ -147,7 +147,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\gameserver.cpp" />
     <ClCompile Include="src\util\global_settings.cpp" />
-    <ClCompile Include="src\state.cpp" />
+    <ClCompile Include="src\serverstate.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ecs\components.hpp" />
@@ -164,7 +164,7 @@
     <ClInclude Include="src\gameserver.hpp" />
     <ClInclude Include="src\util\global_settings.hpp" />
     <ClInclude Include="src\util\timer.hpp" />
-    <ClInclude Include="src\state.hpp" />
+    <ClInclude Include="src\serverstate.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="util\settings.txt" />

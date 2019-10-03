@@ -32,9 +32,8 @@ class EXPORT Packet {
   Packet& operator<<(T data) {
     if (size_of_data_ + sizeof(T) > kNumPacketBytes) {
       std::cout << "ERROR: packet full: currsize=" << size_of_data_
-                << ", max=" << kNumPacketBytes
-                << "\n\ttried adding a '" << typeid(T).name() << "' ("
-                << sizeof(T) << " bytes) \n";
+                << ", max=" << kNumPacketBytes << "\n\ttried adding a '"
+                << typeid(T).name() << "' (" << sizeof(T) << " bytes) \n";
     } else {
       std::memcpy(data_ + size_of_data_, &data, sizeof(T));
       size_of_data_ += sizeof(T);
@@ -55,16 +54,17 @@ class EXPORT Packet {
 
   Packet& operator<<(const Packet& other) {
     int size_without_head = other.size_of_data_ - (int)sizeof(PacketHeader);
-    if(size_without_head <= 0){
+    if (size_without_head <= 0) {
       return *this;
     }
-    if (size_of_data_ + size_without_head  > kNumPacketBytes) {
+    if (size_of_data_ + size_without_head > kNumPacketBytes) {
       std::cout << "ERROR: packet full: currsize=" << size_of_data_
                 << ", max=" << kNumPacketBytes
-                << "\n\ttried adding another packet ("
-                << size_without_head << " bytes) \n";
+                << "\n\ttried adding another packet (" << size_without_head
+                << " bytes) \n";
     } else {
-      std::memcpy(data_ + size_of_data_, other.data_+sizeof(PacketHeader), size_without_head);
+      std::memcpy(data_ + size_of_data_, other.data_ + sizeof(PacketHeader),
+                  size_without_head);
       size_of_data_ += size_without_head;
       // std::cout << "<< size_of_data_=" << size_of_data_ << "\n";
     }
@@ -76,13 +76,13 @@ class EXPORT Packet {
   Packet& operator>>(T& data) {
     if (size_of_data_ - (long)sizeof(T) < (long)sizeof(PacketHeader)) {
       std::cout << "ERROR: packet empty: currsize=" << size_of_data_
-                << ", min=" << sizeof(PacketHeader)
-                << "\n\ttried getting a '" << typeid(T).name() << "' ("
-                << sizeof(T) << " bytes) \n";
+                << ", min=" << sizeof(PacketHeader) << "\n\ttried getting a '"
+                << typeid(T).name() << "' (" << sizeof(T) << " bytes) \n";
+      size_of_data_ = sizeof(PacketHeader);
     } else {
-	  size_of_data_ -= sizeof(T);
-	  std::memcpy(&data, data_ + size_of_data_, sizeof(data));
-	}
+      size_of_data_ -= sizeof(T);
+      std::memcpy(&data, data_ + size_of_data_, sizeof(data));
+    }
     // std::cout << ">> size_of_data_=" << size_of_data_ << "\n";
 
     return *this;
@@ -120,9 +120,10 @@ class EXPORT Packet {
   Packet& Remove(T* data, long size) {
     if (size_of_data_ - long(sizeof(T)) * size < (long)sizeof(PacketHeader)) {
       std::cout << "ERROR: packet empty, currsize=" << size_of_data_
-                << ", min=" << sizeof(PacketHeader) << "\n\ttried getting: " << size
-                << " '" << typeid(T).name() << "'s (" << sizeof(T) * size
-                << " bytes)\n";
+                << ", min=" << sizeof(PacketHeader)
+                << "\n\ttried getting: " << size << " '" << typeid(T).name()
+                << "'s (" << sizeof(T) * size << " bytes)\n";
+      size_of_data_ = sizeof(PacketHeader);
     } else {
       size_of_data_ -= (long)sizeof(T) * size;
       std::memcpy(data, data_ + size_of_data_, sizeof(T) * size);

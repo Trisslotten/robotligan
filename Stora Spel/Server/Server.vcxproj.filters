@@ -57,7 +57,7 @@
     <ClInclude Include="src\ecs\components.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\state.hpp">
+    <ClInclude Include="src\serverstate.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -71,7 +71,7 @@
     <ClCompile Include="src\util\global_settings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\state.cpp">
+    <ClCompile Include="src\serverstate.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

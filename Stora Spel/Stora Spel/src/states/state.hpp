@@ -2,9 +2,9 @@
 #define STATE_HPP_
 
 #include <entt.hpp>
-#include "shared/shared.hpp"
-#include <glob/graphics.hpp>
 #include <glm/glm.hpp>
+#include <glob/graphics.hpp>
+#include "shared/shared.hpp"
 
 class Engine;
 
@@ -43,6 +43,8 @@ class State {
  private:
 };
 
+/////////////////////// MAIN MENU ///////////////////////
+
 class MainMenuState : public State {
  public:
   void Startup() override;
@@ -65,6 +67,8 @@ class MainMenuState : public State {
   // Inherited via State
 };
 
+/////////////////////// LOBBY ///////////////////////
+
 class LobbyState : public State {
  public:
   void Startup() override;
@@ -79,6 +83,8 @@ class LobbyState : public State {
   entt::registry registry_lobby_;
 };
 
+/////////////////////// PLAY ///////////////////////
+
 class PlayState : public State {
  public:
   void Startup() override;
@@ -87,22 +93,36 @@ class PlayState : public State {
   void UpdateNetwork() override;
   void Cleanup() override;
 
-
   StateType Type() { return StateType::PLAY; }
 
-  void AddSetEntityTransform(EntityID player_id, glm::vec3 pos,
+  void SetEntityTransform(EntityID player_id, glm::vec3 pos,
                           glm::quat orientation);
   void SetCameraOrientation(glm::quat orientation);
 
+  void SetEntityIDs(std::vector<EntityID> player_ids, EntityID my_id,
+                    EntityID ball_id) {
+    player_ids_ = player_ids;
+    my_id_ = my_id;
+    ball_id_ = ball_id;
+  }
+
  private:
-  void CreateInitalEntities();
+  void CreateInitialEntities();
+  void CreatePlayerEntities();
+  void CreateArenaEntity();
+  void CreateBallEntity();
   void CreateInGameMenu();
 
   void TestCreateLights();
 
   void UpdateInGameMenu(bool show_menu);
 
+  ////////////////////////////////////////
+
   entt::registry registry_gameplay_;
+
+  std::vector<EntityID> player_ids_;
+  EntityID my_id_, ball_id_;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> transforms_;
 
