@@ -64,7 +64,6 @@ class Engine {
   std::unordered_map<int, int> mouse_presses_;
   float accum_yaw_ = 0.f;
   float accum_pitch_ = 0.f;
-  float stamina_current_ = 0.f;
 
   glob::Font2DHandle font_test_ = 0;
   glob::Font2DHandle font_test2_ = 0;
@@ -82,8 +81,6 @@ class Engine {
 
   bool enable_chat_ = false;
 
-  entt::entity blue_goal_light_;
-  entt::entity red_goal_light_;
 
   AbilityID second_ability_ = AbilityID::NULL_ABILITY;
   unsigned int new_team_ = std::numeric_limits<unsigned int>::max();

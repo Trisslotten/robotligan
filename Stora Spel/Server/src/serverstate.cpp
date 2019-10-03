@@ -179,12 +179,12 @@ void ServerPlayState::Update(float dt) {
       to_send << goal_team_c;
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
-      if (goal_goal_c
-              .switched_this_tick) {  // MAY NEED TO CHANGE, NOT A GOOD SOLUTION
+      if (goal_goal_c.switched_this_tick) {  // MAY NEED TO CHANGE, NOT A GOOD SOLUTION
         if (!sent_switch) {
           to_send << PacketBlockType::SWITCH_GOALS;
           sent_switch = true;
         }
+        goal_goal_c.switched_this_tick = false;
       }
     }
   }

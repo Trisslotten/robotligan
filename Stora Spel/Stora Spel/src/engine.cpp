@@ -269,7 +269,9 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::PLAYER_STAMINA: {
-      packet >> stamina_current_;
+      float stamina = 0.f;
+      packet >> stamina;
+      play_state_.SetCurrentStamina(stamina);
       break;
     }
     case PacketBlockType::TEAM_SCORE: {
@@ -302,13 +304,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::SWITCH_GOALS: {
       // TODO: maybe move, is hack now
       if (current_state_->Type() == StateType::PLAY) {
-        TransformComponent& blue_light_trans_c =
-            registry_current_->get<TransformComponent>(blue_goal_light_);
-        TransformComponent& red_light_trans_c =
-            registry_current_->get<TransformComponent>(red_goal_light_);
-        glm::vec3 blue_light_pos = blue_light_trans_c.position;
-        blue_light_trans_c.position = red_light_trans_c.position;
-        red_light_trans_c.position = blue_light_pos;
+        play_state_.SwitchGoals();
       }
       break;
     }

@@ -8,11 +8,11 @@
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 
+#include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
 #include "util/input.hpp"
-#include <shared\pick_up_component.hpp>
 
 void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
@@ -72,9 +72,7 @@ void PlayState::Update() {
   }
 
   if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
-    show_in_game_menu_buttons_ = !show_in_game_menu_buttons_;
-    glob::window::SetMouseLocked(!show_in_game_menu_buttons_);
-    UpdateInGameMenu(show_in_game_menu_buttons_);
+    ToggleInGameMenu();
   }
   if (show_in_game_menu_buttons_) {
     glob::Submit(in_game_menu_gui_, glm::vec2(491, 152), 1.0f);
@@ -86,11 +84,6 @@ void PlayState::Update() {
                glm::vec3(0, 1, 0));
   glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
 
- 
-
-  // Show GUI TEST
-  // Temp Update of stamina bar
-  float stam_len = 0.0f;
   /*
   registry_gameplay_.view<PlayerComponent>().each(
       [&](auto entity, PlayerComponent& player_c) {
@@ -98,7 +91,7 @@ void PlayState::Update() {
       });
           */
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
-  glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, stam_len);
+  glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
   glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
   glob::Submit(gui_quickslots_, glm::vec2(7, 50), 0.3, 100);
   glob::Submit(gui_teamscore_, glm::vec2(497, 648), 1, 100);
@@ -106,7 +99,6 @@ void PlayState::Update() {
 
 void PlayState::UpdateNetwork() {
   auto& packet = engine_->GetPacket();
-
 
   // TEMP: Start recording replay
   bool temp = Input::IsKeyPressed(GLFW_KEY_P);
@@ -116,6 +108,12 @@ void PlayState::UpdateNetwork() {
 
 void PlayState::Cleanup() {
   //
+}
+
+void PlayState::ToggleInGameMenu() {
+  show_in_game_menu_buttons_ = !show_in_game_menu_buttons_;
+  glob::window::SetMouseLocked(!show_in_game_menu_buttons_);
+  UpdateInGameMenu(show_in_game_menu_buttons_);
 }
 
 void PlayState::UpdateInGameMenu(bool show_menu) {
@@ -205,7 +203,7 @@ void PlayState::CreateInGameMenu() {
   ButtonComponent* in_game_buttons_ = GenerateButtonEntity(
       registry_gameplay_, "CONTINUE", glm::vec2(550, 430), font_test_, false);
   in_game_buttons_->button_func = [&]() {
-
+    ToggleInGameMenu();
   };
   // SETTINGS BUTTON -- change registry to registry_settings_
   in_game_buttons_ = GenerateButtonEntity(
@@ -216,9 +214,8 @@ void PlayState::CreateInGameMenu() {
   };
 
   // END GAME -- change registry to registry_mainmenu_
-  in_game_buttons_ =
-      GenerateButtonEntity(registry_gameplay_, "TO MAIN MENU",
-                           glm::vec2(550, 290), font_test_, false);
+  in_game_buttons_ = GenerateButtonEntity(
+      registry_gameplay_, "MAINMENU", glm::vec2(550, 290), font_test_, false);
   in_game_buttons_->button_func = [&] {
     engine_->ChangeState(StateType::MAIN_MENU);
   };
@@ -229,20 +226,26 @@ void PlayState::CreateInGameMenu() {
 }
 
 void PlayState::TestCreateLights() {
-  // Create light
-  auto light = registry_gameplay_.create();
-  registry_gameplay_.assign<LightComponent>(light, glm::vec3(0.3f, 0.3f, 1.0f),
-                                            15.f, 0.2f);
+  // Create lights
+  blue_goal_light_ = registry_gameplay_.create();
+  registry_gameplay_.assign<LightComponent>(
+      blue_goal_light_, glm::vec3(0.1f, 0.1f, 1.0f), 15.f, 0.0f);
   registry_gameplay_.assign<TransformComponent>(
-      light, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      blue_goal_light_, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
 
-  light = registry_gameplay_.create();
-  registry_gameplay_.assign<LightComponent>(light, glm::vec3(1.f, 0.3f, 0.3f),
-                                            15.f, 0.f);
+  red_goal_light_ = registry_gameplay_.create();
+  registry_gameplay_.assign<LightComponent>(
+      red_goal_light_, glm::vec3(1.f, 0.1f, 0.1f), 15.f, 0.f);
   registry_gameplay_.assign<TransformComponent>(
-      light, glm::vec3(-12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      red_goal_light_, glm::vec3(-12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
+
+  auto light = registry_gameplay_.create();
+  registry_gameplay_.assign<LightComponent>(light, glm::vec3(0.4f, 0.4f, 0.4f),
+                                            30.f, 0.1f);
+  registry_gameplay_.assign<TransformComponent>(
+      light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
 }
 
 void PlayState::CreatePickUp(glm::vec3 position) {
@@ -255,3 +258,13 @@ void PlayState::CreatePickUp(glm::vec3 position) {
   registry_gameplay_.assign<PickUpComponent>(pick_up);
 }
 
+void PlayState::SwitchGoals() {
+  TransformComponent& blue_light_trans_c =
+      registry_gameplay_.get<TransformComponent>(blue_goal_light_);
+  TransformComponent& red_light_trans_c =
+      registry_gameplay_.get<TransformComponent>(red_goal_light_);
+
+  glm::vec3 blue_light_pos = blue_light_trans_c.position;
+  blue_light_trans_c.position = red_light_trans_c.position;
+  red_light_trans_c.position = blue_light_pos;
+}
