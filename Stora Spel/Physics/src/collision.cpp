@@ -110,6 +110,7 @@ physics::IntersectData physics::Intersect(const physics::Sphere& s,
 physics::IntersectData physics::Intersect(const physics::OBB& o1,
                                           const physics::OBB& o2) {
   IntersectData data;
+  data.collision = true;
   Corners c1 = GetCorners(o1);
   Corners c2 = GetCorners(o2);
 
