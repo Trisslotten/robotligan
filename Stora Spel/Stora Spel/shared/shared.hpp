@@ -35,11 +35,11 @@ enum : int16_t {
   TEST_STRING,
   TEAM_SCORE,
   SWITCH_GOALS,
-  NUM_BLOCK_TYPES,
   MESSAGE,
   CREATE_PICK_UP,
   DESTROY_PICK_UP,
   RECEIVE_PICK_UP,
+  NUM_BLOCK_TYPES,
 };
 } // namespace PacketType
 
