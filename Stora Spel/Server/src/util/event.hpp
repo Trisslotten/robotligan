@@ -4,7 +4,7 @@
 
 extern entt::dispatcher dispatcher;
 
-enum Event {
+enum class Event {
 	DESTROY_ENTITY,
 	CREATE_CANNONBALL,
 };
