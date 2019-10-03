@@ -6,16 +6,16 @@ void ReplayMachine::WriteInputFrame(const std::bitset<10>& in_bitset,
                                     const float& in_x_value,
                                     const float& in_y_value) {
 
-	// Format:	
-	//	{			:	(for every change 1+X bits are stored,
-	//					where X is the number of bits needed
-	//					to represent the largest index in binary)
-	//		1 bit	:	1, indicating a change
-	//		X bits	:	index int
-	//	}
-	//	1 bit	:	0, indicating the end of the first section
-	//	32 bits	:	x_value float
-    //	32 bits	:	y_value float
+  // Format:	
+  //	{			:	(for every change 1+X bits are stored,
+  //					where X is the number of bits needed
+  //					to represent the largest index in binary)
+  //		1 bit	:	1, indicating a change
+  //		X bits	:	index int
+  //	}
+  //	1 bit	:	0, indicating the end of the first section
+  //	32 bits	:	x_value float
+  //	32 bits	:	y_value float
 
   // Loop over the bitset
   for (unsigned int i = 0; i < in_bitset.size(); i++) {
@@ -103,76 +103,10 @@ void ReplayMachine::Init(unsigned int in_seconds,
   // Create a BitPack capable of holding the maximum
   // number of keys we will allow logging
 
-  //---
-  //
-  // Float; Delta-time							:	0 bits	[Not needed since server tick-rate is a constant]
-  //
-  //---
-  //
-  //	N is number of keys
-  //
-  //	<<STORING KEY PRESSES ALT 1>>
-  //	> Store if a key has been pressed and its index
-  //	> This section can vary in total size from 1 to 1+ceil(base2_log(N))+1 bits
-  //	+ Can store any number of keys easily
-  //	+ Only stores the keys changed, not wasting space on unchanged keys
-  //	- 
-  //
-  // Bool; has the value of a key changed?		:	1 bit	[any key]
-  // {
-  //	Int; the index of the value changed		:	X bits	[# of bits required depends on number of keys used
-  //														in the game. Example: 3 bits can store 2^3 (8) keys.
-  //														In general: X = ceil(base2_log(N)) ]
-  //	Bool; has the value of a key changed?	:	1 bit	[next key]
-  // }
-  //
-  //	<<STORING KEY PRESSES ALT 2>>
-  //	> Store if each key has been pressed as one bit each
-  //	> This section is as many bits as we have buttons
-  //	+ Static size is easy to handle
-  //	+ If two or more keys change at the same time we still only use 8 bits (lets assume we have 8 keys)
-  //	- Even if values presses do not change we store N bits
-  //
-  // Bool; is a key pressed? xN					:	N bits	[one for each key]
-  //
-  //	<<DECISION>>
-  //	> Assume the tick rate of the server is T.
-  //	> Let B be numbers buttons pressed/released.
-  //	> The question is when
-  //	>	(1 + B * ceil(base2_log(N)) * T
-  //	> surpasses N * T.
-  //	> A probable assumption is that most seconds a player does not change a button.
-  //	> Also, when the player does change a button that will occur on 1 or 2 frames
-  //	> of that second (number of frames per second determined by the tick rate).
-  //	> We logically deduce that B will be 0 most of the time and as such we end up with:
-  //	>	1 * T  and  N * T
-  //	> We now draw the conclusion (due to us knowing the nature of the game) that we have
-  //	> more than 1 button. We also know there is (as of this being written) 20 ticks/second.
-  //	> This means that on most seconds we are weighing storing 20 bits vs. storing (if we have
-  //	> 10 different buttons) 200 bits. ALT 1 should thusly be the best choice.
-  //
-  //---
-  //
-  // Float; represents mouse's x-movement		: 32 bits	[ ] 
-  // Float; represents mouse's y-movement		: 32 bits	[ ]
-  //
-  //	<<NTS>>
-  //	> It might be posible to make these two optional, just as the key presses/releases
-  //	> above, by storing the change instead, and if there is no change store nothing.
-  //	> Two check bits would have to be added then, one before each float. If the bit
-  //	> is set there is a 32 bit float upcoming.
-  //
-  //---
-  //
-  //---
-  //
-  //	<<RESULT>>
-  //	> For one controlled entity we will require at maximum
-  //	>	1 + B * (ceil(base2_log(N))+1) + 32 + 32
-  //	> bits per frame, where B (buttons pressed/released) is
-  //	> equal to N (all buttons).
-
-  //---
+  // For one controlled entity we will require at maximum
+  //	1 + B * (ceil(base2_log(N))+1) + 32 + 32
+  // bits per frame, where B (buttons pressed/released) is
+  // equal to N (all buttons).
 
   // Calculate number of frame that will be recorded
   // as well as the number of bits each frame might need
