@@ -290,19 +290,16 @@ void GameServer::CreatePlayer(PlayerID id) {
   registry_.assign<CameraComponent>(entity, camera_offset);
 
   // START ---------- Buff component [MOVE TO PICK-UP EVENT] ----------
-  BuffID buff_id = INFINITE_STAMINA;    // Available buffs: SPEED_BOOST, JUMP_BOOST, INFINITE_STAMINA 
-  float speed_boost_duration =
+  // Available buffs: SPEED_BOOST, JUMP_BOOST, INFINITE_STAMINA 
+  BuffID buff_id = SPEED_BOOST;
+  float buff_duration =
       GlobalSettings::Access()->ValueOf("BUFF_SPEED_BOOST_DURATION");
-  float jump_boost_duraion =
-      GlobalSettings::Access()->ValueOf("BUFF_JUMP_BOOST_DURATION");
-  float infinite_stamina_duration =
-      GlobalSettings::Access()->ValueOf("BUFF_INFINITE_STAMINA_DURATION");
 
   // Add component for a player
   registry_.assign<BuffComponent>(entity,                     // Entity
                                   buff_id,                    // Active buff
                                   true,                       // Toggle buff
-                                  infinite_stamina_duration,  // Buff duration
+                                  buff_duration,              // Buff duration
                                   0.0f                        // Remaining duration
   );
   // END ---------- Buff component [MOVE TO PICK-UP EVENT] ----------
