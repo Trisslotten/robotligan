@@ -9,13 +9,16 @@
 #include <shared.hpp>
 #include <vector>
 
+#include "replay machine/replay_machine.hpp"
+#include "util/global_settings.hpp"
+
 #include "../src/message.hpp"
 #include "util/timer.hpp"
 
 class GameServer {
  public:
   ~GameServer();
-  void Init();
+  void Init(double in_update_rate);
   void Update(float dt);
 
  private:
@@ -34,6 +37,13 @@ class GameServer {
   void CreatePickUpComponents();
   void CreateGoals();
 
+  // Replay stuff---
+  bool StartRecording(unsigned int in_replay_length_seconds);
+  void Record(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value,
+              const float& in_dt);
+  void Replay(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value);
+  //---
+
   NetAPI::Socket::Server server_;
   int last_num_players_ = 0;
   entt::registry registry_;
@@ -50,6 +60,14 @@ class GameServer {
 
   int red_players_ = 0;
   int blue_players_ = 0;
+  std::vector<unsigned int> scores;
+
+  // Replay stuff ---
+  ReplayMachine* replay_machine_ = nullptr;
+  double update_rate_ = 0.0f;
+  bool record_ = false;
+  bool replay_ = false;
+  //---
 };
 
 #endif  // GAME_SERVER_HPP_

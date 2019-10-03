@@ -16,7 +16,7 @@ int main(unsigned argc, char** argv) {
 
   GameServer server;
 
-  server.Init();
+  server.Init(update_rate);
 
   int num_frames = 0;
   Timer debug_timer;

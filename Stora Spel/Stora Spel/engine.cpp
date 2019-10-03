@@ -188,6 +188,13 @@ void Engine::UpdateNetwork() {
       new_team_ = std::numeric_limits<unsigned int>::max();
     }
 
+
+	//TEMP: Start recording replay
+    bool temp = Input::IsKeyPressed(GLFW_KEY_P);
+    packet << temp;
+    packet << PacketBlockType::TEST_REPLAY_KEYS;
+	//TEMP
+
     if (client.IsConnected()) {
       client.Send(packet);
     } else {
