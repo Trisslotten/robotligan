@@ -310,7 +310,6 @@ void GameServer::CreatePlayer(PlayerID id) {
   auto& player_component = registry_.assign<PlayerComponent>(entity);
   player_component.id = id;
   created_players_.push_back(id);
-  std::cout << "DEBUG: Created player id: " << player_component.id << "\n";
 
   ResetEntities();
 }
