@@ -248,6 +248,7 @@ void GameServer::Update(float dt) {
 }
 
 void GameServer::UpdateSystems(float dt) {
+  HandleNewTeam();
   player_controller::Update(registry_, dt);
   ability_controller::Update(registry_, dt);
   buff_controller::Update(registry_, dt);
@@ -311,12 +312,42 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
 }
 
 void GameServer::HandleNewTeam() {
-  // TODO: logic for swapping team
+  if (new_teams_.size() == 0) return;
+
+  auto player_view = registry_.view<PlayerComponent, TeamComponent>();
   new_teams_.erase(std::remove_if(new_teams_.begin(), new_teams_.end(),
-                                  [](std::pair<PlayerID, unsigned int> pair) {
-                                    if (pair.second < 2) return false;
-                                    return true;
-    }));
+       [&](std::pair<PlayerID, unsigned int> pair) {
+    if (pair.second < 2) {
+      for (auto entity : player_view) {
+        auto& player_c = player_view.get<PlayerComponent>(entity);
+        auto& team_c = player_view.get<TeamComponent>(entity);
+      
+        if (player_c.id == pair.first) {
+          if (pair.second == team_c.team) {
+            return true;
+          } else {
+            // TODO : decline team if it is full
+
+            team_c.team = pair.second;
+            if (pair.second == TEAM_BLUE) {
+              blue_players_++;
+              red_players_--;
+            } else {
+              blue_players_--;
+              red_players_++;
+            }
+          }
+      
+          break;
+        }
+      }
+
+      return false;
+    }
+    
+    return true;
+    }
+),new_teams_.end());
 }
 
 void GameServer::CreatePlayer(PlayerID id) {
@@ -399,9 +430,11 @@ void GameServer::CreatePlayer(PlayerID id) {
   if (last_spawned_team_ == 1) {
     registry_.assign<TeamComponent>(entity, TEAM_BLUE);
     last_spawned_team_ = 0;
+    blue_players_++;
   } else {
     registry_.assign<TeamComponent>(entity, TEAM_RED);
     last_spawned_team_ = 1;
+    red_players_++;
   }
 
   registry_.assign<PointsComponent>(entity);

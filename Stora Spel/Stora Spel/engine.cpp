@@ -337,9 +337,6 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> pid;
       packet >> team;
 
-      std::cout << "NEW TEAM: Player id " << pid << " "
-                << (team == 0 ? "team blue" : "team red") << std::endl;
-
       auto player_view = registry_gameplay_.view<PlayerComponent>();
       for (auto entity : player_view) {
         auto& player = player_view.get(entity);

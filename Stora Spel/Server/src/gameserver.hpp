@@ -47,6 +47,9 @@ class GameServer {
   int test_player_guid_ = 0;
 
   int last_spawned_team_ = 1;
+
+  int red_players_ = 0;
+  int blue_players_ = 0;
 };
 
 #endif  // GAME_SERVER_HPP_
