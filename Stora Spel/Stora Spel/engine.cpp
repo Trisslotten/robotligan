@@ -11,11 +11,11 @@
 #include <render_system.hpp>
 #include "Components/ball_component.hpp"
 #include "Components/light_component.hpp"
-#include "Components/pick_up_component.hpp"
 #include "Components/player_component.hpp"
 #include "entitycreation.hpp"
 #include "shared/camera_component.hpp"
 #include "shared/id_component.hpp"
+#include "shared/pick_up_component.hpp"
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
@@ -98,29 +98,19 @@ void Engine::CreateInitalEntities() {
   registry_gameplay_.assign<TransformComponent>(ball, zero_vec, zero_vec,
                                                 glm::vec3(1.0f));
   registry_gameplay_.assign<BallComponent>(ball);
-
-  // Pick-up
-  auto pick_up = registry_gameplay_.create();
-  glob::ModelHandle model_pick_up =
-      glob::GetModel("assets/lowpolydeer/deer.fbx");  // Replace with real model
-  registry_gameplay_.assign<ModelComponent>(pick_up, model_pick_up);
-  registry_gameplay_.assign<TransformComponent>(
-      pick_up, glm::vec3(5.0f, -5.6f, 0.0f), glm::vec3(0.0f, 0.0f, -1.6f),
-      glm::vec3(0.002f));
-  registry_gameplay_.assign<PickUpComponent>(pick_up);
 }
 
 void Engine::Update(float dt) {
   if (take_game_input_ == true) {
-	for (auto const& [key, action] : keybinds_)
-	  if (Input::IsKeyDown(key)) key_presses_[key]++;
-	for (auto const& [button, action] : mousebinds_)
-	  if (Input::IsMouseButtonDown(button)) mouse_presses_[button]++;
+    for (auto const& [key, action] : keybinds_)
+      if (Input::IsKeyDown(key)) key_presses_[key]++;
+    for (auto const& [button, action] : mousebinds_)
+      if (Input::IsMouseButtonDown(button)) mouse_presses_[button]++;
 
-	float mouse_sensitivity = 0.003f;
-	glm::vec2 mouse_movement = mouse_sensitivity * Input::MouseMov();
-	accum_yaw_ -= mouse_movement.x;
-	accum_pitch_ -= mouse_movement.y;
+    float mouse_sensitivity = 0.003f;
+    glm::vec2 mouse_movement = mouse_sensitivity * Input::MouseMov();
+    accum_yaw_ -= mouse_movement.x;
+    accum_pitch_ -= mouse_movement.y;
   }
 
   glob::Submit(font_test3_, glm::vec2(582, 705), 72, std::to_string(scores[1]),
@@ -155,13 +145,13 @@ void Engine::UpdateNetwork() {
     packet << accum_yaw_;
     packet << PacketBlockType::INPUT;
 
-	//message
+    // message
     if (message_.size() > 0) {
       packet.Add(message_.c_str(), message_.size());
       packet << message_.size();
       packet << PacketBlockType::MESSAGE;
       message_.clear();
-	}
+    }
     if (client.IsConnected()) {
       client.Send(packet);
     } else {
@@ -239,20 +229,27 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::MESSAGE: {
+      unsigned int message_from;
+      packet >> message_from;
       size_t strsize = 0;
       packet >> strsize;
-      std::string str;
-      str.resize(strsize);
-      packet.Remove(str.data(), strsize);
-      chat.AddMessage(str);
+      std::string message;
+      message.resize(strsize);
+      packet.Remove(message.data(), strsize);
+      packet >> strsize;
+      std::string name;
+      name.resize(strsize);
+      packet.Remove(name.data(), strsize);
+
+      chat.AddMessage(name, message, message_from);
       if (chat.IsVisable() == false) {
-		chat.SetShowChat();
+        chat.SetShowChat();
         chat.CloseChat();
       } else if (chat.IsClosing() == true) {
-		//resets the closing timer
+        // resets the closing timer
         chat.CloseChat();
-	  }
-      
+      }
+
       break;
     }
     case PacketBlockType::BALL_TRANSFORM: {
@@ -308,6 +305,29 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       red_light_trans_c.position = blue_light_pos;
       break;
     }
+    case PacketBlockType::CREATE_PICK_UP: {
+      glm::vec3 pos;
+      packet >> pos;
+      CreatePickUp(pos);
+      break;
+    }
+    case PacketBlockType::DESTROY_PICK_UP: {
+      int id;
+      packet >> id;
+
+      auto pick_up_view = registry_gameplay_.view<PickUpComponent>();
+      for (auto entity : pick_up_view) {
+        if (id == pick_up_view.get(entity).id) {
+          registry_gameplay_.destroy(entity);
+        }
+      }
+
+      break;
+    }
+    case PacketBlockType::RECEIVE_PICK_UP: {
+      packet >> second_ability_;
+      break;
+    }
   }
 }
 
@@ -347,7 +367,7 @@ void Engine::UpdateSystems(float dt) {
       chat.SubmitText(font_test2_);
 	  if (chat.IsTakingChatInput() == true && chat.GetCurrentMessage().size() == 0)
         glob::Submit(font_test2_, glm::vec2(50.f, 600.f), 20,
-                     "Enter message", glm::vec4(0, 1, 1, 1));
+                     "Enter message", glm::vec4(1, 1, 1, 1));
     }
     if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat.IsVisable()) {
       //glob::window::SetMouseLocked(false);
@@ -409,6 +429,17 @@ void Engine::CreatePlayer(PlayerID player_id, EntityID entity_id) {
                                                 glm::quat(), character_scale);
   registry_gameplay_.assign<ModelComponent>(entity, player_model,
                                             alter_scale * character_scale);
+}
+
+void Engine::CreatePickUp(glm::vec3 position) {
+  auto pick_up = registry_gameplay_.create();
+  glob::ModelHandle model_pick_up =
+      glob::GetModel("assets/lowpolydeer/deer.fbx");  // Replace with real model
+  registry_gameplay_.assign<ModelComponent>(pick_up, model_pick_up);
+  registry_gameplay_.assign<TransformComponent>(
+      pick_up, position, glm::vec3(0.0f, 0.0f, -1.6f),
+      glm::vec3(0.002f));
+  registry_gameplay_.assign<PickUpComponent>(pick_up);
 }
 
 void Engine::TestCreateLights() {
@@ -489,7 +520,7 @@ void Engine::UpdateInGameMenu(bool show_menu) {
   // Set in_game buttons visibility
   auto view = registry_gameplay_.view<ButtonComponent, TransformComponent>();
   for (auto v : view) {
-    auto& button_c = registry_gameplay_.get<ButtonComponent>(v);
-    button_c.visible = show_menu;
+      auto& button_c = registry_gameplay_.get<ButtonComponent>(v);
+      button_c.visible = show_menu;
+    }
   }
-}

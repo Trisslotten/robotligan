@@ -39,6 +39,7 @@ class Engine {
   void UpdateInGameMenu(bool show_menu);
 
   void CreatePlayer(PlayerID player_id, EntityID entity_id);
+  void CreatePickUp(glm::vec3 position);
   void TestCreateLights();
 
   NetAPI::Socket::Client client;
@@ -76,6 +77,7 @@ class Engine {
   bool take_game_input_ = true;
   Chat chat;
   std::string message_ = "";
+  AbilityID second_ability_ = AbilityID::NULL_ABILITY;
 };
 
 #endif  // ENGINE_HPP_

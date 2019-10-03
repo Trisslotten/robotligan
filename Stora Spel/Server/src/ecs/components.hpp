@@ -3,6 +3,7 @@
 
 #include "components/ability_component.hpp"
 #include "components/ball_component.hpp"
+#include "components/buff_component.hpp"
 #include "components/physics_component.hpp"
 #include "components/player_component.hpp"
 #include "components/projectile_component.hpp"

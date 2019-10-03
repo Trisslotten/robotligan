@@ -35,9 +35,28 @@ enum : int16_t {
   TEST_STRING,
   TEAM_SCORE,
   SWITCH_GOALS,
-  NUM_BLOCK_TYPES,
   MESSAGE,
+  CREATE_PICK_UP,
+  DESTROY_PICK_UP,
+  RECEIVE_PICK_UP,
+  NUM_BLOCK_TYPES,
 };
 } // namespace PacketType
+
+enum class AbilityID {
+  NULL_ABILITY,
+  BUILD_WALL,
+  FAKE_BALL,
+  FORCE_PUSH,
+  GRAVITY_CHANGE,
+  HOMING_BALL,
+  INVISIBILITY,
+  MISSILE,
+  SUPER_STRIKE,
+  SWITCH_GOALS,
+  TELEPORT,
+  // Fill with more abilities and passive boosts
+  NUM_OF_ABILITY_IDS
+};
 
 #endif  // SHARED_HPP_

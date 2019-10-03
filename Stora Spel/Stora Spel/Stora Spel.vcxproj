@@ -178,12 +178,12 @@
     <ClInclude Include="Chat.hpp" />
     <ClInclude Include="Components\ball_component.hpp" />
     <ClInclude Include="Components\button_component.hpp" />
-    <ClInclude Include="Components\pick_up_component.hpp" />
     <ClInclude Include="Components\player_component.hpp" />
     <ClInclude Include="shared\camera_component.hpp" />
     <ClInclude Include="Components\light_component.hpp" />
     <ClInclude Include="Components\model_component.hpp" />
     <ClInclude Include="shared\id_component.hpp" />
+    <ClInclude Include="shared\pick_up_component.hpp" />
     <ClInclude Include="shared\transform_component.hpp" />
     <ClInclude Include="Components\position.hpp" />
     <ClInclude Include="Components\physics_component.hpp" />

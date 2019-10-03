@@ -6,9 +6,11 @@
 #include <glob/graphics.hpp>
 #include <iostream>
 #include <transform_component.hpp>
+#include <pick_up_component.hpp>
 
 #include "ecs/components.hpp"
 #include "ecs/systems/ability_controller_system.hpp"
+#include "ecs/systems/buff_controller_system.hpp"
 #include "ecs/systems/collision_system.hpp"
 #include "ecs/systems/goal_system.hpp"
 #include "ecs/systems/physics_system.hpp"
@@ -70,6 +72,7 @@ void GameServer::Update(float dt) {
 
   UpdateSystems(dt);
 
+  auto pick_up_events = registry_.view<PickUpEvent>();
   for (auto& [id, client_data] : server_.GetClients()) {
     NetAPI::Common::Packet to_send;
     auto header = to_send.GetHeader();
@@ -150,6 +153,22 @@ void GameServer::Update(float dt) {
       }
     }
 
+    for (auto entity : pick_ups_) {
+      auto& t = registry_.get<TransformComponent>(entity);
+      to_send << t.position;
+      to_send << PacketBlockType::CREATE_PICK_UP;
+    }
+
+    for (auto entity : pick_up_events) {
+      auto& pick_event = pick_up_events.get(entity);
+      to_send << 0;
+      to_send << PacketBlockType::DESTROY_PICK_UP;
+    
+      if (id == pick_event.player_id) {
+        to_send << pick_event.ability_id;
+        to_send << PacketBlockType::RECEIVE_PICK_UP;
+      }
+    }
     auto view_goals = registry_.view<GoalComponenet, TeamComponent>();
 
     entt::entity blue_goal;
@@ -172,8 +191,11 @@ void GameServer::Update(float dt) {
 
 	//send messages
     for (auto m : messages) {
-      to_send.Add(m.c_str(), m.size());
-      to_send << m.size();
+      to_send.Add(m.name.c_str(), m.name.size());
+      to_send << m.name.size();
+      to_send.Add(m.message.c_str(), m.message.size());
+      to_send << m.message.size();
+      to_send << m.message_from;
       to_send << PacketBlockType::MESSAGE;
 	}
 
@@ -182,11 +204,17 @@ void GameServer::Update(float dt) {
 
   created_players_.clear();
   messages.clear();
+  pick_ups_.clear();
+
+  for (auto entity : pick_up_events) {
+    registry_.destroy(entity);
+  }
 }
 
 void GameServer::UpdateSystems(float dt) {
   player_controller::Update(registry_, dt);
   ability_controller::Update(registry_, dt);
+  buff_controller::Update(registry_, dt);
 
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);
@@ -219,7 +247,20 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       std::string str;
       str.resize(strsize);
       packet.Remove(str.data(), strsize);
-      messages.push_back(str);
+      int player_id = id + 1;
+      Message message;
+      message.name = "player " + std::to_string(player_id) + ": ";
+      message.message = str;
+      auto view_player = registry_.view<TeamComponent, PlayerComponent>();
+      for (auto player : view_player) {
+        auto& team_c = view_player.get<TeamComponent>(player);
+        auto& player_c = view_player.get<PlayerComponent>(player);
+        if (id == player_c.id) {
+          message.message_from = team_c.team;
+          break;
+        }
+      }
+      messages.push_back(message);
       break;
     }
   }
@@ -267,8 +308,8 @@ void GameServer::CreatePlayer(PlayerID id) {
   );
 
   // Prepare hard-coded values
-  AbilityID primary_id = SWITCH_GOALS;
-  AbilityID secondary_id = SWITCH_GOALS;
+  AbilityID primary_id = AbilityID::SWITCH_GOALS;
+  AbilityID secondary_id = AbilityID::SWITCH_GOALS;
   float primary_cooldown =
       GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
   glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
@@ -287,11 +328,25 @@ void GameServer::CreatePlayer(PlayerID id) {
   );
   registry_.assign<CameraComponent>(entity, camera_offset);
 
+  // START ---------- Buff component [MOVE TO PICK-UP EVENT] ----------
+  // Available buffs: SPEED_BOOST, JUMP_BOOST, INFINITE_STAMINA 
+  BuffID buff_id = SPEED_BOOST;
+  float buff_duration =
+      GlobalSettings::Access()->ValueOf("BUFF_SPEED_BOOST_DURATION");
+
+  // Add component for a player
+  registry_.assign<BuffComponent>(entity,                     // Entity
+                                  buff_id,                    // Active buff
+                                  true,                       // Toggle buff
+                                  buff_duration,              // Buff duration
+                                  0.0f                        // Remaining duration
+  );
+  // END ---------- Buff component [MOVE TO PICK-UP EVENT] ----------
+
   auto& player_component = registry_.assign<PlayerComponent>(entity);
   player_component.id = id;
   created_players_.push_back(id);
 
-  std::cout << "DEBUG: Created player id: " << player_component.id << "\n";
   ResetEntities();
 }
 
@@ -374,8 +429,11 @@ void GameServer::ResetEntities() {
     }
   }
   
-  // TODO: reset pick-up
+  // reset pick-up
+  auto pick_up_view = registry_.view<PickUpComponent>();
+  for (auto entity : pick_up_view) registry_.destroy(entity);
 
+  CreatePickUpComponents();
 
   // Reset Balls
   auto ball_view =
@@ -454,6 +512,20 @@ void GameServer::AddArenaComponents(entt::entity& entity) {
   auto& mh = registry_.assign<physics::MeshHitbox>(entity, std::move(md.pos),
                                                    std::move(md.indices));
   // glob::LoadWireframeMesh(model_arena, mh.pos, mh.indices);
+}
+
+void GameServer::CreatePickUpComponents() {
+  glm::vec3 pos = glm::vec3(3.f, -2.f, 3.f);
+  auto entity = registry_.create();
+  registry_.assign<TransformComponent>(entity, pos, glm::vec3(0.f),
+                                       glm::vec3(1.f));
+  registry_.assign<PickUpComponent>(entity);
+  registry_.assign<physics::OBB>(entity, pos, glm::vec3(1.f, 0.f, 0.f),
+                                 glm::vec3(0.f, 1.f, 0.f),
+                                 glm::vec3(0.f, 0.f, 1.f),
+                                  1.f, 1.f, 1.f);
+
+  pick_ups_.push_back(entity);
 }
 
 void GameServer::CreateGoals() {
