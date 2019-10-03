@@ -123,10 +123,10 @@ void Engine::Update(float dt) {
     accum_pitch_ -= mouse_movement.y;
   }
 
-  if (Input::IsKeyPressed(GLFW_KEY_O)) {
+  if (Input::IsKeyPressed(GLFW_KEY_K)) {
     new_team_ = TEAM_BLUE;
   }
-  if (Input::IsKeyPressed(GLFW_KEY_P)) {
+  if (Input::IsKeyPressed(GLFW_KEY_L)) {
     new_team_ = TEAM_RED;
   }
 
