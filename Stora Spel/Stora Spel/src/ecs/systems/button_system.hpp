@@ -2,11 +2,11 @@
 #define BUTTON_SYSTEM_HPP_
 
 #include <entt.hpp>
-#include "button_component.hpp"
-#include "shared/transform_component.hpp"
 
-#include "../util/transform_helper.hpp"
-#include "../util/input.hpp"
+#include "shared/transform_component.hpp"
+#include "ecs/components/button_component.hpp"
+#include "util/transform_helper.hpp"
+#include "util/input.hpp"
 
 #include <glob/window.hpp>
 

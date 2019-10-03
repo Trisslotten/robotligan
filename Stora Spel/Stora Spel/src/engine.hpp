@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include "Chat.hpp"
 #include "shared/shared.hpp"
+#include "states/state.hpp"
 
 struct PlayerScoreBoardInfo {
   int points = 0;
@@ -24,16 +25,23 @@ class Engine {
   Engine& operator=(const Engine&) = delete;
 
   void Init();
-
-  void CreateInitalEntities();
-
   void Update(float dt);
-
   void UpdateNetwork();
-
   void Render();
 
   void SetCurrentRegistry(entt::registry* registry);
+  void ChangeState(StateType state) {
+    wanted_state_type_ = state;
+  }
+  NetAPI::Socket::Client& GetClient() {
+    return client_;
+  }
+  NetAPI::Common::Packet& GetPacket() {
+    return packet_;
+  }
+  void SetSendInput(bool should_send) {
+    should_send_input_ =  should_send;
+  }
 
  private:
   void SetKeybinds();
@@ -41,25 +49,20 @@ class Engine {
   void UpdateSystems(float dt);
   void HandlePacketBlock(NetAPI::Common::Packet& packet);
 
-  void CreateMainMenu();
-  void CreateSettingsMenu();
-  void CreateInGameMenu();
-  void UpdateInGameMenu(bool show_menu);
-
-  void CreatePlayer(PlayerID player_id, EntityID entity_id);
   void CreatePickUp(glm::vec3 position);
-  void TestCreateLights();
 
-  NetAPI::Socket::Client client;
+  NetAPI::Socket::Client client_;
+  NetAPI::Common::Packet packet_;
 
-  entt::registry registry_gameplay_;
-  entt::registry registry_mainmenu_;
-  entt::registry registry_settings_;
+  StateType wanted_state_type_ = StateType::MAIN_MENU;
+  State* current_state_ = nullptr;
+  MainMenuState main_menu_state_;
+  LobbyState lobby_state_;
+  PlayState play_state_;
+
   entt::registry* registry_current_;
 
-  PlayerID my_id = -1;
-
-  std::unordered_map<PlayerID, std::pair<glm::vec3, glm::quat>> transforms;
+  bool should_send_input_ = false;
 
   std::unordered_map<int, int> keybinds_;
   std::unordered_map<int, int> mousebinds_;
@@ -72,14 +75,10 @@ class Engine {
   glob::Font2DHandle font_test_ = 0;
   glob::Font2DHandle font_test2_ = 0;
   glob::Font2DHandle font_test3_ = 0;
-  glob::E2DHandle e2D_test_, e2D_test2_;
-  glob::GUIHandle in_game_menu_gui_ = 0;
-  glob::GUIHandle gui_scoreboard_back_, gui_teamscore_, gui_stamina_base_,
-      gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_;
-  bool show_in_game_menu_buttons_ = false;
 
-  std::vector<unsigned int> scores_;
+   std::vector<unsigned int> scores_;
 
+   
   entt::entity blue_goal_light_;
   entt::entity red_goal_light_;
   bool take_game_input_ = true;

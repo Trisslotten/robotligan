@@ -6,14 +6,15 @@
 #include <entity/registry.hpp>
 #include <entt.hpp>
 #include <glm/glm.hpp>
-#include <shared.hpp>
+#include <shared/shared.hpp>
+#include "serverstate.hpp"
 #include <vector>
 
 #include "replay machine/replay_machine.hpp"
 #include "util/global_settings.hpp"
 
 #include "util/event.hpp"
-#include "../src/message.hpp"
+#include "message.hpp"
 #include "util/timer.hpp"
 
 class GameServer {
@@ -23,21 +24,17 @@ class GameServer {
   void Update(float dt);
   void ReceiveEvent(const EventInfo& e);
 
+  void ChangeState(ServerStateType state) { wanted_state_type_ = state; }
+
+  NetAPI::Socket::Server& GetServer() { return server_; }
+  entt::registry& GetRegistry() { return registry_; }
+
  private:
   void UpdateSystems(float dt);
 
-  void HandlePacketBlock(NetAPI::Common::Packet& packet, unsigned short id);
-
+  void HandlePacketBlock(NetAPI::Common::Packet& packet, int16_t block_type,
+                         int client_id);
   void HandleNewTeam();
-
-  void CreatePlayer(PlayerID id);
-  void CreateEntities();
-  void ResetEntities();
-  void AddBallComponents(entt::entity& entity, glm::vec3 in_pos,
-                         glm::vec3 in_vel);
-  void AddArenaComponents(entt::entity& entity);
-  void CreatePickUpComponents();
-  void CreateGoals();
 
   // Replay stuff---
   bool StartRecording(unsigned int in_replay_length_seconds);
@@ -47,12 +44,15 @@ class GameServer {
   //---
 
   NetAPI::Socket::Server server_;
-  int last_num_players_ = 0;
   entt::registry registry_;
 
-  std::vector<PlayerID> created_players_;
+  ServerState* current_state_ = nullptr;
+  ServerPlayState play_state_;
+  ServerLobbyState lobby_state_;
+  ServerStateType wanted_state_type_ = ServerStateType::LOBBY;
+  ServerStateType current_state_type_ = ServerStateType::LOBBY;
+
   std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
-  std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
   std::vector<entt::entity> pick_ups_;
   std::vector<Message> messages;
 

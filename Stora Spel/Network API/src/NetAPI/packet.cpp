@@ -27,13 +27,13 @@ NetAPI::Common::Packet& NetAPI::Common::Packet::operator=(const Packet& other) {
   return *this;
 }
 
-NetAPI::Common::Packet::Packet(const char* in_buffer, size_t in_size) {
+NetAPI::Common::Packet::Packet(const char* in_buffer, long in_size) {
   data_ = new char[kNumPacketBytes];
   if (in_size > 0 && in_size <= kNumPacketBytes) {
     memcpy(data_, in_buffer, kNumPacketBytes);
     size_of_data_ = in_size;
   } else {
-    if (in_size > kNumPacketBytes)
+    if (in_size > kNumPacketBytes || in_size < 0)
       std::cout << "ERROR: bad size in Packet buffer creation (" << in_size << " bytes)\n",
     memset(data_, 0, kNumPacketBytes);
     size_of_data_ = 0;

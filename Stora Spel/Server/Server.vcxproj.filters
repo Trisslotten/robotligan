@@ -63,6 +63,9 @@
     <ClInclude Include="src\ecs\components.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\serverstate.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\ecs\systems\goal_system.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -101,6 +104,11 @@
     <ClCompile Include="src\util\global_settings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\serverstate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="src\replay machine\bit_pack.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

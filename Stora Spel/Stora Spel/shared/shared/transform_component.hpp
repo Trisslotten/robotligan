@@ -4,8 +4,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include <../util/transform_helper.hpp>
-
 struct TransformComponent {
   glm::vec3 position;
   glm::quat rotation;

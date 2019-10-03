@@ -2,9 +2,10 @@
 #define ABILITY_CONTROLLER_SYSTEM_HPP_
 
 //#include <position.h>
-#include <../util/global_settings.hpp>
+#include <util/global_settings.hpp>
 #include <boundingboxes.hpp>
-#include <camera_component.hpp>
+#include "ecs/components.hpp"
+#include "shared/camera_component.hpp"
 #include <entt.hpp>
 #include "ecs/components.hpp"
 

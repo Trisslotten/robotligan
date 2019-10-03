@@ -5,6 +5,7 @@
 
 #include <entity/registry.hpp>
 #include <glm/ext.hpp>
+#include <glm/ext/quaternion_common.hpp>
 #include <glm/glm.hpp>
 #include <iostream>
 #include <vector>
@@ -13,8 +14,8 @@
 #include "collision.hpp"
 #include "ecs/components/physics_component.hpp"
 #include "ecs/components/projectile_component.hpp"
+#include "shared/transform_component.hpp"
 #include "ecs/components/pick_up_event.hpp"
-#include "transform_component.hpp"
 
 std::ostream& operator<<(std::ostream& o, glm::vec3 v) {
   return o << v.x << " " << v.y << " " << v.z;

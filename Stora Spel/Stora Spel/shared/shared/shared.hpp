@@ -8,8 +8,10 @@
 #define POINTS_ASSIST	2
 #define POINTS_SAVE		4
 
-typedef int PlayerID;
 typedef int EntityID;
+
+// deprecated
+typedef int PlayerID;
 
 namespace PlayerAction {
 enum : int16_t {
@@ -30,12 +32,12 @@ enum : int16_t {
 namespace PacketBlockType {
 enum : int16_t {
   INPUT = 0,
-  SET_CLIENT_PLAYER_ID,
-  CREATE_PLAYER,
+  ENTITY_TRANSFORMS,
   PLAYER_STAMINA,
-  PLAYERS_TRANSFORMS,
   CAMERA_TRANSFORM,
-  BALL_TRANSFORM,
+  CLIENT_READY,      // client is ready in lobby
+  CLIENT_NOT_READY,  // client is not ready in lobby
+  GAME_START,        // game start after lobby
   TEST_STRING,
   TEST_REPLAY_KEYS,
   TEAM_SCORE,
@@ -48,7 +50,8 @@ enum : int16_t {
   RECEIVE_PICK_UP,
   NUM_BLOCK_TYPES,
 };
-} // namespace PacketType
+
+}  // namespace PacketBlockType
 
 enum class AbilityID {
   NULL_ABILITY,

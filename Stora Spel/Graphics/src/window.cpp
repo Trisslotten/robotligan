@@ -22,8 +22,8 @@ namespace glob {
 
 namespace window {
 
-unsigned int window_width = 1280;
-unsigned int window_height = 720;
+unsigned int window_width = 1920;
+unsigned int window_height = 1080;
 
 void Create() {
   if (glfw_window) {
@@ -38,13 +38,22 @@ void Create() {
     assert(0);
   }
 
+  GLFWmonitor* primary = glfwGetPrimaryMonitor();
+
+  const GLFWvidmode* mode = glfwGetVideoMode(primary);
+  glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+  glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+  glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+  glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+
+  //GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "My Title", primary, NULL);
+
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 
   const char* title_str = "Robotligan";
 
-  glfw_window =
-      glfwCreateWindow(window_width, window_height, title_str, NULL, NULL);
+  glfw_window = glfwCreateWindow(window_width, window_height, title_str, NULL, NULL);
 
   if (!glfw_window) {
     std::cout << "ERROR window.cpp: Could not create glfw window\n";
@@ -120,13 +129,14 @@ void SetCharacterCallback(void (*key_callback)(GLFWwindow*, unsigned int)) {
 void SetMouseLocked(bool val) {
   if (val) {
     glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-  }
-  else {
+  } else {
     glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
   }
 }
 
-glm::vec2 GetWindowDimensions() { return glm::vec2(window_width, window_height); }
+glm::vec2 GetWindowDimensions() {
+  return glm::vec2(window_width, window_height);
+}
 
 bool KeyDown(int key) { return GLFW_PRESS == glfwGetKey(glfw_window, key); }
 

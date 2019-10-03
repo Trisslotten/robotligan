@@ -8,6 +8,9 @@
 #include <transform_component.hpp>
 #include <pick_up_component.hpp>
 
+#include "shared/shared.hpp";
+#include "shared/transform_component.hpp"
+
 #include "ecs/components.hpp"
 #include "ecs/systems/ability_controller_system.hpp"
 #include "ecs/systems/buff_controller_system.hpp"
@@ -15,8 +18,6 @@
 #include "ecs/systems/goal_system.hpp"
 #include "ecs/systems/physics_system.hpp"
 #include "ecs/systems/player_controller_system.hpp"
-
-#include "shared.hpp";
 
 namespace {}  // namespace
 
@@ -33,9 +34,13 @@ void GameServer::Init(double in_update_rate) {
 
   server_.Setup(1337);
 
+  lobby_state_.SetGameServer(this);
+  play_state_.SetGameServer(this);
+  lobby_state_.Init();
+  current_state_ = &lobby_state_;
   srand(time(NULL));
 
-  CreateEntities();
+  //CreateEntities();
   CreateGoals();
 
   // Create replay machine
@@ -46,23 +51,22 @@ void GameServer::Init(double in_update_rate) {
 void GameServer::Update(float dt) {
   server_.Update();
 
-  //---------------------------------------------
-  //------------HANDLE NETWORK INPUT-------------
-  //---------------------------------------------
-  for (auto client_data : server_.GetNewlyConnected()) {
-    std::cout << "DEBUG: Creating a player\n";
-    CreatePlayer(client_data->ID);
+  for(auto client_data : server_.GetNewlyConnected()) {
+    lobby_state_.SetClientIsReady(client_data->ID, false);
   }
 
+  // handle received data
   for (auto& [id, client_data] : server_.GetClients()) {
     for (auto& packet : client_data->packets) {
       while (!packet.IsEmpty()) {
-        HandlePacketBlock(packet, id);
+        int16_t block_type = -1;
+        packet >> block_type;
+        HandlePacketBlock(packet, block_type, id);
       }
     }
     client_data->packets.clear();
   }
-
+  /*
   //---------------------------------------------
   //-----------HANDLE PLAYER ACTIONS-------------
   //---------------------------------------------
@@ -85,49 +89,18 @@ void GameServer::Update(float dt) {
         }
       });
   players_inputs_.clear();
-
-  /*
-  registry_.view<TransformComponent>().each([&](auto entity, auto& trans_c) {
-    glm::vec3 p = trans_c.position;
-    //std::cout << (int)p.x << ", " << (int)p.y << ", " << (int)p.z << "\n";
-  });
   */
+
+  current_state_->Update();
 
   //---------------------------------------------
   //--------------UPDATE GAME LOGIC--------------
   //---------------------------------------------
   UpdateSystems(dt);
 
-  //---------------------------------------------
-  //------------HANDLE NETWORK OUTPUT------------
-  //---------------------------------------------
-  auto pick_up_events = registry_.view<PickUpEvent>();
-  for (auto& [id, client_data] : server_.GetClients()) {
-    NetAPI::Common::Packet to_send;
-    auto header = to_send.GetHeader();
-    header->receiver = id;
-
-    /*
-    glm::vec3 ball_pos{0};
-    registry_.view<TransformComponent, BallComponent>().each(
-        [&](auto entity, auto& trans_c, auto& ball) {
-          ball_pos = trans_c.position;
-        });
-    to_send << ball_pos;
-    to_send << PacketBlockType::TEST_BALL_P;
-    */
-    auto view_cam = registry_.view<CameraComponent, PlayerComponent>();
-    for (auto cam : view_cam) {
-      auto& cam_c = view_cam.get<CameraComponent>(cam);
-      auto& player_c = view_cam.get<PlayerComponent>(cam);
-      if (id == player_c.id) {
-        to_send << cam_c.orientation;
-        break;
-      }
-    }
-    to_send << PacketBlockType::CAMERA_TRANSFORM;
-
-    auto view_player = registry_.view<PlayerComponent>();
+  //auto pick_up_events = registry_.view<PickUpEvent>();
+  /*
+   auto view_player = registry_.view<PlayerComponent>();
     for (auto player : view_player) {
       auto& player_c = view_player.get(player);
       if (id == player_c.id) {
@@ -137,51 +110,23 @@ void GameServer::Update(float dt) {
     }
     to_send << PacketBlockType::PLAYER_STAMINA;
 
-    auto view_ball = registry_.view<BallComponent, TransformComponent>();
-    for (auto ball : view_ball) {
-      // auto& ball_c = view_cam.get<BallComponent>(ball);
-      auto& trans_c = view_ball.get<TransformComponent>(ball);
+    auto view_players2 =
+        registry_.view<PlayerComponent, TeamComponent, PointsComponent>();
 
-      to_send << trans_c.rotation;
-      to_send << trans_c.position;
-      break;
-    }
-    to_send << PacketBlockType::BALL_TRANSFORM;
+    for (auto player : view_players2) {
+      auto& player_player_c = registry_.get<PlayerComponent>(player);
+      auto& player_points_c = registry_.get<PointsComponent>(player);
+      auto& player_team_c = registry_.get<TeamComponent>(player);
 
-    auto view_players = registry_.view<TransformComponent, PlayerComponent>();
-    int num_players = view_players.size();
-    for (auto player : view_players) {
-      auto& trans_c = view_players.get<TransformComponent>(player);
-      auto& player_c = view_players.get<PlayerComponent>(player);
-      to_send << trans_c.rotation;
-      to_send << trans_c.position;
-      to_send << player_c.id;
-    }
-    to_send << num_players;
-    to_send << PacketBlockType::PLAYERS_TRANSFORMS;
-
-    bool is_created = false;
-    for (auto& created_id : created_players_) {
-      if (id == created_id) {
-        to_send << id;
-        to_send << PacketBlockType::SET_CLIENT_PLAYER_ID;
-        is_created = true;
-        break;
+      if (player_points_c.changed) {
+        to_send << player_team_c.team;
+        to_send << player_player_c.id;
+        to_send << player_points_c.GetPoints();
+        to_send << player_points_c.GetGoals();
+        to_send << PacketBlockType::UPDATE_POINTS;
       }
     }
-
-    if (is_created) {
-      for (auto& [id, client_data] : server_.GetClients()) {
-        to_send << id;
-        to_send << PacketBlockType::CREATE_PLAYER;
-      }
-    } else {
-      for (auto& created_id : created_players_) {
-        to_send << created_id;
-        to_send << PacketBlockType::CREATE_PLAYER;
-      }
-    }
-
+    
     for (auto entity : pick_ups_) {
       auto& t = registry_.get<TransformComponent>(entity);
       to_send << t.position;
@@ -249,63 +194,51 @@ void GameServer::Update(float dt) {
       to_send << p.first;
       to_send << PacketBlockType::CHOOSE_TEAM;
     }
+    */
 
-    server_.Send(to_send);
-  }
-
-  // reset switched_this_tick bool
-  // NOT A GOOD SOLUTION, MAYBE CHANGE LATER
-  auto view_goals = registry_.view<GoalComponenet, TeamComponent>();
-  for (auto goal : view_goals) {
-    GoalComponenet& goal_goal_c = registry_.get<GoalComponenet>(goal);
-    TeamComponent& goal_team_c = registry_.get<TeamComponent>(goal);
-    if (goal_goal_c.switched_this_tick) {
-      goal_goal_c.switched_this_tick = false;
+  // handle state change
+  if (wanted_state_type_ != current_state_type_) {
+    current_state_type_ = wanted_state_type_;
+    current_state_->Cleanup();
+    switch (wanted_state_type_) {
+      case ServerStateType::LOBBY:
+        std::cout << "Change Server State: LOBBY\n";
+        current_state_ = &lobby_state_;
+        break;
+      case ServerStateType::PLAY:
+        std::cout << "Change Server State: PLAY\n";
+        current_state_ = &play_state_;
+        break;
     }
+    current_state_->Init();
   }
-
-  created_players_.clear();
-  messages.clear();
-  pick_ups_.clear();
-
-  for (auto entity : pick_up_events) {
-    registry_.destroy(entity);
-  }
-  new_teams_.clear();
-}
-
-void GameServer::UpdateSystems(float dt) {
-  HandleNewTeam();
-  player_controller::Update(registry_, dt);
-  ability_controller::Update(registry_, dt);
-  buff_controller::Update(registry_, dt);
-
-  UpdatePhysics(registry_, dt);
-  UpdateCollisions(registry_);
-  if (goal_system::Update(registry_)) {
-    ResetEntities();
-  }
-  dispatcher.update<EventInfo>();
 }
 
 void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
-                                   unsigned short id) {
-  int16_t block_type = -1;
-  packet >> block_type;
+                                   int16_t block_type, int client_id) {
   switch (block_type) {
     case PacketBlockType::INPUT: {
       uint16_t actions = 0;
-      // TODO: put in player_actions then in PlayerComponent
       float pitch = 0.f;
       float yaw = 0.f;
       packet >> yaw;
       packet >> pitch;
       packet >> actions;
-      players_inputs_[id] = std::make_pair(actions, glm::vec2(pitch, yaw));
+      play_state_.SetPlayerInput(client_id, actions, pitch, yaw);
       // std::cout << "PACKET: INPUT, " << actions << ", " << yaw << ", " <<
       // pitch << "\n";
       break;
     }
+        case PacketBlockType::CLIENT_READY: {
+      lobby_state_.SetClientIsReady(client_id, true);
+      std::cout << "PACKET: CLIENT_READY: " << client_id << "\n";
+      break;
+    }
+    case PacketBlockType::CLIENT_NOT_READY: {
+      lobby_state_.SetClientIsReady(client_id, false);
+      break;
+    }
+    
     case PacketBlockType::TEST_REPLAY_KEYS: {
       // If P is pressed, record 10 seconds
       bool start_replay;
@@ -613,27 +546,9 @@ void GameServer::AddBallComponents(entt::entity& entity, glm::vec3 in_pos,
   registry_.assign<physics::Sphere>(entity, zero_vec, ball_radius);
 }
 
-void GameServer::AddArenaComponents(entt::entity& entity) {
-  // Prepare hard-coded values
-  // Scale on the hitbox for the map
-  float v1 = 7.171f;
-  float v2 = 10.6859;  // 13.596f;
-  float v3 = 5.723f;
-  glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 arena_scale = glm::vec3(1.0f);
-  glob::ModelHandle model_arena =
-      glob::GetModel("assets/Map_rectangular/map_rextangular.fbx");
-
-  // Add components for an arena
-  // registry_.assign<ModelComponent>(entity, model_arena);
-  registry_.assign<TransformComponent>(entity, zero_vec, zero_vec, arena_scale);
-
-  // Add a hitbox
-  registry_.assign<physics::Arena>(entity, -v2, v2, -v3, v3, -v1, v1);
-  auto md = glob::GetMeshData(model_arena);
-  glm::mat4 matrix =
-      glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f)) *
-      glm::rotate(90.f * glm::pi<float>() / 180.f, glm::vec3(0.f, 0.f, 1.f));
+void GameServer::UpdateSystems(float dt) {
+  player_controller::Update(registry_, dt);
+  ability_controller::Update(registry_, dt);
 
   for (auto& v : md.pos) v = matrix * glm::vec4(v, 1.f);
   auto& mh = registry_.assign<physics::MeshHitbox>(entity, std::move(md.pos),

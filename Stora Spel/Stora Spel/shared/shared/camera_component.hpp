@@ -2,7 +2,6 @@
 #define CAMERA_COMPONENT_HPP_
 
 #include <glm/glm.hpp>
-#include "../util/transform_helper.hpp"
 
 const float pi = 3.14159265358979323846f;
 

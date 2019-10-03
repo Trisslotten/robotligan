@@ -149,6 +149,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\gameserver.cpp" />
     <ClCompile Include="src\util\global_settings.cpp" />
+    <ClCompile Include="src\serverstate.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ecs\components.hpp" />
@@ -174,6 +175,9 @@
     <ClInclude Include="src\util\event.hpp" />
     <ClInclude Include="src\util\global_settings.hpp" />
     <ClInclude Include="src\util\timer.hpp" />
+    <ClInclude Include="src\serverstate.hpp" />
+  </ItemGroup>
+  <ItemGroup>
     <ClCompile Include="src\replay machine\bit_pack.cpp" />
     <ClCompile Include="src\replay machine\reg_pack.cpp" />
     <ClCompile Include="src\replay machine\replay_machine.cpp" />
