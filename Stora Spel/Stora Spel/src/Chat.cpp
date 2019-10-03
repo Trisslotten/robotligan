@@ -60,6 +60,7 @@ void Chat::Update(float dt) {
     }
   } else {
     current_message_ += Input::GetCharacters();
+
     if (current_message_.size() > 200)
       current_message_ = current_message_.substr(0, 200);
     // std::cout << messages_.size() << std::endl;
@@ -96,6 +97,8 @@ void Chat::SubmitText(glob::Font2DHandle font) {
     temp = current_message_.substr(current_message_.size() - row_length_,
                                    row_length_);
   }
+
+  
 
   glob::Submit(font, glm::vec2(50.f, 700.f - 20.f * 5), 20, temp, glm::vec4(1, 1, 1, 1));
  }

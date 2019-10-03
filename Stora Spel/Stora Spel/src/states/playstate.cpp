@@ -86,10 +86,7 @@ void PlayState::Update() {
                glm::vec3(0, 1, 0));
   glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
 
-  // Show statistics TEST
-  if (Input::IsKeyDown(GLFW_KEY_TAB)) {
-    glob::Submit(gui_test_, glm::vec2(285, 177), 0.6, 100);
-  }
+ 
 
   // Show GUI TEST
   // Temp Update of stamina bar

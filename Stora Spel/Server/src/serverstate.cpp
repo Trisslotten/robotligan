@@ -47,6 +47,8 @@ void ServerPlayState::Init() {
 
   CreateInitialEntities(server.GetConnectedPlayers());
 
+  ResetEntities();
+
   // Create replay machine
   this->replay_machine_ = new ReplayMachine();
 
@@ -73,6 +75,8 @@ void ServerPlayState::Init() {
 
     server.Send(to_send);
   }
+
+
 }
 
 void ServerPlayState::Update(float dt) {

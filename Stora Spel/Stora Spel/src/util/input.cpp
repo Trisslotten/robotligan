@@ -33,6 +33,7 @@ void MouseCallback(GLFWwindow* window, int button, int action, int mods) {
   }
 }
 void CharacterCallback(GLFWwindow* window, unsigned int codepoint) {
+  //std::cout << codepoint << "\n";
   characters += codepoint;
 }
 }  // namespace

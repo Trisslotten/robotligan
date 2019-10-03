@@ -64,7 +64,9 @@ void Engine::Init() {
 }
 
 void Engine::Update(float dt) {
-  Input::Reset();
+  
+
+  //std::cout << "current message: " << Input::GetCharacters() <<"\n";
 
   if (take_game_input_ == true) {
     // accumulate key presses
@@ -117,6 +119,7 @@ void Engine::Update(float dt) {
     // init new state
     current_state_->Init();
   }
+  Input::Reset();
 }
 
 void Engine::UpdateNetwork() {
@@ -187,6 +190,7 @@ void Engine::UpdateNetwork() {
       }
     }
   }
+
 }
 
 void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
@@ -389,6 +393,10 @@ void Engine::UpdateChat(float dt) {
 
 void Engine::UpdateSystems(float dt) {
   UpdateChat(dt);
+
+  if (Input::IsKeyDown(GLFW_KEY_TAB) && current_state_->Type() == StateType::PLAY) {
+    DrawScoreboard();
+  }
 
   button_system::Update(*registry_current_);
   RenderSystem(*registry_current_);

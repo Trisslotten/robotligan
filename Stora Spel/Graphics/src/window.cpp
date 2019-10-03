@@ -22,8 +22,8 @@ namespace glob {
 
 namespace window {
 
-unsigned int window_width = 1920;
-unsigned int window_height = 1080;
+unsigned int window_width = 1280;
+unsigned int window_height = 720;
 
 void Create() {
   if (glfw_window) {
