@@ -170,7 +170,7 @@ void GameServer::Update(float dt) {
       }
     }
 
-	//send messages
+    // send messages
     for (auto m : messages) {
       to_send.Add(m.name.c_str(), m.name.size());
       to_send << m.name.size();
@@ -178,7 +178,7 @@ void GameServer::Update(float dt) {
       to_send << m.message.size();
       to_send << m.message_from;
       to_send << PacketBlockType::MESSAGE;
-	}
+    }
 
     server_.Send(to_send);
   }
@@ -196,6 +196,7 @@ void GameServer::UpdateSystems(float dt) {
   if (goal_system::Update(registry_)) {
     ResetEntities();
   }
+  dispatcher.update<EventInfo>();
 }
 
 void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
@@ -338,7 +339,7 @@ void GameServer::ResetEntities() {
   glm::vec3 player_pos[3];
   for (int i = 0; i < 3; ++i) {
     player_pos[i].x = GlobalSettings::Access()->ValueOf(
-      std::string("PLAYERPOSITION") + std::to_string(i) + "X");
+        std::string("PLAYERPOSITION") + std::to_string(i) + "X");
     player_pos[i].y = GlobalSettings::Access()->ValueOf(
         std::string("PLAYERPOSITION") + std::to_string(i) + "Y");
     player_pos[i].z = GlobalSettings::Access()->ValueOf(
@@ -348,7 +349,8 @@ void GameServer::ResetEntities() {
   unsigned int blue_counter = 0;
   unsigned int red_counter = 0;
   bool blue_team = true;
-  auto player_view = registry_.view<PlayerComponent, PhysicsComponent, TransformComponent, CameraComponent>();
+  auto player_view = registry_.view<PlayerComponent, PhysicsComponent,
+                                    TransformComponent, CameraComponent>();
   for (auto entity : player_view) {
     PhysicsComponent& physics_component =
         player_view.get<PhysicsComponent>(entity);
@@ -362,10 +364,9 @@ void GameServer::ResetEntities() {
       TeamComponent& team = registry_.get<TeamComponent>(entity);
       if (team.team == TEAM_RED) blue_team = false;
     }
-    
+
     float orientation_value = 0.f;
     if (blue_team) orientation_value = glm::pi<float>();
-
 
     cam.orientation = glm::vec3(0.f, orientation_value, 0.f);
 
@@ -380,7 +381,7 @@ void GameServer::ResetEntities() {
       transform_component.position = player_pos[blue_counter];
       blue_counter++;
 
-      blue_counter %= 3; 
+      blue_counter %= 3;
     } else {
       transform_component.position = player_pos[red_counter];
       transform_component.position.x *= -1.f;
@@ -389,9 +390,8 @@ void GameServer::ResetEntities() {
       red_counter %= 3;
     }
   }
-  
-  // TODO: reset pick-up
 
+  // TODO: reset pick-up
 
   // Reset Balls
   auto ball_view =
@@ -492,4 +492,17 @@ void GameServer::CreateGoals() {
   registry_.assign<GoalComponenet>(entity_red);
   auto& trans_comp2 = registry_.assign<TransformComponent>(entity_red);
   trans_comp2.position = glm::vec3(12.f, -4.f, 0.f);
+}
+
+void GameServer::ReceiveEvent(const EventInfo& e) {
+  switch (e.event) {
+    case Event::DESTROY_ENTITY: {
+      break;
+    }
+    case Event::CREATE_CANNONBALL: {
+      break;
+	}
+    default:
+      break;
+  }
 }

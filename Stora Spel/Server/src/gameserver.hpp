@@ -8,6 +8,7 @@
 #include <entt.hpp>
 #include <glm/glm.hpp>
 #include <shared.hpp>
+#include "util/event.hpp"
 #include "../src/message.hpp"
 #include "util/timer.hpp"
 
@@ -16,6 +17,7 @@ class GameServer {
   ~GameServer();
   void Init();
   void Update(float dt);
+  void ReceiveEvent(const EventInfo& e);
 
  private:
   void UpdateSystems(float dt);
