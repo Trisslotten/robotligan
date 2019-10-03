@@ -140,7 +140,7 @@ void Engine::Update(float dt) {
     new_team_ = TEAM_RED;
   }
 
-  glob::Submit(font_test3_, glm::vec2(582, 705), 72, std::to_string(scores[1]),
+  glob::Submit(font_test3_, glm::vec2(582, 705), 72, std::to_string(scores_[1]),
                glm::vec4(0, 0.26, 1, 1));
   glob::Submit(font_test3_, glm::vec2(705, 705), 72, std::to_string(scores_[0]),
                glm::vec4(1, 0, 0, 1));
