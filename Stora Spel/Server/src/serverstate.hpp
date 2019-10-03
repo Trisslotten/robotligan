@@ -65,6 +65,8 @@ class ServerPlayState : public ServerState {
   void ResetEntities();
 
   bool StartRecording(unsigned int in_replay_length_seconds);
+
+
  private:
   entt::entity CreateIDEntity();
 

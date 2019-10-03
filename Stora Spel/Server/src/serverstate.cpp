@@ -9,6 +9,7 @@
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "gameserver.hpp"
+#include <ecs\components\pick_up_event.hpp>
 
 void ServerLobbyState::Init() {
   //
@@ -49,11 +50,7 @@ void ServerPlayState::Init() {
   // Create replay machine
   this->replay_machine_ = new ReplayMachine();
 
-  for (auto& [client_id, client_data] : server.GetClients()) {
-    NetAPI::Common::Packet to_send;
-    auto header = to_send.GetHeader();
-    header->receiver = client_id;
-
+  for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     auto ball_view = registry.view<BallComponent, IDComponent>();
     for (auto ball : ball_view) {
       auto& ball_c = ball_view.get<BallComponent>(ball);
@@ -79,7 +76,6 @@ void ServerPlayState::Init() {
 }
 
 void ServerPlayState::Update(float dt) {
-  auto& server = game_server_->GetServer();
   auto& registry = game_server_->GetRegistry();
 
   registry.view<PlayerComponent>().each(
@@ -101,11 +97,8 @@ void ServerPlayState::Update(float dt) {
       });
   players_inputs_.clear();
 
-  for (auto& [id, client_data] : server.GetClients()) {
-    NetAPI::Common::Packet to_send;
-    auto header = to_send.GetHeader();
-    header->receiver = id;
-    EntityID client_player_id = clients_player_ids_[id];
+  for (auto& [client_id, to_send] : game_server_->GetPackets()) {
+    EntityID client_player_id = clients_player_ids_[client_id];
 
     auto view_cam = registry.view<CameraComponent, IDComponent>();
     for (auto cam : view_cam) {
@@ -130,8 +123,69 @@ void ServerPlayState::Update(float dt) {
     to_send << num_entities;
     to_send << PacketBlockType::ENTITY_TRANSFORMS;
 
-    server.Send(to_send);
+    auto view_player = registry.view<PlayerComponent>();
+    for (auto player : view_player) {
+      auto& player_c = view_player.get(player);
+      if (client_id == player_c.client_id) {
+        to_send << player_c.energy_current;
+        break;
+      }
+    }
+    to_send << PacketBlockType::PLAYER_STAMINA;
+
+    auto view_players2 =
+        registry.view<PlayerComponent, TeamComponent, PointsComponent>();
+
+    for (auto player : view_players2) {
+      auto& player_player_c = registry.get<PlayerComponent>(player);
+      auto& player_points_c = registry.get<PointsComponent>(player);
+      auto& player_team_c = registry.get<TeamComponent>(player);
+
+      if (player_points_c.changed) {
+        to_send << player_team_c.team;
+        to_send << player_player_c.client_id;
+        to_send << player_points_c.GetPoints();
+        to_send << player_points_c.GetGoals();
+        to_send << PacketBlockType::UPDATE_POINTS;
+      }
+    }
+
+    for (auto entity : pick_ups_) {
+      auto& t = registry.get<TransformComponent>(entity);
+      to_send << t.position;
+      to_send << PacketBlockType::CREATE_PICK_UP;
+    }
+
+    auto pick_up_events = registry.view<PickUpEvent>();
+    for (auto entity : pick_up_events) {
+      auto& pick_event = pick_up_events.get(entity);
+      to_send << 0;
+      to_send << PacketBlockType::DESTROY_PICK_UP;
+      if (client_id == pick_event.player_id) {
+        to_send << pick_event.ability_id;
+        to_send << PacketBlockType::RECEIVE_PICK_UP;
+      }
+    }
+    auto view_goals = registry.view<GoalComponenet, TeamComponent>();
+    entt::entity blue_goal;
+    bool sent_switch = false;
+    for (auto goal : view_goals) {
+      GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
+      TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
+      to_send << goal_team_c;
+      to_send << goal_goal_c.goals;
+      to_send << PacketBlockType::TEAM_SCORE;
+      if (goal_goal_c
+              .switched_this_tick) {  // MAY NEED TO CHANGE, NOT A GOOD SOLUTION
+        if (!sent_switch) {
+          to_send << PacketBlockType::SWITCH_GOALS;
+          sent_switch = true;
+        }
+      }
+    }
   }
+
+  pick_ups_.clear();
 }
 
 void ServerPlayState::Cleanup() {
@@ -169,6 +223,7 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
 
   CreateArenaEntity();
   CreateBallEntity();
+  CreateGoals();
 
   for (auto a : clients_player_ids_) {
     std::cout << "client_id=" << a.first << ", entity_id=" << a.second << "\n";

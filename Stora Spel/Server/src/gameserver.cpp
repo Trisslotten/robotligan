@@ -19,9 +19,7 @@
 
 namespace {}  // namespace
 
-GameServer::~GameServer() {
-
-}
+GameServer::~GameServer() {}
 
 void GameServer::Init(double in_update_rate) {
   glob::SetModelUseGL(false);
@@ -37,11 +35,14 @@ void GameServer::Init(double in_update_rate) {
   srand(time(NULL));
 
   // CreateEntities();
-
 }
 
 void GameServer::Update(float dt) {
   server_.Update();
+
+  for (auto& [client_id, client_data] : server_.GetClients()) {
+    packets_[client_id] = NetAPI::Common::Packet();
+  }
 
   for (auto client_data : server_.GetNewlyConnected()) {
     lobby_state_.SetClientIsReady(client_data->ID, false);
@@ -58,12 +59,6 @@ void GameServer::Update(float dt) {
     }
     client_data->packets.clear();
   }
-  /*
-  //---------------------------------------------
-  //-----------HANDLE PLAYER ACTIONS-------------
-  //---------------------------------------------
-
-  */
 
   current_state_->Update(dt);
 
@@ -72,87 +67,31 @@ void GameServer::Update(float dt) {
   //---------------------------------------------
   UpdateSystems(dt);
 
-  // auto pick_up_events = registry_.view<PickUpEvent>();
   /*
-   auto view_player = registry_.view<PlayerComponent>();
-    for (auto player : view_player) {
-      auto& player_c = view_player.get(player);
-      if (id == player_c.id) {
-        to_send << player_c.energy_current;
-        break;
-      }
+  TODO: fix
+    // send new teams
+    for (auto& p : new_teams_) {
+      to_send << p.second;
+      to_send << p.first;
+      to_send << PacketBlockType::CHOOSE_TEAM;
     }
-    to_send << PacketBlockType::PLAYER_STAMINA;
+    */
 
-    auto view_players2 =
-        registry_.view<PlayerComponent, TeamComponent, PointsComponent>();
+  HandleStateChange();
 
-    for (auto player : view_players2) {
-      auto& player_player_c = registry_.get<PlayerComponent>(player);
-      auto& player_points_c = registry_.get<PointsComponent>(player);
-      auto& player_team_c = registry_.get<TeamComponent>(player);
+  HandlePacketsToSend();
 
-      if (player_points_c.changed) {
-        to_send << player_team_c.team;
-        to_send << player_player_c.id;
-        to_send << player_points_c.GetPoints();
-        to_send << player_points_c.GetGoals();
-        to_send << PacketBlockType::UPDATE_POINTS;
-      }
-    }
-    
+  messages.clear();
+}
 
-    for (auto entity : pick_ups_) {
-      auto& t = registry_.get<TransformComponent>(entity);
-      to_send << t.position;
-      to_send << PacketBlockType::CREATE_PICK_UP;
-    }
+void GameServer::HandlePacketsToSend() {
+  for (auto& [id, client_data] : server_.GetClients()) {
+    NetAPI::Common::Packet to_send;
+    auto header = to_send.GetHeader();
+    header->receiver = id;
 
-    for (auto entity : pick_up_events) {
-      auto& pick_event = pick_up_events.get(entity);
-      to_send << 0;
-      to_send << PacketBlockType::DESTROY_PICK_UP;
-    
-
-      if (id == pick_event.player_id) {
-        to_send << pick_event.ability_id;
-        to_send << PacketBlockType::RECEIVE_PICK_UP;
-      }
-    }
-    auto view_goals = registry_.view<GoalComponenet, TeamComponent>();
-    entt::entity blue_goal;
-    bool sent_switch = false;
-    for (auto goal : view_goals) {
-      GoalComponenet& goal_goal_c = registry_.get<GoalComponenet>(goal);
-      TeamComponent& goal_team_c = registry_.get<TeamComponent>(goal);
-      to_send << goal_team_c;
-      to_send << goal_goal_c.goals;
-      to_send << PacketBlockType::TEAM_SCORE;
-      if (goal_goal_c
-              .switched_this_tick) {  // MAY NEED TO CHANGE, NOT A GOOD SOLUTION
-        if (!sent_switch) {
-          to_send << PacketBlockType::SWITCH_GOALS;
-          sent_switch = true;
-        }
-      }
-    }
-
-    // send individual player scores
-    auto view_players2 =
-        registry_.view<PlayerComponent, TeamComponent, PointsComponent>();
-
-    for (auto player : view_players2) {
-      auto& player_player_c = registry_.get<PlayerComponent>(player);
-      auto& player_points_c = registry_.get<PointsComponent>(player);
-      auto& player_team_c = registry_.get<TeamComponent>(player);
-
-      if (player_points_c.changed) {
-        to_send << player_team_c.team;
-        to_send << player_player_c.id;
-        to_send << player_points_c.GetPoints();
-        to_send << player_points_c.GetGoals();
-        to_send << PacketBlockType::UPDATE_POINTS;
-      }
+    if (!packets_[id].IsEmpty()) {
+      to_send << packets_[id];
     }
 
     // send messages
@@ -163,15 +102,15 @@ void GameServer::Update(float dt) {
       to_send << m.message.size();
       to_send << m.message_from;
       to_send << PacketBlockType::MESSAGE;
-          }
-    // send new teams
-    for (auto& p : new_teams_) {
-      to_send << p.second;
-      to_send << p.first;
-      to_send << PacketBlockType::CHOOSE_TEAM;
     }
-    */
 
+    if (!to_send.IsEmpty()) {
+      server_.Send(to_send);
+    }
+  }
+}
+
+void GameServer::HandleStateChange() {
   // handle state change
   if (wanted_state_type_ != current_state_type_) {
     current_state_type_ = wanted_state_type_;
@@ -219,8 +158,7 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       // If P is pressed, record 10 seconds
       bool start_replay;
       packet >> start_replay;
-      if(start_replay)
-        play_state_.StartRecording(10);
+      if (start_replay) play_state_.StartRecording(10);
       break;
     }
     case PacketBlockType::MESSAGE: {
@@ -272,7 +210,6 @@ void GameServer::UpdateSystems(float dt) {
   dispatcher.update<EventInfo>();
   // glob::LoadWireframeMesh(model_arena, mh.pos, mh.indices);
 }
-
 
 void GameServer::ReceiveEvent(const EventInfo& e) {
   switch (e.event) {

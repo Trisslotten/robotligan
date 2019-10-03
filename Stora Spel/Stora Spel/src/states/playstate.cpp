@@ -45,6 +45,7 @@ void PlayState::Init() {
   glob::window::SetMouseLocked(true);
   engine_->SetSendInput(true);
   engine_->SetCurrentRegistry(&registry_gameplay_);
+  engine_->SetEnableChat(true);
 
   CreateInGameMenu();
   CreateInitialEntities();

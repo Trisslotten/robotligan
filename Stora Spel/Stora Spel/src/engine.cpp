@@ -356,36 +356,41 @@ void Engine::SetCurrentRegistry(entt::registry* registry) {
   this->registry_current_ = registry;
 }
 
-void Engine::UpdateSystems(float dt) {
-  // TODO: move to states
-  // chat code
-  if (chat.IsVisable()) {
-    if (Input::IsKeyPressed(GLFW_KEY_ENTER)) {
-      if (chat.IsClosing() == true) {
-        chat.SetShowChat();
-      } else {
-        chat.SetSendMessage(true);
-        message_ = chat.GetCurrentMessage();
-        chat.CloseChat();
+void Engine::UpdateChat(float dt) {
+  if (enable_chat_) {
+    // chat code
+    if (chat.IsVisable()) {
+      if (Input::IsKeyPressed(GLFW_KEY_ENTER)) {
+        if (chat.IsClosing() == true) {
+          chat.SetShowChat();
+        } else {
+          chat.SetSendMessage(true);
+          message_ = chat.GetCurrentMessage();
+          chat.CloseChat();
+        }
       }
+      chat.Update(dt);
+      chat.SubmitText(font_test2_);
+      if (chat.IsTakingChatInput() == true &&
+          chat.GetCurrentMessage().size() == 0)
+        glob::Submit(font_test2_, glm::vec2(50.f, 600.f), 20, "Enter message",
+                     glm::vec4(1, 1, 1, 1));
     }
-    chat.Update(dt);
-    chat.SubmitText(font_test2_);
-    if (chat.IsTakingChatInput() == true &&
-        chat.GetCurrentMessage().size() == 0)
-      glob::Submit(font_test2_, glm::vec2(50.f, 600.f), 20, "Enter message",
-                   glm::vec4(1, 1, 1, 1));
+    if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat.IsVisable()) {
+      // glob::window::SetMouseLocked(false);
+      chat.SetShowChat();
+    }
+    take_game_input_ = !chat.IsTakingChatInput();
+    // TODO fix
+    // take_game_input_ = !chat.IsTakingChatInput() &&
+    // !show_in_game_menu_buttons_;
   }
-  if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat.IsVisable()) {
-    // glob::window::SetMouseLocked(false);
-    chat.SetShowChat();
-  }
+}
 
-  // take_game_input_ = !chat.IsTakingChatInput() &&
-  // !show_in_game_menu_buttons_;
+void Engine::UpdateSystems(float dt) {
+  UpdateChat(dt);
 
   button_system::Update(*registry_current_);
-
   RenderSystem(*registry_current_);
 }
 

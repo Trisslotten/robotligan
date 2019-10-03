@@ -22,11 +22,14 @@ class GameServer {
   ~GameServer();
   void Init(double in_update_rate);
   void Update(float dt);
+  void HandlePacketsToSend();
+  void HandleStateChange();
   void ReceiveEvent(const EventInfo& e);
 
   void ChangeState(ServerStateType state) { wanted_state_type_ = state; }
 
   NetAPI::Socket::Server& GetServer() { return server_; }
+  std::unordered_map<int, NetAPI::Common::Packet>& GetPackets() { return packets_; }
   entt::registry& GetRegistry() { return registry_; }
 
  private:
@@ -37,14 +40,8 @@ class GameServer {
   //void HandleNewTeam();
 
 
-  // Replay stuff---
-  bool StartRecording(unsigned int in_replay_length_seconds);
-  void Record(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value,
-              const float& in_dt);
-  void Replay(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value);
-  //---
-
   NetAPI::Socket::Server server_;
+  std::unordered_map<int, NetAPI::Common::Packet> packets_;
   entt::registry registry_;
 
   ServerState* current_state_ = nullptr;

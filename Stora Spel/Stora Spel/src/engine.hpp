@@ -34,15 +34,16 @@ class Engine {
   NetAPI::Socket::Client& GetClient() { return client_; }
   NetAPI::Common::Packet& GetPacket() { return packet_; }
   void SetSendInput(bool should_send) { should_send_input_ = should_send; }
+  void SetEnableChat(bool should_enable) { this->enable_chat_ = should_enable; }
 
  private:
   void SetKeybinds();
 
+  void UpdateChat(float dt);
   void UpdateSystems(float dt);
   void HandlePacketBlock(NetAPI::Common::Packet& packet);
 
   void DrawScoreboard();
-
 
   NetAPI::Socket::Client client_;
   NetAPI::Common::Packet packet_;
@@ -79,6 +80,8 @@ class Engine {
   Chat chat;
   std::string message_ = "";
 
+  bool enable_chat_ = false;
+
   entt::entity blue_goal_light_;
   entt::entity red_goal_light_;
 
@@ -87,7 +90,6 @@ class Engine {
 
   std::unordered_map<PlayerID, PlayerScoreBoardInfo> player_scores_;
   std::unordered_map<PlayerID, std::string> player_names_;
-
 };
 
 #endif  // ENGINE_HPP_
