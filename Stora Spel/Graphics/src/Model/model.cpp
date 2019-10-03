@@ -105,29 +105,6 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
 			}
 		}
 	  }
-
-	  //std::cout << "Node bones: " << bones_.size() << "\n";
-
-	  //vertice weight printer
-	  /*
-	  for (int i = 0; i < mesh->mNumVertices; i++) {
-		  std::cout << i << " | ";
-		  for (int w = 0; w < 4; w++) {
-			  std::cout << bone_index_.at(i)[w];
-			  if (w != 3) {
-				  std::cout << ", ";
-			  }
-		  }
-		  std::cout << " | ";
-		  for (int w = 0; w < 4; w++) {
-			  std::cout << weights_.at(i)[w];
-			  if (w != 3) {
-				  std::cout << ", ";
-			  }
-		  }
-		  std::cout << "\n";
-	  }
-	  */
 	  return Mesh(vertex, indices, textures, weights, boneIndex);
   }
 

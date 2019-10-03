@@ -250,7 +250,7 @@ animData GetAnimationData(ModelHandle handle) {
 		j.transform = source->transform;
 		j.f_transform = source->f_transform;
 		for (auto c : source->children) {
-			std::cout << c << "\n";
+			//std::cout << c << "\n";
 			j.children.push_back(c);
 		}
 		data.bones.push_back(j);
