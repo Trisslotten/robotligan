@@ -70,10 +70,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>..\Network API\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\Network API\include;$(SolutionDir)entt-master\src\entt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>..\Network API\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\Network API\include;$(SolutionDir)entt-master\src\entt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>..\Network API\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)glm;$(SolutionDir)Physics\include;$(SolutionDir)Stora Spel\shared;$(SolutionDir)Graphics\include;$(IncludePath)</IncludePath>
@@ -102,6 +102,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -116,6 +117,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -171,6 +173,14 @@
     <ClInclude Include="src\message.hpp" />
     <ClInclude Include="src\util\global_settings.hpp" />
     <ClInclude Include="src\util\timer.hpp" />
+    <ClCompile Include="src\replay machine\bit_pack.cpp" />
+    <ClCompile Include="src\replay machine\reg_pack.cpp" />
+    <ClCompile Include="src\replay machine\replay_machine.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\replay machine\bit_pack.hpp" />
+    <ClInclude Include="src\replay machine\reg_pack.hpp" />
+    <ClInclude Include="src\replay machine\replay_machine.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="util\settings.txt" />

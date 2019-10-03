@@ -20,9 +20,13 @@
 
 namespace {}  // namespace
 
-GameServer::~GameServer() {}
+GameServer::~GameServer() {
+  if (this->replay_machine_ != nullptr) {
+    delete this->replay_machine_;
+  }
+}
 
-void GameServer::Init() {
+void GameServer::Init(double in_update_rate) {
   glob::SetModelUseGL(false);
 
   GlobalSettings::Access()->UpdateValuesFromFile();
@@ -33,11 +37,18 @@ void GameServer::Init() {
 
   CreateEntities();
   CreateGoals();
+
+  // Create replay machine
+  this->replay_machine_ = new ReplayMachine();
+  this->update_rate_ = in_update_rate;
 }
 
 void GameServer::Update(float dt) {
   server_.Update();
 
+  //---------------------------------------------
+  //------------HANDLE NETWORK INPUT-------------
+  //---------------------------------------------
   for (auto client_data : server_.GetNewlyConnected()) {
     std::cout << "DEBUG: Creating a player\n";
     CreatePlayer(client_data->ID);
@@ -51,17 +62,27 @@ void GameServer::Update(float dt) {
     }
     client_data->packets.clear();
   }
+
+  //---------------------------------------------
+  //-----------HANDLE PLAYER ACTIONS-------------
+  //---------------------------------------------
   auto player_view = registry_.view<PlayerComponent>();
   registry_.view<PlayerComponent>().each(
       [&](auto entity, PlayerComponent& player_c) {
-        auto inputs = players_inputs_[player_c.id];
-        player_c.actions = inputs.first;
-        player_c.pitch += inputs.second.x;
-        player_c.yaw += inputs.second.y;
-        /*
-        std::cout << "Pitch: " << player_c.pitch << "\n";
-        std::cout << "Yaw:   " << player_c.yaw << "\n\n";
-                */
+        // Check if we are taking inputs from the
+        // client or if we are reading them from a replay
+        if (!this->replay_) {
+          auto inputs = players_inputs_[player_c.id];
+          player_c.actions = inputs.first;
+          player_c.pitch += inputs.second.x;
+          player_c.yaw += inputs.second.y;
+          // Check if the game should be be recorded
+          if (this->record_) {
+            this->Record(player_c.actions, player_c.pitch, player_c.yaw, dt);
+          }
+        } else {
+          this->Replay(player_c.actions, player_c.pitch, player_c.yaw);
+        }
       });
   players_inputs_.clear();
 
@@ -72,8 +93,14 @@ void GameServer::Update(float dt) {
   });
   */
 
+  //---------------------------------------------
+  //--------------UPDATE GAME LOGIC--------------
+  //---------------------------------------------
   UpdateSystems(dt);
 
+  //---------------------------------------------
+  //------------HANDLE NETWORK OUTPUT------------
+  //---------------------------------------------
   auto pick_up_events = registry_.view<PickUpEvent>();
   for (auto& [id, client_data] : server_.GetClients()) {
     NetAPI::Common::Packet to_send;
@@ -275,6 +302,15 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       players_inputs_[id] = std::make_pair(actions, glm::vec2(pitch, yaw));
       // std::cout << "PACKET: INPUT, " << actions << ", " << yaw << ", " <<
       // pitch << "\n";
+      break;
+    }
+    case PacketBlockType::TEST_REPLAY_KEYS: {
+      // If P is pressed, record 10 seconds
+      bool start_replay;
+      packet >> start_replay;
+      if (start_replay && !this->record_) {
+        this->StartRecording(10);
+      }
       break;
     }
     case PacketBlockType::MESSAGE: {
@@ -612,3 +648,46 @@ void GameServer::CreateGoals() {
   auto& trans_comp2 = registry_.assign<TransformComponent>(entity_red);
   trans_comp2.position = glm::vec3(12.f, -4.f, 0.f);
 }
+
+
+// Replay stuff---
+bool GameServer::StartRecording(unsigned int in_replay_length_seconds) {
+  // Initiate the Replay Machine
+  std::cout << "Recording...\n";
+  this->replay_machine_->Init(in_replay_length_seconds, this->update_rate_, 1);
+  this->record_ = true;
+  return true;  // NTS: Return false if recording cannot start?
+}
+
+void GameServer::Record(std::bitset<10>& in_bitset, float& in_x_value,
+                        float& in_y_value, const float& in_dt) {
+  // Save the frame with the ReplayMachine
+  if (this->replay_machine_->SaveReplayFrame(in_bitset, in_x_value, in_y_value,
+                                             this->registry_, in_dt)) {
+    std::cout << "Replaying...\n";
+    // If true is returned it means the internal
+    // BitPack is fully written and there is no
+    // more space to record on.
+    // Turn off recording.
+    this->record_ = false;
+	// Then start replaying the saved data
+    this->replay_ = true;
+  }
+}
+
+void GameServer::Replay(std::bitset<10>& in_bitset, float& in_x_value,
+                        float& in_y_value) {
+  // Ensure we are not recording the replay
+  this->record_ = false;
+  // Read a frame with the ReplayMachine
+  if (this->replay_machine_->LoadReplayFrame(in_bitset, in_x_value, in_y_value,
+                                             this->registry_)) {
+    std::cout << "Finished.\n";
+    // If true is returned it means the internal
+    // BiPack has been fully read and there is no
+    // more data to replay.
+    // Turn off replaying.
+    this->replay_ = false;
+  }
+}
+//---
