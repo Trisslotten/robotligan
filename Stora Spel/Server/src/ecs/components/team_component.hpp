@@ -6,7 +6,7 @@
 
 
 struct TeamComponent {
-  unsigned int team = TEAM_RED;
+  unsigned int team = TEAM_BLUE;
 };
 
 #endif  // TEAM_COMPONENT_HPP_
