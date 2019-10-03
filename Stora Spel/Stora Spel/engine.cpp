@@ -121,14 +121,15 @@ void Engine::Update(float dt) {
     glm::vec2 mouse_movement = mouse_sensitivity * Input::MouseMov();
     accum_yaw_ -= mouse_movement.x;
     accum_pitch_ -= mouse_movement.y;
+    
+	if (Input::IsKeyPressed(GLFW_KEY_K)) {
+	  new_team_ = TEAM_BLUE;
+	}
+	if (Input::IsKeyPressed(GLFW_KEY_L)) {
+	  new_team_ = TEAM_RED;
+	}
   }
 
-  if (Input::IsKeyPressed(GLFW_KEY_K)) {
-    new_team_ = TEAM_BLUE;
-  }
-  if (Input::IsKeyPressed(GLFW_KEY_L)) {
-    new_team_ = TEAM_RED;
-  }
 
   glob::Submit(font_test3_, glm::vec2(582, 705), 72, std::to_string(scores_[1]),
                glm::vec4(0, 0.26, 1, 1));
