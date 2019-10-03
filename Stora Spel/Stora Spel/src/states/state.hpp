@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <glob/graphics.hpp>
 #include "shared/shared.hpp"
+#include "Chat.hpp"
 
 class Engine;
 
@@ -106,6 +107,7 @@ class PlayState : public State {
     ball_id_ = ball_id;
   }
 
+  void CreatePickUp(glm::vec3 position);
  private:
   void CreateInitialEntities();
   void CreatePlayerEntities();
@@ -114,6 +116,7 @@ class PlayState : public State {
   void CreateInGameMenu();
 
   void TestCreateLights();
+
 
   void UpdateInGameMenu(bool show_menu);
 

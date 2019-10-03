@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\engine.cpp" />
     <ClCompile Include="src\entitycreation.cpp" />
     <ClCompile Include="src\util\global_settings.cpp" />
@@ -10,6 +9,10 @@
     <ClCompile Include="src\states\lobbystate.cpp" />
     <ClCompile Include="src\states\mainmenustate.cpp" />
     <ClCompile Include="src\states\playstate.cpp" />
+    <ClCompile Include="nettest.cpp" />
+    <ClCompile Include="src\util\player_settings.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Chat.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
@@ -47,6 +50,9 @@
     <ClInclude Include="shared\shared\id_component.hpp" />
     <ClInclude Include="shared\shared\shared.hpp" />
     <ClInclude Include="src\ecs\components.hpp" />
+    <ClInclude Include="shared\shared\pick_up_component.hpp" />
+    <ClInclude Include="src\util\player_settings.hpp" />
+    <ClInclude Include="src\Chat.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />
@@ -70,5 +76,6 @@
   <ItemGroup>
     <Text Include="src\util\errorlog.txt" />
     <Text Include="src\util\settings.txt" />
+    <Text Include="util\player_settings.txt" />
   </ItemGroup>
 </Project>

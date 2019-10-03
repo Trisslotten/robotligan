@@ -1,7 +1,7 @@
 #ifndef PICK_UP_EVENT_HPP_
 #define PICK_UP_EVENT_HPP_
 
-#include <shared.hpp>
+#include "shared/shared.hpp"
 
 struct PickUpEvent {
   int pick_up_id;

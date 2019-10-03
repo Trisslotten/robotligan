@@ -25,7 +25,7 @@ int main(unsigned argc, char** argv) {
   Engine engine;
   engine.Init();
 
-  double net_update_rate = 64.0;
+  double net_update_rate = kClientUpdateRate;
   double net_update_time = 1.0 / net_update_rate;
 
   int num_render_updates = 0;

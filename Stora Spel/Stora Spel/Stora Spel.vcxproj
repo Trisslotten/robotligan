@@ -152,20 +152,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Chat.cpp" />
-    <ClCompile Include="main.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="src\Chat.cpp" />
     <ClCompile Include="src\engine.cpp" />
     <ClCompile Include="src\entitycreation.cpp" />
+    <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\states\lobbystate.cpp" />
     <ClCompile Include="src\states\mainmenustate.cpp" />
     <ClCompile Include="src\states\playstate.cpp" />
     <ClCompile Include="src\util\global_settings.cpp" />
     <ClCompile Include="src\util\input.cpp" />
+    <ClCompile Include="src\util\player_settings.cpp" />
     <ClCompile Include="src\util\timer.cpp" />
     <ClCompile Include="nettest.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -175,6 +171,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="shared\shared\pick_up_component.hpp" />
     <ClInclude Include="src\ecs\components.hpp" />
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
     <ClInclude Include="src\ecs\components\button_component.hpp" />
@@ -192,7 +189,7 @@
     <ClInclude Include="ecs\components\model_component.hpp" />
     <ClInclude Include="shared\shared\id_component.hpp" />
     <ClInclude Include="shared\shared\transform_component.hpp" />
-    <ClInclude Include="Chat.hpp" />
+    <ClInclude Include="src\Chat.hpp" />
     <ClInclude Include="Components\position.hpp" />
     <ClInclude Include="Components\physics_component.hpp" />
     <ClInclude Include="Components\projectile_component.hpp" />
@@ -210,7 +207,7 @@
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
     <ClInclude Include="src\util\meminfo.hpp" />
     <ClInclude Include="src\util\timer.hpp" />
-    <ClInclude Include="util\player_settings.hpp" />
+    <ClInclude Include="src\util\player_settings.hpp" />
     <ClInclude Include="src\util\transform_helper.hpp" />
   </ItemGroup>
   <ItemGroup>

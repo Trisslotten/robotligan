@@ -30,18 +30,10 @@ class Engine {
   void Render();
 
   void SetCurrentRegistry(entt::registry* registry);
-  void ChangeState(StateType state) {
-    wanted_state_type_ = state;
-  }
-  NetAPI::Socket::Client& GetClient() {
-    return client_;
-  }
-  NetAPI::Common::Packet& GetPacket() {
-    return packet_;
-  }
-  void SetSendInput(bool should_send) {
-    should_send_input_ =  should_send;
-  }
+  void ChangeState(StateType state) { wanted_state_type_ = state; }
+  NetAPI::Socket::Client& GetClient() { return client_; }
+  NetAPI::Common::Packet& GetPacket() { return packet_; }
+  void SetSendInput(bool should_send) { should_send_input_ = should_send; }
 
  private:
   void SetKeybinds();
@@ -49,7 +41,8 @@ class Engine {
   void UpdateSystems(float dt);
   void HandlePacketBlock(NetAPI::Common::Packet& packet);
 
-  void CreatePickUp(glm::vec3 position);
+  void DrawScoreboard();
+
 
   NetAPI::Socket::Client client_;
   NetAPI::Common::Packet packet_;
@@ -76,20 +69,25 @@ class Engine {
   glob::Font2DHandle font_test2_ = 0;
   glob::Font2DHandle font_test3_ = 0;
 
-   std::vector<unsigned int> scores_;
+  glob::GUIHandle gui_scoreboard_back_ = 0;
 
-   
-  entt::entity blue_goal_light_;
-  entt::entity red_goal_light_;
   bool take_game_input_ = true;
+
+  // TODO: move to states
+  std::vector<unsigned int> scores_;
+
   Chat chat;
   std::string message_ = "";
+
+  entt::entity blue_goal_light_;
+  entt::entity red_goal_light_;
+
   AbilityID second_ability_ = AbilityID::NULL_ABILITY;
   unsigned int new_team_ = std::numeric_limits<unsigned int>::max();
 
   std::unordered_map<PlayerID, PlayerScoreBoardInfo> player_scores_;
   std::unordered_map<PlayerID, std::string> player_names_;
-  void DrawScoreboard();
+
 };
 
 #endif  // ENGINE_HPP_

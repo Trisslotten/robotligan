@@ -7,14 +7,14 @@
 #include <entt.hpp>
 #include <glm/glm.hpp>
 #include <shared/shared.hpp>
-#include "serverstate.hpp"
 #include <vector>
+#include "serverstate.hpp"
 
 #include "replay machine/replay_machine.hpp"
 #include "util/global_settings.hpp"
 
-#include "util/event.hpp"
 #include "message.hpp"
+#include "util/event.hpp"
 #include "util/timer.hpp"
 
 class GameServer {
@@ -34,7 +34,8 @@ class GameServer {
 
   void HandlePacketBlock(NetAPI::Common::Packet& packet, int16_t block_type,
                          int client_id);
-  void HandleNewTeam();
+  //void HandleNewTeam();
+
 
   // Replay stuff---
   bool StartRecording(unsigned int in_replay_length_seconds);
@@ -52,24 +53,12 @@ class GameServer {
   ServerStateType wanted_state_type_ = ServerStateType::LOBBY;
   ServerStateType current_state_type_ = ServerStateType::LOBBY;
 
-  std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
-  std::vector<entt::entity> pick_ups_;
   std::vector<Message> messages;
 
   int test_player_guid_ = 0;
 
-  int last_spawned_team_ = 1;
-
-  int red_players_ = 0;
-  int blue_players_ = 0;
   std::vector<unsigned int> scores;
 
-  // Replay stuff ---
-  ReplayMachine* replay_machine_ = nullptr;
-  double update_rate_ = 0.0f;
-  bool record_ = false;
-  bool replay_ = false;
-  //---
 };
 
 #endif  // GAME_SERVER_HPP_

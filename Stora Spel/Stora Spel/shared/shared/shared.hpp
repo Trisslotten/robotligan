@@ -8,6 +8,9 @@
 #define POINTS_ASSIST	2
 #define POINTS_SAVE		4
 
+const double kClientUpdateRate = 64;
+const double kServerUpdateRate = 64;
+
 typedef int EntityID;
 
 // deprecated

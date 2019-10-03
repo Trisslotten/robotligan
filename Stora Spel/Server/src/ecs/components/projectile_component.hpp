@@ -1,7 +1,7 @@
 #ifndef PROJECTILE_COMPONENT_HPP_
 #define PROJECTILE_COMPONENT_HPP_
 
-#include <shared.hpp>
+#include "shared/shared.hpp"
 
 enum ProjectileID {
   CANNON_BALL,

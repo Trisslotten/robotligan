@@ -64,7 +64,7 @@ void Update(entt::registry &registry, float dt) {
         // Check if the player should shoot
         if (ability_component.shoot &&
             ability_component.shoot_cooldown <= 0.0f) {
-          CreateCannonBallEntity(registry, player_component.id);
+          CreateCannonBallEntity(registry, player_component.client_id);
           ability_component.shoot_cooldown = 1.0f;
         }
         ability_component.shoot = false;
@@ -184,7 +184,7 @@ void CreateCannonBallEntity(entt::registry &registry, PlayerID id) {
     PlayerComponent &pc = view_controller.get<PlayerComponent>(entity);
     TransformComponent &tc = view_controller.get<TransformComponent>(entity);
 
-    if (pc.id == id) {
+    if (pc.client_id == id) {
       float speed = 20.0f;
       auto cannonball = registry.create();
       registry.assign<PhysicsComponent>(

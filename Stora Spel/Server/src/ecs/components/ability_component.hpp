@@ -1,7 +1,7 @@
 #ifndef ABILITY_COMPONENT_HPP_
 #define ABILITY_COMPONENT_HPP_
 
-#include <shared.hpp>
+#include "shared/shared.hpp"
 
 struct AbilityComponent {
   AbilityID primary_ability = AbilityID::NULL_ABILITY;

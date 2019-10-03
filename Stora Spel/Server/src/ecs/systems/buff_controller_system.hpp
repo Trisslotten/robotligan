@@ -1,11 +1,9 @@
 #ifndef BUFF_CONTROLLER_SYSTEM_HPP_
 #define BUFF_CONTROLLER_SYSTEM_HPP_
 
-//#include <position.h>
-#include <../util/global_settings.hpp>
-//#include <boundingboxes.hpp>
-//#include <camera_component.hpp>
 #include <entt.hpp>
+
+#include "util/global_settings.hpp"
 #include "ecs/components.hpp"
 
 namespace buff_controller {

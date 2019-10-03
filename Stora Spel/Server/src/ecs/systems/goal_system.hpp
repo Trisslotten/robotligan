@@ -5,13 +5,13 @@
 #include <collision.hpp>
 #include <entt.hpp>
 #include <physics_object.hpp>
-#include <shared.hpp>
-#include <transform_component.hpp>
+#include <shared/shared.hpp>
+#include <shared/transform_component.hpp>
 
-#include "../components/ball_component.hpp"
-#include "../components/goal_component.hpp"
-#include "../components/physics_component.hpp"
-#include "../components/team_component.hpp"
+#include "ecs/components/ball_component.hpp"
+#include "ecs/components/goal_component.hpp"
+#include "ecs/components/physics_component.hpp"
+#include "ecs/components/team_component.hpp"
 
 namespace goal_system {
 bool Update(entt::registry& registry) {
@@ -49,7 +49,7 @@ bool Update(entt::registry& registry) {
             auto& player_team_c = registry.get<TeamComponent>(player);
             auto& player_points_c = registry.get<PointsComponent>(player);
 
-            if (player_player_c.id == ball_ball_c.last_touch) {
+            if (player_player_c.client_id == ball_ball_c.last_touch) {
               if (goal_team_c.team == player_team_c.team) {
                 // if correct goal, add POINTS_GOAL points
                 player_points_c.AddPoints(POINTS_GOAL);

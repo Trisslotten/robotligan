@@ -171,7 +171,7 @@ void Update(entt::registry& registry, float dt) {
           // perform kick
           ball_physics_c.velocity += kick_dir * player_c.kick_force;
           ball_physics_c.is_airborne = true;
-          ball_c.last_touch = player_c.id;
+          ball_c.last_touch = player_c.client_id;
         }
       }
     }

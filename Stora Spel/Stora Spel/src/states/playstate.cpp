@@ -12,6 +12,7 @@
 #include "engine.hpp"
 #include "entitycreation.hpp"
 #include "util/input.hpp"
+#include <shared\pick_up_component.hpp>
 
 void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
@@ -38,8 +39,6 @@ void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
   // \TO BE MOVED
   ///////////////////////////////////////////////////////////////
-
-  
 }
 
 void PlayState::Init() {
@@ -107,7 +106,15 @@ void PlayState::Update() {
   glob::Submit(gui_teamscore_, glm::vec2(497, 648), 1, 100);
 }
 
-void PlayState::UpdateNetwork() {}
+void PlayState::UpdateNetwork() {
+  auto& packet = engine_->GetPacket();
+
+
+  // TEMP: Start recording replay
+  bool temp = Input::IsKeyPressed(GLFW_KEY_P);
+  packet << temp;
+  packet << PacketBlockType::TEST_REPLAY_KEYS;
+}
 
 void PlayState::Cleanup() {
   //
@@ -239,3 +246,14 @@ void PlayState::TestCreateLights() {
       light, glm::vec3(-12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
 }
+
+void PlayState::CreatePickUp(glm::vec3 position) {
+  auto pick_up = registry_gameplay_.create();
+  glob::ModelHandle model_pick_up =
+      glob::GetModel("assets/lowpolydeer/deer.fbx");  // Replace with real model
+  registry_gameplay_.assign<ModelComponent>(pick_up, model_pick_up);
+  registry_gameplay_.assign<TransformComponent>(
+      pick_up, position, glm::vec3(0.0f, 0.0f, -1.6f), glm::vec3(0.002f));
+  registry_gameplay_.assign<PickUpComponent>(pick_up);
+}
+

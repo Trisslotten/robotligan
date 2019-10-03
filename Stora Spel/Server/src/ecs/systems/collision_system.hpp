@@ -85,7 +85,7 @@ void UpdateCollisions(entt::registry& registry) {
       if (data.collision) {
         ball_collisions[ball_counter].collision_list.push_back(
             {player, data.normal, data.move_vector, PLAYER});
-        ball_ball.last_touch = player_player.id;
+        ball_ball.last_touch = player_player.client_id;
       }
     }
 
@@ -446,7 +446,7 @@ void PickUpPlayerCollision(entt::registry& registry) {
         auto entity = registry.create();
         registry.assign<PickUpEvent>(
             entity, pick_up_view.get<PickUpComponent>(pick_up).id,
-            view_player.get<PlayerComponent>(player).id,
+            view_player.get<PlayerComponent>(player).client_id,
             AbilityID::SWITCH_GOALS);
 
         auto& ability_c = view_player.get<AbilityComponent>(player);
