@@ -7,6 +7,7 @@ extern entt::dispatcher dispatcher;
 enum class Event {
 	DESTROY_ENTITY,
 	CREATE_CANNONBALL,
+	NUM_OF_EVENTS,
 };
 
 struct EventInfo {
