@@ -25,7 +25,7 @@ class ServerState {
   void SetGameServer(GameServer* game_server) { game_server_ = game_server; }
 
  protected:
-  GameServer* game_server_;
+  GameServer* game_server_ = nullptr;
 
  private:
 };

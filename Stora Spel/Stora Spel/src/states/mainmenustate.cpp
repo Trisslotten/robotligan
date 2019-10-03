@@ -10,9 +10,14 @@ void MainMenuState::Startup() {
 }
 
 void MainMenuState::Init() {
+  auto& client = engine_->GetClient();
   //
   engine_->SetSendInput(false);
   engine_->SetCurrentRegistry(&registry_mainmenu_);
+
+  if(client.IsConnected()){
+    client.Disconnect();
+  }
 }
 
 void MainMenuState::Update() {

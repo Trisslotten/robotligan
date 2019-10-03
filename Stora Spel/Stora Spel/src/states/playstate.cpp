@@ -38,6 +38,8 @@ void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
   // \TO BE MOVED
   ///////////////////////////////////////////////////////////////
+
+  
 }
 
 void PlayState::Init() {
@@ -45,6 +47,7 @@ void PlayState::Init() {
   engine_->SetSendInput(true);
   engine_->SetCurrentRegistry(&registry_gameplay_);
 
+  CreateInGameMenu();
   CreateInitialEntities();
 }
 
@@ -139,7 +142,8 @@ void PlayState::CreateInitialEntities() {
 }
 
 void PlayState::CreatePlayerEntities() {
-  std::cout << "DEBUG: playstate.cpp: Created "<< player_ids_.size() << " players\n";
+  std::cout << "DEBUG: playstate.cpp: Created " << player_ids_.size()
+            << " players\n";
 
   for (auto entity_id : player_ids_) {
     auto entity = registry_gameplay_.create();
@@ -207,10 +211,11 @@ void PlayState::CreateInGameMenu() {
   };
 
   // END GAME -- change registry to registry_mainmenu_
-  in_game_buttons_ = GenerateButtonEntity(
-      registry_gameplay_, "TO LOBBY", glm::vec2(550, 290), font_test_, false);
+  in_game_buttons_ =
+      GenerateButtonEntity(registry_gameplay_, "TO MAIN MENU",
+                           glm::vec2(550, 290), font_test_, false);
   in_game_buttons_->button_func = [&] {
-    // All the logic here
+    engine_->ChangeState(StateType::MAIN_MENU);
   };
 
   in_game_buttons_ = GenerateButtonEntity(
