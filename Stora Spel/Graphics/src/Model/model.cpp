@@ -87,6 +87,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
 		Joint* j = new Joint();
 		j->id = i;
 		j->name = mesh->mBones[i]->mName.data;
+		j->offset = convertToGLM(mesh->mBones[i]->mOffsetMatrix);
 		bones_.push_back(j);
 
 		//set vec4 arrays for weight and bone index (influencing bone)
@@ -186,6 +187,9 @@ void Model::LoadModel(std::string path) {
     return;
   }
 
+  globalInverseTransform = convertToGLM(scene->mRootNode->mTransformation);
+  globalInverseTransform = glm::inverse(globalInverseTransform);
+
   directory_ = path.substr(0, path.find_last_of('/'));
 
   ProcessNode(scene->mRootNode, scene);
@@ -261,10 +265,6 @@ Joint* Model::MakeArmature(aiNode* node) {
 	for (auto& b : bones_) {
 		if (node->mName.data == b->name) {//node is known bone
 			b->transform = convertToGLM(node->mTransformation);
-			for (int i = 0; i < 16; i++) {
-				std::cout << b->transform[(i / 4) % 4][i % 4] << " : ";
-			}
-			std::cout << "\n";
 			for (int n = 0; n < node->mNumChildren; n++) {
 				for (auto PCB : bones_) {
 					if (node->mChildren[n]->mName.data == PCB->name) {//found child

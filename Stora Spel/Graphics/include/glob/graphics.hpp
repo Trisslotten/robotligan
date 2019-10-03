@@ -19,6 +19,7 @@ namespace glob {
 	struct animData {
 		std::vector<Joint> bones;
 		std::vector<Animation> animations;
+		glm::mat4 globalInverseTransform;
 	};
 
 typedef unsigned long ModelHandle;

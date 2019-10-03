@@ -9,10 +9,9 @@ void Mesh::SetupMesh(bool weighted) {
   glGenVertexArrays(1, &vertex_array_object_);
   glGenBuffers(1, &vertex_buffer_object_);
   glGenBuffers(1, &element_buffer_object_);
-  glGenBuffers(1, &bone_buffer_object_);
-  glGenBuffers(1, &weight_buffer_object_);
 
   /*---------------Binding vertex buffer---------------*/
+
   glBindVertexArray(vertex_array_object_);
   glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer_object_);
   glBufferData(GL_ARRAY_BUFFER, vertices_.size() * sizeof(Vertex),
@@ -38,12 +37,15 @@ void Mesh::SetupMesh(bool weighted) {
 
   if (weighted) {
 
+	  glGenBuffers(1, &bone_buffer_object_);
+	  glGenBuffers(1, &weight_buffer_object_);
+
 	  glBindBuffer(GL_ARRAY_BUFFER, bone_buffer_object_); // bone indexes
 	  glBufferData(GL_ARRAY_BUFFER, bone_index_.size() * sizeof(glm::ivec4),
 		  &bone_index_[0], GL_STATIC_DRAW);
 
 	  glEnableVertexAttribArray(3);  
-	  glVertexAttribPointer(3, 4, GL_INT, GL_FALSE, sizeof(glm::ivec4), (GLvoid*)0);
+	  glVertexAttribIPointer(3, 4, GL_INT, sizeof(glm::ivec4), (GLvoid*)0);
 
 	  glBindBuffer(GL_ARRAY_BUFFER, weight_buffer_object_); // weights
 	  glBufferData(GL_ARRAY_BUFFER, weights_.size() * sizeof(glm::vec4),

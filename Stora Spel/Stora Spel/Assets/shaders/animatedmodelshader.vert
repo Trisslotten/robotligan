@@ -18,21 +18,21 @@ uniform mat4 bone_transform[64];
 
 void main()
 {
-    vec4 t_vertex = vec4(0.f);
+    vec4 t_vertex = vec4(pos, 1.f);
 	vec4 t_normal = vec4(0.f);
+	mat4 transform = mat4(0.f);
 
 	int i = 0;
+	while(bones[i] != -1 && i < 4){
+		transform += (bone_transform[bones[i]] * weights[i]);
+		i++;
+	}
 
-	t_vertex = (weights[0] * bone_transform[bones[0]]) * vec4(pos, 1.f);
-
-	//while(bones[i] != -1 && i < 4){
-		//t_vertex = (weights[i] * bone_transform[bones[i]]) * vec4(pos, 1.f);
-		//i++;
-	//}
-
+	t_vertex = transform * t_vertex;
+	t_normal = transform * vec4(normal, 0.f);
 	frag_pos = (model_transform * t_vertex).xyz;
 
 	v_tex = tex;
-	v_normal = normalize(transpose(inverse(mat3(model_transform)))*normal);
+	v_normal = normalize(transpose(inverse(mat3(model_transform))) * t_normal.xyz);
 	gl_Position = cam_transform * model_transform * t_vertex;
 }

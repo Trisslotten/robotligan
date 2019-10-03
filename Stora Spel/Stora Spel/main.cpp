@@ -200,7 +200,21 @@ void CreateEntities(entt::registry& registry, glm::vec3* in_pos_arr,
   // Create one player entity and add components
   auto avatar_entity = registry.create();
   AddPlayerComponents(registry, avatar_entity);
-  AddRobotComponents(registry, avatar_entity, in_pos_arr[1]);
+  registry.assign<PhysicsComponent>(avatar_entity, glm::vec3(0.f), true,
+	  0.f);
+  registry.assign<TransformComponent>(avatar_entity, in_pos_arr[1],
+	  glm::vec3(0.f), glm::vec3(0.05f));
+  registry.assign<physics::OBB>(
+	  avatar_entity,
+	  glm::vec3(0.05f),	// Center
+	  glm::vec3(1.f, 0.f, 0.f),			//
+	  glm::vec3(0.f, 1.f, 0.f),			// Normals
+	  glm::vec3(0.f, 0.f, 1.f),			//
+	  1.5f,	//
+	  1.5f,  // Length of each plane
+	  1.5f	//
+	  );
+  //AddRobotComponents(registry, avatar_entity, in_pos_arr[1]);
 
   // Create other robots and add components
   for (unsigned int i = 2; i < in_num_pos; i++) {
@@ -315,7 +329,7 @@ void AddRobotComponents(entt::registry& registry, entt::entity& entity,
   glm::vec3 zero_vec = glm::vec3(0.f, 0.f, 0.f);
   glm::vec3 alter_scale =
       glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
-  glm::vec3 character_scale = glm::vec3(0.0015f);
+  glm::vec3 character_scale = glm::vec3(0.75f);
   glob::ModelHandle robot_model =
       glob::GetModel("assets/Mech/Mech.fbx");
 	
@@ -335,9 +349,9 @@ void AddRobotComponents(entt::registry& registry, entt::entity& entity,
       glm::vec3(1.f, 0.f, 0.f),			//
 	  glm::vec3(0.f, 1.f, 0.f),			// Normals
       glm::vec3(0.f, 0.f, 1.f),			//
-	  coeff_x_side * character_scale.x * 0.5f,	//
-      coeff_y_side * character_scale.y * 0.5f,  // Length of each plane
-      coeff_z_side * character_scale.z * 0.5f	//
+	  coeff_x_side * character_scale.x * 0.05f,	//
+      coeff_y_side * character_scale.y * 0.05f,  // Length of each plane
+      coeff_z_side * character_scale.z * 0.05f	//
 	  );
   
 }

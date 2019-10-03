@@ -246,8 +246,9 @@ animData GetAnimationData(ModelHandle handle) {
 		glob::Joint j;
 		j.id = source->id;
 		j.name = source->name;
-		j.position = source->position;
+		j.offset = source->offset;
 		j.transform = source->transform;
+		j.f_transform = source->f_transform;
 		for (auto c : source->children) {
 			std::cout << c << "\n";
 			j.children.push_back(c);
@@ -265,6 +266,8 @@ animData GetAnimationData(ModelHandle handle) {
 		a.channels_ = source->channels_;
 		data.animations.push_back(a);
 	}
+
+	data.globalInverseTransform = model->globalInverseTransform;
 
 	return data;
 }

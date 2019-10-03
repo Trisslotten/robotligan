@@ -11,6 +11,19 @@
 #include "animation_component.hpp"
 #include "player_component.hpp"
 
+void getDefaultPose(glm::mat4 parent, glob::Joint* bone, std::vector<glob::Joint>* armature, glm::mat4 GIT) {
+	glm::mat4 parentTransform = parent;
+
+	glm::mat4 globalTransform = parentTransform * bone->transform;
+
+	bone->f_transform = GIT * globalTransform * bone->offset;
+
+	for (int i = 0; i < bone->children.size(); i++) {
+		getDefaultPose(globalTransform, &armature->at(bone->children.at(i)), armature, GIT);//bone transform is zero (second to last run)
+	}
+}
+
+
 void UpdateAnimations(entt::registry& registry, float dt) {
 
 	auto animation_entities = registry.view<AnimationComponent>();
@@ -22,13 +35,20 @@ void UpdateAnimations(entt::registry& registry, float dt) {
 			boneTransforms.push_back(glm::mat4(1.f));
 		}
 
+		glm::mat4 identity = glm::mat4(1.f);
+		int rootBone = 0;
+		for (int i = 0; i < a.model_data.bones.size(); i++) {
+			if (a.model_data.bones.at(i).id == 0) {
+				rootBone = i;
+				break;
+			}
+		}
+		getDefaultPose(identity, &a.model_data.bones.at(rootBone), &a.model_data.bones, a.model_data.globalInverseTransform);
+
 		//std::cout << a.model_data.bones.size() << "\n";
 		for (auto bone : a.model_data.bones) {
-			/*for (int i = 0; i < 16; i++) {
-				std::cout << bone.transform[(i / 4) % 4][i % 4] << " : ";
-			}*/
 			int id = bone.id;
-			boneTransforms.at(id) = bone.transform;
+			boneTransforms.at(id) = bone.f_transform;
 		}
 		a.bone_transforms = boneTransforms;
 

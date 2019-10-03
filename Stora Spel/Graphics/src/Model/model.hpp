@@ -54,6 +54,7 @@ class Model {
 
   std::vector<Joint*> bones_;
   std::vector<Animation*> animations_;
+  glm::mat4 globalInverseTransform;
 };
 
 }  // namespace glob
