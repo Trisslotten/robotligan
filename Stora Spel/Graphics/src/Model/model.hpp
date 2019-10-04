@@ -8,6 +8,7 @@
 #include "../shader.hpp"
 #include "glob/Animation.hpp"
 #include "glob/joint.hpp"
+#include <glm/gtx/transform.hpp>
 
 namespace glob {
 

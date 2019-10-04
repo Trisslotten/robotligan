@@ -239,9 +239,11 @@ Joint* Model::MakeArmature(aiNode* node) {
 	//Takes all known bones from the bones_ vector and structures it (assigns children)
 	bool rootNode = (node->mName.data == std::string("Root"));
 
+	bool knownBone = false;
 	for (auto& b : bones_) {
 		if (node->mName.data == b->name) {//node is known bone
 			b->transform = convertToGLM(node->mTransformation);
+			knownBone = true;
 			for (int n = 0; n < node->mNumChildren; n++) {
 				for (auto PCB : bones_) {
 					if (node->mChildren[n]->mName.data == PCB->name) {//found child
@@ -251,6 +253,33 @@ Joint* Model::MakeArmature(aiNode* node) {
 			}
 		}
 	}
+
+	//node isn't known bone, but might be the progenitor for the entire armature
+
+	if (!knownBone) {
+		Joint* j = new Joint;
+		j->name = "Armature";
+		j->offset = glm::mat4(0.f);
+		j->transform = glm::rotate(convertToGLM(node->mTransformation), 3.1416f / 2.f, glm::vec3(1.f, 0.f, 0.f));
+		bool knownChildren = false;
+		for (int n = 0; n < node->mNumChildren; n++) {
+			for (auto PCB : bones_) {
+				if (node->mChildren[n]->mName.data == PCB->name) {//found child
+					j->children.push_back(PCB->id);
+					knownChildren = true;
+				}
+			}
+		}
+		if (knownChildren) {
+			std::cout << "Armature created from " << node->mName.data << "\n";
+			j->id = bones_.size();
+			bones_.push_back(j);
+		}
+		else {
+			delete j;
+		}
+	}
+	
 
 	for (int i = 0; i < node->mNumChildren; i++) {
 		MakeArmature(node->mChildren[i]);

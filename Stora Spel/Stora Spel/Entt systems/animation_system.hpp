@@ -38,7 +38,7 @@ void UpdateAnimations(entt::registry& registry, float dt) {
 		glm::mat4 identity = glm::mat4(1.f);
 		int rootBone = 0;
 		for (int i = 0; i < a.model_data.bones.size(); i++) {
-			if (a.model_data.bones.at(i).id == 0) {
+			if (a.model_data.bones.at(i).name == "Armature") {
 				rootBone = i;
 				break;
 			}
