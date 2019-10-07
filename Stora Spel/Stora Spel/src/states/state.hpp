@@ -82,6 +82,7 @@ class LobbyState : public State {
 
  private:
   entt::registry registry_lobby_;
+  void CreateBackgroundEntities();
 };
 
 /////////////////////// PLAY ///////////////////////
