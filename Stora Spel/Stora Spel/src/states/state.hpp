@@ -132,8 +132,8 @@ class ConnectMenuState : public State {
     glm::vec2 pos = glm::vec2(0.0f, 0.0f);
     glob::GUIHandle hndl = 0;
   };
-  std::string ip_;
-  std::string port_;
+  std::string ip_ = "localhost";
+  std::string port_ = "1337";
   InputField ip_field_;
   InputField port_field_;
   glob::Font2DHandle font_test_ = 0;

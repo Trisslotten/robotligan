@@ -35,10 +35,13 @@ void ConnectMenuState::Startup() {
   ip_field_.pos = ip_pos;
   ip_field_.size = glm::vec2(50.0f, 10.0f);
   ip_field_.hndl = glob::GetGUIItem("Assets/GUI_elements/input_field.png");
+  ip_field_.input_field = "localhost";
+ 
 
   port_field_.pos = port_pos;
   port_field_.size = glm::vec2(50.0f, 10.0f);
   port_field_.hndl = glob::GetGUIItem("Assets/GUI_elements/input_field.png");
+  port_field_.input_field = "1337";
 }
 
 void ConnectMenuState::Init() {
