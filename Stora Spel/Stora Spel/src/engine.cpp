@@ -36,6 +36,11 @@ void Engine::Init() {
   scores_.reserve(2);
   scores_.push_back(0);
   scores_.push_back(0);
+
+  gameplay_timer_.reserve(2);
+  gameplay_timer_.push_back(4);
+  gameplay_timer_.push_back(59);
+
   std::vector<std::string> names = {"Bogdan",  "Smibel Gork", "Big King",
                                     "Blorgon", "Thrall",      "Fisken",
                                     "Snabel",  "BOI"};
@@ -64,9 +69,7 @@ void Engine::Init() {
 }
 
 void Engine::Update(float dt) {
-  
-
-  //std::cout << "current message: " << Input::GetCharacters() <<"\n";
+  // std::cout << "current message: " << Input::GetCharacters() <<"\n";
 
   if (take_game_input_ == true) {
     // accumulate key presses
@@ -90,10 +93,18 @@ void Engine::Update(float dt) {
   }
 
   // TODO: move to playstate
+  // Score
   glob::Submit(font_test3_, glm::vec2(582, 705), 72, std::to_string(scores_[1]),
                glm::vec4(0, 0.26, 1, 1));
   glob::Submit(font_test3_, glm::vec2(705, 705), 72, std::to_string(scores_[0]),
                glm::vec4(1, 0, 0, 1));
+  // Gameplay timer
+  glob::Submit(font_test3_, glm::vec2(613, 705), 72,
+               std::to_string(gameplay_timer_[0]), glm::vec4(1, 1, 1, 1));
+  glob::Submit(font_test3_, glm::vec2(643, 705), 72, ":",
+               glm::vec4(1, 1, 1, 1));
+  glob::Submit(font_test3_, glm::vec2(660, 705), 72,
+               std::to_string(gameplay_timer_[1]), glm::vec4(1, 1, 1, 1));
 
   current_state_->Update();
 
@@ -190,7 +201,6 @@ void Engine::UpdateNetwork() {
       }
     }
   }
-
 }
 
 void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
@@ -390,7 +400,8 @@ void Engine::UpdateChat(float dt) {
 void Engine::UpdateSystems(float dt) {
   UpdateChat(dt);
 
-  if (Input::IsKeyDown(GLFW_KEY_TAB) && current_state_->Type() == StateType::PLAY) {
+  if (Input::IsKeyDown(GLFW_KEY_TAB) &&
+      current_state_->Type() == StateType::PLAY) {
     DrawScoreboard();
   }
 

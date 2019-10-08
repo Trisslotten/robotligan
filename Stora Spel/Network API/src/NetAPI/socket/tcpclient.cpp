@@ -108,11 +108,13 @@ std::vector<NetAPI::Common::Packet> NetAPI::Socket::TcpClient::Receive(
 
         result.push_back(packet);
 
+		/*
         if (result.size() > 20) {
 		  // something wrong
 		  std::cout << "WARNING: Network: received more than 20 packets from single connection\n\tonly using first 20\n";
           break;
 		}
+        */
 
         offset += packet_size;
         buff_left -= packet_size;
