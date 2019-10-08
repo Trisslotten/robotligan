@@ -75,7 +75,7 @@ class Engine {
 
   // TODO: move to states
   std::vector<unsigned int> scores_;
-  std::vector<unsigned int> gameplay_timer_;
+  double gameplay_timer_ = 5.0f;
 
   Chat chat;
   std::string message_ = "";

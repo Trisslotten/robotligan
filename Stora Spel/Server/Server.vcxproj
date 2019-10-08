@@ -190,6 +190,9 @@
   <ItemGroup>
     <Text Include="util\settings.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="src\ecs\components\match_timer_component.hpp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

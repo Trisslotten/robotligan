@@ -75,6 +75,7 @@ class ServerPlayState : public ServerState {
   void CreateBallEntity();
   void CreatePlayerEntity();
   void CreateGoals();
+  void CreateMatchTimer();
   void Record(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value,
               const float& in_dt);
   void Replay(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value);
@@ -92,6 +93,8 @@ class ServerPlayState : public ServerState {
   int last_spawned_team_ = 1;
   int red_players_ = 0;
   int blue_players_ = 0;
+
+  Timer match_timer_;
 
   std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
 

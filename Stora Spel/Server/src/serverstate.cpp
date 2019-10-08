@@ -4,12 +4,13 @@
 #include "shared/transform_component.hpp"
 
 #include <collision.hpp>
+#include <ecs\components\pick_up_event.hpp>
 #include <glob\graphics.hpp>
 #include <shared\id_component.hpp>
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
+#include "ecs/components/match_timer_component.hpp"
 #include "gameserver.hpp"
-#include <ecs\components\pick_up_event.hpp>
 
 void ServerLobbyState::Init() {
   //
@@ -75,8 +76,6 @@ void ServerPlayState::Init() {
 
     server.Send(to_send);
   }
-
-
 }
 
 void ServerPlayState::Update(float dt) {
@@ -179,7 +178,8 @@ void ServerPlayState::Update(float dt) {
       to_send << goal_team_c;
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
-      if (goal_goal_c.switched_this_tick) {  // MAY NEED TO CHANGE, NOT A GOOD SOLUTION
+      if (goal_goal_c
+              .switched_this_tick) {  // MAY NEED TO CHANGE, NOT A GOOD SOLUTION
         if (!sent_switch) {
           to_send << PacketBlockType::SWITCH_GOALS;
           sent_switch = true;
@@ -187,6 +187,12 @@ void ServerPlayState::Update(float dt) {
         goal_goal_c.switched_this_tick = false;
       }
     }
+    auto match_timer = registry.view<MatchTimer>();
+    for (auto timer : match_timer) {
+      MatchTimer& match_timer_c = registry.get<MatchTimer>(timer);
+      to_send << match_timer_c.match_timer;
+      to_send << PacketBlockType::MATCH_TIMER;
+	}
   }
 
   pick_ups_.clear();
@@ -228,6 +234,7 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
   CreateArenaEntity();
   CreateBallEntity();
   CreateGoals();
+  CreateMatchTimer();
 
   for (auto a : clients_player_ids_) {
     std::cout << "client_id=" << a.first << ", entity_id=" << a.second << "\n";
@@ -516,6 +523,17 @@ void ServerPlayState::CreateGoals() {
   registry.assign<GoalComponenet>(entity_red);
   auto& trans_comp2 = registry.assign<TransformComponent>(entity_red);
   trans_comp2.position = glm::vec3(12.f, -4.f, 0.f);
+}
+
+void ServerPlayState::CreateMatchTimer() {
+  auto& registry = game_server_->GetRegistry();
+
+  double timer = match_timer_.Restart();
+
+  // Add match timer
+  auto entity_match_timer = registry.create();
+
+  registry.assign<MatchTimer>(entity_match_timer, timer);
 }
 
 /*

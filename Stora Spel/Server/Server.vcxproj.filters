@@ -133,4 +133,7 @@
   <ItemGroup>
     <Text Include="util\settings.txt" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="src\ecs\components\match_timer_component.hpp" />
+  </ItemGroup>
 </Project>
