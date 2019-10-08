@@ -4,9 +4,9 @@
 #include <entity/registry.hpp>
 #include <entt.hpp>
 #include "ecs/components.hpp"
+#include "replay machine/replay_machine.hpp"
 #include "shared/shared.hpp"
 #include "util/timer.hpp"
-#include "replay machine/replay_machine.hpp"
 
 class GameServer;
 
@@ -41,12 +41,36 @@ class ServerLobbyState : public ServerState {
 
   void SetClientIsReady(int client_id, bool is_ready) {
     clients_ready_[client_id] = is_ready;
+    teams_updated_ = true;
   }
+
+  void HandleNewClientTeam(int client_id) {
+    if (last_team_ == TEAM_RED) {
+      client_teams_[client_id] = TEAM_BLUE;
+      last_team_ = TEAM_BLUE;
+    } else {
+      client_teams_[client_id] = TEAM_RED;
+      last_team_ = TEAM_RED;
+    }
+    teams_updated_ = true;
+  }
+
+  void SetClientTeam(int client_id, unsigned int team) {
+    client_teams_[client_id] = team;
+    teams_updated_ = true;
+  }
+
+  
+
+  std::unordered_map<int, unsigned int> client_teams_;
 
  private:
   std::unordered_map<int, bool> clients_ready_;
   Timer start_game_timer;
   bool starting = false;
+  unsigned int last_team_ = TEAM_BLUE;
+
+  bool teams_updated_ = false;
 };
 
 class ServerPlayState : public ServerState {
@@ -70,6 +94,8 @@ class ServerPlayState : public ServerState {
   void SetClientReceiveUpdates(long client_id, bool initialized) {
     clients_receive_updates_[client_id] = initialized;
   }
+
+  std::unordered_map<int, unsigned int> client_teams_;
 
  private:
   entt::entity CreateIDEntity();

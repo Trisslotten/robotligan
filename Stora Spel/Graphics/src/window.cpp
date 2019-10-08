@@ -143,6 +143,14 @@ glm::vec2 GetWindowDimensions() {
   return glm::vec2(window_width, window_height);
 }
 
+glm::vec2 Relative720(glm::vec2 in_pos) {
+  glm::vec2 ret(0);
+  glm::vec2 seventw = glm::vec2(1280, 720);
+  glm::vec2 rel = GetWindowDimensions() / seventw;
+  ret = in_pos * rel;
+  return ret;
+}
+
 bool KeyDown(int key) { return GLFW_PRESS == glfwGetKey(glfw_window, key); }
 
 glm::vec2 MouseMovement() {

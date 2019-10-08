@@ -11,12 +11,10 @@ struct TransformComponent {
 
   void SetRotation(glm::vec3 rot) {
     rotation = rot;
-    //rotation = glm::clamp(rotation, -180.f, 180.f);
   }
 
   void Rotate(glm::vec3 rot) {
     rotation *= glm::quat(rot);
-    //rotation = glm::clamp(rotation, -180.f, 180.f); 
   }
 
   glm::vec3 Forward() {

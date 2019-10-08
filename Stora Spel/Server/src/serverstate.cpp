@@ -4,12 +4,12 @@
 #include "shared/transform_component.hpp"
 
 #include <collision.hpp>
+#include <ecs\components\pick_up_event.hpp>
 #include <glob\graphics.hpp>
 #include <shared\id_component.hpp>
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "gameserver.hpp"
-#include <ecs\components\pick_up_event.hpp>
 
 void ServerLobbyState::Init() {
   //
@@ -35,6 +35,20 @@ void ServerLobbyState::Update(float dt) {
     std::cout << "DEBUG: Start game countdown is zero\n";
     game_server_->ChangeState(ServerStateType::PLAY);
   }
+  for (auto& [client_id, to_send] : game_server_->GetPackets()) {
+    if (teams_updated_) {
+      for (auto client_team : client_teams_) {
+        to_send << client_team.first;   // send id
+        to_send << client_team.second;  // send team
+        bool ready = clients_ready_[client_team.first];
+        to_send << ready;
+        to_send << PacketBlockType::LOBBY_UPDATE_TEAM;
+      }
+    }
+    to_send << client_id;
+    to_send << PacketBlockType::LOBBY_YOUR_ID;
+  }
+  teams_updated_ = false;
 }
 
 void ServerLobbyState::Cleanup() {
@@ -77,8 +91,6 @@ void ServerPlayState::Init() {
 
     server.Send(to_send);
   }
-
-
 }
 
 void ServerPlayState::Update(float dt) {
@@ -188,7 +200,8 @@ void ServerPlayState::Update(float dt) {
       to_send << goal_team_c;
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
-      if (goal_goal_c.switched_this_tick) {  // MAY NEED TO CHANGE, NOT A GOOD SOLUTION
+      if (goal_goal_c
+              .switched_this_tick) {  // MAY NEED TO CHANGE, NOT A GOOD SOLUTION
         if (!sent_switch) {
           to_send << PacketBlockType::SWITCH_GOALS;
           sent_switch = true;
@@ -231,6 +244,8 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
     auto& player_c = registry.get<PlayerComponent>(*view_iter);
     clients_player_ids_[client.first] = id_c.id;
     player_c.client_id = client.first;
+    registry.assign<TeamComponent>(*view_iter,
+                                   client_teams_[player_c.client_id]);
     view_iter++;
   }
 
@@ -379,7 +394,7 @@ void ServerPlayState::CreatePlayerEntity() {
   );
   // END ---------- Buff component [MOVE TO PICK-UP EVENT] ----------
 
-  if (last_spawned_team_ == 1) {
+  /*if (last_spawned_team_ == 1) {
     registry.assign<TeamComponent>(entity, TEAM_BLUE);
     last_spawned_team_ = 0;
     blue_players_++;
@@ -387,7 +402,7 @@ void ServerPlayState::CreatePlayerEntity() {
     registry.assign<TeamComponent>(entity, TEAM_RED);
     last_spawned_team_ = 1;
     red_players_++;
-  }
+  }*/
 
   registry.assign<PointsComponent>(entity);
 
