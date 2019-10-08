@@ -148,6 +148,7 @@
   <ItemGroup>
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\gameserver.cpp" />
+    <ClCompile Include="src\replay machine\deterministic_replay.cpp" />
     <ClCompile Include="src\util\global_settings.cpp" />
     <ClCompile Include="src\serverstate.cpp" />
   </ItemGroup>
@@ -172,6 +173,7 @@
     <ClInclude Include="src\ecs\systems\player_controller_system.hpp" />
     <ClInclude Include="src\gameserver.hpp" />
     <ClInclude Include="src\message.hpp" />
+    <ClInclude Include="src\replay machine\deterministic_replay.hpp" />
     <ClInclude Include="src\util\event.hpp" />
     <ClInclude Include="src\util\global_settings.hpp" />
     <ClInclude Include="src\util\timer.hpp" />
