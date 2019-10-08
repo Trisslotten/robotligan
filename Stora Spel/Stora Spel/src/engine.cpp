@@ -294,9 +294,9 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       scores_[team] = score;
       break;
     }
-    case PacketBlockType::MATCH_TIMER: {
+  /*  case PacketBlockType::MATCH_TIMER: {
       packet >> gameplay_timer_;
-    }
+    }*/
     /*
     TODO: fix
     case PacketBlockType::CHOOSE_TEAM: {
