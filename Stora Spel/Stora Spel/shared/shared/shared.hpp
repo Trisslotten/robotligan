@@ -51,6 +51,8 @@ enum : int16_t {
   CREATE_PICK_UP,
   DESTROY_PICK_UP,
   RECEIVE_PICK_UP,
+  CREATE_PROJECTILE,
+  DESTROY_ENTITIES,
   NUM_BLOCK_TYPES,
 };
 
@@ -72,4 +74,13 @@ enum class AbilityID {
   NUM_OF_ABILITY_IDS
 };
 
+enum class ProjectileID {
+  CANNON_BALL,
+  NUM_PROJECTILE_IDS,
+};
+
+struct Projectile {
+  EntityID entity_id;
+  ProjectileID projectile_id;
+};
 #endif  // SHARED_HPP_

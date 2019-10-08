@@ -3,11 +3,6 @@
 
 #include "shared/shared.hpp"
 
-enum ProjectileID {
-  CANNON_BALL,
-  NUM_PROJECTILE_IDS,
-};
-
 struct ProjectileComponent {
   ProjectileID projectile_id;
   PlayerID creator;

@@ -8,6 +8,7 @@
 #include "shared/pick_up_component.hpp"
 #include "shared/shared.hpp";
 #include "shared/transform_component.hpp"
+#include "shared/id_component.hpp"
 
 #include "ecs/components.hpp"
 #include "ecs/systems/ability_controller_system.hpp"
@@ -16,6 +17,7 @@
 #include "ecs/systems/goal_system.hpp"
 #include "ecs/systems/physics_system.hpp"
 #include "ecs/systems/player_controller_system.hpp"
+
 
 namespace {}  // namespace
 
@@ -209,17 +211,4 @@ void GameServer::UpdateSystems(float dt) {
   }
   dispatcher.update<EventInfo>();
   // glob::LoadWireframeMesh(model_arena, mh.pos, mh.indices);
-}
-
-void GameServer::ReceiveEvent(const EventInfo& e) {
-  switch (e.event) {
-    case Event::DESTROY_ENTITY: {
-      break;
-    }
-    case Event::CREATE_CANNONBALL: {
-      break;
-    }
-    default:
-      break;
-  }
 }

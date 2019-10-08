@@ -64,9 +64,7 @@ void Engine::Init() {
 }
 
 void Engine::Update(float dt) {
-  
-
-  //std::cout << "current message: " << Input::GetCharacters() <<"\n";
+  // std::cout << "current message: " << Input::GetCharacters() <<"\n";
 
   if (take_game_input_ == true) {
     // accumulate key presses
@@ -190,7 +188,6 @@ void Engine::UpdateNetwork() {
       }
     }
   }
-
 }
 
 void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
@@ -347,6 +344,25 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> second_ability_;
       break;
     }
+    case PacketBlockType::CREATE_PROJECTILE: {
+      ProjectileID p_id;
+      EntityID e_id;
+      packet >> p_id;
+      packet >> e_id;
+
+      switch (p_id) {
+        case ProjectileID::CANNON_BALL: {
+          play_state_.CreateCannonBall(e_id);
+        }
+      }
+      break;
+    }
+    case PacketBlockType::DESTROY_ENTITIES: {
+      EntityID id;
+      packet >> id;
+      play_state_.DestroyEntity(id);
+      break;
+	}
   }
 }
 
@@ -421,27 +437,27 @@ void Engine::DrawScoreboard() {
   glm::vec2 offset_goals = glm::vec2(140, 0);
   glm::vec2 offset_points = glm::vec2(300, 0);
   for (auto& p_score : player_scores_) {
-    if (p_score.second.team == TEAM_BLUE) {
+	if (p_score.second.team == TEAM_BLUE) {
       glm::vec2 text_pos = start_pos_blue + glm::vec2(0, blue_count * jump);
       glob::Submit(font_test2_, text_pos, 32, player_names_[p_score.first],
-                   glm::vec4(0, 0, 1, 1));
+		  glm::vec4(0, 0, 1, 1));
       glob::Submit(font_test2_, text_pos + offset_goals, 32,
-                   std::to_string(p_score.second.goals), glm::vec4(0, 0, 1, 1));
+		  std::to_string(p_score.second.goals), glm::vec4(0, 0, 1, 1));
       glob::Submit(font_test2_, text_pos + offset_points, 32,
-                   std::to_string(p_score.second.points),
-                   glm::vec4(0, 0, 1, 1));
+		  std::to_string(p_score.second.points),
+		  glm::vec4(0, 0, 1, 1));
       blue_count++;
     }
     if (p_score.second.team == TEAM_RED) {
-      glm::vec2 text_pos = start_pos_red + glm::vec2(0, red_count * jump);
-      glob::Submit(font_test2_, text_pos, 32, player_names_[p_score.first],
-                   glm::vec4(1, 0, 0, 1));
-      glob::Submit(font_test2_, text_pos + offset_goals, 32,
-                   std::to_string(p_score.second.goals), glm::vec4(1, 0, 0, 1));
-      glob::Submit(font_test2_, text_pos + offset_points, 32,
-                   std::to_string(p_score.second.points),
-                   glm::vec4(1, 0, 0, 1));
-      red_count++;
+        glm::vec2 text_pos = start_pos_red + glm::vec2(0, red_count * jump);
+        glob::Submit(font_test2_, text_pos, 32, player_names_[p_score.first],
+			glm::vec4(1, 0, 0, 1));
+        glob::Submit(font_test2_, text_pos + offset_goals, 32,
+			std::to_string(p_score.second.goals), glm::vec4(1, 0, 0, 1));
+        glob::Submit(font_test2_, text_pos + offset_points, 32,
+			std::to_string(p_score.second.points),
+			glm::vec4(1, 0, 0, 1));
+        red_count++;
     }
   }
 }
