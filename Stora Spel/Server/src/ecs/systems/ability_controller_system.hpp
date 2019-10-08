@@ -188,7 +188,7 @@ void CreateCannonBallEntity(entt::registry &registry, PlayerID id) {
       float speed = 20.0f;
       auto cannonball = registry.create();
       registry.assign<PhysicsComponent>(
-          cannonball, glm::vec3(cc.GetLookDir() * speed), false, 0.0f);
+          cannonball, glm::vec3(cc.GetLookDir() * speed), glm::vec3(0.f), false, 0.0f);
       registry.assign<TransformComponent>(
           cannonball,
           glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),

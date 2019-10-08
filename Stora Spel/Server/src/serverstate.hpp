@@ -66,6 +66,10 @@ class ServerPlayState : public ServerState {
 
   bool StartRecording(unsigned int in_replay_length_seconds);
 
+  
+  void SetClientReceiveUpdates(long client_id, bool initialized) {
+    clients_receive_updates_[client_id] = initialized;
+  }
 
  private:
   entt::entity CreateIDEntity();
@@ -83,6 +87,7 @@ class ServerPlayState : public ServerState {
   EntityID GetNextEntityGuid() { return entity_guid_++; }
 
 
+  std::unordered_map<long, bool> clients_receive_updates_;
   std::unordered_map<int, EntityID> clients_player_ids_;
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
 

@@ -41,6 +41,7 @@ enum : int16_t {
   CLIENT_READY,      // client is ready in lobby
   CLIENT_NOT_READY,  // client is not ready in lobby
   GAME_START,        // game start after lobby
+  CLIENT_RECEIVE_UPDATES, 
   TEST_STRING,
   TEST_REPLAY_KEYS,
   TEAM_SCORE,

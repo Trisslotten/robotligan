@@ -49,6 +49,13 @@ void PlayState::Init() {
 
   CreateInGameMenu();
   CreateInitialEntities();
+
+  auto& client = engine_->GetClient();
+  NetAPI::Common::Packet to_send;
+  bool rec = true;
+  to_send << rec;
+  to_send << PacketBlockType::CLIENT_RECEIVE_UPDATES;
+  client.Send(to_send);
 }
 
 void PlayState::Update() {
@@ -89,7 +96,7 @@ void PlayState::Update() {
       [&](auto entity, PlayerComponent& player_c) {
         stam_len = player_c.energy_current;
       });
-          */
+  */
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
   glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
   glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);

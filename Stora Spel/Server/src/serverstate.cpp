@@ -82,6 +82,8 @@ void ServerPlayState::Init() {
 
 void ServerPlayState::Update(float dt) {
   auto& registry = game_server_->GetRegistry();
+  auto& server = game_server_->GetServer();
+
 
   registry.view<PlayerComponent>().each(
       [&](auto entity, PlayerComponent& player_c) {
@@ -104,6 +106,11 @@ void ServerPlayState::Update(float dt) {
 
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     EntityID client_player_id = clients_player_ids_[client_id];
+
+    if(!clients_receive_updates_[client_id]) {
+      // TODO maybe send important packets even if not initialized
+      continue;
+    }
 
     auto view_cam = registry.view<CameraComponent, IDComponent>();
     for (auto cam : view_cam) {
@@ -291,7 +298,7 @@ void ServerPlayState::CreateBallEntity() {
   // Add components for a ball
   registry.assign<BallComponent>(entity, ball_is_real, ball_is_airborne);
   // registry_.assign<ModelComponent>(entity, model_ball);
-  registry.assign<PhysicsComponent>(entity, glm::vec3(0), ball_is_airborne,
+  registry.assign<PhysicsComponent>(entity, glm::vec3(0), glm::vec3(0.f), ball_is_airborne,
                                     ball_friction);
   registry.assign<TransformComponent>(entity, glm::vec3(0), zero_vec,
                                       ball_scale);
@@ -324,7 +331,7 @@ void ServerPlayState::CreatePlayerEntity() {
   // Add components for a robot
   // registry_.assign<ModelComponent>(entity, robot_model, alter_scale *
   // character_scale);
-  registry.assign<PhysicsComponent>(entity, zero_vec, robot_is_airborne,
+  registry.assign<PhysicsComponent>(entity, zero_vec, zero_vec, robot_is_airborne,
                                     robot_friction);
   registry.assign<TransformComponent>(entity, start_pos, zero_vec,
                                       character_scale);

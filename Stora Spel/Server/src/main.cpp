@@ -45,6 +45,7 @@ int main(unsigned argc, char** argv) {
       num_frames = 0;
     }
     */
+    
   }
   dispatcher.sink<EventInfo>().disconnect<&GameServer::ReceiveEvent>(server);
   return EXIT_SUCCESS;
