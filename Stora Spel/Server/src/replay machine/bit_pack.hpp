@@ -12,6 +12,8 @@ class BitPack {
   unsigned int next_bit_to_write_;
   unsigned int next_bit_to_read_;
 
+  unsigned int end_bit_;
+
  public:
   BitPack(unsigned int in_num_of_frames, unsigned int in_bits_per_frame);
   ~BitPack();
@@ -22,12 +24,16 @@ class BitPack {
   bool IsReadAtEnd();
   unsigned int GetNextWrittenBitIndex() const;
   unsigned int GetNextReadBitIndex() const;
+  //---
   bool WriteBit(bool in_bit);
   bool WriteInt(unsigned int in_int, unsigned int in_bit_count);
   bool WriteFloat32(float in_float);
   bool ReadBit();
   unsigned int ReadInt(unsigned int in_bit_count);
   float ReadFloat32();
+  //---
+
+  //---
   bool SaveToFile(std::string in_path);
   bool LoadFromFile(std::string in_path);
 

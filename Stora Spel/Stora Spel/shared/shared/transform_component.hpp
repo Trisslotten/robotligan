@@ -4,24 +4,35 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+// HACK
+//static unsigned int transform_counter = 0;
+// HACK
+
 struct TransformComponent {
+  // HACK
+  //unsigned int transform_id = transform_counter++;
+  // HACK
+
   glm::vec3 position;
   glm::quat rotation;
   glm::vec3 scale;
 
   void SetRotation(glm::vec3 rot) {
     rotation = rot;
-    //rotation = glm::clamp(rotation, -180.f, 180.f);
+    // rotation = glm::clamp(rotation, -180.f, 180.f);
   }
 
   void Rotate(glm::vec3 rot) {
     rotation *= glm::quat(rot);
-    //rotation = glm::clamp(rotation, -180.f, 180.f); 
+    // rotation = glm::clamp(rotation, -180.f, 180.f);
   }
 
   glm::vec3 Forward() {
-    return rotation * glm::vec3(1.f, 0.f, 0.f);  // transform_helper::DirVectorFromRadians(rotation.y,
-                                           // rotation.x);
+    return rotation *
+           glm::vec3(
+               1.f, 0.f,
+               0.f);  // transform_helper::DirVectorFromRadians(rotation.y,
+                      // rotation.x);
   }
 };
 

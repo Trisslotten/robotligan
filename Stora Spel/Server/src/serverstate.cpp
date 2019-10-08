@@ -565,7 +565,7 @@ bool ServerPlayState::StartRecording(unsigned int in_replay_length_seconds) {
   if (!this->record_) {
     // Initiate the Replay Machine
     std::cout << "Recording...\n";
-    this->replay_machine_->Init(in_replay_length_seconds, kServerUpdateRate, 1);
+    this->replay_machine_->Init(in_replay_length_seconds, kServerUpdateRate, 1, true);
     this->record_ = true;
     return true;  // NTS: Return false if recording cannot start?
   }
