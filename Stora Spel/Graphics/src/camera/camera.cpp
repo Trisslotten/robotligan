@@ -18,18 +18,10 @@ void Camera::UpdateDirectionalVectors() {
 */
 
 void Camera::UpdateViewMatrix() {
-  auto quart_turn = glm::quat(glm::vec3(0,-glm::pi<float>()*0.5f,0));
-  glm::mat3 rot_mat = glm::mat3_cast(glm::inverse(orientation_*quart_turn));
-  /*
-  auto temp = rot_mat[1];
-  rot_mat[1] = -rot_mat[0];
-  rot_mat[0] = temp;
-  */
+  auto quarter_turn = glm::quat(glm::vec3(0,-glm::pi<float>()*0.5f,0));
+  glm::mat3 rot_mat = glm::mat3_cast(glm::inverse(orientation_*quarter_turn));
+
   this->view_mat_ = glm::mat4(rot_mat) * glm::inverse(glm::translate(position_));
-  /*
-  this->view_mat_ = glm::lookAt(
-      this->position_, this->position_ + this->cam_direction_, this->world_up_);
-          */
 }
 
 // Public-------------------------------------------------------------------------------------------
