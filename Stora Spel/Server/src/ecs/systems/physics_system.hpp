@@ -24,6 +24,8 @@ void UpdatePhysics(entt::registry& registry, float dt) {
     po.friction = physics_c.friction;
     po.position = trans_c.position;
     po.velocity = physics_c.velocity;
+    po.acceleration = physics_c.acceleration;
+    po.max_speed = physics_c.max_speed;
 
 	  Update(&po, dt);
 

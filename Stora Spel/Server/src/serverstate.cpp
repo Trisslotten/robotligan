@@ -282,7 +282,7 @@ void ServerPlayState::CreateBallEntity() {
   // Add components for a ball
   registry.assign<BallComponent>(entity, ball_is_real, ball_is_airborne);
   // registry_.assign<ModelComponent>(entity, model_ball);
-  registry.assign<PhysicsComponent>(entity, glm::vec3(0), ball_is_airborne,
+  registry.assign<PhysicsComponent>(entity, glm::vec3(0), glm::vec3(0.f), ball_is_airborne,
                                     ball_friction);
   registry.assign<TransformComponent>(entity, glm::vec3(0), zero_vec,
                                       ball_scale);
@@ -315,7 +315,7 @@ void ServerPlayState::CreatePlayerEntity() {
   // Add components for a robot
   // registry_.assign<ModelComponent>(entity, robot_model, alter_scale *
   // character_scale);
-  registry.assign<PhysicsComponent>(entity, zero_vec, robot_is_airborne,
+  registry.assign<PhysicsComponent>(entity, zero_vec, zero_vec, robot_is_airborne,
                                     robot_friction);
   registry.assign<TransformComponent>(entity, start_pos, zero_vec,
                                       character_scale);
