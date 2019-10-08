@@ -1,13 +1,13 @@
 #ifndef PLAYER_CONTROLLER_SYSTEM_HPP_
 #define PLAYER_CONTROLLER_SYSTEM_HPP_
 
-#include "shared/camera_component.hpp"
 #include <entt.hpp>
 #include <glm/gtx/rotate_vector.hpp>
-#include "shared/transform_component.hpp"
 #include "ecs/components/ability_component.hpp"
 #include "ecs/components/physics_component.hpp"
 #include "ecs/components/player_component.hpp"
+#include "shared/camera_component.hpp"
+#include "shared/transform_component.hpp"
 
 namespace player_controller {
 
@@ -33,8 +33,8 @@ void Update(entt::registry& registry, float dt) {
     player_c.pitch = glm::clamp(player_c.pitch, -0.49f * pi, 0.49f * pi);
     // player_c.pitch = glm::mod(player_c.pitch + delta_pitch, 2.f * pi);
     // player_c.pitch += delta_pitch;
-    cam_c.orientation =
-        glm::quat(glm::vec3(player_c.pitch, player_c.yaw, 0));
+    cam_c.orientation = glm::quat(glm::vec3(0, player_c.yaw, 0)) *
+                        glm::quat(glm::vec3(0, 0, player_c.pitch));
     cam_c.orientation = glm::normalize(cam_c.orientation);
     trans_c.SetRotation(glm::vec3(0, player_c.yaw, 0));
 
@@ -96,7 +96,7 @@ void Update(entt::registry& registry, float dt) {
 
     final_velocity += accum_velocity;
 
-    //physics_c.velocity = final_velocity;
+    // physics_c.velocity = final_velocity;
 
     glm::vec3 cur_move_dir = glm::normalize(physics_c.velocity);
 
@@ -120,13 +120,13 @@ void Update(entt::registry& registry, float dt) {
     // slowdown
     glm::vec3 sidemov = glm::vec3(final_velocity.x, 0, final_velocity.z);
     float cur_move_speed = glm::length(sidemov);
-    //if (cur_move_speed > 0.f) {
-      // movement "floatiness", lower value = less floaty
+    // if (cur_move_speed > 0.f) {
+    // movement "floatiness", lower value = less floaty
     float t = 0.0005f;
-    physics_c.velocity.x = glm::mix(physics_c.velocity.x, final_velocity.x,
-                                1.f - glm::pow(t, dt));
-    physics_c.velocity.z = glm::mix(physics_c.velocity.z, final_velocity.z,
-                                1.f - glm::pow(t, dt));
+    physics_c.velocity.x =
+        glm::mix(physics_c.velocity.x, final_velocity.x, 1.f - glm::pow(t, dt));
+    physics_c.velocity.z =
+        glm::mix(physics_c.velocity.z, final_velocity.z, 1.f - glm::pow(t, dt));
     //}
     physics_c.velocity.y = final_velocity.y;
 
