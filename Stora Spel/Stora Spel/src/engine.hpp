@@ -7,6 +7,7 @@
 #include <glob/graphics.hpp>
 #include <limits>
 #include <unordered_map>
+#include "ecs/systems/sound_system.hpp"
 #include "Chat.hpp"
 #include "shared/shared.hpp"
 #include "states/state.hpp"
@@ -35,6 +36,7 @@ class Engine {
   NetAPI::Common::Packet& GetPacket() { return packet_; }
   void SetSendInput(bool should_send) { should_send_input_ = should_send; }
   void SetEnableChat(bool should_enable) { this->enable_chat_ = should_enable; }
+  slob::SoundEngine& GetSoundEngine() { return sound_system_.GetSoundEngine(); }
 
  private:
   void SetKeybinds();
@@ -81,6 +83,7 @@ class Engine {
 
   bool enable_chat_ = false;
 
+  SoundSystem sound_system_;
 
   AbilityID second_ability_ = AbilityID::NULL_ABILITY;
   unsigned int new_team_ = std::numeric_limits<unsigned int>::max();

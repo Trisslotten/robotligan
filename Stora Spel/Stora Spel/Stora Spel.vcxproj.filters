@@ -13,6 +13,7 @@
     <ClCompile Include="src\util\player_settings.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Chat.cpp" />
+    <ClCompile Include="src\ecs\systems\sound_system.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
@@ -53,6 +54,8 @@
     <ClInclude Include="shared\shared\pick_up_component.hpp" />
     <ClInclude Include="src\util\player_settings.hpp" />
     <ClInclude Include="src\Chat.hpp" />
+    <ClInclude Include="src\ecs\components\sound_component.hpp" />
+    <ClInclude Include="src\ecs\systems\sound_system.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

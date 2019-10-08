@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <glob/graphics.hpp>
 #include <glob/window.hpp>
+#include <slob/sound_engine.hpp>
 
 #include "shared/camera_component.hpp"
 #include "shared/id_component.hpp"
@@ -85,7 +86,10 @@ void PlayState::Update() {
   glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
 
   /*
-  registry_gameplay_.view<PlayerComponent>().each(
+  registry_gameplay_.view<
+  
+  
+  >().each(
       [&](auto entity, PlayerComponent& player_c) {
         stam_len = player_c.energy_current;
       });
@@ -145,6 +149,8 @@ void PlayState::CreateInitialEntities() {
 }
 
 void PlayState::CreatePlayerEntities() {
+  auto& sound_engine = engine_->GetSoundEngine();
+
   std::cout << "DEBUG: playstate.cpp: Created " << player_ids_.size()
             << " players\n";
 
@@ -159,11 +165,13 @@ void PlayState::CreatePlayerEntities() {
         glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
 
     registry_gameplay_.assign<IDComponent>(entity, entity_id);
-    registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(),
                                                   glm::quat(), character_scale);
+
+    registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<ModelComponent>(entity, player_model,
                                               alter_scale * character_scale);
+    registry_gameplay_.assign<SoundComponent>(entity, sound_engine.CreatePlayer());
 
     if (entity_id == my_id_) {
       glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);

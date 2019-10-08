@@ -11,6 +11,7 @@
 #include "ecs/components.hpp"
 #include "ecs/systems/button_system.hpp"
 #include "ecs/systems/render_system.hpp"
+#include "ecs/systems/sound_system.hpp"
 #include "entitycreation.hpp"
 #include "shared/camera_component.hpp"
 #include "shared/id_component.hpp"
@@ -25,6 +26,7 @@ Engine::~Engine() {}
 void Engine::Init() {
   glob::Init();
   Input::Initialize();
+  sound_system_.Init();
 
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
@@ -389,6 +391,8 @@ void Engine::UpdateChat(float dt) {
 
 void Engine::UpdateSystems(float dt) {
   UpdateChat(dt);
+  sound_system_.Update(*registry_current_);
+  
 
   if (Input::IsKeyDown(GLFW_KEY_TAB) && current_state_->Type() == StateType::PLAY) {
     DrawScoreboard();
