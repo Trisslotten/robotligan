@@ -231,6 +231,7 @@
     <None Include="assets\shaders\guishader.vert" />
     <None Include="assets\shaders\modelshader.frag" />
     <None Include="assets\shaders\modelshader.vert" />
+    <None Include="Assets\shaders\particle.geom" />
     <None Include="Assets\shaders\text2Dshader.frag" />
     <None Include="Assets\shaders\text2Dshader.vert" />
     <None Include="Assets\shaders\wireframe.frag" />

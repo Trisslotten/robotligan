@@ -118,6 +118,7 @@ class PlayState : public State {
   void CreateInGameMenu();
 
   void TestCreateLights();
+  void TestParticles();
 
   void ToggleInGameMenu();
   void UpdateInGameMenu(bool show_menu);

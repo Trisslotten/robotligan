@@ -64,6 +64,7 @@
     <None Include="assets\shaders\guishader.frag" />
     <None Include="assets\shaders\e2Dshader.vert" />
     <None Include="assets\shaders\e2Dshader.frag" />
+    <None Include="Assets\shaders\particle.geom" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />

@@ -35,6 +35,12 @@ void RenderSystem(entt::registry& registry) {
                                glm::translate(-m.offset) * glm::scale(t.scale));
   }
 
+  // submit particles
+  auto view_particles = registry.view<glob::ParticleSystemHandle>();
+  for (auto entity : view_particles) {
+    glob::SubmitParticles(view_particles.get(entity));
+  }
+
   // submit lights
   auto lights = registry.view<LightComponent, TransformComponent>();
   for (auto& l : lights) {

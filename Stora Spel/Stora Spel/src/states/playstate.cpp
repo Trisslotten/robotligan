@@ -41,6 +41,13 @@ void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
 }
 
+void PlayState::TestParticles() {
+  auto entity = registry_gameplay_.create();
+  auto handle = glob::CreateParticleSystem();
+
+  registry_gameplay_.assign<glob::ParticleSystemHandle>(entity, handle);
+}
+
 void PlayState::Init() {
   glob::window::SetMouseLocked(true);
   engine_->SetSendInput(true);
@@ -49,6 +56,7 @@ void PlayState::Init() {
 
   CreateInGameMenu();
   CreateInitialEntities();
+  TestParticles();
 }
 
 void PlayState::Update() {

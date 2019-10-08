@@ -12,6 +12,7 @@
 
 #include "Model/model.hpp"
 #include "glob/camera.hpp"
+#include "particles/particle_system.hpp"
 #include "shader.hpp"
 
 #include "2D/elements2D.hpp"
@@ -62,6 +63,7 @@ struct LightItem {
 
 ShaderProgram test_shader;
 ShaderProgram model_shader;
+ShaderProgram particle_shader;
 ShaderProgram text_shader;
 ShaderProgram wireframe_shader;
 ShaderProgram gui_shader;
@@ -83,11 +85,13 @@ std::unordered_map<TextureHandle, Texture> textures;
 */
 
 ModelHandle current_model_guid = 1;
+ParticleSystemHandle current_particle_guid = 1;
 Font2DHandle current_font_guid = 1;
 GUIHandle current_gui_guid = 1;
 E2DHandle current_e2D_guid = 1;
 std::unordered_map<std::string, ModelHandle> model_handles;
 std::unordered_map<ModelHandle, Model> models;
+std::unordered_map<ParticleSystemHandle, ParticleSystem> particle_systems;
 std::unordered_map<std::string, Font2DHandle> font_2D_handles;
 std::unordered_map<Font2DHandle, Font2D> fonts;
 std::unordered_map<std::string, GUIHandle> gui_handles;
@@ -105,6 +109,7 @@ std::unordered_map<ModelHandle, GLuintBuffers> wireframe_buffers;
 
 std::vector<RenderItem> items_to_render;
 std::vector<LightItem> lights_to_render;
+std::vector<ParticleSystem*> particles_to_render;
 std::vector<glm::mat4> cubes;
 std::vector<ModelHandle> wireframe_meshes;
 std::vector<TextItem> text_to_render;
@@ -167,6 +172,11 @@ void Init() {
   model_shader.add("modelshader.vert");
   model_shader.add("modelshader.frag");
   model_shader.compile();
+
+  particle_shader.add("particle.vert");
+  particle_shader.add("particle.geom");
+  particle_shader.add("particle.frag");
+  particle_shader.compile();
 
   wireframe_shader.add("modelshader.vert");
   wireframe_shader.add("wireframe.frag");
@@ -275,6 +285,15 @@ ModelHandle GetModel(const std::string &filepath) {
   return GetAsset<ModelHandle, Model>(model_handles, models, current_model_guid,
                                       filepath);
 }
+
+ParticleSystemHandle CreateParticleSystem() {
+  auto handle = current_particle_guid;
+  particle_systems[handle] = ParticleSystem();
+  current_particle_guid++;
+  
+  return handle;
+}
+
 GUIHandle GetGUIItem(const std::string &filepath) {
   return GetAsset<GUIHandle, Elements2D>(gui_handles, gui_elements,
                                          current_gui_guid, filepath);
@@ -338,6 +357,16 @@ void Submit(ModelHandle model_h, glm::mat4 transform) {
   to_render.model = &find_res->second;
   to_render.transform = transform * pre_rotation;
   items_to_render.push_back(to_render);
+}
+
+void SubmitParticles(ParticleSystemHandle handle) {
+  auto find_res = particle_systems.find(handle);
+  if (find_res == particle_systems.end()) {
+    std::cout << "ERROR graphics.cpp: could not find submitted particles\n";
+    return;
+  }
+  
+  particles_to_render.push_back(&find_res->second);
 }
 
 void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
@@ -462,6 +491,13 @@ void Render() {
     render_item.model->Draw(model_shader);
   }
 
+  // render particles
+  particle_shader.use();
+  particle_shader.uniform("cam_transform", cam_transform);
+  for (auto p : particles_to_render) {
+    p->Draw(particle_shader);
+  }
+
   // render wireframe cubes
   for (auto &m : cubes) DrawCube(m);
   // render wireframe meshes
@@ -497,6 +533,7 @@ void Render() {
   text_to_render.clear();
   cubes.clear();
   wireframe_meshes.clear();
+  particles_to_render.clear();
 
   num_frames++;
 }

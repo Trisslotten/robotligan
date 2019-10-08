@@ -17,6 +17,7 @@
 namespace glob {
 
 typedef unsigned long ModelHandle;
+typedef unsigned long ParticleSystemHandle;
 typedef unsigned long Font2DHandle;
 typedef unsigned long GUIHandle;
 typedef unsigned long E2DHandle;
@@ -33,6 +34,8 @@ EXPORT void Init();
  * Skips loading if model is loaded.
  */
 EXPORT ModelHandle GetModel(const std::string& filepath);
+
+EXPORT ParticleSystemHandle CreateParticleSystem(); 
 
 EXPORT GUIHandle GetGUIItem(const std::string& filepath);
 
@@ -55,6 +58,7 @@ EXPORT void SubmitLightSource(glm::vec3 pos, glm::vec3 color,
                               glm::float32 radius, glm::float32 ambient);
 EXPORT void Submit(ModelHandle model_h, glm::vec3 pos);
 EXPORT void Submit(ModelHandle model_h, glm::mat4 transform);
+EXPORT void SubmitParticles(ParticleSystemHandle handle);
 EXPORT void SubmitCube(glm::mat4 t);
 EXPORT void SubmitWireframeMesh(ModelHandle model_h);
 EXPORT void LoadWireframeMesh(ModelHandle model_h,
