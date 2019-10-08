@@ -12,6 +12,7 @@ NetAPI::Socket::TcpClient::TcpClient() {
 NetAPI::Socket::TcpClient::TcpClient(const TcpClient& other) {
   rec_buffer_ = new char[other.buffer_size_];
   temp_buffer_ = new char[other.buffer_size_];
+  temp_buffer_index_ = other.temp_buffer_index_;
   memcpy(rec_buffer_, other.rec_buffer_, other.buffer_size_);
   memcpy(temp_buffer_, other.temp_buffer_, other.buffer_size_);
   buffer_size_ = other.buffer_size_;
@@ -30,6 +31,7 @@ void NetAPI::Socket::TcpClient::SetBufferSize(unsigned size) {
   delete[] rec_buffer_;
   delete[] temp_buffer_;
   rec_buffer_ = new char[buffer_size_];
+  temp_buffer_ = new char[buffer_size_];
 }
 void NetAPI::Socket::TcpClient::FlushBuffers() {
   ZeroMemory(rec_buffer_, sizeof(char) * buffer_size_);
@@ -157,6 +159,7 @@ NetAPI::Socket::TcpClient& NetAPI::Socket::TcpClient::operator=(
   delete temp_buffer_;
   rec_buffer_ = new char[other.buffer_size_];
   temp_buffer_ = new char[other.buffer_size_];
+  temp_buffer_index_ = other.temp_buffer_index_;
   memcpy(rec_buffer_, other.rec_buffer_, other.buffer_size_);
   memcpy(temp_buffer_, other.temp_buffer_, other.buffer_size_);
   buffer_size_ = other.buffer_size_;
@@ -172,6 +175,7 @@ NetAPI::Socket::TcpClient& NetAPI::Socket::TcpClient::operator=(
 }
 NetAPI::Socket::TcpClient::~TcpClient() {
   delete[] this->rec_buffer_;
+  delete[] temp_buffer_;
   closesocket(send_socket_);
   send_socket_ = INVALID_SOCKET;
 }
