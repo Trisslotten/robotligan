@@ -46,6 +46,7 @@ void GameServer::Update(float dt) {
 
   for (auto client_data : server_.GetNewlyConnected()) {
     lobby_state_.SetClientIsReady(client_data->ID, false);
+    lobby_state_.HandleNewClientTeam(client_data->ID);
   }
 
   // handle received data
@@ -113,7 +114,15 @@ void GameServer::HandlePacketsToSend() {
 void GameServer::HandleStateChange() {
   // handle state change
   if (wanted_state_type_ != current_state_type_) {
+    bool went_from_lobby_to_play =
+        current_state_type_ == ServerStateType::LOBBY &&
+        wanted_state_type_ == ServerStateType::PLAY;
     current_state_type_ = wanted_state_type_;
+
+    std::unordered_map<int, unsigned int> client_teams_lobby;
+    if (went_from_lobby_to_play)
+      client_teams_lobby = lobby_state_.client_teams_;
+
     current_state_->Cleanup();
     switch (wanted_state_type_) {
       case ServerStateType::LOBBY:
@@ -122,6 +131,9 @@ void GameServer::HandleStateChange() {
         break;
       case ServerStateType::PLAY:
         std::cout << "Change Server State: PLAY\n";
+        if (went_from_lobby_to_play) {
+          play_state_.client_teams_ = client_teams_lobby;
+        }
         current_state_ = &play_state_;
         break;
     }
@@ -180,7 +192,15 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
           break;
         }
       }
+
       messages.push_back(message);
+      break;
+    }
+    case PacketBlockType::LOBBY_SELECT_TEAM: {
+      unsigned int team = 0;
+      packet >> team;
+      lobby_state_.SetClientTeam(client_id, team);
+      lobby_state_.SetClientIsReady(client_id, false);
       break;
     }
       /*

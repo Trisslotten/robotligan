@@ -64,9 +64,7 @@ void Engine::Init() {
 }
 
 void Engine::Update(float dt) {
-  
-
-  //std::cout << "current message: " << Input::GetCharacters() <<"\n";
+  // std::cout << "current message: " << Input::GetCharacters() <<"\n";
 
   if (take_game_input_ == true) {
     // accumulate key presses
@@ -190,7 +188,6 @@ void Engine::UpdateNetwork() {
       }
     }
   }
-
 }
 
 void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
@@ -347,6 +344,15 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> second_ability_;
       break;
     }
+    case PacketBlockType::LOBBY_UPDATE_TEAM: {
+      lobby_state_.HandleUpdateLobbyTeamPacket(packet);
+      break;
+    }
+    case PacketBlockType::LOBBY_YOUR_ID: {
+      int id = 0;
+      packet >> id;
+      lobby_state_.SetMyId(id);
+    }
   }
 }
 
@@ -390,7 +396,8 @@ void Engine::UpdateChat(float dt) {
 void Engine::UpdateSystems(float dt) {
   UpdateChat(dt);
 
-  if (Input::IsKeyDown(GLFW_KEY_TAB) && current_state_->Type() == StateType::PLAY) {
+  if (Input::IsKeyDown(GLFW_KEY_TAB) &&
+      current_state_->Type() == StateType::PLAY) {
     DrawScoreboard();
   }
 

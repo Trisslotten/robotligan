@@ -1,11 +1,13 @@
 #ifndef STATE_HPP_
 #define STATE_HPP_
 
+#include <NetAPI\packet.hpp>
 #include <entt.hpp>
 #include <glm/glm.hpp>
 #include <glob/graphics.hpp>
 #include "Chat.hpp"
 #include "shared/shared.hpp"
+#include <ecs/components/button_component.hpp>
 
 class Engine;
 
@@ -70,6 +72,11 @@ class MainMenuState : public State {
 
 /////////////////////// LOBBY ///////////////////////
 
+struct LobbyPlayer {
+  unsigned int team;
+  bool ready;
+};
+
 class LobbyState : public State {
  public:
   void Startup() override;
@@ -80,9 +87,25 @@ class LobbyState : public State {
 
   StateType Type() { return StateType::LOBBY; }
 
+  void HandleUpdateLobbyTeamPacket(NetAPI::Common::Packet& packet);
+  void SetMyId(int client_id) { my_id_ = client_id; }
+
  private:
   entt::registry registry_lobby_;
   void CreateBackgroundEntities();
+  void CreateGUIElements();
+  void DrawTeamSelect();
+
+  glob::GUIHandle team_select_back_;
+  glob::Font2DHandle font_team_names_;
+  std::unordered_map<int, LobbyPlayer> lobby_players_;
+
+  void ReadyButtonFunc();
+  ButtonComponent* ready_button_c = nullptr;
+  bool me_ready_ = false;
+
+  void SendJoinTeam(unsigned int team);
+  int my_id_ = 0;
 };
 
 /////////////////////// PLAY ///////////////////////
@@ -111,6 +134,7 @@ class PlayState : public State {
   void CreatePickUp(glm::vec3 position);
 
   void SwitchGoals();
+
  private:
   void CreateInitialEntities();
   void CreatePlayerEntities();
@@ -131,7 +155,7 @@ class PlayState : public State {
   float current_stamina_ = 0.f;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> transforms_;
-  
+
   entt::entity blue_goal_light_;
   entt::entity red_goal_light_;
 
