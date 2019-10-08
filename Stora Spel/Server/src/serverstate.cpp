@@ -196,12 +196,13 @@ void ServerPlayState::Update(float dt) {
         goal_goal_c.switched_this_tick = false;
       }
     }
-   /* auto match_timer = registry.view<MatchTimer>();
+
+    auto match_timer = registry.view<MatchTimer>();
     for (auto timer : match_timer) {
       MatchTimer& match_timer_c = registry.get<MatchTimer>(timer);
-      to_send << match_timer_c.match_timer;
+      to_send << (int)match_timer_.Elapsed();
       to_send << PacketBlockType::MATCH_TIMER;
-	}*/
+	}
   }
 
   pick_ups_.clear();
@@ -242,8 +243,8 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
 
   CreateArenaEntity();
   CreateBallEntity();
-  CreateGoals();/*
-  CreateMatchTimer();*/
+  CreateGoals();
+  CreateMatchTimer();
 
   for (auto a : clients_player_ids_) {
     std::cout << "client_id=" << a.first << ", entity_id=" << a.second << "\n";
@@ -534,16 +535,16 @@ void ServerPlayState::CreateGoals() {
   trans_comp2.position = glm::vec3(12.f, -4.f, 0.f);
 }
 
-//void ServerPlayState::CreateMatchTimer() {
-//  auto& registry = game_server_->GetRegistry();
-//
-//  double timer = match_timer_.Restart();
-//
-//  // Add match timer
-//  auto entity_match_timer = registry.create();
-//
-//  registry.assign<MatchTimer>(entity_match_timer, timer);
-//}
+void ServerPlayState::CreateMatchTimer() {
+  auto& registry = game_server_->GetRegistry();
+
+  match_timer_.Restart();
+
+  // Add match timer
+  auto entity_match_timer = registry.create();
+
+  registry.assign<MatchTimer>(entity_match_timer);
+}
 
 /*
 TODO: fix

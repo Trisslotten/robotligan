@@ -4,9 +4,9 @@
 #include <entity/registry.hpp>
 #include <entt.hpp>
 #include "ecs/components.hpp"
+#include "replay machine/replay_machine.hpp"
 #include "shared/shared.hpp"
 #include "util/timer.hpp"
-#include "replay machine/replay_machine.hpp"
 
 class GameServer;
 
@@ -66,7 +66,6 @@ class ServerPlayState : public ServerState {
 
   bool StartRecording(unsigned int in_replay_length_seconds);
 
-  
   void SetClientReceiveUpdates(long client_id, bool initialized) {
     clients_receive_updates_[client_id] = initialized;
   }
@@ -85,8 +84,8 @@ class ServerPlayState : public ServerState {
   void Replay(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value);
   void CreatePickUpComponents();
   EntityID GetNextEntityGuid() { return entity_guid_++; }
-
-
+  
+  
   std::unordered_map<long, bool> clients_receive_updates_;
   std::unordered_map<int, EntityID> clients_player_ids_;
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
