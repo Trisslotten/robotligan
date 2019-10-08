@@ -199,7 +199,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> strsize;
       std::string str;
       str.resize(strsize);
-      std::cout << "Packet Size: " << packet.GetPacketSize() << "\n";
+       std::cout << "Packet Size: " << packet.GetPacketSize() << "\n";
       packet.Remove(str.data(), strsize);
       std::cout << "PACKET: TEST_STRING: '" << str << "'\n";
       break;
@@ -353,7 +353,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       switch (p_id) {
         case ProjectileID::CANNON_BALL: {
           play_state_.CreateCannonBall(e_id);
+          break;
         }
+        case ProjectileID::FORCE_PUSH_OBJECT: {
+          play_state_.CreateForcePushObject(e_id);
+          break;
+		}
       }
       break;
     }

@@ -76,6 +76,7 @@ enum class AbilityID {
 
 enum class ProjectileID {
   CANNON_BALL,
+  FORCE_PUSH_OBJECT,
   NUM_PROJECTILE_IDS,
 };
 
