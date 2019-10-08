@@ -359,8 +359,6 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> id;
       lobby_state_.SetMyId(id);
     }
-  }
-}
     case PacketBlockType::CREATE_PROJECTILE: {
       ProjectileID p_id;
       EntityID e_id;
@@ -379,7 +377,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> id;
       play_state_.DestroyEntity(id);
       break;
-	}
+	  }
   }
 }
 
