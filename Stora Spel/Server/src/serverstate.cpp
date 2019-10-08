@@ -52,7 +52,9 @@ void ServerPlayState::Init() {
   // Create replay machine
   this->replay_machine_ = new ReplayMachine();
 
-  for (auto& [client_id, to_send] : game_server_->GetPackets()) {
+  for (auto& [client_id, client_data] : server.GetClients()) {
+    NetAPI::Common::Packet to_send;
+    
     auto ball_view = registry.view<BallComponent, IDComponent>();
     for (auto ball : ball_view) {
       auto& ball_c = ball_view.get<BallComponent>(ball);
