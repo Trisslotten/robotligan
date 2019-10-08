@@ -17,6 +17,8 @@
 #include "shared/transform_component.hpp"
 #include "ecs/components/pick_up_event.hpp"
 
+void DestroyEntity(entt::registry& registry, entt::entity entity);
+
 std::ostream& operator<<(std::ostream& o, glm::vec3 v) {
   return o << v.x << " " << v.y << " " << v.z;
 }
@@ -370,8 +372,9 @@ void PlayerProjectileCollision(entt::registry& registry) {
 
       physics::IntersectData data = Intersect(proj_hitbox, player_hitbox);
       if (data.collision) {
-        if (id.projectile_id == CANNON_BALL) {
-          registry.destroy(projectile);
+        if (id.projectile_id == ProjectileID::CANNON_BALL) {
+          //registry.destroy(projectile);
+          DestroyEntity(registry, projectile);
         }
       }
     }
@@ -392,12 +395,13 @@ void ProjectileBallCollision(entt::registry& registry, entt::entity ball) {
 
     physics::IntersectData data = Intersect(ball_hitbox, proj_hitbox);
     if (data.collision) {
-      if (id.projectile_id == CANNON_BALL && ball_c.is_real == true) {
+      if (id.projectile_id == ProjectileID::CANNON_BALL && ball_c.is_real == true) {
         glm::vec3 dir = normalize(ball_hitbox.center - proj_hitbox.center);
         ball_physics.velocity = dir * 20.0f;
         ball_physics.is_airborne = true;
         ball_c.last_touch = id.creator;
-        registry.destroy(projectile);
+        //registry.destroy(projectile);
+        DestroyEntity(registry, projectile);
       } else {
         registry.destroy(projectile);
         registry.destroy(ball);
@@ -420,8 +424,9 @@ void ProjectileArenaCollision(entt::registry& registry) {
 
       physics::IntersectData data = Intersect(arena_hitbox, proj_hitbox);
       if (data.collision) {
-        if (id.projectile_id == CANNON_BALL) {
-          registry.destroy(projectile);
+        if (id.projectile_id == ProjectileID::CANNON_BALL) {
+          //registry.destroy(projectile);
+          DestroyEntity(registry, projectile);
         }
       }
     }
@@ -507,4 +512,13 @@ void UpdateTransform(entt::registry& registry) {
   }
 }
 
+void DestroyEntity(entt::registry& registry, entt::entity entity) {
+  EventInfo info;
+  if (registry.has<IDComponent>(entity) == false) return;
+  auto id = registry.get<IDComponent>(entity);
+  info.event = Event::DESTROY_ENTITY;
+  info.e_id = id.id;
+  dispatcher.enqueue<EventInfo>(info);
+  registry.destroy(entity);
+}
 #endif  // COLLISION_SYSTEM_HPP_

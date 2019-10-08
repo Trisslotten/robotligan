@@ -97,6 +97,7 @@ void ServerPlayState::Update(float dt) {
   auto& registry = game_server_->GetRegistry();
   auto& server = game_server_->GetServer();
 
+  dispatcher.update<EventInfo>();
 
   registry.view<PlayerComponent>().each(
       [&](auto entity, PlayerComponent& player_c) {
@@ -209,6 +210,21 @@ void ServerPlayState::Update(float dt) {
         goal_goal_c.switched_this_tick = false;
       }
     }
+
+	// send created projectiles
+    for (auto projectiles : created_projectiles_) {
+      to_send << projectiles.entity_id;
+      to_send << projectiles.projectile_id;
+      to_send << PacketBlockType::CREATE_PROJECTILE;
+    }
+    created_projectiles_.clear();
+    // send destroy entity
+    for (auto entity_id : destroy_entities_) {
+      to_send << entity_id;
+      to_send << PacketBlockType::DESTROY_ENTITIES;
+    }
+    destroy_entities_.clear();
+
   }
 
   pick_ups_.clear();
@@ -518,6 +534,26 @@ void ServerPlayState::CreatePickUpComponents() {
                                 glm::vec3(0.f, 1.f, 0.f),
                                 glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
   pick_ups_.push_back(entity);
+}
+
+void ServerPlayState::ReceiveEvent(const EventInfo& e) {
+  switch (e.event) {
+    case Event::DESTROY_ENTITY: {
+      destroy_entities_.push_back(e.e_id);
+      break;
+    }
+    case Event::CREATE_CANNONBALL: {
+      auto& registry = game_server_->GetRegistry();
+      Projectile projectile;
+      projectile.entity_id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, projectile.entity_id);
+      projectile.projectile_id = ProjectileID::CANNON_BALL;
+      created_projectiles_.push_back(projectile);
+      break;
+    }
+    default:
+      break;
+  }
 }
 
 void ServerPlayState::CreateGoals() {

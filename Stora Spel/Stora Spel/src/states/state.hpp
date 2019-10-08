@@ -163,8 +163,8 @@ class PlayState : public State {
   void SetCurrentStamina(float stamina) { current_stamina_ = stamina; }
 
   void CreatePickUp(glm::vec3 position);
-
-
+  void CreateCannonBall(EntityID id);
+  void DestroyEntity(EntityID id);
   void SwitchGoals();
 
  private:

@@ -1,20 +1,21 @@
 #ifndef ABILITY_CONTROLLER_SYSTEM_HPP_
 #define ABILITY_CONTROLLER_SYSTEM_HPP_
 
+#include <entt.hpp>
 //#include <position.h>
 #include <util/global_settings.hpp>
 #include <boundingboxes.hpp>
 #include "ecs/components.hpp"
 #include "shared/camera_component.hpp"
-#include <entt.hpp>
 #include "ecs/components.hpp"
+#include "util/event.hpp"
 
 namespace ability_controller {
 
 bool TriggerAbility(entt::registry &registry, AbilityID in_a_id);
 void CreateMissileEntity(entt::registry &registry);
 void DoSuperStrike(entt::registry &registry);
-void CreateCannonBallEntity(entt::registry &registry, PlayerID id);
+entt::entity CreateCannonBallEntity(entt::registry &registry, PlayerID id);
 void DoSwitchGoals(entt::registry &registry);
 
 void Update(entt::registry &registry, float dt) {
@@ -64,8 +65,12 @@ void Update(entt::registry &registry, float dt) {
         // Check if the player should shoot
         if (ability_component.shoot &&
             ability_component.shoot_cooldown <= 0.0f) {
-          CreateCannonBallEntity(registry, player_component.client_id);
-          ability_component.shoot_cooldown = 1.0f;
+			entt::entity entity = CreateCannonBallEntity(registry, player_component.client_id);
+			ability_component.shoot_cooldown = 1.0f;
+            EventInfo e;
+            e.event = Event::CREATE_CANNONBALL;
+            e.entity = entity;
+            dispatcher.enqueue<EventInfo>(e);
         }
         ability_component.shoot = false;
       });
@@ -175,10 +180,9 @@ void DoSuperStrike(entt::registry &registry) {
   }
 }
 
-void CreateCannonBallEntity(entt::registry &registry, PlayerID id) {
+entt::entity CreateCannonBallEntity(entt::registry &registry, PlayerID id) {
   auto view_controller =
       registry.view<CameraComponent, PlayerComponent, TransformComponent>();
-
   for (auto entity : view_controller) {
     CameraComponent &cc = view_controller.get<CameraComponent>(entity);
     PlayerComponent &pc = view_controller.get<PlayerComponent>(entity);
@@ -195,11 +199,12 @@ void CreateCannonBallEntity(entt::registry &registry, PlayerID id) {
           glm::vec3(0, 0, 0), glm::vec3(.3f, .3f, .3f));
       registry.assign<physics::Sphere>(cannonball,
                                        glm::vec3(tc.position + cc.offset), .3f);
-      registry.assign<ProjectileComponent>(cannonball, CANNON_BALL, id);
+      registry.assign<ProjectileComponent>(cannonball, ProjectileID::CANNON_BALL, id);
       // registry.assign<ModelComponent>(cannonball,
       //                                glob::GetModel("assets/Ball/Ball.fbx"));
       // registry.assign<LightComponent>(cannonball, glm::vec3(1, 0, 1), 3.f,
       // 0.f);
+      return cannonball;
     }
   }
 }

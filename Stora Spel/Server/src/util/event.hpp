@@ -12,7 +12,8 @@ enum class Event {
 
 struct EventInfo {
   Event event;
-  int entity_id;
+  entt::entity entity;
+  int e_id;
 };
 
 #endif  // !EVENT_HPP
