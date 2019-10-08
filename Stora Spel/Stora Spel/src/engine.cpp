@@ -52,10 +52,13 @@ void Engine::Init() {
 
   main_menu_state_.SetEngine(this);
   lobby_state_.SetEngine(this);
+  connect_menu_state_.SetEngine(this);
   play_state_.SetEngine(this);
 
   main_menu_state_.Startup();
+  connect_menu_state_.Startup();
   lobby_state_.Startup();
+
   play_state_.Startup();
 
   main_menu_state_.Init();
@@ -109,6 +112,9 @@ void Engine::Update(float dt) {
       case StateType::MAIN_MENU:
         current_state_ = &main_menu_state_;
         break;
+	  case StateType::CONNECT_MENU:
+		current_state_ = &connect_menu_state_;
+		break;
       case StateType::LOBBY:
         current_state_ = &lobby_state_;
         break;

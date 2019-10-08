@@ -156,6 +156,7 @@
     <ClCompile Include="src\engine.cpp" />
     <ClCompile Include="src\entitycreation.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\states\connectmenustate.cpp" />
     <ClCompile Include="src\states\lobbystate.cpp" />
     <ClCompile Include="src\states\mainmenustate.cpp" />
     <ClCompile Include="src\states\playstate.cpp" />

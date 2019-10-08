@@ -15,10 +15,9 @@ void LobbyState::Startup() {
 
 void LobbyState::Init() {
   //
+  auto& cli = engine_->GetClient();
   engine_->SetSendInput(false);
   engine_->SetCurrentRegistry(&registry_lobby_);
-
-  engine_->GetClient().Connect("localhost", 1337);
 
   engine_->SetEnableChat(true);
 }

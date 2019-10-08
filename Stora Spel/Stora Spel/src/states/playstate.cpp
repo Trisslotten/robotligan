@@ -1,9 +1,8 @@
 #include "state.hpp"
 
-#include <GLFW/glfw3.h>
 #include <glob/graphics.hpp>
 #include <glob/window.hpp>
-
+#include <GLFW/glfw3.h>
 #include "shared/camera_component.hpp"
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
@@ -59,6 +58,11 @@ void PlayState::Init() {
 }
 
 void PlayState::Update() {
+  auto& cli = engine_->GetClient();
+  if (!cli.IsConnected()) {
+    cli.Disconnect();
+    engine_->ChangeState(StateType::MAIN_MENU);
+  }
   if (!transforms_.empty()) {
     auto view_entities =
         registry_gameplay_.view<TransformComponent, IDComponent>();
@@ -209,9 +213,7 @@ void PlayState::CreateInGameMenu() {
   // CONTINUE BUTTON -- change registry to registry_gameplay_
   ButtonComponent* in_game_buttons_ = GenerateButtonEntity(
       registry_gameplay_, "CONTINUE", glm::vec2(550, 430), font_test_, false);
-  in_game_buttons_->button_func = [&]() {
-    ToggleInGameMenu();
-  };
+  in_game_buttons_->button_func = [&]() { ToggleInGameMenu(); };
   // SETTINGS BUTTON -- change registry to registry_settings_
   in_game_buttons_ = GenerateButtonEntity(
       registry_gameplay_, "SETTINGS", glm::vec2(550, 360), font_test_, false);
