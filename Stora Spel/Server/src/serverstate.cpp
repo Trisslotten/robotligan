@@ -52,7 +52,9 @@ void ServerPlayState::Init() {
   // Create replay machine
   this->replay_machine_ = new ReplayMachine();
 
-  for (auto& [client_id, to_send] : game_server_->GetPackets()) {
+  for (auto& [client_id, client_data] : server.GetClients()) {
+    NetAPI::Common::Packet to_send;
+    
     auto ball_view = registry.view<BallComponent, IDComponent>();
     for (auto ball : ball_view) {
       auto& ball_c = ball_view.get<BallComponent>(ball);
@@ -81,6 +83,8 @@ void ServerPlayState::Init() {
 
 void ServerPlayState::Update(float dt) {
   auto& registry = game_server_->GetRegistry();
+  auto& server = game_server_->GetServer();
+
 
   registry.view<PlayerComponent>().each(
       [&](auto entity, PlayerComponent& player_c) {
@@ -103,6 +107,11 @@ void ServerPlayState::Update(float dt) {
 
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     EntityID client_player_id = clients_player_ids_[client_id];
+
+    if(!clients_receive_updates_[client_id]) {
+      // TODO maybe send important packets even if not initialized
+      continue;
+    }
 
     auto view_cam = registry.view<CameraComponent, IDComponent>();
     for (auto cam : view_cam) {
