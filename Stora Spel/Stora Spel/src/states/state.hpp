@@ -11,6 +11,7 @@ class Engine;
 
 enum class StateType {
   MAIN_MENU,
+  CONNECT_MENU,
   LOBBY,
   PLAY,
 };
@@ -83,7 +84,37 @@ class LobbyState : public State {
  private:
   entt::registry registry_lobby_;
 };
-
+/////////////////////// ConnectMenuState
+class ConnectMenuState : public State {
+public:
+	void Startup() override;
+	void Init() override;
+	void Update() override;
+	void UpdateNetwork() override;
+	void Cleanup() override;
+	StateType Type() { return StateType::CONNECT_MENU; }
+private:
+	struct InputField
+	{
+		InputField() {};
+		InputField(glm::vec2 in_size, glm::vec2 in_pos,std::string initialText = ""){
+			size = in_size;
+			pos = in_pos;
+		}
+		bool focus = false;
+		std::string input_field = "";
+		glm::vec2 size = glm::vec2(0.0f,0.0f);
+		glm::vec2 pos = glm::vec2(0.0f, 0.0f);
+		glob::GUIHandle hndl = 0;
+	};
+	bool isClicked_;
+	std::string ip_;
+	std::string port_;
+	InputField ip_field_;
+	InputField port_field_;
+	glob::Font2DHandle font_test_ = 0;
+	entt::registry registry_connect_menu_;
+};
 /////////////////////// PLAY ///////////////////////
 
 class PlayState : public State {

@@ -40,7 +40,7 @@ void MainMenuState::CreateMainMenu() {
   // PLAY BUTTON - change registry to registry_gameplay_
   ButtonComponent* b_c = GenerateButtonEntity(registry_mainmenu_, "PLAY",
                                               glm::vec2(100, 200), font_test_);
-  b_c->button_func = [&]() { engine_->ChangeState(StateType::LOBBY); };
+  b_c->button_func = [&]() { engine_->ChangeState(StateType::CONNECT_MENU); };
 
   // SETTINGS BUTTON - change registry to registry_settings_
   b_c = GenerateButtonEntity(registry_mainmenu_, "SETTINGS",

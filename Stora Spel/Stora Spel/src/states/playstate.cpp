@@ -52,6 +52,11 @@ void PlayState::Init() {
 }
 
 void PlayState::Update() {
+  auto& cli = engine_->GetClient();
+  if (!cli.IsConnected()) {
+	  cli.Disconnect();
+	  engine_->ChangeState(StateType::MAIN_MENU);
+  }
   if (!transforms_.empty()) {
     auto view_entities =
         registry_gameplay_.view<TransformComponent, IDComponent>();
