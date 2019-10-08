@@ -47,6 +47,7 @@ void GameServer::Update(float dt) {
 
   for (auto client_data : server_.GetNewlyConnected()) {
     lobby_state_.SetClientIsReady(client_data->ID, false);
+    play_state_.SetClientReceiveUpdates(client_data->ID, false);
   }
 
   // handle received data
@@ -184,6 +185,13 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       messages.push_back(message);
       break;
     }
+    case PacketBlockType::CLIENT_RECEIVE_UPDATES: {
+      bool receive = false;
+      packet >> receive;
+      play_state_.SetClientReceiveUpdates(client_id, receive);
+      break;
+    }
+
       /*
       TODO: fix
       case PacketBlockType::CHOOSE_TEAM: {

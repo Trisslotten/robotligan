@@ -46,14 +46,16 @@ void Create() {
   glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
   glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
 
-  //GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "My Title", primary, NULL);
+  // GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "My
+  // Title", primary, NULL);
 
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 
   const char* title_str = "Robotligan";
 
-  glfw_window = glfwCreateWindow(window_width, window_height, title_str, NULL, NULL);
+  glfw_window =
+      glfwCreateWindow(window_width, window_height, title_str, NULL, NULL);
 
   if (!glfw_window) {
     std::cout << "ERROR window.cpp: Could not create glfw window\n";
@@ -74,7 +76,7 @@ void Create() {
   glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   // vsync 1, off 0
-  glfwSwapInterval(1);
+  glfwSwapInterval(0);
 
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
@@ -103,7 +105,10 @@ void Update() {
   }
 }
 
-void Cleanup() { glfwTerminate(); }
+void Cleanup() {
+  //glfwDestroyWindow(glfw_window);
+  //glfwTerminate();
+}
 
 bool IsInitialized() { return initd; }
 

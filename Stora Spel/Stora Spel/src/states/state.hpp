@@ -109,6 +109,7 @@ class PlayState : public State {
 
   void CreatePickUp(glm::vec3 position);
 
+
   void SwitchGoals();
  private:
   void CreateInitialEntities();
