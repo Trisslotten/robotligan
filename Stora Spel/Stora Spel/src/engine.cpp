@@ -358,6 +358,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       int id = 0;
       packet >> id;
       lobby_state_.SetMyId(id);
+      break;
     }
     case PacketBlockType::CREATE_PROJECTILE: {
       ProjectileID p_id;
