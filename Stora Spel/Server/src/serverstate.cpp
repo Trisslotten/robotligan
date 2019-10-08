@@ -428,10 +428,11 @@ void ServerPlayState::ResetEntities() {
 
   unsigned int blue_counter = 0;
   unsigned int red_counter = 0;
-  bool blue_team = true;
+  
   auto player_view = registry.view<PlayerComponent, PhysicsComponent,
                                    TransformComponent, CameraComponent>();
   for (auto entity : player_view) {
+    bool blue_team = true;
     PhysicsComponent& physics_component =
         player_view.get<PhysicsComponent>(entity);
     TransformComponent& transform_component =
