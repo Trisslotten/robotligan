@@ -267,6 +267,29 @@ void PlayState::CreatePickUp(glm::vec3 position) {
   registry_gameplay_.assign<PickUpComponent>(pick_up);
 }
 
+void PlayState::CreateCannonBall(EntityID id) {
+  auto cannonball = registry_gameplay_.create();
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glm::vec3 arena_scale = glm::vec3(1.0f);
+  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  registry_gameplay_.assign<ModelComponent>(cannonball, model_ball);
+  registry_gameplay_.assign<TransformComponent>(cannonball, zero_vec, zero_vec,
+                                                glm::vec3(0.3f));
+  registry_gameplay_.assign<IDComponent>(cannonball, id);
+}
+
+void PlayState::DestroyEntity(EntityID id) {
+  auto id_view = registry_gameplay_.view<IDComponent>();
+  for (auto entity : id_view) {
+    auto& e_id = id_view.get(entity);
+
+	if (e_id.id == id) {
+      registry_gameplay_.destroy(entity);
+      return;
+	}
+  }
+}
+
 void PlayState::SwitchGoals() {
   TransformComponent& blue_light_trans_c =
       registry_gameplay_.get<TransformComponent>(blue_goal_light_);
