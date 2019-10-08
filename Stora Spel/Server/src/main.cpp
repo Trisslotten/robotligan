@@ -38,12 +38,13 @@ int main(unsigned argc, char** argv) {
         std::chrono::microseconds((int)glm::min(1000.0, update_time_ms * 1000.0));
     std::this_thread::sleep_for(sleep_time);
 
-    
+    /*
     if (debug_timer.Elapsed() > 5.0) {
       double elapsed = debug_timer.Restart();
       std::cout << "DEBUG: update rate = " << num_frames / elapsed << " U/s\n";
       num_frames = 0;
     }
+    */
     
   }
   dispatcher.sink<EventInfo>().disconnect<&GameServer::ReceiveEvent>(server);
