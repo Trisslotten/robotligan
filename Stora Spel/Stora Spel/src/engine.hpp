@@ -35,7 +35,7 @@ class Engine {
   NetAPI::Common::Packet& GetPacket() { return packet_; }
   void SetSendInput(bool should_send) { should_send_input_ = should_send; }
   void SetEnableChat(bool should_enable) { this->enable_chat_ = should_enable; }
-
+  int GetGameplayTimer() const;
  private:
   void SetKeybinds();
 
@@ -75,6 +75,7 @@ class Engine {
 
   // TODO: move to states
   std::vector<unsigned int> scores_;
+  
   int gameplay_timer_sec_ = 0;
 
   Chat chat;

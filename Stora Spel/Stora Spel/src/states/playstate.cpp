@@ -36,6 +36,7 @@ void PlayState::Startup() {
       glob::GetGUIItem("assets/GUI_elements/stamina_bar_icon.png");
   gui_quickslots_ =
       glob::GetGUIItem("assets/GUI_elements/koncept_abilities.png");
+  font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
   ///////////////////////////////////////////////////////////////
   // \TO BE MOVED
   ///////////////////////////////////////////////////////////////
@@ -91,6 +92,7 @@ void PlayState::Update() {
                glm::vec3(0, 1, 0));
   glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
 
+  UpdateGameplayTimer();
   /*
   registry_gameplay_.view<PlayerComponent>().each(
       [&](auto entity, PlayerComponent& player_c) {
@@ -130,6 +132,36 @@ void PlayState::UpdateInGameMenu(bool show_menu) {
     auto& button_c = registry_gameplay_.get<ButtonComponent>(v);
     button_c.visible = show_menu;
   }
+}
+
+void PlayState::UpdateGameplayTimer() {
+  // Gameplay timer
+  int temp = 300 - engine_->GetGameplayTimer();
+  int sec = 0;
+  int min = 5;
+
+  if (temp < 300 && temp >= 240) {
+    min = 4;
+    sec = 60 - engine_->GetGameplayTimer();
+  } else if (temp < 240 && temp >= 180) {
+    min = 3;
+    sec = 60 - engine_->GetGameplayTimer() + 60;
+  } else if (temp < 180 && temp >= 120) {
+    min = 2;
+    sec = 60 - engine_->GetGameplayTimer() + 120;
+  } else if (temp < 120 && temp >= 60) {
+    min = 1;
+    sec = 60 - engine_->GetGameplayTimer() + 180;
+  } else if (temp < 60) {
+    min = 0;
+    sec = 60 - engine_->GetGameplayTimer() + 240;
+  }
+  // --------------------------------------
+  glob::Submit(font_test_, glm::vec2(613, 680), 72, std::to_string(min),
+               glm::vec4(1, 1, 1, 1));
+  glob::Submit(font_test_, glm::vec2(643, 680), 72, ":", glm::vec4(1, 1, 1, 1));
+  glob::Submit(font_test_, glm::vec2(660, 680), 72, std::to_string(sec),
+               glm::vec4(1, 1, 1, 1));
 }
 
 void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,
@@ -209,9 +241,7 @@ void PlayState::CreateInGameMenu() {
   // CONTINUE BUTTON -- change registry to registry_gameplay_
   ButtonComponent* in_game_buttons_ = GenerateButtonEntity(
       registry_gameplay_, "CONTINUE", glm::vec2(550, 430), font_test_, false);
-  in_game_buttons_->button_func = [&]() {
-    ToggleInGameMenu();
-  };
+  in_game_buttons_->button_func = [&]() { ToggleInGameMenu(); };
   // SETTINGS BUTTON -- change registry to registry_settings_
   in_game_buttons_ = GenerateButtonEntity(
       registry_gameplay_, "SETTINGS", glm::vec2(550, 360), font_test_, false);

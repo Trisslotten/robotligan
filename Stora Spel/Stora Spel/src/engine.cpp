@@ -98,34 +98,7 @@ void Engine::Update(float dt) {
                glm::vec4(0, 0.26, 1, 1));
   glob::Submit(font_test3_, glm::vec2(705, 705), 72, std::to_string(scores_[0]),
                glm::vec4(1, 0, 0, 1));
-  // Gameplay timer
-  int temp = 300 - gameplay_timer_sec_;
-  int sec = 0;
-  int min = 5;
 
-  if (temp < 300 && temp >= 295) {
-    min = 4;
-    sec = 60 - gameplay_timer_sec_;
-  } else if (temp < 295 && temp >= 290) {
-    min = 3;
-    sec = 60 - gameplay_timer_sec_ + 5; 
-  } else if (temp < 290 && temp >= 285) {
-    min = 2;
-    sec = 60 - gameplay_timer_sec_ + 10; 
-  } else if (temp < 285 && temp >= 280) {
-    min = 1;
-    sec = 60 - gameplay_timer_sec_ + 15; 
-  } else if (temp < 280) {
-    min = 0;
-    sec = 60 - gameplay_timer_sec_ + 20; 
-  }
-
-  glob::Submit(font_test3_, glm::vec2(613, 680), 72,
-               std::to_string(min), glm::vec4(1, 1, 1, 1));
-  glob::Submit(font_test3_, glm::vec2(643, 680), 72, ":",
-               glm::vec4(1, 1, 1, 1));
-  glob::Submit(font_test3_, glm::vec2(660, 680), 72,
-               std::to_string(sec), glm::vec4(1, 1, 1, 1));
 
   current_state_->Update();
 
@@ -481,3 +454,5 @@ void Engine::DrawScoreboard() {
     }
   }
 }
+
+int Engine::GetGameplayTimer() const { return gameplay_timer_sec_; }
