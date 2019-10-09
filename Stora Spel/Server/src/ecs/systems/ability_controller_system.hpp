@@ -249,29 +249,29 @@ void DoSwitchGoals(entt::registry &registry) {
 }
 
 entt::entity CreateForcePushEntity(entt::registry &registry, PlayerID id) {
-  auto view_controller =
-      registry.view<CameraComponent, PlayerComponent, TransformComponent>();
-  for (auto entity : view_controller) {
-    CameraComponent &cc = view_controller.get<CameraComponent>(entity);
-    PlayerComponent &pc = view_controller.get<PlayerComponent>(entity);
-    TransformComponent &tc = view_controller.get<TransformComponent>(entity);
-
-    if (pc.client_id == id) {
-      float speed = GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_SPEED");
-      auto force_object = registry.create();
-      registry.assign<PhysicsComponent>(
-          force_object, glm::vec3(cc.GetLookDir() * speed), true, 0.0f);
-      registry.assign<TransformComponent>(
-          force_object,
-          glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),
-          glm::vec3(0, 0, 0), glm::vec3(.5f, .5f, .5f));
-      registry.assign<physics::Sphere>(force_object,
-                                       glm::vec3(tc.position + cc.offset), .5f);
-      registry.assign<ProjectileComponent>(force_object,
-                                           ProjectileID::FORCE_PUSH_OBJECT, id);
-      return force_object;
-    }
-  }
+//  auto view_controller =
+//      registry.view<CameraComponent, PlayerComponent, TransformComponent>();
+//  for (auto entity : view_controller) {
+//    CameraComponent &cc = view_controller.get<CameraComponent>(entity);
+//    PlayerComponent &pc = view_controller.get<PlayerComponent>(entity);
+//    TransformComponent &tc = view_controller.get<TransformComponent>(entity);
+//
+//    if (pc.client_id == id) {
+//      float speed = GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_SPEED");
+//      auto force_object = registry.create();
+//      registry.assign<PhysicsComponent>(
+//          force_object, glm::vec3(cc.GetLookDir() * speed), true, 0.0f);
+//      registry.assign<TransformComponent>(
+//          force_object,
+//          glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),
+//          glm::vec3(0, 0, 0), glm::vec3(.5f, .5f, .5f));
+//      registry.assign<physics::Sphere>(force_object,
+//                                       glm::vec3(tc.position + cc.offset), .5f);
+//      registry.assign<ProjectileComponent>(force_object,
+//                                           ProjectileID::FORCE_PUSH_OBJECT, id);
+//      return force_object;
+//    }
+//  }
 }
 
 };  // namespace ability_controller
