@@ -257,10 +257,10 @@ entt::entity CreateForcePushEntity(entt::registry &registry, PlayerID id) {
     TransformComponent &tc = view_controller.get<TransformComponent>(entity);
 
     if (pc.client_id == id) {
-      float speed = 15.0f;//GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_SPEED");
+      float speed = GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_SPEED");
 	  auto force_object = registry.create();
-      registry.assign<PhysicsComponent>(
-          force_object, glm::vec3(cc.GetLookDir() * speed), true, 0.0f);
+      //registry.assign<PhysicsComponent>(
+      //    force_object, cc.GetLookDir() * speed, true, 0.0f);
       registry.assign<TransformComponent>(
           force_object,
           glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),
