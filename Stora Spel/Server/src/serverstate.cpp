@@ -379,7 +379,7 @@ void ServerPlayState::CreatePlayerEntity() {
   auto& player_component = registry.assign<PlayerComponent>(entity);
 
   // Prepare hard-coded values
-  AbilityID primary_id = AbilityID::SWITCH_GOALS;
+  AbilityID primary_id = AbilityID::FORCE_PUSH;
   AbilityID secondary_id = AbilityID::SWITCH_GOALS;
   float primary_cooldown =
       GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
@@ -553,6 +553,15 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       created_projectiles_.push_back(projectile);
       break;
     }
+    case Event::CREATE_FORCE_PUSH: {
+      auto& registry = game_server_->GetRegistry();
+      Projectile projectile;
+      projectile.entity_id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, projectile.entity_id);
+      projectile.projectile_id = ProjectileID::FORCE_PUSH_OBJECT;
+      created_projectiles_.push_back(projectile);
+      break;
+	}
     default:
       break;
   }

@@ -164,6 +164,7 @@ class PlayState : public State {
 
   void CreatePickUp(glm::vec3 position);
   void CreateCannonBall(EntityID id);
+  void CreateForcePushObject(EntityID id);
   void DestroyEntity(EntityID id);
   void SwitchGoals();
 
