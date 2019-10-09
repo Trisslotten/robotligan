@@ -2,18 +2,18 @@
 #define ABILITY_CONTROLLER_SYSTEM_HPP_
 
 //#include <position.h>
-#include <util/global_settings.hpp>
 #include <boundingboxes.hpp>
+#include <entt.hpp>
+#include <util/global_settings.hpp>
 #include "ecs/components.hpp"
 #include "shared/camera_component.hpp"
-#include <entt.hpp>
-#include "ecs/components.hpp"
 #include "util/event.hpp"
 #include "util/global_settings.hpp"
 
 namespace ability_controller {
 
-bool TriggerAbility(entt::registry &registry, AbilityID in_a_id, PlayerID player_id);
+bool TriggerAbility(entt::registry &registry, AbilityID in_a_id,
+                    PlayerID player_id);
 void CreateMissileEntity(entt::registry &registry);
 void DoSuperStrike(entt::registry &registry);
 entt::entity CreateCannonBallEntity(entt::registry &registry, PlayerID id);
@@ -42,7 +42,8 @@ void Update(entt::registry &registry, float dt) {
         if (ability_component.use_primary &&
             !(ability_component.cooldown_remaining > 0.0f)) {
           // Trigger the ability
-          if (TriggerAbility(registry, ability_component.primary_ability, player_component.client_id)) {
+          if (TriggerAbility(registry, ability_component.primary_ability,
+                             player_component.client_id)) {
             // If ability triggered successfully set the
             // AbilityComponent's cooldown to be on max capacity
             ability_component.cooldown_remaining =
@@ -68,18 +69,20 @@ void Update(entt::registry &registry, float dt) {
         // Check if the player should shoot
         if (ability_component.shoot &&
             ability_component.shoot_cooldown <= 0.0f) {
-			entt::entity entity = CreateCannonBallEntity(registry, player_component.client_id);
-			ability_component.shoot_cooldown = 1.0f;
-            EventInfo e;
-            e.event = Event::CREATE_CANNONBALL;
-            e.entity = entity;
-            dispatcher.enqueue<EventInfo>(e);
+          entt::entity entity =
+              CreateCannonBallEntity(registry, player_component.client_id);
+          ability_component.shoot_cooldown = 1.0f;
+          EventInfo e;
+          e.event = Event::CREATE_CANNONBALL;
+          e.entity = entity;
+          dispatcher.enqueue<EventInfo>(e);
         }
         ability_component.shoot = false;
       });
 }
 
-bool TriggerAbility(entt::registry &registry, AbilityID in_a_id, PlayerID player_id) {
+bool TriggerAbility(entt::registry &registry, AbilityID in_a_id,
+                    PlayerID player_id) {
   switch (in_a_id) {
     case AbilityID::NULL_ABILITY:
       break;
@@ -208,7 +211,8 @@ entt::entity CreateCannonBallEntity(entt::registry &registry, PlayerID id) {
           glm::vec3(0, 0, 0), glm::vec3(.3f, .3f, .3f));
       registry.assign<physics::Sphere>(cannonball,
                                        glm::vec3(tc.position + cc.offset), .3f);
-      registry.assign<ProjectileComponent>(cannonball, ProjectileID::CANNON_BALL, id);
+      registry.assign<ProjectileComponent>(cannonball,
+                                           ProjectileID::CANNON_BALL, id);
       // registry.assign<ModelComponent>(cannonball,
       //                                glob::GetModel("assets/Ball/Ball.fbx"));
       // registry.assign<LightComponent>(cannonball, glm::vec3(1, 0, 1), 3.f,
@@ -257,10 +261,13 @@ entt::entity CreateForcePushEntity(entt::registry &registry, PlayerID id) {
     TransformComponent &tc = view_controller.get<TransformComponent>(entity);
 
     if (pc.client_id == id) {
-      float speed = GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_SPEED");
-	  auto force_object = registry.create();
-      //registry.assign<PhysicsComponent>(
+      float speed =
+          GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_SPEED");
+      auto force_object = registry.create();
+      // registry.assign<PhysicsComponent>(
       //    force_object, cc.GetLookDir() * speed, true, 0.0f);
+      registry.assign<PhysicsComponent>(
+          force_object, glm::vec3(cc.GetLookDir() * speed), false, 0.0f);
       registry.assign<TransformComponent>(
           force_object,
           glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),
