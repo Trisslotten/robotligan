@@ -264,10 +264,8 @@ entt::entity CreateForcePushEntity(entt::registry &registry, PlayerID id) {
       float speed =
           GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_SPEED");
       auto force_object = registry.create();
-      // registry.assign<PhysicsComponent>(
-      //    force_object, cc.GetLookDir() * speed, true, 0.0f);
       registry.assign<PhysicsComponent>(
-          force_object, glm::vec3(cc.GetLookDir() * speed), false, 0.0f);
+         force_object, cc.GetLookDir() * speed, glm::vec3(0.f), true, 0.0f);
       registry.assign<TransformComponent>(
           force_object,
           glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),
