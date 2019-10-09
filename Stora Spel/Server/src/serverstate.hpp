@@ -6,6 +6,7 @@
 #include "ecs/components.hpp"
 #include "replay machine/replay_machine.hpp"
 #include "shared/shared.hpp"
+#include "util/event.hpp"
 #include "util/timer.hpp"
 
 class GameServer;
@@ -60,8 +61,11 @@ class ServerLobbyState : public ServerState {
     teams_updated_ = true;
   }
 
-  
+  void SetClientAbility(int client_id, AbilityID id) {
+    client_abilities_[client_id] = id;
+  }
 
+  std::unordered_map<int, AbilityID> client_abilities_;
   std::unordered_map<int, unsigned int> client_teams_;
 
  private:
@@ -89,8 +93,16 @@ class ServerPlayState : public ServerState {
   void ResetEntities();
 
   bool StartRecording(unsigned int in_replay_length_seconds);
+
+  void SetClientReceiveUpdates(long client_id, bool initialized) {
+    clients_receive_updates_[client_id] = initialized;
+  }
+
+  std::unordered_map<int, AbilityID> client_abilities_;
   std::unordered_map<int, unsigned int> client_teams_;
 
+  void ReceiveEvent(const EventInfo& e);
+  // EntityID GetNextEntityGuid() { return entity_guid_++; }
  private:
   entt::entity CreateIDEntity();
 
@@ -105,6 +117,7 @@ class ServerPlayState : public ServerState {
   void CreatePickUpComponents();
   EntityID GetNextEntityGuid() { return entity_guid_++; }
 
+  std::unordered_map<long, bool> clients_receive_updates_;
   std::unordered_map<int, EntityID> clients_player_ids_;
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
 
@@ -117,6 +130,8 @@ class ServerPlayState : public ServerState {
   int blue_players_ = 0;
 
   std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
+  std::vector<Projectile> created_projectiles_;
+  std::vector<int> destroy_entities_;
 
   // Replay stuff ---
   ReplayMachine* replay_machine_ = nullptr;

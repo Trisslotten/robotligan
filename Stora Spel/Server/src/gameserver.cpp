@@ -5,6 +5,7 @@
 #include <glob/graphics.hpp>
 #include <iostream>
 
+#include "shared/id_component.hpp"
 #include "shared/pick_up_component.hpp"
 #include "shared/shared.hpp";
 #include "shared/transform_component.hpp"
@@ -40,12 +41,14 @@ void GameServer::Init(double in_update_rate) {
 void GameServer::Update(float dt) {
   server_.Update();
 
+  packets_.clear();
   for (auto& [client_id, client_data] : server_.GetClients()) {
     packets_[client_id] = NetAPI::Common::Packet();
   }
 
   for (auto client_data : server_.GetNewlyConnected()) {
     lobby_state_.SetClientIsReady(client_data->ID, false);
+    play_state_.SetClientReceiveUpdates(client_data->ID, false);
     lobby_state_.HandleNewClientTeam(client_data->ID);
   }
 
@@ -120,8 +123,12 @@ void GameServer::HandleStateChange() {
     current_state_type_ = wanted_state_type_;
 
     std::unordered_map<int, unsigned int> client_teams_lobby;
-    if (went_from_lobby_to_play)
+    std::unordered_map<int, AbilityID> client_abilities_lobby;
+    if (went_from_lobby_to_play) {
       client_teams_lobby = lobby_state_.client_teams_;
+      client_abilities_lobby = lobby_state_.client_abilities_;
+	}
+      
 
     current_state_->Cleanup();
     switch (wanted_state_type_) {
@@ -133,6 +140,7 @@ void GameServer::HandleStateChange() {
         std::cout << "Change Server State: PLAY\n";
         if (went_from_lobby_to_play) {
           play_state_.client_teams_ = client_teams_lobby;
+          play_state_.client_abilities_ = client_abilities_lobby;
         }
         current_state_ = &play_state_;
         break;
@@ -196,11 +204,25 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       messages.push_back(message);
       break;
     }
+    case PacketBlockType::CLIENT_RECEIVE_UPDATES: {
+      bool receive = false;
+      packet >> receive;
+      play_state_.SetClientReceiveUpdates(client_id, receive);
+      break;
+    }
+
     case PacketBlockType::LOBBY_SELECT_TEAM: {
       unsigned int team = 0;
       packet >> team;
       lobby_state_.SetClientTeam(client_id, team);
       lobby_state_.SetClientIsReady(client_id, false);
+      break;
+    }
+
+    case PacketBlockType::LOBBY_SELECT_ABILITY: {
+      AbilityID id;
+      packet >> id;
+      lobby_state_.SetClientAbility(client_id, id);
       break;
     }
       /*
@@ -229,17 +251,4 @@ void GameServer::UpdateSystems(float dt) {
   }
   dispatcher.update<EventInfo>();
   // glob::LoadWireframeMesh(model_arena, mh.pos, mh.indices);
-}
-
-void GameServer::ReceiveEvent(const EventInfo& e) {
-  switch (e.event) {
-    case Event::DESTROY_ENTITY: {
-      break;
-    }
-    case Event::CREATE_CANNONBALL: {
-      break;
-    }
-    default:
-      break;
-  }
 }

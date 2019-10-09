@@ -13,6 +13,7 @@
     <ClCompile Include="src\util\player_settings.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Chat.cpp" />
+    <ClCompile Include="src\states\connectmenustate.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AbilityHandler\ability.hpp" />

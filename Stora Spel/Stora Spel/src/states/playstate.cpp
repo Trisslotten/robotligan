@@ -1,9 +1,8 @@
 #include "state.hpp"
 
-#include <GLFW/glfw3.h>
 #include <glob/graphics.hpp>
 #include <glob/window.hpp>
-
+#include <GLFW/glfw3.h>
 #include "shared/camera_component.hpp"
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
@@ -49,9 +48,21 @@ void PlayState::Init() {
 
   CreateInGameMenu();
   CreateInitialEntities();
+
+  auto& client = engine_->GetClient();
+  NetAPI::Common::Packet to_send;
+  bool rec = true;
+  to_send << rec;
+  to_send << PacketBlockType::CLIENT_RECEIVE_UPDATES;
+  client.Send(to_send);
 }
 
 void PlayState::Update() {
+  auto& cli = engine_->GetClient();
+  if (!cli.IsConnected()) {
+    cli.Disconnect();
+    engine_->ChangeState(StateType::MAIN_MENU);
+  }
   if (!transforms_.empty()) {
     auto view_entities =
         registry_gameplay_.view<TransformComponent, IDComponent>();
@@ -89,7 +100,7 @@ void PlayState::Update() {
       [&](auto entity, PlayerComponent& player_c) {
         stam_len = player_c.energy_current;
       });
-          */
+  */
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
   glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
   glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
@@ -202,9 +213,7 @@ void PlayState::CreateInGameMenu() {
   // CONTINUE BUTTON -- change registry to registry_gameplay_
   ButtonComponent* in_game_buttons_ = GenerateButtonEntity(
       registry_gameplay_, "CONTINUE", glm::vec2(550, 430), font_test_, false);
-  in_game_buttons_->button_func = [&]() {
-    ToggleInGameMenu();
-  };
+  in_game_buttons_->button_func = [&]() { ToggleInGameMenu(); };
   // SETTINGS BUTTON -- change registry to registry_settings_
   in_game_buttons_ = GenerateButtonEntity(
       registry_gameplay_, "SETTINGS", glm::vec2(550, 360), font_test_, false);
@@ -256,6 +265,29 @@ void PlayState::CreatePickUp(glm::vec3 position) {
   registry_gameplay_.assign<TransformComponent>(
       pick_up, position, glm::vec3(0.0f, 0.0f, -1.6f), glm::vec3(0.002f));
   registry_gameplay_.assign<PickUpComponent>(pick_up);
+}
+
+void PlayState::CreateCannonBall(EntityID id) {
+  auto cannonball = registry_gameplay_.create();
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glm::vec3 arena_scale = glm::vec3(1.0f);
+  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  registry_gameplay_.assign<ModelComponent>(cannonball, model_ball);
+  registry_gameplay_.assign<TransformComponent>(cannonball, zero_vec, zero_vec,
+                                                glm::vec3(0.3f));
+  registry_gameplay_.assign<IDComponent>(cannonball, id);
+}
+
+void PlayState::DestroyEntity(EntityID id) {
+  auto id_view = registry_gameplay_.view<IDComponent>();
+  for (auto entity : id_view) {
+    auto& e_id = id_view.get(entity);
+
+	if (e_id.id == id) {
+      registry_gameplay_.destroy(entity);
+      return;
+	}
+  }
 }
 
 void PlayState::SwitchGoals() {

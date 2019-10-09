@@ -66,7 +66,10 @@ void ServerPlayState::Init() {
   // Create replay machine
   this->replay_machine_ = new ReplayMachine();
 
-  for (auto& [client_id, to_send] : game_server_->GetPackets()) {
+  for (auto& [client_id, client_data] : server.GetClients()) {
+    NetAPI::Common::Packet to_send;
+    to_send.GetHeader()->receiver = client_id;
+
     auto ball_view = registry.view<BallComponent, IDComponent>();
     for (auto ball : ball_view) {
       auto& ball_c = ball_view.get<BallComponent>(ball);
@@ -78,6 +81,7 @@ void ServerPlayState::Init() {
     }
 
     to_send << clients_player_ids_[client_id];
+
     for (auto ids : clients_player_ids_) {
       to_send << ids.second;
     }
@@ -93,6 +97,9 @@ void ServerPlayState::Init() {
 
 void ServerPlayState::Update(float dt) {
   auto& registry = game_server_->GetRegistry();
+  auto& server = game_server_->GetServer();
+
+  dispatcher.update<EventInfo>();
 
   registry.view<PlayerComponent>().each(
       [&](auto entity, PlayerComponent& player_c) {
@@ -115,6 +122,11 @@ void ServerPlayState::Update(float dt) {
 
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     EntityID client_player_id = clients_player_ids_[client_id];
+
+    if (!clients_receive_updates_[client_id]) {
+      // TODO maybe send important packets even if not initialized
+      continue;
+    }
 
     auto view_cam = registry.view<CameraComponent, IDComponent>();
     for (auto cam : view_cam) {
@@ -192,13 +204,37 @@ void ServerPlayState::Update(float dt) {
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
       if (goal_goal_c
-              .switched_this_tick) {  // MAY NEED TO CHANGE, NOT A GOOD SOLUTION
+              .switched_this_tick) {
         if (!sent_switch) {
           to_send << PacketBlockType::SWITCH_GOALS;
           sent_switch = true;
         }
-        goal_goal_c.switched_this_tick = false;
       }
+    }
+
+    // send created projectiles
+    for (auto projectiles : created_projectiles_) {
+      to_send << projectiles.entity_id;
+      to_send << projectiles.projectile_id;
+      to_send << PacketBlockType::CREATE_PROJECTILE;
+    }
+    created_projectiles_.clear();
+    // send destroy entity
+    for (auto entity_id : destroy_entities_) {
+      to_send << entity_id;
+      to_send << PacketBlockType::DESTROY_ENTITIES;
+    }
+    destroy_entities_.clear();
+  }
+
+  //switch goal cleanup
+  auto view_goals = registry.view<GoalComponenet, TeamComponent>();
+  for (auto goal : view_goals) {
+    GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
+    TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
+    if (goal_goal_c
+            .switched_this_tick) { 
+      goal_goal_c.switched_this_tick = false;
     }
   }
 
@@ -237,6 +273,24 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
     player_c.client_id = client.first;
     registry.assign<TeamComponent>(*view_iter,
                                    client_teams_[player_c.client_id]);
+
+    AbilityID primary_id = client_abilities_[player_c.client_id];
+    AbilityID secondary_id = AbilityID::SWITCH_GOALS;
+    float primary_cooldown =
+        GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
+
+    // Add components for a player
+    registry.assign<AbilityComponent>(
+        *view_iter,            // Entity
+        primary_id,        // Primary abiliy id
+        false,             // Use primary ability
+        primary_cooldown,  // Primary ability cooldown
+        0.0f,              // Remaining cooldown
+        secondary_id,      // Secondary ability
+        false,             // Use secondary ability
+        false,             // Shoot
+        0.0f               // Remaining shoot cooldown
+    );
     view_iter++;
   }
 
@@ -297,8 +351,8 @@ void ServerPlayState::CreateBallEntity() {
   // Add components for a ball
   registry.assign<BallComponent>(entity, ball_is_real, ball_is_airborne);
   // registry_.assign<ModelComponent>(entity, model_ball);
-  registry.assign<PhysicsComponent>(entity, glm::vec3(0), ball_is_airborne,
-                                    ball_friction);
+  registry.assign<PhysicsComponent>(entity, glm::vec3(0), glm::vec3(0.f),
+                                    ball_is_airborne, ball_friction);
   registry.assign<TransformComponent>(entity, glm::vec3(0), zero_vec,
                                       ball_scale);
 
@@ -330,8 +384,8 @@ void ServerPlayState::CreatePlayerEntity() {
   // Add components for a robot
   // registry_.assign<ModelComponent>(entity, robot_model, alter_scale *
   // character_scale);
-  registry.assign<PhysicsComponent>(entity, zero_vec, robot_is_airborne,
-                                    robot_friction);
+  registry.assign<PhysicsComponent>(entity, zero_vec, zero_vec,
+                                    robot_is_airborne, robot_friction);
   registry.assign<TransformComponent>(entity, start_pos, zero_vec,
                                       character_scale);
 
@@ -352,7 +406,7 @@ void ServerPlayState::CreatePlayerEntity() {
   auto& player_component = registry.assign<PlayerComponent>(entity);
 
   // Prepare hard-coded values
-  AbilityID primary_id = AbilityID::SWITCH_GOALS;
+  /*AbilityID primary_id = AbilityID::SWITCH_GOALS;
   AbilityID secondary_id = AbilityID::SWITCH_GOALS;
   float primary_cooldown =
       GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
@@ -368,7 +422,7 @@ void ServerPlayState::CreatePlayerEntity() {
       false,             // Use secondary ability
       false,             // Shoot
       0.0f               // Remaining shoot cooldown
-  );
+  );*/
 
   // START ---------- Buff component [MOVE TO PICK-UP EVENT] ----------
   // Available buffs: SPEED_BOOST, JUMP_BOOST, INFINITE_STAMINA
@@ -419,10 +473,11 @@ void ServerPlayState::ResetEntities() {
 
   unsigned int blue_counter = 0;
   unsigned int red_counter = 0;
-  bool blue_team = true;
+
   auto player_view = registry.view<PlayerComponent, PhysicsComponent,
                                    TransformComponent, CameraComponent>();
   for (auto entity : player_view) {
+    bool blue_team = true;
     PhysicsComponent& physics_component =
         player_view.get<PhysicsComponent>(entity);
     TransformComponent& transform_component =
@@ -508,6 +563,26 @@ void ServerPlayState::CreatePickUpComponents() {
                                 glm::vec3(0.f, 1.f, 0.f),
                                 glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
   pick_ups_.push_back(entity);
+}
+
+void ServerPlayState::ReceiveEvent(const EventInfo& e) {
+  switch (e.event) {
+    case Event::DESTROY_ENTITY: {
+      destroy_entities_.push_back(e.e_id);
+      break;
+    }
+    case Event::CREATE_CANNONBALL: {
+      auto& registry = game_server_->GetRegistry();
+      Projectile projectile;
+      projectile.entity_id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, projectile.entity_id);
+      projectile.projectile_id = ProjectileID::CANNON_BALL;
+      created_projectiles_.push_back(projectile);
+      break;
+    }
+    default:
+      break;
+  }
 }
 
 void ServerPlayState::CreateGoals() {

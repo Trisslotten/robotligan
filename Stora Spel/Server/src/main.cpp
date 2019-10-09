@@ -4,6 +4,7 @@
 #include "util/event.hpp"
 #include "gameserver.hpp"
 #include "util/timer.hpp"
+#include "serverstate.hpp"
 
 entt::dispatcher dispatcher{};
 
@@ -18,9 +19,8 @@ int main(unsigned argc, char** argv) {
   double update_time_ms = update_time * 1000.0;
 
   GameServer server;
-  dispatcher.sink<EventInfo>().connect <&GameServer::ReceiveEvent>(server);
   server.Init(update_rate);
-
+  dispatcher.sink<EventInfo>().connect<&ServerPlayState::ReceiveEvent>(*server.GetPlayState());
   int num_frames = 0;
   Timer debug_timer;
 
@@ -45,7 +45,8 @@ int main(unsigned argc, char** argv) {
       num_frames = 0;
     }
     */
+    
   }
-  dispatcher.sink<EventInfo>().disconnect<&GameServer::ReceiveEvent>(server);
+  dispatcher.sink<EventInfo>().disconnect<&ServerPlayState::ReceiveEvent>(*server.GetPlayState());
   return EXIT_SUCCESS;
 }

@@ -54,7 +54,7 @@ class Engine {
   MainMenuState main_menu_state_;
   LobbyState lobby_state_;
   PlayState play_state_;
-
+  ConnectMenuState connect_menu_state_;
   entt::registry* registry_current_;
 
   bool should_send_input_ = false;

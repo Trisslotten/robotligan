@@ -41,6 +41,7 @@ enum : int16_t {
   CLIENT_READY,      // client is ready in lobby
   CLIENT_NOT_READY,  // client is not ready in lobby
   GAME_START,        // game start after lobby
+  CLIENT_RECEIVE_UPDATES, 
   TEST_STRING,
   TEST_REPLAY_KEYS,
   TEAM_SCORE,
@@ -54,6 +55,9 @@ enum : int16_t {
   LOBBY_UPDATE_TEAM,
   LOBBY_SELECT_TEAM,
   LOBBY_YOUR_ID,
+  LOBBY_SELECT_ABILITY,
+  CREATE_PROJECTILE,
+  DESTROY_ENTITIES,
   NUM_BLOCK_TYPES,
 };
 
@@ -75,4 +79,13 @@ enum class AbilityID {
   NUM_OF_ABILITY_IDS
 };
 
+enum class ProjectileID {
+  CANNON_BALL,
+  NUM_PROJECTILE_IDS,
+};
+
+struct Projectile {
+  EntityID entity_id;
+  ProjectileID projectile_id;
+};
 #endif  // SHARED_HPP_
