@@ -459,6 +459,9 @@ void Render() {
   // model_shader.uniform("num_frames", num_frames);
   for (auto &render_item : items_to_render) {
     model_shader.uniform("model_transform", render_item.transform);
+
+    //TODO check if has emissive
+
     render_item.model->Draw(model_shader);
   }
 

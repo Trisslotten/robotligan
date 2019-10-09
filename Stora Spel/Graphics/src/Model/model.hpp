@@ -14,7 +14,7 @@ class Model {
  private:
   Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
 
-  GLint TextureFromFile(const char* path, std::string directory);
+  GLint TextureFromFile(const char* path, std::string directory, aiTextureType type);
 
   void LoadModel(std::string path);
   void ProcessNode(aiNode* node, const aiScene* scene);
