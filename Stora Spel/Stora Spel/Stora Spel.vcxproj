@@ -171,7 +171,9 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="shared\shared\bit_pack.hpp" />
     <ClInclude Include="shared\shared\pick_up_component.hpp" />
+    <ClInclude Include="shared\shared\reg_pack.hpp" />
     <ClInclude Include="src\ecs\components.hpp" />
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
     <ClInclude Include="src\ecs\components\button_component.hpp" />

@@ -1,15 +1,64 @@
-#include "bit_pack.hpp"
+#ifndef BIT_PACK_HPP_
+#define BIT_PACK_HPP_
 
+// #includes for class declaration
+#include <string>
+
+// #includes for function definitions
 #include <math.h>
 #include <bitset>
 #include <cstdio>
 #include <vector>
 
+//-----------------------------------------------
+//--------------CLASS DECLARATION----------------
+//-----------------------------------------------
+
+class BitPack {
+ private:
+  int* bits_;
+
+  unsigned int num_of_bits_;
+  
+  unsigned int next_bit_to_write_;
+  unsigned int next_bit_to_read_;
+
+  unsigned int end_bit_;
+
+ public:
+  BitPack(unsigned int in_num_of_frames, unsigned int in_bits_per_frame);
+  ~BitPack();
+
+  void ResetWrite();
+  void ResetRead();
+  bool IsWriteAtEnd();
+  bool IsReadAtEnd();
+  unsigned int GetNextWrittenBitIndex() const;
+  unsigned int GetNextReadBitIndex() const;
+  //---
+  bool WriteBit(bool in_bit);
+  bool WriteInt(unsigned int in_int, unsigned int in_bit_count);
+  bool WriteFloat32(float in_float);
+  bool ReadBit();
+  unsigned int ReadInt(unsigned int in_bit_count);
+  float ReadFloat32();
+  //---
+
+  //---
+  bool SaveToFile(std::string in_path);
+  bool LoadFromFile(std::string in_path);
+
+};
+
+//-----------------------------------------------
+//------------FUNCTION DEFINITIONS---------------
+//-----------------------------------------------
+
 // Private---------------------------------------------------------------------
 
 // Public----------------------------------------------------------------------
 
-BitPack::BitPack(unsigned int in_num_of_frames,
+inline BitPack::BitPack(unsigned int in_num_of_frames,
                  unsigned int in_bits_per_frame) {
   // Create a bitset capable of holding the amount
   // of data specified
@@ -37,48 +86,48 @@ BitPack::BitPack(unsigned int in_num_of_frames,
   this->end_bit_ = 0;
 }
 
-BitPack::~BitPack() {
+inline BitPack::~BitPack() {
   // Delete the array of bits
   if (this->bits_ != nullptr) {
     delete[] this->bits_;
   }
 }
 
-void BitPack::ResetWrite() {
+inline void BitPack::ResetWrite() {
   // Sets the writing index back to 0.
   // This means next time we write we will overwrite
   // things already put into the sequence
   this->next_bit_to_write_ = 0;
 }
 
-void BitPack::ResetRead() {
+inline void BitPack::ResetRead() {
   // Sets the reading index back to 0.
   // This means next time we read we will read
   // from the start
   this->next_bit_to_read_ = 0;
 }
 
-bool BitPack::IsWriteAtEnd() {
+inline bool BitPack::IsWriteAtEnd() {
   // Return true if the end of the buffer has been reached
   return (this->next_bit_to_write_ == this->num_of_bits_);
 }
 
-bool BitPack::IsReadAtEnd() {
+inline bool BitPack::IsReadAtEnd() {
   // Return true if the last written bit has been reached
   return (this->next_bit_to_read_ == this->end_bit_);
 }
 
-unsigned int BitPack::GetNextWrittenBitIndex() const {
+inline unsigned int BitPack::GetNextWrittenBitIndex() const {
   // Send back the index of the last bit that was written
   return this->next_bit_to_write_;
 }
 
-unsigned int BitPack::GetNextReadBitIndex() const {
+inline unsigned int BitPack::GetNextReadBitIndex() const {
   // Send back the index of the last bit that was read
   return this->next_bit_to_read_;
 }
 
-bool BitPack::WriteBit(bool in_bit) {
+inline bool BitPack::WriteBit(bool in_bit) {
   // Returns true if write successful.
   // Returns false if write failed (buffer end reached)
 
@@ -105,7 +154,7 @@ bool BitPack::WriteBit(bool in_bit) {
   return true;
 }
 
-bool BitPack::WriteInt(unsigned int in_int, unsigned int in_bit_count) {
+inline bool BitPack::WriteInt(unsigned int in_int, unsigned int in_bit_count) {
   // Returns true if write successful.
   // Returns false if write failed (buffer end reached)
 
@@ -126,7 +175,7 @@ bool BitPack::WriteInt(unsigned int in_int, unsigned int in_bit_count) {
   return true;
 }
 
-bool BitPack::WriteFloat32(float in_float) {
+inline bool BitPack::WriteFloat32(float in_float) {
   // Returns true if write successful
   // Returns false if write failed (buffer end reached)
 
@@ -155,7 +204,7 @@ bool BitPack::WriteFloat32(float in_float) {
   return true;
 }
 
-bool BitPack::ReadBit() {
+inline bool BitPack::ReadBit() {
   // Returns the bit read from the buffer
   // at the buffers current read position
 
@@ -181,7 +230,7 @@ bool BitPack::ReadBit() {
   return ret_bit;
 }
 
-unsigned int BitPack::ReadInt(unsigned int in_bit_count) {
+inline unsigned int BitPack::ReadInt(unsigned int in_bit_count) {
   // Returns the integer stored on the number of
   // bits specified at the current read position
 
@@ -196,7 +245,7 @@ unsigned int BitPack::ReadInt(unsigned int in_bit_count) {
   return ret_num;
 }
 
-float BitPack::ReadFloat32() {
+ inline float BitPack::ReadFloat32() {
   // Returns the float stored on the 32 bits
   // at the current read location
 
@@ -215,7 +264,7 @@ float BitPack::ReadFloat32() {
   return ret_num;
 }
 
-bool BitPack::SaveToFile(std::string in_path) {
+inline bool BitPack::SaveToFile(std::string in_path) {
   // Save the full buffer as integers in a file
 
   // Open the file to write binary to
@@ -238,7 +287,7 @@ bool BitPack::SaveToFile(std::string in_path) {
   return true;
 }
 
-bool BitPack::LoadFromFile(std::string in_path) {
+inline bool BitPack::LoadFromFile(std::string in_path) {
   // Read the full buffer as intergers from a file
 
   // If there already is an array, delete it
@@ -267,3 +316,6 @@ bool BitPack::LoadFromFile(std::string in_path) {
   fclose(file_ptr);
   return true;
 }
+ 
+
+#endif  // !BIT_PACK_HPP_

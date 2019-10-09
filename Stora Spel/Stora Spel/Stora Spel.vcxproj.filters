@@ -53,6 +53,8 @@
     <ClInclude Include="shared\shared\pick_up_component.hpp" />
     <ClInclude Include="src\util\player_settings.hpp" />
     <ClInclude Include="src\Chat.hpp" />
+    <ClInclude Include="shared\shared\reg_pack.hpp" />
+    <ClInclude Include="shared\shared\bit_pack.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />
