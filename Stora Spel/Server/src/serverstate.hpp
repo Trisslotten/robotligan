@@ -99,6 +99,7 @@ class ServerPlayState : public ServerState {
   int blue_players_ = 0;
 
   Timer match_timer_;
+  Timer countdown_timer_;
 
   std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
 

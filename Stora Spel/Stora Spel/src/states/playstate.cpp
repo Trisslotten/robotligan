@@ -156,12 +156,24 @@ void PlayState::UpdateGameplayTimer() {
     min = 0;
     sec = 60 - engine_->GetGameplayTimer() + 240;
   }
+
+  // Countdown timer
+  int count = 5.0 - engine_->GetCountdownTimer();
+
   // --------------------------------------
-  glob::Submit(font_test_, glm::vec2(613, 680), 72, std::to_string(min),
+  glob::Submit(font_test_, glm::vec2(645, 705), 40, std::to_string(min),
+               glm::vec4(1));
+  glob::Submit(font_test_, glm::vec2(638, 695), 40, "----",
                glm::vec4(1, 1, 1, 1));
-  glob::Submit(font_test_, glm::vec2(643, 680), 72, ":", glm::vec4(1, 1, 1, 1));
-  glob::Submit(font_test_, glm::vec2(660, 680), 72, std::to_string(sec),
-               glm::vec4(1, 1, 1, 1));
+  glob::Submit(font_test_, glm::vec2(638, 675), 40, std::to_string(sec),
+               glm::vec4(1));
+  if (count > 0) {
+    glob::Submit(font_test_, glm::vec2(735, 450), 500, std::to_string(count),
+                 glm::vec4(1)); // Visible = true
+  } else {
+    glob::Submit(font_test_, glm::vec2(735, 450), 500, std::to_string(count),
+                 glm::vec4(1), false);
+  }
 }
 
 void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,

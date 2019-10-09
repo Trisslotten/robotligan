@@ -287,6 +287,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
     case PacketBlockType::MATCH_TIMER: {
       packet >> gameplay_timer_sec_;
+      packet >> countdown_timer_sec_;
       break;
     }
     /*
@@ -456,3 +457,5 @@ void Engine::DrawScoreboard() {
 }
 
 int Engine::GetGameplayTimer() const { return gameplay_timer_sec_; }
+
+int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }

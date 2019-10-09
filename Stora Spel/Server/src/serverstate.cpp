@@ -90,7 +90,13 @@ void ServerPlayState::Update(float dt) {
         // client or if we are reading them from a replay
         if (!this->replay_) {
           auto inputs = players_inputs_[player_c.client_id];
-          player_c.actions = inputs.first;
+          if (countdown_timer_.Elapsed() <= 5.0f) {
+            match_timer_.Pause();
+          } else {
+            player_c.actions = inputs.first;
+            match_timer_.Resume();
+            countdown_timer_.Pause();
+          }
           player_c.pitch += inputs.second.x;
           player_c.yaw += inputs.second.y;
           // Check if the game should be be recorded
@@ -199,6 +205,7 @@ void ServerPlayState::Update(float dt) {
     auto match_timer = registry.view<MatchTimer>();
     for (auto timer : match_timer) {
       MatchTimer& match_timer_c = registry.get<MatchTimer>(timer);
+      to_send << (int)countdown_timer_.Elapsed();
       to_send << (int)match_timer_.Elapsed();
       to_send << PacketBlockType::MATCH_TIMER;
     }
@@ -538,7 +545,7 @@ void ServerPlayState::CreateMatchTimer() {
   auto& registry = game_server_->GetRegistry();
 
   match_timer_.Restart();
-
+  countdown_timer_.Restart();
   // Add match timer
   auto entity_match_timer = registry.create();
 
