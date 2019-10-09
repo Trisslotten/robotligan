@@ -88,6 +88,7 @@ void ServerPlayState::Init() {
 
     int num_players = server.GetConnectedPlayers();
     to_send << num_players;
+    to_send << client_abilities_[client_id];
 
     to_send << PacketBlockType::GAME_START;
 

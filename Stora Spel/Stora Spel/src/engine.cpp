@@ -238,6 +238,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       std::vector<EntityID> player_ids;
       EntityID my_id;
       EntityID ball_id;
+      int ability_id;
+      packet >> ability_id;
       packet >> num_players;
       player_ids.resize(num_players);
       packet.Remove(player_ids.data(), player_ids.size());
@@ -245,6 +247,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> ball_id;
 
       play_state_.SetEntityIDs(player_ids, my_id, ball_id);
+      play_state_.SetMyPrimaryAbility(ability_id);
 
       ChangeState(StateType::PLAY);
       std::cout << "PACKET: GAME_START\n";
