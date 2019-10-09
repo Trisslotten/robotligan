@@ -104,6 +104,13 @@ void GameServer::HandlePacketsToSend() {
       to_send << PacketBlockType::MESSAGE;
     }
 
+    // send events
+    for (auto event : game_events_) {
+      to_send << event;
+      to_send << PacketBlockType::GAME_EVENT;
+    }
+    game_events_.clear();
+
     if (!to_send.IsEmpty()) {
       server_.Send(to_send);
     }
@@ -195,6 +202,11 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       }
       */
   }
+}
+
+void GameServer::ReceiveGameEvent(const GameEvent& event)
+{
+  game_events_.push_back(event);
 }
 
 void GameServer::UpdateSystems(float dt) {

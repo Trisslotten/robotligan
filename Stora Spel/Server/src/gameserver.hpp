@@ -24,9 +24,11 @@ class GameServer {
   void Update(float dt);
   void HandlePacketsToSend();
   void HandleStateChange();
-  void ReceiveEvent(const EventInfo& e);
 
   void ChangeState(ServerStateType state) { wanted_state_type_ = state; }
+
+  void ReceiveEvent(const EventInfo& e);
+  void ReceiveGameEvent(const GameEvent& event);
 
   NetAPI::Socket::Server& GetServer() { return server_; }
   std::unordered_map<int, NetAPI::Common::Packet>& GetPackets() { return packets_; }
@@ -51,6 +53,7 @@ class GameServer {
   ServerStateType current_state_type_ = ServerStateType::LOBBY;
 
   std::vector<Message> messages;
+  std::vector<GameEvent> game_events_;
 
   int test_player_guid_ = 0;
 

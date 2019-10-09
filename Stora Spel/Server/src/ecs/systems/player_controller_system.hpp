@@ -8,6 +8,7 @@
 #include "ecs/components/ability_component.hpp"
 #include "ecs/components/physics_component.hpp"
 #include "ecs/components/player_component.hpp"
+#include "shared/id_component.hpp"
 
 namespace player_controller {
 
@@ -19,7 +20,7 @@ void InActivatePlayerController() { std::cout << "Escaped pressed\n"; }
 void Update(entt::registry& registry, float dt) {
   auto view_controller =
       registry.view<CameraComponent, PlayerComponent, TransformComponent,
-                    PhysicsComponent, AbilityComponent>();
+                    PhysicsComponent, AbilityComponent, IDComponent>();
 
   for (auto entity : view_controller) {
     CameraComponent& cam_c = view_controller.get<CameraComponent>(entity);
@@ -28,6 +29,7 @@ void Update(entt::registry& registry, float dt) {
         view_controller.get<TransformComponent>(entity);
     PhysicsComponent& physics_c = view_controller.get<PhysicsComponent>(entity);
     AbilityComponent& ability_c = view_controller.get<AbilityComponent>(entity);
+    IDComponent& id_c = view_controller.get<IDComponent>(entity);
 
     constexpr float pi = glm::pi<float>();
     player_c.pitch = glm::clamp(player_c.pitch, -0.49f * pi, 0.49f * pi);
@@ -148,6 +150,11 @@ void Update(entt::registry& registry, float dt) {
 
     // kick ball
     if (player_c.actions[PlayerAction::KICK]) {
+      GameEvent kick_event;
+      kick_event.type = GameEvent::KICK;
+      kick_event.kick.player_id = id_c.id;
+      dispatcher.trigger(kick_event);
+
       glm::vec3 kick_dir =
           cam_c.GetLookDir() + glm::vec3(0, player_c.kick_pitch, 0);
 

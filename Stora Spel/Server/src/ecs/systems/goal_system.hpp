@@ -38,6 +38,12 @@ bool Update(entt::registry& registry) {
 
         physics::IntersectData data = Intersect(ball_sphere_c, goal_OBB_c);
         if (data.collision) {
+          // create event for goal
+          
+          GameEvent event;
+          event.type = GameEvent::GOAL;
+          dispatcher.trigger<GameEvent>(event);
+
           // each team "owns" the goal where to score.
           printf("Team %i scored a goal!\n", goal_team_c.team);
           goal_goal_c.goals++;

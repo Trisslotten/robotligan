@@ -17,42 +17,43 @@ typedef int EntityID;
 typedef int PlayerID;
 
 namespace PlayerAction {
-enum : int16_t {
-  WALK_FORWARD = 0,
-  WALK_BACKWARD,
-  WALK_LEFT,
-  WALK_RIGHT,
-  ABILITY_PRIMARY,
-  ABILITY_SECONDARY,
-  SPRINT,
-  JUMP,
-  SHOOT,
-  KICK,
-  NUM_ACTIONS,
-};
+  enum : int16_t {
+    WALK_FORWARD = 0,
+    WALK_BACKWARD,
+    WALK_LEFT,
+    WALK_RIGHT,
+    ABILITY_PRIMARY,
+    ABILITY_SECONDARY,
+    SPRINT,
+    JUMP,
+    SHOOT,
+    KICK,
+    NUM_ACTIONS,
+  };
 }  // namespace PlayerAction
 
 namespace PacketBlockType {
-enum : int16_t {
-  INPUT = 0,
-  ENTITY_TRANSFORMS,
-  PLAYER_STAMINA,
-  CAMERA_TRANSFORM,
-  CLIENT_READY,      // client is ready in lobby
-  CLIENT_NOT_READY,  // client is not ready in lobby
-  GAME_START,        // game start after lobby
-  TEST_STRING,
-  TEST_REPLAY_KEYS,
-  TEAM_SCORE,
-  CHOOSE_TEAM,
-  SWITCH_GOALS,
-  MESSAGE,
-  UPDATE_POINTS,
-  CREATE_PICK_UP,
-  DESTROY_PICK_UP,
-  RECEIVE_PICK_UP,
-  NUM_BLOCK_TYPES,
-};
+  enum : int16_t {
+    INPUT = 0,
+    ENTITY_TRANSFORMS,
+    PLAYER_STAMINA,
+    CAMERA_TRANSFORM,
+    CLIENT_READY,      // client is ready in lobby
+    CLIENT_NOT_READY,  // client is not ready in lobby
+    GAME_START,        // game start after lobby
+    TEST_STRING,
+    TEST_REPLAY_KEYS,
+    TEAM_SCORE,
+    CHOOSE_TEAM,
+    SWITCH_GOALS,
+    MESSAGE,
+    UPDATE_POINTS,
+    CREATE_PICK_UP,
+    DESTROY_PICK_UP,
+    RECEIVE_PICK_UP,
+    GAME_EVENT,
+    NUM_BLOCK_TYPES,
+  };
 
 }  // namespace PacketBlockType
 
@@ -70,6 +71,24 @@ enum class AbilityID {
   TELEPORT,
   // Fill with more abilities and passive boosts
   NUM_OF_ABILITY_IDS
+};
+
+
+struct GameEvent {
+  enum {GOAL, KICK} type;
+  union {
+
+    // Goal
+    struct {
+    
+    } goal;
+
+    // Kick
+    struct {
+      EntityID player_id;
+    } kick;
+
+  };
 };
 
 #endif  // SHARED_HPP_

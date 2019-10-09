@@ -1,9 +1,11 @@
 #include "sound_system.hpp"
 #include <shared\transform_component.hpp>
 #include <shared\camera_component.hpp>
+#include "engine.hpp"
+#include <shared\id_component.hpp>
 
 
-void SoundSystem::Update(entt::registry& registry)  {
+void SoundSystem::Update(entt::registry& registry) {
   // Set listener attributes to match the local player
   auto cam_view = registry.view<CameraComponent, TransformComponent>();
   for (auto cam_entity : cam_view) {
@@ -41,19 +43,52 @@ void SoundSystem::Update(entt::registry& registry)  {
 
 }
 
-void SoundSystem::Init() {
+void SoundSystem::Init(Engine* engine) {
+  engine_ = engine;
   sound_engine_.Init();
   sound_step_ = sound_engine_.GetSound("assets/sound/footstep.wav");
   sound_crowd_ = sound_engine_.GetSound("assets/sound/crowd.mp3");
+  sound_kick_ = sound_engine_.GetSound("assets/sound/hitsound.mp3");
+  sound_goal_ = sound_engine_.GetSound("assets/sound/goal.mp3");
 }
 
-void SoundSystem::PlayStaticSound(entt::registry& registry) {
+void SoundSystem::PlayAmbientSound(entt::registry& registry) {
   // Play static sounds (music, ambient etc)
   auto local_view = registry.view<CameraComponent, SoundComponent>();
   for (auto local_entity : local_view) {
-    CameraComponent& cam_c = local_view.get<CameraComponent>(local_entity);
-    SoundComponent& sound_c = local_view.get<SoundComponent>(local_entity);
+    auto& cam_c = local_view.get<CameraComponent>(local_entity);
+    auto& sound_c = local_view.get<SoundComponent>(local_entity);
 
-    sound_c.sound_player->Play(sound_crowd_, -1, 0.3f);
+    sound_c.sound_player->Play(sound_crowd_, -1, 0.1f);
+    break;
+  }
+}
+
+void SoundSystem::ReceiveGameEvent(const GameEvent& event)
+{
+  auto registry = engine_->GetCurrentRegistry();
+
+  switch (event.type) {
+  case GameEvent::GOAL: {
+    auto view = registry->view<CameraComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& sound_c = view.get<SoundComponent>(entity);
+      sound_c.sound_player->Play(sound_goal_);
+      break;
+    }
+    break;
+  }
+  case GameEvent::KICK: {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.kick.player_id) {
+        sound_c.sound_player->Play(sound_kick_);
+        break;
+      }
+    }
+    break;
+  }
   }
 }

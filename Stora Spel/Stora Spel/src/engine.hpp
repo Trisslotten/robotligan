@@ -38,6 +38,7 @@ class Engine {
   void SetEnableChat(bool should_enable) { this->enable_chat_ = should_enable; }
   SoundSystem& GetSoundSystem() { return sound_system_; }
   slob::SoundEngine& GetSoundEngine() { return sound_system_.GetSoundEngine(); }
+  entt::registry* GetCurrentRegistry() { return registry_current_; }
 
  private:
   void SetKeybinds();

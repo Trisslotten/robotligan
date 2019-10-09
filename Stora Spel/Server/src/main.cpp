@@ -18,7 +18,8 @@ int main(unsigned argc, char** argv) {
   double update_time_ms = update_time * 1000.0;
 
   GameServer server;
-  dispatcher.sink<EventInfo>().connect <&GameServer::ReceiveEvent>(server);
+  dispatcher.sink<EventInfo>().connect<&GameServer::ReceiveEvent>(server);
+  dispatcher.sink<GameEvent>().connect<&GameServer::ReceiveGameEvent>(server);
   server.Init(update_rate);
 
   int num_frames = 0;
@@ -35,7 +36,7 @@ int main(unsigned argc, char** argv) {
     }
 
     auto sleep_time =
-        std::chrono::microseconds((int)glm::min(1000.0, update_time_ms * 1000.0));
+      std::chrono::microseconds((int)glm::min(1000.0, update_time_ms * 1000.0));
     std::this_thread::sleep_for(sleep_time);
 
     /*

@@ -18,6 +18,9 @@
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
+#include "eventdispatcher.hpp"
+
+
 
 Engine::Engine() {}
 
@@ -26,12 +29,15 @@ Engine::~Engine() {}
 void Engine::Init() {
   glob::Init();
   Input::Initialize();
-  sound_system_.Init();
+  sound_system_.Init(this);
 
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
 
   // glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
+
+
+  dispatcher.sink<GameEvent>().connect<&SoundSystem::ReceiveGameEvent>(sound_system_);
 
   SetKeybinds();
 
@@ -347,6 +353,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
     case PacketBlockType::RECEIVE_PICK_UP: {
       packet >> second_ability_;
+      break;
+    }
+    case PacketBlockType::GAME_EVENT: {
+      GameEvent event;
+      packet >> event;
+      dispatcher.trigger(event);
       break;
     }
   }
