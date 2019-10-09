@@ -258,7 +258,7 @@ entt::entity CreateForcePushEntity(entt::registry &registry, PlayerID id) {
 //
 //    if (pc.client_id == id) {
 //      float speed = GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_SPEED");
-//      auto force_object = registry.create();
+	    auto force_object = registry.create();
 //      registry.assign<PhysicsComponent>(
 //          force_object, glm::vec3(cc.GetLookDir() * speed), true, 0.0f);
 //      registry.assign<TransformComponent>(
@@ -272,6 +272,7 @@ entt::entity CreateForcePushEntity(entt::registry &registry, PlayerID id) {
 //      return force_object;
 //    }
 //  }
+  return force_object;
 }
 
 };  // namespace ability_controller
