@@ -12,6 +12,7 @@ class SoundSystem {
 public:
   void Update(entt::registry& registry);
   void Init();
+  void PlayStaticSound(entt::registry& registry);
   slob::SoundEngine& GetSoundEngine() { return sound_engine_; }
 
 private:
@@ -22,6 +23,7 @@ private:
 
   slob::SoundEngine sound_engine_;
   slob::SoundHandle sound_step_;
+  slob::SoundHandle sound_crowd_;
 };
 
 

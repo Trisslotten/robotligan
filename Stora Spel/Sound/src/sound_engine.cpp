@@ -19,15 +19,15 @@ class EXPORT Sound {
     sound_->setMode(FMOD_LOOP_NORMAL);
   }
 
-  void Play(FMOD::System* system, FMOD::ChannelGroup* group, int loop_count) {
+  void Play(FMOD::System* system, FMOD::ChannelGroup* group, int loop_count, float volume) {
     FMOD::Channel* channel = nullptr;
     FMOD_RESULT result = system->playSound(sound_, group, true, &channel);
     channel->setLoopCount(loop_count);
-    channel->setVolume(volume_);
+    channel->setVolume(volume);
     channel->setPaused(false);
   }
 
-  void SetVolume(float vol) { volume_ = vol; }
+  /*void SetVolume(float vol) { volume_ = vol; }*/
 
   void Set3DAttributes(glm::vec3 pos, glm::vec3 vel) {
     pos_ = pos;
@@ -38,7 +38,7 @@ class EXPORT Sound {
 
  private:
   FMOD::Sound* sound_ = nullptr;
-  float volume_ = 1.0f;
+  //float volume_ = 1.0f;
   glm::vec3 pos_{1.0f};
   glm::vec3 vel_{0.0f};
 };
@@ -49,7 +49,7 @@ struct SoundEngine::Impl {
   FMOD::System* system = nullptr;
   FMOD::ChannelGroup* channel_group = nullptr;
   std::vector<SoundPlayer*> sound_players;
-  float master_volume = 1.0f;
+  //float master_volume = 1.0f;
 
   SoundHandle sound_handle_guid = 0;
 };
@@ -126,11 +126,12 @@ SoundHandle SoundEngine::GetSound(const std::string& path) {
                   impl_->sound_handle_guid, path, impl_->system);
 }
 
-void SoundEngine::SetMasterVolume(float vol) { impl_->master_volume = vol;
-  FMOD::ChannelGroup* master_group = nullptr;
-  impl_->system->getMasterChannelGroup(&master_group);
-  master_group->setVolume(vol);
-}
+//void SoundEngine::SetMasterVolume(float vol) {
+//  impl_->master_volume = vol;
+//  FMOD::ChannelGroup* master_group = nullptr;
+//  impl_->system->getMasterChannelGroup(&master_group);
+//  master_group->setVolume(vol);
+//}
 
 void SoundEngine::SetListenerAttributes(glm::vec3 pos, glm::quat orientation,
                                         glm::vec3 vel) {
@@ -160,10 +161,10 @@ SoundPlayer::SoundPlayer(void* engine_impl) {
 }
 SoundPlayer::~SoundPlayer() { delete i_; }
 
-void SoundPlayer::Play(SoundHandle handle, int loop_count) {
+void SoundPlayer::Play(SoundHandle handle, int loop_count, float volume) {
   auto iter = i_->sound_engine->sounds.find(handle);
   if (iter != i_->sound_engine->sounds.end()) {
-    iter->second.Play(i_->sound_engine->system, i_->group, loop_count);
+    iter->second.Play(i_->sound_engine->system, i_->group, loop_count, volume);
   }
 }
 

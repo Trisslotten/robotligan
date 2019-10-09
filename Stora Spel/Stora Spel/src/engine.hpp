@@ -36,6 +36,7 @@ class Engine {
   NetAPI::Common::Packet& GetPacket() { return packet_; }
   void SetSendInput(bool should_send) { should_send_input_ = should_send; }
   void SetEnableChat(bool should_enable) { this->enable_chat_ = should_enable; }
+  SoundSystem& GetSoundSystem() { return sound_system_; }
   slob::SoundEngine& GetSoundEngine() { return sound_system_.GetSoundEngine(); }
 
  private:

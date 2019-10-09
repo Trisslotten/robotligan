@@ -50,6 +50,7 @@ void PlayState::Init() {
 
   CreateInGameMenu();
   CreateInitialEntities();
+  engine_->GetSoundSystem().PlayStaticSound(registry_gameplay_);
 }
 
 void PlayState::Update() {
