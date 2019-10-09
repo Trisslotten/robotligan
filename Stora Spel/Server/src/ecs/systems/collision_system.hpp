@@ -536,47 +536,47 @@ void UpdateTransform(entt::registry& registry) {
   }
 }
 
-void ApplyForcePush(entt::registry& registry, glm::vec3 pos) {
-  physics::Sphere force_push;
-  force_push.center = pos;
-  force_push.radius =
-      GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_RADIUS");
-
-  auto balls =
-      registry.view<physics::Sphere, BallComponent, PhysicsComponent>();
-  for (auto ball : balls) {
-    auto& hitbox = balls.get<physics::Sphere>(ball);
-    auto& physics_c = balls.get<PhysicsComponent>(ball);
-    ApplyForcePushOnEntity(force_push.center, hitbox.center, physics_c);
-  }
-
-  auto players =
-      registry.view<physics::OBB, PlayerComponent, PhysicsComponent>();
-
-   for (auto player : players) {
-    auto& hitbox = players.get<physics::OBB>(player);
-     auto& physics_c = players.get<PhysicsComponent>(player);
-    ApplyForcePushOnEntity(force_push.center, hitbox.center, physics_c);
-  }
-
-}
-
-void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos, PhysicsComponent& physics_c) {
-  physics::Sphere force_push;
-  force_push.center = explosion_pos;
-  force_push.radius =
-      GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_RADIUS");
-  glm::vec3 dir = entity_pos - force_push.center;
-  float length = glm::length(dir);
-  if (length < force_push.radius) {
-    physics_c.is_airborne = true;
-    float force =
-        GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_STRENGTH");
-    physics_c.velocity =
-        dir * force * (force_push.radius - length) / force_push.radius;
-  }
-}
-
+//void ApplyForcePush(entt::registry& registry, glm::vec3 pos) {
+//  physics::Sphere force_push;
+//  force_push.center = pos;
+//  force_push.radius =
+//      GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_RADIUS");
+//
+//  auto balls =
+//      registry.view<physics::Sphere, BallComponent, PhysicsComponent>();
+//  for (auto ball : balls) {
+//    auto& hitbox = balls.get<physics::Sphere>(ball);
+//    auto& physics_c = balls.get<PhysicsComponent>(ball);
+//    ApplyForcePushOnEntity(force_push.center, hitbox.center, physics_c);
+//  }
+//
+//  auto players =
+//      registry.view<physics::OBB, PlayerComponent, PhysicsComponent>();
+//
+//   for (auto player : players) {
+//    auto& hitbox = players.get<physics::OBB>(player);
+//     auto& physics_c = players.get<PhysicsComponent>(player);
+//    ApplyForcePushOnEntity(force_push.center, hitbox.center, physics_c);
+//  }
+//
+//}
+//
+//void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos, PhysicsComponent& physics_c) {
+//  physics::Sphere force_push;
+//  force_push.center = explosion_pos;
+//  force_push.radius =
+//      GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_RADIUS");
+//  glm::vec3 dir = entity_pos - force_push.center;
+//  float length = glm::length(dir);
+//  if (length < force_push.radius) {
+//    physics_c.is_airborne = true;
+//    float force =
+//        GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_STRENGTH");
+//    physics_c.velocity =
+//        dir * force * (force_push.radius - length) / force_push.radius;
+//  }
+//}
+//
 void DestroyEntity(entt::registry& registry, entt::entity entity) {
   EventInfo info;
   if (registry.has<IDComponent>(entity) == false) return;
