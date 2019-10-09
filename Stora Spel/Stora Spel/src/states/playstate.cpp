@@ -117,6 +117,8 @@ void PlayState::Update() {
   glob::Submit(gui_quickslots_, glm::vec2(7, 50), 0.3, 100);
   glob::Submit(ability_handles_[my_primary_ability_id], glm::vec2(9, 50), 0.75f,
                100);
+  glob::Submit(ability_handles_[(int)engine_->GetSecondaryAbility()], glm::vec2(66, 50), 0.75f,
+               100);
 
   glob::Submit(gui_teamscore_, glm::vec2(497, 648), 1, 100);
 }

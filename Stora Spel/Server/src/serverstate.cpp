@@ -204,8 +204,7 @@ void ServerPlayState::Update(float dt) {
       to_send << goal_team_c;
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
-      if (goal_goal_c
-              .switched_this_tick) {
+      if (goal_goal_c.switched_this_tick) {
         if (!sent_switch) {
           to_send << PacketBlockType::SWITCH_GOALS;
           sent_switch = true;
@@ -228,13 +227,14 @@ void ServerPlayState::Update(float dt) {
     destroy_entities_.clear();
   }
 
-  //switch goal cleanup
+  
+
+  // switch goal cleanup
   auto view_goals = registry.view<GoalComponenet, TeamComponent>();
   for (auto goal : view_goals) {
     GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
     TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
-    if (goal_goal_c
-            .switched_this_tick) { 
+    if (goal_goal_c.switched_this_tick) {
       goal_goal_c.switched_this_tick = false;
     }
   }
@@ -282,7 +282,7 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
 
     // Add components for a player
     registry.assign<AbilityComponent>(
-        *view_iter,            // Entity
+        *view_iter,        // Entity
         primary_id,        // Primary abiliy id
         false,             // Use primary ability
         primary_cooldown,  // Primary ability cooldown
