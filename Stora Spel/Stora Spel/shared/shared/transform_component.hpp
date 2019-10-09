@@ -5,12 +5,12 @@
 #include <glm/gtc/quaternion.hpp>
 
 // HACK
-//static unsigned int transform_counter = 0;
+// static unsigned int transform_counter = 0;
 // HACK
 
 struct TransformComponent {
   // HACK
-  //unsigned int transform_id = transform_counter++;
+  // unsigned int transform_id = transform_counter++;
   // HACK
 
   glm::vec3 position;
@@ -34,6 +34,22 @@ struct TransformComponent {
                0.f);  // transform_helper::DirVectorFromRadians(rotation.y,
                       // rotation.x);
   }
+
+  // Comparasion Operators
+  bool operator==(const TransformComponent& rhs) {
+    if (this->position != rhs.position) {
+      return false;
+    }
+    if (this->rotation != rhs.rotation) {
+      return false;
+    }
+    if (this->scale != rhs.scale) {
+      return false;
+    }
+    return true;
+  }
+
+  bool operator!=(const TransformComponent& rhs) { return !((*this) == rhs); }
 };
 
 #endif  // !TRANSFORM_COMPONENT_H_

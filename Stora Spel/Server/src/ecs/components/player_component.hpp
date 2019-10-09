@@ -13,10 +13,11 @@ struct PlayerComponent {
 
   // "Stamina"
   float energy_max = GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_MAX");
-  float energy_current =GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_MAX");
+  float energy_current = GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_MAX");
   float cost_jump = GlobalSettings::Access()->ValueOf("PLAYER_COST_JUMP");
   float cost_sprint = GlobalSettings::Access()->ValueOf("PLAYER_COST_SPRINT");
-  float energy_regen_tick = GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_REGEN_TICK");
+  float energy_regen_tick =
+      GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_REGEN_TICK");
 
   // Kicking values
   float kick_pitch = GlobalSettings::Access()->ValueOf("PLAYER_KICK_PITCH");
@@ -28,6 +29,31 @@ struct PlayerComponent {
   std::bitset<PlayerAction::NUM_ACTIONS> actions;
   float yaw = 0;
   float pitch = 0;
+
+  // Comparasion Operators
+  bool operator==(const PlayerComponent& rhs) {
+    // if (this->client_id != rhs.client_id) {
+    //  return false;
+    // }
+
+    return (this->client_id == rhs.client_id) &&
+           (this->walkspeed == rhs.walkspeed) &&
+           (this->jump_speed == rhs.jump_speed) &&
+           (this->no_clip == rhs.no_clip) &&
+           (this->energy_max == rhs.energy_max) &&
+           (this->energy_current == rhs.energy_current) &&
+           (this->cost_jump == rhs.cost_jump) &&
+           (this->cost_sprint == rhs.cost_sprint) &&
+           (this->energy_regen_tick == rhs.energy_regen_tick) &&
+           (this->kick_pitch == rhs.kick_pitch) &&
+           (this->kick_reach == rhs.kick_reach) &&
+           (this->kick_fov == rhs.kick_fov) &&
+           (this->kick_force == rhs.kick_force) &&
+           (this->actions == rhs.actions) && (this->yaw == rhs.yaw) &&
+           (this->pitch == rhs.pitch);
+  }
+
+  bool operator!=(const PlayerComponent& rhs) { return !((*this) == rhs); }
 };
 
 #endif  // PLAYER_COMPONENT_H_

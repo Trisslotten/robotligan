@@ -8,8 +8,7 @@
 #include <entity/snapshot.hpp>
 
 #include "deterministic_replay.hpp"
-//#include "bit_pack.hpp"
-#include "reg_pack.hpp"
+#include "assert_module.hpp"
 
 class ReplayMachine {
  private:
@@ -18,13 +17,9 @@ class ReplayMachine {
   float recording_max_seconds_;
   float recording_elapsed_seconds_;
 
-  // Variables	:	State log for assert mode
-  RegPack* assert_log_;
-  bool assert_mode_on_;  // NTS: Assert the transform/physics component to begin
-                         // with NTS: Do geometrical replay on client
-
-  // Functions	:	Assert mode comparasions
-  void AssertTransformComponents(entt::registry& in_registry);
+  // Variables	:	Assert mode
+  AssertModule* assert_module_;
+  bool assert_mode_on_;
 
  public:
   ReplayMachine();
