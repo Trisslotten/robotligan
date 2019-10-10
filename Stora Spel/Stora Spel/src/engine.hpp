@@ -39,11 +39,15 @@ class Engine {
 
   std::unordered_map<PlayerID, std::string> player_names_;
 
-  AbilityID GetSecondaryAbility() { return second_ability_;
-  }
-  
+  AbilityID GetSecondaryAbility() { return second_ability_; }
+
+ std::vector<unsigned int> GetTeamScores() { return scores_; }
+
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
+
+  Chat* GetChat() { return &chat_; }
+
  private:
   void SetKeybinds();
 
@@ -84,11 +88,11 @@ class Engine {
 
   // TODO: move to states
   std::vector<unsigned int> scores_;
-  
+
   int gameplay_timer_sec_ = 0;
   int countdown_timer_sec_ = 0;
 
-  Chat chat;
+  Chat chat_;
   std::string message_ = "";
 
   bool enable_chat_ = false;

@@ -196,6 +196,8 @@ class PlayState : public State {
   void ToggleInGameMenu();
   void UpdateInGameMenu(bool show_menu);
   void UpdateGameplayTimer();
+
+  void DrawTopScores();
   ////////////////////////////////////////
 
   entt::registry registry_gameplay_;
@@ -210,6 +212,7 @@ class PlayState : public State {
   entt::entity red_goal_light_;
 
   glob::Font2DHandle font_test_ = 0;
+  glob::Font2DHandle font_scores_ = 0;
   glob::E2DHandle e2D_test_, e2D_test2_;
   glob::GUIHandle in_game_menu_gui_ = 0;
   glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
