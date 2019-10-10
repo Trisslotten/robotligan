@@ -40,6 +40,9 @@ class Engine {
 
   AbilityID GetSecondaryAbility() { return second_ability_;
   }
+  
+  int GetGameplayTimer() const;
+  int GetCountdownTimer() const;
  private:
   void SetKeybinds();
 
@@ -79,6 +82,9 @@ class Engine {
 
   // TODO: move to states
   std::vector<unsigned int> scores_;
+  
+  int gameplay_timer_sec_ = 0;
+  int countdown_timer_sec_ = 0;
 
   Chat chat;
   std::string message_ = "";

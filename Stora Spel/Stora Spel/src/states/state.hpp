@@ -195,6 +195,7 @@ class PlayState : public State {
 
   void ToggleInGameMenu();
   void UpdateInGameMenu(bool show_menu);
+  void UpdateGameplayTimer();
   ////////////////////////////////////////
 
   entt::registry registry_gameplay_;

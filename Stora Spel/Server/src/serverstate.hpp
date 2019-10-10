@@ -117,7 +117,8 @@ class ServerPlayState : public ServerState {
   void Replay(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value);
   void CreatePickUpComponents();
   EntityID GetNextEntityGuid() { return entity_guid_++; }
-
+  
+  
   std::unordered_map<long, bool> clients_receive_updates_;
   std::unordered_map<int, EntityID> clients_player_ids_;
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
@@ -129,6 +130,9 @@ class ServerPlayState : public ServerState {
   int last_spawned_team_ = 1;
   int red_players_ = 0;
   int blue_players_ = 0;
+
+  Timer match_timer_;
+  Timer countdown_timer_;
 
   std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
   std::vector<Projectile> created_projectiles_;

@@ -36,6 +36,11 @@ void Engine::Init() {
   scores_.reserve(2);
   scores_.push_back(0);
   scores_.push_back(0);
+
+  /*gameplay_timer_.reserve(2);
+  gameplay_timer_.push_back(4);
+  gameplay_timer_.push_back(59);*/
+
   std::vector<std::string> names = {"Bogdan",  "Smibel Gork", "Big King",
                                     "Blorgon", "Thrall",      "Fisken",
                                     "Snabel",  "BOI"};
@@ -290,6 +295,11 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       scores_[team] = score;
       break;
     }
+    case PacketBlockType::MATCH_TIMER: {
+      packet >> gameplay_timer_sec_;
+      packet >> countdown_timer_sec_;
+      break;
+    }
     /*
     TODO: fix
     case PacketBlockType::CHOOSE_TEAM: {
@@ -491,5 +501,8 @@ void Engine::DrawScoreboard() {
         red_count++;
       }
   }
-  }
 }
+
+int Engine::GetGameplayTimer() const { return gameplay_timer_sec_; }
+
+int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }
