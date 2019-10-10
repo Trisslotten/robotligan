@@ -12,6 +12,7 @@
 #include "engine.hpp"
 #include "entitycreation.hpp"
 #include "util/input.hpp"
+#include "util/global_settings.hpp"
 
 void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
@@ -34,7 +35,15 @@ void PlayState::Startup() {
   gui_stamina_icon_ =
       glob::GetGUIItem("assets/GUI_elements/stamina_bar_icon.png");
   gui_quickslots_ =
-      glob::GetGUIItem("assets/GUI_elements/koncept_abilities.png");
+      glob::GetGUIItem("assets/GUI_elements/quickslots_blank.png");
+
+  int num_abilities = (int)AbilityID::NUM_OF_ABILITY_IDS;
+  ability_handles_.resize(num_abilities);
+  for (int i = 0; i < num_abilities; i++) {
+    ability_handles_[i] = glob::GetGUIItem(
+        "assets/GUI_Elements/ability_icons/" + std::to_string(i) + ".png");
+  }
+  font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
   ///////////////////////////////////////////////////////////////
   // \TO BE MOVED
   ///////////////////////////////////////////////////////////////
@@ -95,6 +104,7 @@ void PlayState::Update() {
                glm::vec3(0, 1, 0));
   glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
 
+  UpdateGameplayTimer();
   /*
   registry_gameplay_.view<PlayerComponent>().each(
       [&](auto entity, PlayerComponent& player_c) {
@@ -104,7 +114,14 @@ void PlayState::Update() {
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
   glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
   glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
+
+  // draw quickslot info
   glob::Submit(gui_quickslots_, glm::vec2(7, 50), 0.3, 100);
+  glob::Submit(ability_handles_[my_primary_ability_id], glm::vec2(9, 50), 0.75f,
+               100);
+  glob::Submit(ability_handles_[(int)engine_->GetSecondaryAbility()], glm::vec2(66, 50), 0.75f,
+               100);
+
   glob::Submit(gui_teamscore_, glm::vec2(497, 648), 1, 100);
 }
 
@@ -133,6 +150,34 @@ void PlayState::UpdateInGameMenu(bool show_menu) {
   for (auto v : view) {
     auto& button_c = registry_gameplay_.get<ButtonComponent>(v);
     button_c.visible = show_menu;
+  }
+}
+
+void PlayState::UpdateGameplayTimer() {
+  // Gameplay timer
+  int temp = (int)GlobalSettings::Access()->ValueOf("MATCH_TIME") - engine_->GetGameplayTimer();
+  int sec = 0;
+  int min = 5;
+
+  min = temp / 60;
+  sec = temp % 60;
+
+  // Countdown timer
+  int count = (int)GlobalSettings::Access()->ValueOf("COUNTDOWN_TIME") - engine_->GetCountdownTimer();
+
+  // --------------------------------------
+  glob::Submit(font_test_, glm::vec2(645, 705), 40, std::to_string(min),
+               glm::vec4(1));
+  glob::Submit(font_test_, glm::vec2(638, 695), 40, "----",
+               glm::vec4(1, 1, 1, 1));
+  glob::Submit(font_test_, glm::vec2(638, 675), 40, std::to_string(sec),
+               glm::vec4(1));
+  if (count > 0) {
+    glob::Submit(font_test_, glm::vec2(735, 450), 500, std::to_string(count),
+                 glm::vec4(1));  // Visible = true
+  } else {
+    glob::Submit(font_test_, glm::vec2(735, 450), 500, std::to_string(count),
+                 glm::vec4(1), false);
   }
 }
 
@@ -265,6 +310,39 @@ void PlayState::CreatePickUp(glm::vec3 position) {
   registry_gameplay_.assign<TransformComponent>(
       pick_up, position, glm::vec3(0.0f, 0.0f, -1.6f), glm::vec3(0.002f));
   registry_gameplay_.assign<PickUpComponent>(pick_up);
+}
+
+void PlayState::CreateCannonBall(EntityID id) {
+  auto cannonball = registry_gameplay_.create();
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  registry_gameplay_.assign<ModelComponent>(cannonball, model_ball);
+  registry_gameplay_.assign<TransformComponent>(cannonball, zero_vec, zero_vec,
+                                                glm::vec3(0.3f));
+  registry_gameplay_.assign<IDComponent>(cannonball, id);
+}
+
+void PlayState::CreateForcePushObject(EntityID id) {
+  auto force_object = registry_gameplay_.create();
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  registry_gameplay_.assign<ModelComponent>(force_object, model_ball);
+  registry_gameplay_.assign<TransformComponent>(force_object, zero_vec, zero_vec,
+                                                glm::vec3(0.5f));
+  registry_gameplay_.assign<IDComponent>(force_object, id);
+}
+
+
+void PlayState::DestroyEntity(EntityID id) {
+  auto id_view = registry_gameplay_.view<IDComponent>();
+  for (auto entity : id_view) {
+    auto& e_id = id_view.get(entity);
+
+	if (e_id.id == id) {
+      registry_gameplay_.destroy(entity);
+      return;
+	}
+  }
 }
 
 void PlayState::SwitchGoals() {

@@ -36,6 +36,11 @@ void Engine::Init() {
   scores_.reserve(2);
   scores_.push_back(0);
   scores_.push_back(0);
+
+  /*gameplay_timer_.reserve(2);
+  gameplay_timer_.push_back(4);
+  gameplay_timer_.push_back(59);*/
+
   std::vector<std::string> names = {"Bogdan",  "Smibel Gork", "Big King",
                                     "Blorgon", "Thrall",      "Fisken",
                                     "Snabel",  "BOI"};
@@ -91,11 +96,14 @@ void Engine::Update(float dt) {
   }
 
   // TODO: move to playstate
-  glob::Submit(font_test3_, glm::vec2(582, 705), 72, std::to_string(scores_[1]),
-               glm::vec4(0, 0.26, 1, 1));
-  glob::Submit(font_test3_, glm::vec2(705, 705), 72, std::to_string(scores_[0]),
-               glm::vec4(1, 0, 0, 1));
+  if (current_state_->Type() == StateType::PLAY) {
+    glob::Submit(font_test3_, glm::vec2(582, 705), 72,
+                 std::to_string(scores_[1]), glm::vec4(0, 0.26, 1, 1));
+    glob::Submit(font_test3_, glm::vec2(705, 705), 72,
+                 std::to_string(scores_[0]), glm::vec4(1, 0, 0, 1));
 
+  }
+  
   current_state_->Update();
 
   UpdateSystems(dt);
@@ -205,7 +213,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> strsize;
       std::string str;
       str.resize(strsize);
-      std::cout << "Packet Size: " << packet.GetPacketSize() << "\n";
+       std::cout << "Packet Size: " << packet.GetPacketSize() << "\n";
       packet.Remove(str.data(), strsize);
       std::cout << "PACKET: TEST_STRING: '" << str << "'\n";
       break;
@@ -235,6 +243,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       std::vector<EntityID> player_ids;
       EntityID my_id;
       EntityID ball_id;
+      int ability_id;
+      packet >> ability_id;
       packet >> num_players;
       player_ids.resize(num_players);
       packet.Remove(player_ids.data(), player_ids.size());
@@ -242,6 +252,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> ball_id;
 
       play_state_.SetEntityIDs(player_ids, my_id, ball_id);
+      play_state_.SetMyPrimaryAbility(ability_id);
 
       ChangeState(StateType::PLAY);
       std::cout << "PACKET: GAME_START\n";
@@ -298,6 +309,11 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> score;
       packet >> team;
       scores_[team] = score;
+      break;
+    }
+    case PacketBlockType::MATCH_TIMER: {
+      packet >> gameplay_timer_sec_;
+      packet >> countdown_timer_sec_;
       break;
     }
     /*
@@ -374,7 +390,32 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       int id = 0;
       packet >> id;
       lobby_state_.SetMyId(id);
+      break;
     }
+    case PacketBlockType::CREATE_PROJECTILE: {
+      ProjectileID p_id;
+      EntityID e_id;
+      packet >> p_id;
+      packet >> e_id;
+
+      switch (p_id) {
+        case ProjectileID::CANNON_BALL: {
+          play_state_.CreateCannonBall(e_id);
+          break;
+        }
+        case ProjectileID::FORCE_PUSH_OBJECT: {
+          play_state_.CreateForcePushObject(e_id);
+          break;
+		}
+      }
+      break;
+    }
+    case PacketBlockType::DESTROY_ENTITIES: {
+      EntityID id;
+      packet >> id;
+      play_state_.DestroyEntity(id);
+      break;
+	  }
   }
 }
 
@@ -449,28 +490,36 @@ void Engine::DrawScoreboard() {
   glm::vec2 start_pos_red = glm::vec2(320, 320);
   glm::vec2 offset_goals = glm::vec2(140, 0);
   glm::vec2 offset_points = glm::vec2(300, 0);
-  for (auto& p_score : player_scores_) {
-    if (p_score.second.team == TEAM_BLUE) {
-      glm::vec2 text_pos = start_pos_blue + glm::vec2(0, blue_count * jump);
-      glob::Submit(font_test2_, text_pos, 32, player_names_[p_score.first],
-                   glm::vec4(0, 0, 1, 1));
-      glob::Submit(font_test2_, text_pos + offset_goals, 32,
-                   std::to_string(p_score.second.goals), glm::vec4(0, 0, 1, 1));
-      glob::Submit(font_test2_, text_pos + offset_points, 32,
-                   std::to_string(p_score.second.points),
-                   glm::vec4(0, 0, 1, 1));
-      blue_count++;
-    }
-    if (p_score.second.team == TEAM_RED) {
-      glm::vec2 text_pos = start_pos_red + glm::vec2(0, red_count * jump);
-      glob::Submit(font_test2_, text_pos, 32, player_names_[p_score.first],
-                   glm::vec4(1, 0, 0, 1));
-      glob::Submit(font_test2_, text_pos + offset_goals, 32,
-                   std::to_string(p_score.second.goals), glm::vec4(1, 0, 0, 1));
-      glob::Submit(font_test2_, text_pos + offset_points, 32,
-                   std::to_string(p_score.second.points),
-                   glm::vec4(1, 0, 0, 1));
-      red_count++;
+  if (current_state_->Type() == StateType::PLAY) {
+    for (auto& p_score : player_scores_) {
+      if (p_score.second.team == TEAM_BLUE) {
+        glm::vec2 text_pos = start_pos_blue + glm::vec2(0, blue_count * jump);
+        glob::Submit(font_test2_, text_pos, 32, player_names_[p_score.first],
+                     glm::vec4(0, 0, 1, 1));
+        glob::Submit(font_test2_, text_pos + offset_goals, 32,
+                     std::to_string(p_score.second.goals),
+                     glm::vec4(0, 0, 1, 1));
+        glob::Submit(font_test2_, text_pos + offset_points, 32,
+                     std::to_string(p_score.second.points),
+                     glm::vec4(0, 0, 1, 1));
+        blue_count++;
+      }
+      if (p_score.second.team == TEAM_RED) {
+        glm::vec2 text_pos = start_pos_red + glm::vec2(0, red_count * jump);
+        glob::Submit(font_test2_, text_pos, 32, player_names_[p_score.first],
+                     glm::vec4(1, 0, 0, 1));
+        glob::Submit(font_test2_, text_pos + offset_goals, 32,
+                     std::to_string(p_score.second.goals),
+                     glm::vec4(1, 0, 0, 1));
+        glob::Submit(font_test2_, text_pos + offset_points, 32,
+                     std::to_string(p_score.second.points),
+                     glm::vec4(1, 0, 0, 1));
+        red_count++;
+      }
     }
   }
 }
+
+int Engine::GetGameplayTimer() const { return gameplay_timer_sec_; }
+
+int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }

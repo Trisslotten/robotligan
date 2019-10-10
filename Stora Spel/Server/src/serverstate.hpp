@@ -4,9 +4,11 @@
 #include <entity/registry.hpp>
 #include <entt.hpp>
 #include "ecs/components.hpp"
-#include "replay machine/replay_machine.hpp"
 #include "shared/shared.hpp"
+#include "util/event.hpp"
 #include "util/timer.hpp"
+#include "replay machine/replay_machine.hpp"
+#include "util/event.hpp"
 
 class GameServer;
 
@@ -60,6 +62,11 @@ class ServerLobbyState : public ServerState {
     teams_updated_ = true;
   }
 
+  void SetClientAbility(int client_id, AbilityID id) {
+    client_abilities_[client_id] = id;
+  }
+
+  std::unordered_map<int, AbilityID> client_abilities_;
   std::unordered_map<int, unsigned int> client_teams_;
 
  private:
@@ -92,8 +99,11 @@ class ServerPlayState : public ServerState {
     clients_receive_updates_[client_id] = initialized;
   }
 
+  std::unordered_map<int, AbilityID> client_abilities_;
   std::unordered_map<int, unsigned int> client_teams_;
 
+  void ReceiveEvent(const EventInfo& e);
+  // EntityID GetNextEntityGuid() { return entity_guid_++; }
  private:
   entt::entity CreateIDEntity();
 
@@ -120,7 +130,12 @@ class ServerPlayState : public ServerState {
   int red_players_ = 0;
   int blue_players_ = 0;
 
+  Timer match_timer_;
+  Timer countdown_timer_;
+
   std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
+  std::vector<Projectile> created_projectiles_;
+  std::vector<int> destroy_entities_;
 
   // Replay stuff ---
   ReplayMachine* replay_machine_ = nullptr;

@@ -2,12 +2,12 @@
 #define STATE_HPP_
 
 #include <NetAPI\packet.hpp>
+#include <ecs/components/button_component.hpp>
 #include <entt.hpp>
 #include <glm/glm.hpp>
 #include <glob/graphics.hpp>
 #include "Chat.hpp"
 #include "shared/shared.hpp"
-#include <ecs/components/button_component.hpp>
 
 class Engine;
 
@@ -96,8 +96,15 @@ class LobbyState : public State {
   void CreateBackgroundEntities();
   void CreateGUIElements();
   void DrawTeamSelect();
+  void DrawAbilitySelect();
 
   glob::GUIHandle team_select_back_;
+  glob::GUIHandle ability_select_back_;
+  glob::GUIHandle ability_back_normal_;
+  glob::GUIHandle ability_back_hover_;
+  glob::GUIHandle ability_back_selected_;
+
+  std::vector<glob::GUIHandle> ability_icons_;
   glob::Font2DHandle font_team_names_;
   std::unordered_map<int, LobbyPlayer> lobby_players_;
 
@@ -107,6 +114,14 @@ class LobbyState : public State {
 
   void SendJoinTeam(unsigned int team);
   int my_id_ = 0;
+
+  int my_selected_ability_ = 0;
+
+  entt::entity GetAbilityButton(std::string find_string);
+  void SelectAbilityHandler(int id);
+
+  bool IsAbilityBlackListed(int id);
+  std::vector<int> ability_blacklist;
 };
 /////////////////////// ConnectMenuState
 class ConnectMenuState : public State {
@@ -163,9 +178,11 @@ class PlayState : public State {
   void SetCurrentStamina(float stamina) { current_stamina_ = stamina; }
 
   void CreatePickUp(glm::vec3 position);
-
-
+  void CreateCannonBall(EntityID id);
+  void CreateForcePushObject(EntityID id);
+  void DestroyEntity(EntityID id);
   void SwitchGoals();
+  void SetMyPrimaryAbility(int id) { my_primary_ability_id = id; }
 
  private:
   void CreateInitialEntities();
@@ -178,6 +195,7 @@ class PlayState : public State {
 
   void ToggleInGameMenu();
   void UpdateInGameMenu(bool show_menu);
+  void UpdateGameplayTimer();
   ////////////////////////////////////////
 
   entt::registry registry_gameplay_;
@@ -197,7 +215,11 @@ class PlayState : public State {
   glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
       gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_;
 
+  std::vector<glob::GUIHandle> ability_handles_;
+
   bool show_in_game_menu_buttons_ = false;
+
+  int my_primary_ability_id = 0;
 };
 
 #endif  // STATE_HPP_

@@ -57,6 +57,10 @@ enum : int16_t {
   LOBBY_YOUR_ID,
   PING,
   PING_RECIEVE,
+  LOBBY_SELECT_ABILITY,
+  CREATE_PROJECTILE,
+  DESTROY_ENTITIES,
+  MATCH_TIMER,
   NUM_BLOCK_TYPES,
 };
 
@@ -78,4 +82,14 @@ enum class AbilityID {
   NUM_OF_ABILITY_IDS
 };
 
+enum class ProjectileID {
+  CANNON_BALL,
+  FORCE_PUSH_OBJECT,
+  NUM_PROJECTILE_IDS,
+};
+
+struct Projectile {
+  EntityID entity_id;
+  ProjectileID projectile_id;
+};
 #endif  // SHARED_HPP_

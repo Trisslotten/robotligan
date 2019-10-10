@@ -28,6 +28,7 @@ class GameServer {
   void DoOncePerSecond();
   void ChangeState(ServerStateType state) { wanted_state_type_ = state; }
 
+  ServerPlayState* GetPlayState() { return &play_state_; }
   NetAPI::Socket::Server& GetServer() { return server_; }
   std::unordered_map<int, NetAPI::Common::Packet>& GetPackets() {
     return packets_;

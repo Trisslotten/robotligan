@@ -13,9 +13,14 @@
 #include "boundingboxes.hpp"
 #include "collision.hpp"
 #include "ecs/components/physics_component.hpp"
+#include "ecs/components/pick_up_event.hpp"
 #include "ecs/components/projectile_component.hpp"
 #include "shared/transform_component.hpp"
-#include "ecs/components/pick_up_event.hpp"
+
+void DestroyEntity(entt::registry& registry, entt::entity entity);
+void ApplyForcePush(entt::registry& registry, glm::vec3 pos);
+void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
+                            PhysicsComponent &physics_c);
 
 std::ostream& operator<<(std::ostream& o, glm::vec3 v) {
   return o << v.x << " " << v.y << " " << v.z;
@@ -296,7 +301,9 @@ void PlayerArenaCollision(entt::registry& registry) {
         if (data.move_vector.y > 0.0f) {
           physics_c.is_airborne = false;
           physics_c.velocity.y = 0.f;
-        }
+        } else if (data.move_vector.y < 0.0f) {
+          physics_c.velocity.y = 0.f;
+		}
       }
     }
   }
@@ -370,8 +377,17 @@ void PlayerProjectileCollision(entt::registry& registry) {
 
       physics::IntersectData data = Intersect(proj_hitbox, player_hitbox);
       if (data.collision) {
-        if (id.projectile_id == CANNON_BALL) {
-          registry.destroy(projectile);
+        switch (id.projectile_id) {
+          case ProjectileID::CANNON_BALL: {
+            // registry.destroy(projectile);
+            DestroyEntity(registry, projectile);
+            break;
+          }
+          case ProjectileID::FORCE_PUSH_OBJECT: {
+            ApplyForcePush(registry, proj_hitbox.center);
+            DestroyEntity(registry, projectile);
+            break;
+          }
         }
       }
     }
@@ -392,15 +408,21 @@ void ProjectileBallCollision(entt::registry& registry, entt::entity ball) {
 
     physics::IntersectData data = Intersect(ball_hitbox, proj_hitbox);
     if (data.collision) {
-      if (id.projectile_id == CANNON_BALL && ball_c.is_real == true) {
-        glm::vec3 dir = normalize(ball_hitbox.center - proj_hitbox.center);
-        ball_physics.velocity = dir * 20.0f;
-        ball_physics.is_airborne = true;
-        ball_c.last_touch = id.creator;
-        registry.destroy(projectile);
-      } else {
-        registry.destroy(projectile);
-        registry.destroy(ball);
+      switch (id.projectile_id) {
+        case ProjectileID::CANNON_BALL: {
+          glm::vec3 dir = normalize(ball_hitbox.center - proj_hitbox.center);
+          ball_physics.velocity = dir * 20.0f;
+          ball_physics.is_airborne = true;
+          ball_c.last_touch = id.creator;
+          // registry.destroy(projectile);
+          DestroyEntity(registry, projectile);
+          break;
+        }
+        case ProjectileID::FORCE_PUSH_OBJECT: {
+          ApplyForcePush(registry, proj_hitbox.center);
+          DestroyEntity(registry, projectile);
+          break;
+        }
       }
     }
   }
@@ -420,8 +442,17 @@ void ProjectileArenaCollision(entt::registry& registry) {
 
       physics::IntersectData data = Intersect(arena_hitbox, proj_hitbox);
       if (data.collision) {
-        if (id.projectile_id == CANNON_BALL) {
-          registry.destroy(projectile);
+        switch (id.projectile_id) {
+          case ProjectileID::CANNON_BALL: {
+            // registry.destroy(projectile);
+            DestroyEntity(registry, projectile);
+            break;
+          }
+          case ProjectileID::FORCE_PUSH_OBJECT: {
+            ApplyForcePush(registry, proj_hitbox.center);
+            DestroyEntity(registry, projectile);
+            break;
+          }
         }
       }
     }
@@ -432,8 +463,8 @@ void ProjectileArenaCollision(entt::registry& registry) {
 
 void PickUpPlayerCollision(entt::registry& registry) {
   auto pick_up_view = registry.view<PickUpComponent, physics::OBB>();
-  auto view_player =
-      registry.view<physics::OBB, PhysicsComponent, PlayerComponent, AbilityComponent>();
+  auto view_player = registry.view<physics::OBB, PhysicsComponent,
+                                   PlayerComponent, AbilityComponent>();
 
   for (auto pick_up : pick_up_view) {
     auto& pick_up_obb = pick_up_view.get<physics::OBB>(pick_up);
@@ -507,4 +538,54 @@ void UpdateTransform(entt::registry& registry) {
   }
 }
 
+void ApplyForcePush(entt::registry& registry, glm::vec3 pos) {
+  physics::Sphere force_push;
+  force_push.center = pos;
+  force_push.radius =
+      GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_RADIUS");
+
+  auto balls =
+      registry.view<physics::Sphere, BallComponent, PhysicsComponent>();
+  for (auto ball : balls) {
+    auto& hitbox = balls.get<physics::Sphere>(ball);
+    auto& physics_c = balls.get<PhysicsComponent>(ball);
+    ApplyForcePushOnEntity(force_push.center, hitbox.center, physics_c);
+  }
+
+  auto players =
+      registry.view<physics::OBB, PlayerComponent, PhysicsComponent>();
+
+   for (auto player : players) {
+    auto& hitbox = players.get<physics::OBB>(player);
+     auto& physics_c = players.get<PhysicsComponent>(player);
+    ApplyForcePushOnEntity(force_push.center, hitbox.center, physics_c);
+  }
+
+}
+
+void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos, PhysicsComponent& physics_c) {
+  physics::Sphere force_push;
+  force_push.center = explosion_pos;
+  force_push.radius =
+      GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_RADIUS");
+  glm::vec3 dir = entity_pos - force_push.center;
+  float length = glm::length(dir);
+  if (length < force_push.radius) {
+    physics_c.is_airborne = true;
+    float force =
+        GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_STRENGTH");
+    physics_c.velocity =
+        dir * force * (force_push.radius - length) / force_push.radius;
+  }
+}
+
+void DestroyEntity(entt::registry& registry, entt::entity entity) {
+  EventInfo info;
+  if (registry.has<IDComponent>(entity) == false) return;
+  auto id = registry.get<IDComponent>(entity);
+  info.event = Event::DESTROY_ENTITY;
+  info.e_id = id.id;
+  dispatcher.enqueue<EventInfo>(info);
+  registry.destroy(entity);
+}
 #endif  // COLLISION_SYSTEM_HPP_
