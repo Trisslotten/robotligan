@@ -41,6 +41,8 @@ class ServerLobbyState : public ServerState {
   ServerLobbyState() = default;
   ~ServerLobbyState() {}
 
+  void SetTeamsUpdated(bool val) { teams_updated_ = val; }
+
   void SetClientIsReady(int client_id, bool is_ready) {
     clients_ready_[client_id] = is_ready;
     teams_updated_ = true;
@@ -72,7 +74,7 @@ class ServerLobbyState : public ServerState {
  private:
   std::unordered_map<int, bool> clients_ready_;
   Timer start_game_timer;
-  bool starting = false;
+  bool starting_ = false;
   unsigned int last_team_ = TEAM_BLUE;
 
   bool teams_updated_ = false;
@@ -117,6 +119,7 @@ class ServerPlayState : public ServerState {
   void Replay(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value);
   void CreatePickUpComponents();
   EntityID GetNextEntityGuid() { return entity_guid_++; }
+  void EndGame();
 
   std::unordered_map<long, bool> clients_receive_updates_;
   std::unordered_map<int, EntityID> clients_player_ids_;
@@ -130,6 +133,8 @@ class ServerPlayState : public ServerState {
   int red_players_ = 0;
   int blue_players_ = 0;
 
+  int match_time_ = 300;
+  int count_down_time_ = 5;
   Timer match_timer_;
   Timer countdown_timer_;
 

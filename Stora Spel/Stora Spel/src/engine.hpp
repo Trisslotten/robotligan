@@ -50,6 +50,8 @@ class Engine {
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
 
+  void DrawScoreboard();
+
   Chat* GetChat() { return &chat_; }
 
  private:
@@ -58,8 +60,6 @@ class Engine {
   void UpdateChat(float dt);
   void UpdateSystems(float dt);
   void HandlePacketBlock(NetAPI::Common::Packet& packet);
-
-  void DrawScoreboard();
 
   NetAPI::Socket::Client client_;
   NetAPI::Common::Packet packet_;

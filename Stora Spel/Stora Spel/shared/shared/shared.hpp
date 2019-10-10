@@ -63,6 +63,7 @@ enum : int16_t {
   MATCH_TIMER,
   GAME_EVENT,
   PHYSICS_DATA,
+  GAME_END,
   NUM_BLOCK_TYPES,
 };
 

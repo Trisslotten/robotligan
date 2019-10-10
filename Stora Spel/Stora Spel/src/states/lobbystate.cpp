@@ -43,6 +43,9 @@ void LobbyState::SendJoinTeam(unsigned int team) {
   NetAPI::Common::Packet& packet = engine_->GetPacket();
   packet << team;
   packet << PacketBlockType::LOBBY_SELECT_TEAM;
+  if (me_ready_) {
+    ReadyButtonFunc();
+  }
 }
 
 entt::entity LobbyState::GetAbilityButton(std::string find_string) {
@@ -84,30 +87,12 @@ bool LobbyState::IsAbilityBlackListed(int id) {
   return false;
 }
 void LobbyState::Startup() {
-  auto font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
-  auto button = registry_lobby_.create();
-  ButtonComponent& b_c = registry_lobby_.assign<ButtonComponent>(button);
-  /*ready_button_c = GenerateButtonEntity(
-      registry_lobby_, "READY", glob::window::Relative720(glm::vec2(1120, 40)),
-      font_test_);*/
-  b_c.text = "READY";
-  b_c.font_size = 72;  // menu_settings::font_size;
-  b_c.bounds = glm::vec2(b_c.font_size * b_c.text.size() / 2, b_c.font_size);
-  b_c.f_handle = font_test_;
-  glm::vec2 pos = glob::window::Relative720(glm::vec2(1120, 40));
-  registry_lobby_.assign<TransformComponent>(
-      button, glm::vec3(glob::window::GetWindowDimensions().x - 200, 82, 0));
-  b_c.text_current_color = glm::vec4(1.f, 0.f, 0.f, 1.f);
-  b_c.text_normal_color = glm::vec4(1.f, 0.f, 0.f, 1.f);
-  b_c.text_hover_color = glm::vec4(0.6f, 0.f, 0.f, 1.f);
-  b_c.visible = true;
-  registry_lobby_.assign<ReadyButtonComponent>(button);
-
-  b_c.button_func = [&]() { this->ReadyButtonFunc(); };
+  font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
 }
 
 void LobbyState::Init() {
   //
+  glob::window::SetMouseLocked(false);
   auto& cli = engine_->GetClient();
   engine_->SetSendInput(false);
   engine_->SetCurrentRegistry(&registry_lobby_);
@@ -116,7 +101,7 @@ void LobbyState::Init() {
 
   CreateBackgroundEntities();
   CreateGUIElements();
-  SelectAbilityHandler(1);
+  SelectAbilityHandler(my_selected_ability_);
 
   engine_->GetChat()->SetPosition(glm::vec2(20, 140));
 }
@@ -130,7 +115,7 @@ void LobbyState::Update() {
 void LobbyState::UpdateNetwork() {}
 
 void LobbyState::Cleanup() {
-  //
+  me_ready_ = false;
   registry_lobby_.reset();
 }
 
@@ -212,6 +197,27 @@ void LobbyState::CreateGUIElements() {
     ability_icons_[i] = glob::GetGUIItem("Assets/GUI_elements/ability_icons/" +
                                          std::to_string(i) + ".png");
   }
+
+  //ready button
+  auto button = registry_lobby_.create();
+  ButtonComponent& b_c = registry_lobby_.assign<ButtonComponent>(button);
+  /*ready_button_c = GenerateButtonEntity(
+      registry_lobby_, "READY", glob::window::Relative720(glm::vec2(1120, 40)),
+      font_test_);*/
+  b_c.text = "READY";
+  b_c.font_size = 72;  // menu_settings::font_size;
+  b_c.bounds = glm::vec2(b_c.font_size * b_c.text.size() / 2, b_c.font_size);
+  b_c.f_handle = font_test_;
+  glm::vec2 pos = glob::window::Relative720(glm::vec2(1120, 40));
+  registry_lobby_.assign<TransformComponent>(
+      button, glm::vec3(glob::window::GetWindowDimensions().x - 200, 82, 0));
+  b_c.text_current_color = glm::vec4(1.f, 0.f, 0.f, 1.f);
+  b_c.text_normal_color = glm::vec4(1.f, 0.f, 0.f, 1.f);
+  b_c.text_hover_color = glm::vec4(0.6f, 0.f, 0.f, 1.f);
+  b_c.visible = true;
+  registry_lobby_.assign<ReadyButtonComponent>(button);
+
+  b_c.button_func = [&]() { this->ReadyButtonFunc(); };
 
   // auto button_join_red = registry_lobby_.create();
   ButtonComponent* button_c = GenerateButtonEntity(

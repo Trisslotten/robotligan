@@ -1,16 +1,15 @@
 #include "gameserver.hpp"
 
-#include <numeric>
 #include <algorithm>
 #include <bitset>
 #include <glob/graphics.hpp>
 #include <iostream>
+#include <numeric>
 
 #include "shared/id_component.hpp"
 #include "shared/pick_up_component.hpp"
 #include "shared/shared.hpp";
 #include "shared/transform_component.hpp"
-#include "shared/id_component.hpp"
 
 #include "ecs/components.hpp"
 #include "ecs/systems/ability_controller_system.hpp"
@@ -19,7 +18,6 @@
 #include "ecs/systems/goal_system.hpp"
 #include "ecs/systems/physics_system.hpp"
 #include "ecs/systems/player_controller_system.hpp"
-
 
 namespace {}  // namespace
 
@@ -129,6 +127,11 @@ void GameServer::HandleStateChange() {
     bool went_from_lobby_to_play =
         current_state_type_ == ServerStateType::LOBBY &&
         wanted_state_type_ == ServerStateType::PLAY;
+
+    bool went_from_play_to_lobby =
+        current_state_type_ == ServerStateType::PLAY &&
+        wanted_state_type_ == ServerStateType::LOBBY;
+
     current_state_type_ = wanted_state_type_;
 
     std::unordered_map<int, unsigned int> client_teams_lobby;
@@ -136,8 +139,7 @@ void GameServer::HandleStateChange() {
     if (went_from_lobby_to_play) {
       client_teams_lobby = lobby_state_.client_teams_;
       client_abilities_lobby = lobby_state_.client_abilities_;
-	}
-      
+    }
 
     current_state_->Cleanup();
     switch (wanted_state_type_) {
@@ -151,6 +153,9 @@ void GameServer::HandleStateChange() {
           play_state_.client_teams_ = client_teams_lobby;
           play_state_.client_abilities_ = client_abilities_lobby;
         }
+        if (went_from_play_to_lobby) {
+          lobby_state_.SetTeamsUpdated(true);
+		}
         current_state_ = &play_state_;
         break;
     }
