@@ -26,3 +26,6 @@ Example: '>MY_VALUE=13.37'
 
 //--Debug Options--//
 >RENDER_WIREFRAME=0.0
+
+//--Match options--//
+>MATCH_TIME=300.0 //5 min

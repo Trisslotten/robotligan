@@ -13,6 +13,7 @@
 #include "engine.hpp"
 #include "entitycreation.hpp"
 #include "util/input.hpp"
+#include "util/global_settings.hpp"
 
 void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
@@ -136,26 +137,12 @@ void PlayState::UpdateInGameMenu(bool show_menu) {
 
 void PlayState::UpdateGameplayTimer() {
   // Gameplay timer
-  int temp = 300 - engine_->GetGameplayTimer();
+  int temp = (int)GlobalSettings::Access()->ValueOf("MATCH_TIME") - engine_->GetGameplayTimer();
   int sec = 0;
   int min = 5;
 
-  if (temp < 300 && temp >= 240) {
-    min = 4;
-    sec = 60 - engine_->GetGameplayTimer();
-  } else if (temp < 240 && temp >= 180) {
-    min = 3;
-    sec = 60 - engine_->GetGameplayTimer() + 60;
-  } else if (temp < 180 && temp >= 120) {
-    min = 2;
-    sec = 60 - engine_->GetGameplayTimer() + 120;
-  } else if (temp < 120 && temp >= 60) {
-    min = 1;
-    sec = 60 - engine_->GetGameplayTimer() + 180;
-  } else if (temp < 60) {
-    min = 0;
-    sec = 60 - engine_->GetGameplayTimer() + 240;
-  }
+  min = temp / 60;
+  sec = temp % 60;
 
   // Countdown timer
   int count = 5.0 - engine_->GetCountdownTimer();
@@ -169,7 +156,7 @@ void PlayState::UpdateGameplayTimer() {
                glm::vec4(1));
   if (count > 0) {
     glob::Submit(font_test_, glm::vec2(735, 450), 500, std::to_string(count),
-                 glm::vec4(1)); // Visible = true
+                 glm::vec4(1));  // Visible = true
   } else {
     glob::Submit(font_test_, glm::vec2(735, 450), 500, std::to_string(count),
                  glm::vec4(1), false);

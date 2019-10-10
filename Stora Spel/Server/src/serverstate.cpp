@@ -46,6 +46,10 @@ void ServerPlayState::Init() {
   auto& server = game_server_->GetServer();
   auto& registry = game_server_->GetRegistry();
 
+  //Start the countdown and match timer
+  match_timer_.Restart();
+  countdown_timer_.Restart();
+
   CreateInitialEntities(server.GetConnectedPlayers());
 
   ResetEntities();
@@ -202,13 +206,10 @@ void ServerPlayState::Update(float dt) {
       }
     }
 
-    auto match_timer = registry.view<MatchTimer>();
-    for (auto timer : match_timer) {
-      MatchTimer& match_timer_c = registry.get<MatchTimer>(timer);
-      to_send << (int)countdown_timer_.Elapsed();
-      to_send << (int)match_timer_.Elapsed();
-      to_send << PacketBlockType::MATCH_TIMER;
-    }
+    // Send countdown & match time in sec
+    to_send << (int)countdown_timer_.Elapsed();
+    to_send << (int)match_timer_.Elapsed();
+    to_send << PacketBlockType::MATCH_TIMER;
   }
 
   pick_ups_.clear();
@@ -250,7 +251,6 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
   CreateArenaEntity();
   CreateBallEntity();
   CreateGoals();
-  CreateMatchTimer();
 
   for (auto a : clients_player_ids_) {
     std::cout << "client_id=" << a.first << ", entity_id=" << a.second << "\n";
@@ -539,17 +539,6 @@ void ServerPlayState::CreateGoals() {
   registry.assign<GoalComponenet>(entity_red);
   auto& trans_comp2 = registry.assign<TransformComponent>(entity_red);
   trans_comp2.position = glm::vec3(12.f, -4.f, 0.f);
-}
-
-void ServerPlayState::CreateMatchTimer() {
-  auto& registry = game_server_->GetRegistry();
-
-  match_timer_.Restart();
-  countdown_timer_.Restart();
-  // Add match timer
-  auto entity_match_timer = registry.create();
-
-  registry.assign<MatchTimer>(entity_match_timer);
 }
 
 /*
