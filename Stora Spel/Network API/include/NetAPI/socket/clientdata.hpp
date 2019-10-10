@@ -11,7 +11,7 @@ namespace NetAPI {
 namespace Socket {
 const unsigned kAveragePingCount = 64;
 struct EXPORT ClientData {
-  ClientData() { ping.resize(KAveragePingCount); }
+  ClientData() { ping.resize(kAveragePingCount); }
   unsigned short ID = 0;
   Client client;
   std::vector<Common::Packet> packets;

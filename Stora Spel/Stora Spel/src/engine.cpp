@@ -300,8 +300,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::PING_RECIEVE: {
       unsigned length = 0;
       packet >> length;
-      client_pings.resize(length);
-      packet.Remove<>(client_pings.data(), length);
+      client_pings_.resize(length);
+      packet.Remove<>(client_pings_.data(), length);
       break;
     }
     case PacketBlockType::TEAM_SCORE: {

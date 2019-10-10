@@ -225,9 +225,9 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       packet >> challenge;
       auto now = std::chrono::steady_clock::now();
       auto before = server_.GetClients().at(client_id)->last_time;
-      auto id = server_.GetClients().at(client_id)->ID;
-      if (id > NetAPI::Socket::KAveragePingCount - 1) {
-        server_.GetClients().at(client_id)->ID = 0;
+      auto id = server_.GetClients().at(client_id)->ping_id;
+      if (id > NetAPI::Socket::kAveragePingCount - 1) {
+        server_.GetClients().at(client_id)->ping_id = 0;
         id = 0;
       }
       server_.GetClients().at(client_id)->ping[id] =
