@@ -117,6 +117,8 @@ void LobbyState::Init() {
   CreateBackgroundEntities();
   CreateGUIElements();
   SelectAbilityHandler(1);
+
+  engine_->GetChat()->SetPosition(glm::vec2(20, 140));
 }
 
 void LobbyState::Update() {

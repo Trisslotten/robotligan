@@ -38,11 +38,15 @@ class Engine {
 
   std::unordered_map<PlayerID, std::string> player_names_;
 
-  AbilityID GetSecondaryAbility() { return second_ability_;
-  }
-  
+  AbilityID GetSecondaryAbility() { return second_ability_; }
+
+ std::vector<unsigned int> GetTeamScores() { return scores_; }
+
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
+
+  Chat* GetChat() { return &chat; }
+
  private:
   void SetKeybinds();
 
@@ -82,7 +86,7 @@ class Engine {
 
   // TODO: move to states
   std::vector<unsigned int> scores_;
-  
+
   int gameplay_timer_sec_ = 0;
   int countdown_timer_sec_ = 0;
 
@@ -91,12 +95,10 @@ class Engine {
 
   bool enable_chat_ = false;
 
-
   AbilityID second_ability_ = AbilityID::NULL_ABILITY;
   unsigned int new_team_ = std::numeric_limits<unsigned int>::max();
 
   std::unordered_map<PlayerID, PlayerScoreBoardInfo> player_scores_;
-  
 };
 
 #endif  // ENGINE_HPP_

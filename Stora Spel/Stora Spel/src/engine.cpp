@@ -95,14 +95,6 @@ void Engine::Update(float dt) {
     }
   }
 
-  // TODO: move to playstate
-  if (current_state_->Type() == StateType::PLAY) {
-    glob::Submit(font_test3_, glm::vec2(582, 705), 72,
-                 std::to_string(scores_[1]), glm::vec4(0, 0.26, 1, 1));
-    glob::Submit(font_test3_, glm::vec2(705, 705), 72,
-                 std::to_string(scores_[0]), glm::vec4(1, 0, 0, 1));
-
-  }
   
   current_state_->Update();
 
@@ -426,7 +418,8 @@ void Engine::UpdateChat(float dt) {
       chat.SubmitText(font_test2_);
       if (chat.IsTakingChatInput() == true &&
           chat.GetCurrentMessage().size() == 0)
-        glob::Submit(font_test2_, glm::vec2(50.f, 600.f), 20, "Enter message",
+        glob::Submit(font_test2_, chat.GetPosition() + glm::vec2(0, -20.f * 5),
+                     20, "Enter message",
                      glm::vec4(1, 1, 1, 1));
     }
     if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat.IsVisable()) {
@@ -466,14 +459,20 @@ void Engine::SetKeybinds() {
 }
 
 void Engine::DrawScoreboard() {
-  glob::Submit(gui_scoreboard_back_, glm::vec2(285, 177), 0.6, 100);
+  glm::vec2 scoreboard_pos = glob::window::GetWindowDimensions();
+  scoreboard_pos /= 2;
+  scoreboard_pos.x -= 290;
+  scoreboard_pos.y -= 150;
+  glob::Submit(gui_scoreboard_back_, scoreboard_pos, 0.6, 100);
   int red_count = 0;
   int blue_count = 0;
   int jump = -16;
-  glm::vec2 start_pos_blue = glm::vec2(320, 430);
-  glm::vec2 start_pos_red = glm::vec2(320, 320);
-  glm::vec2 offset_goals = glm::vec2(140, 0);
-  glm::vec2 offset_points = glm::vec2(300, 0);
+  glm::vec2 start_pos_blue =
+      scoreboard_pos + glm::vec2(24, 260);  //::vec2(320, 430);
+  glm::vec2 start_pos_red =
+      scoreboard_pos + glm::vec2(24, 140);  // glm::vec2(320, 320);
+  glm::vec2 offset_goals = glm::vec2(160, 0);
+  glm::vec2 offset_points = glm::vec2(320, 0);
   if (current_state_->Type() == StateType::PLAY) {
     for (auto& p_score : player_scores_) {
       if (p_score.second.team == TEAM_BLUE) {
