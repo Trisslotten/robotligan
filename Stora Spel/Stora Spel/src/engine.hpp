@@ -51,7 +51,7 @@ class Engine {
   NetAPI::Socket::Client client_;
   NetAPI::Common::Packet packet_;
 
-  std::vector<unsigned> client_pings;
+  std::vector<unsigned> client_pings_;
   StateType wanted_state_type_ = StateType::MAIN_MENU;
   State* current_state_ = nullptr;
   MainMenuState main_menu_state_;
