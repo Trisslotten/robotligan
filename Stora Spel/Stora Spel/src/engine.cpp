@@ -101,9 +101,8 @@ void Engine::Update(float dt) {
                  std::to_string(scores_[1]), glm::vec4(0, 0.26, 1, 1));
     glob::Submit(font_test3_, glm::vec2(705, 705), 72,
                  std::to_string(scores_[0]), glm::vec4(1, 0, 0, 1));
-
   }
-  
+
   current_state_->Update();
 
   UpdateSystems(dt);
@@ -213,7 +212,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> strsize;
       std::string str;
       str.resize(strsize);
-       std::cout << "Packet Size: " << packet.GetPacketSize() << "\n";
+      std::cout << "Packet Size: " << packet.GetPacketSize() << "\n";
       packet.Remove(str.data(), strsize);
       std::cout << "PACKET: TEST_STRING: '" << str << "'\n";
       break;
@@ -312,8 +311,13 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::MATCH_TIMER: {
+      int time = 0;
+      int countdown_time = 0;
+      packet >> countdown_time;
+      packet >> time;
       packet >> gameplay_timer_sec_;
       packet >> countdown_timer_sec_;
+      play_state_.SetMatchTime(time, countdown_time);
       break;
     }
     /*
@@ -406,7 +410,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         case ProjectileID::FORCE_PUSH_OBJECT: {
           play_state_.CreateForcePushObject(e_id);
           break;
-		}
+        }
       }
       break;
     }
@@ -415,7 +419,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> id;
       play_state_.DestroyEntity(id);
       break;
-	  }
+    }
+    case PacketBlockType::GAME_END: {
+      play_state_.EndGame();
+      //ChangeState(StateType::LOBBY);
+      break;
+    }
   }
 }
 

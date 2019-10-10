@@ -6,6 +6,7 @@
 #include <entt.hpp>
 #include <glm/glm.hpp>
 #include <glob/graphics.hpp>
+#include <util/timer.hpp>
 #include "Chat.hpp"
 #include "shared/shared.hpp"
 
@@ -106,6 +107,7 @@ class LobbyState : public State {
 
   std::vector<glob::GUIHandle> ability_icons_;
   glob::Font2DHandle font_team_names_;
+  glob::Font2DHandle font_test_;
   std::unordered_map<int, LobbyPlayer> lobby_players_;
 
   void ReadyButtonFunc();
@@ -183,6 +185,12 @@ class PlayState : public State {
   void DestroyEntity(EntityID id);
   void SwitchGoals();
   void SetMyPrimaryAbility(int id) { my_primary_ability_id = id; }
+  void SetMatchTime(int time, int countdown_time) {
+    match_time_ = time;
+    countdown_time_ = countdown_time;
+  }
+
+  void EndGame();
 
  private:
   void CreateInitialEntities();
@@ -220,6 +228,11 @@ class PlayState : public State {
   bool show_in_game_menu_buttons_ = false;
 
   int my_primary_ability_id = 0;
+  int match_time_ = 300;
+  int countdown_time_ = 5;
+
+  Timer end_game_timer_;
+  bool game_has_ended_ = false;
 };
 
 #endif  // STATE_HPP_

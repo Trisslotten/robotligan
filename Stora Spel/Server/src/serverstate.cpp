@@ -13,7 +13,11 @@
 #include "gameserver.hpp"
 
 void ServerLobbyState::Init() {
-  //
+  start_game_timer.Restart();
+  starting_ = false;
+  for (auto& ready_c : clients_ready_) {
+    ready_c.second = false;
+  }
   srand(time(NULL));
 }
 
@@ -24,16 +28,16 @@ void ServerLobbyState::Update(float dt) {
     can_start = can_start && ready.second;
   }
 
-  if (can_start && !starting) {
+  if (can_start && !starting_) {
     std::cout << "DEBUG: Start game countdown\n";
     start_game_timer.Restart();
-    starting = true;
+    starting_ = true;
   }
   if (!can_start) {
-    starting = false;
+    starting_ = false;
   }
 
-  if (starting && start_game_timer.Elapsed() > 5.f) {
+  if (starting_ && start_game_timer.Elapsed() > 5.f) {
     std::cout << "DEBUG: Start game countdown is zero\n";
     game_server_->ChangeState(ServerStateType::PLAY);
   }
@@ -114,7 +118,7 @@ void ServerPlayState::Update(float dt) {
         // client or if we are reading them from a replay
         if (!this->replay_) {
           auto inputs = players_inputs_[player_c.client_id];
-          if (countdown_timer_.Elapsed() <= 5.0f) {
+          if (countdown_timer_.Elapsed() <= count_down_time_) {
             match_timer_.Pause();
           } else {
             player_c.actions = inputs.first;
@@ -241,9 +245,10 @@ void ServerPlayState::Update(float dt) {
     // Send countdown & match time in sec
     to_send << (int)countdown_timer_.Elapsed();
     to_send << (int)match_timer_.Elapsed();
+    to_send << match_time_;
+    to_send << count_down_time_;
     to_send << PacketBlockType::MATCH_TIMER;
   }
-  
 
   // switch goal cleanup
   auto view_goals = registry.view<GoalComponenet, TeamComponent>();
@@ -255,12 +260,24 @@ void ServerPlayState::Update(float dt) {
     }
   }
   pick_ups_.clear();
+
+  if (match_timer_.Elapsed() > match_time_) {
+    EndGame();
+  }
 }
 
 void ServerPlayState::Cleanup() {
   if (this->replay_machine_ != nullptr) {
     delete this->replay_machine_;
   }
+  game_server_->GetRegistry().reset();
+
+  client_abilities_.clear();
+  client_teams_.clear();
+  clients_player_ids_.clear();
+  red_players_ = 0;
+  blue_players_ = 0;
+  entity_guid_ = 0;
 }
 
 entt::entity ServerPlayState::CreateIDEntity() {
@@ -579,6 +596,13 @@ void ServerPlayState::CreatePickUpComponents() {
                                 glm::vec3(0.f, 1.f, 0.f),
                                 glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
   pick_ups_.push_back(entity);
+}
+
+void ServerPlayState::EndGame() {
+  for (auto& [client_id, to_send] : game_server_->GetPackets()) {
+    to_send << PacketBlockType::GAME_END;
+  }
+  game_server_->ChangeState(ServerStateType::LOBBY);
 }
 
 void ServerPlayState::ReceiveEvent(const EventInfo& e) {

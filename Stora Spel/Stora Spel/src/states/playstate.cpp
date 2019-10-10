@@ -1,8 +1,8 @@
 #include "state.hpp"
 
+#include <GLFW/glfw3.h>
 #include <glob/graphics.hpp>
 #include <glob/window.hpp>
-#include <GLFW/glfw3.h>
 #include "shared/camera_component.hpp"
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
@@ -11,8 +11,8 @@
 #include "ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
-#include "util/input.hpp"
 #include "util/global_settings.hpp"
+#include "util/input.hpp"
 
 void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
@@ -119,12 +119,31 @@ void PlayState::Update() {
   glob::Submit(gui_quickslots_, glm::vec2(7, 50), 0.3, 100);
   glob::Submit(ability_handles_[my_primary_ability_id], glm::vec2(9, 50), 0.75f,
                100);
-  glob::Submit(ability_handles_[(int)engine_->GetSecondaryAbility()], glm::vec2(66, 50), 0.75f,
-               100);
+  glob::Submit(ability_handles_[(int)engine_->GetSecondaryAbility()],
+               glm::vec2(66, 50), 0.75f, 100);
 
   glob::Submit(gui_teamscore_, glm::vec2(497, 648), 1, 100);
-}
 
+  if (game_has_ended_) {
+    engine_->DrawScoreboard();
+
+    glm::vec2 pos = glob::window::GetWindowDimensions();
+    pos /= 2;
+    pos.y -= 200;
+    pos.x -= 100;
+
+    int game_end_timeout = 5;
+    std::string end_countdown_text =
+        std::to_string((int)(game_end_timeout - end_game_timer_.Elapsed()));
+
+    glob::Submit(font_test_, pos, 48,
+                 "Returning to lobby in: " + end_countdown_text);
+
+    if (end_game_timer_.Elapsed() >= 5.0f) {
+      engine_->ChangeState(StateType::LOBBY);
+    }
+  }
+}
 void PlayState::UpdateNetwork() {
   auto& packet = engine_->GetPacket();
 
@@ -135,7 +154,8 @@ void PlayState::UpdateNetwork() {
 }
 
 void PlayState::Cleanup() {
-  //
+  registry_gameplay_.reset();
+  game_has_ended_ = false;
 }
 
 void PlayState::ToggleInGameMenu() {
@@ -155,7 +175,7 @@ void PlayState::UpdateInGameMenu(bool show_menu) {
 
 void PlayState::UpdateGameplayTimer() {
   // Gameplay timer
-  int temp = (int)GlobalSettings::Access()->ValueOf("MATCH_TIME") - engine_->GetGameplayTimer();
+  int temp = match_time_ - engine_->GetGameplayTimer();
   int sec = 0;
   int min = 5;
 
@@ -163,7 +183,7 @@ void PlayState::UpdateGameplayTimer() {
   sec = temp % 60;
 
   // Countdown timer
-  int count = (int)GlobalSettings::Access()->ValueOf("COUNTDOWN_TIME") - engine_->GetCountdownTimer();
+  int count = countdown_time_ - engine_->GetCountdownTimer();
 
   // --------------------------------------
   glob::Submit(font_test_, glm::vec2(645, 705), 40, std::to_string(min),
@@ -327,21 +347,20 @@ void PlayState::CreateForcePushObject(EntityID id) {
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
   registry_gameplay_.assign<ModelComponent>(force_object, model_ball);
-  registry_gameplay_.assign<TransformComponent>(force_object, zero_vec, zero_vec,
-                                                glm::vec3(0.5f));
+  registry_gameplay_.assign<TransformComponent>(force_object, zero_vec,
+                                                zero_vec, glm::vec3(0.5f));
   registry_gameplay_.assign<IDComponent>(force_object, id);
 }
-
 
 void PlayState::DestroyEntity(EntityID id) {
   auto id_view = registry_gameplay_.view<IDComponent>();
   for (auto entity : id_view) {
     auto& e_id = id_view.get(entity);
 
-	if (e_id.id == id) {
+    if (e_id.id == id) {
       registry_gameplay_.destroy(entity);
       return;
-	}
+    }
   }
 }
 
@@ -354,4 +373,9 @@ void PlayState::SwitchGoals() {
   glm::vec3 blue_light_pos = blue_light_trans_c.position;
   blue_light_trans_c.position = red_light_trans_c.position;
   red_light_trans_c.position = blue_light_pos;
+}
+
+void PlayState::EndGame() {
+  end_game_timer_.Restart();
+  game_has_ended_ = true;
 }
