@@ -167,7 +167,6 @@ namespace slob {
   SoundPlayer::~SoundPlayer() { delete i_; }
 
   void SoundPlayer::Play(SoundHandle handle, int loop_count, float volume) {
-    std::cout << "Play Sound: " << handle << "\n";
     auto iter = i_->sound_engine->sounds.find(handle);
     if (iter != i_->sound_engine->sounds.end()) {
       iter->second.Play(i_->sound_engine->system, i_->group, loop_count, volume);
