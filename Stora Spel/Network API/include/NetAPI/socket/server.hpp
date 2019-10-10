@@ -2,14 +2,14 @@
 #pragma warning(disable : 4251)
 #ifndef SERVER_HPP_
 #define SERVER_HPP_
-
+#include <unordered_map>
+#include <vector>
 #include <NetAPI/Packet.hpp>
 #include <NetAPI/common.hpp>
 #include <NetAPI/socket/client.hpp>
 #include <NetAPI/socket/clientdata.hpp>
 #include <NetAPI/socket/tcplistener.hpp>
-#include <unordered_map>
-#include <vector>
+#include <shared/shared.hpp>
 namespace NetAPI {
 namespace Socket {
 class EXPORT Server {
@@ -26,6 +26,7 @@ class EXPORT Server {
   std::vector<ClientData*> GetNewlyConnected() { return newly_connected_; }
 
  private:
+  void SendPing();
   std::unordered_map<std::string, long> ids_;
   std::unordered_map<long, ClientData*> client_data_;
   std::vector<ClientData*> newly_connected_;

@@ -60,8 +60,6 @@ class ServerLobbyState : public ServerState {
     teams_updated_ = true;
   }
 
-  
-
   std::unordered_map<int, unsigned int> client_teams_;
 
  private:
@@ -90,7 +88,6 @@ class ServerPlayState : public ServerState {
 
   bool StartRecording(unsigned int in_replay_length_seconds);
 
-  
   void SetClientReceiveUpdates(long client_id, bool initialized) {
     clients_receive_updates_[client_id] = initialized;
   }
@@ -110,7 +107,6 @@ class ServerPlayState : public ServerState {
   void Replay(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value);
   void CreatePickUpComponents();
   EntityID GetNextEntityGuid() { return entity_guid_++; }
-
 
   std::unordered_map<long, bool> clients_receive_updates_;
   std::unordered_map<int, EntityID> clients_player_ids_;
