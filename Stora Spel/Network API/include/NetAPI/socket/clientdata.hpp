@@ -9,7 +9,7 @@
 #include <NetAPI/socket/client.hpp>
 namespace NetAPI {
 namespace Socket {
-const unsigned KAveragePingCount = 64;
+const unsigned kAveragePingCount = 64;
 struct EXPORT ClientData {
   ClientData() { ping.resize(KAveragePingCount); }
   unsigned short ID = 0;
