@@ -44,6 +44,7 @@ void PlayState::Startup() {
         "assets/GUI_Elements/ability_icons/" + std::to_string(i) + ".png");
   }
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+  font_scores_ = glob::GetFont("assets/fonts/fonts/OCRAEXT_2.TTF");
   ///////////////////////////////////////////////////////////////
   // \TO BE MOVED
   ///////////////////////////////////////////////////////////////
@@ -57,6 +58,9 @@ void PlayState::Init() {
 
   CreateInGameMenu();
   CreateInitialEntities();
+
+  engine_->GetChat()->SetPosition(
+      glm::vec2(30, glob::window::GetWindowDimensions().y - 30));
 
   auto& client = engine_->GetClient();
   NetAPI::Common::Packet to_send;
@@ -95,7 +99,11 @@ void PlayState::Update() {
     ToggleInGameMenu();
   }
   if (show_in_game_menu_buttons_) {
-    glob::Submit(in_game_menu_gui_, glm::vec2(491, 152), 1.0f);
+    glm::vec2 in_game_menu_pos = glob::window::GetWindowDimensions();
+    in_game_menu_pos /= 2;
+    in_game_menu_pos.x -= 165;
+    in_game_menu_pos.y -= 180;
+    glob::Submit(in_game_menu_gui_, in_game_menu_pos, 1.0f);
   }
   // Submit 2D Element TEST
   glob::Submit(e2D_test_, glm::vec3(10.5f, 1.0f, 0.0f), 2, -90.0f,
@@ -143,6 +151,7 @@ void PlayState::Update() {
       engine_->ChangeState(StateType::LOBBY);
     }
   }
+  DrawTopScores();
 }
 void PlayState::UpdateNetwork() {
   auto& packet = engine_->GetPacket();
@@ -161,6 +170,7 @@ void PlayState::Cleanup() {
 void PlayState::ToggleInGameMenu() {
   show_in_game_menu_buttons_ = !show_in_game_menu_buttons_;
   glob::window::SetMouseLocked(!show_in_game_menu_buttons_);
+  engine_->SetSendInput(!show_in_game_menu_buttons_);
   UpdateInGameMenu(show_in_game_menu_buttons_);
 }
 
@@ -185,20 +195,47 @@ void PlayState::UpdateGameplayTimer() {
   // Countdown timer
   int count = countdown_time_ - engine_->GetCountdownTimer();
 
+  glm::vec2 pos = glob::window::GetWindowDimensions();
+  pos.x /= 2;
+  pos.x += 4;
+  pos.y -= 6;
+
+  std::string min_string = std::to_string(min);
+  std::string sec_string = std::to_string(sec);
+
+  // min_string = "0" + min_string;
+  if (sec < 10) sec_string = "0" + sec_string;
+
   // --------------------------------------
-  glob::Submit(font_test_, glm::vec2(645, 705), 40, std::to_string(min),
-               glm::vec4(1));
-  glob::Submit(font_test_, glm::vec2(638, 695), 40, "----",
+  glob::Submit(font_test_, pos, 40, min_string, glm::vec4(1));
+  glob::Submit(font_test_, pos + glm::vec2(-8, -12), 40, "----",
                glm::vec4(1, 1, 1, 1));
-  glob::Submit(font_test_, glm::vec2(638, 675), 40, std::to_string(sec),
+  glob::Submit(font_test_, pos + glm::vec2(-7, -26), 40, sec_string,
                glm::vec4(1));
+
+  glm::vec2 countdown_pos = glob::window::GetWindowDimensions();
+  countdown_pos /= 2;
+  countdown_pos.x += 75;
+  countdown_pos.y += 100;
   if (count > 0) {
-    glob::Submit(font_test_, glm::vec2(735, 450), 500, std::to_string(count),
-                 glm::vec4(1));  // Visible = true
-  } else {
-    glob::Submit(font_test_, glm::vec2(735, 450), 500, std::to_string(count),
-                 glm::vec4(1), false);
+    glob::Submit(font_test_, countdown_pos, 500, std::to_string(count),
+                 glm::vec4(1));
   }
+}
+
+void PlayState::DrawTopScores() {
+  glm::vec2 team_score_pos = glob::window::GetWindowDimensions();
+  team_score_pos.x /= 2;
+  team_score_pos.x -= 145;
+  team_score_pos.y -= 60;
+  glob::Submit(gui_teamscore_, team_score_pos, 1, 100);
+
+  glob::Submit(font_scores_, team_score_pos + glm::vec2(90, 55), 72,
+               std::to_string(engine_->GetTeamScores()[1]),
+               glm::vec4(0, 0.26, 1, 1));
+  glob::Submit(font_scores_, team_score_pos + glm::vec2(217, 55), 72,
+               std::to_string(engine_->GetTeamScores()[0]),
+               glm::vec4(1, 0, 0, 1));
 }
 
 void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,
@@ -275,27 +312,36 @@ void PlayState::CreateBallEntity() {
 void PlayState::CreateInGameMenu() {
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
 
+  glm::vec2 in_game_menu_pos = glob::window::GetWindowDimensions();
+  in_game_menu_pos /= 2;
+  in_game_menu_pos.x -= 110;
+  in_game_menu_pos.y += 110;
+
   // CONTINUE BUTTON -- change registry to registry_gameplay_
   ButtonComponent* in_game_buttons_ = GenerateButtonEntity(
-      registry_gameplay_, "CONTINUE", glm::vec2(550, 430), font_test_, false);
+      registry_gameplay_, "CONTINUE", in_game_menu_pos + glm::vec2(0, 0),
+      font_test_, false);
   in_game_buttons_->button_func = [&]() { ToggleInGameMenu(); };
   // SETTINGS BUTTON -- change registry to registry_settings_
-  in_game_buttons_ = GenerateButtonEntity(
-      registry_gameplay_, "SETTINGS", glm::vec2(550, 360), font_test_, false);
+  in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "SETTINGS",
+                                          in_game_menu_pos + glm::vec2(0, -70),
+                                          font_test_, false);
 
   in_game_buttons_->button_func = [&] {
     // All the logic here
   };
 
   // END GAME -- change registry to registry_mainmenu_
-  in_game_buttons_ = GenerateButtonEntity(
-      registry_gameplay_, "MAINMENU", glm::vec2(550, 290), font_test_, false);
+  in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "MAINMENU",
+                                          in_game_menu_pos + glm::vec2(0, -140),
+                                          font_test_, false);
   in_game_buttons_->button_func = [&] {
     engine_->ChangeState(StateType::MAIN_MENU);
   };
 
-  in_game_buttons_ = GenerateButtonEntity(
-      registry_gameplay_, "EXIT", glm::vec2(550, 220), font_test_, false);
+  in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "EXIT",
+                                          in_game_menu_pos + glm::vec2(0, -210),
+                                          font_test_, false);
   in_game_buttons_->button_func = [&] { exit(0); };
 }
 
