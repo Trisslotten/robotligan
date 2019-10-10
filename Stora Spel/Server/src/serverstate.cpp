@@ -60,7 +60,7 @@ void ServerPlayState::Init() {
   auto& server = game_server_->GetServer();
   auto& registry = game_server_->GetRegistry();
 
-  //Start the countdown and match timer
+  // Start the countdown and match timer
   match_timer_.Restart();
   countdown_timer_.Restart();
 
@@ -224,7 +224,7 @@ void ServerPlayState::Update(float dt) {
       }
     }
 
-	// send created projectiles
+    // send created projectiles
     for (auto projectiles : created_projectiles_) {
       to_send << projectiles.entity_id;
       to_send << projectiles.projectile_id;
@@ -243,9 +243,6 @@ void ServerPlayState::Update(float dt) {
     to_send << (int)match_timer_.Elapsed();
     to_send << PacketBlockType::MATCH_TIMER;
   }
-
-  }
-
   pick_ups_.clear();
 }
 
@@ -463,7 +460,7 @@ void ServerPlayState::ResetEntities() {
 
   unsigned int blue_counter = 0;
   unsigned int red_counter = 0;
-  
+
   auto player_view = registry.view<PlayerComponent, PhysicsComponent,
                                    TransformComponent, CameraComponent>();
   for (auto entity : player_view) {
@@ -578,7 +575,7 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       projectile.projectile_id = ProjectileID::FORCE_PUSH_OBJECT;
       created_projectiles_.push_back(projectile);
       break;
-	}
+    }
     default:
       break;
   }
