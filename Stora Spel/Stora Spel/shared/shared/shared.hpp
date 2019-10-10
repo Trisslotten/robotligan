@@ -75,7 +75,7 @@ enum class AbilityID {
 
 
 struct GameEvent {
-  enum {GOAL, KICK} type;
+  enum {GOAL, KICK, HIT, NUDGE, BOUNCE} type;
   union {
 
     // Goal
@@ -87,6 +87,21 @@ struct GameEvent {
     struct {
       EntityID player_id;
     } kick;
+
+    // Hit
+    struct {
+      EntityID player_id;
+    } hit;
+
+    // Nudge
+    struct {
+      EntityID ball_id;
+    } nudge;
+
+    // Ball bounce
+    struct {
+      EntityID ball_id;
+    } bounce;
 
   };
 };

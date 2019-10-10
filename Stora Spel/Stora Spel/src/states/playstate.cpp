@@ -193,6 +193,8 @@ void PlayState::CreateArenaEntity() {
 }
 
 void PlayState::CreateBallEntity() {
+  auto& sound_engine = engine_->GetSoundEngine();
+
   // Ball
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f);
@@ -203,6 +205,7 @@ void PlayState::CreateBallEntity() {
                                                 glm::vec3(1.0f));
   registry_gameplay_.assign<BallComponent>(ball);
   registry_gameplay_.assign<IDComponent>(ball, ball_id_);
+  registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
 }
 
 void PlayState::CreateInGameMenu() {

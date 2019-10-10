@@ -6,6 +6,8 @@
 
 
 void SoundSystem::Update(entt::registry& registry) {
+  sound_engine_.Update();
+
   // Set listener attributes to match the local player
   auto cam_view = registry.view<CameraComponent, TransformComponent>();
   for (auto cam_entity : cam_view) {
@@ -48,8 +50,11 @@ void SoundSystem::Init(Engine* engine) {
   sound_engine_.Init();
   sound_step_ = sound_engine_.GetSound("assets/sound/footstep.wav");
   sound_crowd_ = sound_engine_.GetSound("assets/sound/crowd.mp3");
-  sound_kick_ = sound_engine_.GetSound("assets/sound/hitsound.mp3");
+  sound_kick_ = sound_engine_.GetSound("assets/sound/kick_swing.mp3");
+  sound_hit_ = sound_engine_.GetSound("assets/sound/ball_hit_sound.mp3");
+  sound_nudge_ = sound_engine_.GetSound("assets/sound/ball_nudge.mp3");
   sound_goal_ = sound_engine_.GetSound("assets/sound/goal.mp3");
+  sound_ball_bounce_ = sound_engine_.GetSound("assets/sound/bounce.mp3");
 }
 
 void SoundSystem::PlayAmbientSound(entt::registry& registry) {
@@ -59,7 +64,7 @@ void SoundSystem::PlayAmbientSound(entt::registry& registry) {
     auto& cam_c = local_view.get<CameraComponent>(local_entity);
     auto& sound_c = local_view.get<SoundComponent>(local_entity);
 
-    sound_c.sound_player->Play(sound_crowd_, -1, 0.1f);
+    sound_c.sound_player->Play(sound_crowd_, -1, 0.2f);
     break;
   }
 }
@@ -73,7 +78,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event)
     auto view = registry->view<CameraComponent, SoundComponent>();
     for (auto entity : view) {
       auto& sound_c = view.get<SoundComponent>(entity);
-      sound_c.sound_player->Play(sound_goal_);
+      sound_c.sound_player->Play(sound_goal_, 0, 0.5);
       break;
     }
     break;
@@ -85,6 +90,45 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event)
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.kick.player_id) {
         sound_c.sound_player->Play(sound_kick_);
+        break;
+      }
+    }
+    break;
+  }
+  case GameEvent::HIT: {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.hit.player_id) {
+        sound_c.sound_player->Play(sound_hit_);
+        break;
+      }
+    }
+    break;
+  }
+  case GameEvent::NUDGE: {
+    auto view = registry->view<IDComponent, BallComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto ball_c = view.get<BallComponent>(entity);
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.nudge.ball_id && nudge_timer_.Elapsed() > 0.1f) {
+        nudge_timer_.Restart();
+        sound_c.sound_player->Play(sound_nudge_, 0, 1.0f);
+        break;
+      }
+    }
+    break;
+  }
+  case GameEvent::BOUNCE: {
+    auto view = registry->view<IDComponent, BallComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto ball_c = view.get<BallComponent>(entity);
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.nudge.ball_id) {
+        sound_c.sound_player->Play(sound_ball_bounce_);
         break;
       }
     }

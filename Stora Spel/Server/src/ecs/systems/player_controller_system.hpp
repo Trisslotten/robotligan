@@ -149,7 +149,8 @@ void Update(entt::registry& registry, float dt) {
     // std::cout << "stam: " << player_c.energy_current << "\n";
 
     // kick ball
-    if (player_c.actions[PlayerAction::KICK]) {
+    if (player_c.actions[PlayerAction::KICK] && player_c.kick_timer.Elapsed() > player_c.kick_cooldown) {
+      player_c.kick_timer.Restart();
       GameEvent kick_event;
       kick_event.type = GameEvent::KICK;
       kick_event.kick.player_id = id_c.id;
@@ -179,6 +180,12 @@ void Update(entt::registry& registry, float dt) {
           ball_physics_c.velocity += kick_dir * player_c.kick_force;
           ball_physics_c.is_airborne = true;
           ball_c.last_touch = player_c.client_id;
+
+          // save game event
+          GameEvent hit_event;
+          hit_event.type = GameEvent::HIT;
+          hit_event.hit.player_id = id_c.id;
+          dispatcher.trigger(hit_event);
         }
       }
     }
