@@ -20,7 +20,7 @@ class Model {
 
   void LoadModel(std::string path);
   void ProcessNode(aiNode* node, const aiScene* scene);
-  std::string PrintArmature();
+  std::string PrintArmature(Joint parent, int depth);
   Joint* MakeArmature(aiNode* node);
 
   std::vector<Texture> texture_loaded_;
@@ -42,6 +42,7 @@ class Model {
 
 
   bool is_loaded_ = false;
+  bool humanoid_ = false;
 
  public:
   Model();

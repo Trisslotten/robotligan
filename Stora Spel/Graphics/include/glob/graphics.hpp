@@ -20,6 +20,14 @@ namespace glob {
 		std::vector<Joint> bones;
 		std::vector<Animation> animations;
 		glm::mat4 globalInverseTransform;
+		bool humanoid = false;
+		int hip = -1;
+		int upperBody = -1;
+		int leftLeg = -1;
+		int rightLeg = -1;
+		int leftArm = -1;
+		int rightArm = -1;
+		int armatureRoot;
 	};
 
 typedef unsigned long ModelHandle;

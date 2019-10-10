@@ -264,10 +264,54 @@ animData GetAnimationData(ModelHandle handle) {
 		a.current_frame_time_ = source->current_frame_time_;
 		a.tick_per_second_ = source->tick_per_second_;
 		a.channels_ = source->channels_;
+		a.armature_transform_ = source->armature_transform_;
 		data.animations.push_back(a);
 	}
 
 	data.globalInverseTransform = model->globalInverseTransform;
+
+	for (auto bone : data.bones) {
+		if (bone.name == "Hip") {
+			data.humanoid = true;
+			data.hip = bone.id;
+			std::cout << "Hip detected and set...\nHumanoid animation-set loading...\n";
+		}
+	}
+
+	if (data.humanoid) {
+		for (auto bone : data.bones) {
+			if (bone.name == "Spine") {
+				data.upperBody = bone.id;
+				std::cout << "Upper body found!\n";
+			}
+			else if (bone.name == "Leg upper L") {
+				data.leftLeg = bone.id;
+				std::cout << "Left leg found!\n";
+			}
+			else if (bone.name == "Leg upper R") {
+				data.rightLeg = bone.id;
+				std::cout << "Right leg found!\n";
+			}
+			else if (bone.name == "Shoulder L") {
+				data.leftArm = bone.id;
+				std::cout << "Left arm found!\n";
+			}
+			else if (bone.name == "Shoulder R") {
+				data.rightArm = bone.id;
+				std::cout << "Right arm found!\n";
+			}
+		}
+	}
+
+	int num = 0;
+	for (auto b : model->bones_) {
+		if (b->name == "Armature") {
+			break;
+		}
+		num++;
+	}
+
+	data.armatureRoot = num;
 
 	return data;
 }

@@ -60,7 +60,7 @@
     <ClInclude Include="include\glob\camera.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Animation.hpp">
+    <ClInclude Include="include\glob\Animation.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\glob\joint.hpp">

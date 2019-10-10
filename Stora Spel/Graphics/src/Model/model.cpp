@@ -81,7 +81,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   }
 
   if (mesh->HasBones()) {
-	  std::cout << "Mesh bones: " << mesh->mNumBones << "\n";
+	  //std::cout << "Mesh bones: " << mesh->mNumBones << "\n";
 	  //find and store bones (no children assigned)
 	  for (int i = 0; i < mesh->mNumBones; i++) {
 		Joint* j = new Joint();
@@ -172,7 +172,17 @@ void Model::LoadModel(std::string path) {
   ProcessNode(scene->mRootNode, scene);
 
   MakeArmature(scene->mRootNode);
-  std::cout << PrintArmature() << "\n";
+
+  if (bones_.size() > 0) {
+	  int rootBone = 0;
+	  for (int i = 0; i < bones_.size(); i++) {
+		  if (bones_.at(i)->name == "Armature") {
+			  rootBone = i;
+			  break;
+		  }
+	  }
+	  std::cout << PrintArmature(*bones_.at(rootBone), 0) << "\n";
+  }
 
   if (scene->HasAnimations()) {
 	  //load animations
@@ -184,7 +194,7 @@ void Model::LoadModel(std::string path) {
 		  anim->duration_ = scene->mAnimations[i]->mDuration;
 		  anim->tick_per_second_ = scene->mAnimations[i]->mTicksPerSecond;
 
-		  //std::cout  << "Name: " << anim.name_ << "\n";
+		  std::cout  << "Animation " << i << " : " << anim->name_ << "\n";
 
 		  //load channels
 		  for (int j = 0; j < scene->mAnimations[i]->mNumChannels; j++) {
@@ -199,15 +209,18 @@ void Model::LoadModel(std::string path) {
 			  for (int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumScalingKeys; k++) {
 				  channel.scaling_keys.push_back(scene->mAnimations[i]->mChannels[j]->mScalingKeys[k]);
 			  }
-
 			  //find relevant bone for channel
 			  char id = 0;
 			  for (auto j : bones_) {
 				  if (j->name == jointName) {
 					  id = j->id;
+					  anim->armature_transform_.push_back(glm::mat4(1.f));
 				  }
 			  }
 			  channel.boneID = id;
+			  if (channel.position_keys.size() == 0 && channel.rotation_keys.size() == 0 && channel.scaling_keys.size() == 0) {
+				  std::cout << "Empty channel!\n";
+			  }
 			  anim->channels_.push_back(channel);
 		  }
 		  animations_.push_back(anim);
@@ -216,21 +229,14 @@ void Model::LoadModel(std::string path) {
   is_loaded_ = true;
 }
 
-std::string Model::PrintArmature() {
+std::string Model::PrintArmature(Joint parent, int depth) {
 	std::stringstream ss;
-	for (auto b : bones_) {
-		ss << b->name << "\n";
-		for (auto c : b->children) {
-			for (auto ab : bones_) {
-				if (ab->id == c) {
-					for (int ib = 0; ib < bones_.size(); ib++) {
-						if (bones_.at(ib)->id == bones_.at(c)->id) {
-							ss << "-" << bones_.at(c)->name << "\n";
-						}
-					}
-				}
-			}
-		}
+	for (int i = 0; i < depth; i++) {
+		ss << "-";
+	}
+	ss << parent.name << "\n";
+	for (int i = 0; i < parent.children.size(); i++) {
+		ss << PrintArmature(*bones_.at(parent.children.at(i)), depth + 1);
 	}
 	return ss.str();
 }

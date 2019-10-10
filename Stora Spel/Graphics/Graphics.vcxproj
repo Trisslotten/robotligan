@@ -178,7 +178,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Animation.hpp" />
+    <ClInclude Include="include\glob\Animation.hpp" />
     <ClInclude Include="include\glob\joint.hpp" />
     <ClInclude Include="external\include\ft2build.h" />
     <ClInclude Include="external\include\msdfgen\msdfgen-ext.h" />
