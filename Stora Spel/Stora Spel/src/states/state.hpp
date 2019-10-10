@@ -117,7 +117,7 @@ class LobbyState : public State {
   void SendJoinTeam(unsigned int team);
   int my_id_ = 0;
 
-  int my_selected_ability_ = 0;
+  int my_selected_ability_ = 1;
 
   entt::entity GetAbilityButton(std::string find_string);
   void SelectAbilityHandler(int id);

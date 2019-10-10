@@ -43,6 +43,9 @@ void LobbyState::SendJoinTeam(unsigned int team) {
   NetAPI::Common::Packet& packet = engine_->GetPacket();
   packet << team;
   packet << PacketBlockType::LOBBY_SELECT_TEAM;
+  if (me_ready_) {
+    ReadyButtonFunc();
+  }
 }
 
 entt::entity LobbyState::GetAbilityButton(std::string find_string) {
@@ -98,7 +101,7 @@ void LobbyState::Init() {
 
   CreateBackgroundEntities();
   CreateGUIElements();
-  SelectAbilityHandler(1);
+  SelectAbilityHandler(my_selected_ability_);
 
   engine_->GetChat()->SetPosition(glm::vec2(20, 140));
 }

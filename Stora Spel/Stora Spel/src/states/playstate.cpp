@@ -130,21 +130,36 @@ void PlayState::Update() {
   glob::Submit(ability_handles_[(int)engine_->GetSecondaryAbility()],
                glm::vec2(66, 50), 0.75f, 100);
 
-  glob::Submit(gui_teamscore_, glm::vec2(497, 648), 1, 100);
-
   if (game_has_ended_) {
     engine_->DrawScoreboard();
 
     glm::vec2 pos = glob::window::GetWindowDimensions();
     pos /= 2;
-    pos.y -= 200;
-    pos.x -= 100;
+    pos.y -= 160;
+    pos.x -= 175;
+
+    std::string best_team = "    BLUE";
+    glm::vec4 best_team_color = glm::vec4(0.13f, 0.13f, 1.f, 1.f);
+
+    if (engine_->GetTeamScores()[0] > engine_->GetTeamScores()[1]) {
+      best_team = "    RED";
+      best_team_color = glm::vec4(1.f, 0.13f, 0.13f, 1.f);
+    } else if (engine_->GetTeamScores()[0] == engine_->GetTeamScores()[1]) {
+      best_team = "  NO TEAM";
+      best_team_color = glm::vec4(.8f, .4f, .4f, 1.f);
+    }
+
+    glob::Submit(font_test_, pos + glm::vec2(41, -1), 48, best_team + " wins!",
+                 glm::vec4(0, 0, 0, 0.7f));
+
+    glob::Submit(font_test_, pos + glm::vec2(40, 0), 48, best_team + " wins!",
+                 best_team_color);
 
     int game_end_timeout = 5;
     std::string end_countdown_text =
         std::to_string((int)(game_end_timeout - end_game_timer_.Elapsed()));
 
-    glob::Submit(font_test_, pos, 48,
+    glob::Submit(font_test_, pos + glm::vec2(0, -50), 48,
                  "Returning to lobby in: " + end_countdown_text);
 
     if (end_game_timer_.Elapsed() >= 5.0f) {
