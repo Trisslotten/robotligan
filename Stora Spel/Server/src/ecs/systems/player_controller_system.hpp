@@ -114,6 +114,14 @@ void Update(entt::registry& registry, float dt) {
       physics_c.is_airborne = true;
       // Subtract energy cost from resources
       player_c.energy_current -= player_c.cost_jump;
+
+      // save game event
+      if (registry.has<IDComponent>(entity)) {
+        GameEvent jump_event;
+        jump_event.type = GameEvent::JUMP;
+        jump_event.jump.player_id = registry.get<IDComponent>(entity).id;
+        dispatcher.trigger(jump_event);
+      }
     }
 
     player_c.energy_current =

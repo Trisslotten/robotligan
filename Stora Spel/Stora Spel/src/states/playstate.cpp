@@ -95,6 +95,17 @@ void PlayState::Update() {
     // std::cout << "\n";
     transforms_.clear();
   }
+  if (!physics_.empty()) {
+    auto view_entities = registry_gameplay_.view<PhysicsComponent, IDComponent>();
+    for (auto entity : view_entities) {
+      auto& physics_c = view_entities.get<PhysicsComponent>(entity);
+      auto& id_c = view_entities.get<IDComponent>(entity);
+      auto phys = physics_[id_c.id];
+
+      physics_c.velocity = phys.first;
+      physics_c.is_airborne = phys.second;
+    }
+  }
 
   if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
     ToggleInGameMenu();

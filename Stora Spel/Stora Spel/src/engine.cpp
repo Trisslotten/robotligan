@@ -250,6 +250,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         packet >> id;
         packet >> vel;
         packet >> is_airborne;
+        play_state_.SetEntityPhysics(id, vel, is_airborne);
       }
       break;
     }

@@ -330,6 +330,13 @@ void PlayerArenaCollision(entt::registry& registry) {
         if (data.move_vector.y > 0.0f) {
           physics_c.is_airborne = false;
           physics_c.velocity.y = 0.f;
+          // save game event
+          if (registry.has<IDComponent>(player)) {
+            GameEvent land_event;
+            land_event.type = GameEvent::LAND;
+            land_event.land.player_id = registry.get<IDComponent>(player).id;
+            dispatcher.trigger(land_event);
+          }
         } else if (data.move_vector.y < 0.0f) {
           physics_c.velocity.y = 0.f;
 		}

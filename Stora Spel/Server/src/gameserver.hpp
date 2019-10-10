@@ -29,7 +29,6 @@ class GameServer {
   void ChangeState(ServerStateType state) { wanted_state_type_ = state; }
 
   ServerPlayState* GetPlayState() { return &play_state_; }
-  void ReceiveEvent(const EventInfo& e);
   void ReceiveGameEvent(const GameEvent& event);
 
   NetAPI::Socket::Server& GetServer() { return server_; }

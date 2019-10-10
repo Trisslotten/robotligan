@@ -36,9 +36,9 @@ void SoundSystem::Update(entt::registry& registry) {
     SoundComponent& sound_c = player_view.get<SoundComponent>(player_entity);
     PhysicsComponent& physics_c = player_view.get<PhysicsComponent>(player_entity);
 
-    if (player_c.step_timer.Elapsed() > 0.5f && glm::length(physics_c.velocity) > 0.0f && !physics_c.is_airborne) {
+    if (player_c.step_timer.Elapsed() > 0.5f && glm::length(physics_c.velocity) > 1.0f && !physics_c.is_airborne) {
       player_c.step_timer.Restart();
-      sound_c.sound_player->Play(sound_step_, 0, 0.1f);
+      sound_c.sound_player->Play(sound_step_, 0, 0.2f);
     }
   }
 }
@@ -53,6 +53,8 @@ void SoundSystem::Init(Engine* engine) {
   sound_nudge_ = sound_engine_.GetSound("assets/sound/ball_nudge.mp3");
   sound_goal_ = sound_engine_.GetSound("assets/sound/goal.mp3");
   sound_ball_bounce_ = sound_engine_.GetSound("assets/sound/bounce.mp3");
+  sound_player_land_ = sound_engine_.GetSound("assets/sound/robot_land.mp3");
+  sound_player_jump_ = sound_engine_.GetSound("assets/sound/robot_jump.mp3");
 }
 
 void SoundSystem::PlayAmbientSound(entt::registry& registry) {
@@ -128,6 +130,30 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event)
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.nudge.ball_id) {
         sound_c.sound_player->Play(sound_ball_bounce_);
+        break;
+      }
+    }
+    break;
+  }
+  case GameEvent::LAND: {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.land.player_id) {
+        sound_c.sound_player->Play(sound_player_land_, 0, 0.1f);
+        break;
+      }
+    }
+    break;
+  }
+  case GameEvent::JUMP: {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.jump.player_id) {
+        sound_c.sound_player->Play(sound_player_jump_, 0, 0.1f);
         break;
       }
     }
