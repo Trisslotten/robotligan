@@ -145,7 +145,7 @@ void PlayState::UpdateGameplayTimer() {
   sec = temp % 60;
 
   // Countdown timer
-  int count = 5.0 - engine_->GetCountdownTimer();
+  int count = (int)GlobalSettings::Access()->ValueOf("COUNTDOWN_TIME") - engine_->GetCountdownTimer();
 
   // --------------------------------------
   glob::Submit(font_test_, glm::vec2(645, 705), 40, std::to_string(min),
