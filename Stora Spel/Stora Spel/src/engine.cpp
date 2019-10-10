@@ -500,6 +500,7 @@ void Engine::DrawScoreboard() {
                      glm::vec4(1, 0, 0, 1));
         red_count++;
       }
+    }
   }
 }
 
