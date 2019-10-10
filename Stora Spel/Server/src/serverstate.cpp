@@ -9,6 +9,7 @@
 #include <shared\id_component.hpp>
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
+#include "ecs/components/match_timer_component.hpp"
 #include "gameserver.hpp"
 
 void ServerLobbyState::Init() {
@@ -59,6 +60,10 @@ void ServerPlayState::Init() {
   auto& server = game_server_->GetServer();
   auto& registry = game_server_->GetRegistry();
 
+  //Start the countdown and match timer
+  match_timer_.Restart();
+  countdown_timer_.Restart();
+
   CreateInitialEntities(server.GetConnectedPlayers());
 
   ResetEntities();
@@ -107,7 +112,13 @@ void ServerPlayState::Update(float dt) {
         // client or if we are reading them from a replay
         if (!this->replay_) {
           auto inputs = players_inputs_[player_c.client_id];
-          player_c.actions = inputs.first;
+          if (countdown_timer_.Elapsed() <= 5.0f) {
+            match_timer_.Pause();
+          } else {
+            player_c.actions = inputs.first;
+            match_timer_.Resume();
+            countdown_timer_.Pause();
+          }
           player_c.pitch += inputs.second.x;
           player_c.yaw += inputs.second.y;
           // Check if the game should be be recorded
@@ -226,6 +237,12 @@ void ServerPlayState::Update(float dt) {
       to_send << PacketBlockType::DESTROY_ENTITIES;
     }
     destroy_entities_.clear();
+
+    // Send countdown & match time in sec
+    to_send << (int)countdown_timer_.Elapsed();
+    to_send << (int)match_timer_.Elapsed();
+    to_send << PacketBlockType::MATCH_TIMER;
+  }
 
   }
 

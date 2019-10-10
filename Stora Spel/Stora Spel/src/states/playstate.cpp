@@ -12,6 +12,7 @@
 #include "engine.hpp"
 #include "entitycreation.hpp"
 #include "util/input.hpp"
+#include "util/global_settings.hpp"
 
 void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
@@ -35,6 +36,7 @@ void PlayState::Startup() {
       glob::GetGUIItem("assets/GUI_elements/stamina_bar_icon.png");
   gui_quickslots_ =
       glob::GetGUIItem("assets/GUI_elements/koncept_abilities.png");
+  font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
   ///////////////////////////////////////////////////////////////
   // \TO BE MOVED
   ///////////////////////////////////////////////////////////////
@@ -95,6 +97,7 @@ void PlayState::Update() {
                glm::vec3(0, 1, 0));
   glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
 
+  UpdateGameplayTimer();
   /*
   registry_gameplay_.view<PlayerComponent>().each(
       [&](auto entity, PlayerComponent& player_c) {
@@ -133,6 +136,34 @@ void PlayState::UpdateInGameMenu(bool show_menu) {
   for (auto v : view) {
     auto& button_c = registry_gameplay_.get<ButtonComponent>(v);
     button_c.visible = show_menu;
+  }
+}
+
+void PlayState::UpdateGameplayTimer() {
+  // Gameplay timer
+  int temp = (int)GlobalSettings::Access()->ValueOf("MATCH_TIME") - engine_->GetGameplayTimer();
+  int sec = 0;
+  int min = 5;
+
+  min = temp / 60;
+  sec = temp % 60;
+
+  // Countdown timer
+  int count = (int)GlobalSettings::Access()->ValueOf("COUNTDOWN_TIME") - engine_->GetCountdownTimer();
+
+  // --------------------------------------
+  glob::Submit(font_test_, glm::vec2(645, 705), 40, std::to_string(min),
+               glm::vec4(1));
+  glob::Submit(font_test_, glm::vec2(638, 695), 40, "----",
+               glm::vec4(1, 1, 1, 1));
+  glob::Submit(font_test_, glm::vec2(638, 675), 40, std::to_string(sec),
+               glm::vec4(1));
+  if (count > 0) {
+    glob::Submit(font_test_, glm::vec2(735, 450), 500, std::to_string(count),
+                 glm::vec4(1));  // Visible = true
+  } else {
+    glob::Submit(font_test_, glm::vec2(735, 450), 500, std::to_string(count),
+                 glm::vec4(1), false);
   }
 }
 

@@ -36,6 +36,11 @@ void Engine::Init() {
   scores_.reserve(2);
   scores_.push_back(0);
   scores_.push_back(0);
+
+  /*gameplay_timer_.reserve(2);
+  gameplay_timer_.push_back(4);
+  gameplay_timer_.push_back(59);*/
+
   std::vector<std::string> names = {"Bogdan",  "Smibel Gork", "Big King",
                                     "Blorgon", "Thrall",      "Fisken",
                                     "Snabel",  "BOI"};
@@ -91,10 +96,12 @@ void Engine::Update(float dt) {
   }
 
   // TODO: move to playstate
+  // Score
   glob::Submit(font_test3_, glm::vec2(582, 705), 72, std::to_string(scores_[1]),
                glm::vec4(0, 0.26, 1, 1));
   glob::Submit(font_test3_, glm::vec2(705, 705), 72, std::to_string(scores_[0]),
                glm::vec4(1, 0, 0, 1));
+
 
   current_state_->Update();
 
@@ -282,6 +289,11 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> score;
       packet >> team;
       scores_[team] = score;
+      break;
+    }
+    case PacketBlockType::MATCH_TIMER: {
+      packet >> gameplay_timer_sec_;
+      packet >> countdown_timer_sec_;
       break;
     }
     /*
@@ -483,3 +495,7 @@ void Engine::DrawScoreboard() {
     }
   }
 }
+
+int Engine::GetGameplayTimer() const { return gameplay_timer_sec_; }
+
+int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }
