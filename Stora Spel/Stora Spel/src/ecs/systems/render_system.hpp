@@ -89,6 +89,13 @@ void RenderSystem(entt::registry& registry) {
     if (button_c.visible) {
       glob::Submit(button_c.f_handle, button_pos, button_c.font_size,
                    button_c.text, button_c.text_current_color);
+      if (button_c.gui_handle_current) {
+        glob::Submit(button_c.gui_handle_current, button_pos, 1.f);
+
+        if (button_c.gui_handle_icon) {
+          glob::Submit(button_c.gui_handle_icon, button_pos, 1.f);
+        }
+      }
     }
   }
 }

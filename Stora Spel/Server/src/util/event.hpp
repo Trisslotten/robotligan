@@ -7,12 +7,14 @@ extern entt::dispatcher dispatcher;
 enum class Event {
 	DESTROY_ENTITY,
 	CREATE_CANNONBALL,
+	CREATE_FORCE_PUSH,
 	NUM_OF_EVENTS,
 };
 
 struct EventInfo {
   Event event;
-  int entity_id;
+  entt::entity entity;
+  int e_id;
 };
 
 #endif  // !EVENT_HPP

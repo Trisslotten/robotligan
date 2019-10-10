@@ -33,28 +33,39 @@ namespace PlayerAction {
 }  // namespace PlayerAction
 
 namespace PacketBlockType {
-  enum : int16_t {
-    INPUT = 0,
-    ENTITY_TRANSFORMS,
-    PLAYER_STAMINA,
-    CAMERA_TRANSFORM,
-    CLIENT_READY,      // client is ready in lobby
-    CLIENT_NOT_READY,  // client is not ready in lobby
-    GAME_START,        // game start after lobby
-    TEST_STRING,
-    TEST_REPLAY_KEYS,
-    TEAM_SCORE,
-    CHOOSE_TEAM,
-    SWITCH_GOALS,
-    MESSAGE,
-    UPDATE_POINTS,
-    CREATE_PICK_UP,
-    DESTROY_PICK_UP,
-    RECEIVE_PICK_UP,
-    GAME_EVENT,
-    PHYSICS_DATA,
-    NUM_BLOCK_TYPES,
-  };
+enum : int16_t {
+  INPUT = 0,
+  ENTITY_TRANSFORMS,
+  PLAYER_STAMINA,
+  CAMERA_TRANSFORM,
+  CLIENT_READY,      // client is ready in lobby
+  CLIENT_NOT_READY,  // client is not ready in lobby
+  GAME_START,        // game start after lobby
+  CLIENT_RECEIVE_UPDATES, 
+  TEST_STRING,
+  TEST_REPLAY_KEYS,
+  TEAM_SCORE,
+  CHOOSE_TEAM,
+  SWITCH_GOALS,
+  MESSAGE,
+  UPDATE_POINTS,
+  CREATE_PICK_UP,
+  DESTROY_PICK_UP,
+  RECEIVE_PICK_UP,
+  LOBBY_UPDATE_TEAM,
+  LOBBY_SELECT_TEAM,
+  LOBBY_YOUR_ID,
+  PING,
+  PING_RECIEVE,
+  LOBBY_SELECT_ABILITY,
+  CREATE_PROJECTILE,
+  DESTROY_ENTITIES,
+  MATCH_TIMER,
+  GAME_EVENT,
+  PHYSICS_DATA,
+  NUM_BLOCK_TYPES,
+};
+
 
 }  // namespace PacketBlockType
 
@@ -107,4 +118,14 @@ struct GameEvent {
   };
 };
 
+enum class ProjectileID {
+  CANNON_BALL,
+  FORCE_PUSH_OBJECT,
+  NUM_PROJECTILE_IDS,
+};
+
+struct Projectile {
+  EntityID entity_id;
+  ProjectileID projectile_id;
+};
 #endif  // SHARED_HPP_

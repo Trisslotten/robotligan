@@ -45,8 +45,10 @@ class EXPORT TcpClient {
   bool blocking_ = false;
   int error_ = 0;
   bool connected_ = false;
-  unsigned buffer_size_ = Common::kNumPacketBytes;
+  unsigned buffer_size_ = 2*Common::kNumPacketBytes;
   char* rec_buffer_ = nullptr;
+  size_t temp_buffer_index_ = 0;
+  char* temp_buffer_ = nullptr;
   SOCKET send_socket_ = INVALID_SOCKET;
 };
 }  // namespace Socket

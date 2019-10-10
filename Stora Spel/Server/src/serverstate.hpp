@@ -5,8 +5,10 @@
 #include <entt.hpp>
 #include "ecs/components.hpp"
 #include "shared/shared.hpp"
+#include "util/event.hpp"
 #include "util/timer.hpp"
 #include "replay machine/replay_machine.hpp"
+#include "util/event.hpp"
 
 class GameServer;
 
@@ -41,12 +43,39 @@ class ServerLobbyState : public ServerState {
 
   void SetClientIsReady(int client_id, bool is_ready) {
     clients_ready_[client_id] = is_ready;
+    teams_updated_ = true;
   }
+
+  void HandleNewClientTeam(int client_id) {
+    if (last_team_ == TEAM_RED) {
+      client_teams_[client_id] = TEAM_BLUE;
+      last_team_ = TEAM_BLUE;
+    } else {
+      client_teams_[client_id] = TEAM_RED;
+      last_team_ = TEAM_RED;
+    }
+    teams_updated_ = true;
+  }
+
+  void SetClientTeam(int client_id, unsigned int team) {
+    client_teams_[client_id] = team;
+    teams_updated_ = true;
+  }
+
+  void SetClientAbility(int client_id, AbilityID id) {
+    client_abilities_[client_id] = id;
+  }
+
+  std::unordered_map<int, AbilityID> client_abilities_;
+  std::unordered_map<int, unsigned int> client_teams_;
 
  private:
   std::unordered_map<int, bool> clients_ready_;
   Timer start_game_timer;
   bool starting = false;
+  unsigned int last_team_ = TEAM_BLUE;
+
+  bool teams_updated_ = false;
 };
 
 class ServerPlayState : public ServerState {
@@ -66,7 +95,15 @@ class ServerPlayState : public ServerState {
 
   bool StartRecording(unsigned int in_replay_length_seconds);
 
+  void SetClientReceiveUpdates(long client_id, bool initialized) {
+    clients_receive_updates_[client_id] = initialized;
+  }
 
+  std::unordered_map<int, AbilityID> client_abilities_;
+  std::unordered_map<int, unsigned int> client_teams_;
+
+  void ReceiveEvent(const EventInfo& e);
+  // EntityID GetNextEntityGuid() { return entity_guid_++; }
  private:
   entt::entity CreateIDEntity();
 
@@ -81,7 +118,7 @@ class ServerPlayState : public ServerState {
   void CreatePickUpComponents();
   EntityID GetNextEntityGuid() { return entity_guid_++; }
 
-
+  std::unordered_map<long, bool> clients_receive_updates_;
   std::unordered_map<int, EntityID> clients_player_ids_;
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
 
@@ -93,7 +130,12 @@ class ServerPlayState : public ServerState {
   int red_players_ = 0;
   int blue_players_ = 0;
 
+  Timer match_timer_;
+  Timer countdown_timer_;
+
   std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
+  std::vector<Projectile> created_projectiles_;
+  std::vector<int> destroy_entities_;
 
   // Replay stuff ---
   ReplayMachine* replay_machine_ = nullptr;

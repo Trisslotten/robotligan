@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <lodepng.hpp>
+#include "glob/window.hpp"
 
 void glob::Elements2D::CreateTexture() {
   // Generate texture id
@@ -58,7 +59,7 @@ void glob::Elements2D::DrawOnScreen(ShaderProgram& shader, glm::vec2 pos,
   shader.uniform("t_pos", pos);
   shader.uniform("t_scale", scale);
   shader.uniform("t_scale_x", scale_x);
-  shader.uniform("screen_dims", glm::vec2(1280, 720));
+  shader.uniform("screen_dims", window::GetWindowDimensions());
   shader.uniform("texture_dims", glm::vec2(texture_width_, texture_height_));
   shader.uniform("gui_element_texture", 0);
 

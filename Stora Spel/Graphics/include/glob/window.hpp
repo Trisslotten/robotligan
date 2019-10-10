@@ -36,6 +36,8 @@ EXPORT void SetCharacterCallback(void (*GLFWcharfun)(GLFWwindow*, unsigned int))
 EXPORT void SetMouseLocked(bool val);
 EXPORT glm::vec2 GetWindowDimensions();
 
+EXPORT glm::vec2 Relative720(glm::vec2 in_pos);
+
 }  // namespace window
 }  // namespace glob
 

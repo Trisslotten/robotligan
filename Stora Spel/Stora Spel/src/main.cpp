@@ -52,7 +52,7 @@ int main(unsigned argc, char** argv) {
     }
 
     /*
-    if (debug_timer.Elapsed() > 5.0 && false) {
+    if (debug_timer.Elapsed() > 5.0) {
       double elapsed = debug_timer.Restart();
       std::cout << "DEBUG:    net update rate = " << num_net_updates / elapsed
                 << " U/s\n       render update rate = "
