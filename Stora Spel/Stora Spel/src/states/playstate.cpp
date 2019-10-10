@@ -209,20 +209,20 @@ void PlayState::CreatePlayerEntities() {
 
     glm::vec3 alter_scale =
         glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
-    glm::vec3 character_scale = glm::vec3(0.1f);
+    glm::vec3 character_scale = glm::vec3(0.001f);
 
     glob::ModelHandle player_model =
-        glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
+        glob::GetModel("Assets/Mech/Mech.fbx");
 
     registry_gameplay_.assign<IDComponent>(entity, entity_id);
     registry_gameplay_.assign<PlayerComponent>(entity);
-    registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(),
+    registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(0.f),
                                                   glm::quat(), character_scale);
-    registry_gameplay_.assign<ModelComponent>(entity, player_model,
-                                              alter_scale * character_scale);
+    registry_gameplay_.assign<ModelComponent>(entity, player_model, glm::vec3(0.f));
+	registry_gameplay_.assign<AnimationComponent>(entity, glob::GetAnimationData(player_model));
 
     if (entity_id == my_id_) {
-      glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
+      glm::vec3 camera_offset = glm::vec3(0.1f, 0.55f, 0.f);
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset);
     }
   }

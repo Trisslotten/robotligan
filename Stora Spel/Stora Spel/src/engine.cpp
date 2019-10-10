@@ -11,6 +11,7 @@
 #include "ecs/components.hpp"
 #include "ecs/systems/button_system.hpp"
 #include "ecs/systems/render_system.hpp"
+#include "ecs/systems/animation_system.hpp"
 #include "entitycreation.hpp"
 #include "shared/camera_component.hpp"
 #include "shared/id_component.hpp"
@@ -450,6 +451,7 @@ void Engine::UpdateSystems(float dt) {
 
   button_system::Update(*registry_current_);
   RenderSystem(*registry_current_);
+  UpdateAnimations(*registry_current_, dt);
 }
 
 void Engine::SetKeybinds() {

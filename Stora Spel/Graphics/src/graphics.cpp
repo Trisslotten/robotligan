@@ -397,6 +397,23 @@ TextureHandle GetTexture(const std::string &filepath) {
 }
 */
 
+MeshData GetMeshData(ModelHandle model_h) {
+	auto item = models.find(model_h);
+
+	if (item == models.end()) {
+		std::cout
+			<< "DEBUG graphics.cpp: asset not found trying to get mesh hitbox\n";
+		return {};
+	}
+
+	auto& model = models[model_h];
+	return model.GetMeshData();
+}
+E2DHandle GetE2DItem(const std::string& filepath) {
+	return GetAsset<E2DHandle, Elements2D>(e2D_handles, e2D_elements,
+		current_e2D_guid, filepath);
+}
+
 void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
                        glm::float32 ambient) {
   LightItem item;

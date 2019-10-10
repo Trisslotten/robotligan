@@ -65,7 +65,9 @@ Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indic
   indices_ = indices;
   textures_ = textures;
 
-  SetupMesh(weighted);
+  if (glob::kModelUseGL) {
+	  SetupMesh(weighted);
+  }
 }
 
 Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices,

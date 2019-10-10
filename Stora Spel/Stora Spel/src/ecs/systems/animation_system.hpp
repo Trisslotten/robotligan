@@ -8,8 +8,7 @@
 #include "glob/joint.hpp"
 #include "glob/Animation.hpp"
 
-#include "animation_component.hpp"
-#include "player_component.hpp"
+#include "ecs/components.hpp"
 
 #include "glm/gtx/matrix_interpolation.hpp"
 #include <math.h>
@@ -71,7 +70,7 @@ bool isAChildOf(int parent, int lookFor, AnimationComponent* ac) {
 		}
 	return false;
 }
-
+bool first = true;
 void UpdateAnimations(entt::registry& registry, float dt) {
 
 	auto animation_entities = registry.view<AnimationComponent>();
@@ -86,16 +85,18 @@ void UpdateAnimations(entt::registry& registry, float dt) {
 			bonePriorities.push_back(1);
 		}
 
-		/*
+		
 		if (first) {
 			//playAnimation(11, 2.f, &a, 10, 1.f, LOOP);
 			//playAnimation(13, 2.f, &a, 10, 1.f, LOOP);
-			playAnimation(3, 1.f, &a, 11, 1.f, LOOP, a.model_data.upperBody);
-			playAnimation(4, 1.f, &a, 11, 1.f, LOOP, a.model_data.upperBody);
-			playAnimation(11, 2.f, &a, 10, 1.f, LOOP);
-			playAnimation(13, 2.f, &a, 10, 1.f, LOOP);
+			playAnimation(7, 1.f, &a, 10, 1.f, LOOP);
+			//playAnimation(4, 1.f, &a, 11, 1.f, LOOP, a.model_data.upperBody);
+			//playAnimation(11, 2.f, &a, 10, 1.f, LOOP);
+			//playAnimation(13, 2.f, &a, 10, 1.f, LOOP);
 			//a.active_animations.at(1)->strength = 0.5f;
+			first = false;
 		}
+		/*
 		time_ += dt;
 		a.active_animations.at(0)->strength_ =  1.f - (sin(time_) + 1.f) / 2.f;
 		a.active_animations.at(1)->strength_ = (sin(time_) + 1.f) / 2.f;

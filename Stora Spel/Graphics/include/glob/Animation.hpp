@@ -2,7 +2,6 @@
 #define ANIMATION_HPP_
 
 #include <assimp/scene.h>
-#include <glad/glad.h>
 #include <glm/glm.hpp>
 
 #include <string>

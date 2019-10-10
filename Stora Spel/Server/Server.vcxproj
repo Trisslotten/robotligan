@@ -76,10 +76,10 @@
     <IncludePath>..\Network API\include;$(SolutionDir)entt-master\src\entt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>..\Network API\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)glm;$(SolutionDir)Physics\include;$(SolutionDir)Stora Spel\shared;$(SolutionDir)Graphics\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\Network API\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)glm;$(SolutionDir)Physics\include;$(SolutionDir)Stora Spel\shared;$(SolutionDir)Graphics\include;$(SolutionDir)Graphics\external\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>..\Network API\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)glm;$(SolutionDir)Physics\include;$(SolutionDir)Stora Spel\shared;$(SolutionDir)Graphics\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\Network API\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)glm;$(SolutionDir)Physics\include;$(SolutionDir)Stora Spel\shared;$(SolutionDir)Graphics\include;$(SolutionDir)Graphics\external\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>

@@ -69,21 +69,22 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   //std::cout << "glob::kModelUseGL: " << glob::kModelUseGL << "\n";
   if (glob::kModelUseGL) {
 
-    // Process materials
-    if (mesh->mMaterialIndex >= 0) {
-      aiMaterial* temp_material = scene->mMaterials[mesh->mMaterialIndex];
-      std::vector<Texture> diffuse_maps =
-          LoadMaterielTextures(temp_material, aiTextureType_DIFFUSE,
-                               "texture_diffuse"  // Make sure this in glsl
-          );
-      textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
+	  // Process materials
+	  if (mesh->mMaterialIndex >= 0) {
+		  aiMaterial* temp_material = scene->mMaterials[mesh->mMaterialIndex];
+		  std::vector<Texture> diffuse_maps =
+			  LoadMaterielTextures(temp_material, aiTextureType_DIFFUSE,
+				  "texture_diffuse"  // Make sure this in glsl
+			  );
+		  textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
 
-      std::vector<Texture> specular_maps =
-          LoadMaterielTextures(temp_material, aiTextureType_SPECULAR,
-                               "texture_specular"  // Make sure this in glsl
-          );
-      textures.insert(textures.end(), specular_maps.begin(), specular_maps.end());
-    }  
+		  std::vector<Texture> specular_maps =
+			  LoadMaterielTextures(temp_material, aiTextureType_SPECULAR,
+				  "texture_specular"  // Make sure this in glsl
+			  );
+		  textures.insert(textures.end(), specular_maps.begin(), specular_maps.end());
+	  }
+  }
 
   if (mesh->HasBones()) {
 	  //std::cout << "Mesh bones: " << mesh->mNumBones << "\n";
@@ -176,6 +177,8 @@ void Model::LoadModel(std::string path) {
   ProcessNode(scene->mRootNode, scene);
 
   MakeArmature(scene->mRootNode);
+
+  std::cout << "Bone size: " << bones_.size() << "\n";
 
   if (bones_.size() > 0) {
 	  int rootBone = 0;

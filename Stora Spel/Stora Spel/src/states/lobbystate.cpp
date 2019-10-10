@@ -177,7 +177,7 @@ void LobbyState::CreateBackgroundEntities() {
   auto& trans = registry_lobby_.assign<TransformComponent>(
       robot, zero_vec, zero_vec, glm::vec3(0.15f));
   glob::ModelHandle model_robot =
-      glob::GetModel("assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
+      glob::GetModel("assets/Mech/Mech.fbx");
   registry_lobby_.assign<ModelComponent>(robot, model_robot);
   trans.position = glm::vec3(10.f, -4.f, 0.f);
 
