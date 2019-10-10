@@ -176,6 +176,7 @@
     <ClInclude Include="src\ecs\components.hpp" />
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
     <ClInclude Include="src\ecs\components\button_component.hpp" />
+    <ClInclude Include="src\ecs\components\input_component.hpp" />
     <ClInclude Include="src\ecs\components\player_component.hpp" />
     <ClInclude Include="ecs\components\ball_component.hpp" />
     <ClInclude Include="ecs\components\button_component.hpp" />
@@ -237,6 +238,7 @@
     <None Include="Assets\shaders\wireframe.frag" />
     <None Include="shaders\testshader.frag" />
     <None Include="shaders\testshader.vert" />
+    <None Include="src\ecs\systems\input_system.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="src\util\errorlog.txt" />
