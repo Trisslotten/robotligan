@@ -27,7 +27,7 @@ void SoundSystem::Update(entt::registry& registry) {
       sound_view.get<TransformComponent>(sound_entity);
     SoundComponent& sound_c = sound_view.get<SoundComponent>(sound_entity);
 
-    sound_c.sound_player->Set3DAttributes(trans_c.position, glm::vec3(0));
+    sound_c.sound_player->Set3DAttributes(trans_c.position, glm::vec3(0.f));
   }
   // Play footstep sounds from each player on the field
   auto player_view = registry.view<PlayerComponent, SoundComponent, PhysicsComponent>();

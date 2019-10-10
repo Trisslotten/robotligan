@@ -121,15 +121,7 @@ void PlayState::Update() {
   glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
 
   UpdateGameplayTimer();
-  /*
-  registry_gameplay_.view<
   
-  
-  >().each(
-      [&](auto entity, PlayerComponent& player_c) {
-        stam_len = player_c.energy_current;
-      });
-  */
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
   glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
   glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
