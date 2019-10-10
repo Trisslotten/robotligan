@@ -1,6 +1,7 @@
 #ifndef CLIENT_HPP_
 #define CLIENT_HPP_
 
+#include <chrono>
 #include <NetAPI/common.hpp>
 #include <NetAPI/packet.hpp>
 #include <NetAPI/socket/tcpclient.hpp>

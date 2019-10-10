@@ -19,6 +19,7 @@ int main(unsigned argc, char** argv) {
   double update_time_ms = update_time * 1000.0;
 
   GameServer server;
+  dispatcher.sink<EventInfo>().connect<&GameServer::ReceiveEvent>(server);
   server.Init(update_rate);
   dispatcher.sink<EventInfo>().connect<&ServerPlayState::ReceiveEvent>(*server.GetPlayState());
   int num_frames = 0;
