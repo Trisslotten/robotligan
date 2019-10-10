@@ -7,6 +7,7 @@
 #include <glob/graphics.hpp>
 #include <limits>
 #include <unordered_map>
+#include <vector>
 #include "Chat.hpp"
 #include "shared/shared.hpp"
 #include "states/state.hpp"
@@ -37,6 +38,7 @@ class Engine {
   void SetEnableChat(bool should_enable) { this->enable_chat_ = should_enable; }
 
   std::unordered_map<PlayerID, std::string> player_names_;
+
  private:
   void SetKeybinds();
 
@@ -49,6 +51,7 @@ class Engine {
   NetAPI::Socket::Client client_;
   NetAPI::Common::Packet packet_;
 
+  std::vector<unsigned> client_pings;
   StateType wanted_state_type_ = StateType::MAIN_MENU;
   State* current_state_ = nullptr;
   MainMenuState main_menu_state_;
@@ -82,12 +85,10 @@ class Engine {
 
   bool enable_chat_ = false;
 
-
   AbilityID second_ability_ = AbilityID::NULL_ABILITY;
   unsigned int new_team_ = std::numeric_limits<unsigned int>::max();
 
   std::unordered_map<PlayerID, PlayerScoreBoardInfo> player_scores_;
-  
 };
 
 #endif  // ENGINE_HPP_

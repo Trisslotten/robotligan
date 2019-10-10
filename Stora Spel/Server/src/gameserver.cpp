@@ -1,5 +1,6 @@
 #include "gameserver.hpp"
 
+#include <numeric>
 #include <algorithm>
 #include <bitset>
 #include <glob/graphics.hpp>
@@ -33,7 +34,7 @@ void GameServer::Init(double in_update_rate) {
   lobby_state_.Init();
   current_state_ = &lobby_state_;
   srand(time(NULL));
-
+  pings_.resize(NetAPI::Common::kMaxPlayers);
   // CreateEntities();
 }
 
@@ -62,7 +63,7 @@ void GameServer::Update(float dt) {
     }
     client_data->packets.clear();
   }
-
+  DoOncePerSecond();
   current_state_->Update(dt);
 
   //---------------------------------------------
@@ -79,7 +80,6 @@ void GameServer::Update(float dt) {
       to_send << PacketBlockType::CHOOSE_TEAM;
     }
     */
-
   HandleStateChange();
 
   HandlePacketsToSend();
@@ -212,6 +212,30 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       lobby_state_.SetClientIsReady(client_id, false);
       break;
     }
+    case PacketBlockType::PING: {
+      int challenge = 0;
+      packet >> challenge;
+      auto now = std::chrono::steady_clock::now();
+      auto before = server_.GetClients().at(client_id)->last_time;
+      auto id = server_.GetClients().at(client_id)->ID;
+      if (id > NetAPI::Socket::KAveragePingCount - 1) {
+        server_.GetClients().at(client_id)->ID = 0;
+        id = 0;
+      }
+      server_.GetClients().at(client_id)->ping[id] =
+          std::chrono::duration_cast<std::chrono::milliseconds>(now - before)
+              .count();
+      server_.GetClients().at(client_id)->ping_sum = 0;
+      for (auto& v : server_.GetClients().at(client_id)->ping) {
+        server_.GetClients().at(client_id)->ping_sum += v;
+      }
+      if (challenge > 0) {
+        // Failed ping
+      } else {
+        server_.GetClients().at(client_id)->last_time = now;
+      }
+      break;
+    }
       /*
       TODO: fix
       case PacketBlockType::CHOOSE_TEAM: {
@@ -251,4 +275,22 @@ void GameServer::ReceiveEvent(const EventInfo& e) {
     default:
       break;
   }
+}
+
+void GameServer::DoOncePerSecond() {
+  /*
+          Broadcast client pings to all clients
+  */
+  NetAPI::Common::Packet p;
+  p.GetHeader()->receiver = NetAPI::Socket::EVERYONE;
+  auto& data = server_.GetClients();
+  pings_.resize(NetAPI::Common::kMaxPlayers);
+  for (auto cli : data) {
+    pings_[cli.first] = cli.second->ping_sum;
+  }
+  unsigned size = pings_.size();
+  p.Add(pings_.data(), size);
+  p << size;
+  p << PacketBlockType::PING_RECIEVE;
+  server_.Send(p);
 }

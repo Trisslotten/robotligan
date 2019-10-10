@@ -110,9 +110,9 @@ void Engine::Update(float dt) {
       case StateType::MAIN_MENU:
         current_state_ = &main_menu_state_;
         break;
-	  case StateType::CONNECT_MENU:
-		current_state_ = &connect_menu_state_;
-		break;
+      case StateType::CONNECT_MENU:
+        current_state_ = &connect_menu_state_;
+        break;
       case StateType::LOBBY:
         current_state_ = &lobby_state_;
         break;
@@ -275,6 +275,22 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       float stamina = 0.f;
       packet >> stamina;
       play_state_.SetCurrentStamina(stamina);
+      break;
+    }
+    case PacketBlockType::PING: {
+      int challenge = 0;
+      packet >> challenge;
+      challenge *= -1;
+      NetAPI::Common::Packet send_packet;
+      send_packet << challenge << PacketBlockType::PING;
+      client_.Send(send_packet);
+      break;
+    }
+    case PacketBlockType::PING_RECIEVE: {
+      unsigned length = 0;
+      packet >> length;
+      client_pings.resize(length);
+      packet.Remove<>(client_pings.data(), length);
       break;
     }
     case PacketBlockType::TEAM_SCORE: {
