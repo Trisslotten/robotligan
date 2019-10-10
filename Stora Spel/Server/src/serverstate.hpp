@@ -133,7 +133,7 @@ class ServerPlayState : public ServerState {
   int red_players_ = 0;
   int blue_players_ = 0;
 
-  int match_time_ = 10;
+  int match_time_ = 300;
   int count_down_time_ = 5;
   Timer match_timer_;
   Timer countdown_timer_;
