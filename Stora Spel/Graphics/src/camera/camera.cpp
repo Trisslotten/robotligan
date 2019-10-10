@@ -1,6 +1,7 @@
 #include "glob/camera.hpp"
 
 // Private------------------------------------------------------------------------------------------
+/*
 void Camera::UpdateDirectionalVectors() {
   // Calculate the direction using yaw and pitch
   this->cam_direction_.x = cos(this->yaw_) * cos(this->pitch_);
@@ -14,10 +15,13 @@ void Camera::UpdateDirectionalVectors() {
   // Calculate what is up using right and direction
   this->cam_up_ = glm::cross(this->cam_right_, this->cam_direction_);
 }
+*/
 
 void Camera::UpdateViewMatrix() {
-  this->view_mat_ = glm::lookAt(
-      this->position_, this->position_ + this->cam_direction_, this->world_up_);
+  auto quarter_turn = glm::quat(glm::vec3(0,-glm::pi<float>()*0.5f,0));
+  glm::mat3 rot_mat = glm::mat3_cast(glm::inverse(orientation_*quarter_turn));
+
+  this->view_mat_ = glm::mat4(rot_mat) * glm::inverse(glm::translate(position_));
 }
 
 // Public-------------------------------------------------------------------------------------------
@@ -28,8 +32,10 @@ Camera::Camera(glm::vec3 in_pos, glm::vec3 in_target, float in_fov_deg,
   this->position_ = in_pos;
   this->world_up_ = glm::vec3(0.0f, 1.0f, 0.0f);
 
+  this->orientation_ = glm::quatLookAt(in_target - in_pos, this->world_up_);
+
   // Calculate yaw and pitch values
-  this->LookAtPoint(in_target);
+  // this->LookAtPoint(in_target);
 
   /// Calculate directional vectors
   // this->UpdateDirectionalVectors();		//NTS: Call moved into
@@ -51,22 +57,24 @@ glm::mat4 Camera::GetViewPerspectiveMatrix() const {
   return this->perspective_mat_ * this->view_mat_;
 }
 
+void Camera::SetOrientation(const glm::quat& orientation) {
+  this->orientation_ = orientation;
+  this->UpdateViewMatrix();
+}
+
 void Camera::MoveCamera(glm::vec3 in_vec) {
-  this->position_.x += in_vec.x;
-  this->position_.y += in_vec.y;
-  this->position_.z += in_vec.z;
-  this->UpdateDirectionalVectors();
+  this->position_ = in_vec;
+  // this->UpdateDirectionalVectors();
   this->UpdateViewMatrix();
 }
 
 void Camera::SetPosition(glm::vec3 in_vec) {
-  this->position_.x = in_vec.x;
-  this->position_.y = in_vec.y;
-  this->position_.z = in_vec.z;
-  this->UpdateDirectionalVectors();
+  this->position_ = in_vec;
+  // this->UpdateDirectionalVectors();
   this->UpdateViewMatrix();
 }
 
+/*
 void Camera::LookAtPoint(glm::vec3 in_target) {
   // Create vector from camera to target point
   glm::vec3 temp_dir = glm::normalize(in_target - this->position_);
@@ -101,7 +109,9 @@ void Camera::LookAtPoint(glm::vec3 in_target) {
   this->UpdateDirectionalVectors();
   this->UpdateViewMatrix();
 }
+*/
 
+/*
 void Camera::TurnCameraViaDegrees(float in_yaw_deg, float in_pitch_deg) {
   this->yaw_ += glm::radians(in_yaw_deg);
   this->pitch_ += glm::radians(in_pitch_deg);
@@ -129,3 +139,4 @@ void Camera::TurnCameraViaRadians(float in_yaw_rad, float in_pitch_rad) {
   this->UpdateDirectionalVectors();
   this->UpdateViewMatrix();
 }
+*/

@@ -22,9 +22,13 @@ namespace glob {
 
 namespace window {
 
+unsigned int window_width = 1600;
+unsigned int window_height = 900;
+
 void Create() {
   if (glfw_window) {
-    std::cout << "WARNING window.cpp: Calling WindowCreate() when window already created"
+    std::cout << "WARNING window.cpp: Calling WindowCreate() when window "
+                 "already created"
               << std::endl;
     return;
   }
@@ -34,15 +38,24 @@ void Create() {
     assert(0);
   }
 
+  GLFWmonitor* primary = glfwGetPrimaryMonitor();
+
+  const GLFWvidmode* mode = glfwGetVideoMode(primary);
+  glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+  glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+  glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+  glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+
+  // GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "My
+  // Title", primary, NULL);
+
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 
-  int width = 1280;
-  int height = 720;
-  const char* title_str = "Hello World";
+  const char* title_str = "Robotligan";
 
   glfw_window =
-      glfwCreateWindow(width, height, title_str, NULL, NULL);
+      glfwCreateWindow(window_width, window_height, title_str, NULL, NULL);
 
   if (!glfw_window) {
     std::cout << "ERROR window.cpp: Could not create glfw window\n";
@@ -53,7 +66,8 @@ void Create() {
   glfwMakeContextCurrent(glfw_window);
 
   if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-    std::cout << "ERROR window.cpp: Failed to initialize OpenGL context" << std::endl;
+    std::cout << "ERROR window.cpp: Failed to initialize OpenGL context"
+              << std::endl;
     assert(0);
   }
 
@@ -67,7 +81,6 @@ void Create() {
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   glDisable(GL_CULL_FACE);
-  
 
   initd = true;
   // glClear(GL_COLOR_BUFFER_BIT);
@@ -86,13 +99,16 @@ void Update() {
   glfwPollEvents();
   UpdateMousePos();
 
-  int state = glfwGetKey(glfw_window, GLFW_KEY_ESCAPE);
+  int state = glfwGetKey(glfw_window, GLFW_KEY_0);
   if (state == GLFW_PRESS) {
     glfwSetWindowShouldClose(glfw_window, GLFW_TRUE);
   }
 }
 
-void Cleanup() { glfwTerminate(); }
+void Cleanup() {
+  //glfwDestroyWindow(glfw_window);
+  //glfwTerminate();
+}
 
 bool IsInitialized() { return initd; }
 
@@ -109,6 +125,31 @@ void SetKeyCallback(void (*key_callback)(GLFWwindow*, int, int, int, int)) {
 void SetMouseCallback(void (*key_callback)(GLFWwindow*, int, int, int)) {
   glfwSetMouseButtonCallback(glob::window::GetGlfwWindow(),
                              (GLFWmousebuttonfun)key_callback);
+}
+
+void SetCharacterCallback(void (*key_callback)(GLFWwindow*, unsigned int)) {
+  glfwSetCharCallback(glob::window::GetGlfwWindow(), (GLFWcharfun)key_callback);
+}
+
+void SetMouseLocked(bool val) {
+  if (val) {
+    glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+  } else {
+    glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+  }
+}
+
+glm::vec2 GetWindowDimensions() {
+  return glm::vec2(window_width, window_height);
+}
+
+glm::vec2 Relative720(glm::vec2 in_pos) {
+  glm::vec2 ret(0);
+  glm::vec2 seventw = glm::vec2(1280, 720);
+  glm::vec2 rel = GetWindowDimensions() / seventw;
+  ret.x = in_pos.x * rel.x;
+  ret.y = in_pos.y * rel.y;
+  return ret;
 }
 
 bool KeyDown(int key) { return GLFW_PRESS == glfwGetKey(glfw_window, key); }

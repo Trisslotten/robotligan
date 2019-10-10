@@ -11,6 +11,7 @@
 #include <lodepng.hpp>
 
 #include "Font2D.hpp"
+#include "glob/window.hpp"
 
 bool FileAlreadyExists(const std::string& path) {
   struct stat buffer;
@@ -208,7 +209,7 @@ bool glob::Font2D::LoadFromFile(const std::string& path) {
 }
 
 void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
-                        std::string text, glm::vec4 color) {
+                        std::string text, glm::vec4 color, bool visible) {
   const char* chars = text.c_str();
   unsigned int len = text.length();
 
@@ -218,7 +219,7 @@ void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
   shader.uniform("bgColor", glm::vec4(0, 0, 0, 0));
   shader.uniform("fgColor", color);
   shader.uniform("msdf", 0);
-  shader.uniform("screen_dims", glm::vec2(1280, 720));
+  shader.uniform("screen_dims", glob::window::GetWindowDimensions());
   //shader.uniform("t_pos", pos);
   shader.uniform("size", size);
 
@@ -239,8 +240,9 @@ void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
     // shader.uniform("character", (GLint)cur);
     shader.uniform("character", cur);
     shader.uniform("t_pos", pos + glm::vec2(offset_accum, 0));
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
+    if (visible) {
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    }
     // std::cout << "Char: " << (char)cur << " " << l << ", " << r << "\n";
 
     // double kerning = 0;

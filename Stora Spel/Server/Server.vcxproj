@@ -70,16 +70,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>..\Network API\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\Network API\include;$(SolutionDir)entt-master\src\entt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>..\Network API\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\Network API\include;$(SolutionDir)entt-master\src\entt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>..\Network API\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\Network API\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)glm;$(SolutionDir)Physics\include;$(SolutionDir)Stora Spel\shared;$(SolutionDir)Graphics\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>..\Network API\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\Network API\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)glm;$(SolutionDir)Physics\include;$(SolutionDir)Stora Spel\shared;$(SolutionDir)Graphics\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -87,10 +87,13 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)Server\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;Network API.lib;Physics.lib;Graphics.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(IntDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -99,6 +102,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -113,6 +117,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,16 +134,62 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)Server\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;Network API.lib;Physics.lib;Graphics.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)$(IntDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\gameserver.cpp" />
+    <ClCompile Include="src\util\global_settings.cpp" />
+    <ClCompile Include="src\serverstate.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\ecs\components.hpp" />
+    <ClInclude Include="src\ecs\components\ability_component.hpp" />
+    <ClInclude Include="src\ecs\components\ball_component.hpp" />
+    <ClInclude Include="src\ecs\components\buff_component.hpp" />
+    <ClInclude Include="src\ecs\components\goal_component.hpp" />
+    <ClInclude Include="src\ecs\components\match_timer_component.hpp" />
+    <ClInclude Include="src\ecs\components\physics_component.hpp" />
+    <ClInclude Include="src\ecs\components\pick_up_event.hpp" />
+    <ClInclude Include="src\ecs\components\player_component.hpp" />
+    <ClInclude Include="src\ecs\components\points_component.hpp" />
+    <ClInclude Include="src\ecs\components\projectile_component.hpp" />
+    <ClInclude Include="src\ecs\components\team_component.hpp" />
+    <ClInclude Include="src\ecs\systems\ability_controller_system.hpp" />
+    <ClInclude Include="src\ecs\systems\buff_controller_system.hpp" />
+    <ClInclude Include="src\ecs\systems\collision_system.hpp" />
+    <ClInclude Include="src\ecs\systems\collision_temp_debug_system.h" />
+    <ClInclude Include="src\ecs\systems\goal_system.hpp" />
+    <ClInclude Include="src\ecs\systems\physics_system.hpp" />
+    <ClInclude Include="src\ecs\systems\player_controller_system.hpp" />
+    <ClInclude Include="src\gameserver.hpp" />
+    <ClInclude Include="src\message.hpp" />
+    <ClInclude Include="src\util\event.hpp" />
+    <ClInclude Include="src\util\global_settings.hpp" />
+    <ClInclude Include="src\util\timer.hpp" />
+    <ClInclude Include="src\serverstate.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\replay machine\bit_pack.cpp" />
+    <ClCompile Include="src\replay machine\reg_pack.cpp" />
+    <ClCompile Include="src\replay machine\replay_machine.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\replay machine\bit_pack.hpp" />
+    <ClInclude Include="src\replay machine\reg_pack.hpp" />
+    <ClInclude Include="src\replay machine\replay_machine.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="util\settings.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,14 +1,20 @@
 #include <NetAPI/socket/tcpclient.hpp>
+#include <iostream>
 #include <string>
+#include <vector>
 NetAPI::Socket::TcpClient::TcpClient() {
   rec_buffer_ = new char[buffer_size_];
+  temp_buffer_ = new char[buffer_size_];
   timeout_.tv_sec = 0;
-  timeout_.tv_usec = 500;
+  timeout_.tv_usec = 50;
 }
 
 NetAPI::Socket::TcpClient::TcpClient(const TcpClient& other) {
   rec_buffer_ = new char[other.buffer_size_];
+  temp_buffer_ = new char[other.buffer_size_];
+  temp_buffer_index_ = other.temp_buffer_index_;
   memcpy(rec_buffer_, other.rec_buffer_, other.buffer_size_);
+  memcpy(temp_buffer_, other.temp_buffer_, other.buffer_size_);
   buffer_size_ = other.buffer_size_;
   connected_ = other.connected_;
   ID_ = other.ID_;
@@ -23,10 +29,13 @@ NetAPI::Socket::TcpClient::TcpClient(const TcpClient& other) {
 void NetAPI::Socket::TcpClient::SetBufferSize(unsigned size) {
   buffer_size_ = size;
   delete[] rec_buffer_;
+  delete[] temp_buffer_;
   rec_buffer_ = new char[buffer_size_];
+  temp_buffer_ = new char[buffer_size_];
 }
 void NetAPI::Socket::TcpClient::FlushBuffers() {
   ZeroMemory(rec_buffer_, sizeof(char) * buffer_size_);
+  ZeroMemory(temp_buffer_, sizeof(char) * buffer_size_);
 }
 bool NetAPI::Socket::TcpClient::Connect(const char* addr, unsigned short port) {
   struct addrinfo *result = NULL, *ptr = NULL, hints = {};
@@ -64,69 +73,81 @@ bool NetAPI::Socket::TcpClient::Connect(const char* addr, unsigned short port) {
   connected_ = true;
   return true;
 }
-bool NetAPI::Socket::TcpClient::Send(const char* data, size_t length) {
-  error_ = send(send_socket_, data, (int)length, 0);
-  if (error_ == SOCKET_ERROR) {
-    error_ = WSAGetLastError();
-    return false;
-  }
-  return true;
-}
 bool NetAPI::Socket::TcpClient::Send(NetAPI::Common::Packet& p) {
+  auto h = p.GetHeader();
+  h->packet_size = p.GetPacketSize();
+
+  // std::cout << "Network: send packet size=" << p.GetPacketSize() << "\n";
+
   error_ = send(send_socket_, p.GetRaw(), (int)p.GetPacketSize(), 0);
   if (error_ == SOCKET_ERROR) {
     error_ = WSAGetLastError();
+    if (error_ == WSAECONNRESET || error_ == WSAECONNABORTED ||
+        error_ == WSAENETRESET || error_ == WSAENOTCONN) {
+      this->Disconnect();
+    }
     return false;
   }
   return true;
 }
-const char* NetAPI::Socket::TcpClient::Recive() {
-  // Implement blocking? meeh
+std::vector<NetAPI::Common::Packet> NetAPI::Socket::TcpClient::Receive(
+    unsigned short timeout) {
   int bytes = 1;
+  FD_ZERO(&read_set_);
+  FD_SET(send_socket_, &read_set_);
+  timeout_.tv_usec = timeout;
 
-  FD_ZERO(&read_set_);
-  FD_SET(send_socket_, &read_set_);
+  std::vector<NetAPI::Common::Packet> result;
+
   if (select(send_socket_, &read_set_, NULL, NULL, &timeout_) == 1) {
     last_buff_len_ = recv(send_socket_, rec_buffer_, buffer_size_, 0);
+    // std::cout << "last_buff_len_=" << last_buff_len_ << "\n";
     if (last_buff_len_ > 0) {
-      return rec_buffer_;
+      // TODO maybe sanity check
+      memcpy(temp_buffer_ + temp_buffer_index_, rec_buffer_, last_buff_len_);
+      temp_buffer_index_ += last_buff_len_;
+
+      int ph_size = sizeof(NetAPI::Common::PacketHeader);
+
+      // check if enough to get packetheader to check the packet size
+      while (temp_buffer_index_ >= ph_size) {
+        NetAPI::Common::PacketHeader* packet_header =
+            (NetAPI::Common::PacketHeader*)temp_buffer_;
+        size_t p_size = packet_header->packet_size;
+
+        // if buffered enough
+        if (temp_buffer_index_ >= p_size) {
+          result.emplace_back(temp_buffer_, p_size);
+
+          // move rest of buffer to beginning
+          memmove(temp_buffer_, temp_buffer_ + p_size,
+                  temp_buffer_index_ - p_size);
+          temp_buffer_index_ -= p_size;
+        } else {
+          // break to wait for rest of packet
+          break;
+        }
+      }
+      return result;
     }
-    if (last_buff_len_ == 0) {
+    if (last_buff_len_ == 0 || (WSAGetLastError() == WSAECONNRESET)) {
       connected_ = false;
-      return NetAPI::Common::kSocketNotConnected;
+      this->Disconnect();
+      return result;
     } else {
       error_ = WSAGetLastError();
-      return nullptr;
+      std::cout << "ERROR: Network WSA error: " << error_ << "\n";
+      return result;
     }
   } else {
-    return NetAPI::Common::kNoDataAvailable;
+    return result;
   }
-}
-NetAPI::Common::Packet NetAPI::Socket::TcpClient::Recieve() {
-  int bytes = 1;
-  FD_ZERO(&read_set_);
-  FD_SET(send_socket_, &read_set_);
-  if (select(send_socket_, &read_set_, NULL, NULL, &timeout_) == 1) {
-    last_buff_len_ = recv(send_socket_, rec_buffer_, buffer_size_, 0);
-    if (last_buff_len_ > 0) {
-      return NetAPI::Common::Packet(rec_buffer_, last_buff_len_);
-    }
-    if (last_buff_len_ == 0 || WSAGetLastError() == 10054) {
-      connected_ = false;
-      return NetAPI::Common::Packet(nullptr, 0);
-    } else {
-      error_ = WSAGetLastError();
-      return NetAPI::Common::Packet(nullptr, 0);
-    }
-  } else {
-    return NetAPI::Common::Packet(rec_buffer_, last_buff_len_);
-  }
+  return result;
 }
 void NetAPI::Socket::TcpClient::Disconnect() {
-  if (connected_ && send_socket_ != INVALID_SOCKET) {
-    connected_ = false;
-    closesocket(send_socket_);
-  }
+  connected_ = false;
+  closesocket(send_socket_);
+  send_socket_ = INVALID_SOCKET;
 }
 void NetAPI::Socket::TcpClient::operator=(const SOCKET& other) {
   connected_ = true;
@@ -134,8 +155,13 @@ void NetAPI::Socket::TcpClient::operator=(const SOCKET& other) {
 }
 NetAPI::Socket::TcpClient& NetAPI::Socket::TcpClient::operator=(
     const TcpClient& other) {
+  delete rec_buffer_;
+  delete temp_buffer_;
   rec_buffer_ = new char[other.buffer_size_];
+  temp_buffer_ = new char[other.buffer_size_];
+  temp_buffer_index_ = other.temp_buffer_index_;
   memcpy(rec_buffer_, other.rec_buffer_, other.buffer_size_);
+  memcpy(temp_buffer_, other.temp_buffer_, other.buffer_size_);
   buffer_size_ = other.buffer_size_;
   connected_ = other.connected_;
   ID_ = other.ID_;
@@ -149,5 +175,7 @@ NetAPI::Socket::TcpClient& NetAPI::Socket::TcpClient::operator=(
 }
 NetAPI::Socket::TcpClient::~TcpClient() {
   delete[] this->rec_buffer_;
-  error_ = shutdown(send_socket_, SD_SEND);
+  delete[] temp_buffer_;
+  closesocket(send_socket_);
+  send_socket_ = INVALID_SOCKET;
 }

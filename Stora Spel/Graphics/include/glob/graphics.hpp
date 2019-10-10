@@ -11,8 +11,10 @@
 #include <glm/gtc/quaternion.hpp>
 #include "joint.hpp"
 #include "animation.hpp"
+#include "glob/mesh_data.hpp"
 
 #include <string>
+#include "camera.hpp"
 
 namespace glob {
 
@@ -32,7 +34,9 @@ namespace glob {
 
 typedef unsigned long ModelHandle;
 typedef unsigned long Font2DHandle;
-//typedef unsigned long TextureHandle;
+typedef unsigned long GUIHandle;
+typedef unsigned long E2DHandle;
+// typedef unsigned long TextureHandle;
 
 /*
  * Initialize renderer.
@@ -47,6 +51,7 @@ EXPORT void Init();
 EXPORT ModelHandle GetModel(const std::string& filepath);
 
 EXPORT Font2DHandle GetFont(const std::string& filepath);
+EXPORT GUIHandle GetGUIItem(const std::string& filepath);
 
 /*
 *Get model information relevant to the animation component
@@ -54,6 +59,10 @@ EXPORT Font2DHandle GetFont(const std::string& filepath);
 */
 
 EXPORT animData GetAnimationData(ModelHandle handle);
+
+EXPORT E2DHandle GetE2DItem(const std::string& filepath);
+
+EXPORT glob::MeshData GetMeshData(ModelHandle model_h);
 
 /*
  * Returns a texture handle for the specified image file.
@@ -69,16 +78,28 @@ EXPORT void SubmitBAM(ModelHandle model_h, glm::mat4 transform, std::vector<glm:
 EXPORT void Submit(ModelHandle model_h, glm::vec3 pos);
 EXPORT void Submit(ModelHandle model_h, glm::mat4 transform);
 EXPORT void SubmitCube(glm::mat4 t);
+EXPORT void SubmitWireframeMesh(ModelHandle model_h);
+EXPORT void LoadWireframeMesh(ModelHandle model_h,
+                              const std::vector<glm::vec3>& vertices,
+                              const std::vector<unsigned int>& indices);
 
 EXPORT void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
-                   std::string text, glm::vec4 color = glm::vec4(1,1,1,1));
+                   std::string text, glm::vec4 color = glm::vec4(1, 1, 1, 1),
+                   bool visible = true);
+EXPORT void Submit(GUIHandle gui_h, glm::vec2 pos, float scale,
+                   float scale_x = 100.0f);
+EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale,
+                   float rotDegrees, glm::vec3 rotAxis);
+
+EXPORT Camera GetCamera();
+EXPORT void SetCamera(Camera camera);
+
+EXPORT void SetModelUseGL(bool use_gl);
 
 /*
  * Render all items submitted this frame
  */
 EXPORT void Render();
-
-EXPORT void* GetCamera();
 
 }  // namespace glob
 

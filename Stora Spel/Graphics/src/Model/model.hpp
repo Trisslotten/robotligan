@@ -6,6 +6,7 @@
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
 #include "../shader.hpp"
+#include "glob/mesh_data.hpp"
 #include "glob/Animation.hpp"
 #include "glob/joint.hpp"
 #include <glm/gtx/transform.hpp>
@@ -44,6 +45,7 @@ class Model {
   bool is_loaded_ = false;
   bool humanoid_ = false;
 
+  bool use_gl_ = true;
  public:
   Model();
   Model(const std::string& path);
@@ -57,6 +59,8 @@ class Model {
   std::vector<Joint*> bones_;
   std::vector<Animation*> animations_;
   glm::mat4 globalInverseTransform;
+
+  glob::MeshData GetMeshData();
 };
 
 }  // namespace glob

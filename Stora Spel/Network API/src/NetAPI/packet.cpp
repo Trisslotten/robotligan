@@ -1,36 +1,43 @@
 #include <NetAPI/packet.hpp>
+#include <iostream>
 
 NetAPI::Common::Packet::Packet() {
   data_ = new char[kNumPacketBytes];
-  memcpy(data_, &p_, sizeof(p_));
-  size_of_data_ = sizeof(p_);
+  PacketHeader p{};
+  memcpy(data_, &p, sizeof(PacketHeader));
+  GetHeader()->packet_size = sizeof(PacketHeader);
 }
 
 NetAPI::Common::Packet::Packet(const Packet& other) {
+  delete[] data_;
   data_ = new char[kNumPacketBytes];
   memcpy(data_, other.data_, kNumPacketBytes);
-  size_of_data_ = other.size_of_data_;
-  p_ = other.p_;
+  GetHeader()->packet_size = other.GetHeader()->packet_size;
 }
 
 NetAPI::Common::Packet& NetAPI::Common::Packet::operator=(const Packet& other) {
   if (&other == this) return *this;
 
+  delete[] data_;
+
   data_ = new char[kNumPacketBytes];
   memcpy(data_, other.data_, kNumPacketBytes);
-  size_of_data_ = other.size_of_data_;
-  p_ = other.p_;
+  GetHeader()->packet_size = other.GetHeader()->packet_size;
 
   return *this;
 }
 
-NetAPI::Common::Packet::Packet(const char* in_buffer, size_t in_size) {
+NetAPI::Common::Packet::Packet(const char* in_buffer, long in_size) {
   data_ = new char[kNumPacketBytes];
-  if (in_size > 0)
-  {
-	  memcpy(data_, in_buffer, kNumPacketBytes);
+  if (in_size > 0 && in_size <= kNumPacketBytes) {
+    memcpy(data_, in_buffer, kNumPacketBytes);
+    GetHeader()->packet_size = in_size;
+  } else {
+    if (in_size > kNumPacketBytes || in_size < 0)
+      std::cout << "ERROR: bad size in Packet buffer creation (" << in_size << " bytes)\n",
+    memset(data_, 0, kNumPacketBytes);
+    GetHeader()->packet_size = 0;
   }
-  size_of_data_ = in_size;
 }
 
 NetAPI::Common::Packet::~Packet() { delete[] data_; }
