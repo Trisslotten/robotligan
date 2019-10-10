@@ -263,13 +263,13 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       name.resize(strsize);
       packet.Remove(name.data(), strsize);
 
-      chat.AddMessage(name, message, message_from);
-      if (chat.IsVisable() == false) {
-        chat.SetShowChat();
-        chat.CloseChat();
-      } else if (chat.IsClosing() == true) {
+      chat_.AddMessage(name, message, message_from);
+      if (chat_.IsVisable() == false) {
+        chat_.SetShowChat();
+        chat_.CloseChat();
+      } else if (chat_.IsClosing() == true) {
         // resets the closing timer
-        chat.CloseChat();
+        chat_.CloseChat();
       }
 
       break;
@@ -403,32 +403,32 @@ void Engine::SetCurrentRegistry(entt::registry* registry) {
 
 void Engine::UpdateChat(float dt) {
   if (enable_chat_) {
-    // chat code
-    if (chat.IsVisable()) {
+    // chat_ code
+    if (chat_.IsVisable()) {
       if (Input::IsKeyPressed(GLFW_KEY_ENTER)) {
-        if (chat.IsClosing() == true) {
-          chat.SetShowChat();
+        if (chat_.IsClosing() == true) {
+          chat_.SetShowChat();
         } else {
-          chat.SetSendMessage(true);
-          message_ = chat.GetCurrentMessage();
-          chat.CloseChat();
+          chat_.SetSendMessage(true);
+          message_ = chat_.GetCurrentMessage();
+          chat_.CloseChat();
         }
       }
-      chat.Update(dt);
-      chat.SubmitText(font_test2_);
-      if (chat.IsTakingChatInput() == true &&
-          chat.GetCurrentMessage().size() == 0)
-        glob::Submit(font_test2_, chat.GetPosition() + glm::vec2(0, -20.f * 5),
+      chat_.Update(dt);
+      chat_.SubmitText(font_test2_);
+      if (chat_.IsTakingChatInput() == true &&
+          chat_.GetCurrentMessage().size() == 0)
+        glob::Submit(font_test2_, chat_.GetPosition() + glm::vec2(0, -20.f * 5),
                      20, "Enter message",
                      glm::vec4(1, 1, 1, 1));
     }
-    if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat.IsVisable()) {
+    if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat_.IsVisable()) {
       // glob::window::SetMouseLocked(false);
-      chat.SetShowChat();
+      chat_.SetShowChat();
     }
-    take_game_input_ = !chat.IsTakingChatInput();
+    take_game_input_ = !chat_.IsTakingChatInput();
     // TODO fix
-    // take_game_input_ = !chat.IsTakingChatInput() &&
+    // take_game_input_ = !chat_.IsTakingChatInput() &&
     // !show_in_game_menu_buttons_;
   }
 }

@@ -45,7 +45,7 @@ class Engine {
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
 
-  Chat* GetChat() { return &chat; }
+  Chat* GetChat() { return &chat_; }
 
  private:
   void SetKeybinds();
@@ -90,7 +90,7 @@ class Engine {
   int gameplay_timer_sec_ = 0;
   int countdown_timer_sec_ = 0;
 
-  Chat chat;
+  Chat chat_;
   std::string message_ = "";
 
   bool enable_chat_ = false;
