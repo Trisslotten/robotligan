@@ -12,6 +12,7 @@
 
 #include "Model/model.hpp"
 #include "glob/camera.hpp"
+#include "glob/window.hpp"
 #include "shader.hpp"
 
 #include "2D/elements2D.hpp"
@@ -60,7 +61,8 @@ struct LightItem {
   glm::float32 ambient;
 };
 
-ShaderProgram test_shader;
+ShaderProgram fullscreen_shader;
+ShaderProgram model_emission_shader;
 ShaderProgram model_shader;
 ShaderProgram text_shader;
 ShaderProgram wireframe_shader;
@@ -70,6 +72,11 @@ ShaderProgram e2D_shader;
 GLuint triangle_vbo, triangle_vao;
 GLuint cube_vbo, cube_vao;
 GLuint quad_vbo, quad_vao;
+
+GLuint framebuffer = 0;
+GLuint renderbuffer = 0;
+GLuint draw_color_texture = 0;
+GLuint draw_emission_texture = 0;
 
 float num_frames = 0;
 
@@ -160,13 +167,19 @@ void DrawWireFrameMeshes(ModelHandle model_h) {
 }
 
 void Init() {
-  test_shader.add("testshader.frag");
-  test_shader.add("testshader.vert");
-  test_shader.compile();
+  fullscreen_shader.add("fullscreenquad.vert");
+  fullscreen_shader.add("fullscreenquad.frag");
+  fullscreen_shader.compile();
 
   model_shader.add("modelshader.vert");
   model_shader.add("modelshader.frag");
+  model_shader.add("shading.frag");
   model_shader.compile();
+
+  model_emission_shader.add("modelshader.vert");
+  model_emission_shader.add("modelemissive.frag");
+  model_emission_shader.add("shading.frag");
+  model_emission_shader.compile();
 
   wireframe_shader.add("modelshader.vert");
   wireframe_shader.add("wireframe.frag");
@@ -187,9 +200,9 @@ void Init() {
   glGenVertexArrays(1, &triangle_vao);
   glBindVertexArray(triangle_vao);
   std::vector<glm::vec3> vertices{
-      {0, 1, 1},
-      {0, -1, 1},
-      {0, -1, -1},
+      {-1, -1, 0},
+      {3, -1, 0},
+      {-1, 3, 0},
   };
   glGenBuffers(1, &triangle_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, triangle_vbo);
@@ -239,6 +252,48 @@ void Init() {
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
                         (GLvoid *)0);
   glBindVertexArray(0);
+
+  auto ws = glob::window::GetWindowDimensions();
+  glGenTextures(1, &draw_color_texture);
+  glGenTextures(1, &draw_emission_texture);
+  glGenFramebuffers(1, &framebuffer);
+  glGenRenderbuffers(1, &renderbuffer);
+
+  glBindTexture(GL_TEXTURE_2D, draw_color_texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, ws.x, ws.y, 0, GL_RGB,
+               GL_UNSIGNED_BYTE, NULL);
+
+  glBindTexture(GL_TEXTURE_2D, draw_emission_texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, ws.x, ws.y, 0, GL_RGB,
+               GL_UNSIGNED_BYTE, NULL);
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, ws.x, ws.y);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                         draw_color_texture, 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D,
+                         draw_emission_texture, 0);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+                            GL_RENDERBUFFER, renderbuffer);
+
+  GLuint att[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+  glDrawBuffers(2, att);
+
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    std::cout << "ERROR: graphics.cpp: default_framebuffer is not complete!"
+              << std::endl;
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 // H=Handle, A=Asset
@@ -435,35 +490,76 @@ void LoadWireframeMesh(ModelHandle model_h,
 }
 
 void Render() {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
 
   // render models and light
-  model_shader.use();
-
-  int lightNR = 0;
+  std::vector<glm::vec3> light_positions;
+  std::vector<glm::vec3> light_colors;
+  std::vector<float> light_radii;
+  std::vector<float> light_ambients;
   for (auto &light_item : lights_to_render) {
-    model_shader.uniform("light_pos[" + std::to_string(lightNR) + "]",
-                         light_item.pos);
-    model_shader.uniform("light_col[" + std::to_string(lightNR) + "]",
-                         light_item.color);
-    model_shader.uniform("light_radius[" + std::to_string(lightNR) + "]",
-                         light_item.radius);
-    model_shader.uniform("light_amb[" + std::to_string(lightNR) + "]",
-                         light_item.ambient);
-    lightNR++;
+    light_positions.push_back(light_item.pos);
+    light_colors.push_back(light_item.color);
+    light_radii.push_back(light_item.radius);
+    light_ambients.push_back(light_item.ambient);
   }
-  model_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
 
-  model_shader.uniform("cam_transform", cam_transform);
-  // model_shader.uniform("num_frames", num_frames);
+  std::vector<RenderItem> emissive_items;
   for (auto &render_item : items_to_render) {
+    if (render_item.model->IsEmissive()) {
+      emissive_items.push_back(render_item);
+    }
+  }
+
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  model_shader.use();
+  model_shader.uniformv("light_pos", lights_to_render.size(),
+                        light_positions.data());
+  model_shader.uniformv("light_col", lights_to_render.size(),
+                        light_colors.data());
+  model_shader.uniformv("light_radius", lights_to_render.size(),
+                        light_radii.data());
+  model_shader.uniformv("light_amb", lights_to_render.size(),
+                        light_ambients.data());
+  model_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
+  model_shader.uniform("cam_transform", cam_transform);
+  for (auto &render_item : items_to_render) {
+    if (render_item.model->IsEmissive()) {
+      continue;
+    }
     model_shader.uniform("model_transform", render_item.transform);
-
-    //TODO check if has emissive
-
     render_item.model->Draw(model_shader);
   }
+
+  model_emission_shader.use();
+  model_emission_shader.uniformv("light_pos", lights_to_render.size(),
+                                 light_positions.data());
+  model_emission_shader.uniformv("light_col", lights_to_render.size(),
+                                 light_colors.data());
+  model_emission_shader.uniformv("light_radius", lights_to_render.size(),
+                                 light_radii.data());
+  model_emission_shader.uniformv("light_amb", lights_to_render.size(),
+                                 light_ambients.data());
+  model_emission_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
+  model_emission_shader.uniform("cam_transform", cam_transform);
+  for (auto &render_item : emissive_items) {
+    model_emission_shader.uniform("model_transform", render_item.transform);
+    render_item.model->Draw(model_emission_shader);
+  }
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  fullscreen_shader.use();
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, draw_color_texture);
+  fullscreen_shader.uniform("texture_color", 0);
+  glActiveTexture(GL_TEXTURE0+1);
+  glBindTexture(GL_TEXTURE_2D, draw_emission_texture);
+  fullscreen_shader.uniform("texture_emission", 1);
+  DrawFullscreenQuad();
 
   // render wireframe cubes
   for (auto &m : cubes) DrawCube(m);
