@@ -37,6 +37,9 @@ class Engine {
   void SetEnableChat(bool should_enable) { this->enable_chat_ = should_enable; }
 
   std::unordered_map<PlayerID, std::string> player_names_;
+
+  AbilityID GetSecondaryAbility() { return second_ability_;
+  }
  private:
   void SetKeybinds();
 

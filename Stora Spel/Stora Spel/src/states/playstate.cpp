@@ -34,7 +34,15 @@ void PlayState::Startup() {
   gui_stamina_icon_ =
       glob::GetGUIItem("assets/GUI_elements/stamina_bar_icon.png");
   gui_quickslots_ =
-      glob::GetGUIItem("assets/GUI_elements/koncept_abilities.png");
+      glob::GetGUIItem("assets/GUI_elements/quickslots_blank.png");
+
+  int num_abilities = (int)AbilityID::NUM_OF_ABILITY_IDS;
+  ability_handles_.resize(num_abilities);
+  for (int i = 0; i < num_abilities; i++) {
+    ability_handles_[i] = glob::GetGUIItem(
+        "assets/GUI_Elements/ability_icons/" + std::to_string(i) + ".png");
+  }
+
   ///////////////////////////////////////////////////////////////
   // \TO BE MOVED
   ///////////////////////////////////////////////////////////////
@@ -104,7 +112,14 @@ void PlayState::Update() {
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
   glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
   glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
+
+  // draw quickslot info
   glob::Submit(gui_quickslots_, glm::vec2(7, 50), 0.3, 100);
+  glob::Submit(ability_handles_[my_primary_ability_id], glm::vec2(9, 50), 0.75f,
+               100);
+  glob::Submit(ability_handles_[(int)engine_->GetSecondaryAbility()], glm::vec2(66, 50), 0.75f,
+               100);
+
   glob::Submit(gui_teamscore_, glm::vec2(497, 648), 1, 100);
 }
 

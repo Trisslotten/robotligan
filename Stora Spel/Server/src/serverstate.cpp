@@ -88,6 +88,7 @@ void ServerPlayState::Init() {
 
     int num_players = server.GetConnectedPlayers();
     to_send << num_players;
+    to_send << client_abilities_[client_id];
 
     to_send << PacketBlockType::GAME_START;
 
@@ -203,13 +204,11 @@ void ServerPlayState::Update(float dt) {
       to_send << goal_team_c;
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
-      if (goal_goal_c
-              .switched_this_tick) {  // MAY NEED TO CHANGE, NOT A GOOD SOLUTION
+      if (goal_goal_c.switched_this_tick) {
         if (!sent_switch) {
           to_send << PacketBlockType::SWITCH_GOALS;
           sent_switch = true;
         }
-        goal_goal_c.switched_this_tick = false;
       }
     }
 
@@ -227,6 +226,16 @@ void ServerPlayState::Update(float dt) {
     }
     destroy_entities_.clear();
 
+  
+
+  // switch goal cleanup
+  auto view_goals = registry.view<GoalComponenet, TeamComponent>();
+  for (auto goal : view_goals) {
+    GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
+    TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
+    if (goal_goal_c.switched_this_tick) {
+      goal_goal_c.switched_this_tick = false;
+    }
   }
 
   pick_ups_.clear();
@@ -264,6 +273,24 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
     player_c.client_id = client.first;
     registry.assign<TeamComponent>(*view_iter,
                                    client_teams_[player_c.client_id]);
+
+    AbilityID primary_id = client_abilities_[player_c.client_id];
+    AbilityID secondary_id = AbilityID::SWITCH_GOALS;
+    float primary_cooldown =
+        GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
+
+    // Add components for a player
+    registry.assign<AbilityComponent>(
+        *view_iter,        // Entity
+        primary_id,        // Primary abiliy id
+        false,             // Use primary ability
+        primary_cooldown,  // Primary ability cooldown
+        0.0f,              // Remaining cooldown
+        secondary_id,      // Secondary ability
+        false,             // Use secondary ability
+        false,             // Shoot
+        0.0f               // Remaining shoot cooldown
+    );
     view_iter++;
   }
 
@@ -379,7 +406,7 @@ void ServerPlayState::CreatePlayerEntity() {
   auto& player_component = registry.assign<PlayerComponent>(entity);
 
   // Prepare hard-coded values
-  AbilityID primary_id = AbilityID::FORCE_PUSH;
+  /*AbilityID primary_id = AbilityID::SWITCH_GOALS;
   AbilityID secondary_id = AbilityID::SWITCH_GOALS;
   float primary_cooldown =
       GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
@@ -395,7 +422,7 @@ void ServerPlayState::CreatePlayerEntity() {
       false,             // Use secondary ability
       false,             // Shoot
       0.0f               // Remaining shoot cooldown
-  );
+  );*/
 
   // START ---------- Buff component [MOVE TO PICK-UP EVENT] ----------
   // Available buffs: SPEED_BOOST, JUMP_BOOST, INFINITE_STAMINA
