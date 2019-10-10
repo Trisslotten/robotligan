@@ -302,6 +302,7 @@ void PlayState::CreateForcePushObject(EntityID id) {
   registry_gameplay_.assign<IDComponent>(force_object, id);
 }
 
+
 void PlayState::DestroyEntity(EntityID id) {
   auto id_view = registry_gameplay_.view<IDComponent>();
   for (auto entity : id_view) {

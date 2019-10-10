@@ -212,7 +212,7 @@ void ServerPlayState::Update(float dt) {
       }
     }
 
-	// send created projectiles
+    // send created projectiles
     for (auto projectiles : created_projectiles_) {
       to_send << projectiles.entity_id;
       to_send << projectiles.projectile_id;
@@ -225,7 +225,7 @@ void ServerPlayState::Update(float dt) {
       to_send << PacketBlockType::DESTROY_ENTITIES;
     }
     destroy_entities_.clear();
-
+  }
   
 
   // switch goal cleanup
