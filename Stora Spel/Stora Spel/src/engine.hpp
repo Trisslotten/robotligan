@@ -58,6 +58,7 @@ class Engine {
   LobbyState lobby_state_;
   PlayState play_state_;
 
+  entt::registry* registry_previous_;
   entt::registry* registry_current_;
 
   bool should_send_input_ = false;

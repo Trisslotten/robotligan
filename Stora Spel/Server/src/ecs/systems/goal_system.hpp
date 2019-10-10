@@ -7,10 +7,10 @@
 #include <physics_object.hpp>
 #include <shared/shared.hpp>
 #include <shared/transform_component.hpp>
+#include <shared/physics_component.hpp>
 
 #include "ecs/components/ball_component.hpp"
 #include "ecs/components/goal_component.hpp"
-#include "ecs/components/physics_component.hpp"
 #include "ecs/components/team_component.hpp"
 
 namespace goal_system {

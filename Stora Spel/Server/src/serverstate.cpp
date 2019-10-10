@@ -127,6 +127,19 @@ void ServerPlayState::Update(float dt) {
     to_send << num_entities;
     to_send << PacketBlockType::ENTITY_TRANSFORMS;
 
+    auto view_physics = registry.view<PhysicsComponent, IDComponent>();
+    int num_physics = view_physics.size();
+    for (auto entity : view_physics) {
+      auto& phys_c = view_physics.get<PhysicsComponent>(entity);
+      auto& id_c = view_physics.get<IDComponent>(entity);
+
+      to_send << phys_c.is_airborne;
+      to_send << phys_c.velocity;
+      to_send << id_c.id;
+    }
+    to_send << num_physics;
+    to_send << PacketBlockType::PHYSICS_DATA;
+
     auto view_player = registry.view<PlayerComponent>();
     for (auto player : view_player) {
       auto& player_c = view_player.get(player);

@@ -9,7 +9,8 @@
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 
-#include <shared\pick_up_component.hpp>
+#include <shared/pick_up_component.hpp>
+#include <shared/physics_component.hpp>
 #include "ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
@@ -135,6 +136,10 @@ void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,
   transforms_[player_id] = std::make_pair(pos, orientation);
 }
 
+void PlayState::SetEntityPhysics(EntityID player_id, glm::vec3 vel, bool is_airborne) {
+  physics_[player_id] = std::make_pair(vel, is_airborne);
+}
+
 void PlayState::SetCameraOrientation(glm::quat orientation) {
   registry_gameplay_.view<CameraComponent>().each(
       [&](auto entity, CameraComponent& cam_c) {
@@ -168,7 +173,7 @@ void PlayState::CreatePlayerEntities() {
     registry_gameplay_.assign<IDComponent>(entity, entity_id);
     registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(),
                                                   glm::quat(), character_scale);
-
+    registry_gameplay_.assign<PhysicsComponent>(entity);
     registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<ModelComponent>(entity, player_model,
                                               alter_scale * character_scale);
@@ -203,6 +208,7 @@ void PlayState::CreateBallEntity() {
   registry_gameplay_.assign<ModelComponent>(ball, model_ball);
   registry_gameplay_.assign<TransformComponent>(ball, zero_vec, zero_vec,
                                                 glm::vec3(1.0f));
+  registry_gameplay_.assign<PhysicsComponent>(ball);
   registry_gameplay_.assign<BallComponent>(ball);
   registry_gameplay_.assign<IDComponent>(ball, ball_id_);
   registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());

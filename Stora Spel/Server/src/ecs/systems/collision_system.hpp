@@ -9,10 +9,10 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include <vector>
+#include <shared/physics_component.hpp>
 
 #include "boundingboxes.hpp"
 #include "collision.hpp"
-#include "ecs/components/physics_component.hpp"
 #include "ecs/components/projectile_component.hpp"
 #include "shared/transform_component.hpp"
 #include "shared/id_component.hpp"

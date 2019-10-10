@@ -6,7 +6,7 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include "shared/transform_component.hpp"
 #include "ecs/components/ability_component.hpp"
-#include "ecs/components/physics_component.hpp"
+#include <shared/physics_component.hpp>
 #include "ecs/components/player_component.hpp"
 #include "shared/id_component.hpp"
 
@@ -30,6 +30,8 @@ void Update(entt::registry& registry, float dt) {
     PhysicsComponent& physics_c = view_controller.get<PhysicsComponent>(entity);
     AbilityComponent& ability_c = view_controller.get<AbilityComponent>(entity);
     IDComponent& id_c = view_controller.get<IDComponent>(entity);
+
+
 
     constexpr float pi = glm::pi<float>();
     player_c.pitch = glm::clamp(player_c.pitch, -0.49f * pi, 0.49f * pi);

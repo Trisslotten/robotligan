@@ -229,6 +229,19 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       }
       break;
     }
+    case PacketBlockType::PHYSICS_DATA: {
+      int size = -1;
+      packet >> size;
+      for (int i = 0; i < size; i++) {
+        EntityID id;
+        glm::vec3 vel;
+        bool is_airborne;
+        packet >> id;
+        packet >> vel;
+        packet >> is_airborne;
+      }
+      break;
+    }
     case PacketBlockType::CAMERA_TRANSFORM: {
       glm::quat orientation;
       packet >> orientation;

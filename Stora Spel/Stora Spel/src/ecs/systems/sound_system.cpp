@@ -1,8 +1,9 @@
 #include "sound_system.hpp"
-#include <shared\transform_component.hpp>
-#include <shared\camera_component.hpp>
+#include <shared/transform_component.hpp>
+#include <shared/camera_component.hpp>
 #include "engine.hpp"
-#include <shared\id_component.hpp>
+#include <shared/id_component.hpp>
+#include <shared/physics_component.hpp>
 
 
 void SoundSystem::Update(entt::registry& registry) {
@@ -28,21 +29,18 @@ void SoundSystem::Update(entt::registry& registry) {
 
     sound_c.sound_player->Set3DAttributes(trans_c.position, glm::vec3(0));
   }
-
   // Play footstep sounds from each player on the field
-  auto player_view = registry.view<PlayerComponent, SoundComponent>();
+  auto player_view = registry.view<PlayerComponent, SoundComponent, PhysicsComponent>();
   for (auto player_entity : player_view) {
     PlayerComponent& player_c = player_view.get<PlayerComponent>(player_entity);
     SoundComponent& sound_c = player_view.get<SoundComponent>(player_entity);
+    PhysicsComponent& physics_c = player_view.get<PhysicsComponent>(player_entity);
 
-    if (player_c.step_timer.Elapsed() > 0.5f /*&& physics_c.velocity > 0.0f && !physics_c.is_airborne*/) {
+    if (player_c.step_timer.Elapsed() > 0.5f && glm::length(physics_c.velocity) > 0.0f && !physics_c.is_airborne) {
       player_c.step_timer.Restart();
       sound_c.sound_player->Play(sound_step_, 0, 0.1f);
     }
   }
-
-  // Listen for events and play associated sounds
-
 }
 
 void SoundSystem::Init(Engine* engine) {
@@ -73,6 +71,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event)
 {
   auto registry = engine_->GetCurrentRegistry();
 
+  // Listen for events and play associated sounds
   switch (event.type) {
   case GameEvent::GOAL: {
     auto view = registry->view<CameraComponent, SoundComponent>();

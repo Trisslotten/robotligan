@@ -57,6 +57,7 @@
     <ClInclude Include="src\ecs\components\sound_component.hpp" />
     <ClInclude Include="src\ecs\systems\sound_system.hpp" />
     <ClInclude Include="src\eventdispatcher.hpp" />
+    <ClInclude Include="shared\shared\physics_component.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

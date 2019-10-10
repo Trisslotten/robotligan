@@ -3,7 +3,7 @@
 
 #include <glm/glm.hpp>
 
-#include "..//util/global_settings.hpp"
+#include "util/global_settings.hpp"
 
 struct PhysicsComponent {
   glm::vec3 velocity;

@@ -98,6 +98,8 @@ class PlayState : public State {
 
   void SetEntityTransform(EntityID player_id, glm::vec3 pos,
                           glm::quat orientation);
+  void SetEntityPhysics(EntityID player_id, glm::vec3 vel,
+    bool is_airborne);
   void SetCameraOrientation(glm::quat orientation);
   void SetEntityIDs(std::vector<EntityID> player_ids, EntityID my_id,
                     EntityID ball_id) {
@@ -130,6 +132,7 @@ class PlayState : public State {
   float current_stamina_ = 0.f;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> transforms_;
+  std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
   
   entt::entity blue_goal_light_;
   entt::entity red_goal_light_;

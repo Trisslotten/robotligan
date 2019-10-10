@@ -52,6 +52,7 @@ namespace PacketBlockType {
     DESTROY_PICK_UP,
     RECEIVE_PICK_UP,
     GAME_EVENT,
+    PHYSICS_DATA,
     NUM_BLOCK_TYPES,
   };
 
@@ -75,7 +76,7 @@ enum class AbilityID {
 
 
 struct GameEvent {
-  enum {GOAL, KICK, HIT, NUDGE, BOUNCE} type;
+  enum {GOAL = 0, KICK, HIT, NUDGE, BOUNCE, NUM_EVENTS} type;
   union {
 
     // Goal
