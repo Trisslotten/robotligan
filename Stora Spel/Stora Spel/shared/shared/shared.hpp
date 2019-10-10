@@ -17,19 +17,19 @@ typedef int EntityID;
 typedef int PlayerID;
 
 namespace PlayerAction {
-enum : int16_t {
-  WALK_FORWARD = 0,
-  WALK_BACKWARD,
-  WALK_LEFT,
-  WALK_RIGHT,
-  ABILITY_PRIMARY,
-  ABILITY_SECONDARY,
-  SPRINT,
-  JUMP,
-  SHOOT,
-  KICK,
-  NUM_ACTIONS,
-};
+  enum : int16_t {
+    WALK_FORWARD = 0,
+    WALK_BACKWARD,
+    WALK_LEFT,
+    WALK_RIGHT,
+    ABILITY_PRIMARY,
+    ABILITY_SECONDARY,
+    SPRINT,
+    JUMP,
+    SHOOT,
+    KICK,
+    NUM_ACTIONS,
+  };
 }  // namespace PlayerAction
 
 namespace PacketBlockType {
@@ -61,8 +61,11 @@ enum : int16_t {
   CREATE_PROJECTILE,
   DESTROY_ENTITIES,
   MATCH_TIMER,
+  GAME_EVENT,
+  PHYSICS_DATA,
   NUM_BLOCK_TYPES,
 };
+
 
 }  // namespace PacketBlockType
 
@@ -80,6 +83,49 @@ enum class AbilityID {
   TELEPORT,
   // Fill with more abilities and passive boosts
   NUM_OF_ABILITY_IDS
+};
+
+
+struct GameEvent {
+  enum {GOAL = 0, KICK, HIT, NUDGE, BOUNCE, LAND, JUMP, NUM_EVENTS} type;
+  union {
+
+    // Goal
+    struct {
+    
+    } goal;
+
+    // Kick
+    struct {
+      EntityID player_id;
+    } kick;
+
+    // Hit
+    struct {
+      EntityID player_id;
+    } hit;
+
+    // Nudge
+    struct {
+      EntityID ball_id;
+    } nudge;
+
+    // Ball bounce
+    struct {
+      EntityID ball_id;
+    } bounce;
+
+    // Player Land
+    struct {
+      EntityID player_id;
+    } land;
+
+    // Player Jump
+    struct {
+      EntityID player_id;
+    } jump;
+
+  };
 };
 
 enum class ProjectileID {

@@ -20,6 +20,7 @@ int main(unsigned argc, char** argv) {
 
   GameServer server;
   dispatcher.sink<EventInfo>().connect<&GameServer::ReceiveEvent>(server);
+  dispatcher.sink<GameEvent>().connect<&GameServer::ReceiveGameEvent>(server);
   server.Init(update_rate);
   dispatcher.sink<EventInfo>().connect<&ServerPlayState::ReceiveEvent>(*server.GetPlayState());
   int num_frames = 0;

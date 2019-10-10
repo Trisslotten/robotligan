@@ -9,13 +9,15 @@
 #include <glm/glm.hpp>
 #include <iostream>
 #include <vector>
+#include <shared/physics_component.hpp>
 
 #include "boundingboxes.hpp"
 #include "collision.hpp"
-#include "ecs/components/physics_component.hpp"
 #include "ecs/components/pick_up_event.hpp"
 #include "ecs/components/projectile_component.hpp"
 #include "shared/transform_component.hpp"
+#include "shared/id_component.hpp"
+#include "ecs/components/pick_up_event.hpp"
 
 void DestroyEntity(entt::registry& registry, entt::entity entity);
 void ApplyForcePush(entt::registry& registry, glm::vec3 pos);
@@ -140,6 +142,14 @@ void HandleBallCollisions(entt::registry& registry, const CollisionList& list,
     if (object.tag ==
         PLAYER) {  // the only object colliding with the ball is a player
       PlayerBallCollision(registry, object, list.entity, arena);
+
+      // save game event
+      if (registry.has<IDComponent>(list.entity)) {
+        GameEvent nudge_event;
+        nudge_event.type = GameEvent::NUDGE;
+        nudge_event.nudge.ball_id = registry.get<IDComponent>(list.entity).id;
+        dispatcher.trigger(nudge_event);
+      }
     } else if (object.tag ==
                ARENA) {  // the only object colliding with the ball is the arena
       BallArenaCollision(registry, object, list.entity);
@@ -233,31 +243,40 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
 
   ball_hitbox.center += object.move_vector;
 
+
+  bool bounced = false;
+
   if (object.normal.x) {
     glm::vec3 temp_normal =
         glm::normalize(glm::vec3(object.normal.x, 0.f, 0.f));
     float dot_val = glm::dot(ball_physics.velocity, temp_normal);
-    if (dot_val < 0.f)
+    if (dot_val < 0.f) {
       ball_physics.velocity =
-          ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
+        ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
+      bounced = true;
+    }
   }
 
   if (object.normal.y) {
     glm::vec3 temp_normal =
         glm::normalize(glm::vec3(0.f, object.normal.y, 0.f));
     float dot_val = glm::dot(ball_physics.velocity, temp_normal);
-    if (dot_val < 0.f)
+    if (dot_val < 0.f) {
       ball_physics.velocity =
-          ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
+        ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
+      bounced = true;
+    }
   }
 
   if (object.normal.z) {
     glm::vec3 temp_normal =
         glm::normalize(glm::vec3(0.f, 0.f, object.normal.z));
     float dot_val = glm::dot(ball_physics.velocity, temp_normal);
-    if (dot_val < 0.f)
+    if (dot_val < 0.f) {
       ball_physics.velocity =
-          ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
+        ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
+      bounced = true;
+    }
   }
 
   if (object.normal.y > 0.2f) {
@@ -266,6 +285,16 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
       ball_physics.velocity.y = 0.f;
       ball_physics.is_airborne = false;
       ball_c.rotation = glm::quat();
+    }
+  }
+
+  if (bounced) {
+    // save game event
+    if (registry.has<IDComponent>(ball)) {
+      GameEvent bounce_event;
+      bounce_event.type = GameEvent::BOUNCE;
+      bounce_event.bounce.ball_id = registry.get<IDComponent>(ball).id;
+      dispatcher.trigger(bounce_event);
     }
   }
 
@@ -301,6 +330,13 @@ void PlayerArenaCollision(entt::registry& registry) {
         if (data.move_vector.y > 0.0f) {
           physics_c.is_airborne = false;
           physics_c.velocity.y = 0.f;
+          // save game event
+          if (registry.has<IDComponent>(player)) {
+            GameEvent land_event;
+            land_event.type = GameEvent::LAND;
+            land_event.land.player_id = registry.get<IDComponent>(player).id;
+            dispatcher.trigger(land_event);
+          }
         } else if (data.move_vector.y < 0.0f) {
           physics_c.velocity.y = 0.f;
 		}

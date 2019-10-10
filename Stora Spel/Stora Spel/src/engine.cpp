@@ -11,12 +11,16 @@
 #include "ecs/components.hpp"
 #include "ecs/systems/button_system.hpp"
 #include "ecs/systems/render_system.hpp"
+#include "ecs/systems/sound_system.hpp"
 #include "entitycreation.hpp"
 #include "shared/camera_component.hpp"
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
+#include "eventdispatcher.hpp"
+
+
 
 Engine::Engine() {}
 
@@ -25,11 +29,15 @@ Engine::~Engine() {}
 void Engine::Init() {
   glob::Init();
   Input::Initialize();
+  sound_system_.Init(this);
 
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
 
   // glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
+
+
+  dispatcher.sink<GameEvent>().connect<&SoundSystem::ReceiveGameEvent>(sound_system_);
 
   SetKeybinds();
 
@@ -224,6 +232,20 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       }
       break;
     }
+    case PacketBlockType::PHYSICS_DATA: {
+      int size = -1;
+      packet >> size;
+      for (int i = 0; i < size; i++) {
+        EntityID id;
+        glm::vec3 vel;
+        bool is_airborne;
+        packet >> id;
+        packet >> vel;
+        packet >> is_airborne;
+        play_state_.SetEntityPhysics(id, vel, is_airborne);
+      }
+      break;
+    }
     case PacketBlockType::CAMERA_TRANSFORM: {
       glm::quat orientation;
       packet >> orientation;
@@ -374,6 +396,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> second_ability_;
       break;
     }
+    case PacketBlockType::GAME_EVENT: {
+      GameEvent event;
+      packet >> event;
+      dispatcher.trigger(event);
+      break;
+    }
     case PacketBlockType::LOBBY_UPDATE_TEAM: {
       lobby_state_.HandleUpdateLobbyTeamPacket(packet);
       break;
@@ -398,7 +426,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         case ProjectileID::FORCE_PUSH_OBJECT: {
           play_state_.CreateForcePushObject(e_id);
           break;
-		}
+		    }
       }
       break;
     }
@@ -451,6 +479,8 @@ void Engine::UpdateChat(float dt) {
 
 void Engine::UpdateSystems(float dt) {
   UpdateChat(dt);
+  sound_system_.Update(*registry_current_);
+  
 
   if (Input::IsKeyDown(GLFW_KEY_TAB) &&
       current_state_->Type() == StateType::PLAY) {

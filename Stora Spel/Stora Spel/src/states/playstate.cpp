@@ -3,11 +3,14 @@
 #include <GLFW/glfw3.h>
 #include <glob/graphics.hpp>
 #include <glob/window.hpp>
+#include <slob/sound_engine.hpp>
+
 #include "shared/camera_component.hpp"
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 
-#include <shared\pick_up_component.hpp>
+#include <shared/pick_up_component.hpp>
+#include <shared/physics_component.hpp>
 #include "ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
@@ -68,6 +71,8 @@ void PlayState::Init() {
   to_send << rec;
   to_send << PacketBlockType::CLIENT_RECEIVE_UPDATES;
   client.Send(to_send);
+
+  engine_->GetSoundSystem().PlayAmbientSound(registry_gameplay_);
 }
 
 void PlayState::Update() {
@@ -94,6 +99,17 @@ void PlayState::Update() {
     // std::cout << "\n";
     transforms_.clear();
   }
+  if (!physics_.empty()) {
+    auto view_entities = registry_gameplay_.view<PhysicsComponent, IDComponent>();
+    for (auto entity : view_entities) {
+      auto& physics_c = view_entities.get<PhysicsComponent>(entity);
+      auto& id_c = view_entities.get<IDComponent>(entity);
+      auto phys = physics_[id_c.id];
+
+      physics_c.velocity = phys.first;
+      physics_c.is_airborne = phys.second;
+    }
+  }
 
   if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
     ToggleInGameMenu();
@@ -113,12 +129,7 @@ void PlayState::Update() {
   glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
 
   UpdateGameplayTimer();
-  /*
-  registry_gameplay_.view<PlayerComponent>().each(
-      [&](auto entity, PlayerComponent& player_c) {
-        stam_len = player_c.energy_current;
-      });
-  */
+  
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
   glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
   glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
@@ -224,6 +235,10 @@ void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,
   transforms_[player_id] = std::make_pair(pos, orientation);
 }
 
+void PlayState::SetEntityPhysics(EntityID player_id, glm::vec3 vel, bool is_airborne) {
+  physics_[player_id] = std::make_pair(vel, is_airborne);
+}
+
 void PlayState::SetCameraOrientation(glm::quat orientation) {
   registry_gameplay_.view<CameraComponent>().each(
       [&](auto entity, CameraComponent& cam_c) {
@@ -239,6 +254,8 @@ void PlayState::CreateInitialEntities() {
 }
 
 void PlayState::CreatePlayerEntities() {
+  auto& sound_engine = engine_->GetSoundEngine();
+
   std::cout << "DEBUG: playstate.cpp: Created " << player_ids_.size()
             << " players\n";
 
@@ -253,11 +270,13 @@ void PlayState::CreatePlayerEntities() {
         glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
 
     registry_gameplay_.assign<IDComponent>(entity, entity_id);
-    registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(),
                                                   glm::quat(), character_scale);
+    registry_gameplay_.assign<PhysicsComponent>(entity);
+    registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<ModelComponent>(entity, player_model,
                                               alter_scale * character_scale);
+    registry_gameplay_.assign<SoundComponent>(entity, sound_engine.CreatePlayer());
 
     if (entity_id == my_id_) {
       glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
@@ -278,6 +297,8 @@ void PlayState::CreateArenaEntity() {
 }
 
 void PlayState::CreateBallEntity() {
+  auto& sound_engine = engine_->GetSoundEngine();
+
   // Ball
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f);
@@ -286,8 +307,10 @@ void PlayState::CreateBallEntity() {
   registry_gameplay_.assign<ModelComponent>(ball, model_ball);
   registry_gameplay_.assign<TransformComponent>(ball, zero_vec, zero_vec,
                                                 glm::vec3(1.0f));
+  registry_gameplay_.assign<PhysicsComponent>(ball);
   registry_gameplay_.assign<BallComponent>(ball);
   registry_gameplay_.assign<IDComponent>(ball, ball_id_);
+  registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
 }
 
 void PlayState::CreateInGameMenu() {
