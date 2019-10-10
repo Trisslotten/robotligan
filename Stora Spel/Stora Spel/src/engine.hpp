@@ -8,6 +8,7 @@
 #include <limits>
 #include <unordered_map>
 #include <vector>
+#include "ecs/systems/sound_system.hpp"
 #include "Chat.hpp"
 #include "shared/shared.hpp"
 #include "states/state.hpp"
@@ -36,14 +37,21 @@ class Engine {
   NetAPI::Common::Packet& GetPacket() { return packet_; }
   void SetSendInput(bool should_send) { should_send_input_ = should_send; }
   void SetEnableChat(bool should_enable) { this->enable_chat_ = should_enable; }
+  SoundSystem& GetSoundSystem() { return sound_system_; }
+  slob::SoundEngine& GetSoundEngine() { return sound_system_.GetSoundEngine(); }
+  entt::registry* GetCurrentRegistry() { return registry_current_; }
 
   std::unordered_map<PlayerID, std::string> player_names_;
 
-  AbilityID GetSecondaryAbility() { return second_ability_;
-  }
-  
+  AbilityID GetSecondaryAbility() { return second_ability_; }
+
+ std::vector<unsigned int> GetTeamScores() { return scores_; }
+
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
+
+  Chat* GetChat() { return &chat_; }
+
  private:
   void SetKeybinds();
 
@@ -84,14 +92,16 @@ class Engine {
 
   // TODO: move to states
   std::vector<unsigned int> scores_;
-  
+
   int gameplay_timer_sec_ = 0;
   int countdown_timer_sec_ = 0;
 
-  Chat chat;
+  Chat chat_;
   std::string message_ = "";
 
   bool enable_chat_ = false;
+
+  SoundSystem sound_system_;
 
   AbilityID second_ability_ = AbilityID::NULL_ABILITY;
   unsigned int new_team_ = std::numeric_limits<unsigned int>::max();

@@ -80,11 +80,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>..\Network API\include;$(IncludePath)</IncludePath>
-    <IncludePath>$(SolutionDir)Graphics\external\include;$(SolutionDir)glm;$(SolutionDir)Graphics\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;$(SolutionDir)Physics\include;$(ProjectDir)src;$(ProjectDir)shared;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Graphics\external\include;$(SolutionDir)glm;$(SolutionDir)Graphics\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;$(SolutionDir)Physics\include;$(SolutionDir)Sound\include;$(ProjectDir)src;$(ProjectDir)shared;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>..\Network API\include;$(IncludePath)</IncludePath>
-    <IncludePath>$(SolutionDir)Graphics\external\include;$(SolutionDir)glm;$(SolutionDir)Graphics\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;$(SolutionDir)Physics\include;$(ProjectDir)src;$(ProjectDir)shared;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Graphics\external\include;$(SolutionDir)glm;$(SolutionDir)Graphics\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;$(SolutionDir)Physics\include;$(SolutionDir)Sound\include;$(ProjectDir)src;$(ProjectDir)shared;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -153,6 +153,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Chat.cpp" />
+    <ClCompile Include="src\ecs\systems\sound_system.cpp" />
     <ClCompile Include="src\engine.cpp" />
     <ClCompile Include="src\entitycreation.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -172,6 +173,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="shared\shared\physics_component.hpp" />
     <ClInclude Include="shared\shared\pick_up_component.hpp" />
     <ClInclude Include="src\ecs\components.hpp" />
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
@@ -183,6 +185,7 @@
     <ClInclude Include="src\ecs\components\light_component.hpp" />
     <ClInclude Include="src\ecs\components\model_component.hpp" />
     <ClInclude Include="ecs\components\player_component.hpp" />
+    <ClInclude Include="src\ecs\components\sound_component.hpp" />
     <ClInclude Include="src\ecs\systems\button_system.hpp" />
     <ClInclude Include="src\ecs\systems\print_position_system.hpp" />
     <ClInclude Include="src\ecs\systems\render_system.hpp" />
@@ -197,11 +200,13 @@
     <ClInclude Include="Components\projectile_component.hpp" />
     <ClInclude Include="Components\transform_component.hpp" />
     <ClInclude Include="Components\velocity.hpp" />
+    <ClInclude Include="src\ecs\systems\sound_system.hpp" />
     <ClInclude Include="src\engine.hpp" />
     <ClInclude Include="src\entitycreation.hpp" />
     <ClInclude Include="ecs\systems\button_system.hpp" />
     <ClInclude Include="ecs\systems\print_position_system.hpp" />
     <ClInclude Include="shared\shared\shared.hpp" />
+    <ClInclude Include="src\eventdispatcher.hpp" />
     <ClInclude Include="src\states\state.hpp" />
     <ClInclude Include="src\util\global_settings.hpp" />
     <ClInclude Include="ecs\systems\render_system.hpp" />
