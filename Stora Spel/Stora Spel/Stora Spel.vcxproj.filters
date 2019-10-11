@@ -69,6 +69,7 @@
     <None Include="Assets\shaders\modelemissive.frag" />
     <None Include="Assets\shaders\fullscreenquad.frag" />
     <None Include="Assets\shaders\fullscreenquad.vert" />
+    <None Include="Assets\shaders\kawaseblur.comp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />

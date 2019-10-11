@@ -100,7 +100,6 @@ GLint Model::TextureFromFile(const char* path, std::string directory, aiTextureT
   if(type == aiTextureType_EMISSIVE) {
     internal_format = GL_RED;
     color_type = LCT_GREY;
-    std::cout << "aiTextureType_EMISSIVE: " << path << "\n";
     is_emissive_ = true;
   }
   
@@ -195,7 +194,6 @@ std::vector<Texture> Model::LoadMaterielTextures(aiMaterial* material,
       temp_texture.id_texture = TextureFromFile(ai_string.C_Str(), directory_, type);
       temp_texture.type = type_name;
       temp_texture.path = ai_string;
-      std::cout << ai_string.C_Str() << "\n";
       texture.push_back(temp_texture);
       texture_loaded_.push_back(temp_texture);
     }

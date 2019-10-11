@@ -230,6 +230,7 @@
     <None Include="assets\shaders\e2Dshader.vert" />
     <None Include="assets\shaders\guishader.frag" />
     <None Include="assets\shaders\guishader.vert" />
+    <None Include="Assets\shaders\kawaseblur.comp" />
     <None Include="Assets\shaders\modelemissive.frag" />
     <None Include="assets\shaders\modelshader.frag" />
     <None Include="assets\shaders\modelshader.vert" />
