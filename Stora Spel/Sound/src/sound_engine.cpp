@@ -15,7 +15,7 @@ namespace slob {
   class EXPORT Sound {
   public:
     void LoadFromFile(const std::string& path, FMOD::System* system) {
-      system->createSound(path.c_str(), FMOD_3D, nullptr, &sound_);
+      system->createSound(path.c_str(), FMOD_CREATECOMPRESSEDSAMPLE, nullptr, &sound_);
       sound_->setMode(FMOD_LOOP_NORMAL);
     }
 
