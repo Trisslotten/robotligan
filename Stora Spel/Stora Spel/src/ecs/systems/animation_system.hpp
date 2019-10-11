@@ -89,25 +89,25 @@ void UpdateAnimations(entt::registry& registry, float dt) {
 		if (first) {
 			//playAnimation(11, 2.f, &a, 10, 1.f, LOOP);
 			//playAnimation(13, 2.f, &a, 10, 1.f, LOOP);
-			playAnimation(7, 1.f, &a, 10, 1.f, LOOP);
-			//playAnimation(4, 1.f, &a, 11, 1.f, LOOP, a.model_data.upperBody);
+			playAnimation(14, 1.f, &a, 10, 1.f, LOOP);
+			//playAnimation(13, 1.f, &a, 11, 1.f, LOOP, a.model_data.upperBody);
 			//playAnimation(11, 2.f, &a, 10, 1.f, LOOP);
 			//playAnimation(13, 2.f, &a, 10, 1.f, LOOP);
 			//a.active_animations.at(1)->strength = 0.5f;
 			first = false;
 		}
-		/*
+		
 		time_ += dt;
-		a.active_animations.at(0)->strength_ =  1.f - (sin(time_) + 1.f) / 2.f;
-		a.active_animations.at(1)->strength_ = (sin(time_) + 1.f) / 2.f;
+		//a.active_animations.at(0)->strength_ =  1.f - (sin(time_) + 1.f) / 2.f;
+		//a.active_animations.at(1)->strength_ = (sin(time_) + 1.f) / 2.f;
 		//4 = run
 
 		if (time_ > 7 && !p) {
 			//playAnimation(9, 1.f, &a, 10, 1.f, LOOP);
-			playAnimation(7, 0.2f, &a, 12, 1.f, MUTE_ALL);
+			//playAnimation(7, 0.2f, &a, 12, 1.f, MUTE_ALL);
 			p = true;
 		}
-		*/
+		
 
 		for (int i = 0; i < a.active_animations.size(); i++) {
 			glob::Animation* anim = a.active_animations.at(i);

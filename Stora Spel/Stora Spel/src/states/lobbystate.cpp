@@ -175,10 +175,11 @@ void LobbyState::CreateBackgroundEntities() {
   // ladda in och skapa entity för robotar
   auto robot = registry_lobby_.create();
   auto& trans = registry_lobby_.assign<TransformComponent>(
-      robot, zero_vec, zero_vec, glm::vec3(0.15f));
+      robot, zero_vec, glm::vec3(0.f, 180.f, 0.f), glm::vec3(0.01f));
   glob::ModelHandle model_robot =
       glob::GetModel("assets/Mech/Mech.fbx");
   registry_lobby_.assign<ModelComponent>(robot, model_robot);
+  //registry_lobby_.assign<AnimationComponent>(robot, glob::GetAnimationData(model_robot));
   trans.position = glm::vec3(10.f, -4.f, 0.f);
 
   // lägga ut en kamera i scenen
