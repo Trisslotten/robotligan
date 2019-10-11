@@ -10,6 +10,7 @@
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "ecs/systems/button_system.hpp"
+#include "ecs/systems/particle_system.hpp"
 #include "ecs/systems/render_system.hpp"
 #include "entitycreation.hpp"
 #include "shared/camera_component.hpp"
@@ -395,6 +396,7 @@ void Engine::UpdateSystems(float dt) {
   }
 
   button_system::Update(*registry_current_);
+  ParticleSystem(*registry_current_, dt);
   RenderSystem(*registry_current_);
 }
 

@@ -53,6 +53,8 @@
     <ClInclude Include="shared\shared\pick_up_component.hpp" />
     <ClInclude Include="src\util\player_settings.hpp" />
     <ClInclude Include="src\Chat.hpp" />
+    <ClInclude Include="src\ecs\components\particle_component.hpp" />
+    <ClInclude Include="src\ecs\systems\particle_system.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />
@@ -65,6 +67,7 @@
     <None Include="assets\shaders\e2Dshader.vert" />
     <None Include="assets\shaders\e2Dshader.frag" />
     <None Include="Assets\shaders\particle.geom" />
+    <None Include="Assets\shaders\compute_shader.comp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />

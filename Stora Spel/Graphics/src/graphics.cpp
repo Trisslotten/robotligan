@@ -6,12 +6,16 @@
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <lodepng.hpp>
 
+#include <fstream>
 #include <iostream>
+#include <sstream>
 #include <unordered_map>
 
 #include "Model/model.hpp"
 #include "glob/camera.hpp"
+#include "Particles/particle_settings.hpp"
 #include "particles/particle_system.hpp"
 #include "shader.hpp"
 
@@ -64,6 +68,7 @@ struct LightItem {
 ShaderProgram test_shader;
 ShaderProgram model_shader;
 ShaderProgram particle_shader;
+ShaderProgram compute_shader;
 ShaderProgram text_shader;
 ShaderProgram wireframe_shader;
 ShaderProgram gui_shader;
@@ -91,7 +96,16 @@ GUIHandle current_gui_guid = 1;
 E2DHandle current_e2D_guid = 1;
 std::unordered_map<std::string, ModelHandle> model_handles;
 std::unordered_map<ModelHandle, Model> models;
-std::unordered_map<ParticleSystemHandle, ParticleSystem> particle_systems;
+std::unordered_map<ParticleSystemHandle, int> particle_systems;
+std::unordered_map<std::string, GLuint> textures;
+
+struct ParticleSystemInfo {
+  ParticleSystem system;
+  bool in_use;
+
+  ParticleSystemInfo(ShaderProgram *ptr, GLuint tex, bool use) : system(ptr, tex), in_use(use) {}
+};
+std::vector<ParticleSystemInfo> buffer_particle_systems;
 std::unordered_map<std::string, Font2DHandle> font_2D_handles;
 std::unordered_map<Font2DHandle, Font2D> fonts;
 std::unordered_map<std::string, GUIHandle> gui_handles;
@@ -109,7 +123,7 @@ std::unordered_map<ModelHandle, GLuintBuffers> wireframe_buffers;
 
 std::vector<RenderItem> items_to_render;
 std::vector<LightItem> lights_to_render;
-std::vector<ParticleSystem*> particles_to_render;
+std::vector<int> particles_to_render;
 std::vector<glm::mat4> cubes;
 std::vector<ModelHandle> wireframe_meshes;
 std::vector<TextItem> text_to_render;
@@ -164,6 +178,75 @@ void DrawWireFrameMeshes(ModelHandle model_h) {
   glBindVertexArray(0);
 }
 
+void CreateDefaultParticleTexture() {
+  GLuint texture;
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  glm::vec2 middle(63.5f, 63.5f);
+  std::vector<float> data(128 * 128 * 4);
+  for (size_t y = 0; y < 128; ++y) {
+    for (size_t x = 0; x < 128; ++x) {
+      glm::vec2 result = middle - glm::vec2(x, y);
+      float value = 1.0f;
+      if (glm::length(result) > 63.5f) {
+        value = 0.0f;
+      } else {
+        value = 1.0f - (glm::length(result) / 63.5f);
+      }
+
+      for (int i = 0; i < 3; ++i) data[y * 128 * 4 + x * 4 + i] = 1.0f;
+
+      data[y * 128 * 4 + x * 4 + 3] = value;
+    }
+  }
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 128, 128, 0, GL_RGBA, GL_FLOAT,
+               data.data());
+
+  textures["default"] = texture;
+}
+
+GLint TextureFromFile(std::string filename) {
+  const char *path = "Assets"; 
+  std::string directory = std::string(path);
+  filename = directory + '/' + filename;
+
+  // Generate texture id
+  GLuint texture_id;
+  glGenTextures(1, &texture_id);
+
+  // Load texture
+  std::vector<unsigned char> image;
+  unsigned width, height;
+
+  unsigned error = lodepng::decode(image, width, height, filename);
+  if (error != 0) {
+    std::cout << "ERROR: Could not load texture: " << filename << "\n";
+    return false;
+  }
+
+  // Generate texture data
+  glBindTexture(GL_TEXTURE_2D, texture_id);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+               GL_UNSIGNED_BYTE, image.data());
+  // glGenerateMipmap(GL_TEXTURE_2D);
+
+  // Set some parameters for the texture
+
+  glBindTexture(GL_TEXTURE_2D, 0);  // Unbind the texture
+
+  return texture_id;
+}
+
 void Init() {
   test_shader.add("testshader.frag");
   test_shader.add("testshader.vert");
@@ -177,6 +260,12 @@ void Init() {
   particle_shader.add("particle.geom");
   particle_shader.add("particle.frag");
   particle_shader.compile();
+
+  compute_shader.add("compute_shader.comp");
+  compute_shader.compile();
+
+  CreateDefaultParticleTexture();
+  textures["smoke"] = TextureFromFile("smoke.png");
 
   wireframe_shader.add("modelshader.vert");
   wireframe_shader.add("wireframe.frag");
@@ -249,6 +338,12 @@ void Init() {
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
                         (GLvoid *)0);
   glBindVertexArray(0);
+
+  //buffer_particle_systems.reserve(1);
+  //for (int i = 0; i < 1; ++i) {
+  //  buffer_particle_systems.emplace_back();
+  //  buffer_particle_systems[i].second = false;
+  //}
 }
 
 // H=Handle, A=Asset
@@ -286,12 +381,138 @@ ModelHandle GetModel(const std::string &filepath) {
                                       filepath);
 }
 
+std::pair<ParticleSettings, std::string> ReadParticleFile(std::string filename) {
+  const char *path = "Assets/Particle config";
+  std::string directory = std::string(path);
+  filename = directory + '/' + filename;
+   // Create three strings to hold entire line, key and value
+  std::string cur_str;
+  std::string key_str;
+  std::string val_str;
+
+  // Clear the settings map
+  std::unordered_map<std::string, std::string> settings_map;
+
+  // Open a file stream
+  std::ifstream settings_file(filename);
+
+  // If the file isn't able to be opened, write error
+  if (!settings_file.is_open()) {
+    std::cout << "graphics.cpp ReadParticles()\n";
+    return {};
+  }
+
+  // Read through the settings file
+  while (settings_file) {
+    // Read up to the end of the line. Save as the current line
+    std::getline(settings_file, cur_str, '\n');
+
+    // Check if the first char is '>'
+    if (!(cur_str.size() == 0) && cur_str.at(0) == '>') {
+      // If it is, read the string up the '=' delimiter. That is the key.
+      key_str = cur_str.substr(0, cur_str.find('='));
+
+      // Remove the '>' from the key
+      key_str.erase(0, 1);
+
+      // Remove the part holding the key from the strong, along with the
+      // delimiter
+      cur_str.erase(0, cur_str.find('=') + 1);
+
+      // Save the remaining string as the value
+      val_str = cur_str;
+
+      // Save what has been read into the map
+      settings_map[key_str] = val_str;
+    }
+  }
+
+  settings_file.close();
+
+  ParticleSettings ps = {};
+  std::string texture = "default";
+  for (auto it : settings_map) {
+    if (it.first == "color") {
+      std::stringstream ss(it.second);
+      glm::vec4 col;
+      ss >> col.x;
+      ss >> col.y;
+      ss >> col.z;
+      ss >> col.w;
+
+      ps.color = col;
+    } else if (it.first == "emit_pos") {
+      std::stringstream ss(it.second);
+      glm::vec3 pos;
+      ss >> pos.x;
+      ss >> pos.y;
+      ss >> pos.z;
+
+      ps.emit_pos = pos;
+    } else if (it.first == "size") {
+      std::stringstream ss(it.second);
+      float size;
+      ss >> size;
+
+      ps.size = size;
+    } else if (it.first == "time") {
+      std::stringstream ss(it.second);
+      float time;
+      ss >> time;
+
+      ps.time = time;
+    } else if (it.first == "spawn_rate") {
+      std::stringstream ss(it.second);
+      float rate;
+      ss >> rate;
+
+      ps.spawn_rate = rate;
+    } else if (it.first == "texture") {
+      std::stringstream ss(it.second);
+      ss >> texture;
+    }
+  }
+
+  return {ps, texture};
+}
+
 ParticleSystemHandle CreateParticleSystem() {
   auto handle = current_particle_guid;
-  particle_systems[handle] = ParticleSystem();
+
+  int index = -1;
+  for (int i = 0; i < buffer_particle_systems.size(); ++i) {
+    if (buffer_particle_systems[i].in_use == false) {
+      index = i;
+      buffer_particle_systems[i].in_use = true;
+    }
+  }
+  
+  if (index < 0) {
+    index = buffer_particle_systems.size();
+    buffer_particle_systems.emplace_back(&compute_shader, textures["smoke"], true);
+    //buffer_particle_systems[index].in_use = true;
+  }
+
+  if (index == -1) return -1;
+  particle_systems[handle] = index;
   current_particle_guid++;
   
   return handle;
+}
+
+void SetParticleSettings(ParticleSystemHandle handle, std::string filename) {
+  auto find_res = particle_systems.find(handle);
+  if (find_res == particle_systems.end()) {
+    std::cout << "ERROR graphics.cpp: invalid handle\n";
+    return;
+  }
+
+  auto settings = ReadParticleFile(filename);
+  auto texture = textures[settings.second];
+
+  int index = find_res->second;
+  buffer_particle_systems[index].system.Settings(settings.first);
+  buffer_particle_systems[index].system.SetTexture(texture);
 }
 
 GUIHandle GetGUIItem(const std::string &filepath) {
@@ -320,7 +541,18 @@ E2DHandle GetE2DItem(const std::string &filepath) {
   return GetAsset<E2DHandle, Elements2D>(e2D_handles, e2D_elements,
                                          current_e2D_guid, filepath);
 }
-/*
+
+void UpdateParticles(ParticleSystemHandle handle, float dt) {
+  auto find_res = particle_systems.find(handle);
+  if (find_res == particle_systems.end()) {
+    std::cout << "ERROR graphics.cpp: could not find submitted particles\n";
+    return;
+  }
+
+  int index = find_res->second;
+  buffer_particle_systems[index].system.Update(dt);
+}
+    /*
 TextureHandle GetTexture(const std::string &filepath) {
   return GetAsset<TextureHandle, Texture>(texture_handles, textures,
                                           current_texture_guid, filepath);
@@ -366,7 +598,7 @@ void SubmitParticles(ParticleSystemHandle handle) {
     return;
   }
   
-  particles_to_render.push_back(&find_res->second);
+  particles_to_render.push_back(find_res->second);
 }
 
 void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
@@ -491,12 +723,6 @@ void Render() {
     render_item.model->Draw(model_shader);
   }
 
-  // render particles
-  particle_shader.use();
-  particle_shader.uniform("cam_transform", cam_transform);
-  for (auto p : particles_to_render) {
-    p->Draw(particle_shader);
-  }
 
   // render wireframe cubes
   for (auto &m : cubes) DrawCube(m);
@@ -514,6 +740,16 @@ void Render() {
                               e2D_item.rot);
   }
 
+  // render particles
+  particle_shader.use();
+  particle_shader.uniform("cam_transform", cam_transform);
+  particle_shader.uniform("cam_pos", camera.GetPosition());
+  particle_shader.uniform("cam_up", camera.GetUpVector());
+  for (auto p : particles_to_render) {
+    buffer_particle_systems[p].system.Draw(particle_shader, camera);
+  }
+
+  glBindVertexArray(quad_vao);
   gui_shader.use();
   for (auto &gui_item : gui_items_to_render) {
     gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale,

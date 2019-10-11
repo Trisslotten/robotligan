@@ -36,9 +36,13 @@ void RenderSystem(entt::registry& registry) {
   }
 
   // submit particles
-  auto view_particles = registry.view<glob::ParticleSystemHandle>();
+  auto view_particles = registry.view<ParticleComponent>();
   for (auto entity : view_particles) {
-    glob::SubmitParticles(view_particles.get(entity));
+    auto& particle_c = view_particles.get(entity);
+
+    for (int i = 0; i < particle_c.handles.size(); ++i) {
+      glob::SubmitParticles(particle_c.handles[i]);
+    }
   }
 
   // submit lights

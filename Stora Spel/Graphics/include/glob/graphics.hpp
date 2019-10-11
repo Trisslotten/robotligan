@@ -35,7 +35,9 @@ EXPORT void Init();
  */
 EXPORT ModelHandle GetModel(const std::string& filepath);
 
-EXPORT ParticleSystemHandle CreateParticleSystem(); 
+EXPORT ParticleSystemHandle CreateParticleSystem();
+
+EXPORT void SetParticleSettings(ParticleSystemHandle handle, std::string filename);
 
 EXPORT GUIHandle GetGUIItem(const std::string& filepath);
 
@@ -44,6 +46,8 @@ EXPORT Font2DHandle GetFont(const std::string& filepath);
 EXPORT E2DHandle GetE2DItem(const std::string& filepath);
 
 EXPORT glob::MeshData GetMeshData(ModelHandle model_h);
+
+EXPORT void UpdateParticles(ParticleSystemHandle handle, float dt);
 
 /*
  * Returns a texture handle for the specified image file.

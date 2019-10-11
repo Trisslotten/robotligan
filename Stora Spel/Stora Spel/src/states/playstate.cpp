@@ -45,7 +45,12 @@ void PlayState::TestParticles() {
   auto entity = registry_gameplay_.create();
   auto handle = glob::CreateParticleSystem();
 
-  registry_gameplay_.assign<glob::ParticleSystemHandle>(entity, handle);
+  std::vector handles = {handle};
+  std::vector offsets = {glm::vec3(0.f)};
+
+  glob::SetParticleSettings(handle, "fire.txt");
+
+  registry_gameplay_.assign<ParticleComponent>(entity, handles, offsets);
 }
 
 void PlayState::Init() {
