@@ -489,6 +489,11 @@ void ProjectileArenaCollision(entt::registry& registry) {
             DestroyEntity(registry, projectile);
             break;
           }
+          case ProjectileID::MISSILE_OBJECT: {
+            //ApplyForcePush(registry, proj_hitbox.center);
+            DestroyEntity(registry, projectile);
+            break;
+          }
         }
       }
     }

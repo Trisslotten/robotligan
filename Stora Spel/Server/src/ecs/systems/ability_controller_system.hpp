@@ -6,7 +6,7 @@
 #include <boundingboxes.hpp>
 #include "ecs/components.hpp"
 #include "shared/camera_component.hpp"
-#include "ecs/components.hpp"
+#include "shared/transform_component.hpp"
 #include "util/event.hpp"
 
 #include "util/event.hpp"
@@ -15,76 +15,78 @@
 namespace ability_controller {
 
 bool TriggerAbility(entt::registry &registry, AbilityID in_a_id,
-                    PlayerID player_id);
-void CreateMissileEntity(entt::registry &registry);
+                    PlayerID player_id, entt::entity caster);
+void CreateMissileEntity(entt::registry &registry, entt::entity caster);
 void DoSuperStrike(entt::registry &registry);
 entt::entity CreateCannonBallEntity(entt::registry &registry, PlayerID id);
 void DoSwitchGoals(entt::registry &registry);
 entt::entity CreateForcePushEntity(entt::registry &registry, PlayerID id);
 
 void Update(entt::registry &registry, float dt) {
-  registry.view<PlayerComponent, AbilityComponent>().each(
-      [&](PlayerComponent &player_component,
-          AbilityComponent &ability_component) {
-        // Loop over each entity with a PlayerComponent
-        // and Ability Component
+  auto view_players =
+      registry.view<PlayerComponent, TransformComponent, AbilityComponent>();
+  for (auto player : view_players) {
+    auto &ability_component = registry.get<AbilityComponent>(player);
+    auto &transform_component = registry.get<TransformComponent>(player);
+    auto &player_component = registry.get<PlayerComponent>(player);
 
-        // Update cooldowns
-        ability_component.cooldown_remaining -= dt;
-        ability_component.shoot_cooldown -= dt;
-        if (ability_component.cooldown_remaining < 0.0f) {
-          ability_component.cooldown_remaining = 0.0f;
-        }
-        if (ability_component.shoot_cooldown < 0.0f) {
-          ability_component.shoot_cooldown = 0.0f;
-        }
+    // Loop over each entity with a PlayerComponent
+    // and Ability Component
 
-        // First check if primary ability is being used
-        // AND ability is not on cooldown
-        if (ability_component.use_primary &&
-            !(ability_component.cooldown_remaining > 0.0f)) {
-          // Trigger the ability
-          if (TriggerAbility(registry, ability_component.primary_ability,
-                             player_component.client_id)) {
-            // If ability triggered successfully set the
-            // AbilityComponent's cooldown to be on max capacity
-            ability_component.cooldown_remaining =
-                ability_component.cooldown_max;
-          }
-        }
-        // When finished set primary ability to not activated
-        ability_component.use_primary = false;
+    // Update cooldowns
+    ability_component.cooldown_remaining -= dt;
+    ability_component.shoot_cooldown -= dt;
+    if (ability_component.cooldown_remaining < 0.0f) {
+      ability_component.cooldown_remaining = 0.0f;
+    }
+    if (ability_component.shoot_cooldown < 0.0f) {
+      ability_component.shoot_cooldown = 0.0f;
+    }
 
-        // Then check if secondary ability is being used
-        if (ability_component.use_secondary) {
-          // Trigger the ability
-          if (TriggerAbility(registry, ability_component.secondary_ability,
-                             player_component.client_id)) {
-            // If ability triggered successfully, remove the
-            // slotted secondary ability
-            ability_component.secondary_ability = AbilityID::NULL_ABILITY;
-          }
-        }
-        // When finished set secondary ability to not activated
-        ability_component.use_secondary = false;
+    // First check if primary ability is being used
+    // AND ability is not on cooldown
+    if (ability_component.use_primary &&
+        !(ability_component.cooldown_remaining > 0.0f)) {
+      // Trigger the ability
+      if (TriggerAbility(registry, ability_component.primary_ability,
+                         player_component.client_id, player)) {
+        // If ability triggered successfully set the
+        // AbilityComponent's cooldown to be on max capacity
+        ability_component.cooldown_remaining = ability_component.cooldown_max;
+      }
+    }
+    // When finished set primary ability to not activated
+    ability_component.use_primary = false;
 
-        // Check if the player should shoot
-        if (ability_component.shoot &&
-            ability_component.shoot_cooldown <= 0.0f) {
-          entt::entity entity =
-              CreateCannonBallEntity(registry, player_component.client_id);
-          ability_component.shoot_cooldown = 1.0f;
-          EventInfo e;
-          e.event = Event::CREATE_CANNONBALL;
-          e.entity = entity;
-          dispatcher.enqueue<EventInfo>(e);
-        }
-        ability_component.shoot = false;
-      });
+    // Then check if secondary ability is being used
+    if (ability_component.use_secondary) {
+      // Trigger the ability
+      if (TriggerAbility(registry, ability_component.secondary_ability,
+                         player_component.client_id, player)) {
+        // If ability triggered successfully, remove the
+        // slotted secondary ability
+        ability_component.secondary_ability = AbilityID::NULL_ABILITY;
+      }
+    }
+    // When finished set secondary ability to not activated
+    ability_component.use_secondary = false;
+
+    // Check if the player should shoot
+    if (ability_component.shoot && ability_component.shoot_cooldown <= 0.0f) {
+      entt::entity entity =
+          CreateCannonBallEntity(registry, player_component.client_id);
+      ability_component.shoot_cooldown = 1.0f;
+      EventInfo e;
+      e.event = Event::CREATE_CANNONBALL;
+      e.entity = entity;
+      dispatcher.enqueue<EventInfo>(e);
+    }
+    ability_component.shoot = false;
+  }
 }
 
 bool TriggerAbility(entt::registry &registry, AbilityID in_a_id,
-                    PlayerID player_id) {
+                    PlayerID player_id, entt::entity caster) {
   switch (in_a_id) {
     case AbilityID::NULL_ABILITY:
       break;
@@ -107,7 +109,7 @@ bool TriggerAbility(entt::registry &registry, AbilityID in_a_id,
     case AbilityID::INVISIBILITY:
       break;
     case AbilityID::MISSILE:
-      CreateMissileEntity(registry);
+      CreateMissileEntity(registry, caster);
       return true;
       break;
     case AbilityID::SUPER_STRIKE:
@@ -126,11 +128,29 @@ bool TriggerAbility(entt::registry &registry, AbilityID in_a_id,
   }
 }
 
-void CreateMissileEntity(entt::registry &registry) {
+void CreateMissileEntity(entt::registry &registry, entt::entity caster) {
   // Create new entity
-  auto entity = registry.create();
+  auto &player_c = registry.get<PlayerComponent>(caster);
+  auto &trans_c = registry.get<TransformComponent>(caster);
+  auto &cam_c = registry.get<CameraComponent>(caster);
 
-  // WIP: Assign it the correct components here
+  auto missile = registry.create();
+  registry.assign<MissileComponent>(missile, 20.f, player_c.target, player_c.client_id);
+  auto &missile_trans_c = registry.assign<TransformComponent>(missile);
+  missile_trans_c.position = trans_c.position + cam_c.GetLookDir();
+  missile_trans_c.rotation = cam_c.orientation;
+
+  auto& missile_phys_c = registry.assign<PhysicsComponent>(missile);
+  missile_phys_c.velocity = cam_c.GetLookDir();
+  missile_phys_c.is_airborne = true;
+
+  registry.assign<ProjectileComponent>(missile, ProjectileID::MISSILE_OBJECT,
+                                       player_c.client_id);
+
+  EventInfo e;
+  e.event = Event::CREATE_MISSILE;
+  e.entity = missile;
+  dispatcher.enqueue<EventInfo>(e);
 }
 
 void DoSuperStrike(entt::registry &registry) {
@@ -205,8 +225,9 @@ entt::entity CreateCannonBallEntity(entt::registry &registry, PlayerID id) {
     if (pc.client_id == id) {
       float speed = 20.0f;
       auto cannonball = registry.create();
-      registry.assign<PhysicsComponent>(
-          cannonball, glm::vec3(cc.GetLookDir() * speed), glm::vec3(0.f), false, 0.0f);
+      registry.assign<PhysicsComponent>(cannonball,
+                                        glm::vec3(cc.GetLookDir() * speed),
+                                        glm::vec3(0.f), false, 0.0f);
       registry.assign<TransformComponent>(
           cannonball,
           glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),
@@ -266,8 +287,8 @@ entt::entity CreateForcePushEntity(entt::registry &registry, PlayerID id) {
       float speed =
           GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_SPEED");
       auto force_object = registry.create();
-      registry.assign<PhysicsComponent>(
-         force_object, cc.GetLookDir() * speed, glm::vec3(0.f), true, 0.0f);
+      registry.assign<PhysicsComponent>(force_object, cc.GetLookDir() * speed,
+                                        glm::vec3(0.f), true, 0.0f);
       registry.assign<TransformComponent>(
           force_object,
           glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),

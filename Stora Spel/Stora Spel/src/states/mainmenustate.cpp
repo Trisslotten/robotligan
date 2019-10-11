@@ -12,6 +12,7 @@ void MainMenuState::Startup() {
 void MainMenuState::Init() {
   auto& client = engine_->GetClient();
   //
+  glob::window::SetMouseLocked(false);
   engine_->SetSendInput(false);
   engine_->SetCurrentRegistry(&registry_mainmenu_);
   engine_->SetEnableChat(false);

@@ -170,6 +170,7 @@
     <ClInclude Include="src\ecs\systems\collision_system.hpp" />
     <ClInclude Include="src\ecs\systems\collision_temp_debug_system.h" />
     <ClInclude Include="src\ecs\systems\goal_system.hpp" />
+    <ClInclude Include="src\ecs\systems\missile_system.hpp" />
     <ClInclude Include="src\ecs\systems\physics_system.hpp" />
     <ClInclude Include="src\ecs\systems\player_controller_system.hpp" />
     <ClInclude Include="src\ecs\systems\target_system.hpp" />
