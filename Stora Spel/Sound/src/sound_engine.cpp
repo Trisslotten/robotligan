@@ -140,7 +140,7 @@ namespace slob {
 
   void SoundEngine::SetListenerAttributes(glm::vec3 pos, glm::quat orientation,
     glm::vec3 vel) {
-    glm::vec3 forward = orientation * glm::vec3(1, 0, 0);
+    glm::vec3 forward = orientation * glm::vec3(-1, 0, 0);
     glm::vec3 up = orientation * glm::vec3(0, 1, 0);
     impl_->system->set3DListenerAttributes(
       0, (FMOD_VECTOR*)& pos, (FMOD_VECTOR*)& vel, (FMOD_VECTOR*)& forward,
