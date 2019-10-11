@@ -116,6 +116,9 @@ void LobbyState::UpdateNetwork() {}
 
 void LobbyState::Cleanup() {
   me_ready_ = false;
+  for (auto& l_p : lobby_players_) {
+    l_p.second.ready = false;
+  }
   registry_lobby_.reset();
 }
 
