@@ -12,8 +12,9 @@
 #include "ecs/components/ball_component.hpp"
 #include "ecs/components/goal_component.hpp"
 #include "ecs/components/team_component.hpp"
-
 namespace goal_system {
+const unsigned kDistanceForBlock = 10;
+const float kTimeToSimulate = 1.5f;
 bool Update(entt::registry& registry) {
   auto view_balls = registry.view<BallComponent, TransformComponent,
                                   physics::Sphere, PhysicsComponent>();
@@ -37,6 +38,7 @@ bool Update(entt::registry& registry) {
         GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
 
         physics::IntersectData data = Intersect(ball_sphere_c, goal_OBB_c);
+		auto distance = glm::distance(ball_sphere_c.center, goal_OBB_c.center);
         if (data.collision) {
           // create event for goal
           
@@ -66,10 +68,53 @@ bool Update(entt::registry& registry) {
                 player_points_c.AddGoals(-1);
               }
             }
+			else if (player_player_c.client_id == ball_ball_c.prev_touch)
+			{
+				if (goal_team_c.team == player_team_c.team)
+				{
+					player_points_c.AddPoints(POINTS_ASSIST);
+					player_points_c.AddAssists(1);
+				}
+			}
           }
 
           return true;
-        }
+		}
+		else if (distance < kDistanceForBlock)
+		{
+			auto view_players =  registry.view<PlayerComponent, TeamComponent, PointsComponent>();
+			/*
+				TODO: Calculate the time it would take for the ball to travel to the goal. Prio 2
+			
+			*/
+			float acceleration = 1.0f;
+			auto simulated_position = ball_physics_c.velocity * kTimeToSimulate + (float(1.0/2.0) * ball_physics_c.acceleration * (kTimeToSimulate * kTimeToSimulate));
+			physics::Sphere s;
+			s.center = ball_sphere_c.center + simulated_position;
+			s.radius = ball_sphere_c.radius;
+			physics::IntersectData simulated_goal = physics::Intersect(s, goal_OBB_c);
+			if (glm::distance(s.center, goal_OBB_c.center) < 5)
+			{
+				for (auto player : view_players) {
+					auto& player_player_c = registry.get<PlayerComponent>(player);
+					auto& player_transform_c = registry.get<TransformComponent>(player);
+					auto& player_team_c = registry.get<TeamComponent>(player);
+					auto& player_points_c = registry.get<PointsComponent>(player);
+					auto& player_obb = registry.get<physics::OBB>(player);
+					auto simulated_player = physics::Intersect(ball_sphere_c, player_obb);
+					if (simulated_player.collision)
+					{
+						if (player_team_c.team != goal_team_c.team)
+						{
+							//Blocked
+							player_points_c.AddPoints(POINTS_SAVE);
+							player_points_c.AddBlock(1);
+						}
+						break;
+					}
+				}
+			}
+		}
       }
     }
   }

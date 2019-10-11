@@ -4,6 +4,8 @@
 struct PointsComponent {
   int points = 0;
   int goals = 0;
+  int assists = 0;
+  int blocks = 0;
   bool changed = true;
 
   void AddPoints(int p) {
@@ -21,6 +23,20 @@ struct PointsComponent {
   int GetGoals() {
     //changed = false;
     return goals;
+  }
+  void AddAssists(int a) {
+	  assists += a;
+  }
+  int GetAssists() {
+	  return assists;
+  }
+  void AddBlock(int b)
+  {
+	  blocks++;
+  }
+  int GetBlocks()
+  {
+	  return blocks;
   }
 
 };

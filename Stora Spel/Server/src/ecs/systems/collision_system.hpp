@@ -92,6 +92,7 @@ void UpdateCollisions(entt::registry& registry) {
       if (data.collision) {
         ball_collisions[ball_counter].collision_list.push_back(
             {player, data.normal, data.move_vector, PLAYER});
+		ball_ball.prev_touch = ball_ball.last_touch;
         ball_ball.last_touch = player_player.client_id;
       }
     }
