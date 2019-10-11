@@ -10,5 +10,6 @@
 #include "components/team_component.hpp"
 #include "components/goal_component.hpp"
 #include "components/points_component.hpp"
+#include "components/missile_component.hpp"
 
 #endif  // COMPONENTS_HPP_
