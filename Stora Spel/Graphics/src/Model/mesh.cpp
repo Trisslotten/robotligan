@@ -48,7 +48,7 @@ Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indic
 Mesh::~Mesh() {}
 
 void Mesh::Draw(ShaderProgram& shader) {
-  for (unsigned int i = 0; i < textures_.size(); i++) {
+  for (int i = 0; i < textures_.size(); i++) {
     glActiveTexture(GL_TEXTURE0 + i);
     glBindTexture(GL_TEXTURE_2D, textures_[i].id_texture);
     shader.uniform(textures_[i].type, i);

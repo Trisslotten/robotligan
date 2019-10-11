@@ -71,6 +71,11 @@
     <None Include="assets\shaders\guishader.frag" />
     <None Include="assets\shaders\e2Dshader.vert" />
     <None Include="assets\shaders\e2Dshader.frag" />
+    <None Include="Assets\shaders\shading.frag" />
+    <None Include="Assets\shaders\modelemissive.frag" />
+    <None Include="Assets\shaders\fullscreenquad.frag" />
+    <None Include="Assets\shaders\fullscreenquad.vert" />
+    <None Include="Assets\shaders\kawaseblur.comp" />
     <None Include="src\ecs\systems\input_system.hpp" />
   </ItemGroup>
   <ItemGroup>

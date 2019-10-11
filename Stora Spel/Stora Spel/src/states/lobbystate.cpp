@@ -156,7 +156,7 @@ void LobbyState::CreateBackgroundEntities() {
                                              arena_scale);
   // ladda in och skapa entity för boll
   auto ball = registry_lobby_.create();
-  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/TestBall.fbx");
   registry_lobby_.assign<ModelComponent>(ball, model_ball);
   registry_lobby_.assign<TransformComponent>(ball, glm::vec3(0, -4, 0),
                                              zero_vec, glm::vec3(1.0f));

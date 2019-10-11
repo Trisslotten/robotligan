@@ -337,7 +337,7 @@ void PlayState::CreateBallEntity() {
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f);
   auto ball = registry_gameplay_.create();
-  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/TestBall.fbx");
   registry_gameplay_.assign<ModelComponent>(ball, model_ball);
   registry_gameplay_.assign<TransformComponent>(ball, zero_vec, zero_vec,
                                                 glm::vec3(1.0f));
