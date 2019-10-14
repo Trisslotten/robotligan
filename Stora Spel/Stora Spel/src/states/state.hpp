@@ -1,8 +1,6 @@
 #ifndef STATE_HPP_
 #define STATE_HPP_
 
-#define LATENCY 0.006f
-
 #include <list>
 #include <NetAPI\packet.hpp>
 #include <ecs/components/button_component.hpp>
@@ -201,6 +199,9 @@ class PlayState : public State {
 
   void SetKeyBinds(std::unordered_map<int, int>* keybinds) {keybinds_ = keybinds;}
   void OnServerFrame();
+  void SetLatency(const std::vector<unsigned>& client_pings_) {
+    latency_ = client_pings_[my_id_] / 1000.0f;
+  }
 
  private:
   void CreateInitialEntities();
@@ -259,6 +260,7 @@ class PlayState : public State {
   std::list<PlayerData> history_;
   FrameState predicted_state_;
   float history_duration_;
+  float latency_;
 };
 
 #endif  // STATE_HPP_

@@ -80,33 +80,6 @@ void Engine::Init() {
 }
 
 void Engine::Update(float dt) {
-  int counter = 0;
-  for (auto& timer : time_test) {
-    timer += dt;
-    if (timer > LATENCY) {
-      while (packet_test[counter].IsEmpty() == false) {
-		HandlePacketBlock(packet_test[counter]);
-      }
-      if (current_state_ == &play_state_) {
-        play_state_.OnServerFrame();
-      }
-    } else {
-       continue;
-    }
-    counter++;
-  }
-  std::vector<NetAPI::Common::Packet> temp;
-  std::vector<float> temp_t;
-  for (int i = counter; i < packet_test.size(); ++i) {
-    temp.push_back(packet_test[i]);
-    temp_t.push_back(time_test[i]);
-  }
-  packet_test.clear();
-  time_test.clear();
-  for (int i = 0; i < temp.size(); ++i) {
-    packet_test.push_back(temp[i]);
-    time_test.push_back(temp_t[i]);
-  }
   // std::cout << "current message: " << Input::GetCharacters() <<"\n";
 
   if (take_game_input_ == true) {
@@ -222,13 +195,11 @@ void Engine::UpdateNetwork() {
     auto packets = client_.Receive();
     // std::cout <<"Num recevied packets: "<< packets.size() << "\n";
     for (auto& packet : packets) {
-      //while (!packet.IsEmpty()) {
-        packet_test.push_back(packet);
-		time_test.push_back(0.0f);
-        // std::cout << "Remaining packet size: " << packet.GetPacketSize() <<
-        // "\n";
-        //HandlePacketBlock(packet);
-      //}
+      while (!packet.IsEmpty()) {
+      // std::cout << "Remaining packet size: " << packet.GetPacketSize() <<
+      // "\n";
+		HandlePacketBlock(packet);
+      }
     }
   }
 }
@@ -345,6 +316,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> length;
       client_pings_.resize(length);
       packet.Remove<>(client_pings_.data(), length);
+      play_state_.SetLatency(client_pings_);
       break;
     }
     case PacketBlockType::TEAM_SCORE: {

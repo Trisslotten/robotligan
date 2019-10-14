@@ -19,7 +19,6 @@
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
 #include <physics.hpp>
-#include "..//..//..//Server/src/ecs/components/physics_component.hpp"
 
 void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
@@ -102,6 +101,7 @@ void PlayState::Update(float dt) {
     }
     // std::cout << "\n";
     transforms_.clear();
+    OnServerFrame();
   }
   
   // interpolate
@@ -376,9 +376,10 @@ FrameState PlayState::SimulateMovement(std::vector<int>* action, float dt) {
     predicted_state_.velocity.z = glm::mix(
         predicted_state_.velocity.z, final_velocity.z, 1.f - glm::pow(t, dt));
     predicted_state_.velocity.y = final_velocity.y;
+    auto& phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
     physics::PhysicsObject po;
     po.acceleration = glm::vec3(0.f);
-    po.airborne = false;
+    po.airborne = phys_c.is_airborne;
     po.friction = 0.f;
     po.max_speed = 1000;
     po.position = predicted_state_.position;
@@ -418,28 +419,30 @@ void PlayState::MovePlayer(float dt) {
     }
   }
   FrameState new_state = SimulateMovement(&new_frame.actions, dt);
-    new_frame.delta_pos = new_state.position - predicted_state_.position;
-    new_frame.velocity = new_state.velocity;
+  new_frame.delta_pos = new_state.position - predicted_state_.position;
+  new_frame.velocity = new_state.velocity;
 
-	history_.push_back(new_frame);
-    history_duration_ += dt;
+  history_.push_back(new_frame);
+  history_duration_ += dt;
 
-	//float converge_multiplier = 0.05f;
-	//
-	//glm::vec3 extrapolated_position = predicted_state_.position + po.velocity * LATENCY * converge_multiplier;
-	//
-	//t = dt / (LATENCY * (1 + converge_multiplier));
-	//
-	//trans_c.position = (extrapolated_position - trans_c.position) * t;
-    auto& trans_c = registry_gameplay_.get<TransformComponent>(my_entity_);
-    trans_c.position = new_state.position;
-    predicted_state_ = new_state;
+  auto& trans_c = registry_gameplay_.get<TransformComponent>(my_entity_);
+  //float t;
+  //
+  //float converge_multiplier = 0.05f;
+  //
+  //glm::vec3 extrapolated_position = predicted_state_.position + new_state.velocity * latency_ * converge_multiplier;
+  //
+  //t = dt / (latency_ * (1 + converge_multiplier));
+  //
+  //trans_c.position = (extrapolated_position - trans_c.position) * t;
+  trans_c.position = new_state.position;
+  predicted_state_ = new_state;
 }
 
 void PlayState::OnServerFrame() { 
-	float dt = 0;
-  if (history_duration_ - LATENCY > 0) {
-    dt = history_duration_ - LATENCY;
+  float dt = 0;
+  if (history_duration_ - latency_ > 0) {
+    dt = history_duration_ - latency_;
   }
   history_duration_ -= dt;
   while (history_.size() > 0 && dt > 0) {
@@ -453,14 +456,14 @@ void PlayState::OnServerFrame() {
         break;
 	}
   }
-  glm::vec3 velocity = history_.front().velocity;
-  if (registry_gameplay_.has<PhysicsComponent>(my_entity_)) {
-    auto& phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
-    velocity = phys_c.velocity;
-  }
+  auto& phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
+  glm::vec3 velocity = phys_c.velocity;
 
-  float velocity_tolerance = 0.3f;
+  float velocity_tolerance = 100.3f;
+  float lol = glm::length(velocity - history_.front().velocity);
+
   if (glm::length(velocity - history_.front().velocity) > velocity_tolerance) {
+    std::cout << "ruber banding" << std::endl;
     //auto& trans_c = registry_gameplay_.get<TransformComponent>(my_entity_);
     predicted_state_.position = player_new_pos_;
     predicted_state_.rotation = player_new_rotation_;
