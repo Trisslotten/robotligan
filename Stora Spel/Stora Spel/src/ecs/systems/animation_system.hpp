@@ -35,26 +35,6 @@ void getDefaultPose(glm::mat4 parent, glob::Joint* bone, std::vector<glob::Joint
 	}
 }
 
-void playAnimation(int anim, float speed, AnimationComponent *ac, char priority, float strength, int mode, int bodyArgument = -1) {
-	for (int i = 0; i < ac->active_animations.size(); i++) {
-		if (ac->active_animations.at(i) == &ac->model_data.animations.at(anim)) {
-			std::cout << "WARNING: The animation \"" << ac->model_data.animations.at(anim).name_ << "\" is already playing, cannot stack the same animation!\n";
-			return;
-		}
-	}
-	glob::Animation* anim_ptr = &ac->model_data.animations.at(anim);
-	ac->active_animations.push_back(anim_ptr);
-	anim_ptr->speed_ = speed;
-	anim_ptr->priority_ = priority;
-	anim_ptr->mode_ = mode;
-	anim_ptr->playing_ = true;
-
-	if (bodyArgument != -1) {
-		anim_ptr->body_argument_ = bodyArgument;
-	}
-
-}
-
 float time_ = 0;
 bool p = false;
 
@@ -70,8 +50,73 @@ bool isAChildOf(int parent, int lookFor, AnimationComponent* ac) {
 		}
 	return false;
 }
+
+int getAnimationByName(std::string name, AnimationComponent* ac) {
+	std::vector<glob::Animation>* anims = &ac->model_data.animations;
+	for (int i = 0; i < anims->size(); i++) {
+		if (anims->at(i).name_ == name) {
+			return i;
+		}
+	}
+}
+
+int getActiveAnimationByName(std::string name, AnimationComponent* ac) {
+	std::vector<glob::Animation*>* anims = &ac->active_animations;
+	for (int i = 0; i < anims->size(); i++) {
+		if (anims->at(i)->name_ == name) {
+			return i;
+		}
+	}
+}
+
+void playAnimation(std::string name, float speed, AnimationComponent* ac, char priority, float strength, int mode, int bodyArgument = -1) {
+	int anim = getAnimationByName(name, ac);
+	for (int i = 0; i < ac->active_animations.size(); i++) {
+		if (ac->active_animations.at(i) == &ac->model_data.animations.at(anim)) {
+			//std::cout << "WARNING: The animation \"" << ac->model_data.animations.at(anim).name_ << "\" is already playing, cannot stack the same animation!\n";
+			return;
+		}
+	}
+	glob::Animation* anim_ptr = &ac->model_data.animations.at(anim);
+	ac->active_animations.push_back(anim_ptr);
+	anim_ptr->speed_ = speed;
+	anim_ptr->priority_ = priority;
+	anim_ptr->mode_ = mode;
+	anim_ptr->playing_ = true;
+
+	if (bodyArgument != -1) {
+		anim_ptr->body_argument_ = bodyArgument;
+	}
+
+	//std::cout << "Playing " << anim_ptr->name_ << "\n";
+}
+
+void stopAnimation(std::string name, AnimationComponent* ac) {
+	int anim = getActiveAnimationByName(name, ac);
+
+	ac->active_animations.at(anim)->body_argument_ = -1;
+	ac->active_animations.at(anim)->current_frame_time_ = 0.f;
+	ac->active_animations.at(anim)->playing_ = false;
+	//remove from list
+	ac->active_animations.erase(ac->active_animations.begin() + anim);
+}
+
+void updateEntities(entt::registry& registry, float dt) {
+	auto players = registry.group<AnimationComponent, ModelComponent, PlayerComponent>();
+
+	for (auto& entity : players) {
+		auto& ac = players.get<AnimationComponent>(entity);
+		auto& m = players.get<ModelComponent>(entity);
+		auto& p = players.get<PlayerComponent>(entity);
+
+
+	}
+}
+
 bool first = true;
 void UpdateAnimations(entt::registry& registry, float dt) {
+
+	updateEntities(registry, dt);
 
 	auto animation_entities = registry.view<AnimationComponent>();
 	for (auto& entity : animation_entities) {
@@ -89,7 +134,7 @@ void UpdateAnimations(entt::registry& registry, float dt) {
 		if (first) {
 			//playAnimation(11, 2.f, &a, 10, 1.f, LOOP);
 			//playAnimation(13, 2.f, &a, 10, 1.f, LOOP);
-			playAnimation(14, 1.f, &a, 10, 1.f, LOOP);
+			playAnimation("Run", 1.f, &a, 10, 1.f, LOOP);
 			//playAnimation(13, 1.f, &a, 11, 1.f, LOOP, a.model_data.upperBody);
 			//playAnimation(11, 2.f, &a, 10, 1.f, LOOP);
 			//playAnimation(13, 2.f, &a, 10, 1.f, LOOP);
@@ -104,7 +149,7 @@ void UpdateAnimations(entt::registry& registry, float dt) {
 
 		if (time_ > 7 && !p) {
 			//playAnimation(9, 1.f, &a, 10, 1.f, LOOP);
-			//playAnimation(7, 0.2f, &a, 12, 1.f, MUTE_ALL);
+			playAnimation("Run_B", 0.2f, &a, 12, 1.f, MUTE_ALL);
 			p = true;
 		}
 		
@@ -123,12 +168,7 @@ void UpdateAnimations(entt::registry& registry, float dt) {
 					}
 				}
 				else if (anim->mode_ == MUTE_ALL) {
-					//reset some values...
-					a.active_animations.at(i)->body_argument_ = -1;
-					a.active_animations.at(i)->current_frame_time_ = 0.f;
-					a.active_animations.at(i)->playing_ = false;
-					//remove from list
-					a.active_animations.erase(a.active_animations.begin() + i);
+					stopAnimation(a.active_animations.at(i)->name_, &a);
 					i--;
 					removedAnimation = true;
 				}
