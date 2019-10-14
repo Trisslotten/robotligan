@@ -63,12 +63,14 @@ class MainMenuState : public State {
  private:
   void CreateMainMenu();
   void CreateSettingsMenu();
+  void CreateInformationMenu();
 
   entt::registry registry_mainmenu_;
   entt::registry registry_settings_;
+  entt::registry registry_information_;
 
   glob::Font2DHandle font_test_ = 0;
-
+  glob::GUIHandle information_image_ = 0;
   // Inherited via State
 };
 
