@@ -144,6 +144,8 @@ void CreateMissileEntity(entt::registry &registry, entt::entity caster) {
   missile_phys_c.velocity = cam_c.GetLookDir();
   missile_phys_c.is_airborne = true;
 
+  auto& sphere = registry.assign<physics::Sphere>(missile);
+  sphere.radius = 0.5f;
   registry.assign<ProjectileComponent>(missile, ProjectileID::MISSILE_OBJECT,
                                        player_c.client_id);
 

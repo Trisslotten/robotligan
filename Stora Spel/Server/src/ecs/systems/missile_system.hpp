@@ -45,8 +45,8 @@ void Update(entt::registry& registry, float dt) {
       glm::vec3 diff = player_trans_c.position - missile_trans_c.position;
       glm::vec3 dir = glm::normalize(diff);
       if (glm::length(diff) < missile_missile_c.detonation_dist &&
-          player_player_c.client_id != missile_missile_c.creator) {
-        player_phys_c.velocity += dir * 10.f;
+          player_player_c.client_id != missile_missile_c.creator && !exploded) {
+        player_phys_c.velocity += dir * 50.f;
         player_phys_c.is_airborne = true;
         exploded = true;
       }
