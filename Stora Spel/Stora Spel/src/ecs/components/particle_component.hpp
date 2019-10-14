@@ -7,6 +7,7 @@
 struct ParticleComponent {
   std::vector<glob::ParticleSystemHandle> handles;
   std::vector<glm::vec3> offsets;
+  std::vector<glm::vec3> directions;
 };
 
 #endif  // PARTICLE_COMPONENT_HPP_

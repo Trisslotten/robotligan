@@ -13,18 +13,7 @@ layout(location = 3) out float g_time;
 void main()
 {
 	g_pos = a_pos;
-	//g_pos = vec3(0);
 	g_color = a_color;
-	//g_color = vec4(1.0);
-	//g_color = vec4(.5,.5,0.5, 0.01);
 	g_size = a_size;
-	//g_size = 1.0;
 	g_time = a_time;
-	//g_time = 5.0;
-
-	//g_pos.y = -2.0;
-	//if (g_pos.x == 0.0 || g_pos.x == 1.0 || g_pos.x == 2.0)
-	//	g_size = 1.0;
-	//gl_Position = cam_transform * vec4(pos, 1.0);
-	//gl_Position = vec4(pos, 1.0);
 }

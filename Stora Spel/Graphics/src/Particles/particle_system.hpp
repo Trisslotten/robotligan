@@ -10,6 +10,8 @@
 
 namespace glob {
 
+constexpr int SIZE = 1000;
+
 struct Particle {
   glm::vec4 position;
   glm::vec4 velocity;
@@ -26,14 +28,20 @@ public:
   ParticleSystem(const ParticleSystem&) = delete;
   ParticleSystem& operator=(const ParticleSystem&) = delete;
 
-  ParticleSystem(ParticleSystem&& other);
+  ParticleSystem(ParticleSystem&& other) = default;
   ParticleSystem& operator=(ParticleSystem&& other) = delete;
 
   void Settings(const ParticleSettings& ps);
+  ParticleSettings GetSettings();
+  void SetPosition(glm::vec3 pos);
+  void SetDirection(glm::vec3 dir);
   void SetTexture(GLuint tex);
+  void SetShader(ShaderProgram* ptr);
+
+  void Reset();
 
   void Update(float dt);
-  void Draw(ShaderProgram& shader, const Camera& camera);
+  void Draw(ShaderProgram& shader);
 
 private:
   std::default_random_engine gen_;
@@ -42,23 +50,17 @@ private:
   glob::ParticleSettings settings_ = {};
   float spawns_ = 0.f;
 
-  //std::vector<Particle> particles_;
-  GLuint position_vbo_;
-  GLuint velocity_buffer_;
-  GLuint color_vbo_;
-  GLuint size_vbo_;
-  GLuint time_buffer_;
-  GLuint vertex_array_object_;
-  GLuint texture_;
+  GLuint position_vbo_ = 0;
+  GLuint velocity_buffer_ = 0;
+  GLuint color_vbo_ = 0;
+  GLuint size_vbo_ = 0;
+  GLuint time_buffer_ = 0;
+  GLuint vertex_array_object_ = 0;
 
   int current_index_ = 0;
-  //glm::vec4 color_ = glm::vec4(0.3f, 0.4f, 0.6f, 0.3f);
-  //float particle_size_ = 0.03f;
-  int SIZE = 10000;
+  int created_bursts = 0;
 
 private:
-  void CleanUp();
-  void Reset();
   void Spawn(int num);
 };
 

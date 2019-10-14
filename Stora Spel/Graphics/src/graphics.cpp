@@ -211,7 +211,7 @@ void CreateDefaultParticleTexture() {
 }
 
 GLint TextureFromFile(std::string filename) {
-  const char *path = "Assets"; 
+  const char *path = "Assets/Texture"; 
   std::string directory = std::string(path);
   filename = directory + '/' + filename;
 
@@ -339,11 +339,7 @@ void Init() {
                         (GLvoid *)0);
   glBindVertexArray(0);
 
-  //buffer_particle_systems.reserve(1);
-  //for (int i = 0; i < 1; ++i) {
-  //  buffer_particle_systems.emplace_back();
-  //  buffer_particle_systems[i].second = false;
-  //}
+  buffer_particle_systems.reserve(10);
 }
 
 // H=Handle, A=Asset
@@ -381,7 +377,137 @@ ModelHandle GetModel(const std::string &filepath) {
                                       filepath);
 }
 
-std::pair<ParticleSettings, std::string> ReadParticleFile(std::string filename) {
+ParticleSettings ProccessMap(ParticleSettings ps, const std::unordered_map<std::string, std::string>& map) {
+  bool color_delta = false;
+  glm::vec4 end_color = glm::vec4(1.f);
+  bool vel_delta = false;
+  float end_vel = 0.0f;
+  bool size_delta = false;
+  float end_size;
+  for (auto it : map) {
+    if (it.first == "color") {
+      std::stringstream ss(it.second);
+      glm::vec4 col;
+      ss >> col.x;
+      ss >> col.y;
+      ss >> col.z;
+      ss >> col.w;
+
+      ps.color = col;
+    } else if (it.first == "end_color") {
+      color_delta = true;
+      std::stringstream ss(it.second);
+      glm::vec4 col;
+      ss >> col.x;
+      ss >> col.y;
+      ss >> col.z;
+      ss >> col.w;
+
+      end_color = col;
+    } else if (it.first == "emit_pos") {
+      std::stringstream ss(it.second);
+      glm::vec3 pos;
+      ss >> pos.x;
+      ss >> pos.y;
+      ss >> pos.z;
+
+      ps.emit_pos = pos;
+    } else if (it.first == "size") {
+      std::stringstream ss(it.second);
+      float size;
+      ss >> size;
+
+      ps.size = size;
+    } else if (it.first == "end_size") {
+      size_delta = true;
+      std::stringstream ss(it.second);
+      float size;
+      ss >> size;
+
+      end_size = size;
+    } else if (it.first == "time") {
+      std::stringstream ss(it.second);
+      float time;
+      ss >> time;
+
+      ps.time = time;
+    } else if (it.first == "spawn_rate") {
+      std::stringstream ss(it.second);
+      float rate;
+      ss >> rate;
+
+      ps.spawn_rate = rate;
+    } else if (it.first == "velocity") {
+      std::stringstream ss(it.second);
+      float vel;
+      ss >> vel;
+
+      ps.velocity = vel;
+    } else if (it.first == "end_velocity") {
+      vel_delta = true;
+      std::stringstream ss(it.second);
+      float vel;
+      ss >> vel;
+
+      end_vel = vel;
+    } else if (it.first == "direction") {
+      std::stringstream ss(it.second);
+      glm::vec3 dir;
+      ss >> dir.x;
+      ss >> dir.y;
+      ss >> dir.z;
+
+      ps.direction = dir;
+    } else if (it.first == "dir_val") {
+      std::stringstream ss(it.second);
+      float val;
+      ss >> val;
+
+      ps.direction_strength = val;
+    } else if (it.first == "radius") {
+      std::stringstream ss(it.second);
+      float val;
+      ss >> val;
+
+      ps.radius = val;
+    } else if (it.first == "burst") {
+      std::stringstream ss(it.second);
+      bool burst;
+      ss >> burst;
+
+      ps.burst = burst;
+    } else if (it.first == "burst_particles") {
+      std::stringstream ss(it.second);
+      float val;
+      ss >> val;
+
+      ps.burst_particles = val;
+    } else if (it.first == "number_of_bursts") {
+      std::stringstream ss(it.second);
+      int val;
+      ss >> val;
+
+      ps.number_of_bursts = val;
+    } else if (it.first == "texture") {
+      std::string texture;
+      std::stringstream ss(it.second);
+      ss >> texture;
+
+      auto it = textures.find(texture);
+      if (it != textures.end()) {
+        ps.texture = it->second;
+      }
+    }
+  }
+
+  if (color_delta) ps.color_delta = (ps.color - end_color) / ps.time;
+  if (vel_delta) ps.velocity_delta = (ps.velocity - end_vel) / ps.time;
+  if (size_delta) ps.size_delta = (ps.size - end_size) / ps.time;
+
+  return ps;
+}
+
+ParticleSettings ReadParticleFile(std::string filename) {
   const char *path = "Assets/Particle config";
   std::string directory = std::string(path);
   filename = directory + '/' + filename;
@@ -430,50 +556,11 @@ std::pair<ParticleSettings, std::string> ReadParticleFile(std::string filename) 
   settings_file.close();
 
   ParticleSettings ps = {};
-  std::string texture = "default";
-  for (auto it : settings_map) {
-    if (it.first == "color") {
-      std::stringstream ss(it.second);
-      glm::vec4 col;
-      ss >> col.x;
-      ss >> col.y;
-      ss >> col.z;
-      ss >> col.w;
+  ps.texture = textures["default"];
+  
+  ps = ProccessMap(ps, settings_map);
 
-      ps.color = col;
-    } else if (it.first == "emit_pos") {
-      std::stringstream ss(it.second);
-      glm::vec3 pos;
-      ss >> pos.x;
-      ss >> pos.y;
-      ss >> pos.z;
-
-      ps.emit_pos = pos;
-    } else if (it.first == "size") {
-      std::stringstream ss(it.second);
-      float size;
-      ss >> size;
-
-      ps.size = size;
-    } else if (it.first == "time") {
-      std::stringstream ss(it.second);
-      float time;
-      ss >> time;
-
-      ps.time = time;
-    } else if (it.first == "spawn_rate") {
-      std::stringstream ss(it.second);
-      float rate;
-      ss >> rate;
-
-      ps.spawn_rate = rate;
-    } else if (it.first == "texture") {
-      std::stringstream ss(it.second);
-      ss >> texture;
-    }
-  }
-
-  return {ps, texture};
+  return ps;
 }
 
 ParticleSystemHandle CreateParticleSystem() {
@@ -489,8 +576,7 @@ ParticleSystemHandle CreateParticleSystem() {
   
   if (index < 0) {
     index = buffer_particle_systems.size();
-    buffer_particle_systems.emplace_back(&compute_shader, textures["smoke"], true);
-    //buffer_particle_systems[index].in_use = true;
+    buffer_particle_systems.emplace_back(&compute_shader, textures["default"], true);
   }
 
   if (index == -1) return -1;
@@ -498,6 +584,65 @@ ParticleSystemHandle CreateParticleSystem() {
   current_particle_guid++;
   
   return handle;
+}
+
+void DestroyParticleSystem(ParticleSystemHandle handle) {
+  auto find_res = particle_systems.find(handle);
+  if (find_res == particle_systems.end()) {
+    std::cout << "ERROR graphics.cpp: invalid handle\n";
+    return;
+  }
+  int index = find_res->second;
+  buffer_particle_systems[index].in_use = false;
+  particle_systems.erase(handle);
+}
+
+void ResetParticles(ParticleSystemHandle handle) {
+  auto find_res = particle_systems.find(handle);
+  if (find_res == particle_systems.end()) {
+    std::cout << "ERROR graphics.cpp: invalid handle\n";
+    return;
+  }
+
+  int index = find_res->second;
+  buffer_particle_systems[index].system.Reset();
+}
+
+void SetEmitPosition(ParticleSystemHandle handle, glm::vec3 pos) {
+  auto find_res = particle_systems.find(handle);
+  if (find_res == particle_systems.end()) {
+    std::cout << "ERROR graphics.cpp: invalid handle\n";
+    return;
+  }
+
+  int index = find_res->second;
+  buffer_particle_systems[index].system.SetPosition(pos);
+}
+
+void SetParticleDirection(ParticleSystemHandle handle, glm::vec3 dir) {
+  auto find_res = particle_systems.find(handle);
+  if (find_res == particle_systems.end()) {
+    std::cout << "ERROR graphics.cpp: invalid handle\n";
+    return;
+  }
+
+  int index = find_res->second;
+  buffer_particle_systems[index].system.SetDirection(dir);
+}
+
+void SetParticleSettings(ParticleSystemHandle handle,
+  std::unordered_map<std::string, std::string> map) {
+  auto find_res = particle_systems.find(handle);
+  if (find_res == particle_systems.end()) {
+    std::cout << "ERROR graphics.cpp: invalid handle\n";
+    return;
+  }
+
+  int index = find_res->second;
+  ParticleSettings ps = buffer_particle_systems[index].system.GetSettings();
+  auto settings = ProccessMap(ps, map);
+
+  buffer_particle_systems[index].system.Settings(settings);
 }
 
 void SetParticleSettings(ParticleSystemHandle handle, std::string filename) {
@@ -508,11 +653,9 @@ void SetParticleSettings(ParticleSystemHandle handle, std::string filename) {
   }
 
   auto settings = ReadParticleFile(filename);
-  auto texture = textures[settings.second];
 
   int index = find_res->second;
-  buffer_particle_systems[index].system.Settings(settings.first);
-  buffer_particle_systems[index].system.SetTexture(texture);
+  buffer_particle_systems[index].system.Settings(settings);
 }
 
 GUIHandle GetGUIItem(const std::string &filepath) {
@@ -746,7 +889,7 @@ void Render() {
   particle_shader.uniform("cam_pos", camera.GetPosition());
   particle_shader.uniform("cam_up", camera.GetUpVector());
   for (auto p : particles_to_render) {
-    buffer_particle_systems[p].system.Draw(particle_shader, camera);
+    buffer_particle_systems[p].system.Draw(particle_shader);
   }
 
   glBindVertexArray(quad_vao);

@@ -279,6 +279,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       unsigned int score, team;
       packet >> score;
       packet >> team;
+      if (scores_[team] != score) reset = true;
       scores_[team] = score;
       break;
     }

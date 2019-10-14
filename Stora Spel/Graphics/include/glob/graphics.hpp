@@ -12,6 +12,7 @@
 #include "glob/mesh_data.hpp"
 
 #include <string>
+#include <unordered_map>
 #include "camera.hpp"
 
 namespace glob {
@@ -36,6 +37,18 @@ EXPORT void Init();
 EXPORT ModelHandle GetModel(const std::string& filepath);
 
 EXPORT ParticleSystemHandle CreateParticleSystem();
+
+EXPORT void DestroyParticleSystem(ParticleSystemHandle handle);
+
+EXPORT void ResetParticles(ParticleSystemHandle handle);
+
+EXPORT void SetEmitPosition(ParticleSystemHandle handle, glm::vec3 pos);
+
+EXPORT void SetParticleDirection(ParticleSystemHandle handle, glm::vec3 dir);
+
+EXPORT void SetParticleSettings(
+    ParticleSystemHandle handle,
+    std::unordered_map<std::string, std::string> map);
 
 EXPORT void SetParticleSettings(ParticleSystemHandle handle, std::string filename);
 

@@ -34,16 +34,10 @@ void main()
 	if (g_time[0] > 0.0) {
 
 		color = g_color[0];
-		//color = vec3(1.0, 1.0, 1.0);
 		vec3 point_to_cam = cam_pos - g_pos[0];
 		mat4 rotate = rotationMatrix(point_to_cam, g_time[0]);
-		//point_to_cam.y = 0.0;
-		//point_to_cam = normalize(point_to_cam);
-		//float angle = dot(vec3(0.f, 0.f, 1.f), point_to_cam);
-		//vec3 test_up = vec3(0.0, 1.0, 0.0);
-		vec3 test_right = vec3(1.0, 0.0, 0.0);
+		
 		vec3 right = cross(cam_up, point_to_cam);
-		//right.y = 0.0;
 		vec3 up = cross(right, point_to_cam);
 
 		up = normalize(up) * g_size[0];

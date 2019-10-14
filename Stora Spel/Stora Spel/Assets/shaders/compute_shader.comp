@@ -4,17 +4,17 @@ layout(local_size_x = 1024, local_size_y = 1, local_size_z = 1) in;
 
 layout(std430, binding=7) buffer Pos
 {
-	vec4 Positions[];
+	vec4 positions[];
 };
 
 layout(std430, binding=8) buffer Vel
 {
-	vec4 Velocities[];
+	vec4 velocities[];
 };
 
 layout(std430, binding=9) buffer Col
 {
-	vec4 Colors[];
+	vec4 colors[];
 };
 
 layout(std430, binding=10) buffer Size
@@ -24,52 +24,25 @@ layout(std430, binding=10) buffer Size
 
 layout(std430, binding=11) buffer Time
 {
-	float Times[];
+	float times[];
 };
 
+uniform vec4 color_delta;
+uniform float velocity_delta;
+uniform float size_delta;
 uniform float dt;
 
 void main()
 {
 	uint gid = gl_GlobalInvocationID.x;
-	if (gid < 10000 && Times[gid] > 0.f) {
-		float ratio = Times[gid] / 10.0f;
-		//Positions[gid] += vec4(0.1f, 1.f, 0.0f, 0.0f) * 0.01;
-		Positions[gid] += Velocities[gid] * dt;
-		//Velocities[gid] = vec4(0.0);
-		//Colors[gid] = Colors[gid] * ratio;
-		//sizes[gid] = 0.3;
-		//sizes[gid] += 0.006;
-		Times[gid] -= dt;
-		//Colors[gid].a = ratio;
+	if (gid < 1000 && times[gid] > 0.f) {
+		float ratio = times[gid] / 10.0f;
+		float vel = length(velocities[gid]);
+		float factor = (vel - velocity_delta * dt) / vel;
+		velocities[gid] *= factor;
+		positions[gid] += velocities[gid] * dt;
+		colors[gid] -= color_delta * dt;
+		sizes[gid] -= size_delta * dt;
+		times[gid] -= dt;
 	}
 }
-
-
-//layout(local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
-//
-//layout(std430, binding=7) buffer Pos
-//{
-//	vec4 Positions[];
-//};
-//layout(std430, binding=8) buffer Vel
-//{
-//	vec4 Velocities[];
-//};
-//layout(std430, binding=9) buffer Life
-//{
-//	float Lives[];
-//};
-//layout(std430, binding=10) buffer Col
-//{
-//	vec4 Colors[];
-//};
-//
-//void main()
-//{
-//	uint gid = gl_GlobalInvocationID.x;
-//	Positions[gid] = vec4(0);
-//	Velocities[gid] = vec4(0);
-//	Colors[gid] = vec4(vec3(0.7), 1);
-//	Lives[gid] = 0;
-//}
