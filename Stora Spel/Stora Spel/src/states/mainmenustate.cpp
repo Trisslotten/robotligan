@@ -23,6 +23,7 @@ void MainMenuState::Init() {
 
 void MainMenuState::Update() {
   //
+
 }
 
 void MainMenuState::UpdateNetwork() {

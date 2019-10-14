@@ -6,13 +6,17 @@
 #include <boundingboxes.hpp>
 #include "ecs/components.hpp"
 #include "shared/camera_component.hpp"
-#include "ecs/components.hpp"
 #include "util/event.hpp"
 
 #include "util/event.hpp"
 #include "util/global_settings.hpp"
+#include "util/timer.hpp"
+
+#include <physics.hpp>
 
 namespace ability_controller {
+Timer gravity_timer;
+bool gravity_used = false;
 
 bool TriggerAbility(entt::registry &registry, AbilityID in_a_id,
                     PlayerID player_id);
@@ -21,6 +25,7 @@ void DoSuperStrike(entt::registry &registry);
 entt::entity CreateCannonBallEntity(entt::registry &registry, PlayerID id);
 void DoSwitchGoals(entt::registry &registry);
 entt::entity CreateForcePushEntity(entt::registry &registry, PlayerID id);
+void GravityChange(entt::registry &registry);
 
 void Update(entt::registry &registry, float dt) {
   registry.view<PlayerComponent, AbilityComponent>().each(
@@ -81,6 +86,12 @@ void Update(entt::registry &registry, float dt) {
         }
         ability_component.shoot = false;
       });
+
+  if (gravity_used &&
+      gravity_timer.Elapsed() >=
+          GlobalSettings::Access()->ValueOf("ABILITY_GRAVITY_DURATION")) {
+    physics::SetGravity(GlobalSettings::Access()->ValueOf("PHYSICS_GRAVITY"));
+  }
 }
 
 bool TriggerAbility(entt::registry &registry, AbilityID in_a_id,
@@ -101,6 +112,7 @@ bool TriggerAbility(entt::registry &registry, AbilityID in_a_id,
       break;
     }
     case AbilityID::GRAVITY_CHANGE:
+      GravityChange(registry);
       break;
     case AbilityID::HOMING_BALL:
       break;
@@ -205,8 +217,9 @@ entt::entity CreateCannonBallEntity(entt::registry &registry, PlayerID id) {
     if (pc.client_id == id) {
       float speed = 20.0f;
       auto cannonball = registry.create();
-      registry.assign<PhysicsComponent>(
-          cannonball, glm::vec3(cc.GetLookDir() * speed), glm::vec3(0.f), false, 0.0f);
+      registry.assign<PhysicsComponent>(cannonball,
+                                        glm::vec3(cc.GetLookDir() * speed),
+                                        glm::vec3(0.f), false, 0.0f);
       registry.assign<TransformComponent>(
           cannonball,
           glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),
@@ -266,8 +279,8 @@ entt::entity CreateForcePushEntity(entt::registry &registry, PlayerID id) {
       float speed =
           GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_SPEED");
       auto force_object = registry.create();
-      registry.assign<PhysicsComponent>(
-         force_object, cc.GetLookDir() * speed, glm::vec3(0.f), true, 0.0f);
+      registry.assign<PhysicsComponent>(force_object, cc.GetLookDir() * speed,
+                                        glm::vec3(0.f), true, 0.0f);
       registry.assign<TransformComponent>(
           force_object,
           glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),
@@ -279,6 +292,13 @@ entt::entity CreateForcePushEntity(entt::registry &registry, PlayerID id) {
       return force_object;
     }
   }
+}
+
+void GravityChange(entt::registry &registry) {
+  physics::SetGravity(
+      GlobalSettings::Access()->ValueOf("ABILITY_GRAVITY_CHANGE"));
+  gravity_timer.Restart();
+  gravity_used = true;
 }
 
 };  // namespace ability_controller
