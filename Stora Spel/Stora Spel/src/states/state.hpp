@@ -5,9 +5,11 @@
 
 #include <list>
 #include <NetAPI\packet.hpp>
+#include <ecs/components/button_component.hpp>
 #include <entt.hpp>
 #include <glm/glm.hpp>
 #include <glob/graphics.hpp>
+#include <util/timer.hpp>
 #include "Chat.hpp"
 #include "shared/shared.hpp"
 #include <ecs/components/button_component.hpp>
@@ -100,9 +102,17 @@ class LobbyState : public State {
   void CreateBackgroundEntities();
   void CreateGUIElements();
   void DrawTeamSelect();
+  void DrawAbilitySelect();
 
   glob::GUIHandle team_select_back_;
+  glob::GUIHandle ability_select_back_;
+  glob::GUIHandle ability_back_normal_;
+  glob::GUIHandle ability_back_hover_;
+  glob::GUIHandle ability_back_selected_;
+
+  std::vector<glob::GUIHandle> ability_icons_;
   glob::Font2DHandle font_team_names_;
+  glob::Font2DHandle font_test_;
   std::unordered_map<int, LobbyPlayer> lobby_players_;
 
   void ReadyButtonFunc();
@@ -111,6 +121,14 @@ class LobbyState : public State {
 
   void SendJoinTeam(unsigned int team);
   int my_id_ = 0;
+
+  int my_selected_ability_ = 1;
+
+  entt::entity GetAbilityButton(std::string find_string);
+  void SelectAbilityHandler(int id);
+
+  bool IsAbilityBlackListed(int id);
+  std::vector<int> ability_blacklist;
 };
 /////////////////////// ConnectMenuState
 class ConnectMenuState : public State {
@@ -157,6 +175,8 @@ class PlayState : public State {
 
   void SetEntityTransform(EntityID player_id, glm::vec3 pos,
                           glm::quat orientation);
+  void SetEntityPhysics(EntityID player_id, glm::vec3 vel,
+    bool is_airborne);
   void SetCameraOrientation(glm::quat orientation);
   void SetEntityIDs(std::vector<EntityID> player_ids, EntityID my_id,
                     EntityID ball_id) {
@@ -171,6 +191,13 @@ class PlayState : public State {
   void CreateForcePushObject(EntityID id);
   void DestroyEntity(EntityID id);
   void SwitchGoals();
+  void SetMyPrimaryAbility(int id) { my_primary_ability_id = id; }
+  void SetMatchTime(int time, int countdown_time) {
+    match_time_ = time;
+    countdown_time_ = countdown_time;
+  }
+
+  void EndGame();
 
   void SetKeyBinds(std::unordered_map<int, int>* keybinds) {keybinds_ = keybinds;}
   void OnServerFrame();
@@ -186,6 +213,9 @@ class PlayState : public State {
 
   void ToggleInGameMenu();
   void UpdateInGameMenu(bool show_menu);
+  void UpdateGameplayTimer();
+
+  void DrawTopScores();
   FrameState SimulateMovement(std::vector<int> *action, float dt);
   void MovePlayer(float dt);
   
@@ -204,16 +234,28 @@ class PlayState : public State {
   entt::entity my_entity_;
 
   std::unordered_map<int, int>* keybinds_;
+  std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
+  
   entt::entity blue_goal_light_;
   entt::entity red_goal_light_;
 
   glob::Font2DHandle font_test_ = 0;
+  glob::Font2DHandle font_scores_ = 0;
   glob::E2DHandle e2D_test_, e2D_test2_;
   glob::GUIHandle in_game_menu_gui_ = 0;
   glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
       gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_;
 
+  std::vector<glob::GUIHandle> ability_handles_;
+
   bool show_in_game_menu_buttons_ = false;
+
+  int my_primary_ability_id = 0;
+  int match_time_ = 300;
+  int countdown_time_ = 5;
+
+  Timer end_game_timer_;
+  bool game_has_ended_ = false;
   std::list<PlayerData> history_;
   FrameState predicted_state_;
   float history_duration_;

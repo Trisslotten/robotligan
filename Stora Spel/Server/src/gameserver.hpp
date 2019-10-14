@@ -24,13 +24,17 @@ class GameServer {
   void Update(float dt);
   void HandlePacketsToSend();
   void HandleStateChange();
-
-
+  void ReceiveEvent(const EventInfo& e);
+  void DoOncePerSecond();
   void ChangeState(ServerStateType state) { wanted_state_type_ = state; }
 
   ServerPlayState* GetPlayState() { return &play_state_; }
+  void ReceiveGameEvent(const GameEvent& event);
+
   NetAPI::Socket::Server& GetServer() { return server_; }
-  std::unordered_map<int, NetAPI::Common::Packet>& GetPackets() { return packets_; }
+  std::unordered_map<int, NetAPI::Common::Packet>& GetPackets() {
+    return packets_;
+  }
   entt::registry& GetRegistry() { return registry_; }
 
  private:
@@ -38,9 +42,9 @@ class GameServer {
 
   void HandlePacketBlock(NetAPI::Common::Packet& packet, int16_t block_type,
                          int client_id);
-  //void HandleNewTeam();
+  // void HandleNewTeam();
 
-
+  std::vector<unsigned> pings_;
   NetAPI::Socket::Server server_;
   std::unordered_map<int, NetAPI::Common::Packet> packets_;
   entt::registry registry_;
@@ -52,11 +56,11 @@ class GameServer {
   ServerStateType current_state_type_ = ServerStateType::LOBBY;
 
   std::vector<Message> messages;
+  std::vector<GameEvent> game_events_;
 
   int test_player_guid_ = 0;
 
   std::vector<unsigned int> scores;
-
 };
 
 #endif  // GAME_SERVER_HPP_

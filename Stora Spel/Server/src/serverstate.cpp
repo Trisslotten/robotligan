@@ -9,10 +9,16 @@
 #include <shared\id_component.hpp>
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
+#include "ecs/components/match_timer_component.hpp"
 #include "gameserver.hpp"
 
 void ServerLobbyState::Init() {
-  //
+  start_game_timer.Restart();
+  starting_ = false;
+  for (auto& ready_c : clients_ready_) {
+    ready_c.second = false;
+  }
+  srand(time(NULL));
 }
 
 void ServerLobbyState::Update(float dt) {
@@ -22,16 +28,16 @@ void ServerLobbyState::Update(float dt) {
     can_start = can_start && ready.second;
   }
 
-  if (can_start && !starting) {
+  if (can_start && !starting_) {
     std::cout << "DEBUG: Start game countdown\n";
     start_game_timer.Restart();
-    starting = true;
+    starting_ = true;
   }
   if (!can_start) {
-    starting = false;
+    starting_ = false;
   }
 
-  if (starting && start_game_timer.Elapsed() > 5.f) {
+  if (starting_ && start_game_timer.Elapsed() > 5.f) {
     std::cout << "DEBUG: Start game countdown is zero\n";
     game_server_->ChangeState(ServerStateType::PLAY);
   }
@@ -58,6 +64,10 @@ void ServerLobbyState::Cleanup() {
 void ServerPlayState::Init() {
   auto& server = game_server_->GetServer();
   auto& registry = game_server_->GetRegistry();
+
+  // Start the countdown and match timer
+  match_timer_.Restart();
+  countdown_timer_.Restart();
 
   CreateInitialEntities(server.GetConnectedPlayers());
 
@@ -88,6 +98,7 @@ void ServerPlayState::Init() {
 
     int num_players = server.GetConnectedPlayers();
     to_send << num_players;
+    to_send << client_abilities_[client_id];
 
     to_send << PacketBlockType::GAME_START;
 
@@ -107,7 +118,13 @@ void ServerPlayState::Update(float dt) {
         // client or if we are reading them from a replay
         if (!this->replay_) {
           auto inputs = players_inputs_[player_c.client_id];
-          player_c.actions = inputs.first;
+          if (countdown_timer_.Elapsed() <= count_down_time_) {
+            match_timer_.Pause();
+          } else {
+            player_c.actions = inputs.first;
+            match_timer_.Resume();
+            countdown_timer_.Pause();
+          }
           player_c.pitch += inputs.second.x;
           player_c.yaw += inputs.second.y;
           // Check if the game should be be recorded
@@ -150,6 +167,19 @@ void ServerPlayState::Update(float dt) {
     }
     to_send << num_entities;
     to_send << PacketBlockType::ENTITY_TRANSFORMS;
+
+    auto view_physics = registry.view<PhysicsComponent, IDComponent>();
+    int num_physics = view_physics.size();
+    for (auto entity : view_physics) {
+      auto& phys_c = view_physics.get<PhysicsComponent>(entity);
+      auto& id_c = view_physics.get<IDComponent>(entity);
+
+      to_send << phys_c.is_airborne;
+      to_send << phys_c.velocity;
+      to_send << id_c.id;
+    }
+    to_send << num_physics;
+    to_send << PacketBlockType::PHYSICS_DATA;
 
     auto view_player = registry.view<PlayerComponent>();
     for (auto player : view_player) {
@@ -203,17 +233,15 @@ void ServerPlayState::Update(float dt) {
       to_send << goal_team_c;
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
-      if (goal_goal_c
-              .switched_this_tick) {  // MAY NEED TO CHANGE, NOT A GOOD SOLUTION
+      if (goal_goal_c.switched_this_tick) {
         if (!sent_switch) {
           to_send << PacketBlockType::SWITCH_GOALS;
           sent_switch = true;
         }
-        goal_goal_c.switched_this_tick = false;
       }
     }
 
-	// send created projectiles
+    // send created projectiles
     for (auto projectiles : created_projectiles_) {
       to_send << projectiles.entity_id;
       to_send << projectiles.projectile_id;
@@ -227,15 +255,42 @@ void ServerPlayState::Update(float dt) {
     }
     destroy_entities_.clear();
 
+    // Send countdown & match time in sec
+    to_send << (int)countdown_timer_.Elapsed();
+    to_send << (int)match_timer_.Elapsed();
+    to_send << match_time_;
+    to_send << count_down_time_;
+    to_send << PacketBlockType::MATCH_TIMER;
   }
 
+  // switch goal cleanup
+  auto view_goals = registry.view<GoalComponenet, TeamComponent>();
+  for (auto goal : view_goals) {
+    GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
+    TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
+    if (goal_goal_c.switched_this_tick) {
+      goal_goal_c.switched_this_tick = false;
+    }
+  }
   pick_ups_.clear();
+
+  if (match_timer_.Elapsed() > match_time_) {
+    EndGame();
+  }
 }
 
 void ServerPlayState::Cleanup() {
   if (this->replay_machine_ != nullptr) {
     delete this->replay_machine_;
   }
+  game_server_->GetRegistry().reset();
+
+  client_abilities_.clear();
+  client_teams_.clear();
+  clients_player_ids_.clear();
+  red_players_ = 0;
+  blue_players_ = 0;
+  entity_guid_ = 0;
 }
 
 entt::entity ServerPlayState::CreateIDEntity() {
@@ -264,6 +319,24 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
     player_c.client_id = client.first;
     registry.assign<TeamComponent>(*view_iter,
                                    client_teams_[player_c.client_id]);
+
+    AbilityID primary_id = client_abilities_[player_c.client_id];
+    AbilityID secondary_id = AbilityID::SWITCH_GOALS;
+    float primary_cooldown =
+        GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
+
+    // Add components for a player
+    registry.assign<AbilityComponent>(
+        *view_iter,        // Entity
+        primary_id,        // Primary abiliy id
+        false,             // Use primary ability
+        primary_cooldown,  // Primary ability cooldown
+        0.0f,              // Remaining cooldown
+        secondary_id,      // Secondary ability
+        false,             // Use secondary ability
+        false,             // Shoot
+        0.0f               // Remaining shoot cooldown
+    );
     view_iter++;
   }
 
@@ -379,7 +452,7 @@ void ServerPlayState::CreatePlayerEntity() {
   auto& player_component = registry.assign<PlayerComponent>(entity);
 
   // Prepare hard-coded values
-  AbilityID primary_id = AbilityID::FORCE_PUSH;
+  /*AbilityID primary_id = AbilityID::SWITCH_GOALS;
   AbilityID secondary_id = AbilityID::SWITCH_GOALS;
   float primary_cooldown =
       GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
@@ -395,7 +468,7 @@ void ServerPlayState::CreatePlayerEntity() {
       false,             // Use secondary ability
       false,             // Shoot
       0.0f               // Remaining shoot cooldown
-  );
+  );*/
 
   // START ---------- Buff component [MOVE TO PICK-UP EVENT] ----------
   // Available buffs: SPEED_BOOST, JUMP_BOOST, INFINITE_STAMINA
@@ -446,7 +519,7 @@ void ServerPlayState::ResetEntities() {
 
   unsigned int blue_counter = 0;
   unsigned int red_counter = 0;
-  
+
   auto player_view = registry.view<PlayerComponent, PhysicsComponent,
                                    TransformComponent, CameraComponent>();
   for (auto entity : player_view) {
@@ -538,6 +611,13 @@ void ServerPlayState::CreatePickUpComponents() {
   pick_ups_.push_back(entity);
 }
 
+void ServerPlayState::EndGame() {
+  for (auto& [client_id, to_send] : game_server_->GetPackets()) {
+    to_send << PacketBlockType::GAME_END;
+  }
+  game_server_->ChangeState(ServerStateType::LOBBY);
+}
+
 void ServerPlayState::ReceiveEvent(const EventInfo& e) {
   switch (e.event) {
     case Event::DESTROY_ENTITY: {
@@ -561,7 +641,7 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       projectile.projectile_id = ProjectileID::FORCE_PUSH_OBJECT;
       created_projectiles_.push_back(projectile);
       break;
-	}
+    }
     default:
       break;
   }

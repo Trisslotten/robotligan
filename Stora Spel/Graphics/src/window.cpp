@@ -22,8 +22,8 @@ namespace glob {
 
 namespace window {
 
-unsigned int window_width = 1280;
-unsigned int window_height = 720;
+unsigned int window_width = 1600;
+unsigned int window_height = 900;
 
 void Create() {
   if (glfw_window) {
@@ -147,7 +147,8 @@ glm::vec2 Relative720(glm::vec2 in_pos) {
   glm::vec2 ret(0);
   glm::vec2 seventw = glm::vec2(1280, 720);
   glm::vec2 rel = GetWindowDimensions() / seventw;
-  ret = in_pos * rel;
+  ret.x = in_pos.x * rel.x;
+  ret.y = in_pos.y * rel.y;
   return ret;
 }
 

@@ -6,6 +6,8 @@
 #include <boundingboxes.hpp>
 #include "ecs/components.hpp"
 #include "shared/camera_component.hpp"
+#include "ecs/components.hpp"
+#include "util/event.hpp"
 
 #include "util/event.hpp"
 #include "util/global_settings.hpp"

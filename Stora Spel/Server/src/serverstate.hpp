@@ -5,6 +5,7 @@
 #include <entt.hpp>
 #include "ecs/components.hpp"
 #include "shared/shared.hpp"
+#include "util/event.hpp"
 #include "util/timer.hpp"
 #include "replay machine/replay_machine.hpp"
 #include "util/event.hpp"
@@ -40,6 +41,8 @@ class ServerLobbyState : public ServerState {
   ServerLobbyState() = default;
   ~ServerLobbyState() {}
 
+  void SetTeamsUpdated(bool val) { teams_updated_ = val; }
+
   void SetClientIsReady(int client_id, bool is_ready) {
     clients_ready_[client_id] = is_ready;
     teams_updated_ = true;
@@ -61,14 +64,17 @@ class ServerLobbyState : public ServerState {
     teams_updated_ = true;
   }
 
-  
+  void SetClientAbility(int client_id, AbilityID id) {
+    client_abilities_[client_id] = id;
+  }
 
+  std::unordered_map<int, AbilityID> client_abilities_;
   std::unordered_map<int, unsigned int> client_teams_;
 
  private:
   std::unordered_map<int, bool> clients_ready_;
   Timer start_game_timer;
-  bool starting = false;
+  bool starting_ = false;
   unsigned int last_team_ = TEAM_BLUE;
 
   bool teams_updated_ = false;
@@ -91,15 +97,15 @@ class ServerPlayState : public ServerState {
 
   bool StartRecording(unsigned int in_replay_length_seconds);
 
-  
   void SetClientReceiveUpdates(long client_id, bool initialized) {
     clients_receive_updates_[client_id] = initialized;
   }
 
+  std::unordered_map<int, AbilityID> client_abilities_;
   std::unordered_map<int, unsigned int> client_teams_;
 
   void ReceiveEvent(const EventInfo& e);
-  //EntityID GetNextEntityGuid() { return entity_guid_++; }
+  // EntityID GetNextEntityGuid() { return entity_guid_++; }
  private:
   entt::entity CreateIDEntity();
 
@@ -113,7 +119,7 @@ class ServerPlayState : public ServerState {
   void Replay(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value);
   void CreatePickUpComponents();
   EntityID GetNextEntityGuid() { return entity_guid_++; }
-
+  void EndGame();
 
   std::unordered_map<long, bool> clients_receive_updates_;
   std::unordered_map<int, EntityID> clients_player_ids_;
@@ -126,6 +132,11 @@ class ServerPlayState : public ServerState {
   int last_spawned_team_ = 1;
   int red_players_ = 0;
   int blue_players_ = 0;
+
+  int match_time_ = 300;
+  int count_down_time_ = 5;
+  Timer match_timer_;
+  Timer countdown_timer_;
 
   std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
   std::vector<Projectile> created_projectiles_;

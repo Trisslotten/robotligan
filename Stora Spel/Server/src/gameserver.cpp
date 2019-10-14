@@ -4,11 +4,12 @@
 #include <bitset>
 #include <glob/graphics.hpp>
 #include <iostream>
+#include <numeric>
 
+#include "shared/id_component.hpp"
 #include "shared/pick_up_component.hpp"
 #include "shared/shared.hpp";
 #include "shared/transform_component.hpp"
-#include "shared/id_component.hpp"
 
 #include "ecs/components.hpp"
 #include "ecs/systems/ability_controller_system.hpp"
@@ -17,7 +18,6 @@
 #include "ecs/systems/goal_system.hpp"
 #include "ecs/systems/physics_system.hpp"
 #include "ecs/systems/player_controller_system.hpp"
-
 
 namespace {}  // namespace
 
@@ -35,7 +35,7 @@ void GameServer::Init(double in_update_rate) {
   lobby_state_.Init();
   current_state_ = &lobby_state_;
   srand(time(NULL));
-
+  pings_.resize(NetAPI::Common::kMaxPlayers);
   // CreateEntities();
 }
 
@@ -64,7 +64,7 @@ void GameServer::Update(float dt) {
     }
     client_data->packets.clear();
   }
-
+  DoOncePerSecond();
   current_state_->Update(dt);
 
   //---------------------------------------------
@@ -81,7 +81,6 @@ void GameServer::Update(float dt) {
       to_send << PacketBlockType::CHOOSE_TEAM;
     }
     */
-
   HandleStateChange();
 
   HandlePacketsToSend();
@@ -109,6 +108,13 @@ void GameServer::HandlePacketsToSend() {
       to_send << PacketBlockType::MESSAGE;
     }
 
+    // send events
+    for (auto event : game_events_) {
+      to_send << event;
+      to_send << PacketBlockType::GAME_EVENT;
+    }
+    game_events_.clear();
+
     if (!to_send.IsEmpty()) {
       server_.Send(to_send);
     }
@@ -121,11 +127,19 @@ void GameServer::HandleStateChange() {
     bool went_from_lobby_to_play =
         current_state_type_ == ServerStateType::LOBBY &&
         wanted_state_type_ == ServerStateType::PLAY;
+
+    bool went_from_play_to_lobby =
+        current_state_type_ == ServerStateType::PLAY &&
+        wanted_state_type_ == ServerStateType::LOBBY;
+
     current_state_type_ = wanted_state_type_;
 
     std::unordered_map<int, unsigned int> client_teams_lobby;
-    if (went_from_lobby_to_play)
+    std::unordered_map<int, AbilityID> client_abilities_lobby;
+    if (went_from_lobby_to_play) {
       client_teams_lobby = lobby_state_.client_teams_;
+      client_abilities_lobby = lobby_state_.client_abilities_;
+    }
 
     current_state_->Cleanup();
     switch (wanted_state_type_) {
@@ -137,7 +151,11 @@ void GameServer::HandleStateChange() {
         std::cout << "Change Server State: PLAY\n";
         if (went_from_lobby_to_play) {
           play_state_.client_teams_ = client_teams_lobby;
+          play_state_.client_abilities_ = client_abilities_lobby;
         }
+        if (went_from_play_to_lobby) {
+          lobby_state_.SetTeamsUpdated(true);
+		}
         current_state_ = &play_state_;
         break;
     }
@@ -214,6 +232,37 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       lobby_state_.SetClientIsReady(client_id, false);
       break;
     }
+    case PacketBlockType::PING: {
+      int challenge = 0;
+      packet >> challenge;
+      auto now = std::chrono::steady_clock::now();
+      auto before = server_.GetClients().at(client_id)->last_time;
+      auto id = server_.GetClients().at(client_id)->ping_id;
+      if (id > NetAPI::Socket::kAveragePingCount - 1) {
+        server_.GetClients().at(client_id)->ping_id = 0;
+        id = 0;
+      }
+      server_.GetClients().at(client_id)->ping[id] =
+          std::chrono::duration_cast<std::chrono::milliseconds>(now - before)
+              .count();
+      server_.GetClients().at(client_id)->ping_sum = 0;
+      for (auto& v : server_.GetClients().at(client_id)->ping) {
+        server_.GetClients().at(client_id)->ping_sum += v;
+      }
+      if (challenge > 0) {
+        // Failed ping
+      } else {
+        server_.GetClients().at(client_id)->last_time = now;
+      }
+      break;
+    }
+
+    case PacketBlockType::LOBBY_SELECT_ABILITY: {
+      AbilityID id;
+      packet >> id;
+      lobby_state_.SetClientAbility(client_id, id);
+      break;
+    }
       /*
       TODO: fix
       case PacketBlockType::CHOOSE_TEAM: {
@@ -228,6 +277,11 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
   }
 }
 
+void GameServer::ReceiveGameEvent(const GameEvent& event)
+{
+  game_events_.push_back(event);
+}
+
 void GameServer::UpdateSystems(float dt) {
   player_controller::Update(registry_, dt);
   ability_controller::Update(registry_, dt);
@@ -240,4 +294,35 @@ void GameServer::UpdateSystems(float dt) {
   }
   dispatcher.update<EventInfo>();
   // glob::LoadWireframeMesh(model_arena, mh.pos, mh.indices);
+}
+
+void GameServer::ReceiveEvent(const EventInfo& e) {
+  switch (e.event) {
+    case Event::DESTROY_ENTITY: {
+      break;
+    }
+    case Event::CREATE_CANNONBALL: {
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+void GameServer::DoOncePerSecond() {
+  /*
+          Broadcast client pings to all clients
+  */
+  NetAPI::Common::Packet p;
+  p.GetHeader()->receiver = NetAPI::Socket::EVERYONE;
+  auto& data = server_.GetClients();
+  pings_.resize(NetAPI::Common::kMaxPlayers);
+  for (auto cli : data) {
+    pings_[cli.first] = cli.second->ping_sum;
+  }
+  unsigned size = pings_.size();
+  p.Add(pings_.data(), size);
+  p << size;
+  p << PacketBlockType::PING_RECIEVE;
+  server_.Send(p);
 }

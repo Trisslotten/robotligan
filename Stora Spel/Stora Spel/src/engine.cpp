@@ -11,12 +11,16 @@
 #include "ecs/components.hpp"
 #include "ecs/systems/button_system.hpp"
 #include "ecs/systems/render_system.hpp"
+#include "ecs/systems/sound_system.hpp"
 #include "entitycreation.hpp"
 #include "shared/camera_component.hpp"
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
+#include "eventdispatcher.hpp"
+
+
 
 Engine::Engine() {}
 
@@ -25,17 +29,26 @@ Engine::~Engine() {}
 void Engine::Init() {
   glob::Init();
   Input::Initialize();
+  sound_system_.Init(this);
 
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
 
   // glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
 
+
+  dispatcher.sink<GameEvent>().connect<&SoundSystem::ReceiveGameEvent>(sound_system_);
+
   SetKeybinds();
 
   scores_.reserve(2);
   scores_.push_back(0);
   scores_.push_back(0);
+
+  /*gameplay_timer_.reserve(2);
+  gameplay_timer_.push_back(4);
+  gameplay_timer_.push_back(59);*/
+
   std::vector<std::string> names = {"Bogdan",  "Smibel Gork", "Big King",
                                     "Blorgon", "Thrall",      "Fisken",
                                     "Snabel",  "BOI"};
@@ -117,12 +130,7 @@ void Engine::Update(float dt) {
     }
   }
 
-  // TODO: move to playstate
-  glob::Submit(font_test3_, glm::vec2(582, 705), 72, std::to_string(scores_[1]),
-               glm::vec4(0, 0.26, 1, 1));
-  glob::Submit(font_test3_, glm::vec2(705, 705), 72, std::to_string(scores_[0]),
-               glm::vec4(1, 0, 0, 1));
-
+  
   current_state_->Update(dt);
 
   UpdateSystems(dt);
@@ -137,9 +145,9 @@ void Engine::Update(float dt) {
       case StateType::MAIN_MENU:
         current_state_ = &main_menu_state_;
         break;
-	  case StateType::CONNECT_MENU:
-		current_state_ = &connect_menu_state_;
-		break;
+      case StateType::CONNECT_MENU:
+        current_state_ = &connect_menu_state_;
+        break;
       case StateType::LOBBY:
         current_state_ = &lobby_state_;
         break;
@@ -234,7 +242,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> strsize;
       std::string str;
       str.resize(strsize);
-       std::cout << "Packet Size: " << packet.GetPacketSize() << "\n";
+      std::cout << "Packet Size: " << packet.GetPacketSize() << "\n";
       packet.Remove(str.data(), strsize);
       std::cout << "PACKET: TEST_STRING: '" << str << "'\n";
       break;
@@ -253,6 +261,20 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       }
       break;
     }
+    case PacketBlockType::PHYSICS_DATA: {
+      int size = -1;
+      packet >> size;
+      for (int i = 0; i < size; i++) {
+        EntityID id;
+        glm::vec3 vel;
+        bool is_airborne;
+        packet >> id;
+        packet >> vel;
+        packet >> is_airborne;
+        play_state_.SetEntityPhysics(id, vel, is_airborne);
+      }
+      break;
+    }
     case PacketBlockType::CAMERA_TRANSFORM: {
       glm::quat orientation;
       packet >> orientation;
@@ -264,6 +286,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       std::vector<EntityID> player_ids;
       EntityID my_id;
       EntityID ball_id;
+      int ability_id;
+      packet >> ability_id;
       packet >> num_players;
       player_ids.resize(num_players);
       packet.Remove(player_ids.data(), player_ids.size());
@@ -271,6 +295,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> ball_id;
 
       play_state_.SetEntityIDs(player_ids, my_id, ball_id);
+      play_state_.SetMyPrimaryAbility(ability_id);
 
       ChangeState(StateType::PLAY);
       std::cout << "PACKET: GAME_START\n";
@@ -289,13 +314,13 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       name.resize(strsize);
       packet.Remove(name.data(), strsize);
 
-      chat.AddMessage(name, message, message_from);
-      if (chat.IsVisable() == false) {
-        chat.SetShowChat();
-        chat.CloseChat();
-      } else if (chat.IsClosing() == true) {
+      chat_.AddMessage(name, message, message_from);
+      if (chat_.IsVisable() == false) {
+        chat_.SetShowChat();
+        chat_.CloseChat();
+      } else if (chat_.IsClosing() == true) {
         // resets the closing timer
-        chat.CloseChat();
+        chat_.CloseChat();
       }
 
       break;
@@ -306,11 +331,37 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetCurrentStamina(stamina);
       break;
     }
+    case PacketBlockType::PING: {
+      int challenge = 0;
+      packet >> challenge;
+      challenge *= -1;
+      NetAPI::Common::Packet send_packet;
+      send_packet << challenge << PacketBlockType::PING;
+      client_.Send(send_packet);
+      break;
+    }
+    case PacketBlockType::PING_RECIEVE: {
+      unsigned length = 0;
+      packet >> length;
+      client_pings_.resize(length);
+      packet.Remove<>(client_pings_.data(), length);
+      break;
+    }
     case PacketBlockType::TEAM_SCORE: {
       unsigned int score, team;
       packet >> score;
       packet >> team;
       scores_[team] = score;
+      break;
+    }
+    case PacketBlockType::MATCH_TIMER: {
+      int time = 0;
+      int countdown_time = 0;
+      packet >> countdown_time;
+      packet >> time;
+      packet >> gameplay_timer_sec_;
+      packet >> countdown_timer_sec_;
+      play_state_.SetMatchTime(time, countdown_time);
       break;
     }
     /*
@@ -379,6 +430,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> second_ability_;
       break;
     }
+    case PacketBlockType::GAME_EVENT: {
+      GameEvent event;
+      packet >> event;
+      dispatcher.trigger(event);
+      break;
+    }
     case PacketBlockType::LOBBY_UPDATE_TEAM: {
       lobby_state_.HandleUpdateLobbyTeamPacket(packet);
       break;
@@ -403,7 +460,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         case ProjectileID::FORCE_PUSH_OBJECT: {
           play_state_.CreateForcePushObject(e_id);
           break;
-		}
+        }
       }
       break;
     }
@@ -412,7 +469,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> id;
       play_state_.DestroyEntity(id);
       break;
-	  }
+    }
+    case PacketBlockType::GAME_END: {
+      play_state_.EndGame();
+      //ChangeState(StateType::LOBBY);
+      break;
+    }
   }
 }
 
@@ -424,37 +486,40 @@ void Engine::SetCurrentRegistry(entt::registry* registry) {
 
 void Engine::UpdateChat(float dt) {
   if (enable_chat_) {
-    // chat code
-    if (chat.IsVisable()) {
+    // chat_ code
+    if (chat_.IsVisable()) {
       if (Input::IsKeyPressed(GLFW_KEY_ENTER)) {
-        if (chat.IsClosing() == true) {
-          chat.SetShowChat();
+        if (chat_.IsClosing() == true) {
+          chat_.SetShowChat();
         } else {
-          chat.SetSendMessage(true);
-          message_ = chat.GetCurrentMessage();
-          chat.CloseChat();
+          chat_.SetSendMessage(true);
+          message_ = chat_.GetCurrentMessage();
+          chat_.CloseChat();
         }
       }
-      chat.Update(dt);
-      chat.SubmitText(font_test2_);
-      if (chat.IsTakingChatInput() == true &&
-          chat.GetCurrentMessage().size() == 0)
-        glob::Submit(font_test2_, glm::vec2(50.f, 600.f), 20, "Enter message",
+      chat_.Update(dt);
+      chat_.SubmitText(font_test2_);
+      if (chat_.IsTakingChatInput() == true &&
+          chat_.GetCurrentMessage().size() == 0)
+        glob::Submit(font_test2_, chat_.GetPosition() + glm::vec2(0, -20.f * 5),
+                     20, "Enter message",
                      glm::vec4(1, 1, 1, 1));
     }
-    if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat.IsVisable()) {
+    if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat_.IsVisable()) {
       // glob::window::SetMouseLocked(false);
-      chat.SetShowChat();
+      chat_.SetShowChat();
     }
-    take_game_input_ = !chat.IsTakingChatInput();
+    take_game_input_ = !chat_.IsTakingChatInput();
     // TODO fix
-    // take_game_input_ = !chat.IsTakingChatInput() &&
+    // take_game_input_ = !chat_.IsTakingChatInput() &&
     // !show_in_game_menu_buttons_;
   }
 }
 
 void Engine::UpdateSystems(float dt) {
   UpdateChat(dt);
+  sound_system_.Update(*registry_current_);
+  
 
   if (Input::IsKeyDown(GLFW_KEY_TAB) &&
       current_state_->Type() == StateType::PLAY) {
@@ -479,36 +544,50 @@ void Engine::SetKeybinds() {
 }
 
 void Engine::DrawScoreboard() {
-  glob::Submit(gui_scoreboard_back_, glm::vec2(285, 177), 0.6, 100);
+  glm::vec2 scoreboard_pos = glob::window::GetWindowDimensions();
+  scoreboard_pos /= 2;
+  scoreboard_pos.x -= 290;
+  scoreboard_pos.y -= 150;
+  glob::Submit(gui_scoreboard_back_, scoreboard_pos, 0.6, 100);
   int red_count = 0;
   int blue_count = 0;
   int jump = -16;
-  glm::vec2 start_pos_blue = glm::vec2(320, 430);
-  glm::vec2 start_pos_red = glm::vec2(320, 320);
-  glm::vec2 offset_goals = glm::vec2(140, 0);
-  glm::vec2 offset_points = glm::vec2(300, 0);
-  for (auto& p_score : player_scores_) {
-	if (p_score.second.team == TEAM_BLUE) {
-      glm::vec2 text_pos = start_pos_blue + glm::vec2(0, blue_count * jump);
-      glob::Submit(font_test2_, text_pos, 32, player_names_[p_score.first],
-		  glm::vec4(0, 0, 1, 1));
-      glob::Submit(font_test2_, text_pos + offset_goals, 32,
-		  std::to_string(p_score.second.goals), glm::vec4(0, 0, 1, 1));
-      glob::Submit(font_test2_, text_pos + offset_points, 32,
-		  std::to_string(p_score.second.points),
-		  glm::vec4(0, 0, 1, 1));
-      blue_count++;
-    }
-    if (p_score.second.team == TEAM_RED) {
+  glm::vec2 start_pos_blue =
+      scoreboard_pos + glm::vec2(24, 260);  //::vec2(320, 430);
+  glm::vec2 start_pos_red =
+      scoreboard_pos + glm::vec2(24, 140);  // glm::vec2(320, 320);
+  glm::vec2 offset_goals = glm::vec2(160, 0);
+  glm::vec2 offset_points = glm::vec2(320, 0);
+  if (current_state_->Type() == StateType::PLAY) {
+    for (auto& p_score : player_scores_) {
+      if (p_score.second.team == TEAM_BLUE) {
+        glm::vec2 text_pos = start_pos_blue + glm::vec2(0, blue_count * jump);
+        glob::Submit(font_test2_, text_pos, 32, player_names_[p_score.first],
+                     glm::vec4(0, 0, 1, 1));
+        glob::Submit(font_test2_, text_pos + offset_goals, 32,
+                     std::to_string(p_score.second.goals),
+                     glm::vec4(0, 0, 1, 1));
+        glob::Submit(font_test2_, text_pos + offset_points, 32,
+                     std::to_string(p_score.second.points),
+                     glm::vec4(0, 0, 1, 1));
+        blue_count++;
+      }
+      if (p_score.second.team == TEAM_RED) {
         glm::vec2 text_pos = start_pos_red + glm::vec2(0, red_count * jump);
         glob::Submit(font_test2_, text_pos, 32, player_names_[p_score.first],
-			glm::vec4(1, 0, 0, 1));
+                     glm::vec4(1, 0, 0, 1));
         glob::Submit(font_test2_, text_pos + offset_goals, 32,
-			std::to_string(p_score.second.goals), glm::vec4(1, 0, 0, 1));
+                     std::to_string(p_score.second.goals),
+                     glm::vec4(1, 0, 0, 1));
         glob::Submit(font_test2_, text_pos + offset_points, 32,
-			std::to_string(p_score.second.points),
-			glm::vec4(1, 0, 0, 1));
+                     std::to_string(p_score.second.points),
+                     glm::vec4(1, 0, 0, 1));
         red_count++;
+      }
     }
   }
 }
+
+int Engine::GetGameplayTimer() const { return gameplay_timer_sec_; }
+
+int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }

@@ -14,6 +14,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Chat.cpp" />
     <ClCompile Include="src\states\connectmenustate.cpp" />
+    <ClCompile Include="src\ecs\systems\sound_system.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
@@ -54,6 +55,11 @@
     <ClInclude Include="shared\shared\pick_up_component.hpp" />
     <ClInclude Include="src\util\player_settings.hpp" />
     <ClInclude Include="src\Chat.hpp" />
+    <ClInclude Include="src\ecs\components\input_component.hpp" />
+    <ClInclude Include="src\ecs\components\sound_component.hpp" />
+    <ClInclude Include="src\ecs\systems\sound_system.hpp" />
+    <ClInclude Include="src\eventdispatcher.hpp" />
+    <ClInclude Include="shared\shared\physics_component.hpp" />
     <ClInclude Include="src\playerdata.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -66,6 +72,12 @@
     <None Include="assets\shaders\guishader.frag" />
     <None Include="assets\shaders\e2Dshader.vert" />
     <None Include="assets\shaders\e2Dshader.frag" />
+    <None Include="Assets\shaders\shading.frag" />
+    <None Include="Assets\shaders\modelemissive.frag" />
+    <None Include="Assets\shaders\fullscreenquad.frag" />
+    <None Include="Assets\shaders\fullscreenquad.vert" />
+    <None Include="Assets\shaders\kawaseblur.comp" />
+    <None Include="src\ecs\systems\input_system.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />

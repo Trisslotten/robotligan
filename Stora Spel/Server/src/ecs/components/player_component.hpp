@@ -4,6 +4,7 @@
 #include <bitset>
 #include <shared/shared.hpp>
 #include "util/global_settings.hpp"
+#include "util/timer.hpp"
 
 struct PlayerComponent {
   long client_id = -1;
@@ -19,10 +20,12 @@ struct PlayerComponent {
   float energy_regen_tick = GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_REGEN_TICK");
 
   // Kicking values
+  float kick_cooldown = GlobalSettings::Access()->ValueOf("PLAYER_KICK_COOLDOWN");
   float kick_pitch = GlobalSettings::Access()->ValueOf("PLAYER_KICK_PITCH");
   float kick_reach = GlobalSettings::Access()->ValueOf("PLAYER_KICK_REACH");
   float kick_fov = GlobalSettings::Access()->ValueOf("PLAYER_KICK_FOV");
   float kick_force = GlobalSettings::Access()->ValueOf("PLAYER_KICK_FORCE");
+  Timer kick_timer;
 
   // input from client
   std::bitset<PlayerAction::NUM_ACTIONS> actions;

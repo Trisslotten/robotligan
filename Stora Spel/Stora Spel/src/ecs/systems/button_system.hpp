@@ -32,12 +32,19 @@ void Update(entt::registry& registry) {
                                            button_c.bounds) &&
           !a_button_is_selected) {
         button_c.text_current_color = button_c.text_hover_color;
+        if (button_c.gui_handle_hover) {
+          button_c.gui_handle_current = button_c.gui_handle_hover;
+			
+		}
         if (Input::IsButtonPressed(GLFW_MOUSE_BUTTON_1)) {
           button_c.button_func();
         }
         a_button_is_selected = true;
       } else {
         button_c.text_current_color = button_c.text_normal_color;
+        if (button_c.gui_handle_current) {
+          button_c.gui_handle_current = button_c.gui_handle_normal;
+		}
       }
 	}
   }
