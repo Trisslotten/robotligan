@@ -131,6 +131,8 @@ void Engine::Update(float dt) {
     // init new state
     current_state_->Init();
   }
+
+
   Input::Reset();
 }
 

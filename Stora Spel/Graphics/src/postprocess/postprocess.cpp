@@ -63,7 +63,7 @@ void glob::PostProcess::Init() {
   glDrawBuffers(2, att);
 
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    std::cout << "ERROR: postprocess.cpp: default_framebuffer is not complete!"
+    std::cout << "ERROR: postprocess.cpp: framebuffer_ is not complete!"
               << std::endl;
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

@@ -21,6 +21,7 @@
 #include <msdfgen/msdfgen-ext.h>
 #include <msdfgen/msdfgen.h>
 #include "postprocess/postprocess.hpp"
+#include "postprocess/blur.hpp"
 
 namespace glob {
 
@@ -75,7 +76,14 @@ GLuint triangle_vbo, triangle_vao;
 GLuint cube_vbo, cube_vao;
 GLuint quad_vbo, quad_vao;
 
+GLuint shadow_framebuffer;
+GLuint shadow_renderbuffer;
+GLuint shadow_texture;
+int shadow_size = 512;
+ShaderProgram shadow_shader;
+
 PostProcess post_process;
+Blur blur;
 
 float num_frames = 0;
 
@@ -172,15 +180,18 @@ void Init() {
 
   model_shader.add("modelshader.vert");
   model_shader.add("modelshader.frag");
+  model_shader.add("shading.vert");
   model_shader.add("shading.frag");
   model_shader.compile();
 
   model_emission_shader.add("modelshader.vert");
   model_emission_shader.add("modelemissive.frag");
+  model_emission_shader.add("shading.vert");
   model_emission_shader.add("shading.frag");
   model_emission_shader.compile();
 
   wireframe_shader.add("modelshader.vert");
+  wireframe_shader.add("shading.vert");
   wireframe_shader.add("wireframe.frag");
   wireframe_shader.compile();
 
@@ -253,6 +264,45 @@ void Init() {
   glBindVertexArray(0);
 
   post_process.Init();
+
+  blur.Init();
+  blur.CreatePass(1,1,1);
+  blur.Finalize();
+
+  shadow_shader.add("modelshader.vert");
+  shadow_shader.add("shading.vert");
+  shadow_shader.add("shadow.frag");
+  shadow_shader.compile();
+
+  glGenFramebuffers(1, &shadow_framebuffer);
+  glGenRenderbuffers(1, &shadow_renderbuffer);
+
+  glGenTextures(1, &shadow_texture);
+  glBindTexture(GL_TEXTURE_2D, shadow_texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 1);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                  GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, shadow_size, shadow_size, 0, GL_RG,
+               GL_UNSIGNED_BYTE, NULL);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, shadow_framebuffer);
+
+  glBindRenderbuffer(GL_RENDERBUFFER, shadow_renderbuffer);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, shadow_size,
+                        shadow_size);
+
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                         shadow_texture, 0);
+
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+                            GL_RENDERBUFFER, shadow_renderbuffer);
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    std::cout << "ERROR: graphics.cpp: shadow_framebuffer is not complete!"
+              << std::endl;
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 // H=Handle, A=Asset
@@ -465,7 +515,6 @@ void Render() {
     light_radii.push_back(light_item.radius);
     light_ambients.push_back(light_item.ambient);
   }
-
   std::vector<RenderItem> emissive_items;
   for (auto &render_item : items_to_render) {
     if (render_item.model->IsEmissive()) {
@@ -473,6 +522,36 @@ void Render() {
     }
   }
 
+  glBindFramebuffer(GL_FRAMEBUFFER, shadow_framebuffer);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glViewport(0, 0, shadow_size, shadow_size);
+  glm::vec3 shadow_light_pos = glm::vec3(10.6,5.7,7.1);
+  glm::mat4 shadow_transform =
+      glm::perspective(glm::radians(70.f), 1.f, 0.1f, 50.f) *
+      glm::lookAt(shadow_light_pos, glm::vec3(0,-5.7,0),
+                  glm::vec3(0, 1, 0));
+  shadow_shader.use();
+  shadow_shader.uniform("cam_transform", shadow_transform);
+  shadow_shader.uniform("shadow_light_pos", shadow_light_pos);
+  for (auto &render_item : items_to_render) {
+    shadow_shader.uniform("model_transform", render_item.transform);
+    render_item.model->Draw(shadow_shader);
+  }
+
+  model_shader.use();
+  model_shader.uniform("shadow_transform", shadow_transform);
+  model_shader.uniform("shadow_map", 3);
+  model_shader.uniform("shadow_light_pos", shadow_light_pos);
+  model_emission_shader.use();
+  model_emission_shader.uniform("shadow_transform", shadow_transform);
+  model_emission_shader.uniform("shadow_map", 3);
+  model_emission_shader.uniform("shadow_light_pos", shadow_light_pos);
+  glActiveTexture(GL_TEXTURE0 + 3);
+  glBindTexture(GL_TEXTURE_2D, shadow_texture);
+  glGenerateMipmap(GL_TEXTURE_2D);
+
+  auto ws = glob::window::GetWindowDimensions();
+  glViewport(0, 0, ws.x, ws.y);
   post_process.BeforeDraw();
   {
     model_shader.use();
@@ -486,6 +565,7 @@ void Render() {
                           light_ambients.data());
     model_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
     model_shader.uniform("cam_transform", cam_transform);
+    model_shader.uniform("shadow_light_pos", shadow_light_pos);
     for (auto &render_item : items_to_render) {
       if (render_item.model->IsEmissive()) {
         continue;
@@ -543,8 +623,8 @@ void Render() {
 
   text_shader.use();
   for (auto &text_item : text_to_render) {
-      text_item.font->Draw(text_shader, text_item.pos, text_item.size,
-                           text_item.text, text_item.color, text_item.visible);
+    text_item.font->Draw(text_shader, text_item.pos, text_item.size,
+                         text_item.text, text_item.color, text_item.visible);
   }
 
   lights_to_render.clear();
