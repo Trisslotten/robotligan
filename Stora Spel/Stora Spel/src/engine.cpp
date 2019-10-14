@@ -9,18 +9,16 @@
 #include <glob\window.hpp>
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
-#include "ecs/systems/button_system.hpp"
+#include "ecs/systems/gui_system.hpp"
 #include "ecs/systems/render_system.hpp"
 #include "ecs/systems/sound_system.hpp"
 #include "entitycreation.hpp"
+#include "eventdispatcher.hpp"
 #include "shared/camera_component.hpp"
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
-#include "eventdispatcher.hpp"
-
-
 
 Engine::Engine() {}
 
@@ -36,8 +34,8 @@ void Engine::Init() {
 
   // glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
 
-
-  dispatcher.sink<GameEvent>().connect<&SoundSystem::ReceiveGameEvent>(sound_system_);
+  dispatcher.sink<GameEvent>().connect<&SoundSystem::ReceiveGameEvent>(
+      sound_system_);
 
   SetKeybinds();
 
@@ -67,8 +65,10 @@ void Engine::Init() {
   lobby_state_.SetEngine(this);
   connect_menu_state_.SetEngine(this);
   play_state_.SetEngine(this);
+  settings_state_.SetEngine(this);
 
   main_menu_state_.Startup();
+  settings_state_.Startup();
   connect_menu_state_.Startup();
   lobby_state_.Startup();
 
@@ -103,7 +103,6 @@ void Engine::Update(float dt) {
     }
   }
 
-  
   current_state_->Update();
 
   UpdateSystems(dt);
@@ -126,6 +125,9 @@ void Engine::Update(float dt) {
         break;
       case StateType::PLAY:
         current_state_ = &play_state_;
+        break;
+      case StateType::SETTINGS:
+        current_state_ = &settings_state_;
         break;
     }
     // init new state
@@ -443,7 +445,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
     case PacketBlockType::GAME_END: {
       play_state_.EndGame();
-      //ChangeState(StateType::LOBBY);
+      // ChangeState(StateType::LOBBY);
       break;
     }
   }
@@ -473,8 +475,7 @@ void Engine::UpdateChat(float dt) {
       if (chat_.IsTakingChatInput() == true &&
           chat_.GetCurrentMessage().size() == 0)
         glob::Submit(font_test2_, chat_.GetPosition() + glm::vec2(0, -20.f * 5),
-                     20, "Enter message",
-                     glm::vec4(1, 1, 1, 1));
+                     20, "Enter message", glm::vec4(1, 1, 1, 1));
     }
     if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat_.IsVisable()) {
       // glob::window::SetMouseLocked(false);
@@ -490,14 +491,13 @@ void Engine::UpdateChat(float dt) {
 void Engine::UpdateSystems(float dt) {
   UpdateChat(dt);
   sound_system_.Update(*registry_current_);
-  
 
   if (Input::IsKeyDown(GLFW_KEY_TAB) &&
       current_state_->Type() == StateType::PLAY) {
     DrawScoreboard();
   }
 
-  button_system::Update(*registry_current_);
+  gui_system::Update(*registry_current_);
   RenderSystem(*registry_current_);
 }
 

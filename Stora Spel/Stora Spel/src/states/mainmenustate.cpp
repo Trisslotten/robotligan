@@ -6,7 +6,6 @@
 
 void MainMenuState::Startup() {
   CreateMainMenu();
-  CreateSettingsMenu();
 }
 
 void MainMenuState::Init() {
@@ -46,7 +45,8 @@ void MainMenuState::CreateMainMenu() {
   b_c = GenerateButtonEntity(registry_mainmenu_, "SETTINGS",
                              glm::vec2(100, 140), font_test_);
   b_c->button_func = [&]() {
-    engine_->SetCurrentRegistry(&registry_settings_);
+    //engine_->SetCurrentRegistry(&registry_settings_);
+    engine_->ChangeState(StateType::SETTINGS);
   };
 
   // EXIT BUTTON - close the game
@@ -55,11 +55,4 @@ void MainMenuState::CreateMainMenu() {
   b_c->button_func = [&]() { exit(0); };
 }
 
-void MainMenuState::CreateSettingsMenu() {
-  // BACK BUTTON in SETTINGS - go back to main menu
-  ButtonComponent* b_c = GenerateButtonEntity(registry_settings_, "BACK",
-                                              glm::vec2(100, 200), font_test_);
-  b_c->button_func = [&]() {
-    engine_->SetCurrentRegistry(&registry_mainmenu_);
-  };
-}
+

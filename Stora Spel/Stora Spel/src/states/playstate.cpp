@@ -366,7 +366,7 @@ void PlayState::CreateInGameMenu() {
                                           font_test_, false);
 
   in_game_buttons_->button_func = [&] {
-    // All the logic here
+    engine_->ChangeState(StateType::SETTINGS);
   };
 
   // END GAME -- change registry to registry_mainmenu_

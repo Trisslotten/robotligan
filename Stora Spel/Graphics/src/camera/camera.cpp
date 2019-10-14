@@ -24,6 +24,11 @@ void Camera::UpdateViewMatrix() {
   this->view_mat_ = glm::mat4(rot_mat) * glm::inverse(glm::translate(position_));
 }
 
+void Camera::UpdatePerspectiveMatrix() {
+  this->perspective_mat_ = glm::perspective(glm::radians(fov_), aspect_,
+                                            nearplane_, farplane_);
+}
+
 // Public-------------------------------------------------------------------------------------------
 
 Camera::Camera(glm::vec3 in_pos, glm::vec3 in_target, float in_fov_deg,
@@ -44,9 +49,17 @@ Camera::Camera(glm::vec3 in_pos, glm::vec3 in_target, float in_fov_deg,
   // Calculate view matrix
   this->UpdateViewMatrix();
 
+  fov_ = in_fov_deg;
+  nearplane_ = in_nearplane;
+  farplane_ = in_farplane;
+  aspect_ = in_aspect;
+
   // STEP 2: Calculate perpective-matrix
   this->perspective_mat_ = glm::perspective(glm::radians(in_fov_deg), in_aspect,
                                             in_nearplane, in_farplane);
+}
+
+Camera::Camera() {
 }
 
 Camera::~Camera() {}

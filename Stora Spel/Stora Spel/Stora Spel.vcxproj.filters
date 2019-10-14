@@ -15,6 +15,7 @@
     <ClCompile Include="src\Chat.cpp" />
     <ClCompile Include="src\states\connectmenustate.cpp" />
     <ClCompile Include="src\ecs\systems\sound_system.cpp" />
+    <ClCompile Include="src\states\settingsstate.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
@@ -44,7 +45,6 @@
     <ClInclude Include="src\ecs\components\light_component.hpp" />
     <ClInclude Include="src\ecs\components\model_component.hpp" />
     <ClInclude Include="src\ecs\components\player_component.hpp" />
-    <ClInclude Include="src\ecs\systems\button_system.hpp" />
     <ClInclude Include="src\ecs\systems\print_position_system.hpp" />
     <ClInclude Include="src\ecs\systems\render_system.hpp" />
     <ClInclude Include="shared\shared\transform_component.hpp" />
@@ -60,6 +60,8 @@
     <ClInclude Include="src\ecs\systems\sound_system.hpp" />
     <ClInclude Include="src\eventdispatcher.hpp" />
     <ClInclude Include="shared\shared\physics_component.hpp" />
+    <ClInclude Include="src\ecs\components\slider_component.hpp" />
+    <ClInclude Include="src\ecs\systems\gui_system.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

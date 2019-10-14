@@ -8,8 +8,8 @@
 #include <limits>
 #include <unordered_map>
 #include <vector>
-#include "ecs/systems/sound_system.hpp"
 #include "Chat.hpp"
+#include "ecs/systems/sound_system.hpp"
 #include "shared/shared.hpp"
 #include "states/state.hpp"
 
@@ -32,7 +32,10 @@ class Engine {
   void Render();
 
   void SetCurrentRegistry(entt::registry* registry);
-  void ChangeState(StateType state) { wanted_state_type_ = state; }
+  void ChangeState(StateType state) {
+    wanted_state_type_ = state;
+    previous_state_ = current_state_->Type();
+  }
   NetAPI::Socket::Client& GetClient() { return client_; }
   NetAPI::Common::Packet& GetPacket() { return packet_; }
   void SetSendInput(bool should_send) { should_send_input_ = should_send; }
@@ -45,7 +48,7 @@ class Engine {
 
   AbilityID GetSecondaryAbility() { return second_ability_; }
 
- std::vector<unsigned int> GetTeamScores() { return scores_; }
+  std::vector<unsigned int> GetTeamScores() { return scores_; }
 
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
@@ -53,6 +56,8 @@ class Engine {
   void DrawScoreboard();
 
   Chat* GetChat() { return &chat_; }
+
+  StateType GetPreviousStateType() { return previous_state_; }
 
  private:
   void SetKeybinds();
@@ -71,6 +76,7 @@ class Engine {
   LobbyState lobby_state_;
   PlayState play_state_;
   ConnectMenuState connect_menu_state_;
+  SettingsState settings_state_;
   entt::registry* registry_current_;
 
   bool should_send_input_ = false;
@@ -107,6 +113,8 @@ class Engine {
   unsigned int new_team_ = std::numeric_limits<unsigned int>::max();
 
   std::unordered_map<PlayerID, PlayerScoreBoardInfo> player_scores_;
+
+  StateType previous_state_;
 };
 
 #endif  // ENGINE_HPP_

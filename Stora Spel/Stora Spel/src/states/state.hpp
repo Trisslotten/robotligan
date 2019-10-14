@@ -17,6 +17,7 @@ enum class StateType {
   CONNECT_MENU,
   LOBBY,
   PLAY,
+  SETTINGS,
 };
 
 class State {
@@ -156,6 +157,27 @@ class ConnectMenuState : public State {
   glob::Font2DHandle font_test_ = 0;
   entt::registry registry_connect_menu_;
 };
+
+/////////////////////// SETTINGS ///////////////////
+class SettingsState : public State {
+ public:
+  void Startup() override;
+  void Init() override;
+  void Update() override;
+  void UpdateNetwork() override;
+  void Cleanup() override;
+  StateType Type() { return StateType::SETTINGS; }
+
+ private:
+  void CreateSettingsMenu();
+  void SaveSettings();
+  glob::Font2DHandle font_test_ = 0;
+  entt::registry registry_settings_;
+
+  float setting_fov_ = 90.f;
+};
+
+
 /////////////////////// PLAY ///////////////////////
 
 class PlayState : public State {
@@ -170,8 +192,7 @@ class PlayState : public State {
 
   void SetEntityTransform(EntityID player_id, glm::vec3 pos,
                           glm::quat orientation);
-  void SetEntityPhysics(EntityID player_id, glm::vec3 vel,
-    bool is_airborne);
+  void SetEntityPhysics(EntityID player_id, glm::vec3 vel, bool is_airborne);
   void SetCameraOrientation(glm::quat orientation);
   void SetEntityIDs(std::vector<EntityID> player_ids, EntityID my_id,
                     EntityID ball_id) {
@@ -218,7 +239,7 @@ class PlayState : public State {
 
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> transforms_;
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
-  
+
   entt::entity blue_goal_light_;
   entt::entity red_goal_light_;
 
