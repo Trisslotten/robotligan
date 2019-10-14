@@ -1,6 +1,9 @@
 #ifndef STATE_HPP_
 #define STATE_HPP_
 
+#define LATENCY 0.006f
+
+#include <list>
 #include <NetAPI\packet.hpp>
 #include <entt.hpp>
 #include <glm/glm.hpp>
@@ -8,6 +11,7 @@
 #include "Chat.hpp"
 #include "shared/shared.hpp"
 #include <ecs/components/button_component.hpp>
+#include <playerdata.hpp>
 
 class Engine;
 
@@ -26,7 +30,7 @@ class State {
   // when state changed to this state
   virtual void Init() = 0;
 
-  virtual void Update() = 0;
+  virtual void Update(float dt) = 0;
 
   virtual void UpdateNetwork() = 0;
 
@@ -53,7 +57,7 @@ class MainMenuState : public State {
  public:
   void Startup() override;
   void Init() override;
-  void Update() override;
+  void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
 
@@ -82,7 +86,7 @@ class LobbyState : public State {
  public:
   void Startup() override;
   void Init() override;
-  void Update() override;
+  void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
 
@@ -113,7 +117,7 @@ class ConnectMenuState : public State {
  public:
   void Startup() override;
   void Init() override;
-  void Update() override;
+  void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
   StateType Type() { return StateType::CONNECT_MENU; }
@@ -145,7 +149,7 @@ class PlayState : public State {
  public:
   void Startup() override;
   void Init() override;
-  void Update() override;
+  void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
 
@@ -168,6 +172,9 @@ class PlayState : public State {
   void DestroyEntity(EntityID id);
   void SwitchGoals();
 
+  void SetKeyBinds(std::unordered_map<int, int>* keybinds) {keybinds_ = keybinds;}
+  void OnServerFrame();
+
  private:
   void CreateInitialEntities();
   void CreatePlayerEntities();
@@ -179,6 +186,9 @@ class PlayState : public State {
 
   void ToggleInGameMenu();
   void UpdateInGameMenu(bool show_menu);
+  FrameState SimulateMovement(std::vector<int> *action, float dt);
+  void MovePlayer(float dt);
+  
   ////////////////////////////////////////
 
   entt::registry registry_gameplay_;
@@ -188,7 +198,12 @@ class PlayState : public State {
   float current_stamina_ = 0.f;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> transforms_;
+  std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> new_transforms_;
+  glm::vec3 player_new_pos_;
+  glm::quat player_new_rotation_;
+  entt::entity my_entity_;
 
+  std::unordered_map<int, int>* keybinds_;
   entt::entity blue_goal_light_;
   entt::entity red_goal_light_;
 
@@ -199,6 +214,9 @@ class PlayState : public State {
       gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_;
 
   bool show_in_game_menu_buttons_ = false;
+  std::list<PlayerData> history_;
+  FrameState predicted_state_;
+  float history_duration_;
 };
 
 #endif  // STATE_HPP_

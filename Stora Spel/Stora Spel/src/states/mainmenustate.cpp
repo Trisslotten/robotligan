@@ -21,7 +21,7 @@ void MainMenuState::Init() {
   }
 }
 
-void MainMenuState::Update() {
+void MainMenuState::Update(float dt) {
   //
 }
 

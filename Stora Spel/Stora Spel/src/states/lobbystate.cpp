@@ -80,7 +80,7 @@ void LobbyState::Init() {
   CreateGUIElements();
 }
 
-void LobbyState::Update() {
+void LobbyState::Update(float dt) {
   //
   DrawTeamSelect();
 }

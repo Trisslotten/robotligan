@@ -52,7 +52,7 @@ void ConnectMenuState::Init() {
   engine_->SetEnableChat(false);
 }
 
-void ConnectMenuState::Update() {
+void ConnectMenuState::Update(float dt) {
   auto& client = engine_->GetClient();
   auto isDown = glob::window::MouseButtonDown(GLFW_MOUSE_BUTTON_1);
   auto windowSize = glob::window::GetWindowDimensions();

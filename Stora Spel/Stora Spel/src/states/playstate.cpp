@@ -3,6 +3,8 @@
 #include <glob/graphics.hpp>
 #include <glob/window.hpp>
 #include <GLFW/glfw3.h>
+#include <glm/gtx/compatibility.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 #include "shared/camera_component.hpp"
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
@@ -12,6 +14,8 @@
 #include "engine.hpp"
 #include "entitycreation.hpp"
 #include "util/input.hpp"
+#include <physics.hpp>
+#include "..//..//..//Server/src/ecs/components/physics_component.hpp"
 
 void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
@@ -57,7 +61,7 @@ void PlayState::Init() {
   client.Send(to_send);
 }
 
-void PlayState::Update() {
+void PlayState::Update(float dt) {
   auto& cli = engine_->GetClient();
   if (!cli.IsConnected()) {
     cli.Disconnect();
@@ -66,12 +70,12 @@ void PlayState::Update() {
   if (!transforms_.empty()) {
     auto view_entities =
         registry_gameplay_.view<TransformComponent, IDComponent>();
+    new_transforms_.clear();
     for (auto entity : view_entities) {
       auto& trans_c = view_entities.get<TransformComponent>(entity);
       auto& id_c = view_entities.get<IDComponent>(entity);
       auto trans = transforms_[id_c.id];
-      trans_c.position = trans.first;
-      trans_c.rotation = trans.second;
+      new_transforms_[id_c.id] = std::make_pair(trans.first, trans.second);
       /*
       std::cout << trans_c.position.x << ", ";
       std::cout << trans_c.position.y << ", ";
@@ -81,6 +85,34 @@ void PlayState::Update() {
     // std::cout << "\n";
     transforms_.clear();
   }
+  
+  // interpolate
+  auto view_entities =
+      registry_gameplay_.view<TransformComponent, IDComponent>();
+
+  float f = 0.25f * dt;  // pow(0.75f, dt);
+  for (auto entity : view_entities) {
+    auto& trans_c = view_entities.get<TransformComponent>(entity);
+    auto& id_c = view_entities.get<IDComponent>(entity);
+    if (id_c.id == my_id_) {
+      auto trans = new_transforms_[id_c.id];
+      player_new_pos_ = trans.first;
+      player_new_rotation_ = trans.second;
+      //if (glm::length(trans_c.position - trans.first) > 3.0f) {
+		//trans_c.position = glm::lerp(trans_c.position, trans.first, 1.0f - f);
+        //trans_c.position = trans.first;
+        //std::cout << "rubber banding\n"; 
+	  //}
+      trans_c.position = trans.first;
+      trans_c.rotation = trans.second;
+    } else {
+		auto trans = new_transforms_[id_c.id];
+		trans_c.position = glm::lerp(trans_c.position, trans.first, 1.0f - f);
+		trans_c.rotation = glm::slerp(trans_c.rotation, trans.second, 1.0f - f);  
+	}
+  }
+ 
+  MovePlayer(dt);
 
   if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
     ToggleInGameMenu();
@@ -136,6 +168,193 @@ void PlayState::UpdateInGameMenu(bool show_menu) {
   }
 }
 
+FrameState PlayState::SimulateMovement(std::vector<int>* action, float dt) {
+  auto view_controller = registry_gameplay_.view<CameraComponent, PlayerComponent, TransformComponent>();
+
+  glm::vec3 final_velocity = glm::vec3(0.f, 0.f, 0.f);
+  for (auto entity : view_controller) {
+    CameraComponent& cam_c = view_controller.get<CameraComponent>(entity);
+    // PlayerComponent& player_c = view_controller.get<PlayerComponent>(entity);
+    TransformComponent& trans_c =
+        view_controller.get<TransformComponent>(entity);
+    // PhysicsComponent& physics_c =
+    // view_controller.get<PhysicsComponent>(entity);
+
+    // Caputre keyboard input and apply velocity
+
+    glm::vec3 accum_velocity = glm::vec3(0.f);
+
+    // base movement direction on camera orientation.
+    glm::vec3 frwd = cam_c.GetLookDir();
+    frwd.y = 0;
+    frwd = glm::normalize(frwd);
+    glm::vec3 up(0, 1, 0);
+    glm::vec3 right = glm::normalize(glm::cross(frwd, up));
+    bool sprint = false;
+    for (int a : *action) {
+      if (a == PlayerAction::WALK_FORWARD) {
+        accum_velocity += frwd;
+      }
+      if (a == PlayerAction::WALK_BACKWARD) {
+        accum_velocity -= frwd;
+      }
+      if (a == PlayerAction::WALK_RIGHT) {
+        accum_velocity += right;
+      }
+      if (a == PlayerAction::WALK_LEFT) {
+        accum_velocity -= right;
+      }
+      if (a == PlayerAction::SPRINT && current_stamina_ > 60.0f * dt) {
+        sprint = true;
+      }
+    }
+
+    if (glm::length(accum_velocity) > 0.f)
+      accum_velocity = glm::normalize(accum_velocity) * 12.0f;
+    if (sprint) {
+      accum_velocity *= 2.f;
+    }
+
+    // physics stuff
+
+    final_velocity += accum_velocity;
+
+    // physics_c.velocity = final_velocity;
+
+    // glm::vec3 cur_move_dir = glm::normalize(physics_c.velocity);
+
+    // IF player is pressing space
+    // AND is not airborne
+    // AND has more enery than the cost for jumping
+    // if (player_c.actions[PlayerAction::JUMP] && !physics_c.is_airborne &&
+    //    player_c.energy_current > player_c.cost_jump && !player_c.no_clip) {
+    //  // Add velocity upwards
+    //  final_velocity += up * player_c.jump_speed;
+    //  // Set them to be airborne
+    //  physics_c.is_airborne = true;
+    //  // Subtract energy cost from resources
+    //  player_c.energy_current -= player_c.cost_jump;
+    //}
+
+    // slowdown
+    glm::vec3 sidemov = glm::vec3(final_velocity.x, 0, final_velocity.z);
+    float cur_move_speed = glm::length(sidemov);
+    // if (cur_move_speed > 0.f) {
+    // movement "floatiness", lower value = less floaty
+    float t = 0.0005f;
+    predicted_state_.velocity.x = glm::mix(
+        predicted_state_.velocity.x, final_velocity.x, 1.f - glm::pow(t, dt));
+    predicted_state_.velocity.z = glm::mix(
+        predicted_state_.velocity.z, final_velocity.z, 1.f - glm::pow(t, dt));
+    predicted_state_.velocity.y = final_velocity.y;
+    physics::PhysicsObject po;
+    po.acceleration = glm::vec3(0.f);
+    po.airborne = false;
+    po.friction = 0.f;
+    po.max_speed = 1000;
+    po.position = predicted_state_.position;
+    po.velocity = predicted_state_.velocity;
+
+    physics::Update(&po, dt);
+    FrameState new_state;
+    new_state.velocity = po.velocity;
+    new_state.position = po.position;
+    return new_state;
+  }
+}
+
+void PlayState::MovePlayer(float dt) {
+  auto view_controller =
+      registry_gameplay_
+          .view<CameraComponent, PlayerComponent, TransformComponent>();
+
+  PlayerData new_frame;
+  new_frame.delta_time = dt;
+
+  for (auto const& [key, action] : *keybinds_) {
+    if (action == PlayerAction::WALK_FORWARD && Input::IsKeyDown(key)) {
+      new_frame.actions.push_back(PlayerAction::WALK_FORWARD);
+    }
+    if (action == PlayerAction::WALK_BACKWARD && Input::IsKeyDown(key)) {
+      new_frame.actions.push_back(PlayerAction::WALK_BACKWARD);
+    }
+    if (action == PlayerAction::WALK_RIGHT && Input::IsKeyDown(key)) {
+      new_frame.actions.push_back(PlayerAction::WALK_RIGHT);
+    }
+    if (action == PlayerAction::WALK_LEFT && Input::IsKeyDown(key)) {
+      new_frame.actions.push_back(PlayerAction::WALK_LEFT);
+    }
+    if (action == PlayerAction::SPRINT && current_stamina_ > 60.0f * dt) {
+      new_frame.actions.push_back(PlayerAction::SPRINT);
+    }
+  }
+  FrameState new_state = SimulateMovement(&new_frame.actions, dt);
+    new_frame.delta_pos = new_state.position - predicted_state_.position;
+    new_frame.velocity = new_state.velocity;
+
+	history_.push_back(new_frame);
+    history_duration_ += dt;
+
+	//float converge_multiplier = 0.05f;
+	//
+	//glm::vec3 extrapolated_position = predicted_state_.position + po.velocity * LATENCY * converge_multiplier;
+	//
+	//t = dt / (LATENCY * (1 + converge_multiplier));
+	//
+	//trans_c.position = (extrapolated_position - trans_c.position) * t;
+    auto& trans_c = registry_gameplay_.get<TransformComponent>(my_entity_);
+    trans_c.position = new_state.position;
+    predicted_state_ = new_state;
+}
+
+void PlayState::OnServerFrame() { 
+	float dt = 0;
+  if (history_duration_ - LATENCY > 0) {
+    dt = history_duration_ - LATENCY;
+  }
+  history_duration_ -= dt;
+  while (history_.size() > 0 && dt > 0) {
+    if (dt >= history_.front().delta_time) {
+        dt -= history_.front().delta_time;
+        history_.pop_front();
+    } else {
+        float t = 1 - dt / history_.front().delta_time;
+        history_.front().delta_time -= dt;
+        history_.front().delta_pos *= dt;
+        break;
+	}
+  }
+  glm::vec3 velocity = history_.front().velocity;
+  if (registry_gameplay_.has<PhysicsComponent>(my_entity_)) {
+    auto& phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
+    velocity = phys_c.velocity;
+  }
+
+  float velocity_tolerance = 0.3f;
+  if (glm::length(velocity - history_.front().velocity) > velocity_tolerance) {
+    //auto& trans_c = registry_gameplay_.get<TransformComponent>(my_entity_);
+    predicted_state_.position = player_new_pos_;
+    predicted_state_.rotation = player_new_rotation_;
+    predicted_state_.velocity = velocity;
+
+	for (auto& frame : history_) {
+      FrameState new_state = SimulateMovement(&frame.actions, frame.delta_time);
+      frame.delta_pos = new_state.position - predicted_state_.position;
+      frame.velocity = predicted_state_.velocity;
+      predicted_state_ = new_state;
+	}
+  } else {
+    auto& trans_c = registry_gameplay_.get<TransformComponent>(my_entity_);
+    predicted_state_.position = player_new_pos_;
+    predicted_state_.rotation = player_new_rotation_;
+
+	for (auto& frame : history_) {
+      predicted_state_.position += frame.delta_pos;
+      predicted_state_.rotation = frame.rotation;
+	}
+  }
+}
+
 void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,
                                    glm::quat orientation) {
   transforms_[player_id] = std::make_pair(pos, orientation);
@@ -179,6 +398,7 @@ void PlayState::CreatePlayerEntities() {
     if (entity_id == my_id_) {
       glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset);
+      my_entity_ = entity;
     }
   }
 }
