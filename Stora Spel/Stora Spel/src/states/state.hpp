@@ -20,7 +20,7 @@ enum class StateType {
 };
 
 class State {
- public:
+public:
   // when program starts
   virtual void Startup() = 0;
 
@@ -42,16 +42,16 @@ class State {
   State() = default;
   ~State() {}
 
- protected:
+protected:
   Engine* engine_ = nullptr;
 
- private:
+private:
 };
 
 /////////////////////// MAIN MENU ///////////////////////
 
 class MainMenuState : public State {
- public:
+public:
   void Startup() override;
   void Init() override;
   void Update() override;
@@ -60,7 +60,7 @@ class MainMenuState : public State {
 
   StateType Type() { return StateType::MAIN_MENU; }
 
- private:
+private:
   void CreateMainMenu();
   void CreateSettingsMenu();
 
@@ -80,7 +80,7 @@ struct LobbyPlayer {
 };
 
 class LobbyState : public State {
- public:
+public:
   void Startup() override;
   void Init() override;
   void Update() override;
@@ -92,7 +92,7 @@ class LobbyState : public State {
   void HandleUpdateLobbyTeamPacket(NetAPI::Common::Packet& packet);
   void SetMyId(int client_id) { my_id_ = client_id; }
 
- private:
+private:
   entt::registry registry_lobby_;
   void CreateBackgroundEntities();
   void CreateGUIElements();
@@ -127,7 +127,7 @@ class LobbyState : public State {
 };
 /////////////////////// ConnectMenuState
 class ConnectMenuState : public State {
- public:
+public:
   void Startup() override;
   void Init() override;
   void Update() override;
@@ -135,11 +135,11 @@ class ConnectMenuState : public State {
   void Cleanup() override;
   StateType Type() { return StateType::CONNECT_MENU; }
 
- private:
+private:
   struct InputField {
-    InputField(){};
+    InputField() {};
     InputField(glm::vec2 in_size, glm::vec2 in_pos,
-               std::string initial_text = "") {
+      std::string initial_text = "") {
       size = in_size;
       pos = in_pos;
     }
@@ -159,7 +159,7 @@ class ConnectMenuState : public State {
 /////////////////////// PLAY ///////////////////////
 
 class PlayState : public State {
- public:
+public:
   void Startup() override;
   void Init() override;
   void Update() override;
@@ -169,12 +169,12 @@ class PlayState : public State {
   StateType Type() { return StateType::PLAY; }
 
   void SetEntityTransform(EntityID player_id, glm::vec3 pos,
-                          glm::quat orientation);
+    glm::quat orientation);
   void SetEntityPhysics(EntityID player_id, glm::vec3 vel,
     bool is_airborne);
   void SetCameraOrientation(glm::quat orientation);
   void SetEntityIDs(std::vector<EntityID> player_ids, EntityID my_id,
-                    EntityID ball_id) {
+    EntityID ball_id) {
     player_ids_ = player_ids;
     my_id_ = my_id;
     ball_id_ = ball_id;
@@ -194,7 +194,7 @@ class PlayState : public State {
 
   void EndGame();
 
- private:
+private:
   void CreateInitialEntities();
   void CreatePlayerEntities();
   void CreateArenaEntity();
@@ -218,7 +218,7 @@ class PlayState : public State {
 
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> transforms_;
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
-  
+
   entt::entity blue_goal_light_;
   entt::entity red_goal_light_;
 
@@ -227,7 +227,7 @@ class PlayState : public State {
   glob::E2DHandle e2D_test_, e2D_test2_;
   glob::GUIHandle in_game_menu_gui_ = 0;
   glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
-      gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_;
+    gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_, gui_minimap_, gui_minimap_goal_red_, gui_minimap_goal_blue_, gui_minimap_player_red_, gui_minimap_player_blue_, gui_minimap_ball_;
 
   std::vector<glob::GUIHandle> ability_handles_;
 

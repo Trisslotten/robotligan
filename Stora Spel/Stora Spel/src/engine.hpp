@@ -13,7 +13,7 @@
 #include "shared/shared.hpp"
 #include "states/state.hpp"
 
-struct PlayerScoreBoardInfo {
+struct PlayerStatInfo {
   int points = 0;
   int goals = 0;
   unsigned int team = TEAM_RED;
@@ -49,6 +49,7 @@ class Engine {
 
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
+  unsigned int GetPlayerTeam(EntityID id) { return player_scores_[id].team; }
 
   void DrawScoreboard();
 
@@ -106,7 +107,7 @@ class Engine {
   AbilityID second_ability_ = AbilityID::NULL_ABILITY;
   unsigned int new_team_ = std::numeric_limits<unsigned int>::max();
 
-  std::unordered_map<PlayerID, PlayerScoreBoardInfo> player_scores_;
+  std::unordered_map<PlayerID, PlayerStatInfo> player_scores_;
 };
 
 #endif  // ENGINE_HPP_

@@ -18,6 +18,8 @@ void SoundSystem::Update(entt::registry& registry) {
 
     // TODO: Get velocity and airbourne bool-check from physics component
     sound_engine_.SetListenerAttributes(trans_c.position, camera_c.orientation, glm::vec3(0));
+
+    std::cout << "X: " << trans_c.position.x << " Z: " << trans_c.position.z << std::endl;
   }
 
   // Set 3D space attributes for sounds coming from each object/player on the field
