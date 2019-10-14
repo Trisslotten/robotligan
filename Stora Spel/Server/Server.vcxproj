@@ -189,7 +189,7 @@
     <ClInclude Include="src\replay machine\replay_machine.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="util\settings.txt" />
+    <Text Include="config\server_settings.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

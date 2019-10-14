@@ -11,6 +11,7 @@
 #include "ecs/components.hpp"
 #include "ecs/components/match_timer_component.hpp"
 #include "gameserver.hpp"
+#include <physics.hpp>
 
 void ServerLobbyState::Init() {
   start_game_timer.Restart();
@@ -64,6 +65,11 @@ void ServerLobbyState::Cleanup() {
 void ServerPlayState::Init() {
   auto& server = game_server_->GetServer();
   auto& registry = game_server_->GetRegistry();
+
+  //initialize option values
+  match_time_ = (int)GlobalSettings::Access()->ValueOf("MATCH_TIME");
+  count_down_time_ = (int)GlobalSettings::Access()->ValueOf("COUNTDOWN_TIME");
+  physics::SetGravity(GlobalSettings::Access()->ValueOf("PHYSICS_GRAVITY"));
 
   // Start the countdown and match timer
   match_timer_.Restart();
@@ -247,13 +253,12 @@ void ServerPlayState::Update(float dt) {
       to_send << projectiles.projectile_id;
       to_send << PacketBlockType::CREATE_PROJECTILE;
     }
-    created_projectiles_.clear();
+
     // send destroy entity
     for (auto entity_id : destroy_entities_) {
       to_send << entity_id;
       to_send << PacketBlockType::DESTROY_ENTITIES;
     }
-    destroy_entities_.clear();
 
     // Send countdown & match time in sec
     to_send << (int)countdown_timer_.Elapsed();
@@ -272,6 +277,8 @@ void ServerPlayState::Update(float dt) {
       goal_goal_c.switched_this_tick = false;
     }
   }
+  destroy_entities_.clear();
+  created_projectiles_.clear();
   pick_ups_.clear();
 
   if (match_timer_.Elapsed() > match_time_) {
@@ -642,8 +649,6 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       created_projectiles_.push_back(projectile);
       break;
     }
-    default:
-      break;
   }
 }
 

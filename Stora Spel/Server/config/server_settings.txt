@@ -7,6 +7,7 @@ Example: '>MY_VALUE=13.37'
 
 //--Physics Values--//
 >PHYSICS_FRICTION=0.0
+>PHYSICS_GRAVITY=9.82
 
 //--Player Stats--//
 >PLAYER_SPEED_WALK=12.0
@@ -55,3 +56,7 @@ Example: '>MY_VALUE=13.37'
 
 //--Debug Options--//
 >RENDER_WIREFRAME=0.0
+
+//--Match options--//
+>MATCH_TIME=300.0 //5 min
+>COUNTDOWN_TIME=5.0 
