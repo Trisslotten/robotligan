@@ -4,10 +4,7 @@
 
 #include "glob/window.hpp"
 
-void glob::PostProcess::Init() {
-  kawase_blur_compute_.add("kawaseblur.comp");
-  kawase_blur_compute_.compile();
-
+void glob::PostProcess::Init(Blur& blur) {
   auto ws = glob::window::GetWindowDimensions();
 
   glGenRenderbuffers(1, &renderbuffer_);
@@ -24,7 +21,7 @@ void glob::PostProcess::Init() {
 
   glGenTextures(1, &draw_emission_texture_);
   glBindTexture(GL_TEXTURE_2D, draw_emission_texture_);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 1);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 2);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
@@ -34,16 +31,8 @@ void glob::PostProcess::Init() {
                GL_UNSIGNED_BYTE, NULL);
   glGenerateMipmap(GL_TEXTURE_2D);
 
-  glGenTextures(2, emission_blur_textures_);
-  for (int i = 0; i < 2; i++) {
-    glBindTexture(GL_TEXTURE_2D, emission_blur_textures_[i]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, int(ws.x) / 2, int(ws.y) / 2, 0,
-                 GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-  }
+
+  blur_id = blur.CreatePass(ws.x / 2, ws.y / 2, GL_RGBA8);
 
   glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -73,40 +62,14 @@ void glob::PostProcess::BeforeDraw() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void glob::PostProcess::AfterDraw() {
+void glob::PostProcess::AfterDraw(Blur& blur) {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glBindTexture(GL_TEXTURE_2D, draw_emission_texture_);
   glGenerateMipmap(GL_TEXTURE_2D);
 
-  kawase_blur_compute_.use();
-  float group_size = 16;
-  auto tex_size = glob::window::GetWindowDimensions() / 2.f;
-  glm::ivec2 num_groups = glm::ceil(tex_size / group_size);
-  kawase_blur_compute_.uniform("size", tex_size);
-  // the kernels for each pass
-  std::vector<int> kernels = {0, 1, 1};
-  for (int i = 0; i < kernels.size(); i++) {
-    kawase_blur_compute_.uniform("pass", i);
-    kawase_blur_compute_.uniform("kernel", kernels[i]);
-
-    int curr_i = emission_blur_tex_index_;
-    int next_i = (emission_blur_tex_index_ + 1) % 2;
-    glActiveTexture(GL_TEXTURE0);
-    if (i == 0)
-      glBindTexture(GL_TEXTURE_2D, draw_emission_texture_);
-    else {
-      glBindTexture(GL_TEXTURE_2D, emission_blur_textures_[curr_i]);
-    }
-    kawase_blur_compute_.uniform("read_tex", 0);
-    glBindImageTexture(0, emission_blur_textures_[next_i], 0, GL_FALSE, 0,
-                       GL_WRITE_ONLY, GL_RGBA8);
-
-    glDispatchCompute(num_groups.x, num_groups.y, 1);
-
-    emission_blur_tex_index_ = next_i;
-  }
-  glBindImageTexture(0, 0, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+  blurred_emission_texture =
+      blur.BlurTexture(blur_id, draw_emission_texture_, 2);
 }
 
 void glob::PostProcess::BindColorTex(GLuint slot) {
@@ -116,5 +79,5 @@ void glob::PostProcess::BindColorTex(GLuint slot) {
 
 void glob::PostProcess::BindEmissionTex(GLuint slot) {
   glActiveTexture(GL_TEXTURE0 + slot);
-  glBindTexture(GL_TEXTURE_2D, emission_blur_textures_[emission_blur_tex_index_]);
+  glBindTexture(GL_TEXTURE_2D, blurred_emission_texture);
 }

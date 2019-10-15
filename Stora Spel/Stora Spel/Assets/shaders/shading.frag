@@ -1,17 +1,21 @@
 #version 440 core
 
-in vec4 v_shadow_space;
+#define MAX_SHADOWS 4
 
+#define MAX_LIGHTS 16
 
-uniform vec3 light_pos[64];
-uniform vec3 light_col[64];
-uniform float light_radius[64];
-uniform float light_amb[64];
+in vec4 v_shadow_spaces[MAX_SHADOWS];
+
+uniform int num_shadows;
+uniform sampler2D shadow_maps[MAX_SHADOWS];
+uniform mat4 shadow_transforms[MAX_SHADOWS];
+uniform vec3 shadow_light_positions[MAX_SHADOWS];
+
+uniform vec3 light_pos[MAX_LIGHTS];
+uniform vec3 light_col[MAX_LIGHTS];
+uniform float light_radius[MAX_LIGHTS];
+uniform float light_amb[MAX_LIGHTS];
 uniform int NR_OF_LIGHTS;
-
-uniform sampler2D shadow_map;
-uniform mat4 shadow_transform;
-uniform vec3 shadow_light_pos;
 
 // https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
 float rand(vec2 n) { 
@@ -27,19 +31,19 @@ vec3 dither() {
 	return result;
 }
 
-float shadow(vec3 position) {
+float shadow(vec3 position, int index) {
 	float result = 1.0;
 
-	vec4 shadow_space = v_shadow_space;
+	vec4 shadow_space = v_shadow_spaces[index];
 	shadow_space /= shadow_space.w;
 
 	vec2 uv = (shadow_space.xy+1.)*0.5;
 	if(uv.x < 0. || uv.x > 1. || uv.y < 0. || uv.y > 1.) {
 		return 1.0;
 	}
-	float frag_depth = length(position - shadow_light_pos);
+	float frag_depth = length(position - shadow_light_positions[index]);
 
-	vec2 depths = textureLod(shadow_map, uv, 1).xy;
+	vec2 depths = textureLod(shadow_maps[index], uv, 0).xy;
 	float E_x2 = depths.y;
 	float Ex_2 = depths.x*depths.x;
 	float variance = E_x2 - Ex_2;
@@ -67,27 +71,26 @@ vec3 shading(vec3 position, vec3 normal) {
 		vec3 diffuse = max(dot(light_dir, normal), 0) * light_col[l] * intensity;
 
 		lighting += diffuse;
-	}
-
-	for(int l = 0; l < NR_OF_LIGHTS; l++){
 		lighting += light_amb[l];
 	}
 
-	vec4 shadow_space = shadow_transform * vec4(position, 1.0);
-	shadow_space.xyz /= shadow_space.w;
+	for(int i = 0; i < num_shadows; i++) {
+		vec4 shadow_space = v_shadow_spaces[i];
+		shadow_space.xyz /= shadow_space.w;
 
-	vec3 ld = normalize(shadow_light_pos - position);
-	if(shadow_space.w > 0) {
-		vec3 spot_light = vec3(0.5);
-		// diffuse
-		spot_light *= max(dot(ld, normal), 0);
-		// in spot light circle
-		spot_light *= smoothstep( 1.0,  0.5, max(shadow_space.x,shadow_space.y));
-		spot_light *= smoothstep(-1.0, -0.5, min(shadow_space.x,shadow_space.y));
-		// occlusion
-		spot_light *= shadow(position);
+		vec3 ld = normalize(shadow_light_positions[i] - position);
+		if(shadow_space.w > 0) {
+			vec3 spot_light = vec3(0.25);
+			// diffuse
+			spot_light *= max(dot(ld, normal), 0);
+			// in spot light circle
+			spot_light *= smoothstep( 1.0,  0.5, max(shadow_space.x,shadow_space.y));
+			spot_light *= smoothstep(-1.0, -0.5, min(shadow_space.x,shadow_space.y));
+			// occlusion
+			spot_light *= shadow(position, i);
 
-		lighting += spot_light;
+			lighting += spot_light;
+		}
 	}
 
 	return lighting;

@@ -1,9 +1,14 @@
 #version 440 core
 
-uniform mat4 shadow_transform;
+#define MAX_SHADOWS 4
 
-out vec4 v_shadow_space;
+uniform int num_shadows;
+uniform mat4 shadow_transforms[MAX_SHADOWS];
+
+out vec4 v_shadow_spaces[MAX_SHADOWS];
 
 void handleShading(vec3 position) {
-	v_shadow_space = shadow_transform * vec4(position, 1.0);
+	for(int i = 0; i < num_shadows; i++) {
+		v_shadow_spaces[i] = shadow_transforms[i] * vec4(position, 1.0);
+	}
 }

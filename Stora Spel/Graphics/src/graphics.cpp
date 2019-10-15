@@ -20,8 +20,8 @@
 
 #include <msdfgen/msdfgen-ext.h>
 #include <msdfgen/msdfgen.h>
-#include "postprocess/postprocess.hpp"
 #include "postprocess/blur.hpp"
+#include "postprocess/postprocess.hpp"
 
 namespace glob {
 
@@ -76,11 +76,16 @@ GLuint triangle_vbo, triangle_vao;
 GLuint cube_vbo, cube_vao;
 GLuint quad_vbo, quad_vao;
 
+const int num_shadow_maps = 4;
 GLuint shadow_framebuffer;
 GLuint shadow_renderbuffer;
 GLuint shadow_texture;
-int shadow_size = 512;
+GLuint shadow_blurred_textures[num_shadow_maps] = {0};
+int shadow_size = 1024;
+int shadow_blurred_level = 1;
+int shadow_blurred_size = shadow_size / glm::pow(2, shadow_blurred_level);
 ShaderProgram shadow_shader;
+uint64_t shadow_blur_id = 0;
 
 PostProcess post_process;
 Blur blur;
@@ -115,6 +120,7 @@ struct GLuintBuffers {
   GLuint ebo;
   GLuint size;
 };
+
 std::unordered_map<ModelHandle, GLuintBuffers> wireframe_buffers;
 
 std::vector<RenderItem> items_to_render;
@@ -263,11 +269,11 @@ void Init() {
                         (GLvoid *)0);
   glBindVertexArray(0);
 
-  post_process.Init();
-
   blur.Init();
-  blur.CreatePass(1,1,1);
-  blur.Finalize();
+
+  shadow_blur_id =
+      blur.CreatePass(shadow_blurred_size, shadow_blurred_size, GL_RG32F);
+  post_process.Init(blur);
 
   shadow_shader.add("modelshader.vert");
   shadow_shader.add("shading.vert");
@@ -284,9 +290,20 @@ void Init() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                   GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, shadow_size, shadow_size, 0, GL_RG,
                GL_UNSIGNED_BYTE, NULL);
+
+  glGenTextures(num_shadow_maps, shadow_blurred_textures);
+  for (int i = 0; i < num_shadow_maps; i++) {
+    glBindTexture(GL_TEXTURE_2D, shadow_blurred_textures[i]);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, shadow_blurred_size,
+                 shadow_blurred_size, 0, GL_RG, GL_UNSIGNED_BYTE, NULL);
+  }
 
   glBindFramebuffer(GL_FRAMEBUFFER, shadow_framebuffer);
 
@@ -522,39 +539,79 @@ void Render() {
     }
   }
 
-  glBindFramebuffer(GL_FRAMEBUFFER, shadow_framebuffer);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  glViewport(0, 0, shadow_size, shadow_size);
-  glm::vec3 shadow_light_pos = glm::vec3(10.6,5.7,7.1);
-  glm::mat4 shadow_transform =
+  std::vector<std::pair<glm::vec3, glm::mat4>> shadow_casters;
+  shadow_casters.push_back(std::make_pair(
+      glm::vec3(10.6, 5.7, 7.1),
       glm::perspective(glm::radians(70.f), 1.f, 0.1f, 50.f) *
-      glm::lookAt(shadow_light_pos, glm::vec3(0,-5.7,0),
-                  glm::vec3(0, 1, 0));
-  shadow_shader.use();
-  shadow_shader.uniform("cam_transform", shadow_transform);
-  shadow_shader.uniform("shadow_light_pos", shadow_light_pos);
-  for (auto &render_item : items_to_render) {
-    shadow_shader.uniform("model_transform", render_item.transform);
-    render_item.model->Draw(shadow_shader);
+          glm::lookAt(glm::vec3(10.6, 5.7, 7.1), glm::vec3(0, -5.7, 0),
+                      glm::vec3(0, 1, 0))));
+
+  shadow_casters.push_back(std::make_pair(
+      glm::vec3(-10.6, 5.7, -7.1),
+      glm::perspective(glm::radians(70.f), 1.f, 0.1f, 50.f) *
+          glm::lookAt(glm::vec3(-10.6, 5.7, -7.1), glm::vec3(0, -5.7, 0),
+                      glm::vec3(0, 1, 0))));
+
+  shadow_casters.push_back(std::make_pair(
+      glm::vec3(10.6, 5.7, -7.1),
+      glm::perspective(glm::radians(70.f), 1.f, 0.1f, 50.f) *
+          glm::lookAt(glm::vec3(10.6, 5.7, -7.1), glm::vec3(0, -5.7, 0),
+                      glm::vec3(0, 1, 0))));
+
+  shadow_casters.push_back(std::make_pair(
+      glm::vec3(-10.6, 5.7, 7.1),
+      glm::perspective(glm::radians(70.f), 1.f, 0.1f, 50.f) *
+          glm::lookAt(glm::vec3(-10.6, 5.7, 7.1), glm::vec3(0, -5.7, 0),
+                      glm::vec3(0, 1, 0))));
+
+  glBindFramebuffer(GL_FRAMEBUFFER, shadow_framebuffer);
+  glViewport(0, 0, shadow_size, shadow_size);
+
+  for (int i = 0; i < shadow_casters.size(); i++) {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glm::vec3 shadow_light_pos = shadow_casters[i].first;
+    glm::mat4 shadow_transform = shadow_casters[i].second;
+
+    shadow_shader.use();
+    shadow_shader.uniform("cam_transform", shadow_transform);
+    shadow_shader.uniform("shadow_light_pos", shadow_light_pos);
+    for (auto &render_item : items_to_render) {
+      shadow_shader.uniform("model_transform", render_item.transform);
+      render_item.model->Draw(shadow_shader);
+    }
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, shadow_texture);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    blur.BlurTexture(shadow_blur_id, shadow_texture, 1,
+                     shadow_blurred_textures[i]);
+
+    model_shader.use();
+    model_shader.uniform("shadow_transforms[" + std::to_string(i) + "]",
+                         shadow_transform);
+    model_shader.uniform("shadow_light_positions[" + std::to_string(i) + "]",
+                         shadow_light_pos);
+    model_shader.uniform("shadow_maps[" + std::to_string(i) + "]", 3 + i);
+
+    model_emission_shader.use();
+    model_emission_shader.uniform(
+        "shadow_transforms[" + std::to_string(i) + "]", shadow_transform);
+    model_emission_shader.uniform(
+        "shadow_light_positions[" + std::to_string(i) + "]", shadow_light_pos);
+    model_emission_shader.uniform("shadow_maps[" + std::to_string(i) + "]",
+                                  3 + i);
   }
 
-  model_shader.use();
-  model_shader.uniform("shadow_transform", shadow_transform);
-  model_shader.uniform("shadow_map", 3);
-  model_shader.uniform("shadow_light_pos", shadow_light_pos);
-  model_emission_shader.use();
-  model_emission_shader.uniform("shadow_transform", shadow_transform);
-  model_emission_shader.uniform("shadow_map", 3);
-  model_emission_shader.uniform("shadow_light_pos", shadow_light_pos);
-  glActiveTexture(GL_TEXTURE0 + 3);
-  glBindTexture(GL_TEXTURE_2D, shadow_texture);
-  glGenerateMipmap(GL_TEXTURE_2D);
+  for (int i = 0; i < shadow_casters.size(); i++) {
+    glActiveTexture(GL_TEXTURE0 + 3 + i);
+    glBindTexture(GL_TEXTURE_2D, shadow_blurred_textures[i]);
+  }
 
   auto ws = glob::window::GetWindowDimensions();
   glViewport(0, 0, ws.x, ws.y);
   post_process.BeforeDraw();
   {
     model_shader.use();
+    model_shader.uniform("num_shadows", (int)shadow_casters.size());
     model_shader.uniformv("light_pos", lights_to_render.size(),
                           light_positions.data());
     model_shader.uniformv("light_col", lights_to_render.size(),
@@ -565,7 +622,6 @@ void Render() {
                           light_ambients.data());
     model_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
     model_shader.uniform("cam_transform", cam_transform);
-    model_shader.uniform("shadow_light_pos", shadow_light_pos);
     for (auto &render_item : items_to_render) {
       if (render_item.model->IsEmissive()) {
         continue;
@@ -575,6 +631,7 @@ void Render() {
     }
 
     model_emission_shader.use();
+    model_emission_shader.uniform("num_shadows", (int)shadow_casters.size());
     model_emission_shader.uniformv("light_pos", lights_to_render.size(),
                                    light_positions.data());
     model_emission_shader.uniformv("light_col", lights_to_render.size(),
@@ -590,7 +647,7 @@ void Render() {
       render_item.model->Draw(model_emission_shader);
     }
   }
-  post_process.AfterDraw();
+  post_process.AfterDraw(blur);
 
   fullscreen_shader.use();
   post_process.BindColorTex(0);

@@ -2,16 +2,20 @@
 #define GLOB_BLUR_HPP_
 
 #include <unordered_map>
-#include "shader.hpp"
 #include <unordered_set>
+#include "shader.hpp"
 
 namespace glob {
 
 class Blur {
  public:
   void Init();
-  void CreatePass(uint16_t width, uint16_t height, int32_t internal_format);
-  void Finalize();
+  // internal_format must be valid format for glBindImageTexture
+  // example: GL_RGB8 does not work, use GL_RGBA8 instead
+  uint64_t CreatePass(uint16_t width, uint16_t height, int32_t internal_format);
+
+  GLuint BlurTexture(uint64_t pass_id, GLuint source_texture,
+                     int source_level = 0, GLuint result_texture = 0);
 
  private:
   union PassInfo {
@@ -24,16 +28,13 @@ class Blur {
   };
 
   struct Pass {
-    GLuint textures[2];
+    GLuint textures[2] = {0, 0};
     int index = 0;
   };
 
   ShaderProgram kawase_blur_compute_;
 
-  std::unordered_set<uint64_t> passes_;
-
-  std::unordered_map<uint64_t, Pass> textures_;
-  std::unordered_map<uint64_t, 
+  std::unordered_map<uint64_t, Pass> passes_;
 };
 
 }  // namespace glob
