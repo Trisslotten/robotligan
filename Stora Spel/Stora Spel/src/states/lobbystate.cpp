@@ -150,7 +150,7 @@ void LobbyState::CreateBackgroundEntities() {
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f);
   glob::ModelHandle model_arena =
-      glob::GetModel("assets/Map_rectangular/map_rextangular.fbx");
+      glob::GetModel("assets/Map/Map_unified_TMP.fbx");
   registry_lobby_.assign<ModelComponent>(arena, model_arena);
   registry_lobby_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                              arena_scale);

@@ -6,12 +6,12 @@
 #include <collision.hpp>
 #include <ecs\components\pick_up_event.hpp>
 #include <glob\graphics.hpp>
+#include <physics.hpp>
 #include <shared\id_component.hpp>
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "ecs/components/match_timer_component.hpp"
 #include "gameserver.hpp"
-#include <physics.hpp>
 
 void ServerLobbyState::Init() {
   start_game_timer.Restart();
@@ -66,7 +66,7 @@ void ServerPlayState::Init() {
   auto& server = game_server_->GetServer();
   auto& registry = game_server_->GetRegistry();
 
-  //initialize option values
+  // initialize option values
   match_time_ = (int)GlobalSettings::Access()->ValueOf("MATCH_TIME");
   count_down_time_ = (int)GlobalSettings::Access()->ValueOf("COUNTDOWN_TIME");
   physics::SetGravity(GlobalSettings::Access()->ValueOf("PHYSICS_GRAVITY"));
@@ -364,19 +364,20 @@ void ServerPlayState::CreateArenaEntity() {
   // Prepare hard-coded values
   // Scale on the hitbox for the map
   float v1 = 7.171f;
-  float v2 = 10.6859;  // 13.596f;
-  float v3 = 5.723f;
+  float v2 = 21.6859;  // 13.596f;
+  float v3 = 3.423f;
+  float v4 = 7.723f;
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 arena_scale = glm::vec3(1.0f);
-  glob::ModelHandle model_arena =
-      glob::GetModel("assets/Map_rectangular/map_rextangular.fbx");
+  glm::vec3 arena_scale = glm::vec3(1.0f, 1.0f, 1.0f);
+  glob::ModelHandle model_arena = glob::GetModel("assets/Map/Map_HITBOX.fbx");
 
   // Add components for an arena
   // registry_.assign<ModelComponent>(entity, model_arena);
-  registry.assign<TransformComponent>(entity, zero_vec, zero_vec, arena_scale);
+  registry.assign<TransformComponent>(entity, zero_vec, zero_vec,
+                                      arena_scale);
 
   // Add a hitbox
-  registry.assign<physics::Arena>(entity, -v2, v2, -v3, v3, -v1, v1);
+  registry.assign<physics::Arena>(entity, -v2, v2, -v3, v4, -v1, v1);
   auto md = glob::GetMeshData(model_arena);
   glm::mat4 matrix =
       glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f)) *
@@ -406,7 +407,7 @@ void ServerPlayState::CreateBallEntity() {
   // registry_.assign<ModelComponent>(entity, model_ball);
   registry.assign<PhysicsComponent>(entity, glm::vec3(0), glm::vec3(0.f),
                                     ball_is_airborne, ball_friction);
-  registry.assign<TransformComponent>(entity, glm::vec3(0), zero_vec,
+  registry.assign<TransformComponent>(entity, zero_vec,glm::vec3(0),
                                       ball_scale);
 
   // Add a hitbox
@@ -659,13 +660,14 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       break;
     }
     case Event::CHANGED_TARGET: {
-      std::unordered_map<int, NetAPI::Common::Packet> &packets = game_server_->GetPackets();
+      std::unordered_map<int, NetAPI::Common::Packet>& packets =
+          game_server_->GetPackets();
       auto p_c = game_server_->GetRegistry().get<PlayerComponent>(e.entity);
       packets[p_c.client_id] << e.e_id;
-      packets[p_c.client_id] << PacketBlockType::YOUR_TARGET; 
+      packets[p_c.client_id] << PacketBlockType::YOUR_TARGET;
       break;
-	}
-	default:
+    }
+    default:
       break;
   }
 }
