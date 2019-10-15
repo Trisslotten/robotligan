@@ -239,6 +239,7 @@ private:
 
   Timer end_game_timer_;
   bool game_has_ended_ = false;
+  bool goals_swapped_ = false;
 };
 
 #endif  // STATE_HPP_

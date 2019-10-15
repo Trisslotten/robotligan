@@ -144,30 +144,47 @@ void PlayState::Update() {
   // draw Minimap
   glob::Submit(gui_minimap_, glm::vec2(glob::window::GetWindowDimensions().x - 250, 10), 0.3);
   // draw Minimap goals
-  // TODO: If goals are swapped, swap map pos
-  glob::Submit(gui_minimap_goal_red_, glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10), 0.2);
-  glob::Submit(gui_minimap_goal_blue_, glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
+  if (!goals_swapped_) {
+    glob::Submit(gui_minimap_goal_red_, glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10), 0.2);
+    glob::Submit(gui_minimap_goal_blue_, glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
+  } else {
+    glob::Submit(gui_minimap_goal_red_, glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
+    glob::Submit(gui_minimap_goal_blue_, glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10), 0.2);
+  }
 
-  // Draw movable objects
-  auto view_entities = registry_gameplay_.view<TransformComponent, PlayerComponent, IDComponent>();
-  for (auto entity : view_entities) {
-    auto& trans_c = view_entities.get<TransformComponent>(entity);
-    auto& player_c = view_entities.get<PlayerComponent>(entity);
-    auto& id_c = view_entities.get<IDComponent>(entity);
+  // Draw Player icons
+  auto view_player = registry_gameplay_.view<TransformComponent, PlayerComponent, IDComponent>();
+  for (auto entity : view_player) {
+    auto& trans_c = view_player.get<TransformComponent>(entity);
+    auto& id_c = view_player.get<IDComponent>(entity);
 
     // Normalize and project player pos to screen space (Z in world space is X in screen space and vice versa)
     float norm_pos_x = trans_c.position.z / 7.1f;
     float norm_pos_y = trans_c.position.x / 10.6f;
-    float minimap_pos_x = (norm_pos_x * 120.f) + 1470.f - 11.f;
+    float minimap_pos_x = (norm_pos_x * 120.f) + glob::window::GetWindowDimensions().x - 130.f - 11.f;
     float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 20.f;
 
-    // Draw Player icons
+    // Draw the right color icons
     if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
       glob::Submit(gui_minimap_player_red_, glm::vec2(minimap_pos_x, minimap_pos_y), 0.1);    // TODO: CALC REAL POS
     }
     else {
-      glob::Submit(gui_minimap_player_blue_, glm::vec2(glob::window::GetWindowDimensions().x - 10, 370), 0.1);   // TODO: CALC REAL POS
+      glob::Submit(gui_minimap_player_blue_, glm::vec2(minimap_pos_x, minimap_pos_y), 0.1);   // TODO: CALC REAL POS
     }
+  }
+
+  // Draw Ball icon
+  auto view_ball = registry_gameplay_.view<TransformComponent, BallComponent>();
+  for (auto entity : view_ball) {
+    auto& trans_c = view_ball.get<TransformComponent>(entity);
+
+    // Normalize and project player pos to screen space (Z in world space is X in screen space and vice versa)
+    float norm_pos_x = trans_c.position.z / 7.1f;
+    float norm_pos_y = trans_c.position.x / 10.6f;
+    float minimap_pos_x = (norm_pos_x * 120.f) + glob::window::GetWindowDimensions().x - 130.f - 20.f;
+    float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 20.f;
+
+    glob::Submit(gui_minimap_ball_, glm::vec2(minimap_pos_x, minimap_pos_y), 0.1);
   }
 
   // draw quickslot info
@@ -486,6 +503,11 @@ void PlayState::DestroyEntity(EntityID id) {
 }
 
 void PlayState::SwitchGoals() {
+  if (!goals_swapped_) {
+    goals_swapped_ = true;
+  } else {
+    goals_swapped_ = false;
+  }
   TransformComponent& blue_light_trans_c =
     registry_gameplay_.get<TransformComponent>(blue_goal_light_);
   TransformComponent& red_light_trans_c =
