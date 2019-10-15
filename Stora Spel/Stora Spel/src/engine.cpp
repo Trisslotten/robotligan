@@ -92,7 +92,7 @@ void Engine::Update(float dt) {
       if (Input::IsMouseButtonDown(button)) mouse_presses_[button]++;
 
     // accumulate mouse movement
-    float mouse_sensitivity = 0.003f;
+    float mouse_sensitivity = 0.003f * mouse_sensitivity_;
     glm::vec2 mouse_movement = mouse_sensitivity * Input::MouseMov();
     accum_yaw_ -= mouse_movement.x;
     accum_pitch_ -= mouse_movement.y;

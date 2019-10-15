@@ -14,9 +14,10 @@ void SettingsState::Init() {
   glob::window::SetMouseLocked(false);
   engine_->SetSendInput(false);
   engine_->SetCurrentRegistry(&registry_settings_);
-  CreateSettingsMenu();
   setting_volume_ = GlobalSettings::Access()->ValueOf("SOUND_VOLUME");
   setting_fov_ = GlobalSettings::Access()->ValueOf("GRAPHICS_FOV");
+  setting_mouse_sens_ = GlobalSettings::Access()->ValueOf("INPUT_MOUSE_SENS");
+  CreateSettingsMenu();
 }
 
 void SettingsState::Update() {
@@ -29,8 +30,11 @@ void SettingsState::Update() {
                glm::vec2(35, glob::window::GetWindowDimensions().y - 60), 48,
                "GRAPHICS");
   glob::Submit(font_test_,
-               glm::vec2(600, glob::window::GetWindowDimensions().y - 60), 48,
+               glm::vec2(400, glob::window::GetWindowDimensions().y - 60), 48,
                "SOUND");
+  glob::Submit(font_test_,
+               glm::vec2(1000, glob::window::GetWindowDimensions().y - 60), 48,
+               "INPUT");
 
   if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
     engine_->ChangeState(engine_->GetPreviousStateType());
@@ -73,7 +77,7 @@ void SettingsState::CreateSettingsMenu() {
   slider_c.font_handle = font_test_;
 
   glm::vec2 sound_start_pos =
-      glm::vec2(600, glob::window::GetWindowDimensions().y - 175);
+      glm::vec2(400, glob::window::GetWindowDimensions().y - 175);
   // volume slider
   auto volume_slider = registry_settings_.create();
   auto& vol_slider_c =
@@ -91,11 +95,31 @@ void SettingsState::CreateSettingsMenu() {
   vol_slider_c.text = "VOLUME";
   vol_slider_c.value_to_write = &setting_volume_;
   vol_slider_c.font_handle = font_test_;
+
+  glm::vec2 game_start_pos =
+      glm::vec2(1000, glob::window::GetWindowDimensions().y - 175);
+  // volume slider
+  auto sens_slider = registry_settings_.create();
+  auto& sens_slider_c = registry_settings_.assign<SliderComponent>(sens_slider);
+  sens_slider_c.back_tex =
+      glob::GetGUIItem("assets/GUI_Elements/slider_back.png");
+  sens_slider_c.front_tex =
+      glob::GetGUIItem("assets/GUI_Elements/slider_front.png");
+  sens_slider_c.value = setting_mouse_sens_;
+  sens_slider_c.position = game_start_pos + down_jump * 0.f;
+  sens_slider_c.min_val = 0.1f;
+  sens_slider_c.max_val = 2.1f;
+  sens_slider_c.dimensions = glm::vec2(150, 50);
+  sens_slider_c.increment = 0.02f;
+  sens_slider_c.text = "MOUSE SENSITIVTY";
+  sens_slider_c.value_to_write = &setting_mouse_sens_;
+  sens_slider_c.font_handle = font_test_;
 }
 
 void SettingsState::SaveSettings() {
   glob::GetCamera().SetFov(setting_fov_);
   GlobalSettings::Access()->WriteValue("SOUND_VOLUME", setting_volume_);
   GlobalSettings::Access()->WriteValue("GRAPHICS_FOV", setting_fov_);
+  GlobalSettings::Access()->WriteValue("INPUT_MOUSE_SENS", setting_mouse_sens_);
   engine_->UpdateSettingsValues();
 }

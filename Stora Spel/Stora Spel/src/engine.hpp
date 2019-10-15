@@ -7,12 +7,12 @@
 #include <glob/graphics.hpp>
 #include <limits>
 #include <unordered_map>
+#include <util/global_settings.hpp>
 #include <vector>
 #include "Chat.hpp"
 #include "ecs/systems/sound_system.hpp"
 #include "shared/shared.hpp"
 #include "states/state.hpp"
-#include <util/global_settings.hpp>
 
 struct PlayerScoreBoardInfo {
   int points = 0;
@@ -32,9 +32,10 @@ class Engine {
   void UpdateNetwork();
   void Render();
   void UpdateSettingsValues() {
-	sound_system_.GetSoundEngine().SetMasterVolume(
+    sound_system_.GetSoundEngine().SetMasterVolume(
         GlobalSettings::Access()->ValueOf("SOUND_VOLUME") / 100.f);
     glob::GetCamera().SetFov(GlobalSettings::Access()->ValueOf("GRAPHICS_FOV"));
+    mouse_sensitivity_ = GlobalSettings::Access()->ValueOf("INPUT_MOUSE_SENS");
   }
 
   void SetCurrentRegistry(entt::registry* registry);
@@ -122,6 +123,8 @@ class Engine {
   std::unordered_map<PlayerID, PlayerScoreBoardInfo> player_scores_;
 
   StateType previous_state_;
+
+  float mouse_sensitivity_ = 1.0f;
 };
 
 #endif  // ENGINE_HPP_

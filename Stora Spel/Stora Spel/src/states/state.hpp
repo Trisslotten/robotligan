@@ -176,6 +176,7 @@ class SettingsState : public State {
 
   float setting_fov_ = 90.f;
   float setting_volume_ = 100.f;
+  float setting_mouse_sens_ = 1.0f;
 };
 
 

@@ -103,8 +103,8 @@ void RenderSystem(entt::registry& registry) {
 
   for (auto slider : view_sliders) {
     auto& slider_c = registry.get<SliderComponent>(slider);
-    float indent_text = slider_c.dimensions.x / 2 -
-                        slider_c.text.length() /2;
+    float indent_text = 0;
+    //-4 * slider_c.text.length() / 2;
     glob::Submit(slider_c.font_handle,
                  slider_c.position + glm::vec2(indent_text, 60), 22,
                  slider_c.text);
