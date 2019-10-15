@@ -1,0 +1,35 @@
+#version 440 core
+
+layout(local_size_x = 16, local_size_y = 16) in;
+
+layout(binding = 0, rgba8) writeonly uniform image2D write_img;
+
+uniform sampler2D read_tex;
+
+uniform vec2 size;
+uniform int pass;
+uniform int kernel;
+
+void main()	{
+	ivec2 i = ivec2(gl_GlobalInvocationID.xy);
+	vec2 uv = i / size;
+	vec3 t = vec3(1.0/size, 0);
+
+	float level = 0.0;
+	if(pass == 0) {
+		level = 1.0;
+	}
+
+	// xy zw
+	vec4 d = vec4(t.xy, -t.xy);
+
+	vec3 bl = textureLod(read_tex, uv + t.zz + kernel * d.zw, level).rgb;
+	vec3 br = textureLod(read_tex, uv + t.xz + kernel * d.xw, level).rgb;
+	vec3 tl = textureLod(read_tex, uv + t.zy + kernel * d.zy, level).rgb;
+	vec3 tr = textureLod(read_tex, uv + t.xy + kernel * d.xy, level).rgb;
+
+	vec3 blurred = 0.25 * (bl + br + tl + tr);
+
+	imageStore(write_img, i, vec4(blurred, 1.0));
+}
+

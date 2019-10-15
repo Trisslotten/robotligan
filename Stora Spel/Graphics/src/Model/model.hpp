@@ -17,7 +17,8 @@ class Model {
  private:
   Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
 
-  GLint TextureFromFile(const char* path, std::string directory);
+  GLint TextureFromFile(const char* path, std::string directory,
+                        aiTextureType type);
 
   void LoadModel(std::string path);
   void ProcessNode(aiNode* node, const aiScene* scene);
@@ -46,6 +47,8 @@ class Model {
   bool humanoid_ = false;
 
   bool use_gl_ = true;
+  bool is_emissive_ = false;
+
  public:
   Model();
   Model(const std::string& path);
@@ -61,8 +64,10 @@ class Model {
   glm::mat4 globalInverseTransform;
 
   glob::MeshData GetMeshData();
+
+  bool IsEmissive() { return is_emissive_; }
 };
 
 }  // namespace glob
 
-#endif // MODEL_HPP_
+#endif  // MODEL_HPP_

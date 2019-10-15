@@ -5,6 +5,7 @@
 
 #include <lodepng.hpp>
 #include "../usegl.hpp"
+#include <glm/ext.hpp>
 
 namespace glob {
 
@@ -78,12 +79,19 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
 			  );
 		  textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
 
-		  std::vector<Texture> specular_maps =
-			  LoadMaterielTextures(temp_material, aiTextureType_SPECULAR,
-				  "texture_specular"  // Make sure this in glsl
-			  );
-		  textures.insert(textures.end(), specular_maps.begin(), specular_maps.end());
-	  }
+      std::vector<Texture> specular_maps =
+          LoadMaterielTextures(temp_material, aiTextureType_SPECULAR,
+                               "texture_specular"  // Make sure this in glsl
+          );
+      textures.insert(textures.end(), specular_maps.begin(), specular_maps.end());
+
+      std::vector<Texture> emissive_maps = 
+          LoadMaterielTextures(temp_material, aiTextureType_EMISSIVE,
+                               "texture_emissive"  // Make sure this in glsl
+          );
+          textures.insert(textures.end(), emissive_maps.begin(), emissive_maps.end());
+    }  
+
   }
 
   if (mesh->HasBones()) {
@@ -117,36 +125,43 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   return Mesh(vertex, indices, textures);
 }
 
-GLint Model::TextureFromFile(const char* path, std::string directory) {
+GLint Model::TextureFromFile(const char* path, std::string directory, aiTextureType type) {
   std::string filename = std::string(path);
   filename = directory + '/' + filename;
 
-  // Generate texture id
-  GLuint texture_id;
-  glGenTextures(1, &texture_id);
+  GLint internal_format = GL_RGBA;
+  LodePNGColorType color_type = LCT_RGBA;
+
+  if(type == aiTextureType_EMISSIVE) {
+    internal_format = GL_RED;
+    color_type = LCT_GREY;
+    is_emissive_ = true;
+  }
+  
 
   // Load texture
   std::vector<unsigned char> image;
   unsigned width, height;
-
-  unsigned error = lodepng::decode(image, width, height, filename);
+  unsigned error = lodepng::decode(image, width, height, filename, color_type);
   if (error != 0) {
     std::cout << "ERROR: Could not load texture: " << filename << "\n";
     return false;
   }
 
-  // Generate texture data
+  // Generate texture id
+  GLuint texture_id;
+  glGenTextures(1, &texture_id);
+
+  // Set some parameters for the texture
   glBindTexture(GL_TEXTURE_2D, texture_id);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+  glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, internal_format,
                GL_UNSIGNED_BYTE, image.data());
   // glGenerateMipmap(GL_TEXTURE_2D);
-
-  // Set some parameters for the texture
 
   glBindTexture(GL_TEXTURE_2D, 0);  // Unbind the texture
 
@@ -333,10 +348,9 @@ std::vector<Texture> Model::LoadMaterielTextures(aiMaterial* material,
     }
     if (!skip_loop) {
       Texture temp_texture;
-      temp_texture.id_texture = TextureFromFile(ai_string.C_Str(), directory_);
+      temp_texture.id_texture = TextureFromFile(ai_string.C_Str(), directory_, type);
       temp_texture.type = type_name;
       temp_texture.path = ai_string;
-      std::cout << ai_string.C_Str() << "\n";
       texture.push_back(temp_texture);
       texture_loaded_.push_back(temp_texture);
     }

@@ -12,6 +12,7 @@
 
 #include "Model/model.hpp"
 #include "glob/camera.hpp"
+#include "glob/window.hpp"
 #include "shader.hpp"
 
 #include "2D/elements2D.hpp"
@@ -19,6 +20,7 @@
 
 #include <msdfgen/msdfgen-ext.h>
 #include <msdfgen/msdfgen.h>
+#include "postprocess/postprocess.hpp"
 
 namespace glob {
 
@@ -53,9 +55,9 @@ struct BoneAnimatedRenderItem {
 };
 
 struct TextItem {
-  Font2D *font;
-  glm::vec2 pos;
-  unsigned int size;
+  Font2D *font = nullptr;
+  glm::vec2 pos{0};
+  unsigned int size = 0;
   std::string text;
   glm::vec4 color;
   bool visible;
@@ -68,7 +70,8 @@ struct LightItem {
   glm::float32 ambient;
 };
 
-ShaderProgram test_shader;
+ShaderProgram fullscreen_shader;
+ShaderProgram model_emission_shader;
 ShaderProgram model_shader;
 ShaderProgram animated_model_shader;
 ShaderProgram text_shader;
@@ -81,6 +84,8 @@ std::vector<ShaderProgram*> mesh_render_group;
 GLuint triangle_vbo, triangle_vao;
 GLuint cube_vbo, cube_vao;
 GLuint quad_vbo, quad_vao;
+
+PostProcess post_process;
 
 float num_frames = 0;
 
@@ -177,9 +182,13 @@ void Init() {
   test_shader.add("testshader.frag");
   test_shader.add("testshader.vert");
   test_shader.compile();
+  fullscreen_shader.add("fullscreenquad.vert");
+  fullscreen_shader.add("fullscreenquad.frag");
+  fullscreen_shader.compile();
 
   model_shader.add("modelshader.vert");
   model_shader.add("modelshader.frag");
+  model_shader.add("shading.frag");
   model_shader.compile();
 
   animated_model_shader.add("animatedmodelshader.vert");
@@ -188,6 +197,11 @@ void Init() {
 
   mesh_render_group.push_back(&animated_model_shader);
   mesh_render_group.push_back(&model_shader);
+
+  model_emission_shader.add("modelshader.vert");
+  model_emission_shader.add("modelemissive.frag");
+  model_emission_shader.add("shading.frag");
+  model_emission_shader.compile();
 
   wireframe_shader.add("modelshader.vert");
   wireframe_shader.add("wireframe.frag");
@@ -208,9 +222,9 @@ void Init() {
   glGenVertexArrays(1, &triangle_vao);
   glBindVertexArray(triangle_vao);
   std::vector<glm::vec3> vertices{
-      {0, 1, 1},
-      {0, -1, 1},
-      {0, -1, -1},
+      {-1, -1, 0},
+      {3, -1, 0},
+      {-1, 3, 0},
   };
   glGenBuffers(1, &triangle_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, triangle_vbo);
@@ -260,6 +274,8 @@ void Init() {
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
                         (GLvoid *)0);
   glBindVertexArray(0);
+
+  post_process.Init();
 }
 
 // H=Handle, A=Asset
@@ -284,8 +300,10 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
     }
   } else {
     // if asset is loaded
+    /*
     std::cout << "DEBUG graphics.cpp: Asset '" << filepath
               << "' already loaded\n";
+    */
     result = item->second;
   }
 
@@ -562,7 +580,6 @@ void LoadWireframeMesh(ModelHandle model_h,
 }
 
 void Render() {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
 
   int lightNR;
@@ -577,16 +594,71 @@ void Render() {
 		  lightNR++;
 	  }
 	shader->uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
+  // render models and light
+  std::vector<glm::vec3> light_positions;
+  std::vector<glm::vec3> light_colors;
+  std::vector<float> light_radii;
+  std::vector<float> light_ambients;
+  for (auto &light_item : lights_to_render) {
+    light_positions.push_back(light_item.pos);
+    light_colors.push_back(light_item.color);
+    light_radii.push_back(light_item.radius);
+    light_ambients.push_back(light_item.ambient);
+  }
 
+  std::vector<RenderItem> emissive_items;
+  for (auto &render_item : items_to_render) {
+    if (render_item.model->IsEmissive()) {
+      emissive_items.push_back(render_item);
+    }
 	shader->uniform("cam_transform", cam_transform);
   }
 
-  model_shader.use();
-  //model_shader.uniform("num_frames", num_frames);
-  for (auto &render_item : items_to_render) {
-    model_shader.uniform("model_transform", render_item.transform);
-    render_item.model->Draw(model_shader);
+  post_process.BeforeDraw();
+  {
+    model_shader.use();
+    model_shader.uniformv("light_pos", lights_to_render.size(),
+                          light_positions.data());
+    model_shader.uniformv("light_col", lights_to_render.size(),
+                          light_colors.data());
+    model_shader.uniformv("light_radius", lights_to_render.size(),
+                          light_radii.data());
+    model_shader.uniformv("light_amb", lights_to_render.size(),
+                          light_ambients.data());
+    model_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
+    model_shader.uniform("cam_transform", cam_transform);
+    for (auto &render_item : items_to_render) {
+      if (render_item.model->IsEmissive()) {
+        continue;
+      }
+      model_shader.uniform("model_transform", render_item.transform);
+      render_item.model->Draw(model_shader);
+    }
+
+    model_emission_shader.use();
+    model_emission_shader.uniformv("light_pos", lights_to_render.size(),
+                                   light_positions.data());
+    model_emission_shader.uniformv("light_col", lights_to_render.size(),
+                                   light_colors.data());
+    model_emission_shader.uniformv("light_radius", lights_to_render.size(),
+                                   light_radii.data());
+    model_emission_shader.uniformv("light_amb", lights_to_render.size(),
+                                   light_ambients.data());
+    model_emission_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
+    model_emission_shader.uniform("cam_transform", cam_transform);
+    for (auto &render_item : emissive_items) {
+      model_emission_shader.uniform("model_transform", render_item.transform);
+      render_item.model->Draw(model_emission_shader);
+    }
   }
+  post_process.AfterDraw();
+
+  fullscreen_shader.use();
+  post_process.BindColorTex(0);
+  fullscreen_shader.uniform("texture_color", 0);
+  post_process.BindEmissionTex(1);
+  fullscreen_shader.uniform("texture_emission", 1);
+  DrawFullscreenQuad();
 
   animated_model_shader.use();
   //render bone animated items

@@ -4,7 +4,7 @@
 #include <entt.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include "ecs/components/ability_component.hpp"
-#include "ecs/components/physics_component.hpp"
+#include <shared/physics_component.hpp>
 #include "ecs/components/player_component.hpp"
 #include "shared/camera_component.hpp"
 #include "shared/transform_component.hpp"
@@ -19,7 +19,7 @@ void InActivatePlayerController() { std::cout << "Escaped pressed\n"; }
 void Update(entt::registry& registry, float dt) {
   auto view_controller =
       registry.view<CameraComponent, PlayerComponent, TransformComponent,
-                    PhysicsComponent, AbilityComponent>();
+                    PhysicsComponent, AbilityComponent, IDComponent>();
 
   for (auto entity : view_controller) {
     CameraComponent& cam_c = view_controller.get<CameraComponent>(entity);
@@ -28,6 +28,9 @@ void Update(entt::registry& registry, float dt) {
         view_controller.get<TransformComponent>(entity);
     PhysicsComponent& physics_c = view_controller.get<PhysicsComponent>(entity);
     AbilityComponent& ability_c = view_controller.get<AbilityComponent>(entity);
+    IDComponent& id_c = view_controller.get<IDComponent>(entity);
+
+
 
     constexpr float pi = glm::pi<float>();
     player_c.pitch = glm::clamp(player_c.pitch, -0.49f * pi, 0.49f * pi);
@@ -111,6 +114,14 @@ void Update(entt::registry& registry, float dt) {
       physics_c.is_airborne = true;
       // Subtract energy cost from resources
       player_c.energy_current -= player_c.cost_jump;
+
+      // save game event
+      if (registry.has<IDComponent>(entity)) {
+        GameEvent jump_event;
+        jump_event.type = GameEvent::JUMP;
+        jump_event.jump.player_id = registry.get<IDComponent>(entity).id;
+        dispatcher.trigger(jump_event);
+      }
     }
 
     player_c.energy_current =
@@ -147,7 +158,13 @@ void Update(entt::registry& registry, float dt) {
     // std::cout << "stam: " << player_c.energy_current << "\n";
 
     // kick ball
-    if (player_c.actions[PlayerAction::KICK]) {
+    if (player_c.actions[PlayerAction::KICK] && player_c.kick_timer.Elapsed() > player_c.kick_cooldown) {
+      player_c.kick_timer.Restart();
+      GameEvent kick_event;
+      kick_event.type = GameEvent::KICK;
+      kick_event.kick.player_id = id_c.id;
+      dispatcher.trigger(kick_event);
+
       glm::vec3 kick_dir =
           cam_c.GetLookDir() + glm::vec3(0, player_c.kick_pitch, 0);
 
@@ -172,6 +189,12 @@ void Update(entt::registry& registry, float dt) {
           ball_physics_c.velocity += kick_dir * player_c.kick_force;
           ball_physics_c.is_airborne = true;
           ball_c.last_touch = player_c.client_id;
+
+          // save game event
+          GameEvent hit_event;
+          hit_event.type = GameEvent::HIT;
+          hit_event.hit.player_id = id_c.id;
+          dispatcher.trigger(hit_event);
         }
       }
     }
