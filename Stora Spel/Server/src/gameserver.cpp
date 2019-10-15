@@ -308,6 +308,9 @@ void GameServer::ReceiveEvent(const EventInfo& e) {
     case Event::CREATE_CANNONBALL: {
       break;
     }
+    case Event::CREATE_TELEPORT_PROJECTILE: {
+      break;
+    }
     default:
       break;
   }

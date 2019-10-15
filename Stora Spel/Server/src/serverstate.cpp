@@ -640,6 +640,15 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       created_projectiles_.push_back(projectile);
       break;
     }
+    case Event::CREATE_TELEPORT_PROJECTILE: {
+      auto& registry = game_server_->GetRegistry();
+      Projectile projectile;
+      projectile.entity_id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, projectile.entity_id);
+      projectile.projectile_id = ProjectileID::TELEPORT_PROJECTILE;
+      created_projectiles_.push_back(projectile);
+      break;
+    }
     case Event::CREATE_FORCE_PUSH: {
       auto& registry = game_server_->GetRegistry();
       Projectile projectile;
