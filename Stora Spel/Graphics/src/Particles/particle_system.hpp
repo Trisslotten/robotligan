@@ -57,7 +57,7 @@ private:
   GLuint vertex_array_object_ = 0;
 
   int current_index_ = 0;
-  int created_bursts = 0;
+  int created_bursts_ = 0;
 
 private:
   void Spawn(int num);

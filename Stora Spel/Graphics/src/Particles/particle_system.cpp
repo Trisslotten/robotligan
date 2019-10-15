@@ -215,9 +215,9 @@ namespace glob {
     int new_particles = 0;
     if (!settings_.burst) {
       new_particles = spawns_;
-    } else if (created_bursts < settings_.number_of_bursts && spawns_ >= settings_.burst_particles) {
+    } else if (created_bursts_ < settings_.number_of_bursts && spawns_ >= settings_.burst_particles) {
       new_particles = settings_.burst_particles;
-      created_bursts++;
+      created_bursts_++;
     }
     spawns_ -= new_particles;
 
@@ -269,7 +269,7 @@ namespace glob {
 
   void ParticleSystem::Reset() {
     spawns_ = settings_.burst_particles;
-    created_bursts = 0;
+    created_bursts_ = 0;
     
     std::vector<float> time_data(SIZE, 0.f);
 
