@@ -12,6 +12,7 @@
 #include "ecs/systems/sound_system.hpp"
 #include "shared/shared.hpp"
 #include "states/state.hpp"
+#include <util/global_settings.hpp>
 
 struct PlayerScoreBoardInfo {
   int points = 0;
@@ -30,11 +31,17 @@ class Engine {
   void Update(float dt);
   void UpdateNetwork();
   void Render();
+  void UpdateSettingsValues() {
+	sound_system_.GetSoundEngine().SetMasterVolume(
+        GlobalSettings::Access()->ValueOf("SOUND_VOLUME") / 100.f);
+    glob::GetCamera().SetFov(GlobalSettings::Access()->ValueOf("GRAPHICS_FOV"));
+  }
 
   void SetCurrentRegistry(entt::registry* registry);
   void ChangeState(StateType state) {
     wanted_state_type_ = state;
     previous_state_ = current_state_->Type();
+    UpdateSettingsValues();
   }
   NetAPI::Socket::Client& GetClient() { return client_; }
   NetAPI::Common::Packet& GetPacket() { return packet_; }

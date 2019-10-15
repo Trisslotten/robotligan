@@ -4,14 +4,19 @@
 #include <glob/window.hpp>
 #include "state.hpp"
 #include <util/global_settings.hpp>
+#include <GLFW/glfw3.h>
 
 void SettingsState::Startup() {
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
 }
 
 void SettingsState::Init() {
+  glob::window::SetMouseLocked(false);
+  engine_->SetSendInput(false);
   engine_->SetCurrentRegistry(&registry_settings_);
   CreateSettingsMenu();
+  setting_volume_ = GlobalSettings::Access()->ValueOf("SOUND_VOLUME");
+  setting_fov_ = GlobalSettings::Access()->ValueOf("GRAPHICS_FOV");
 }
 
 void SettingsState::Update() {
@@ -26,6 +31,10 @@ void SettingsState::Update() {
   glob::Submit(font_test_,
                glm::vec2(600, glob::window::GetWindowDimensions().y - 60), 48,
                "SOUND");
+
+  if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
+    engine_->ChangeState(engine_->GetPreviousStateType());
+  }
 }
 
 void SettingsState::UpdateNetwork() {
@@ -87,4 +96,6 @@ void SettingsState::CreateSettingsMenu() {
 void SettingsState::SaveSettings() {
   glob::GetCamera().SetFov(setting_fov_);
   GlobalSettings::Access()->WriteValue("SOUND_VOLUME", setting_volume_);
+  GlobalSettings::Access()->WriteValue("GRAPHICS_FOV", setting_fov_);
+  engine_->UpdateSettingsValues();
 }

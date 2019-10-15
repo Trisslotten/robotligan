@@ -77,6 +77,8 @@ void Engine::Init() {
   main_menu_state_.Init();
   current_state_ = &main_menu_state_;
   wanted_state_type_ = StateType::MAIN_MENU;
+
+  UpdateSettingsValues();
 }
 
 void Engine::Update(float dt) {

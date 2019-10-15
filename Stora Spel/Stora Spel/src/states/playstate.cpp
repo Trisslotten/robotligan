@@ -367,6 +367,7 @@ void PlayState::CreateInGameMenu() {
 
   in_game_buttons_->button_func = [&] {
     engine_->ChangeState(StateType::SETTINGS);
+    ToggleInGameMenu();
   };
 
   // END GAME -- change registry to registry_mainmenu_
