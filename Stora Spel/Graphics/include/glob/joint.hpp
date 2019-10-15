@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 
+#include "glm/glm.hpp"
+
 namespace glob {
 	struct Joint {
 		std::vector<int> children;

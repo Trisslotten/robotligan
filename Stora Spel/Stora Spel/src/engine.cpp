@@ -31,6 +31,7 @@ void Engine::Init() {
   glob::Init();
   Input::Initialize();
   sound_system_.Init(this);
+  animation_system_.init(this);
 
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
@@ -39,6 +40,7 @@ void Engine::Init() {
 
 
   dispatcher.sink<GameEvent>().connect<&SoundSystem::ReceiveGameEvent>(sound_system_);
+  dispatcher.sink<GameEvent>().connect<&AnimationSystem::receiveGameEvent>(animation_system_);
 
   SetKeybinds();
 
@@ -85,6 +87,12 @@ void Engine::Update(float dt) {
 
   if (take_game_input_ == true) {
     // accumulate key presses
+	  for (auto const& [key, action] : keybinds_) {
+		  key_presses_[key] = 0;
+	  }
+	  for (auto const& [button, action] : mousebinds_) {
+		  mouse_presses_[button] = 0;
+	  }
     for (auto const& [key, action] : keybinds_)
       if (Input::IsKeyDown(key)) key_presses_[key]++;
     for (auto const& [button, action] : mousebinds_)
@@ -132,6 +140,7 @@ void Engine::Update(float dt) {
     // init new state
     current_state_->Init();
   }
+
   Input::Reset();
 }
 
@@ -143,12 +152,10 @@ void Engine::UpdateNetwork() {
   for (auto const& [key, action] : keybinds_) {
     auto& presses = key_presses_[key];
     if (presses > 0) actions.set(action, true);
-    presses = 0;
   }
   for (auto const& [button, action] : mousebinds_) {
     auto& presses = mouse_presses_[button];
     if (presses > 0) actions.set(action, true);
-    presses = 0;
   }
 
   uint16_t action_bits = actions.to_ulong();
@@ -500,8 +507,9 @@ void Engine::UpdateSystems(float dt) {
 
   button_system::Update(*registry_current_);
   RenderSystem(*registry_current_);
-  UpdateAnimations(*registry_current_, dt);
+  animation_system_.UpdateAnimations(*registry_current_, dt);
 }
+
 
 void Engine::SetKeybinds() {
   keybinds_[GLFW_KEY_W] = PlayerAction::WALK_FORWARD;

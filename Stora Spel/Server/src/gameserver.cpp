@@ -174,8 +174,8 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       packet >> pitch;
       packet >> actions;
       play_state_.SetPlayerInput(client_id, actions, pitch, yaw);
-      // std::cout << "PACKET: INPUT, " << actions << ", " << yaw << ", " <<
-      // pitch << "\n";
+      //std::cout << "PACKET: INPUT, " << actions << ", " << yaw << ", " <<
+      //pitch << "\n";
       break;
     }
     case PacketBlockType::CLIENT_READY: {

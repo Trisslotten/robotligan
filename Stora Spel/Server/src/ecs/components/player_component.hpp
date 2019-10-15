@@ -31,6 +31,10 @@ struct PlayerComponent {
   std::bitset<PlayerAction::NUM_ACTIONS> actions;
   float yaw = 0;
   float pitch = 0;
+
+  //States
+  bool sprinting = false;
+  bool running = false;
 };
 
 #endif  // PLAYER_COMPONENT_H_

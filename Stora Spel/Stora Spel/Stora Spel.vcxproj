@@ -153,6 +153,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Chat.cpp" />
+    <ClCompile Include="src\ecs\systems\animation_system.cpp" />
     <ClCompile Include="src\ecs\systems\sound_system.cpp" />
     <ClCompile Include="src\engine.cpp" />
     <ClCompile Include="src\entitycreation.cpp" />

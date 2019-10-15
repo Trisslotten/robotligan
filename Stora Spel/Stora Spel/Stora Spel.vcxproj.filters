@@ -16,6 +16,7 @@
     <ClCompile Include="src\Chat.cpp" />
     <ClCompile Include="src\states\connectmenustate.cpp" />
     <ClCompile Include="src\ecs\systems\sound_system.cpp" />
+    <ClCompile Include="src\ecs\systems\animation_system.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AbilityHandler\ability.hpp" />

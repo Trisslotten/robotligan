@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <vector>
 #include "ecs/systems/sound_system.hpp"
+#include "ecs/systems/animation_system.hpp"
 #include "Chat.hpp"
 #include "shared/shared.hpp"
 #include "states/state.hpp"
@@ -102,6 +103,7 @@ class Engine {
   bool enable_chat_ = false;
 
   SoundSystem sound_system_;
+  AnimationSystem animation_system_;
 
   AbilityID second_ability_ = AbilityID::NULL_ABILITY;
   unsigned int new_team_ = std::numeric_limits<unsigned int>::max();

@@ -178,10 +178,6 @@ void DrawWireFrameMeshes(ModelHandle model_h) {
 
 void Init() {
 //std::cout << "Max uniform size: " << MAX_VERTEX_UNIFORM_COMPONENTS_ARB << "\n";
-
-  test_shader.add("testshader.frag");
-  test_shader.add("testshader.vert");
-  test_shader.compile();
   fullscreen_shader.add("fullscreenquad.vert");
   fullscreen_shader.add("fullscreenquad.frag");
   fullscreen_shader.compile();
@@ -193,15 +189,17 @@ void Init() {
 
   animated_model_shader.add("animatedmodelshader.vert");
   animated_model_shader.add("modelshader.frag");
+  animated_model_shader.add("shading.frag");
   animated_model_shader.compile();
-
-  mesh_render_group.push_back(&animated_model_shader);
-  mesh_render_group.push_back(&model_shader);
 
   model_emission_shader.add("modelshader.vert");
   model_emission_shader.add("modelemissive.frag");
   model_emission_shader.add("shading.frag");
   model_emission_shader.compile();
+
+  mesh_render_group.push_back(&animated_model_shader);
+  mesh_render_group.push_back(&model_shader);
+  mesh_render_group.push_back(&model_emission_shader);
 
   wireframe_shader.add("modelshader.vert");
   wireframe_shader.add("wireframe.frag");
@@ -582,51 +580,44 @@ void LoadWireframeMesh(ModelHandle model_h,
 void Render() {
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
 
-  int lightNR;
-  for (auto& shader : mesh_render_group) {
-	lightNR = 0;
-	shader->use();
-	for (auto& light_item : lights_to_render) {
-		  shader->uniform("light_pos[" + std::to_string(lightNR) + "]", light_item.pos);
-		  shader->uniform("light_col[" + std::to_string(lightNR) + "]", light_item.color);
-		  shader->uniform("light_radius[" + std::to_string(lightNR) + "]", light_item.radius);
-		  shader->uniform("light_amb[" + std::to_string(lightNR) + "]", light_item.ambient);
-		  lightNR++;
-	  }
-	shader->uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
   // render models and light
   std::vector<glm::vec3> light_positions;
   std::vector<glm::vec3> light_colors;
   std::vector<float> light_radii;
   std::vector<float> light_ambients;
-  for (auto &light_item : lights_to_render) {
-    light_positions.push_back(light_item.pos);
-    light_colors.push_back(light_item.color);
-    light_radii.push_back(light_item.radius);
-    light_ambients.push_back(light_item.ambient);
+  for (auto& light_item : lights_to_render) {
+	  light_positions.push_back(light_item.pos);
+	  light_colors.push_back(light_item.color);
+	  light_radii.push_back(light_item.radius);
+	  light_ambients.push_back(light_item.ambient);
+  }
+  std::vector<RenderItem> emissive_items;
+  for (auto& render_item : items_to_render) {
+	  if (render_item.model->IsEmissive()) {
+		  emissive_items.push_back(render_item);
+	  }
   }
 
-  std::vector<RenderItem> emissive_items;
-  for (auto &render_item : items_to_render) {
-    if (render_item.model->IsEmissive()) {
-      emissive_items.push_back(render_item);
-    }
-	shader->uniform("cam_transform", cam_transform);
+  for (auto& shader : mesh_render_group) {
+	  shader->use();
+	  for (auto& light_item : lights_to_render) {
+		  shader->uniformv("light_pos", lights_to_render.size(),
+			  light_positions.data());
+		  shader->uniformv("light_col", lights_to_render.size(),
+			  light_colors.data());
+		  shader->uniformv("light_radius", lights_to_render.size(),
+			  light_radii.data());
+		  shader->uniformv("light_amb", lights_to_render.size(),
+			  light_ambients.data());
+	  }
+	  shader->uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
+	  shader->uniform("cam_transform", cam_transform);
   }
+
 
   post_process.BeforeDraw();
   {
     model_shader.use();
-    model_shader.uniformv("light_pos", lights_to_render.size(),
-                          light_positions.data());
-    model_shader.uniformv("light_col", lights_to_render.size(),
-                          light_colors.data());
-    model_shader.uniformv("light_radius", lights_to_render.size(),
-                          light_radii.data());
-    model_shader.uniformv("light_amb", lights_to_render.size(),
-                          light_ambients.data());
-    model_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
-    model_shader.uniform("cam_transform", cam_transform);
     for (auto &render_item : items_to_render) {
       if (render_item.model->IsEmissive()) {
         continue;
@@ -636,20 +627,23 @@ void Render() {
     }
 
     model_emission_shader.use();
-    model_emission_shader.uniformv("light_pos", lights_to_render.size(),
-                                   light_positions.data());
-    model_emission_shader.uniformv("light_col", lights_to_render.size(),
-                                   light_colors.data());
-    model_emission_shader.uniformv("light_radius", lights_to_render.size(),
-                                   light_radii.data());
-    model_emission_shader.uniformv("light_amb", lights_to_render.size(),
-                                   light_ambients.data());
-    model_emission_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
-    model_emission_shader.uniform("cam_transform", cam_transform);
     for (auto &render_item : emissive_items) {
       model_emission_shader.uniform("model_transform", render_item.transform);
       render_item.model->Draw(model_emission_shader);
     }
+
+	animated_model_shader.use();
+	//render bone animated items
+	for (auto& BARI : bone_animated_items_to_render) {
+		animated_model_shader.uniform("model_transform", BARI.transform);
+		int numBones = 0;
+		for (auto& bone : BARI.bone_transforms) {
+			animated_model_shader.uniform("bone_transform[" + std::to_string(numBones) + "]", bone);
+			numBones++;
+		}
+		//animated_model_shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
+		BARI.model->Draw(animated_model_shader);
+	}
   }
   post_process.AfterDraw();
 
@@ -660,18 +654,7 @@ void Render() {
   fullscreen_shader.uniform("texture_emission", 1);
   DrawFullscreenQuad();
 
-  animated_model_shader.use();
-  //render bone animated items
-  for (auto& BARI : bone_animated_items_to_render) {
-	  animated_model_shader.uniform("model_transform", BARI.transform);
-	  int numBones = 0;
-	  for (auto& bone : BARI.bone_transforms) {
-		  animated_model_shader.uniform("bone_transform[" + std::to_string(numBones) + "]", bone);
-		  numBones++;
-	  }
-	  //animated_model_shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
-	  BARI.model->Draw(animated_model_shader);
-  }
+
 
   // render wireframe cubes
   for (auto &m : cubes) DrawCube(m);
