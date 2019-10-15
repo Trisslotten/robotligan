@@ -371,7 +371,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> id;
       packet >> team;
 
-      PlayerScoreBoardInfo psbi;
+      PlayerStatInfo psbi;
       psbi.goals = goals;
       psbi.points = points;
       psbi.team = team;

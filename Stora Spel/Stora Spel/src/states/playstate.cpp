@@ -23,7 +23,7 @@ void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
   // Create in-game menu background
   in_game_menu_gui_ =
-      glob::GetGUIItem("Assets/GUI_elements/ingame_menu_V1.png");
+    glob::GetGUIItem("Assets/GUI_elements/ingame_menu_V1.png");
   // Create 2D element
   e2D_test_ = glob::GetE2DItem("assets/GUI_elements/point_table.png");
   e2D_test2_ = glob::GetE2DItem("assets/GUI_elements/Scoreboard_V1.png");
@@ -33,19 +33,25 @@ void PlayState::Startup() {
   gui_test_ = glob::GetGUIItem("assets/GUI_elements/Scoreboard_V1.png");
   gui_teamscore_ = glob::GetGUIItem("assets/GUI_elements/point_table.png");
   gui_stamina_base_ =
-      glob::GetGUIItem("assets/GUI_elements/stamina_bar_base.png");
+    glob::GetGUIItem("assets/GUI_elements/stamina_bar_base.png");
   gui_stamina_fill_ =
-      glob::GetGUIItem("assets/GUI_elements/stamina_bar_fill.png");
+    glob::GetGUIItem("assets/GUI_elements/stamina_bar_fill.png");
   gui_stamina_icon_ =
-      glob::GetGUIItem("assets/GUI_elements/stamina_bar_icon.png");
+    glob::GetGUIItem("assets/GUI_elements/stamina_bar_icon.png");
   gui_quickslots_ =
-      glob::GetGUIItem("assets/GUI_elements/quickslots_blank.png");
+    glob::GetGUIItem("assets/GUI_elements/quickslots_blank.png");
+  gui_minimap_ = glob::GetGUIItem("assets/GUI_elements/Minimap_V2.png");
+  gui_minimap_goal_red_ = glob::GetGUIItem("assets/GUI_elements/goal_red_icon.png");
+  gui_minimap_goal_blue_ = glob::GetGUIItem("assets/GUI_elements/goal_blue_icon.png");
+  gui_minimap_player_red_ = glob::GetGUIItem("assets/GUI_elements/player_iconv2_red.png");
+  gui_minimap_player_blue_ = glob::GetGUIItem("assets/GUI_elements/player_iconv2_blue.png");
+  gui_minimap_ball_ = glob::GetGUIItem("assets/GUI_elements/Ball_Icon.png");
 
   int num_abilities = (int)AbilityID::NUM_OF_ABILITY_IDS;
   ability_handles_.resize(num_abilities);
   for (int i = 0; i < num_abilities; i++) {
     ability_handles_[i] = glob::GetGUIItem(
-        "assets/GUI_Elements/ability_icons/" + std::to_string(i) + ".png");
+      "assets/GUI_Elements/ability_icons/" + std::to_string(i) + ".png");
   }
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
   font_scores_ = glob::GetFont("assets/fonts/fonts/OCRAEXT_2.TTF");
@@ -64,7 +70,7 @@ void PlayState::Init() {
   CreateInitialEntities();
 
   engine_->GetChat()->SetPosition(
-      glm::vec2(30, glob::window::GetWindowDimensions().y - 30));
+    glm::vec2(30, glob::window::GetWindowDimensions().y - 30));
 
   auto& client = engine_->GetClient();
   NetAPI::Common::Packet to_send;
@@ -84,7 +90,7 @@ void PlayState::Update() {
   }
   if (!transforms_.empty()) {
     auto view_entities =
-        registry_gameplay_.view<TransformComponent, IDComponent>();
+      registry_gameplay_.view<TransformComponent, IDComponent>();
     for (auto entity : view_entities) {
       auto& trans_c = view_entities.get<TransformComponent>(entity);
       auto& id_c = view_entities.get<IDComponent>(entity);
@@ -125,23 +131,69 @@ void PlayState::Update() {
   }
   // Submit 2D Element TEST
   glob::Submit(e2D_test_, glm::vec3(10.5f, 1.0f, 0.0f), 2, -90.0f,
-               glm::vec3(0, 1, 0));
+    glm::vec3(0, 1, 0));
   glob::Submit(e2D_test_, glm::vec3(-10.5f, 1.0f, 0.0f), 2, 90.0f,
-               glm::vec3(0, 1, 0));
+    glm::vec3(0, 1, 0));
   glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
 
   UpdateGameplayTimer();
 
+  // draw stamina bar
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
   glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
   glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
 
+  // draw Minimap
+  glob::Submit(gui_minimap_, glm::vec2(glob::window::GetWindowDimensions().x - 250, 10), 0.3);
+  // draw Minimap goals
+  if (!goals_swapped_) {
+    glob::Submit(gui_minimap_goal_red_, glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10), 0.2);
+    glob::Submit(gui_minimap_goal_blue_, glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
+  } else {
+    glob::Submit(gui_minimap_goal_red_, glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
+    glob::Submit(gui_minimap_goal_blue_, glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10), 0.2);
+  }
+
+  // Draw Player icons
+  auto view_player = registry_gameplay_.view<TransformComponent, PlayerComponent, IDComponent>();
+  for (auto entity : view_player) {
+    auto& trans_c = view_player.get<TransformComponent>(entity);
+    auto& id_c = view_player.get<IDComponent>(entity);
+
+    // Normalize and project player pos to screen space (Z in world space is X in screen space and vice versa)
+    float norm_pos_x = trans_c.position.z / 7.1f;
+    float norm_pos_y = trans_c.position.x / 10.6f;
+    float minimap_pos_x = (norm_pos_x * 120.f) + glob::window::GetWindowDimensions().x - 130.f - 11.f;
+    float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 20.f;
+
+    // Draw the right color icons
+    if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
+      glob::Submit(gui_minimap_player_red_, glm::vec2(minimap_pos_x, minimap_pos_y), 0.1);    // TODO: CALC REAL POS
+    } else {
+      glob::Submit(gui_minimap_player_blue_, glm::vec2(minimap_pos_x, minimap_pos_y), 0.1);   // TODO: CALC REAL POS
+    }
+  }
+
+  // Draw Ball icon
+  auto view_ball = registry_gameplay_.view<TransformComponent, BallComponent>();
+  for (auto entity : view_ball) {
+    auto& trans_c = view_ball.get<TransformComponent>(entity);
+
+    // Normalize and project player pos to screen space (Z in world space is X in screen space and vice versa)
+    float norm_pos_x = trans_c.position.z / 7.1f;
+    float norm_pos_y = trans_c.position.x / 10.6f;
+    float minimap_pos_x = (norm_pos_x * 120.f) + glob::window::GetWindowDimensions().x - 130.f - 20.f;
+    float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 20.f;
+
+    glob::Submit(gui_minimap_ball_, glm::vec2(minimap_pos_x, minimap_pos_y), 0.1);
+  }
+
   // draw quickslot info
   glob::Submit(gui_quickslots_, glm::vec2(7, 50), 0.3, 100);
   glob::Submit(ability_handles_[my_primary_ability_id], glm::vec2(9, 50), 0.75f,
-               100);
+    100);
   glob::Submit(ability_handles_[(int)engine_->GetSecondaryAbility()],
-               glm::vec2(66, 50), 0.75f, 100);
+    glm::vec2(66, 50), 0.75f, 100);
 
   if (game_has_ended_) {
     engine_->DrawScoreboard();
@@ -163,17 +215,17 @@ void PlayState::Update() {
     }
 
     glob::Submit(font_test_, pos + glm::vec2(41, -1), 48, best_team + " wins!",
-                 glm::vec4(0, 0, 0, 0.7f));
+      glm::vec4(0, 0, 0, 0.7f));
 
     glob::Submit(font_test_, pos + glm::vec2(40, 0), 48, best_team + " wins!",
-                 best_team_color);
+      best_team_color);
 
     int game_end_timeout = 5;
     std::string end_countdown_text =
-        std::to_string((int)(game_end_timeout - end_game_timer_.Elapsed()));
+      std::to_string((int)(game_end_timeout - end_game_timer_.Elapsed()));
 
     glob::Submit(font_test_, pos + glm::vec2(0, -50), 48,
-                 "Returning to lobby in: " + end_countdown_text);
+      "Returning to lobby in: " + end_countdown_text);
 
     if (end_game_timer_.Elapsed() >= 5.0f) {
       engine_->ChangeState(StateType::LOBBY);
@@ -238,9 +290,9 @@ void PlayState::UpdateGameplayTimer() {
   // --------------------------------------
   glob::Submit(font_test_, pos, 40, min_string, glm::vec4(1));
   glob::Submit(font_test_, pos + glm::vec2(-8, -12), 40, "----",
-               glm::vec4(1, 1, 1, 1));
+    glm::vec4(1, 1, 1, 1));
   glob::Submit(font_test_, pos + glm::vec2(-7, -26), 40, sec_string,
-               glm::vec4(1));
+    glm::vec4(1));
 
   glm::vec2 countdown_pos = glob::window::GetWindowDimensions();
   countdown_pos /= 2;
@@ -248,7 +300,7 @@ void PlayState::UpdateGameplayTimer() {
   countdown_pos.y += 100;
   if (count > 0) {
     glob::Submit(font_test_, countdown_pos, 500, std::to_string(count),
-                 glm::vec4(1));
+      glm::vec4(1));
   }
 }
 
@@ -260,11 +312,11 @@ void PlayState::DrawTopScores() {
   glob::Submit(gui_teamscore_, team_score_pos, 1, 100);
 
   glob::Submit(font_scores_, team_score_pos + glm::vec2(90, 55), 72,
-               std::to_string(engine_->GetTeamScores()[1]),
-               glm::vec4(0, 0.26, 1, 1));
+    std::to_string(engine_->GetTeamScores()[1]),
+    glm::vec4(0, 0.26, 1, 1));
   glob::Submit(font_scores_, team_score_pos + glm::vec2(217, 55), 72,
-               std::to_string(engine_->GetTeamScores()[0]),
-               glm::vec4(1, 0, 0, 1));
+    std::to_string(engine_->GetTeamScores()[0]),
+    glm::vec4(1, 0, 0, 1));
 }
 
 void PlayState::DrawTarget() {
@@ -306,7 +358,7 @@ void PlayState::DrawTarget() {
 }
 
 void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,
-                                   glm::quat orientation) {
+  glm::quat orientation) {
   transforms_[player_id] = std::make_pair(pos, orientation);
 }
 
@@ -317,9 +369,9 @@ void PlayState::SetEntityPhysics(EntityID player_id, glm::vec3 vel,
 
 void PlayState::SetCameraOrientation(glm::quat orientation) {
   registry_gameplay_.view<CameraComponent>().each(
-      [&](auto entity, CameraComponent& cam_c) {
-        cam_c.orientation = orientation;
-      });
+    [&](auto entity, CameraComponent& cam_c) {
+    cam_c.orientation = orientation;
+  });
 }
 
 void PlayState::CreateInitialEntities() {
@@ -333,21 +385,21 @@ void PlayState::CreatePlayerEntities() {
   auto& sound_engine = engine_->GetSoundEngine();
 
   std::cout << "DEBUG: playstate.cpp: Created " << player_ids_.size()
-            << " players\n";
+    << " players\n";
 
   for (auto entity_id : player_ids_) {
     auto entity = registry_gameplay_.create();
 
     glm::vec3 alter_scale =
-        glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
+      glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
     glm::vec3 character_scale = glm::vec3(0.1f);
 
     glob::ModelHandle player_model =
-        glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
+      glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
 
     registry_gameplay_.assign<IDComponent>(entity, entity_id);
     registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(),
-                                                  glm::quat(), character_scale);
+      glm::quat(), character_scale);
     registry_gameplay_.assign<PhysicsComponent>(entity);
     registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<ModelComponent>(entity, player_model,
@@ -367,10 +419,10 @@ void PlayState::CreateArenaEntity() {
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f);
   glob::ModelHandle model_arena =
-      glob::GetModel("assets/Map_rectangular/map_rextangular.fbx");
+    glob::GetModel("assets/Map_rectangular/map_rextangular.fbx");
   registry_gameplay_.assign<ModelComponent>(arena, model_arena);
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
-                                                arena_scale);
+    arena_scale);
 }
 
 void PlayState::CreateBallEntity() {
@@ -383,7 +435,7 @@ void PlayState::CreateBallEntity() {
   glob::ModelHandle model_ball = glob::GetModel("assets/Ball/TestBall.fbx");
   registry_gameplay_.assign<ModelComponent>(ball, model_ball);
   registry_gameplay_.assign<TransformComponent>(ball, zero_vec, zero_vec,
-                                                glm::vec3(1.0f));
+    glm::vec3(1.0f));
   registry_gameplay_.assign<PhysicsComponent>(ball);
   registry_gameplay_.assign<BallComponent>(ball);
   registry_gameplay_.assign<IDComponent>(ball, ball_id_);
@@ -400,13 +452,13 @@ void PlayState::CreateInGameMenu() {
 
   // CONTINUE BUTTON -- change registry to registry_gameplay_
   ButtonComponent* in_game_buttons_ = GenerateButtonEntity(
-      registry_gameplay_, "CONTINUE", in_game_menu_pos + glm::vec2(0, 0),
-      font_test_, false);
+    registry_gameplay_, "CONTINUE", in_game_menu_pos + glm::vec2(0, 0),
+    font_test_, false);
   in_game_buttons_->button_func = [&]() { ToggleInGameMenu(); };
   // SETTINGS BUTTON -- change registry to registry_settings_
   in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "SETTINGS",
-                                          in_game_menu_pos + glm::vec2(0, -70),
-                                          font_test_, false);
+    in_game_menu_pos + glm::vec2(0, -70),
+    font_test_, false);
 
   in_game_buttons_->button_func = [&] {
     // All the logic here
@@ -414,15 +466,15 @@ void PlayState::CreateInGameMenu() {
 
   // END GAME -- change registry to registry_mainmenu_
   in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "MAINMENU",
-                                          in_game_menu_pos + glm::vec2(0, -140),
-                                          font_test_, false);
+    in_game_menu_pos + glm::vec2(0, -140),
+    font_test_, false);
   in_game_buttons_->button_func = [&] {
     engine_->ChangeState(StateType::MAIN_MENU);
   };
 
   in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "EXIT",
-                                          in_game_menu_pos + glm::vec2(0, -210),
-                                          font_test_, false);
+    in_game_menu_pos + glm::vec2(0, -210),
+    font_test_, false);
   in_game_buttons_->button_func = [&] { exit(0); };
 }
 
@@ -430,32 +482,32 @@ void PlayState::TestCreateLights() {
   // Create lights
   blue_goal_light_ = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(
-      blue_goal_light_, glm::vec3(0.1f, 0.1f, 1.0f), 15.f, 0.0f);
+    blue_goal_light_, glm::vec3(0.1f, 0.1f, 1.0f), 15.f, 0.0f);
   registry_gameplay_.assign<TransformComponent>(
-      blue_goal_light_, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
-      glm::vec3(1.f));
+    blue_goal_light_, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+    glm::vec3(1.f));
 
   red_goal_light_ = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(
-      red_goal_light_, glm::vec3(1.f, 0.1f, 0.1f), 15.f, 0.f);
+    red_goal_light_, glm::vec3(1.f, 0.1f, 0.1f), 15.f, 0.f);
   registry_gameplay_.assign<TransformComponent>(
-      red_goal_light_, glm::vec3(-12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
-      glm::vec3(1.f));
+    red_goal_light_, glm::vec3(-12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+    glm::vec3(1.f));
 
   auto light = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(light, glm::vec3(0.4f, 0.4f, 0.4f),
-                                            30.f, 0.1f);
+    30.f, 0.1f);
   registry_gameplay_.assign<TransformComponent>(
-      light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
+    light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
 }
 
 void PlayState::CreatePickUp(glm::vec3 position) {
   auto pick_up = registry_gameplay_.create();
   glob::ModelHandle model_pick_up =
-      glob::GetModel("assets/lowpolydeer/deer.fbx");  // Replace with real model
+    glob::GetModel("assets/lowpolydeer/deer.fbx");  // Replace with real model
   registry_gameplay_.assign<ModelComponent>(pick_up, model_pick_up);
   registry_gameplay_.assign<TransformComponent>(
-      pick_up, position, glm::vec3(0.0f, 0.0f, -1.6f), glm::vec3(0.002f));
+    pick_up, position, glm::vec3(0.0f, 0.0f, -1.6f), glm::vec3(0.002f));
   registry_gameplay_.assign<PickUpComponent>(pick_up);
 }
 
@@ -465,7 +517,7 @@ void PlayState::CreateCannonBall(EntityID id) {
   glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
   registry_gameplay_.assign<ModelComponent>(cannonball, model_ball);
   registry_gameplay_.assign<TransformComponent>(cannonball, zero_vec, zero_vec,
-                                                glm::vec3(0.3f));
+    glm::vec3(0.3f));
   registry_gameplay_.assign<IDComponent>(cannonball, id);
 }
 
@@ -475,7 +527,7 @@ void PlayState::CreateForcePushObject(EntityID id) {
   glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
   registry_gameplay_.assign<ModelComponent>(force_object, model_ball);
   registry_gameplay_.assign<TransformComponent>(force_object, zero_vec,
-                                                zero_vec, glm::vec3(0.5f));
+    zero_vec, glm::vec3(0.5f));
   registry_gameplay_.assign<IDComponent>(force_object, id);
 }
 
@@ -502,10 +554,15 @@ void PlayState::DestroyEntity(EntityID id) {
 }
 
 void PlayState::SwitchGoals() {
+  if (!goals_swapped_) {
+    goals_swapped_ = true;
+  } else {
+    goals_swapped_ = false;
+  }
   TransformComponent& blue_light_trans_c =
-      registry_gameplay_.get<TransformComponent>(blue_goal_light_);
+    registry_gameplay_.get<TransformComponent>(blue_goal_light_);
   TransformComponent& red_light_trans_c =
-      registry_gameplay_.get<TransformComponent>(red_goal_light_);
+    registry_gameplay_.get<TransformComponent>(red_goal_light_);
 
   glm::vec3 blue_light_pos = blue_light_trans_c.position;
   blue_light_trans_c.position = red_light_trans_c.position;
