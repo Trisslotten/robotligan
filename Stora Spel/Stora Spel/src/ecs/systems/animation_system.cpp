@@ -128,7 +128,6 @@ void AnimationSystem::updateEntities(entt::registry& registry, float dt) {
 			float totStrength = 0.f;
 			float cutoffSpeed = 5.f;
 			float speed = glm::length(ph.velocity);
-			std::cout << "Speed: " << speed << "\n";
 			for (int i = 0; i < 4; i++) {
 				int anim = getActiveAnimationByName(slide_anims_[i], &ac);
 				switch (i) {
@@ -161,7 +160,6 @@ void AnimationSystem::updateEntities(entt::registry& registry, float dt) {
 					pl.sprint_coeff -= 1.f * dt;
 				}
 				pl.sprint_coeff = std::clamp(pl.sprint_coeff, 0.f, 1.f);
-				std::cout << "Strength: " << strength << "\n";
 				ac.active_animations.at(anim)->strength_ = strength;
 				totStrength += strength;
 			}
@@ -169,13 +167,13 @@ void AnimationSystem::updateEntities(entt::registry& registry, float dt) {
 				int f = getActiveAnimationByName("SlideF", &ac);
 				int b = getActiveAnimationByName("SlideB", &ac);
 				float defaultPoseModifier = std::clamp(1.f - totStrength, 0.f, 1.f) / 2.f;
-				std::cout << "Modifier: " << defaultPoseModifier << "\n";
 				ac.active_animations.at(f)->strength_ = defaultPoseModifier;
 				ac.active_animations.at(b)->strength_ = defaultPoseModifier;
 			}
 		}
 
 		//RUNNING ANIMATIONS
+
 	}
 }
 void AnimationSystem::receiveGameEvent(GameEvent event) {
