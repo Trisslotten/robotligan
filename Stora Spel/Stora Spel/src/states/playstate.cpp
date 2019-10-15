@@ -167,8 +167,7 @@ void PlayState::Update() {
     // Draw the right color icons
     if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
       glob::Submit(gui_minimap_player_red_, glm::vec2(minimap_pos_x, minimap_pos_y), 0.1);    // TODO: CALC REAL POS
-    }
-    else {
+    } else {
       glob::Submit(gui_minimap_player_blue_, glm::vec2(minimap_pos_x, minimap_pos_y), 0.1);   // TODO: CALC REAL POS
     }
   }
@@ -208,8 +207,7 @@ void PlayState::Update() {
     if (engine_->GetTeamScores()[0] > engine_->GetTeamScores()[1]) {
       best_team = "    RED";
       best_team_color = glm::vec4(1.f, 0.13f, 0.13f, 1.f);
-    }
-    else if (engine_->GetTeamScores()[0] == engine_->GetTeamScores()[1]) {
+    } else if (engine_->GetTeamScores()[0] == engine_->GetTeamScores()[1]) {
       best_team = "  NO TEAM";
       best_team_color = glm::vec4(.8f, .4f, .4f, 1.f);
     }
