@@ -9,8 +9,8 @@
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 
-#include <shared/pick_up_component.hpp>
 #include <shared/physics_component.hpp>
+#include <shared/pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
@@ -100,7 +100,8 @@ void PlayState::Update() {
     transforms_.clear();
   }
   if (!physics_.empty()) {
-    auto view_entities = registry_gameplay_.view<PhysicsComponent, IDComponent>();
+    auto view_entities =
+        registry_gameplay_.view<PhysicsComponent, IDComponent>();
     for (auto entity : view_entities) {
       auto& physics_c = view_entities.get<PhysicsComponent>(entity);
       auto& id_c = view_entities.get<IDComponent>(entity);
@@ -129,7 +130,7 @@ void PlayState::Update() {
   glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
 
   UpdateGameplayTimer();
-  
+
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
   glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
   glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
@@ -269,7 +270,8 @@ void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,
   transforms_[player_id] = std::make_pair(pos, orientation);
 }
 
-void PlayState::SetEntityPhysics(EntityID player_id, glm::vec3 vel, bool is_airborne) {
+void PlayState::SetEntityPhysics(EntityID player_id, glm::vec3 vel,
+                                 bool is_airborne) {
   physics_[player_id] = std::make_pair(vel, is_airborne);
 }
 
@@ -300,17 +302,19 @@ void PlayState::CreatePlayerEntities() {
         glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
     glm::vec3 character_scale = glm::vec3(0.0033f);
 
-    glob::ModelHandle player_model =
-        glob::GetModel("Assets/Mech/Mech.fbx");
+    glob::ModelHandle player_model = glob::GetModel("Assets/Mech/Mech.fbx");
 
     registry_gameplay_.assign<IDComponent>(entity, entity_id);
     registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(0.f),
                                                   glm::quat(), character_scale);
-    registry_gameplay_.assign<ModelComponent>(entity, player_model, glm::vec3(0.f, 0.9f,0.f));
-	registry_gameplay_.assign<AnimationComponent>(entity, glob::GetAnimationData(player_model));
+    registry_gameplay_.assign<ModelComponent>(entity, player_model,
+                                              glm::vec3(0.f, 0.9f, 0.f));
+    registry_gameplay_.assign<AnimationComponent>(
+        entity, glob::GetAnimationData(player_model));
     registry_gameplay_.assign<PhysicsComponent>(entity);
-    registry_gameplay_.assign<SoundComponent>(entity, sound_engine.CreatePlayer());
+    registry_gameplay_.assign<SoundComponent>(entity,
+                                              sound_engine.CreatePlayer());
 
     if (entity_id == my_id_) {
       glm::vec3 camera_offset = glm::vec3(0.1f, 0.7f, 0.f);

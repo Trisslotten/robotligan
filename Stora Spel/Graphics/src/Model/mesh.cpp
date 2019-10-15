@@ -18,7 +18,6 @@ void Mesh::SetupMesh(bool weighted) {
   glBufferData(GL_ARRAY_BUFFER, vertices_.size() * sizeof(Vertex),
                &vertices_[0], GL_STATIC_DRAW);
 
-  
   /*---------------Binding element buffer--------------*/
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, element_buffer_object_);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_.size() * sizeof(GLuint),
@@ -37,53 +36,54 @@ void Mesh::SetupMesh(bool weighted) {
                         (GLvoid*)offsetof(Vertex, normals));
 
   if (weighted) {
+    glGenBuffers(1, &bone_buffer_object_);
+    glGenBuffers(1, &weight_buffer_object_);
 
-	  glGenBuffers(1, &bone_buffer_object_);
-	  glGenBuffers(1, &weight_buffer_object_);
+    glBindBuffer(GL_ARRAY_BUFFER, bone_buffer_object_);  // bone indexes
+    glBufferData(GL_ARRAY_BUFFER, bone_index_.size() * sizeof(glm::ivec4),
+                 &bone_index_[0], GL_STATIC_DRAW);
 
-	  glBindBuffer(GL_ARRAY_BUFFER, bone_buffer_object_); // bone indexes
-	  glBufferData(GL_ARRAY_BUFFER, bone_index_.size() * sizeof(glm::ivec4),
-		  &bone_index_[0], GL_STATIC_DRAW);
+    glEnableVertexAttribArray(3);
+    glVertexAttribIPointer(3, 4, GL_INT, sizeof(glm::ivec4), (GLvoid*)0);
 
-	  glEnableVertexAttribArray(3);  
-	  glVertexAttribIPointer(3, 4, GL_INT, sizeof(glm::ivec4), (GLvoid*)0);
+    glBindBuffer(GL_ARRAY_BUFFER, weight_buffer_object_);  // weights
+    glBufferData(GL_ARRAY_BUFFER, weights_.size() * sizeof(glm::vec4),
+                 &weights_[0], GL_STATIC_DRAW);
 
-	  glBindBuffer(GL_ARRAY_BUFFER, weight_buffer_object_); // weights
-	  glBufferData(GL_ARRAY_BUFFER, weights_.size() * sizeof(glm::vec4),
-		  &weights_[0], GL_STATIC_DRAW);
-
-	  glEnableVertexAttribArray(4);  
-	  glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4), (GLvoid*)0);
-
-
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4),
+                          (GLvoid*)0);
   }
 }
 
-Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices,
+Mesh::Mesh(const std::vector<Vertex>& vertices,
+           const std::vector<GLuint>& indices,
            const std::vector<Texture>& textures) {
   vertices_ = vertices;
   indices_ = indices;
   textures_ = textures;
 
   if (glob::kModelUseGL) {
-	  SetupMesh(weighted);
+    SetupMesh(weighted_);
   }
 }
 
-Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices,
-		   const std::vector<Texture>& textures, const std::vector<glm::vec4> weights, 
-		   const std::vector<glm::ivec4> boneIndex) {
-	vertices_ = vertices;
-	indices_ = indices;
-	textures_ = textures;
+Mesh::Mesh(const std::vector<Vertex>& vertices,
+           const std::vector<GLuint>& indices,
+           const std::vector<Texture>& textures,
+           const std::vector<glm::vec4> weights,
+           const std::vector<glm::ivec4> boneIndex) {
+  vertices_ = vertices;
+  indices_ = indices;
+  textures_ = textures;
 
-	weights_ = weights;
-	bone_index_ = boneIndex;
+  weights_ = weights;
+  bone_index_ = boneIndex;
 
-	weighted = true;
-	if (glob::kModelUseGL) {
-		SetupMesh(weighted);
-	}
+  weighted_ = true;
+  if (glob::kModelUseGL) {
+    SetupMesh(weighted_);
+  }
 }
 
 Mesh::~Mesh() {}

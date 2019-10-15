@@ -27,7 +27,8 @@ struct Texture {
 
 class Mesh {
  private:
-	 GLuint vertex_array_object_, vertex_buffer_object_, element_buffer_object_, weight_buffer_object_, bone_buffer_object_;
+  GLuint vertex_array_object_, vertex_buffer_object_, element_buffer_object_,
+      weight_buffer_object_, bone_buffer_object_;
 
   std::vector<Vertex> vertices_;
   std::vector<GLuint> indices_;
@@ -36,7 +37,7 @@ class Mesh {
   std::vector<glm::vec4> weights_;
   std::vector<glm::ivec4> bone_index_;
 
-  bool weighted = false;
+  bool weighted_ = false;
 
   void SetupMesh(bool weighted);
 
@@ -44,8 +45,9 @@ class Mesh {
   Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices,
        const std::vector<Texture>& textures);
   Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices,
-	   const std::vector<Texture>& textures, const std::vector<glm::vec4> weights,
-	   const std::vector<glm::ivec4> boneIndex);
+       const std::vector<Texture>& textures,
+       const std::vector<glm::vec4> weights,
+       const std::vector<glm::ivec4> boneIndex);
   ~Mesh();
 
   void Draw(ShaderProgram& shader);

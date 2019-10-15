@@ -101,7 +101,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
 		Joint* j = new Joint();
 		j->id = i;
 		j->name = mesh->mBones[i]->mName.data;
-		j->offset = convertToGLM(mesh->mBones[i]->mOffsetMatrix);
+		j->offset = ConvertToGLM(mesh->mBones[i]->mOffsetMatrix);
 		bones_.push_back(j);
 
 		//set vec4 arrays for weight and bone index (influencing bone)
@@ -184,8 +184,8 @@ void Model::LoadModel(std::string path) {
     return;
   }
 
-  globalInverseTransform = convertToGLM(scene->mRootNode->mTransformation);
-  globalInverseTransform = glm::inverse(globalInverseTransform);
+  globalInverseTransform_ = ConvertToGLM(scene->mRootNode->mTransformation);
+  globalInverseTransform_ = glm::inverse(globalInverseTransform_);
 
   directory_ = path.substr(0, path.find_last_of('/'));
 
@@ -270,7 +270,7 @@ Joint* Model::MakeArmature(aiNode* node) {
 	bool knownBone = false;
 	for (auto& b : bones_) {
 		if (node->mName.data == b->name) {//node is known bone
-			b->transform = convertToGLM(node->mTransformation);
+			b->transform = ConvertToGLM(node->mTransformation);
 			knownBone = true;
 			for (int n = 0; n < node->mNumChildren; n++) {
 				for (auto PCB : bones_) {
@@ -288,7 +288,7 @@ Joint* Model::MakeArmature(aiNode* node) {
 		Joint* j = new Joint;
 		j->name = "Armature";
 		j->offset = glm::mat4(0.f);
-		j->transform = glm::rotate(convertToGLM(node->mTransformation), 3.1416f / 2.f, glm::vec3(1.f, 0.f, 0.f));
+		j->transform = glm::rotate(ConvertToGLM(node->mTransformation), 3.1416f / 2.f, glm::vec3(1.f, 0.f, 0.f));
 		bool knownChildren = false;
 		for (int n = 0; n < node->mNumChildren; n++) {
 			for (auto PCB : bones_) {
