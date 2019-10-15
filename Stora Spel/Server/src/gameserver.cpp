@@ -113,12 +113,12 @@ void GameServer::HandlePacketsToSend() {
       to_send << event;
       to_send << PacketBlockType::GAME_EVENT;
     }
-    game_events_.clear();
 
     if (!to_send.IsEmpty()) {
       server_.Send(to_send);
     }
   }
+  game_events_.clear();
 }
 
 void GameServer::HandleStateChange() {

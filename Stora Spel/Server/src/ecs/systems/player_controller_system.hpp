@@ -122,7 +122,6 @@ void Update(entt::registry& registry, float dt) {
 		  }
 	  }
 	  else if(!player_c.actions[PlayerAction::SPRINT] && player_c.sprinting) {
-		  std::cout << "Sending end event #meme\n";
 		  player_c.sprinting = false;
 		  GameEvent sprint_event;
 		  sprint_event.type = GameEvent::SPRINT_END;

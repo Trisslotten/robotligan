@@ -108,68 +108,70 @@ void AnimationSystem::strengthModulator(AnimationComponent* ac) {
 }
 
 void AnimationSystem::updateEntities(entt::registry& registry, float dt) {
-	auto players = registry.view<AnimationComponent, ModelComponent, PlayerComponent, TransformComponent, CameraComponent, PhysicsComponent>();
+	auto players = registry.view<AnimationComponent, ModelComponent, PlayerComponent, TransformComponent, PhysicsComponent>();
 	for (auto& entity : players) {
 		auto& ac = players.get<AnimationComponent>(entity);
 		auto& m = players.get<ModelComponent>(entity);
 		auto& pl = players.get<PlayerComponent>(entity);
 		auto& t = players.get<TransformComponent>(entity);
-		auto& c = players.get<CameraComponent>(entity);
 		auto& ph = players.get<PhysicsComponent>(entity);
 		
 		playAnimation("Resting", 0.5f, &ac, 10, 1.f, LOOP);
 
-		glm::vec3 lookDir = c.GetLookDir() * glm::vec3(1.f, 0.f, 1.f);
+		glm::vec3 lookDir = t.Forward() * glm::vec3(1.f, 0.f, 1.f);
 		glm::vec3 h_lookDir;
 		glm::vec3 moveDir = glm::normalize(ph.velocity);
 
 		//SLIDE ANIMATIONS
-		bool standStill = false;
-		if (abs(ph.velocity.x + ph.velocity.y + ph.velocity.z) < 1.f) {
-			standStill = true;
-		}
-		float strength = 0.f;
-		if (!standStill) {
+		if (pl.sprinting) {
+			float strength = 0.f;
+			float totStrength = 0.f;
+			float cutoffSpeed = 5.f;
+			float speed = glm::length(ph.velocity);
+			std::cout << "Speed: " << speed << "\n";
 			for (int i = 0; i < 4; i++) {
 				int anim = getActiveAnimationByName(slide_anims_[i], &ac);
-				if (anim != -1) {
-					switch (i) {
-						case 0: {//F
-							h_lookDir = glm::normalize(lookDir);
-							strength = std::clamp(glm::dot(h_lookDir, moveDir), 0.f, 1.f);
-							ac.active_animations.at(anim)->strength_ = strength;
-							break;
-						}
-						case 1: {//B
-							h_lookDir = glm::normalize(lookDir);
-							strength = abs(std::clamp(glm::dot(h_lookDir, moveDir), -1.f, 0.f));
-							ac.active_animations.at(anim)->strength_ = strength;
-							break;
-						}
-						case 2: {//R
-							h_lookDir = glm::normalize(glm::cross(lookDir, glm::vec3(0.f, 1.f, 0.f)));
-							strength = std::clamp(glm::dot(h_lookDir, moveDir), 0.f, 1.f);
-							ac.active_animations.at(anim)->strength_ = strength;
-							break;
-						}
-						case 3: {//L
-							h_lookDir = glm::normalize(glm::cross(lookDir, glm::vec3(0.f, 1.f, 0.f)));
-							strength =  abs(std::clamp(glm::dot(h_lookDir, moveDir), -1.f, 0.f));
-							ac.active_animations.at(anim)->strength_ = strength;
-							break;
-						}
+				switch (i) {
+					case 0: {//F
+						h_lookDir = glm::normalize(lookDir);
+						strength = std::clamp(glm::dot(h_lookDir, moveDir), 0.f, 1.f);
+						break;
+					}
+					case 1: {//B
+						h_lookDir = glm::normalize(lookDir);
+						strength = abs(std::clamp(glm::dot(h_lookDir, moveDir), -1.f, 0.f));
+						break;
+					}
+					case 2: {//R
+						h_lookDir = glm::normalize(glm::cross(lookDir, glm::vec3(0.f, 1.f, 0.f)));
+						strength = std::clamp(glm::dot(h_lookDir, moveDir), 0.f, 1.f);
+						break;
+					}
+					case 3: {//L
+						h_lookDir = glm::normalize(glm::cross(lookDir, glm::vec3(0.f, 1.f, 0.f)));
+						strength = abs(std::clamp(glm::dot(h_lookDir, moveDir), -1.f, 0.f));
+						break;
 					}
 				}
+				if (speed < cutoffSpeed) {
+					strength = std::clamp(strength - pl.sprint_coeff, 0.f, 1.f);
+					pl.sprint_coeff += 1.f * dt;
+				}
+				else {
+					pl.sprint_coeff -= 1.f * dt;
+				}
+				pl.sprint_coeff = std::clamp(pl.sprint_coeff, 0.f, 1.f);
+				std::cout << "Strength: " << strength << "\n";
+				ac.active_animations.at(anim)->strength_ = strength;
+				totStrength += strength;
 			}
-		}
-		else {
-			int f = getActiveAnimationByName("SlideF", &ac);
-			int b = getActiveAnimationByName("SlideB", &ac);
-			if (f != -1) {
-				ac.active_animations.at(f)->strength_ = 0.5f;
-			}
-			if (b != -1) {
-				ac.active_animations.at(b)->strength_ = 0.5f;
+			if (speed < cutoffSpeed) {
+				int f = getActiveAnimationByName("SlideF", &ac);
+				int b = getActiveAnimationByName("SlideB", &ac);
+				float defaultPoseModifier = std::clamp(1.f - totStrength, 0.f, 1.f) / 2.f;
+				std::cout << "Modifier: " << defaultPoseModifier << "\n";
+				ac.active_animations.at(f)->strength_ = defaultPoseModifier;
+				ac.active_animations.at(b)->strength_ = defaultPoseModifier;
 			}
 		}
 
@@ -177,7 +179,6 @@ void AnimationSystem::updateEntities(entt::registry& registry, float dt) {
 	}
 }
 void AnimationSystem::receiveGameEvent(GameEvent event) {
-
 	auto registry = engine_->GetCurrentRegistry();
 	switch (event.type) {
 	case GameEvent::GOAL: {
@@ -190,12 +191,12 @@ void AnimationSystem::receiveGameEvent(GameEvent event) {
 		break;
 	};
 	case GameEvent::RUN_START: {
-		auto view = registry->view<IDComponent, AnimationComponent>();
+		auto view = registry->view<IDComponent, AnimationComponent, PlayerComponent>();
 		for (auto entity : view) {
-			auto& id_c = view.get<IDComponent>(entity);
-			auto& ac = view.get<AnimationComponent>(entity);
-			if (id_c.id == event.sprint_start.player_id) {
-
+			if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
+				auto& ac = view.get<AnimationComponent>(entity);
+				auto& pc = view.get<PlayerComponent>(entity);
+				pc.running = true;
 				playAnimation("Run", 1.f, &ac, 15, 1.f, LOOP);
 
 				break;
@@ -204,12 +205,12 @@ void AnimationSystem::receiveGameEvent(GameEvent event) {
 		break;
 	};
 	case GameEvent::RUN_END: {
-		auto view = registry->view<IDComponent, AnimationComponent>();
+		auto view = registry->view<IDComponent, AnimationComponent, PlayerComponent>();
 		for (auto entity : view) {
-			auto& id_c = view.get<IDComponent>(entity);
-			auto& ac = view.get<AnimationComponent>(entity);
-			if (id_c.id == event.sprint_start.player_id) {
-
+			if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
+				auto& ac = view.get<AnimationComponent>(entity);
+				auto& pc = view.get<PlayerComponent>(entity);
+				pc.running = false;
 				stopAnimation("Run", &ac);
 
 				break;
@@ -218,12 +219,13 @@ void AnimationSystem::receiveGameEvent(GameEvent event) {
 		break;
 	};
 	case GameEvent::SPRINT_START: {
-		auto view = registry->view<IDComponent, AnimationComponent>();
+		auto view = registry->view<IDComponent, AnimationComponent, PlayerComponent>();
 		for (auto entity : view) {
-			auto& id_c = view.get<IDComponent>(entity);
-			auto& ac = view.get<AnimationComponent>(entity);
-			if (id_c.id == event.sprint_start.player_id) {
+			if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
 
+				auto& pc = view.get<PlayerComponent>(entity);
+				auto& ac = view.get<AnimationComponent>(entity);
+				pc.sprinting = true;
 				playAnimation("SlideF", 1.f, &ac, 20, 0.f, LOOP);
 				playAnimation("SlideB", 1.f, &ac, 20, 0.f, LOOP);
 				playAnimation("SlideR", 1.f, &ac, 20, 0.f, LOOP);
@@ -235,16 +237,18 @@ void AnimationSystem::receiveGameEvent(GameEvent event) {
 		break;
 	};
 	case GameEvent::SPRINT_END: {
-		auto view = registry->view<IDComponent, AnimationComponent>();
+		auto view = registry->view<IDComponent, AnimationComponent, PlayerComponent>();
 		for (auto entity : view) {
-			auto& id_c = view.get<IDComponent>(entity);
-			auto& ac = view.get<AnimationComponent>(entity);
-			if (id_c.id == event.sprint_end.player_id) {
+			if (view.get<IDComponent>(entity).id == event.sprint_end.player_id) {
 
+				auto& pc = view.get<PlayerComponent>(entity);
+				auto& ac = view.get<AnimationComponent>(entity);
+				pc.sprinting = false;
 				stopAnimation("SlideF", &ac);
 				stopAnimation("SlideB", &ac);
 				stopAnimation("SlideR", &ac);
 				stopAnimation("SlideL", &ac);
+				pc.sprint_coeff = 0.f;
 
 				break;
 			}

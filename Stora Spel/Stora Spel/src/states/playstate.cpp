@@ -298,7 +298,7 @@ void PlayState::CreatePlayerEntities() {
 
     glm::vec3 alter_scale =
         glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
-    glm::vec3 character_scale = glm::vec3(0.001f);
+    glm::vec3 character_scale = glm::vec3(0.0033f);
 
     glob::ModelHandle player_model =
         glob::GetModel("Assets/Mech/Mech.fbx");
@@ -307,13 +307,13 @@ void PlayState::CreatePlayerEntities() {
     registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(0.f),
                                                   glm::quat(), character_scale);
-    registry_gameplay_.assign<ModelComponent>(entity, player_model, glm::vec3(0.f));
+    registry_gameplay_.assign<ModelComponent>(entity, player_model, glm::vec3(0.f, 0.9f,0.f));
 	registry_gameplay_.assign<AnimationComponent>(entity, glob::GetAnimationData(player_model));
     registry_gameplay_.assign<PhysicsComponent>(entity);
     registry_gameplay_.assign<SoundComponent>(entity, sound_engine.CreatePlayer());
 
     if (entity_id == my_id_) {
-      glm::vec3 camera_offset = glm::vec3(0.1f, 0.55f, 0.f);
+      glm::vec3 camera_offset = glm::vec3(0.1f, 0.7f, 0.f);
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset);
     }
   }
