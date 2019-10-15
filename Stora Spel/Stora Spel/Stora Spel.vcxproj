@@ -179,6 +179,7 @@
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
     <ClInclude Include="src\ecs\components\button_component.hpp" />
     <ClInclude Include="src\ecs\components\input_component.hpp" />
+    <ClInclude Include="src\ecs\components\particle_component.hpp" />
     <ClInclude Include="src\ecs\components\player_component.hpp" />
     <ClInclude Include="ecs\components\ball_component.hpp" />
     <ClInclude Include="ecs\components\button_component.hpp" />
@@ -187,6 +188,7 @@
     <ClInclude Include="ecs\components\player_component.hpp" />
     <ClInclude Include="src\ecs\components\sound_component.hpp" />
     <ClInclude Include="src\ecs\systems\button_system.hpp" />
+    <ClInclude Include="src\ecs\systems\particle_system.hpp" />
     <ClInclude Include="src\ecs\systems\print_position_system.hpp" />
     <ClInclude Include="src\ecs\systems\render_system.hpp" />
     <ClInclude Include="shared\shared\camera_component.hpp" />
@@ -232,6 +234,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\shaders\compute_shader.comp" />
     <None Include="assets\shaders\e2Dshader.frag" />
     <None Include="assets\shaders\e2Dshader.vert" />
     <None Include="assets\shaders\guishader.frag" />
@@ -240,6 +243,7 @@
     <None Include="Assets\shaders\modelemissive.frag" />
     <None Include="assets\shaders\modelshader.frag" />
     <None Include="assets\shaders\modelshader.vert" />
+    <None Include="Assets\shaders\particle.geom" />
     <None Include="Assets\shaders\shading.frag" />
     <None Include="Assets\shaders\fullscreenquad.frag" />
     <None Include="Assets\shaders\fullscreenquad.vert" />

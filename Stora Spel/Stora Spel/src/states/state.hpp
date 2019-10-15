@@ -205,6 +205,7 @@ private:
   void CreateInGameMenu();
 
   void TestCreateLights();
+  void TestParticles();
 
   void ToggleInGameMenu();
   void UpdateInGameMenu(bool show_menu);

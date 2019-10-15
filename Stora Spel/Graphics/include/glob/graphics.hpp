@@ -12,11 +12,13 @@
 #include "glob/mesh_data.hpp"
 
 #include <string>
+#include <unordered_map>
 #include "camera.hpp"
 
 namespace glob {
 
 typedef unsigned long ModelHandle;
+typedef unsigned long ParticleSystemHandle;
 typedef unsigned long Font2DHandle;
 typedef unsigned long GUIHandle;
 typedef unsigned long E2DHandle;
@@ -34,6 +36,22 @@ EXPORT void Init();
  */
 EXPORT ModelHandle GetModel(const std::string& filepath);
 
+EXPORT ParticleSystemHandle CreateParticleSystem();
+
+EXPORT void DestroyParticleSystem(ParticleSystemHandle handle);
+
+EXPORT void ResetParticles(ParticleSystemHandle handle);
+
+EXPORT void SetEmitPosition(ParticleSystemHandle handle, glm::vec3 pos);
+
+EXPORT void SetParticleDirection(ParticleSystemHandle handle, glm::vec3 dir);
+
+EXPORT void SetParticleSettings(
+    ParticleSystemHandle handle,
+    std::unordered_map<std::string, std::string> map);
+
+EXPORT void SetParticleSettings(ParticleSystemHandle handle, std::string filename);
+
 EXPORT GUIHandle GetGUIItem(const std::string& filepath);
 
 EXPORT Font2DHandle GetFont(const std::string& filepath);
@@ -41,6 +59,8 @@ EXPORT Font2DHandle GetFont(const std::string& filepath);
 EXPORT E2DHandle GetE2DItem(const std::string& filepath);
 
 EXPORT glob::MeshData GetMeshData(ModelHandle model_h);
+
+EXPORT void UpdateParticles(ParticleSystemHandle handle, float dt);
 
 /*
  * Returns a texture handle for the specified image file.
@@ -55,6 +75,7 @@ EXPORT void SubmitLightSource(glm::vec3 pos, glm::vec3 color,
                               glm::float32 radius, glm::float32 ambient);
 EXPORT void Submit(ModelHandle model_h, glm::vec3 pos);
 EXPORT void Submit(ModelHandle model_h, glm::mat4 transform);
+EXPORT void SubmitParticles(ParticleSystemHandle handle);
 EXPORT void SubmitCube(glm::mat4 t);
 EXPORT void SubmitWireframeMesh(ModelHandle model_h);
 EXPORT void LoadWireframeMesh(ModelHandle model_h,

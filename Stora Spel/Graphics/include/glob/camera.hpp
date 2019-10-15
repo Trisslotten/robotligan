@@ -55,6 +55,9 @@ class Camera {
   EXPORT void SetOrientation(const glm::quat& orientation);
   EXPORT void MoveCamera(glm::vec3 in_vec);
   EXPORT void SetPosition(glm::vec3 in_vec);
+
+  glm::vec3 GetUpVector() const { return orientation_ * glm::vec3(0.f, 1.f, 0.f); }
+  glm::vec3 GetDir() const { return orientation_ * glm::vec3(1.f, 0.f, 0.f); }
   //EXPORT void LookAtPoint(glm::vec3 in_target);
   /*
   EXPORT void TurnCameraViaDegrees(float in_yaw_deg, float in_pitch_deg);
