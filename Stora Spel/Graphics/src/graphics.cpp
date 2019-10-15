@@ -22,6 +22,7 @@
 #include <msdfgen/msdfgen.h>
 #include "postprocess/blur.hpp"
 #include "postprocess/postprocess.hpp"
+#include "shadows/shadows.hpp"
 
 namespace glob {
 
@@ -76,19 +77,9 @@ GLuint triangle_vbo, triangle_vao;
 GLuint cube_vbo, cube_vao;
 GLuint quad_vbo, quad_vao;
 
-const int num_shadow_maps = 4;
-GLuint shadow_framebuffer;
-GLuint shadow_renderbuffer;
-GLuint shadow_texture;
-GLuint shadow_blurred_textures[num_shadow_maps] = {0};
-int shadow_size = 1024;
-int shadow_blurred_level = 1;
-int shadow_blurred_size = shadow_size / glm::pow(2, shadow_blurred_level);
-ShaderProgram shadow_shader;
-uint64_t shadow_blur_id = 0;
-
 PostProcess post_process;
 Blur blur;
+Shadows shadows;
 
 float num_frames = 0;
 
@@ -271,55 +262,8 @@ void Init() {
 
   blur.Init();
 
-  shadow_blur_id =
-      blur.CreatePass(shadow_blurred_size, shadow_blurred_size, GL_RG32F);
   post_process.Init(blur);
-
-  shadow_shader.add("modelshader.vert");
-  shadow_shader.add("shading.vert");
-  shadow_shader.add("shadow.frag");
-  shadow_shader.compile();
-
-  glGenFramebuffers(1, &shadow_framebuffer);
-  glGenRenderbuffers(1, &shadow_renderbuffer);
-
-  glGenTextures(1, &shadow_texture);
-  glBindTexture(GL_TEXTURE_2D, shadow_texture);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 1);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                  GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, shadow_size, shadow_size, 0, GL_RG,
-               GL_UNSIGNED_BYTE, NULL);
-
-  glGenTextures(num_shadow_maps, shadow_blurred_textures);
-  for (int i = 0; i < num_shadow_maps; i++) {
-    glBindTexture(GL_TEXTURE_2D, shadow_blurred_textures[i]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, shadow_blurred_size,
-                 shadow_blurred_size, 0, GL_RG, GL_UNSIGNED_BYTE, NULL);
-  }
-
-  glBindFramebuffer(GL_FRAMEBUFFER, shadow_framebuffer);
-
-  glBindRenderbuffer(GL_RENDERBUFFER, shadow_renderbuffer);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, shadow_size,
-                        shadow_size);
-
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                         shadow_texture, 0);
-
-  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-                            GL_RENDERBUFFER, shadow_renderbuffer);
-  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    std::cout << "ERROR: graphics.cpp: shadow_framebuffer is not complete!"
-              << std::endl;
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  shadows.Init(blur);
 }
 
 // H=Handle, A=Asset
@@ -539,67 +483,14 @@ void Render() {
     }
   }
 
-  std::vector<std::pair<glm::vec3, glm::mat4>> shadow_casters;
-  shadow_casters.push_back(std::make_pair(
-      glm::vec3(10.6, 5.7, 7.1),
-      glm::perspective(glm::radians(70.f), 1.f, 0.1f, 50.f) *
-          glm::lookAt(glm::vec3(10.6, 5.7, 7.1), glm::vec3(0, -5.7, 0),
-                      glm::vec3(0, 1, 0))));
-
-  shadow_casters.push_back(std::make_pair(
-      glm::vec3(-10.6, 5.7, -7.1),
-      glm::perspective(glm::radians(70.f), 1.f, 0.1f, 50.f) *
-          glm::lookAt(glm::vec3(-10.6, 5.7, -7.1), glm::vec3(0, -5.7, 0),
-                      glm::vec3(0, 1, 0))));
-
-  shadow_casters.push_back(std::make_pair(
-      glm::vec3(10.6, 5.7, -7.1),
-      glm::perspective(glm::radians(70.f), 1.f, 0.1f, 50.f) *
-          glm::lookAt(glm::vec3(10.6, 5.7, -7.1), glm::vec3(0, -5.7, 0),
-                      glm::vec3(0, 1, 0))));
-
-  shadow_casters.push_back(std::make_pair(
-      glm::vec3(-10.6, 5.7, 7.1),
-      glm::perspective(glm::radians(70.f), 1.f, 0.1f, 50.f) *
-          glm::lookAt(glm::vec3(-10.6, 5.7, 7.1), glm::vec3(0, -5.7, 0),
-                      glm::vec3(0, 1, 0))));
-
-  glBindFramebuffer(GL_FRAMEBUFFER, shadow_framebuffer);
-  glViewport(0, 0, shadow_size, shadow_size);
-
-  for (int i = 0; i < shadow_casters.size(); i++) {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glm::vec3 shadow_light_pos = shadow_casters[i].first;
-    glm::mat4 shadow_transform = shadow_casters[i].second;
-
-    shadow_shader.use();
-    shadow_shader.uniform("cam_transform", shadow_transform);
-    shadow_shader.uniform("shadow_light_pos", shadow_light_pos);
+  auto lambda = [&](ShaderProgram &shader) {
     for (auto &render_item : items_to_render) {
-      shadow_shader.uniform("model_transform", render_item.transform);
-      render_item.model->Draw(shadow_shader);
+      shader.uniform("model_transform", render_item.transform);
+      render_item.model->Draw(shader);
     }
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, shadow_texture);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    blur.BlurTexture(shadow_blur_id, shadow_texture, 1,
-                     shadow_blurred_textures[i]);
+  };
 
-    model_shader.use();
-    model_shader.uniform("shadow_transforms[" + std::to_string(i) + "]",
-                         shadow_transform);
-    model_shader.uniform("shadow_light_positions[" + std::to_string(i) + "]",
-                         shadow_light_pos);
-    model_shader.uniform("shadow_maps[" + std::to_string(i) + "]", 3 + i);
-
-    model_emission_shader.use();
-    model_emission_shader.uniform(
-        "shadow_transforms[" + std::to_string(i) + "]", shadow_transform);
-    model_emission_shader.uniform(
-        "shadow_light_positions[" + std::to_string(i) + "]", shadow_light_pos);
-    model_emission_shader.uniform("shadow_maps[" + std::to_string(i) + "]",
-                                  3 + i);
-  }
+  shadows.BeforePass();
 
   for (int i = 0; i < shadow_casters.size(); i++) {
     glActiveTexture(GL_TEXTURE0 + 3 + i);

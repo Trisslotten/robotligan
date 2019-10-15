@@ -193,6 +193,7 @@
     <ClInclude Include="include\glob\mesh_data.hpp" />
     <ClInclude Include="src\postprocess\blur.hpp" />
     <ClInclude Include="src\postprocess\postprocess.hpp" />
+    <ClInclude Include="src\shadows\shadows.hpp" />
     <ClInclude Include="src\tinyxml2.hpp" />
     <ClInclude Include="src\shader.hpp" />
     <ClInclude Include="src\camera\camera.hpp" />
@@ -211,6 +212,7 @@
     <ClCompile Include="src\graphics.cpp" />
     <ClCompile Include="src\postprocess\blur.cpp" />
     <ClCompile Include="src\postprocess\postprocess.cpp" />
+    <ClCompile Include="src\shadows\shadows.cpp" />
     <ClCompile Include="src\tinyxml2.cpp" />
     <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\window.cpp" />
