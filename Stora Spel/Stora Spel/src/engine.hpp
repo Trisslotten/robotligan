@@ -8,8 +8,8 @@
 #include <limits>
 #include <unordered_map>
 #include <vector>
-#include "ecs/systems/sound_system.hpp"
 #include "Chat.hpp"
+#include "ecs/systems/sound_system.hpp"
 #include "shared/shared.hpp"
 #include "states/state.hpp"
 
@@ -45,7 +45,7 @@ class Engine {
 
   AbilityID GetSecondaryAbility() { return second_ability_; }
 
- std::vector<unsigned int> GetTeamScores() { return scores_; }
+  std::vector<unsigned int> GetTeamScores() { return scores_; }
 
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
@@ -107,6 +107,7 @@ class Engine {
   unsigned int new_team_ = std::numeric_limits<unsigned int>::max();
 
   std::unordered_map<PlayerID, PlayerScoreBoardInfo> player_scores_;
-};
+}
+;
 
 #endif  // ENGINE_HPP_

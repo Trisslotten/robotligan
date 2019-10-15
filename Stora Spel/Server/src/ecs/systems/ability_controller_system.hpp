@@ -11,8 +11,13 @@
 
 #include "util/event.hpp"
 #include "util/global_settings.hpp"
+#include "util/timer.hpp"
+
+#include <physics.hpp>
 
 namespace ability_controller {
+Timer gravity_timer;
+bool gravity_used = false;
 
 bool TriggerAbility(entt::registry &registry, AbilityID in_a_id,
                     PlayerID player_id, entt::entity caster);
@@ -21,6 +26,7 @@ void DoSuperStrike(entt::registry &registry);
 entt::entity CreateCannonBallEntity(entt::registry &registry, PlayerID id);
 void DoSwitchGoals(entt::registry &registry);
 entt::entity CreateForcePushEntity(entt::registry &registry, PlayerID id);
+void GravityChange(entt::registry &registry);
 
 void Update(entt::registry &registry, float dt) {
   auto view_players =
@@ -71,17 +77,24 @@ void Update(entt::registry &registry, float dt) {
     // When finished set secondary ability to not activated
     ability_component.use_secondary = false;
 
-    // Check if the player should shoot
-    if (ability_component.shoot && ability_component.shoot_cooldown <= 0.0f) {
-      entt::entity entity =
-          CreateCannonBallEntity(registry, player_component.client_id);
-      ability_component.shoot_cooldown = 1.0f;
-      EventInfo e;
-      e.event = Event::CREATE_CANNONBALL;
-      e.entity = entity;
-      dispatcher.enqueue<EventInfo>(e);
-    }
-    ability_component.shoot = false;
+        // Check if the player should shoot
+        if (ability_component.shoot &&
+            ability_component.shoot_cooldown <= 0.0f) {
+          entt::entity entity =
+              CreateCannonBallEntity(registry, player_component.client_id);
+          ability_component.shoot_cooldown = 1.0f;
+          EventInfo e;
+          e.event = Event::CREATE_CANNONBALL;
+          e.entity = entity;
+          dispatcher.enqueue<EventInfo>(e);
+        }
+        ability_component.shoot = false;
+      });
+
+  if (gravity_used &&
+      gravity_timer.Elapsed() >=
+          GlobalSettings::Access()->ValueOf("ABILITY_GRAVITY_DURATION")) {
+    physics::SetGravity(GlobalSettings::Access()->ValueOf("PHYSICS_GRAVITY"));
   }
 }
 
@@ -103,6 +116,7 @@ bool TriggerAbility(entt::registry &registry, AbilityID in_a_id,
       break;
     }
     case AbilityID::GRAVITY_CHANGE:
+      GravityChange(registry);
       break;
     case AbilityID::HOMING_BALL:
       break;
@@ -302,6 +316,13 @@ entt::entity CreateForcePushEntity(entt::registry &registry, PlayerID id) {
       return force_object;
     }
   }
+}
+
+void GravityChange(entt::registry &registry) {
+  physics::SetGravity(
+      GlobalSettings::Access()->ValueOf("ABILITY_GRAVITY_CHANGE"));
+  gravity_timer.Restart();
+  gravity_used = true;
 }
 
 };  // namespace ability_controller
