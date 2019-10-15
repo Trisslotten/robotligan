@@ -84,6 +84,21 @@ void PlayState::Update(float dt) {
     cli.Disconnect();
     engine_->ChangeState(StateType::MAIN_MENU);
   }
+
+  if (!physics_.empty()) {
+    auto view_entities =
+        registry_gameplay_.view<PhysicsComponent, IDComponent>();
+    for (auto entity : view_entities) {
+      auto& physics_c = view_entities.get<PhysicsComponent>(entity);
+      auto& id_c = view_entities.get<IDComponent>(entity);
+      auto phys = physics_[id_c.id];
+
+      physics_c.velocity = phys.first;
+      physics_c.is_airborne = phys.second;
+    }
+    physics_.clear(); //?
+  }
+
   if (!transforms_.empty()) {
     auto view_entities =
         registry_gameplay_.view<TransformComponent, IDComponent>();
@@ -102,6 +117,7 @@ void PlayState::Update(float dt) {
     // std::cout << "\n";
     transforms_.clear();
     OnServerFrame();
+    packets_received++;
   }
   
   // interpolate
@@ -121,7 +137,8 @@ void PlayState::Update(float dt) {
         //trans_c.position = trans.first;
         //std::cout << "rubber banding\n"; 
 	  //}
-      trans_c.position = trans.first;
+      //trans_c.position = trans.first;
+      //trans_c.position = glm::lerp(trans_c.position, predicted_state_.position, 1.0f - f);
       trans_c.rotation = trans.second;
     } else {
 		auto trans = new_transforms_[id_c.id];
@@ -130,19 +147,11 @@ void PlayState::Update(float dt) {
 	}
   }
  
-  MovePlayer(dt);
-
-  if (!physics_.empty()) {
-    auto view_entities = registry_gameplay_.view<PhysicsComponent, IDComponent>();
-    for (auto entity : view_entities) {
-      auto& physics_c = view_entities.get<PhysicsComponent>(entity);
-      auto& id_c = view_entities.get<IDComponent>(entity);
-      auto phys = physics_[id_c.id];
-
-      physics_c.velocity = phys.first;
-      physics_c.is_airborne = phys.second;
-    }
+  if (actions_.empty() == false) {
+    MovePlayer(1/60.0f);
+    packets_sent++;
   }
+  actions_.clear();
 
   if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
     ToggleInGameMenu();
@@ -297,7 +306,7 @@ void PlayState::DrawTopScores() {
                glm::vec4(1, 0, 0, 1));
 }
 
-FrameState PlayState::SimulateMovement(std::vector<int>* action, float dt) {
+FrameState PlayState::SimulateMovement(std::vector<int>& action, float dt) {
   auto view_controller = registry_gameplay_.view<CameraComponent, PlayerComponent, TransformComponent>();
 
   glm::vec3 final_velocity = glm::vec3(0.f, 0.f, 0.f);
@@ -320,7 +329,7 @@ FrameState PlayState::SimulateMovement(std::vector<int>* action, float dt) {
     glm::vec3 up(0, 1, 0);
     glm::vec3 right = glm::normalize(glm::cross(frwd, up));
     bool sprint = false;
-    for (int a : *action) {
+    for (int a : action) {
       if (a == PlayerAction::WALK_FORWARD) {
         accum_velocity += frwd;
       }
@@ -397,28 +406,15 @@ void PlayState::MovePlayer(float dt) {
   auto view_controller =
       registry_gameplay_
           .view<CameraComponent, PlayerComponent, TransformComponent>();
-
+  ticks_++;
   PlayerData new_frame;
   new_frame.delta_time = dt;
 
-  for (auto const& [key, action] : *keybinds_) {
-    if (action == PlayerAction::WALK_FORWARD && Input::IsKeyDown(key)) {
-      new_frame.actions.push_back(PlayerAction::WALK_FORWARD);
-    }
-    if (action == PlayerAction::WALK_BACKWARD && Input::IsKeyDown(key)) {
-      new_frame.actions.push_back(PlayerAction::WALK_BACKWARD);
-    }
-    if (action == PlayerAction::WALK_RIGHT && Input::IsKeyDown(key)) {
-      new_frame.actions.push_back(PlayerAction::WALK_RIGHT);
-    }
-    if (action == PlayerAction::WALK_LEFT && Input::IsKeyDown(key)) {
-      new_frame.actions.push_back(PlayerAction::WALK_LEFT);
-    }
-    if (action == PlayerAction::SPRINT && current_stamina_ > 60.0f * dt) {
-      new_frame.actions.push_back(PlayerAction::SPRINT);
-    }
+  for (auto& a : actions_) {
+    new_frame.actions.push_back(a);
   }
-  FrameState new_state = SimulateMovement(&new_frame.actions, dt);
+
+  FrameState new_state = SimulateMovement(new_frame.actions, dt);
   new_frame.delta_pos = new_state.position - predicted_state_.position;
   new_frame.velocity = new_state.velocity;
 
@@ -439,52 +435,36 @@ void PlayState::MovePlayer(float dt) {
   predicted_state_ = new_state;
 }
 
-void PlayState::OnServerFrame() { 
-  float dt = 0;
-  if (history_duration_ - latency_ > 0) {
-    dt = history_duration_ - latency_;
-  }
-  history_duration_ -= dt;
-  while (history_.size() > 0 && dt > 0) {
-    if (dt >= history_.front().delta_time) {
-        dt -= history_.front().delta_time;
-        history_.pop_front();
-    } else {
-        float t = 1 - dt / history_.front().delta_time;
-        history_.front().delta_time -= dt;
-        history_.front().delta_pos *= dt;
-        break;
-	}
-  }
-  auto& phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
-  glm::vec3 velocity = phys_c.velocity;
-
-  float velocity_tolerance = 100.3f;
-  float lol = glm::length(velocity - history_.front().velocity);
-
-  if (glm::length(velocity - history_.front().velocity) > velocity_tolerance) {
-    std::cout << "ruber banding" << std::endl;
-    //auto& trans_c = registry_gameplay_.get<TransformComponent>(my_entity_);
-    predicted_state_.position = player_new_pos_;
-    predicted_state_.rotation = player_new_rotation_;
-    predicted_state_.velocity = velocity;
-
-	for (auto& frame : history_) {
-      FrameState new_state = SimulateMovement(&frame.actions, frame.delta_time);
-      frame.delta_pos = new_state.position - predicted_state_.position;
-      frame.velocity = predicted_state_.velocity;
-      predicted_state_ = new_state;
-	}
+void PlayState::OnServerFrame() {
+  auto& trans_c = registry_gameplay_.get<TransformComponent>(my_entity_);
+  std::cout << "ticks: " << ticks_ << "history size: " << history_.size() << std::endl;
+  std::cout << "sent: " << packets_sent << " received: " << packets_received
+            << std::endl;
+  //for (int i = 0; i < ticks_; ++i) {
+  //  history_.pop_front();
+  //}
+  if (history_.size() < 3) {
+    history_.clear();  
   } else {
-    auto& trans_c = registry_gameplay_.get<TransformComponent>(my_entity_);
-    predicted_state_.position = player_new_pos_;
-    predicted_state_.rotation = player_new_rotation_;
-
-	for (auto& frame : history_) {
-      predicted_state_.position += frame.delta_pos;
-      predicted_state_.rotation = frame.rotation;
-	}
+	history_.pop_front();
+	history_.pop_front();
+	history_.pop_front();
   }
+
+  predicted_state_.position = new_transforms_[my_id_].first;
+  predicted_state_.rotation = new_transforms_[my_id_].second;
+  predicted_state_.velocity =
+      registry_gameplay_.get<PhysicsComponent>(my_entity_).velocity;
+
+  for (auto& frame : history_) {
+    FrameState new_frame = SimulateMovement(frame.actions, frame.delta_time);
+    predicted_state_ = new_frame;
+  }
+  ticks_--;
+  
+  //std::cout << glm::length(trans_c.position - predicted_state_.position) << std::endl;
+
+  trans_c.position = predicted_state_.position;
 }
 
 void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,

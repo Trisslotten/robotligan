@@ -81,6 +81,20 @@ void Engine::Init() {
 
 void Engine::Update(float dt) {
   // std::cout << "current message: " << Input::GetCharacters() <<"\n";
+  float latency = 0.250f;
+  int counter = 0;
+  for (auto& time : time_test) {
+    time += dt;
+
+	if (time > latency) {
+      while (packet_test.front().IsEmpty() == false) {
+            HandlePacketBlock(packet_test.front());
+      }
+      packet_test.pop_front();
+      counter++;
+	}
+  }
+  for (int i = 0; i < counter; ++i) time_test.pop_front();
 
   if (take_game_input_ == true) {
     // accumulate key presses
@@ -195,11 +209,13 @@ void Engine::UpdateNetwork() {
     auto packets = client_.Receive();
     // std::cout <<"Num recevied packets: "<< packets.size() << "\n";
     for (auto& packet : packets) {
-      while (!packet.IsEmpty()) {
+      /*while (!packet.IsEmpty()) {
       // std::cout << "Remaining packet size: " << packet.GetPacketSize() <<
       // "\n";
 		HandlePacketBlock(packet);
-      }
+      }*/
+      packet_test.push_back(packet);
+      time_test.push_back(0.0f);
     }
   }
 }
@@ -316,7 +332,6 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> length;
       client_pings_.resize(length);
       packet.Remove<>(client_pings_.data(), length);
-      play_state_.SetLatency(client_pings_);
       break;
     }
     case PacketBlockType::TEAM_SCORE: {

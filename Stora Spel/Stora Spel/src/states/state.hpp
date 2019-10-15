@@ -199,9 +199,7 @@ class PlayState : public State {
 
   void SetKeyBinds(std::unordered_map<int, int>* keybinds) {keybinds_ = keybinds;}
   void OnServerFrame();
-  void SetLatency(const std::vector<unsigned>& client_pings_) {
-    latency_ = client_pings_[my_id_] / 1000.0f;
-  }
+  void AddAction(int action) { actions_.push_back(action); }
 
  private:
   void CreateInitialEntities();
@@ -217,7 +215,7 @@ class PlayState : public State {
   void UpdateGameplayTimer();
 
   void DrawTopScores();
-  FrameState SimulateMovement(std::vector<int> *action, float dt);
+  FrameState SimulateMovement(std::vector<int> &action, float dt);
   void MovePlayer(float dt);
   
   ////////////////////////////////////////
@@ -261,6 +259,10 @@ class PlayState : public State {
   FrameState predicted_state_;
   float history_duration_;
   float latency_;
+  std::vector<int> actions_;
+  int ticks_ = 0;
+  int packets_sent = 0;
+  int packets_received = 0;
 };
 
 #endif  // STATE_HPP_

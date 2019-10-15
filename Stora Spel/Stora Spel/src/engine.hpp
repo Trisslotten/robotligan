@@ -107,8 +107,8 @@ class Engine {
   unsigned int new_team_ = std::numeric_limits<unsigned int>::max();
 
   std::unordered_map<PlayerID, PlayerScoreBoardInfo> player_scores_;
-  std::vector<NetAPI::Common::Packet> packet_test;
-  std::vector<float> time_test;
+  std::list<NetAPI::Common::Packet> packet_test;
+  std::list<float> time_test;
 };
 
 #endif  // ENGINE_HPP_
