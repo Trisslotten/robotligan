@@ -510,14 +510,7 @@ void Render() {
       render_item.model->Draw(model_emission_shader);
     }
   }
-  post_process.AfterDraw();
-
-  fullscreen_shader.use();
-  post_process.BindColorTex(0);
-  fullscreen_shader.uniform("texture_color", 0);
-  post_process.BindEmissionTex(1);
-  fullscreen_shader.uniform("texture_emission", 1);
-  DrawFullscreenQuad();
+  
 
   // render wireframe cubes
   for (auto &m : cubes) DrawCube(m);
@@ -546,6 +539,14 @@ void Render() {
       text_item.font->Draw(text_shader, text_item.pos, text_item.size,
                            text_item.text, text_item.color, text_item.visible);
   }
+  post_process.AfterDraw();
+
+  fullscreen_shader.use();
+  post_process.BindColorTex(0);
+  fullscreen_shader.uniform("texture_color", 0);
+  post_process.BindEmissionTex(1);
+  fullscreen_shader.uniform("texture_emission", 1);
+  DrawFullscreenQuad();
 
   lights_to_render.clear();
   items_to_render.clear();

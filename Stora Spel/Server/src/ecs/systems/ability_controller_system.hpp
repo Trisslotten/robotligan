@@ -77,19 +77,18 @@ void Update(entt::registry &registry, float dt) {
     // When finished set secondary ability to not activated
     ability_component.use_secondary = false;
 
-        // Check if the player should shoot
-        if (ability_component.shoot &&
-            ability_component.shoot_cooldown <= 0.0f) {
-          entt::entity entity =
-              CreateCannonBallEntity(registry, player_component.client_id);
-          ability_component.shoot_cooldown = 1.0f;
-          EventInfo e;
-          e.event = Event::CREATE_CANNONBALL;
-          e.entity = entity;
-          dispatcher.enqueue<EventInfo>(e);
-        }
-        ability_component.shoot = false;
-      });
+    // Check if the player should shoot
+    if (ability_component.shoot && ability_component.shoot_cooldown <= 0.0f) {
+      entt::entity entity =
+          CreateCannonBallEntity(registry, player_component.client_id);
+      ability_component.shoot_cooldown = 1.0f;
+      EventInfo e;
+      e.event = Event::CREATE_CANNONBALL;
+      e.entity = entity;
+      dispatcher.enqueue<EventInfo>(e);
+    }
+    ability_component.shoot = false;
+  };
 
   if (gravity_used &&
       gravity_timer.Elapsed() >=
@@ -149,16 +148,17 @@ void CreateMissileEntity(entt::registry &registry, entt::entity caster) {
   auto &cam_c = registry.get<CameraComponent>(caster);
 
   auto missile = registry.create();
-  registry.assign<MissileComponent>(missile, 20.f, player_c.target, player_c.client_id);
+  registry.assign<MissileComponent>(missile, 20.f, player_c.target,
+                                    player_c.client_id);
   auto &missile_trans_c = registry.assign<TransformComponent>(missile);
   missile_trans_c.position = trans_c.position + cam_c.GetLookDir();
   missile_trans_c.rotation = cam_c.orientation;
 
-  auto& missile_phys_c = registry.assign<PhysicsComponent>(missile);
+  auto &missile_phys_c = registry.assign<PhysicsComponent>(missile);
   missile_phys_c.velocity = cam_c.GetLookDir();
   missile_phys_c.is_airborne = true;
 
-  auto& sphere = registry.assign<physics::Sphere>(missile);
+  auto &sphere = registry.assign<physics::Sphere>(missile);
   sphere.radius = 0.5f;
   registry.assign<ProjectileComponent>(missile, ProjectileID::MISSILE_OBJECT,
                                        player_c.client_id);
