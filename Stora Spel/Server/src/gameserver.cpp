@@ -18,6 +18,8 @@
 #include "ecs/systems/goal_system.hpp"
 #include "ecs/systems/physics_system.hpp"
 #include "ecs/systems/player_controller_system.hpp"
+#include "ecs/systems/target_system.hpp"
+#include "ecs/systems/missile_system.hpp"
 
 namespace {}  // namespace
 
@@ -286,6 +288,8 @@ void GameServer::UpdateSystems(float dt) {
   player_controller::Update(registry_, dt);
   ability_controller::Update(registry_, dt);
   buff_controller::Update(registry_, dt);
+  target_system::Update(registry_);
+  missile_system::Update(registry_, dt);
 
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);

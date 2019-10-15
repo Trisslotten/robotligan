@@ -432,6 +432,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
           play_state_.CreateForcePushObject(e_id);
           break;
         }
+        case ProjectileID::MISSILE_OBJECT: {
+          play_state_.CreateMissileObject(e_id);
+          break;
+        }
       }
       break;
     }
@@ -446,6 +450,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       //ChangeState(StateType::LOBBY);
       break;
     }
+    case PacketBlockType::YOUR_TARGET: {
+      EntityID target;
+      packet >> target;
+      play_state_.SetMyTarget(target);
+      break;
+	}
   }
 }
 

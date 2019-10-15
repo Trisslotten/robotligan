@@ -247,13 +247,12 @@ void ServerPlayState::Update(float dt) {
       to_send << projectiles.projectile_id;
       to_send << PacketBlockType::CREATE_PROJECTILE;
     }
-    created_projectiles_.clear();
+
     // send destroy entity
     for (auto entity_id : destroy_entities_) {
       to_send << entity_id;
       to_send << PacketBlockType::DESTROY_ENTITIES;
     }
-    destroy_entities_.clear();
 
     // Send countdown & match time in sec
     to_send << (int)countdown_timer_.Elapsed();
@@ -272,6 +271,8 @@ void ServerPlayState::Update(float dt) {
       goal_goal_c.switched_this_tick = false;
     }
   }
+  destroy_entities_.clear();
+  created_projectiles_.clear();
   pick_ups_.clear();
 
   if (match_timer_.Elapsed() > match_time_) {
@@ -642,7 +643,23 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       created_projectiles_.push_back(projectile);
       break;
     }
-    default:
+    case Event::CREATE_MISSILE: {
+      auto& registry = game_server_->GetRegistry();
+      Projectile projectile;
+      projectile.entity_id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, projectile.entity_id);
+      projectile.projectile_id = ProjectileID::MISSILE_OBJECT;
+      created_projectiles_.push_back(projectile);
+      break;
+    }
+    case Event::CHANGED_TARGET: {
+      std::unordered_map<int, NetAPI::Common::Packet> &packets = game_server_->GetPackets();
+      auto p_c = game_server_->GetRegistry().get<PlayerComponent>(e.entity);
+      packets[p_c.client_id] << e.e_id;
+      packets[p_c.client_id] << PacketBlockType::YOUR_TARGET; 
+      break;
+	}
+	default:
       break;
   }
 }

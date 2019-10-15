@@ -64,6 +64,7 @@ enum : int16_t {
   GAME_EVENT,
   PHYSICS_DATA,
   GAME_END,
+  YOUR_TARGET,
   NUM_BLOCK_TYPES,
 };
 
@@ -132,6 +133,7 @@ struct GameEvent {
 enum class ProjectileID {
   CANNON_BALL,
   FORCE_PUSH_OBJECT,
+  MISSILE_OBJECT,
   NUM_PROJECTILE_IDS,
 };
 

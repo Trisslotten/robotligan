@@ -9,8 +9,8 @@
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 
-#include <shared/pick_up_component.hpp>
 #include <shared/physics_component.hpp>
+#include <shared/pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
@@ -27,6 +27,7 @@ void PlayState::Startup() {
   // Create 2D element
   e2D_test_ = glob::GetE2DItem("assets/GUI_elements/point_table.png");
   e2D_test2_ = glob::GetE2DItem("assets/GUI_elements/Scoreboard_V1.png");
+  e2D_target_ = glob::GetE2DItem("assets/GUI_elements/target.png");
 
   // Create GUI elementds
   gui_test_ = glob::GetGUIItem("assets/GUI_elements/Scoreboard_V1.png");
@@ -100,7 +101,8 @@ void PlayState::Update() {
     transforms_.clear();
   }
   if (!physics_.empty()) {
-    auto view_entities = registry_gameplay_.view<PhysicsComponent, IDComponent>();
+    auto view_entities =
+        registry_gameplay_.view<PhysicsComponent, IDComponent>();
     for (auto entity : view_entities) {
       auto& physics_c = view_entities.get<PhysicsComponent>(entity);
       auto& id_c = view_entities.get<IDComponent>(entity);
@@ -129,7 +131,7 @@ void PlayState::Update() {
   glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
 
   UpdateGameplayTimer();
-  
+
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
   glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
   glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
@@ -178,6 +180,7 @@ void PlayState::Update() {
     }
   }
   DrawTopScores();
+  DrawTarget();
 }
 void PlayState::UpdateNetwork() {
   auto& packet = engine_->GetPacket();
@@ -264,12 +267,51 @@ void PlayState::DrawTopScores() {
                glm::vec4(1, 0, 0, 1));
 }
 
+void PlayState::DrawTarget() {
+  if (my_target_ != -1) {
+    auto view_players =
+        registry_gameplay_
+            .view<PlayerComponent, TransformComponent, IDComponent>();
+    glm::vec3 target_pos;
+    glm::vec3 my_pos;
+    glm::vec3 my_forward;
+
+    for (auto player : view_players) {
+      auto& p_c = registry_gameplay_.get<PlayerComponent>(player);
+      auto& t_c = registry_gameplay_.get<TransformComponent>(player);
+      auto& id_c = registry_gameplay_.get<IDComponent>(player);
+
+      if (id_c.id == my_target_) {
+        target_pos = t_c.position;
+      }
+      if (id_c.id == my_id_) {
+        my_pos = t_c.position;
+        my_forward = t_c.Forward();
+        if (registry_gameplay_.has<CameraComponent>(player)) {
+          auto& c_c = registry_gameplay_.get<CameraComponent>(player);
+          my_forward = c_c.GetLookDir();
+        }
+      }
+    }
+    glm::vec3 diff = target_pos - my_pos;
+    glm::vec3 dir = glm::normalize(diff);
+    float dot = glm::dot(my_forward, dir);
+
+    float angles = glm::atan(dir.x,dir.z);
+    glm::vec3 cross = glm::normalize(glm::cross(my_forward, dir));
+
+    glob::Submit(e2D_target_, target_pos, 1.0f, glm::degrees(angles)+180.f,
+                 glm::vec3(0,1,0));
+  }
+}
+
 void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,
                                    glm::quat orientation) {
   transforms_[player_id] = std::make_pair(pos, orientation);
 }
 
-void PlayState::SetEntityPhysics(EntityID player_id, glm::vec3 vel, bool is_airborne) {
+void PlayState::SetEntityPhysics(EntityID player_id, glm::vec3 vel,
+                                 bool is_airborne) {
   physics_[player_id] = std::make_pair(vel, is_airborne);
 }
 
@@ -310,7 +352,8 @@ void PlayState::CreatePlayerEntities() {
     registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<ModelComponent>(entity, player_model,
                                               alter_scale * character_scale);
-    registry_gameplay_.assign<SoundComponent>(entity, sound_engine.CreatePlayer());
+    registry_gameplay_.assign<SoundComponent>(entity,
+                                              sound_engine.CreatePlayer());
 
     if (entity_id == my_id_) {
       glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
@@ -434,6 +477,16 @@ void PlayState::CreateForcePushObject(EntityID id) {
   registry_gameplay_.assign<TransformComponent>(force_object, zero_vec,
                                                 zero_vec, glm::vec3(0.5f));
   registry_gameplay_.assign<IDComponent>(force_object, id);
+}
+
+void PlayState::CreateMissileObject(EntityID id) {
+  auto missile_object = registry_gameplay_.create();
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glob::ModelHandle model_ball = glob::GetModel("assets/Rocket/Rocket.fbx");
+  registry_gameplay_.assign<ModelComponent>(missile_object, model_ball);
+  registry_gameplay_.assign<TransformComponent>(missile_object, zero_vec,
+                                                zero_vec, glm::vec3(0.5f));
+  registry_gameplay_.assign<IDComponent>(missile_object, id);
 }
 
 void PlayState::DestroyEntity(EntityID id) {
