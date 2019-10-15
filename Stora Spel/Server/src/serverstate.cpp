@@ -11,6 +11,7 @@
 #include "ecs/components.hpp"
 #include "ecs/components/match_timer_component.hpp"
 #include "gameserver.hpp"
+#include <physics.hpp>
 
 void ServerLobbyState::Init() {
   start_game_timer.Restart();
@@ -64,6 +65,11 @@ void ServerLobbyState::Cleanup() {
 void ServerPlayState::Init() {
   auto& server = game_server_->GetServer();
   auto& registry = game_server_->GetRegistry();
+
+  //initialize option values
+  match_time_ = (int)GlobalSettings::Access()->ValueOf("MATCH_TIME");
+  count_down_time_ = (int)GlobalSettings::Access()->ValueOf("COUNTDOWN_TIME");
+  physics::SetGravity(GlobalSettings::Access()->ValueOf("PHYSICS_GRAVITY"));
 
   // Start the countdown and match timer
   match_timer_.Restart();

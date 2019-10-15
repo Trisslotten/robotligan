@@ -252,8 +252,8 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="src\util\errorlog.txt" />
-    <Text Include="src\util\settings.txt" />
-    <Text Include="util\player_settings.txt" />
+    <Text Include="config\client_settings.txt" />
+    <Text Include="config\player_settings.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

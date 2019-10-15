@@ -10,6 +10,7 @@
 #endif
 
 namespace physics {
+EXPORT void SetGravity(float _g);
 EXPORT void Update(PhysicsObject* po, float dt);
 }  // namespace physics
 

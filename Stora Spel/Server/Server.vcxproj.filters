@@ -105,6 +105,9 @@
     <ClInclude Include="src\ecs\systems\missile_system.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\ecs\components\physics_component.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -143,6 +146,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="util\settings.txt" />
+    <Text Include="config\server_settings.txt" />
   </ItemGroup>
 </Project>
