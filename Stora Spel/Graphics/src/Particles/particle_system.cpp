@@ -3,8 +3,9 @@
 namespace glob {
   GLsync fence;
 
-  ParticleSystem::ParticleSystem(ShaderProgram* ptr, GLuint tex) : compute_shader_(ptr) {
+  ParticleSystem::ParticleSystem(ShaderProgram* ptr, GLuint tex) {
     settings_.texture = tex;
+    settings_.compute_shader = ptr;
 
     glGenVertexArrays(1, &vertex_array_object_);
 
@@ -91,10 +92,14 @@ namespace glob {
 
       glm::vec3 vel = dir;
 
-      while (glm::dot(vel, settings_.direction) <
-             settings_.direction_strength) {
-        vel += settings_.direction;
-        vel = glm::normalize(vel);
+      if (settings_.direction_strength > 1.f) {
+        vel = glm::normalize(settings_.direction);
+      } else {
+        while (glm::dot(vel, settings_.direction) <
+               settings_.direction_strength) {
+          vel += settings_.direction;
+          vel = glm::normalize(vel);
+        }
       }
 
       vel *= settings_.velocity;
@@ -188,11 +193,11 @@ namespace glob {
   }
 
   void ParticleSystem::Update(float dt) {
-    compute_shader_->use();
-    compute_shader_->uniform("dt", dt);
-    compute_shader_->uniform("color_delta", settings_.color_delta);
-    compute_shader_->uniform("velocity_delta", settings_.velocity_delta);
-    compute_shader_->uniform("size_delta", settings_.size_delta);
+    settings_.compute_shader->use();
+    settings_.compute_shader->uniform("dt", dt);
+    settings_.compute_shader->uniform("color_delta", settings_.color_delta);
+    settings_.compute_shader->uniform("velocity_delta", settings_.velocity_delta);
+    settings_.compute_shader->uniform("size_delta", settings_.size_delta);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, position_vbo_);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, velocity_buffer_);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, color_vbo_);
@@ -259,7 +264,7 @@ namespace glob {
   }
 
   void ParticleSystem::SetShader(ShaderProgram* ptr) {
-    compute_shader_ = ptr;
+    settings_.compute_shader = ptr;
   }
 
   void ParticleSystem::Reset() {

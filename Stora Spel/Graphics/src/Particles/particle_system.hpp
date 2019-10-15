@@ -46,7 +46,6 @@ public:
 private:
   std::default_random_engine gen_;
 
-  ShaderProgram* compute_shader_;
   glob::ParticleSettings settings_ = {};
   float spawns_ = 0.f;
 

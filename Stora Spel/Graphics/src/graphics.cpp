@@ -68,7 +68,7 @@ struct LightItem {
 ShaderProgram test_shader;
 ShaderProgram model_shader;
 ShaderProgram particle_shader;
-ShaderProgram compute_shader;
+//ShaderProgram compute_shader;
 ShaderProgram text_shader;
 ShaderProgram wireframe_shader;
 ShaderProgram gui_shader;
@@ -98,6 +98,7 @@ std::unordered_map<std::string, ModelHandle> model_handles;
 std::unordered_map<ModelHandle, Model> models;
 std::unordered_map<ParticleSystemHandle, int> particle_systems;
 std::unordered_map<std::string, GLuint> textures;
+std::unordered_map<std::string, std::unique_ptr<ShaderProgram>> compute_shaders;
 
 struct ParticleSystemInfo {
   ParticleSystem system;
@@ -261,8 +262,9 @@ void Init() {
   particle_shader.add("particle.frag");
   particle_shader.compile();
 
-  compute_shader.add("compute_shader.comp");
-  compute_shader.compile();
+  compute_shaders["default"] = std::make_unique<ShaderProgram>();
+  compute_shaders["default"]->add("compute_shader.comp");
+  compute_shaders["default"]->compile();
 
   CreateDefaultParticleTexture();
   textures["smoke"] = TextureFromFile("smoke.png");
@@ -497,6 +499,15 @@ ParticleSettings ProccessMap(ParticleSettings ps, const std::unordered_map<std::
       if (it != textures.end()) {
         ps.texture = it->second;
       }
+    } else if (it.first == "shader") {
+      std::string shader;
+      std::stringstream ss(it.second);
+      ss >> shader;
+
+      auto it = compute_shaders.find(shader);
+      if (it != compute_shaders.end()) {
+        ps.compute_shader = it->second.get();
+      }
     }
   }
 
@@ -557,6 +568,7 @@ ParticleSettings ReadParticleFile(std::string filename) {
 
   ParticleSettings ps = {};
   ps.texture = textures["default"];
+  ps.compute_shader = compute_shaders["default"].get();
   
   ps = ProccessMap(ps, settings_map);
 
@@ -576,7 +588,7 @@ ParticleSystemHandle CreateParticleSystem() {
   
   if (index < 0) {
     index = buffer_particle_systems.size();
-    buffer_particle_systems.emplace_back(&compute_shader, textures["default"], true);
+    buffer_particle_systems.emplace_back(compute_shaders["default"].get(), textures["default"], true);
   }
 
   if (index == -1) return -1;

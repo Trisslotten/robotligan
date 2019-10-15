@@ -24,6 +24,7 @@ struct ParticleSettings {
   bool burst = false;
 
   GLuint texture = 0;
+  ShaderProgram* compute_shader = nullptr;
 };
 
 }  // namespace glob
