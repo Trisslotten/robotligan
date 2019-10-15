@@ -26,3 +26,6 @@ Example: '>MY_VALUE=13.37'
 
 //--Debug Options--//
 >RENDER_WIREFRAME=0.0
+
+//--Sound Settings--//
+>SOUND_VOLUME=34.000000
