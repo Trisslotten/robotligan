@@ -25,7 +25,9 @@
 
 #include <msdfgen/msdfgen-ext.h>
 #include <msdfgen/msdfgen.h>
+#include "postprocess/blur.hpp"
 #include "postprocess/postprocess.hpp"
+#include "shadows/shadows.hpp"
 
 namespace glob {
 
@@ -94,6 +96,8 @@ GLuint cube_vbo, cube_vao;
 GLuint quad_vbo, quad_vao;
 
 PostProcess post_process;
+Blur blur;
+Shadows shadows;
 
 float num_frames = 0;
 
@@ -136,6 +140,7 @@ struct GLuintBuffers {
   GLuint ebo;
   GLuint size;
 };
+
 std::unordered_map<ModelHandle, GLuintBuffers> wireframe_buffers;
 
 std::vector<RenderItem> items_to_render;
@@ -277,6 +282,7 @@ void Init() {
 
   model_shader.add("modelshader.vert");
   model_shader.add("modelshader.frag");
+  model_shader.add("shading.vert");
   model_shader.add("shading.frag");
   model_shader.compile();
 
@@ -299,6 +305,7 @@ void Init() {
 
   model_emission_shader.add("modelshader.vert");
   model_emission_shader.add("modelemissive.frag");
+  model_emission_shader.add("shading.vert");
   model_emission_shader.add("shading.frag");
   model_emission_shader.compile();
 
@@ -307,6 +314,7 @@ void Init() {
   mesh_render_group.push_back(&model_emission_shader);
 
   wireframe_shader.add("modelshader.vert");
+  wireframe_shader.add("shading.vert");
   wireframe_shader.add("wireframe.frag");
   wireframe_shader.compile();
 
@@ -378,9 +386,12 @@ void Init() {
                         (GLvoid *)0);
   glBindVertexArray(0);
 
-  buffer_particle_systems.reserve(10);
+  blur.Init();
 
-  post_process.Init();
+  post_process.Init(blur);
+  shadows.Init(blur);
+
+  buffer_particle_systems.reserve(10);
 }
 
 // H=Handle, A=Asset
@@ -1023,6 +1034,15 @@ void Render() {
     }
   }
 
+  auto draw_function = [&](ShaderProgram &shader) {
+    for (auto &render_item : items_to_render) {
+      shader.uniform("model_transform", render_item.transform);
+      render_item.model->Draw(shader);
+    }
+  };
+  shadows.RenderToMaps(draw_function, blur);
+  shadows.BindMaps(3);
+
   for (auto &shader : mesh_render_group) {
     shader->use();
     for (auto &light_item : lights_to_render) {
@@ -1039,9 +1059,22 @@ void Render() {
     shader->uniform("cam_transform", cam_transform);
   }
 
+  auto ws = glob::window::GetWindowDimensions();
+  glViewport(0, 0, ws.x, ws.y);
   post_process.BeforeDraw();
   {
     model_shader.use();
+    shadows.SetUniforms(model_shader);
+    model_shader.uniformv("light_pos", lights_to_render.size(),
+                          light_positions.data());
+    model_shader.uniformv("light_col", lights_to_render.size(),
+                          light_colors.data());
+    model_shader.uniformv("light_radius", lights_to_render.size(),
+                          light_radii.data());
+    model_shader.uniformv("light_amb", lights_to_render.size(),
+                          light_ambients.data());
+    model_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
+    model_shader.uniform("cam_transform", cam_transform);
     for (auto &render_item : items_to_render) {
       if (render_item.model->IsEmissive()) {
         continue;
@@ -1071,7 +1104,14 @@ void Render() {
       BARI.model->Draw(animated_model_shader);
     }
   }
-  
+  post_process.AfterDraw(blur);
+
+  fullscreen_shader.use();
+  post_process.BindColorTex(0);
+  fullscreen_shader.uniform("texture_color", 0);
+  post_process.BindEmissionTex(1);
+  fullscreen_shader.uniform("texture_emission", 1);
+  DrawFullscreenQuad();
 
   // render wireframe cubes
   for (auto &m : cubes) DrawCube(m);

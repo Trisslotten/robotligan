@@ -7,16 +7,17 @@
 #include <GLFW/glfw3.h>
 
 #include "shader.hpp"
+#include "blur.hpp"
 
 namespace glob {
 
 class PostProcess {
 public:
-  void Init();
+  void Init(Blur& blur);
 
   void BeforeDraw();
 
-  void AfterDraw();
+  void AfterDraw(Blur& blur);
   
   void BindColorTex(GLuint slot);
   void BindEmissionTex(GLuint slot);
@@ -26,10 +27,10 @@ GLuint framebuffer_ = 0;
 GLuint renderbuffer_ = 0;
 GLuint draw_color_texture_ = 0;
 GLuint draw_emission_texture_ = 0;
-GLuint emission_blur_textures_[2] = {0, 0};
-int emission_blur_tex_index_ = 0;
 
-ShaderProgram kawase_blur_compute_;
+GLuint blurred_emission_texture = 0;
+
+uint64_t blur_id_;
 
 };
 

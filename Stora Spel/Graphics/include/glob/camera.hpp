@@ -52,6 +52,13 @@ class Camera {
   EXPORT Camera();
   EXPORT ~Camera();
 
+  EXPORT glm::vec3 GetLookDir() const {
+    return orientation_ * glm::vec3(1,0,0);
+  }
+  EXPORT glm::quat GetOrientation() const {
+    return orientation_;
+  }
+
   EXPORT glm::vec3 GetPosition() const;
   EXPORT glm::mat4 GetViewPerspectiveMatrix() const;
 

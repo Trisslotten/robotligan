@@ -104,6 +104,8 @@
     <None Include="Assets\shaders\fullscreenquad.vert" />
     <None Include="Assets\shaders\kawaseblur.comp" />
     <None Include="src\ecs\systems\input_system.hpp" />
+    <None Include="Assets\shaders\shadow.frag" />
+    <None Include="Assets\shaders\shading.vert" />
     <None Include="Assets\shaders\particle.geom" />
     <None Include="Assets\shaders\compute_shader.comp" />
   </ItemGroup>

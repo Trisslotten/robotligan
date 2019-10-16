@@ -84,6 +84,12 @@
     <ClInclude Include="src\postprocess\postprocess.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\postprocess\blur.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\shadows\shadows.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -129,6 +135,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\postprocess\postprocess.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\postprocess\blur.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\shadows\shadows.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
