@@ -26,6 +26,7 @@ class GlobalSettings {
   void WriteError(std::string in_file_name, std::string in_function_name,
                   std::string in_msg);
   void WriteMapToConsole();
+  void WriteValue(std::string name, float value);
 };
 
 #endif  // !GLOBAL_SETTINGS_HPP_

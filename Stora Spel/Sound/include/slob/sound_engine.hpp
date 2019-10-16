@@ -33,7 +33,7 @@ class EXPORT SoundEngine {
   void Init();
   void Update();
   SoundHandle GetSound(const std::string& path);
-  //void SetMasterVolume(float vol);
+  void SetMasterVolume(float vol);
   void SetListenerAttributes(glm::vec3 pos, glm::quat orientation, glm::vec3 vel);
   SoundPlayer* CreatePlayer();
 

@@ -73,10 +73,10 @@ void init() {
 void updateSystems(entt::registry* reg, float dt) {
   // collision_debug::Update(*reg);
   player_controller::Update(*reg, dt);
-  ability_controller::Update(*reg, dt);
 
   UpdatePhysics(*reg, dt);
   UpdateCollisions(*reg);
+  ability_controller::Update(*reg, dt);
   button_system::Update(*reg);
 
   auto view = reg->view<CameraComponent, TransformComponent>();

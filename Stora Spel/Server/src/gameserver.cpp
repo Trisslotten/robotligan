@@ -115,12 +115,12 @@ void GameServer::HandlePacketsToSend() {
       to_send << event;
       to_send << PacketBlockType::GAME_EVENT;
     }
-    game_events_.clear();
 
     if (!to_send.IsEmpty()) {
       server_.Send(to_send);
     }
   }
+  game_events_.clear();
 }
 
 void GameServer::HandleStateChange() {
@@ -176,8 +176,8 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       packet >> pitch;
       packet >> actions;
       play_state_.SetPlayerInput(client_id, actions, pitch, yaw);
-      // std::cout << "PACKET: INPUT, " << actions << ", " << yaw << ", " <<
-      // pitch << "\n";
+      //std::cout << "PACKET: INPUT, " << actions << ", " << yaw << ", " <<
+      //pitch << "\n";
       break;
     }
     case PacketBlockType::CLIENT_READY: {
@@ -306,6 +306,9 @@ void GameServer::ReceiveEvent(const EventInfo& e) {
       break;
     }
     case Event::CREATE_CANNONBALL: {
+      break;
+    }
+    case Event::CREATE_TELEPORT_PROJECTILE: {
       break;
     }
     default:

@@ -101,6 +101,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(SolutionDir)Graphics\include;$(SolutionDir)Graphics\lib\include;$(SolutionDir)glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -166,6 +167,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(SolutionDir)Graphics\include;$(SolutionDir)Graphics\lib\include;$(SolutionDir)glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -178,6 +180,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="include\glob\Animation.hpp" />
+    <ClInclude Include="include\glob\joint.hpp" />
     <ClInclude Include="external\include\ft2build.h" />
     <ClInclude Include="external\include\msdfgen\msdfgen-ext.h" />
     <ClInclude Include="external\include\msdfgen\msdfgen.h" />
@@ -191,7 +195,9 @@
     <ClInclude Include="include\glob\mesh_data.hpp" />
     <ClInclude Include="src\Particles\particle_settings.hpp" />
     <ClInclude Include="src\Particles\particle_system.hpp" />
+    <ClInclude Include="src\postprocess\blur.hpp" />
     <ClInclude Include="src\postprocess\postprocess.hpp" />
+    <ClInclude Include="src\shadows\shadows.hpp" />
     <ClInclude Include="src\tinyxml2.hpp" />
     <ClInclude Include="src\shader.hpp" />
     <ClInclude Include="src\camera\camera.hpp" />
@@ -208,8 +214,10 @@
     <ClCompile Include="src\camera\camera.cpp" />
     <ClCompile Include="src\Font\Font2D.cpp" />
     <ClCompile Include="src\graphics.cpp" />
+    <ClCompile Include="src\postprocess\blur.cpp" />
     <ClCompile Include="src\Particles\particle_system.cpp" />
     <ClCompile Include="src\postprocess\postprocess.cpp" />
+    <ClCompile Include="src\shadows\shadows.cpp" />
     <ClCompile Include="src\tinyxml2.cpp" />
     <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\window.cpp" />

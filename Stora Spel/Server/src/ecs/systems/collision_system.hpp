@@ -23,6 +23,7 @@ void DestroyEntity(entt::registry& registry, entt::entity entity);
 void ApplyForcePush(entt::registry& registry, glm::vec3 pos);
 void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
                             PhysicsComponent &physics_c);
+void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos, long player_id);
 
 std::ostream& operator<<(std::ostream& o, glm::vec3 v) {
   return o << v.x << " " << v.y << " " << v.z;
@@ -494,6 +495,12 @@ void ProjectileArenaCollision(entt::registry& registry) {
             DestroyEntity(registry, projectile);
             break;
           }
+          case ProjectileID::TELEPORT_PROJECTILE: {
+            // Teleport to collision site
+            TeleportToCollision(registry, proj_hitbox.center, id.creator);
+            DestroyEntity(registry, projectile);
+            break;
+          }
         }
       }
     }
@@ -618,6 +625,22 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos, Physi
     physics_c.velocity =
         dir * force * (force_push.radius - length) / force_push.radius;
   }
+}
+
+void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos, long player_id) {
+  auto player_view = registry.view<PlayerComponent, TransformComponent, PhysicsComponent, physics::OBB>();
+  for (auto player : player_view) {
+    auto& player_c = player_view.get<PlayerComponent>(player);
+    auto& phys_c = player_view.get<PhysicsComponent>(player);
+    auto& obb_c = player_view.get<physics::OBB>(player);
+
+    if (player_c.client_id == player_id) {
+      phys_c.is_airborne = true;
+      obb_c.center = hit_pos;
+      break;
+    }
+  }
+
 }
 
 void DestroyEntity(entt::registry& registry, entt::entity entity) {

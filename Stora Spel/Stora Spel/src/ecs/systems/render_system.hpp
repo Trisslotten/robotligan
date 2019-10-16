@@ -25,7 +25,8 @@ void RenderSystem(entt::registry& registry) {
     glob::SetCamera(result);
   }
 
-  auto view_model = registry.view<ModelComponent, TransformComponent>();
+  auto view_model = registry.group<ModelComponent, TransformComponent>(
+      entt::exclude<AnimationComponent>);
 
   for (auto& model : view_model) {
     auto& t = view_model.get<TransformComponent>(model);
@@ -33,6 +34,19 @@ void RenderSystem(entt::registry& registry) {
     glob::Submit(m.handle, glm::translate(t.position) *
                                glm::toMat4(t.rotation) *
                                glm::translate(-m.offset) * glm::scale(t.scale));
+  }
+
+  auto animated_models =
+      registry.view<ModelComponent, TransformComponent, AnimationComponent>();
+  for (auto& model : animated_models) {
+    auto& t = animated_models.get<TransformComponent>(model);
+    auto& m = animated_models.get<ModelComponent>(model);
+    auto& a = animated_models.get<AnimationComponent>(model);
+
+    glob::SubmitBAM(m.handle,
+                    glm::translate(t.position) * glm::toMat4(t.rotation) *
+                        glm::translate(-m.offset) * glm::scale(t.scale),
+                    a.bone_transforms);
   }
 
   // submit particles
@@ -107,6 +121,31 @@ void RenderSystem(entt::registry& registry) {
         }
       }
     }
+  }
+
+  auto view_sliders = registry.view<SliderComponent>();
+
+  for (auto slider : view_sliders) {
+    auto& slider_c = registry.get<SliderComponent>(slider);
+    float indent_text = 0;
+    //-4 * slider_c.text.length() / 2;
+    glob::Submit(slider_c.font_handle,
+                 slider_c.position + glm::vec2(indent_text, 60), 22,
+                 slider_c.text);
+
+    if (slider_c.back_tex) {
+      glob::Submit(slider_c.back_tex, slider_c.position, 1.f);
+    }
+    if (slider_c.front_tex) {
+      glm::vec2 pin_pos = slider_c.position - glm::vec2(10,0);
+      float range = slider_c.max_val - slider_c.min_val;
+      float norm = slider_c.value - slider_c.min_val;
+      float perc = norm / range;
+      pin_pos.x += perc * slider_c.dimensions.x;
+      glob::Submit(slider_c.front_tex, pin_pos, 1.f);
+	}
+    glob::Submit(slider_c.font_handle, slider_c.position + glm::vec2(40, -10),
+                 22, std::to_string(slider_c.value));
   }
 }
 #endif  // RENDER_SYSTEM_HPP_

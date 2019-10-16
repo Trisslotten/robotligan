@@ -7,7 +7,10 @@
 #include <glob/graphics.hpp>
 #include <limits>
 #include <unordered_map>
+#include <util/global_settings.hpp>
 #include <vector>
+#include "ecs/systems/sound_system.hpp"
+#include "ecs/systems/animation_system.hpp"
 #include "Chat.hpp"
 #include "ecs/systems/sound_system.hpp"
 #include "shared/shared.hpp"
@@ -30,9 +33,19 @@ class Engine {
   void Update(float dt);
   void UpdateNetwork();
   void Render();
+  void UpdateSettingsValues() {
+    sound_system_.GetSoundEngine().SetMasterVolume(
+        GlobalSettings::Access()->ValueOf("SOUND_VOLUME") / 100.f);
+    glob::GetCamera().SetFov(GlobalSettings::Access()->ValueOf("GRAPHICS_FOV"));
+    mouse_sensitivity_ = GlobalSettings::Access()->ValueOf("INPUT_MOUSE_SENS");
+  }
 
   void SetCurrentRegistry(entt::registry* registry);
-  void ChangeState(StateType state) { wanted_state_type_ = state; }
+  void ChangeState(StateType state) {
+    wanted_state_type_ = state;
+    previous_state_ = current_state_->Type();
+    UpdateSettingsValues();
+  }
   NetAPI::Socket::Client& GetClient() { return client_; }
   NetAPI::Common::Packet& GetPacket() { return packet_; }
   void SetSendInput(bool should_send) { should_send_input_ = should_send; }
@@ -55,6 +68,8 @@ class Engine {
 
   Chat* GetChat() { return &chat_; }
 
+  StateType GetPreviousStateType() { return previous_state_; }
+
  private:
   void SetKeybinds();
 
@@ -72,6 +87,7 @@ class Engine {
   LobbyState lobby_state_;
   PlayState play_state_;
   ConnectMenuState connect_menu_state_;
+  SettingsState settings_state_;
   entt::registry* registry_current_;
 
   bool should_send_input_ = false;
@@ -103,11 +119,16 @@ class Engine {
   bool enable_chat_ = false;
 
   SoundSystem sound_system_;
+  AnimationSystem animation_system_;
 
   AbilityID second_ability_ = AbilityID::NULL_ABILITY;
   unsigned int new_team_ = std::numeric_limits<unsigned int>::max();
 
   std::unordered_map<PlayerID, PlayerStatInfo> player_scores_;
+
+  StateType previous_state_;
+
+  float mouse_sensitivity_ = 1.0f;
 };
 
 #endif  // ENGINE_HPP_
