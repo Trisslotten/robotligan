@@ -391,13 +391,13 @@ physics::IntersectData physics::Intersect(const MeshHitbox& m,
       data.move_vector = (rsqrt - dist) * data.normal;
 
       return data;
-    } else if (dist != 1000.f && glm::dot(temp, tri.p0 - s.center) > 0.f) {
+    } /*else if (dist != 1000.f && glm::dot(temp, tri.p0 - s.center) > 0.f) {
       data.collision = true;
       data.normal = temp;
       data.move_vector = data.normal * glm::dot(temp, tri.p0 - s.center);
 
       return data;
-    }
+    }*/
   }
 
   //data.normal = glm::normalize(data.normal);
