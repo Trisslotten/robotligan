@@ -10,10 +10,11 @@
 glob::Shadows::Shadows() {
   size_ = 512;
   blurred_level_ = 1;
+  internal_format_ = GL_RG32F;
 }
 
 void glob::Shadows::Init(Blur& blur) {
-  blur_id_ = blur.CreatePass(GetBlurredSize(), GetBlurredSize(), GL_RG32F);
+  blur_id_ = blur.CreatePass(GetBlurredSize(), GetBlurredSize(), internal_format_);
 
   shader_.add("modelshader.vert");
   shader_.add("shading.vert");
@@ -35,7 +36,7 @@ void glob::Shadows::Init(Blur& blur) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   }
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, size_, size_, 0, GL_RG,
+  glTexImage2D(GL_TEXTURE_2D, 0, internal_format_, size_, size_, 0, GL_RG,
                GL_UNSIGNED_BYTE, NULL);
 
   glGenTextures(max_maps_, blurred_textures_);
@@ -45,7 +46,7 @@ void glob::Shadows::Init(Blur& blur) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, GetBlurredSize(), GetBlurredSize(),
+    glTexImage2D(GL_TEXTURE_2D, 0, internal_format_, GetBlurredSize(), GetBlurredSize(),
                  0, GL_RG, GL_UNSIGNED_BYTE, NULL);
   }
 

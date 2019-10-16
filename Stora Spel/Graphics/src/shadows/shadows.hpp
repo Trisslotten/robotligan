@@ -42,6 +42,7 @@ class Shadows {
   int blurred_level_ = 0;
   ShaderProgram shader_;
   uint64_t blur_id_ = 0;
+  GLint internal_format_ = 0;
 
   int start_slots_[max_maps_];
   glm::vec3 positions_[max_maps_];
