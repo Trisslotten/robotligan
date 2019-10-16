@@ -360,16 +360,16 @@ void ServerPlayState::CreateArenaEntity() {
   auto& registry = game_server_->GetRegistry();
 
   auto entity = registry.create();
-
+  glm::vec3 arena_scale = glm::vec3(4.0f, 4.0f, 4.0f);
   // Prepare hard-coded values
   // Scale on the hitbox for the map
-  float v1 = 7.171f;
-  float v2 = 21.6859;  // 13.596f;
-  float v3 = 3.423f;
-  float v4 = 7.723f;
+  float v1 = 6.8f * arena_scale.z;
+  float v2 = 10.67f * arena_scale.x;  // 13.596f;
+  float v3 = 2.723f * arena_scale.y;
+  float v4 = 5.723f * arena_scale.y;
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 arena_scale = glm::vec3(1.0f, 1.0f, 1.0f);
-  glob::ModelHandle model_arena = glob::GetModel("assets/Map/Map_HITBOX.fbx");
+  
+  glob::ModelHandle model_arena = glob::GetModel("assets/Map/Map_unified_TMP.fbx");
 
   // Add components for an arena
   // registry_.assign<ModelComponent>(entity, model_arena);
@@ -383,7 +383,10 @@ void ServerPlayState::CreateArenaEntity() {
       glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f)) *
       glm::rotate(90.f * glm::pi<float>() / 180.f, glm::vec3(0.f, 0.f, 1.f));
 
+ 
   for (auto& v : md.pos) v = matrix * glm::vec4(v, 1.f);
+  for (auto& v : md.pos) v *= arena_scale;
+ 
   auto& mh = registry.assign<physics::MeshHitbox>(entity, std::move(md.pos),
                                                   std::move(md.indices));
 }
@@ -608,7 +611,7 @@ void ServerPlayState::ResetEntities() {
 
 void ServerPlayState::CreatePickUpComponents() {
   auto& registry = game_server_->GetRegistry();
-  glm::vec3 pos = glm::vec3(3.f, -2.f, 3.f);
+  glm::vec3 pos = glm::vec3((float)(rand() % 20), -6.8f, (float)(rand() % 10));
   auto entity = registry.create();
   registry.assign<TransformComponent>(entity, pos, glm::vec3(0.f),
                                       glm::vec3(1.f));
@@ -678,21 +681,21 @@ void ServerPlayState::CreateGoals() {
   auto entity_blue = registry.create();
   registry.assign<physics::OBB>(entity_blue, glm::vec3(0.f, 0.f, 0.f),
                                 glm::vec3(1, 0, 0), glm::vec3(0, 1, 0),
-                                glm::vec3(0, 0, 1), 1.f, 1.f, 2.f);
+                                glm::vec3(0, 0, 1), 4.f, 4.f, 8.f);
   registry.assign<TeamComponent>(entity_blue, TEAM_BLUE);
   registry.assign<GoalComponenet>(entity_blue);
   auto& trans_comp = registry.assign<TransformComponent>(entity_blue);
-  trans_comp.position = glm::vec3(-12.f, -4.f, 0.f);
+  trans_comp.position = glm::vec3(-48.f, -6.f, 0.f);
 
   // red team's goal, place at blue goal in world
   auto entity_red = registry.create();
   registry.assign<physics::OBB>(entity_red, glm::vec3(0.f, 0.f, 0.f),
                                 glm::vec3(1, 0, 0), glm::vec3(0, 1, 0),
-                                glm::vec3(0, 0, 1), 1.f, 1.f, 2.f);
+                                glm::vec3(0, 0, 1), 4.f, 4.f, 8.f);
   registry.assign<TeamComponent>(entity_red, TEAM_RED);
   registry.assign<GoalComponenet>(entity_red);
   auto& trans_comp2 = registry.assign<TransformComponent>(entity_red);
-  trans_comp2.position = glm::vec3(12.f, -4.f, 0.f);
+  trans_comp2.position = glm::vec3(48.f, -6.f, 0.f);
 }
 
 /*
