@@ -15,15 +15,12 @@ void MainMenuState::Init() {
   engine_->SetSendInput(false);
   engine_->SetCurrentRegistry(&registry_mainmenu_);
   engine_->SetEnableChat(false);
-
   if (client.IsConnected()) {
     client.Disconnect();
   }
 }
 
-void MainMenuState::Update() {
-  //
-}
+void MainMenuState::Update() { glob::window::SetMouseLocked(false); }
 
 void MainMenuState::UpdateNetwork() {
   //
