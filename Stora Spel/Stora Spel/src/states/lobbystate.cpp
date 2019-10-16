@@ -75,7 +75,7 @@ void LobbyState::SelectAbilityHandler(int id) {
     b_c.gui_handle_current = ability_back_selected_;
   }
 
-  //send selection to server
+  // send selection to server
   auto& packet = engine_->GetPacket();
   packet << id;
   packet << PacketBlockType::LOBBY_SELECT_ABILITY;
@@ -181,7 +181,7 @@ void LobbyState::CreateBackgroundEntities() {
 }
 
 void LobbyState::CreateGUIElements() {
-  //ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
+  // ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
   team_select_back_ =
       glob::GetGUIItem("Assets/GUI_elements/lobby_team_no_names.png");
   font_team_names_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
@@ -201,7 +201,7 @@ void LobbyState::CreateGUIElements() {
                                          std::to_string(i) + ".png");
   }
 
-  //ready button
+  // ready button
   auto button = registry_lobby_.create();
   ButtonComponent& b_c = registry_lobby_.assign<ButtonComponent>(button);
   /*ready_button_c = GenerateButtonEntity(
@@ -270,7 +270,7 @@ void LobbyState::CreateGUIElements() {
       b_c->bounds = glm::vec2(82, 82);
       b_c->find_name = "ability_" + std::to_string(i);
       c++;
-	}
+    }
   }
 }
 void LobbyState::DrawTeamSelect() {

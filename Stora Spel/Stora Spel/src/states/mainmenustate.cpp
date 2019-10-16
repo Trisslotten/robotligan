@@ -4,6 +4,7 @@
 #include "engine.hpp"
 #include "entitycreation.hpp"
 
+
 void MainMenuState::Startup() {
   CreateMainMenu();
   CreateSettingsMenu();

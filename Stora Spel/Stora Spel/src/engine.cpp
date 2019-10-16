@@ -20,8 +20,6 @@
 #include "util/input.hpp"
 #include "eventdispatcher.hpp"
 
-
-
 Engine::Engine() {}
 
 Engine::~Engine() {}
@@ -36,8 +34,8 @@ void Engine::Init() {
 
   // glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
 
-
-  dispatcher.sink<GameEvent>().connect<&SoundSystem::ReceiveGameEvent>(sound_system_);
+  dispatcher.sink<GameEvent>().connect<&SoundSystem::ReceiveGameEvent>(
+      sound_system_);
 
   SetKeybinds();
 
@@ -103,7 +101,6 @@ void Engine::Update(float dt) {
     }
   }
 
-  
   current_state_->Update();
 
   UpdateSystems(dt);
@@ -366,8 +363,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       PlayerID id;
       int goals, points, assists, saves, ping;
       unsigned int team;
-	  packet >> assists;
-	  packet >> saves;
+      packet >> assists;
+      packet >> saves;
       packet >> goals;
       packet >> points;
       packet >> id;
@@ -377,8 +374,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       psbi.goals = goals;
       psbi.points = points;
       psbi.team = team;
-	  psbi.assists = assists;
-	  psbi.saves = saves;
+      psbi.assists = assists;
+      psbi.saves = saves;
       player_scores_[id] = psbi;
       break;
     }
@@ -447,7 +444,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
     case PacketBlockType::GAME_END: {
       play_state_.EndGame();
-      //ChangeState(StateType::LOBBY);
+      // ChangeState(StateType::LOBBY);
       break;
     }
   }
@@ -477,8 +474,7 @@ void Engine::UpdateChat(float dt) {
       if (chat_.IsTakingChatInput() == true &&
           chat_.GetCurrentMessage().size() == 0)
         glob::Submit(font_test2_, chat_.GetPosition() + glm::vec2(0, -20.f * 5),
-                     20, "Enter message",
-                     glm::vec4(1, 1, 1, 1));
+                     20, "Enter message", glm::vec4(1, 1, 1, 1));
     }
     if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat_.IsVisable()) {
       // glob::window::SetMouseLocked(false);
@@ -494,7 +490,6 @@ void Engine::UpdateChat(float dt) {
 void Engine::UpdateSystems(float dt) {
   UpdateChat(dt);
   sound_system_.Update(*registry_current_);
-  
 
   if (Input::IsKeyDown(GLFW_KEY_TAB) &&
       current_state_->Type() == StateType::PLAY) {
@@ -537,54 +532,54 @@ void Engine::DrawScoreboard() {
   glm::vec2 offset_points = glm::vec2(450, 0);
   glm::vec2 offset_ping = glm::vec2(500, 0);
   /*
-	goals
-	assists
-	saves
-	points
-	ping
+        goals
+        assists
+        saves
+        points
+        ping
   */
   if (current_state_->Type() == StateType::PLAY) {
     for (auto& p_score : player_scores_) {
       if (p_score.second.team == TEAM_BLUE) {
         glm::vec2 text_pos = start_pos_blue + glm::vec2(0, blue_count * jump);
         glob::Submit(font_test2_, text_pos, 32, player_names_[p_score.first],
-			glm::vec4(0, 0, 1, 1));
+                     glm::vec4(0, 0, 1, 1));
         glob::Submit(font_test2_, text_pos + offset_goals, 32,
                      std::to_string(p_score.second.goals),
                      glm::vec4(0, 0, 1, 1));
         glob::Submit(font_test2_, text_pos + offset_assists, 32,
                      std::to_string(p_score.second.assists),
                      glm::vec4(0, 0, 1, 1));
-		glob::Submit(font_test2_, text_pos + offset_saves, 32,
-			std::to_string(p_score.second.saves),
-			glm::vec4(0, 0, 1, 1));
-		glob::Submit(font_test2_, text_pos + offset_points, 32,
-			std::to_string(p_score.second.points),
-			glm::vec4(0, 0, 1, 1));
-		glob::Submit(font_test2_, text_pos + offset_ping, 32,
-			std::to_string(client_pings_[p_score.first]),
-			glm::vec4(0, 0, 1, 1));
-		blue_count++;
+        glob::Submit(font_test2_, text_pos + offset_saves, 32,
+                     std::to_string(p_score.second.saves),
+                     glm::vec4(0, 0, 1, 1));
+        glob::Submit(font_test2_, text_pos + offset_points, 32,
+                     std::to_string(p_score.second.points),
+                     glm::vec4(0, 0, 1, 1));
+        glob::Submit(font_test2_, text_pos + offset_ping, 32,
+                     std::to_string(client_pings_[p_score.first]),
+                     glm::vec4(0, 0, 1, 1));
+        blue_count++;
       }
       if (p_score.second.team == TEAM_RED) {
         glm::vec2 text_pos = start_pos_red + glm::vec2(0, red_count * jump);
-		glob::Submit(font_test2_, text_pos, 32, player_names_[p_score.first],
-			glm::vec4(1, 0, 0, 1));
-		glob::Submit(font_test2_, text_pos + offset_goals, 32,
-			std::to_string(p_score.second.goals),
-			glm::vec4(1, 0, 0, 1));
-		glob::Submit(font_test2_, text_pos + offset_assists, 32,
-			std::to_string(p_score.second.assists),
-			glm::vec4(1, 0, 0, 1));
-		glob::Submit(font_test2_, text_pos + offset_saves, 32,
-			std::to_string(p_score.second.saves),
-			glm::vec4(1, 0, 0, 1));
-		glob::Submit(font_test2_, text_pos + offset_points, 32,
-			std::to_string(p_score.second.points),
-			glm::vec4(1, 0, 0, 1));
-		glob::Submit(font_test2_, text_pos + offset_ping, 32,
-			std::to_string(client_pings_[p_score.first]),
-			glm::vec4(1, 0, 0, 1));
+        glob::Submit(font_test2_, text_pos, 32, player_names_[p_score.first],
+                     glm::vec4(1, 0, 0, 1));
+        glob::Submit(font_test2_, text_pos + offset_goals, 32,
+                     std::to_string(p_score.second.goals),
+                     glm::vec4(1, 0, 0, 1));
+        glob::Submit(font_test2_, text_pos + offset_assists, 32,
+                     std::to_string(p_score.second.assists),
+                     glm::vec4(1, 0, 0, 1));
+        glob::Submit(font_test2_, text_pos + offset_saves, 32,
+                     std::to_string(p_score.second.saves),
+                     glm::vec4(1, 0, 0, 1));
+        glob::Submit(font_test2_, text_pos + offset_points, 32,
+                     std::to_string(p_score.second.points),
+                     glm::vec4(1, 0, 0, 1));
+        glob::Submit(font_test2_, text_pos + offset_ping, 32,
+                     std::to_string(client_pings_[p_score.first]),
+                     glm::vec4(1, 0, 0, 1));
         red_count++;
       }
     }

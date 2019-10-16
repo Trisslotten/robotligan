@@ -100,7 +100,8 @@ void PlayState::Update() {
     transforms_.clear();
   }
   if (!physics_.empty()) {
-    auto view_entities = registry_gameplay_.view<PhysicsComponent, IDComponent>();
+    auto view_entities =
+        registry_gameplay_.view<PhysicsComponent, IDComponent>();
     for (auto entity : view_entities) {
       auto& physics_c = view_entities.get<PhysicsComponent>(entity);
       auto& id_c = view_entities.get<IDComponent>(entity);
@@ -129,7 +130,7 @@ void PlayState::Update() {
   glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
 
   UpdateGameplayTimer();
-  
+
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
   glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
   glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
@@ -269,7 +270,8 @@ void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,
   transforms_[player_id] = std::make_pair(pos, orientation);
 }
 
-void PlayState::SetEntityPhysics(EntityID player_id, glm::vec3 vel, bool is_airborne) {
+void PlayState::SetEntityPhysics(EntityID player_id, glm::vec3 vel,
+                                 bool is_airborne) {
   physics_[player_id] = std::make_pair(vel, is_airborne);
 }
 
@@ -310,7 +312,8 @@ void PlayState::CreatePlayerEntities() {
     registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<ModelComponent>(entity, player_model,
                                               alter_scale * character_scale);
-    registry_gameplay_.assign<SoundComponent>(entity, sound_engine.CreatePlayer());
+    registry_gameplay_.assign<SoundComponent>(entity,
+                                              sound_engine.CreatePlayer());
 
     if (entity_id == my_id_) {
       glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);

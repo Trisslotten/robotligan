@@ -204,8 +204,8 @@ void ServerPlayState::Update(float dt) {
         to_send << player_player_c.client_id;
         to_send << player_points_c.GetPoints();
         to_send << player_points_c.GetGoals();
-		to_send << player_points_c.GetBlocks();
-		to_send << player_points_c.GetAssists();
+        to_send << player_points_c.GetBlocks();
+        to_send << player_points_c.GetAssists();
         to_send << PacketBlockType::UPDATE_POINTS;
       }
     }

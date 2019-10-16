@@ -10,6 +10,7 @@
 #include "replay machine/replay_machine.hpp"
 #include "util/event.hpp"
 
+
 class GameServer;
 
 enum class ServerStateType {

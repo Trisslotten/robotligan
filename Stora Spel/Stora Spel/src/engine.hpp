@@ -47,7 +47,7 @@ class Engine {
 
   AbilityID GetSecondaryAbility() { return second_ability_; }
 
- std::vector<unsigned int> GetTeamScores() { return scores_; }
+  std::vector<unsigned int> GetTeamScores() { return scores_; }
 
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;

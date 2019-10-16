@@ -155,7 +155,7 @@ void GameServer::HandleStateChange() {
         }
         if (went_from_play_to_lobby) {
           lobby_state_.SetTeamsUpdated(true);
-		}
+        }
         current_state_ = &play_state_;
         break;
     }
@@ -277,8 +277,7 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
   }
 }
 
-void GameServer::ReceiveGameEvent(const GameEvent& event)
-{
+void GameServer::ReceiveGameEvent(const GameEvent& event) {
   game_events_.push_back(event);
 }
 
