@@ -22,7 +22,7 @@
 void DestroyEntity(entt::registry& registry, entt::entity entity);
 void ApplyForcePush(entt::registry& registry, glm::vec3 pos);
 void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
-                            PhysicsComponent &physics_c);
+                            PhysicsComponent& physics_c);
 
 std::ostream& operator<<(std::ostream& o, glm::vec3 v) {
   return o << v.x << " " << v.y << " " << v.z;
@@ -92,7 +92,7 @@ void UpdateCollisions(entt::registry& registry) {
       if (data.collision) {
         ball_collisions[ball_counter].collision_list.push_back(
             {player, data.normal, data.move_vector, PLAYER});
-		ball_ball.prev_touch = ball_ball.last_touch;
+        ball_ball.prev_touch = ball_ball.last_touch;
         ball_ball.last_touch = player_player.client_id;
       }
     }
@@ -244,7 +244,6 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
 
   ball_hitbox.center += object.move_vector;
 
-
   bool bounced = false;
 
   if (object.normal.x) {
@@ -253,7 +252,7 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
     float dot_val = glm::dot(ball_physics.velocity, temp_normal);
     if (dot_val < 0.f) {
       ball_physics.velocity =
-        ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
+          ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
       bounced = true;
     }
   }
@@ -264,7 +263,7 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
     float dot_val = glm::dot(ball_physics.velocity, temp_normal);
     if (dot_val < 0.f) {
       ball_physics.velocity =
-        ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
+          ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
       bounced = true;
     }
   }
@@ -275,7 +274,7 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
     float dot_val = glm::dot(ball_physics.velocity, temp_normal);
     if (dot_val < 0.f) {
       ball_physics.velocity =
-        ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
+          ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
       bounced = true;
     }
   }
@@ -340,7 +339,7 @@ void PlayerArenaCollision(entt::registry& registry) {
           }
         } else if (data.move_vector.y < 0.0f) {
           physics_c.velocity.y = 0.f;
-		}
+        }
       }
     }
   }
@@ -592,15 +591,15 @@ void ApplyForcePush(entt::registry& registry, glm::vec3 pos) {
   auto players =
       registry.view<physics::OBB, PlayerComponent, PhysicsComponent>();
 
-   for (auto player : players) {
+  for (auto player : players) {
     auto& hitbox = players.get<physics::OBB>(player);
-     auto& physics_c = players.get<PhysicsComponent>(player);
+    auto& physics_c = players.get<PhysicsComponent>(player);
     ApplyForcePushOnEntity(force_push.center, hitbox.center, physics_c);
   }
-
 }
 
-void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos, PhysicsComponent& physics_c) {
+void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
+                            PhysicsComponent& physics_c) {
   physics::Sphere force_push;
   force_push.center = explosion_pos;
   force_push.radius =
