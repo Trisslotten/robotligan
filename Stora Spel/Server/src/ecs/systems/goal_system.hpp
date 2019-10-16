@@ -83,18 +83,15 @@ bool Update(entt::registry& registry) {
 		else if (distance < kDistanceForBlock)
 		{
 			auto view_players =  registry.view<PlayerComponent, TeamComponent, PointsComponent>();
-			/*
-				TODO: Calculate the time it would take for the ball to travel to the goal. Prio 2
-			
-			*/
-			float acceleration = 1.0f;
-			auto simulated_position = ball_physics_c.velocity * kTimeToSimulate + (float(1.0/2.0) * ball_physics_c.acceleration * (kTimeToSimulate * kTimeToSimulate));
+			auto time = (((ball_physics_c.velocity.x + ball_physics_c.velocity.y) / 2.0f) * distance) * (1.0f/64.f);
+			auto simulated_position = ball_physics_c.velocity * time + (float(1.0/2.0) * ball_physics_c.acceleration * (time * time)); // Fucked?
 			physics::Sphere s;
 			s.center = ball_sphere_c.center + simulated_position;
 			s.radius = ball_sphere_c.radius;
 			physics::IntersectData simulated_goal = physics::Intersect(s, goal_OBB_c);
-			if (glm::distance(s.center, goal_OBB_c.center) < 5)
+			if (glm::distance(s.center, goal_OBB_c.center) < 5 || simulated_goal.collision)
 			{
+				std::cout << "distance: " << glm::distance(s.center, goal_OBB_c.center) << "\n";
 				for (auto player : view_players) {
 					auto& player_player_c = registry.get<PlayerComponent>(player);
 					auto& player_transform_c = registry.get<TransformComponent>(player);
@@ -102,14 +99,11 @@ bool Update(entt::registry& registry) {
 					auto& player_points_c = registry.get<PointsComponent>(player);
 					auto& player_obb = registry.get<physics::OBB>(player);
 					auto simulated_player = physics::Intersect(ball_sphere_c, player_obb);
-					if (simulated_player.collision)
+					if (simulated_player.collision || glm::distance(ball_sphere_c.center, player_obb.center) < 2 && goal_team_c.team != player_team_c.team)
 					{
-						if (player_team_c.team != goal_team_c.team)
-						{
-							//Blocked
-							player_points_c.AddPoints(POINTS_SAVE);
-							player_points_c.AddBlock(1);
-						}
+						//Blocked
+						player_points_c.AddPoints(POINTS_SAVE);
+						player_points_c.AddBlock(1);
 						break;
 					}
 				}

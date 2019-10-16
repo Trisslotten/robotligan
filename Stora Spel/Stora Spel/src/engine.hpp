@@ -16,6 +16,8 @@
 struct PlayerScoreBoardInfo {
   int points = 0;
   int goals = 0;
+  int assists = 0;
+  int saves = 0;
   unsigned int team = TEAM_RED;
 };
 
