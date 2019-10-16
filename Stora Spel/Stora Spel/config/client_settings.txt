@@ -31,7 +31,7 @@ Example: '>MY_VALUE=13.37'
 >SOUND_VOLUME=20.000000
 
 //--Graphics Settings--//
->GRAPHICS_FOV=100.000000
+>GRAPHICS_FOV=90.000000
 
 //--Input Settings--//
 >INPUT_MOUSE_SENS=0.480000
