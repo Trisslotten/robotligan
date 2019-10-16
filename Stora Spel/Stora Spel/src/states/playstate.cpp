@@ -460,7 +460,7 @@ void PlayState::CreateArenaEntity() {
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(4.0f, 4.0f, 4.0f);
   glob::ModelHandle model_arena =
-      glob::GetModel("assets/Map/Map_unified_TMP.fbx");
+    glob::GetModel("assets/Map/Map_singular_TMP.fbx");
   registry_gameplay_.assign<ModelComponent>(arena, model_arena);
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                 arena_scale);

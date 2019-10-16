@@ -300,7 +300,7 @@ void Init() {
   model_shader.compile();
 
   animated_model_shader.add("animatedmodelshader.vert");
-  animated_model_shader.add("modelshader.frag");
+  animated_model_shader.add("modelemissive.frag");
   animated_model_shader.add("shading.vert");
   animated_model_shader.add("shading.frag");
   animated_model_shader.compile();

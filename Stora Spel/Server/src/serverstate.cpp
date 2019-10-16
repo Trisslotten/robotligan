@@ -371,7 +371,8 @@ void ServerPlayState::CreateArenaEntity() {
   float v4 = 5.723f * arena_scale.y;
   glm::vec3 zero_vec = glm::vec3(0.0f);
   
-  glob::ModelHandle model_arena = glob::GetModel("assets/Map/Map_unified_TMP.fbx");
+  glob::ModelHandle model_arena = glob::GetModel("assets/Map/Map_singular_TMP.fbx");
+  ;
 
   // Add components for an arena
   // registry_.assign<ModelComponent>(entity, model_arena);
