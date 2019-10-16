@@ -519,10 +519,10 @@ void PlayState::TestCreateLights() {
 void PlayState::CreatePickUp(glm::vec3 position) {
   auto pick_up = registry_gameplay_.create();
   glob::ModelHandle model_pick_up =
-    glob::GetModel("assets/lowpolydeer/deer.fbx");  // Replace with real model
+    glob::GetModel("assets/Pickup/Pickup.fbx");
   registry_gameplay_.assign<ModelComponent>(pick_up, model_pick_up);
   registry_gameplay_.assign<TransformComponent>(
-    pick_up, position, glm::vec3(0.0f, 0.0f, -1.6f), glm::vec3(0.002f));
+    pick_up, position, glm::vec3(0.0f, 0.0f, 0.f), glm::vec3(0.4f));
   registry_gameplay_.assign<PickUpComponent>(pick_up);
 }
 
