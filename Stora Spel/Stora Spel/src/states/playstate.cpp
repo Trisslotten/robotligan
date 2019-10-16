@@ -447,10 +447,10 @@ void PlayState::CreateBallEntity() {
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f);
   auto ball = registry_gameplay_.create();
-  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/TestBall.fbx");
-  registry_gameplay_.assign<ModelComponent>(ball, model_ball);
+  glob::ModelHandle model_ball_p = glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
+  registry_gameplay_.assign<ModelComponent>(ball, model_ball_p);
   registry_gameplay_.assign<TransformComponent>(ball, zero_vec, zero_vec,
-    glm::vec3(1.0f));
+    glm::vec3(0.95f));
   registry_gameplay_.assign<PhysicsComponent>(ball);
   registry_gameplay_.assign<BallComponent>(ball);
   registry_gameplay_.assign<IDComponent>(ball, ball_id_);
