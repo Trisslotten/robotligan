@@ -30,6 +30,7 @@ class Camera {
   float fov_;
   float nearplane_;
   float farplane_;
+  float aspect_;
 
   // Matrices
   glm::mat4 view_mat_;         // View matrix
@@ -38,6 +39,7 @@ class Camera {
   // Functions
   //void UpdateDirectionalVectors();
   void UpdateViewMatrix();
+  void UpdatePerspectiveMatrix();
 
  public:
   EXPORT Camera(glm::vec3 in_pos,     // Position where camera is created
@@ -47,6 +49,7 @@ class Camera {
          float in_nearplane,   // Near z-plane in view-space
          float in_farplane     // Far z-plane in view-space
   );
+  EXPORT Camera();
   EXPORT ~Camera();
 
   EXPORT glm::vec3 GetPosition() const;
@@ -58,6 +61,12 @@ class Camera {
 
   glm::vec3 GetUpVector() const { return orientation_ * glm::vec3(0.f, 1.f, 0.f); }
   glm::vec3 GetDir() const { return orientation_ * glm::vec3(1.f, 0.f, 0.f); }
+  EXPORT void SetFov(float val) {
+    fov_ = val;
+    UpdateViewMatrix();
+    UpdatePerspectiveMatrix();
+  }
+  EXPORT float GetFov() { return fov_; }
   //EXPORT void LookAtPoint(glm::vec3 in_target);
   /*
   EXPORT void TurnCameraViaDegrees(float in_yaw_deg, float in_pitch_deg);

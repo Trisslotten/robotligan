@@ -97,8 +97,7 @@ PostProcess post_process;
 
 float num_frames = 0;
 
-Camera camera{
-    glm::vec3(25, 5, 0), glm::vec3(0, 3, 0), 90, 16.f / 9.f, 0.1f, 100.f};
+Camera camera;
 
 /*
 TextureHandle current_texture_guid = 1;
@@ -267,6 +266,9 @@ GLint TextureFromFile(std::string filename) {
 }
 
 void Init() {
+  camera = Camera(glm::vec3(25, 5, 0), glm::vec3(0, 3, 0), 90, 16.f / 9.f, 0.1f,
+                  100.f);
+
   // std::cout << "Max uniform size: " << MAX_VERTEX_UNIFORM_COMPONENTS_ARB <<
   // "\n";
   fullscreen_shader.add("fullscreenquad.vert");
@@ -1130,6 +1132,6 @@ void Render() {
   num_frames++;
 }
 
-Camera GetCamera() { return camera; }
+Camera& GetCamera() { return camera; }
 
 }  // namespace glob
