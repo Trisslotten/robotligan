@@ -114,10 +114,8 @@ void PlayState::Update(float dt) {
       std::cout << trans_c.position.z << "\n";
       */
     }
-    // std::cout << "\n";
     transforms_.clear();
     OnServerFrame();
-    packets_received++;
   }
 
   // interpolate
@@ -125,7 +123,6 @@ void PlayState::Update(float dt) {
       registry_gameplay_.view<TransformComponent, IDComponent>();
   if (actions_.empty() == false) {
     MovePlayer(1 / 64.0f);
-    packets_sent++;
     actions_.clear();
   }
 
@@ -144,9 +141,8 @@ void PlayState::Update(float dt) {
       //}
       // trans_c.position = trans.first;
       glm::vec3 temp =
-          lerp(predicted_state_.position, server_predicted_pos_, 0.5f);
-      trans_c.position =
-          glm::lerp(trans_c.position, temp, 0.2f);
+          lerp(predicted_state_.position, server_predicted_.position, 0.5f);
+      trans_c.position = glm::lerp(trans_c.position, temp, 0.2f);
       trans_c.rotation = trans.second;
     } else {
       auto trans = new_transforms_[id_c.id];
@@ -411,10 +407,8 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action, glm::vec3 pos,
 }
 
 void PlayState::MovePlayer(float dt) {
-  auto view_controller =
-      registry_gameplay_
-          .view<CameraComponent, PlayerComponent, TransformComponent>();
-  ticks_++;
+  auto view_controller = registry_gameplay_.view<CameraComponent, PlayerComponent, TransformComponent>();
+
   PlayerData new_frame;
   new_frame.delta_time = dt;
   new_frame.id = frame_id;
@@ -426,65 +420,25 @@ void PlayState::MovePlayer(float dt) {
   FrameState new_state = SimulateMovement(new_frame.actions, trans_c.position, predicted_state_.velocity, dt);
   predicted_state_.position = new_state.position;
   predicted_state_.velocity = new_state.velocity;
-  new_frame.delta_pos = new_state.position - predicted_state_.position;
-  new_frame.velocity = new_state.velocity;
 
   history_.push_back(new_frame);
-  history_duration_ += dt;
 
-  new_state = SimulateMovement(new_frame.actions, server_predicted_pos_, server_predicted_velocity_, dt);
-  server_predicted_pos_ = new_state.position;
-  server_predicted_velocity_ = new_state.velocity;
-  //auto& trans_c = registry_gameplay_.get<TransformComponent>(my_entity_);
-  // float t;
-  //
-  // float converge_multiplier = 0.05f;
-  //
-  // glm::vec3 extrapolated_position = predicted_state_.position +
-  // new_state.velocity * latency_ * converge_multiplier;
-  //
-  // t = dt / (latency_ * (1 + converge_multiplier));
-  //
-  // trans_c.position = (extrapolated_position - trans_c.position) * t;
-  //std::cout << "pos: " << new_state.position.x << std::endl;
-  //trans_c.position = new_state.position;
-  //predicted_state_ = new_state;
+  new_state = SimulateMovement(new_frame.actions, server_predicted_.position, server_predicted_.velocity, dt);
+  server_predicted_ = new_state;
 }
 
 void PlayState::OnServerFrame() {
   auto& trans_c = registry_gameplay_.get<TransformComponent>(my_entity_);
 
-  // for (int i = 0; i < ticks_; ++i) {
-  //  history_.pop_front();
-  //}
-  // if (history_.size() < 3) {
-  //  history_.clear();
-  //} else {
-  // history_.pop_front();
-  // history_.pop_front();
-  // history_.pop_front();
-  //}
-  // if (history_.size())
-  //  history_.pop_front();
-  //for (int i = 0; i < engine_->pops; ++i) history_.pop_front();
-  //
-  //engine_->pops = 0;
 
-  server_predicted_pos_ = new_transforms_[my_id_].first;
-  server_predicted_velocity_ =
+  server_predicted_.position = new_transforms_[my_id_].first;
+  server_predicted_.velocity =
       registry_gameplay_.get<PhysicsComponent>(my_entity_).velocity;
 
   for (auto& frame : history_) {
-    FrameState new_frame = SimulateMovement(frame.actions, server_predicted_pos_, server_predicted_velocity_, frame.delta_time);
-    server_predicted_pos_ = new_frame.position;
-    server_predicted_velocity_ = new_frame.velocity;
+    FrameState new_frame = SimulateMovement(frame.actions, server_predicted_.position, server_predicted_.velocity, frame.delta_time);
+    server_predicted_ = new_frame;
   }
-  ticks_--;
-
-  //std::cout << glm::length(trans_c.position - predicted_state_.position)
-  //          << std::endl;
-
-  // trans_c.position = predicted_state_.position;
 }
 
 void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,

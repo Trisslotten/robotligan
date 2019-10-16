@@ -73,7 +73,7 @@ void Engine::Init() {
   lobby_state_.Startup();
 
   play_state_.Startup();
-  play_state_.SetKeyBinds(&keybinds_);
+
   main_menu_state_.Init();
   current_state_ = &main_menu_state_;
   wanted_state_type_ = StateType::MAIN_MENU;
@@ -243,7 +243,6 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::ENTITY_TRANSFORMS: {
-      pops++;
       int size = -1;
       packet >> size;
       for (int i = 0; i < size; i++) {

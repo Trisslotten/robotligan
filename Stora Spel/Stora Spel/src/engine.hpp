@@ -109,9 +109,6 @@ class Engine {
   std::unordered_map<PlayerID, PlayerScoreBoardInfo> player_scores_;
   std::list<NetAPI::Common::Packet> packet_test;
   std::list<float> time_test;
-
- public:
-  int pops = 0;
 };
 
 #endif  // ENGINE_HPP_
