@@ -74,25 +74,60 @@ void Update(entt::registry& registry, float dt) {
     glm::vec3 right = glm::normalize(glm::cross(frwd, up));
 
     if (true) {  // abs(accum_velocity.length()) < player_c.walkspeed * 4) {
-      if (player_c.actions[PlayerAction::WALK_FORWARD]) {
-        accum_velocity += frwd;
-      }
-      if (player_c.actions[PlayerAction::WALK_BACKWARD]) {
-        accum_velocity -= frwd;
-      }
-      if (player_c.actions[PlayerAction::WALK_RIGHT]) {
-        accum_velocity += right;
-      }
-      if (player_c.actions[PlayerAction::WALK_LEFT]) {
-        accum_velocity -= right;
-      }
-      if (glm::length(accum_velocity) > 0.f)
-        accum_velocity = glm::normalize(accum_velocity) * player_c.walkspeed;
-      if (player_c.actions[PlayerAction::SPRINT] &&
-          player_c.energy_current > player_c.cost_sprint * dt) {
-        accum_velocity *= 2.f;
-        player_c.energy_current -= player_c.cost_sprint * dt;
-      }
+		if (player_c.actions[PlayerAction::WALK_FORWARD] || player_c.actions[PlayerAction::WALK_BACKWARD] || player_c.actions[PlayerAction::WALK_RIGHT] || player_c.actions[PlayerAction::WALK_LEFT]) {
+			if (!player_c.running) {
+				GameEvent run_event;
+				run_event.type = GameEvent::RUN_START;
+				run_event.sprint_start.player_id = registry.get<IDComponent>(entity).id;
+				dispatcher.trigger(run_event);
+				player_c.running = true;
+			}
+			if (player_c.actions[PlayerAction::WALK_FORWARD]) {
+				accum_velocity += frwd;
+			}
+			if (player_c.actions[PlayerAction::WALK_BACKWARD]) {
+				accum_velocity -= frwd;
+			}
+			if (player_c.actions[PlayerAction::WALK_RIGHT]) {
+				accum_velocity += right;
+			}
+			if (player_c.actions[PlayerAction::WALK_LEFT]) {
+				accum_velocity -= right;
+			}
+		}
+		else if(player_c.running){
+			GameEvent run_event;
+			run_event.type = GameEvent::RUN_END;
+			run_event.sprint_start.player_id = registry.get<IDComponent>(entity).id;
+			dispatcher.trigger(run_event);
+			player_c.running = false;
+		}
+	  if (glm::length(accum_velocity) > 0.f) {
+		  accum_velocity = glm::normalize(accum_velocity) * player_c.walkspeed;
+	  }
+
+      if (player_c.actions[PlayerAction::SPRINT]){
+		  if (!player_c.sprinting) {
+			  GameEvent sprint_event;
+			  sprint_event.type = GameEvent::SPRINT_START;
+			  sprint_event.sprint_start.player_id = registry.get<IDComponent>(entity).id;
+			  dispatcher.trigger(sprint_event);
+		  }
+		  player_c.sprinting = true;
+
+		  if( player_c.energy_current > player_c.cost_sprint * dt) {
+
+			accum_velocity *= 2.f;
+			player_c.energy_current -= player_c.cost_sprint * dt;
+		  }
+	  }
+	  else if(!player_c.actions[PlayerAction::SPRINT] && player_c.sprinting) {
+		  player_c.sprinting = false;
+		  GameEvent sprint_event;
+		  sprint_event.type = GameEvent::SPRINT_END;
+		  sprint_event.sprint_end.player_id = registry.get<IDComponent>(entity).id;
+		  dispatcher.trigger(sprint_event);
+	  }
     }
 
     // physics stuff

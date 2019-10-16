@@ -52,6 +52,14 @@ struct E2DItem {
   glm::mat4 rot;
 };
 
+struct BoneAnimatedRenderItem {
+  Model *model;
+  glm::mat4 transform;
+  std::vector<glm::mat4>
+      bone_transforms;  // may be a performance bottleneck, pointer instead?
+  int numBones;
+};
+
 struct TextItem {
   Font2D *font = nullptr;
   glm::vec2 pos{0};
@@ -73,10 +81,13 @@ ShaderProgram model_emission_shader;
 ShaderProgram model_shader;
 ShaderProgram particle_shader;
 //ShaderProgram compute_shader;
+ShaderProgram animated_model_shader;
 ShaderProgram text_shader;
 ShaderProgram wireframe_shader;
 ShaderProgram gui_shader;
 ShaderProgram e2D_shader;
+
+std::vector<ShaderProgram *> mesh_render_group;
 
 GLuint triangle_vbo, triangle_vao;
 GLuint cube_vbo, cube_vao;
@@ -131,6 +142,7 @@ std::unordered_map<ModelHandle, GLuintBuffers> wireframe_buffers;
 std::vector<RenderItem> items_to_render;
 std::vector<LightItem> lights_to_render;
 std::vector<int> particles_to_render;
+std::vector<BoneAnimatedRenderItem> bone_animated_items_to_render;
 std::vector<glm::mat4> cubes;
 std::vector<ModelHandle> wireframe_meshes;
 std::vector<TextItem> text_to_render;
@@ -255,6 +267,8 @@ GLint TextureFromFile(std::string filename) {
 }
 
 void Init() {
+  // std::cout << "Max uniform size: " << MAX_VERTEX_UNIFORM_COMPONENTS_ARB <<
+  // "\n";
   fullscreen_shader.add("fullscreenquad.vert");
   fullscreen_shader.add("fullscreenquad.frag");
   fullscreen_shader.compile();
@@ -276,10 +290,19 @@ void Init() {
   CreateDefaultParticleTexture();
   textures["smoke"] = TextureFromFile("smoke.png");
 
+  animated_model_shader.add("animatedmodelshader.vert");
+  animated_model_shader.add("modelshader.frag");
+  animated_model_shader.add("shading.frag");
+  animated_model_shader.compile();
+
   model_emission_shader.add("modelshader.vert");
   model_emission_shader.add("modelemissive.frag");
   model_emission_shader.add("shading.frag");
   model_emission_shader.compile();
+
+  mesh_render_group.push_back(&animated_model_shader);
+  mesh_render_group.push_back(&model_shader);
+  mesh_render_group.push_back(&model_emission_shader);
 
   wireframe_shader.add("modelshader.vert");
   wireframe_shader.add("wireframe.frag");
@@ -696,6 +719,94 @@ Font2DHandle GetFont(const std::string &filepath) {
                                         current_font_guid, filepath);
 }
 
+animData GetAnimationData(ModelHandle handle) {
+  auto res = models.find(handle);
+  animData data;
+  if (res == models.end()) {
+    std::cout << "ERROR graphics.cpp: could not find submitted model\n";
+    return data;
+  }
+
+  glob::Model *model = &res->second;
+
+  // copy armature
+  for (auto source : model->bones_) {
+    glob::Joint j;
+    j.id = source->id;
+    j.name = source->name;
+    j.offset = source->offset;
+    j.transform = source->transform;
+    j.f_transform = source->f_transform;
+    for (auto c : source->children) {
+      // std::cout << c << "\n";
+      j.children.push_back(c);
+    }
+    data.bones.push_back(j);
+  }
+
+  // copy animations
+  for (auto source : model->animations_) {
+    glob::Animation a;
+    a.name_ = source->name_;
+    a.duration_ = source->duration_;
+    a.current_frame_time_ = source->current_frame_time_;
+    a.tick_per_second_ = source->tick_per_second_;
+    a.channels_ = source->channels_;
+    a.armature_transform_ = source->armature_transform_;
+    data.animations.push_back(a);
+  }
+
+  data.globalInverseTransform = model->globalInverseTransform_;
+
+  for (auto bone : data.bones) {
+    if (bone.name == "Hip") {
+      data.humanoid = true;
+      data.hip = bone.id;
+      std::cout
+          << "Hip detected and set...\nHumanoid animation-set loading...\n";
+    }
+  }
+
+  if (data.humanoid) {
+    for (auto bone : data.bones) {
+      if (bone.name == "Spine") {
+        data.upperBody = bone.id;
+        std::cout << "Upper body found!\n";
+      } else if (bone.name == "Leg upper L") {
+        data.leftLeg = bone.id;
+        std::cout << "Left leg found!\n";
+      } else if (bone.name == "Leg upper R") {
+        data.rightLeg = bone.id;
+        std::cout << "Right leg found!\n";
+      } else if (bone.name == "Shoulder L") {
+        data.leftArm = bone.id;
+        std::cout << "Left arm found!\n";
+      } else if (bone.name == "Shoulder R") {
+        data.rightArm = bone.id;
+        std::cout << "Right arm found!\n";
+      }
+    }
+  }
+
+  int num = 0;
+  for (auto b : model->bones_) {
+    if (b->name == "Armature") {
+      break;
+    }
+    num++;
+  }
+
+  data.armatureRoot = num;
+
+  return data;
+}
+/*
+TextureHandle GetTexture(const std::string &filepath) {
+  return GetAsset<TextureHandle, Texture>(texture_handles, textures,
+                                          current_texture_guid, filepath);
+}
+*/
+
 MeshData GetMeshData(ModelHandle model_h) {
   auto item = models.find(model_h);
 
@@ -738,6 +849,28 @@ void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
   item.radius = radius;
   item.ambient = ambient;
   lights_to_render.push_back(item);
+}
+
+void SubmitBAM(
+    ModelHandle model_h, glm::mat4 transform,
+    std::vector<glm::mat4> bone_transforms) {  // Submit Bone Animated Mesh
+  BoneAnimatedRenderItem BARI;
+
+  auto find_res = models.find(model_h);
+  if (find_res == models.end()) {
+    std::cout << "ERROR graphics.cpp: could not find submitted model\n";
+    return;
+  }
+  BARI.model = &find_res->second;
+  BARI.bone_transforms = bone_transforms;
+
+  const glm::mat4 pre_rotation =
+      glm::rotate(glm::pi<float>() / 2.f, glm::vec3(0, 1, 0)) *
+      glm::rotate(-glm::pi<float>() / 2.f, glm::vec3(1, 0, 0));
+
+  BARI.transform = transform * pre_rotation;
+  BARI.numBones = BARI.bone_transforms.size();
+  bone_animated_items_to_render.push_back(BARI);
 }
 
 void Submit(ModelHandle model_h, glm::vec3 pos) {
@@ -881,7 +1014,6 @@ void Render() {
     light_radii.push_back(light_item.radius);
     light_ambients.push_back(light_item.ambient);
   }
-
   std::vector<RenderItem> emissive_items;
   for (auto &render_item : items_to_render) {
     if (render_item.model->IsEmissive()) {
@@ -889,19 +1021,25 @@ void Render() {
     }
   }
 
+  for (auto &shader : mesh_render_group) {
+    shader->use();
+    for (auto &light_item : lights_to_render) {
+      shader->uniformv("light_pos", lights_to_render.size(),
+                       light_positions.data());
+      shader->uniformv("light_col", lights_to_render.size(),
+                       light_colors.data());
+      shader->uniformv("light_radius", lights_to_render.size(),
+                       light_radii.data());
+      shader->uniformv("light_amb", lights_to_render.size(),
+                       light_ambients.data());
+    }
+    shader->uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
+    shader->uniform("cam_transform", cam_transform);
+  }
+
   post_process.BeforeDraw();
   {
     model_shader.use();
-    model_shader.uniformv("light_pos", lights_to_render.size(),
-                          light_positions.data());
-    model_shader.uniformv("light_col", lights_to_render.size(),
-                          light_colors.data());
-    model_shader.uniformv("light_radius", lights_to_render.size(),
-                          light_radii.data());
-    model_shader.uniformv("light_amb", lights_to_render.size(),
-                          light_ambients.data());
-    model_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
-    model_shader.uniform("cam_transform", cam_transform);
     for (auto &render_item : items_to_render) {
       if (render_item.model->IsEmissive()) {
         continue;
@@ -911,19 +1049,24 @@ void Render() {
     }
 
     model_emission_shader.use();
-    model_emission_shader.uniformv("light_pos", lights_to_render.size(),
-                                   light_positions.data());
-    model_emission_shader.uniformv("light_col", lights_to_render.size(),
-                                   light_colors.data());
-    model_emission_shader.uniformv("light_radius", lights_to_render.size(),
-                                   light_radii.data());
-    model_emission_shader.uniformv("light_amb", lights_to_render.size(),
-                                   light_ambients.data());
-    model_emission_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
-    model_emission_shader.uniform("cam_transform", cam_transform);
     for (auto &render_item : emissive_items) {
       model_emission_shader.uniform("model_transform", render_item.transform);
       render_item.model->Draw(model_emission_shader);
+    }
+
+    animated_model_shader.use();
+    // render bone animated items
+    for (auto &BARI : bone_animated_items_to_render) {
+      animated_model_shader.uniform("model_transform", BARI.transform);
+      int numBones = 0;
+      for (auto &bone : BARI.bone_transforms) {
+        animated_model_shader.uniform(
+            "bone_transform[" + std::to_string(numBones) + "]", bone);
+        numBones++;
+      }
+      // animated_model_shader.uniform("NR_OF_BONES",
+      // (int)BARI.bone_transforms.size());
+      BARI.model->Draw(animated_model_shader);
     }
   }
   
@@ -962,8 +1105,8 @@ void Render() {
 
   text_shader.use();
   for (auto &text_item : text_to_render) {
-      text_item.font->Draw(text_shader, text_item.pos, text_item.size,
-                           text_item.text, text_item.color, text_item.visible);
+    text_item.font->Draw(text_shader, text_item.pos, text_item.size,
+                         text_item.text, text_item.color, text_item.visible);
   }
   post_process.AfterDraw();
 
@@ -976,6 +1119,7 @@ void Render() {
 
   lights_to_render.clear();
   items_to_render.clear();
+  bone_animated_items_to_render.clear();
   e2D_items_to_render.clear();
   gui_items_to_render.clear();
   text_to_render.clear();

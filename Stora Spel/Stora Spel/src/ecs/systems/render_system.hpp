@@ -25,7 +25,8 @@ void RenderSystem(entt::registry& registry) {
     glob::SetCamera(result);
   }
 
-  auto view_model = registry.view<ModelComponent, TransformComponent>();
+  auto view_model = registry.group<ModelComponent, TransformComponent>(
+      entt::exclude<AnimationComponent>);
 
   for (auto& model : view_model) {
     auto& t = view_model.get<TransformComponent>(model);
@@ -33,6 +34,19 @@ void RenderSystem(entt::registry& registry) {
     glob::Submit(m.handle, glm::translate(t.position) *
                                glm::toMat4(t.rotation) *
                                glm::translate(-m.offset) * glm::scale(t.scale));
+  }
+
+  auto animated_models =
+      registry.view<ModelComponent, TransformComponent, AnimationComponent>();
+  for (auto& model : animated_models) {
+    auto& t = animated_models.get<TransformComponent>(model);
+    auto& m = animated_models.get<ModelComponent>(model);
+    auto& a = animated_models.get<AnimationComponent>(model);
+
+    glob::SubmitBAM(m.handle,
+                    glm::translate(t.position) * glm::toMat4(t.rotation) *
+                        glm::translate(-m.offset) * glm::scale(t.scale),
+                    a.bone_transforms);
   }
 
   // submit particles

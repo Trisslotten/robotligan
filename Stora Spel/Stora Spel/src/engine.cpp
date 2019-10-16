@@ -9,19 +9,18 @@
 #include <glob\window.hpp>
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
+#include "ecs/systems/animation_system.hpp"
 #include "ecs/systems/button_system.hpp"
 #include "ecs/systems/particle_system.hpp"
 #include "ecs/systems/render_system.hpp"
 #include "ecs/systems/sound_system.hpp"
 #include "entitycreation.hpp"
+#include "eventdispatcher.hpp"
 #include "shared/camera_component.hpp"
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
-#include "eventdispatcher.hpp"
-
-
 
 Engine::Engine() {}
 
@@ -31,14 +30,17 @@ void Engine::Init() {
   glob::Init();
   Input::Initialize();
   sound_system_.Init(this);
+  animation_system_.Init(this);
 
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
 
   // glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
 
-
-  dispatcher.sink<GameEvent>().connect<&SoundSystem::ReceiveGameEvent>(sound_system_);
+  dispatcher.sink<GameEvent>().connect<&SoundSystem::ReceiveGameEvent>(
+      sound_system_);
+  dispatcher.sink<GameEvent>().connect<&AnimationSystem::ReceiveGameEvent>(
+      animation_system_);
 
   SetKeybinds();
 
@@ -85,6 +87,12 @@ void Engine::Update(float dt) {
 
   if (take_game_input_ == true) {
     // accumulate key presses
+    for (auto const& [key, action] : keybinds_) {
+      key_presses_[key] = 0;
+    }
+    for (auto const& [button, action] : mousebinds_) {
+      mouse_presses_[button] = 0;
+    }
     for (auto const& [key, action] : keybinds_)
       if (Input::IsKeyDown(key)) key_presses_[key]++;
     for (auto const& [button, action] : mousebinds_)
@@ -104,7 +112,6 @@ void Engine::Update(float dt) {
     }
   }
 
-  
   current_state_->Update();
 
   UpdateSystems(dt);
@@ -132,6 +139,7 @@ void Engine::Update(float dt) {
     // init new state
     current_state_->Init();
   }
+
   Input::Reset();
 }
 
@@ -143,12 +151,10 @@ void Engine::UpdateNetwork() {
   for (auto const& [key, action] : keybinds_) {
     auto& presses = key_presses_[key];
     if (presses > 0) actions.set(action, true);
-    presses = 0;
   }
   for (auto const& [button, action] : mousebinds_) {
     auto& presses = mouse_presses_[button];
     if (presses > 0) actions.set(action, true);
-    presses = 0;
   }
 
   uint16_t action_bits = actions.to_ulong();
@@ -449,7 +455,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
     case PacketBlockType::GAME_END: {
       play_state_.EndGame();
-      //ChangeState(StateType::LOBBY);
+      // ChangeState(StateType::LOBBY);
       break;
     }
     case PacketBlockType::YOUR_TARGET: {
@@ -485,8 +491,7 @@ void Engine::UpdateChat(float dt) {
       if (chat_.IsTakingChatInput() == true &&
           chat_.GetCurrentMessage().size() == 0)
         glob::Submit(font_test2_, chat_.GetPosition() + glm::vec2(0, -20.f * 5),
-                     20, "Enter message",
-                     glm::vec4(1, 1, 1, 1));
+                     20, "Enter message", glm::vec4(1, 1, 1, 1));
     }
     if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat_.IsVisable()) {
       // glob::window::SetMouseLocked(false);
@@ -502,7 +507,6 @@ void Engine::UpdateChat(float dt) {
 void Engine::UpdateSystems(float dt) {
   UpdateChat(dt);
   sound_system_.Update(*registry_current_);
-  
 
   if (Input::IsKeyDown(GLFW_KEY_TAB) &&
       current_state_->Type() == StateType::PLAY) {
@@ -512,6 +516,7 @@ void Engine::UpdateSystems(float dt) {
   button_system::Update(*registry_current_);
   ParticleSystem(*registry_current_, dt);
   RenderSystem(*registry_current_);
+  animation_system_.UpdateAnimations(*registry_current_, dt);
 }
 
 void Engine::SetKeybinds() {

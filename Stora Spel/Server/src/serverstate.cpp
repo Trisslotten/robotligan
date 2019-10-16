@@ -141,7 +141,7 @@ void ServerPlayState::Update(float dt) {
           this->Replay(player_c.actions, player_c.pitch, player_c.yaw);
         }
       });
-  players_inputs_.clear();
+  //players_inputs_.clear();
 
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     EntityID client_player_id = clients_player_ids_[client_id];
