@@ -65,4 +65,11 @@ void MainMenuState::CreateMainMenu() {
   b_c->button_func = [&]() { exit(0); };
 }
 
-
+void MainMenuState::CreateInformationMenu() {
+  // BACK BUTTON in Information - go back to main menu
+  ButtonComponent* b_c = GenerateButtonEntity(registry_information_, "BACK",
+                                              glm::vec2(100, 140), font_test_);
+  b_c->button_func = [&]() {
+    engine_->SetCurrentRegistry(&registry_mainmenu_);
+  };
+}

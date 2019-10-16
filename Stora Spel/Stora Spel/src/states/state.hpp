@@ -63,7 +63,6 @@ public:
 
 private:
   void CreateMainMenu();
-  void CreateSettingsMenu();
   void CreateInformationMenu();
 
   entt::registry registry_mainmenu_;

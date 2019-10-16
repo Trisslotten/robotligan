@@ -10,7 +10,6 @@
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "ecs/systems/animation_system.hpp"
-#include "ecs/systems/button_system.hpp"
 #include "ecs/systems/particle_system.hpp"
 #include "ecs/systems/gui_system.hpp"
 #include "ecs/systems/render_system.hpp"
