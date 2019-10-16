@@ -101,9 +101,12 @@ void UpdateCollisions(entt::registry& registry) {
     for (auto arena : view_arena_mesh) {
       auto& arena_hitbox = view_arena_mesh.get(arena);
       physics::IntersectData data = Intersect(arena_hitbox, ball_hitbox);
-      if (data.collision)
+      if (data.collision) {
         ball_collisions[ball_counter].collision_list.push_back(
             {arena, data.normal, data.move_vector, ARENA});
+        //std::cout << "x: " << data.normal.x << " y: " << data.normal.y
+        //          << " z: " << data.normal.z << std::endl;
+      }
     }
 
     // collision with ball and projectiles
