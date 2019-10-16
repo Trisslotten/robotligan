@@ -247,13 +247,11 @@ void ServerPlayState::Update(float dt) {
       to_send << projectiles.projectile_id;
       to_send << PacketBlockType::CREATE_PROJECTILE;
     }
-    created_projectiles_.clear();
     // send destroy entity
     for (auto entity_id : destroy_entities_) {
       to_send << entity_id;
       to_send << PacketBlockType::DESTROY_ENTITIES;
     }
-    destroy_entities_.clear();
 
     // Send countdown & match time in sec
     to_send << (int)countdown_timer_.Elapsed();
@@ -261,7 +259,12 @@ void ServerPlayState::Update(float dt) {
     to_send << match_time_;
     to_send << count_down_time_;
     to_send << PacketBlockType::MATCH_TIMER;
+
+    to_send << frame_id;
+    to_send << PacketBlockType::FRAME_ID;
   }
+  created_projectiles_.clear();
+  destroy_entities_.clear();
 
   // switch goal cleanup
   auto view_goals = registry.view<GoalComponenet, TeamComponent>();

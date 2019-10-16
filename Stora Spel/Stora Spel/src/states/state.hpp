@@ -200,6 +200,19 @@ class PlayState : public State {
   void SetKeyBinds(std::unordered_map<int, int>* keybinds) {keybinds_ = keybinds;}
   void OnServerFrame();
   void AddAction(int action) { actions_.push_back(action); }
+  void ClearActions() {
+    actions_.clear();
+    actions_.push_back(100);
+  }
+
+  void UpdateHistory(int id) {
+    //std::cout << "start id : " << id << std::endl;
+    while (history_.size() > 0 && history_.front().id <= id) {
+      //std::cout << history_.front().id << std::endl;
+      history_.pop_front();
+    }
+    //std::cout << "end" << std::endl;
+  }
 
  private:
   void CreateInitialEntities();
@@ -215,7 +228,7 @@ class PlayState : public State {
   void UpdateGameplayTimer();
 
   void DrawTopScores();
-  FrameState SimulateMovement(std::vector<int> &action, float dt);
+  FrameState SimulateMovement(std::vector<int> &action, glm::vec3 pos, glm::vec3 vel, float dt);
   void MovePlayer(float dt);
   
   ////////////////////////////////////////
@@ -228,7 +241,8 @@ class PlayState : public State {
 
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> transforms_;
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> new_transforms_;
-  glm::vec3 player_new_pos_;
+  glm::vec3 server_predicted_pos_;
+  glm::vec3 server_predicted_velocity_;
   glm::quat player_new_rotation_;
   entt::entity my_entity_;
 
@@ -263,6 +277,7 @@ class PlayState : public State {
   int ticks_ = 0;
   int packets_sent = 0;
   int packets_received = 0;
+  int frame_id = 0;
 };
 
 #endif  // STATE_HPP_

@@ -64,6 +64,7 @@ enum : int16_t {
   GAME_EVENT,
   PHYSICS_DATA,
   GAME_END,
+  FRAME_ID,
   NUM_BLOCK_TYPES,
 };
 

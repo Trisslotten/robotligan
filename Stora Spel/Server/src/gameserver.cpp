@@ -263,6 +263,12 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       lobby_state_.SetClientAbility(client_id, id);
       break;
     }
+    case PacketBlockType::FRAME_ID: {
+      int id;
+      packet >> id;
+      play_state_.SetFrameID(id);
+      break;
+    }
       /*
       TODO: fix
       case PacketBlockType::CHOOSE_TEAM: {

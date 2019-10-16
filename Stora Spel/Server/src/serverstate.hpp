@@ -106,6 +106,7 @@ class ServerPlayState : public ServerState {
 
   void ReceiveEvent(const EventInfo& e);
   // EntityID GetNextEntityGuid() { return entity_guid_++; }
+  void SetFrameID(int id) { frame_id = id; }
  private:
   entt::entity CreateIDEntity();
 
@@ -141,6 +142,8 @@ class ServerPlayState : public ServerState {
   std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
   std::vector<Projectile> created_projectiles_;
   std::vector<int> destroy_entities_;
+
+  int frame_id = 0;
 
   // Replay stuff ---
   ReplayMachine* replay_machine_ = nullptr;

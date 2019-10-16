@@ -81,7 +81,7 @@ void Engine::Init() {
 
 void Engine::Update(float dt) {
   // std::cout << "current message: " << Input::GetCharacters() <<"\n";
-  float latency = 0.250f;
+  float latency = 0.080f;
   int counter = 0;
   for (auto& time : time_test) {
     time += dt;
@@ -155,12 +155,17 @@ void Engine::UpdateNetwork() {
   std::bitset<PlayerAction::NUM_ACTIONS> actions;
   for (auto const& [key, action] : keybinds_) {
     auto& presses = key_presses_[key];
-    if (presses > 0) actions.set(action, true);
+    if (presses > 0) {
+      play_state_.AddAction(action);
+      actions.set(action, true);
+    }
     presses = 0;
   }
   for (auto const& [button, action] : mousebinds_) {
     auto& presses = mouse_presses_[button];
-    if (presses > 0) actions.set(action, true);
+    if (presses > 0) {
+      actions.set(action, true);
+    }
     presses = 0;
   }
 
@@ -196,6 +201,9 @@ void Engine::UpdateNetwork() {
     to_send << accum_pitch_;
     to_send << accum_yaw_;
     to_send << PacketBlockType::INPUT;
+    play_state_.AddAction(100);
+  } else {
+    play_state_.ClearActions();
   }
   if (client_.IsConnected() && !to_send.IsEmpty()) {
     client_.Send(to_send);
@@ -235,6 +243,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::ENTITY_TRANSFORMS: {
+      pops++;
       int size = -1;
       packet >> size;
       for (int i = 0; i < size; i++) {
@@ -460,6 +469,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::GAME_END: {
       play_state_.EndGame();
       //ChangeState(StateType::LOBBY);
+      break;
+    }
+    case PacketBlockType::FRAME_ID: {
+      int id;
+      packet >> id;
+      play_state_.UpdateHistory(id);
       break;
     }
   }

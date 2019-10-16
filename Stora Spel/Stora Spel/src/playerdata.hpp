@@ -11,11 +11,12 @@ struct PlayerData {
   glm::quat rotation;
   float delta_time;
   std::vector<int> actions;
+  int id = 0;
 };
 
 struct FrameState {
   glm::vec3 velocity = glm::vec3(0.f);
-  glm::vec3 position = glm::vec3(0.f);
+  glm::vec3 position = glm::vec3(10.f, 0.0f, 0.0f);
   glm::quat rotation = glm::quat();
 };
 #endif //PLAYERDATA_HPP_

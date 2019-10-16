@@ -11,14 +11,14 @@
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 
-#include <shared/pick_up_component.hpp>
+#include <physics.hpp>
 #include <shared/physics_component.hpp>
+#include <shared/pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
-#include <physics.hpp>
 
 void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
@@ -96,7 +96,7 @@ void PlayState::Update(float dt) {
       physics_c.velocity = phys.first;
       physics_c.is_airborne = phys.second;
     }
-    physics_.clear(); //?
+    physics_.clear();  //?
   }
 
   if (!transforms_.empty()) {
@@ -119,10 +119,15 @@ void PlayState::Update(float dt) {
     OnServerFrame();
     packets_received++;
   }
-  
+
   // interpolate
   auto view_entities =
       registry_gameplay_.view<TransformComponent, IDComponent>();
+  if (actions_.empty() == false) {
+    MovePlayer(1 / 64.0f);
+    packets_sent++;
+    actions_.clear();
+  }
 
   float f = 0.25f * dt;  // pow(0.75f, dt);
   for (auto entity : view_entities) {
@@ -130,28 +135,25 @@ void PlayState::Update(float dt) {
     auto& id_c = view_entities.get<IDComponent>(entity);
     if (id_c.id == my_id_) {
       auto trans = new_transforms_[id_c.id];
-      player_new_pos_ = trans.first;
-      player_new_rotation_ = trans.second;
-      //if (glm::length(trans_c.position - trans.first) > 3.0f) {
-		//trans_c.position = glm::lerp(trans_c.position, trans.first, 1.0f - f);
-        //trans_c.position = trans.first;
-        //std::cout << "rubber banding\n"; 
-	  //}
-      //trans_c.position = trans.first;
-      //trans_c.position = glm::lerp(trans_c.position, predicted_state_.position, 1.0f - f);
+      //player_new_pos_ = trans.first;
+      //player_new_rotation_ = trans.second;
+      // if (glm::length(trans_c.position - trans.first) > 3.0f) {
+      // trans_c.position = glm::lerp(trans_c.position, trans.first, 1.0f - f);
+      // trans_c.position = trans.first;
+      // std::cout << "rubber banding\n";
+      //}
+      // trans_c.position = trans.first;
+      glm::vec3 temp =
+          lerp(predicted_state_.position, server_predicted_pos_, 0.5f);
+      trans_c.position =
+          glm::lerp(trans_c.position, temp, 0.2f);
       trans_c.rotation = trans.second;
     } else {
-		auto trans = new_transforms_[id_c.id];
-		trans_c.position = glm::lerp(trans_c.position, trans.first, 1.0f - f);
-		trans_c.rotation = glm::slerp(trans_c.rotation, trans.second, 1.0f - f);  
-	}
+      auto trans = new_transforms_[id_c.id];
+      trans_c.position = glm::lerp(trans_c.position, trans.first, 1.0f - f);
+      trans_c.rotation = glm::slerp(trans_c.rotation, trans.second, 1.0f - f);
+    }
   }
- 
-  if (actions_.empty() == false) {
-    MovePlayer(1/60.0f);
-    packets_sent++;
-  }
-  actions_.clear();
 
   if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
     ToggleInGameMenu();
@@ -171,7 +173,7 @@ void PlayState::Update(float dt) {
   glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
 
   UpdateGameplayTimer();
-  
+
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
   glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
   glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
@@ -223,6 +225,10 @@ void PlayState::Update(float dt) {
 }
 void PlayState::UpdateNetwork() {
   auto& packet = engine_->GetPacket();
+
+  frame_id++;
+  packet << frame_id;
+  packet << PacketBlockType::FRAME_ID;
 
   // TEMP: Start recording replay
   bool temp = Input::IsKeyPressed(GLFW_KEY_P);
@@ -306,8 +312,11 @@ void PlayState::DrawTopScores() {
                glm::vec4(1, 0, 0, 1));
 }
 
-FrameState PlayState::SimulateMovement(std::vector<int>& action, float dt) {
-  auto view_controller = registry_gameplay_.view<CameraComponent, PlayerComponent, TransformComponent>();
+FrameState PlayState::SimulateMovement(std::vector<int>& action, glm::vec3 pos,
+                                       glm::vec3 vel, float dt) {
+  auto view_controller =
+      registry_gameplay_
+          .view<CameraComponent, PlayerComponent, TransformComponent>();
 
   glm::vec3 final_velocity = glm::vec3(0.f, 0.f, 0.f);
   for (auto entity : view_controller) {
@@ -380,19 +389,18 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action, float dt) {
     // if (cur_move_speed > 0.f) {
     // movement "floatiness", lower value = less floaty
     float t = 0.0005f;
-    predicted_state_.velocity.x = glm::mix(
-        predicted_state_.velocity.x, final_velocity.x, 1.f - glm::pow(t, dt));
-    predicted_state_.velocity.z = glm::mix(
-        predicted_state_.velocity.z, final_velocity.z, 1.f - glm::pow(t, dt));
-    predicted_state_.velocity.y = final_velocity.y;
-    auto& phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
+   vel.x = glm::mix(vel.x, final_velocity.x, 1.f - glm::pow(t, dt));
+   vel.z = glm::mix(vel.z, final_velocity.z, 1.f - glm::pow(t, dt));
+   vel.y = final_velocity.y;
+    
+   auto& phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
     physics::PhysicsObject po;
     po.acceleration = glm::vec3(0.f);
     po.airborne = phys_c.is_airborne;
     po.friction = 0.f;
     po.max_speed = 1000;
-    po.position = predicted_state_.position;
-    po.velocity = predicted_state_.velocity;
+    po.position = pos;
+    po.velocity = vel;
 
     physics::Update(&po, dt);
     FrameState new_state;
@@ -409,62 +417,74 @@ void PlayState::MovePlayer(float dt) {
   ticks_++;
   PlayerData new_frame;
   new_frame.delta_time = dt;
+  new_frame.id = frame_id;
 
   for (auto& a : actions_) {
     new_frame.actions.push_back(a);
   }
-
-  FrameState new_state = SimulateMovement(new_frame.actions, dt);
+  auto& trans_c = view_controller.get<TransformComponent>(my_entity_);
+  FrameState new_state = SimulateMovement(new_frame.actions, trans_c.position, predicted_state_.velocity, dt);
+  predicted_state_.position = new_state.position;
+  predicted_state_.velocity = new_state.velocity;
   new_frame.delta_pos = new_state.position - predicted_state_.position;
   new_frame.velocity = new_state.velocity;
 
   history_.push_back(new_frame);
   history_duration_ += dt;
 
-  auto& trans_c = registry_gameplay_.get<TransformComponent>(my_entity_);
-  //float t;
+  new_state = SimulateMovement(new_frame.actions, server_predicted_pos_, server_predicted_velocity_, dt);
+  server_predicted_pos_ = new_state.position;
+  server_predicted_velocity_ = new_state.velocity;
+  //auto& trans_c = registry_gameplay_.get<TransformComponent>(my_entity_);
+  // float t;
   //
-  //float converge_multiplier = 0.05f;
+  // float converge_multiplier = 0.05f;
   //
-  //glm::vec3 extrapolated_position = predicted_state_.position + new_state.velocity * latency_ * converge_multiplier;
+  // glm::vec3 extrapolated_position = predicted_state_.position +
+  // new_state.velocity * latency_ * converge_multiplier;
   //
-  //t = dt / (latency_ * (1 + converge_multiplier));
+  // t = dt / (latency_ * (1 + converge_multiplier));
   //
-  //trans_c.position = (extrapolated_position - trans_c.position) * t;
-  trans_c.position = new_state.position;
-  predicted_state_ = new_state;
+  // trans_c.position = (extrapolated_position - trans_c.position) * t;
+  //std::cout << "pos: " << new_state.position.x << std::endl;
+  //trans_c.position = new_state.position;
+  //predicted_state_ = new_state;
 }
 
 void PlayState::OnServerFrame() {
   auto& trans_c = registry_gameplay_.get<TransformComponent>(my_entity_);
-  std::cout << "ticks: " << ticks_ << "history size: " << history_.size() << std::endl;
-  std::cout << "sent: " << packets_sent << " received: " << packets_received
-            << std::endl;
-  //for (int i = 0; i < ticks_; ++i) {
+
+  // for (int i = 0; i < ticks_; ++i) {
   //  history_.pop_front();
   //}
-  if (history_.size() < 3) {
-    history_.clear();  
-  } else {
-	history_.pop_front();
-	history_.pop_front();
-	history_.pop_front();
-  }
+  // if (history_.size() < 3) {
+  //  history_.clear();
+  //} else {
+  // history_.pop_front();
+  // history_.pop_front();
+  // history_.pop_front();
+  //}
+  // if (history_.size())
+  //  history_.pop_front();
+  //for (int i = 0; i < engine_->pops; ++i) history_.pop_front();
+  //
+  //engine_->pops = 0;
 
-  predicted_state_.position = new_transforms_[my_id_].first;
-  predicted_state_.rotation = new_transforms_[my_id_].second;
-  predicted_state_.velocity =
+  server_predicted_pos_ = new_transforms_[my_id_].first;
+  server_predicted_velocity_ =
       registry_gameplay_.get<PhysicsComponent>(my_entity_).velocity;
 
   for (auto& frame : history_) {
-    FrameState new_frame = SimulateMovement(frame.actions, frame.delta_time);
-    predicted_state_ = new_frame;
+    FrameState new_frame = SimulateMovement(frame.actions, server_predicted_pos_, server_predicted_velocity_, frame.delta_time);
+    server_predicted_pos_ = new_frame.position;
+    server_predicted_velocity_ = new_frame.velocity;
   }
   ticks_--;
-  
-  //std::cout << glm::length(trans_c.position - predicted_state_.position) << std::endl;
 
-  trans_c.position = predicted_state_.position;
+  //std::cout << glm::length(trans_c.position - predicted_state_.position)
+  //          << std::endl;
+
+  // trans_c.position = predicted_state_.position;
 }
 
 void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,
@@ -472,7 +492,8 @@ void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,
   transforms_[player_id] = std::make_pair(pos, orientation);
 }
 
-void PlayState::SetEntityPhysics(EntityID player_id, glm::vec3 vel, bool is_airborne) {
+void PlayState::SetEntityPhysics(EntityID player_id, glm::vec3 vel,
+                                 bool is_airborne) {
   physics_[player_id] = std::make_pair(vel, is_airborne);
 }
 
@@ -513,7 +534,8 @@ void PlayState::CreatePlayerEntities() {
     registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<ModelComponent>(entity, player_model,
                                               alter_scale * character_scale);
-    registry_gameplay_.assign<SoundComponent>(entity, sound_engine.CreatePlayer());
+    registry_gameplay_.assign<SoundComponent>(entity,
+                                              sound_engine.CreatePlayer());
 
     if (entity_id == my_id_) {
       glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
