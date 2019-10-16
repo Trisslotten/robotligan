@@ -10,35 +10,24 @@ struct PointsComponent {
 
   void AddPoints(int p) {
     points += p;
-    //changed = true;
+    // changed = true;
   }
   int GetPoints() {
-    //changed = false;
+    // changed = false;
     return points;
   }
   void AddGoals(int g) {
     goals += g;
-    //changed = true;
+    // changed = true;
   }
   int GetGoals() {
-    //changed = false;
+    // changed = false;
     return goals;
   }
-  void AddAssists(int a) {
-	  assists += a;
-  }
-  int GetAssists() {
-	  return assists;
-  }
-  void AddBlock(int b)
-  {
-	  blocks++;
-  }
-  int GetBlocks()
-  {
-	  return blocks;
-  }
-
+  void AddAssists(int a) { assists += a; }
+  int GetAssists() { return assists; }
+  void AddBlock(int b) { blocks++; }
+  int GetBlocks() { return blocks; }
 };
 
 #endif  // POINTS_COMPONENT_HPP_
