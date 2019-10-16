@@ -18,7 +18,7 @@ class GeometricReplay {
     float pos[3];
     float rot[4];
     // bool has_animation;	// Not required, just check
-							// if animation vector has elements
+    // if animation vector has elements
     // bool has_particle_effect;  // Same here
     // particle vector
   };
@@ -32,12 +32,26 @@ class GeometricReplay {
     std::vector<EventData> events;
   };
 
+  struct InterpolationWindow {
+    unsigned int a;
+    unsigned int b;
+  };
+
   // VARIABLES
   FrameData* frame_arr_;
+
   unsigned int num_of_frames_;
-  unsigned int current_frame_;
+
+  unsigned int current_frame_write_;
+  unsigned int current_frame_read_;
+
+  unsigned int start_frame_;  // Variables for circular behaviour
+  unsigned int end_frame_;
+
   unsigned int interpolation_interval_;
   unsigned int frames_since_last_interpolation_;
+
+  InterpolationWindow interpolation_window_;
 
   // FUNCTIONS
   void SaveObjectsToFrame(entt::registry& in_registry);
@@ -45,6 +59,11 @@ class GeometricReplay {
   void WriteEventToBitpack();
   void WriteObjectToBitPack();
   void WriteParticleEffectToBitpack();
+
+  void SetInterpolationWindow(unsigned int in_index);
+  void InterpolateFrame(entt::registry& in_registry);
+  void InterpolateTransformComponent(TransformComponent& in_tc,
+                                     ObjectData& in_a, ObjectData& in_b);
 
  public:
   GeometricReplay(unsigned int in_num_of_frames,
