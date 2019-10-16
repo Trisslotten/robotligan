@@ -20,6 +20,7 @@ class Shadows {
   void Init(Blur& blur);
 
   void RenderToMaps(std::function<void(ShaderProgram&)> draw_function,
+                    std::function<void(ShaderProgram&)> anim_draw_function,
                     Blur& blur);
 
   void BindMaps(int start_slot);
@@ -41,6 +42,7 @@ class Shadows {
   int size_ = 0;
   int blurred_level_ = 0;
   ShaderProgram shader_;
+  ShaderProgram anim_shader_;
   uint64_t blur_id_ = 0;
   GLint internal_format_ = 0;
 

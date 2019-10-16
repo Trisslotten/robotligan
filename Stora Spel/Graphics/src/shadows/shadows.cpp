@@ -14,12 +14,18 @@ glob::Shadows::Shadows() {
 }
 
 void glob::Shadows::Init(Blur& blur) {
-  blur_id_ = blur.CreatePass(GetBlurredSize(), GetBlurredSize(), internal_format_);
+  blur_id_ =
+      blur.CreatePass(GetBlurredSize(), GetBlurredSize(), internal_format_);
 
   shader_.add("modelshader.vert");
   shader_.add("shading.vert");
   shader_.add("shadow.frag");
   shader_.compile();
+
+  anim_shader_.add("animatedmodelshader.vert");
+  anim_shader_.add("shading.vert");
+  anim_shader_.add("shadow.frag");
+  anim_shader_.compile();
 
   glGenFramebuffers(1, &framebuffer_);
   glGenRenderbuffers(1, &renderbuffer_);
@@ -46,8 +52,8 @@ void glob::Shadows::Init(Blur& blur) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, internal_format_, GetBlurredSize(), GetBlurredSize(),
-                 0, GL_RG, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, internal_format_, GetBlurredSize(),
+                 GetBlurredSize(), 0, GL_RG, GL_UNSIGNED_BYTE, NULL);
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
@@ -67,7 +73,8 @@ void glob::Shadows::Init(Blur& blur) {
 }
 
 void glob::Shadows::RenderToMaps(
-    std::function<void(ShaderProgram&)> draw_function, Blur& blur) {
+    std::function<void(ShaderProgram&)> draw_function,
+    std::function<void(ShaderProgram&)> anim_draw_function, Blur& blur) {
   float xrot = 1.f;
   float zrot = 1.f;
   num_maps_used_ = 4;
@@ -94,12 +101,18 @@ void glob::Shadows::RenderToMaps(
     shader_.uniform("shadow_light_pos", light_pos);
     draw_function(shader_);
 
+    anim_shader_.use();
+    anim_shader_.uniform("cam_transform", transform);
+    anim_shader_.uniform("shadow_light_pos", light_pos);
+    anim_draw_function(anim_shader_);
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture_);
     if (blurred_level_ > 0) {
       glGenerateMipmap(GL_TEXTURE_2D);
     }
-    blur.BlurTexture(blur_id_, 1, texture_, blurred_level_, blurred_textures_[i]);
+    blur.BlurTexture(blur_id_, 1, texture_, blurred_level_,
+                     blurred_textures_[i]);
   }
 }
 
