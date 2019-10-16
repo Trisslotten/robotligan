@@ -9,7 +9,7 @@
 
 glob::Shadows::Shadows() {
   size_ = 512;
-  blurred_level_ = 1;
+  blurred_level_ = 0;
   internal_format_ = GL_RG32F;
 }
 
@@ -79,10 +79,10 @@ void glob::Shadows::RenderToMaps(
   float zrot = 1.f;
   num_maps_used_ = 4;
   for (int i = 0; i < num_maps_used_; i++) {
-    positions_[i] = glm::vec3(xrot * 10.6, 5.7, zrot * 7.1);
+    positions_[i] = glm::vec3(xrot * 40.0, 20.0, zrot * 20.0);
     transforms_[i] =
-        glm::perspective(glm::radians(70.f), 1.f, 0.1f, 50.f) *
-        glm::lookAt(positions_[i], glm::vec3(0, -5.0, 0), glm::vec3(0, 1, 0));
+        glm::perspective(glm::radians(70.f), 1.f, 0.1f, 100.f) *
+        glm::lookAt(positions_[i], glm::vec3(0, -40.0, 0), glm::vec3(0, 1, 0));
 
     std::swap(xrot, zrot);
     zrot *= -1.f;
