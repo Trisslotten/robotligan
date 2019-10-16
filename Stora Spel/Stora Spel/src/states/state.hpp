@@ -184,6 +184,7 @@ public:
 
   void CreatePickUp(glm::vec3 position);
   void CreateCannonBall(EntityID id);
+  void CreateTeleportProjectile(EntityID id);
   void CreateForcePushObject(EntityID id);
   void CreateMissileObject(EntityID id);
   void DestroyEntity(EntityID id);
