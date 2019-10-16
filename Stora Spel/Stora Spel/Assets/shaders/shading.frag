@@ -80,12 +80,11 @@ vec3 shading(vec3 position, vec3 normal) {
 
 		vec3 ld = normalize(shadow_light_positions[i] - position);
 		if(shadow_space.w > 0) {
-			vec3 spot_light = vec3(0.25);
+			vec3 spot_light = vec3(0.2);
 			// diffuse
 			spot_light *= max(dot(ld, normal), 0);
 			// in spot light circle
-			spot_light *= smoothstep( 1.0,  0.5, max(shadow_space.x,shadow_space.y));
-			spot_light *= smoothstep(-1.0, -0.5, min(shadow_space.x,shadow_space.y));
+			spot_light *= smoothstep(1.0, 0.5, max(abs(shadow_space.x),abs(shadow_space.y)));
 			// occlusion
 			spot_light *= shadow(position, i);
 

@@ -69,7 +69,7 @@ void glob::PostProcess::AfterDraw(Blur& blur) {
   glGenerateMipmap(GL_TEXTURE_2D);
 
   blurred_emission_texture =
-      blur.BlurTexture(blur_id, draw_emission_texture_, 2);
+      blur.BlurTexture(blur_id, 5, draw_emission_texture_, 2);
 }
 
 void glob::PostProcess::BindColorTex(GLuint slot) {

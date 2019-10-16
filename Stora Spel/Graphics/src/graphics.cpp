@@ -483,26 +483,21 @@ void Render() {
     }
   }
 
-  auto lambda = [&](ShaderProgram &shader) {
+  auto draw_function = [&](ShaderProgram &shader) {
     for (auto &render_item : items_to_render) {
       shader.uniform("model_transform", render_item.transform);
       render_item.model->Draw(shader);
     }
   };
-
-  shadows.BeforePass();
-
-  for (int i = 0; i < shadow_casters.size(); i++) {
-    glActiveTexture(GL_TEXTURE0 + 3 + i);
-    glBindTexture(GL_TEXTURE_2D, shadow_blurred_textures[i]);
-  }
+  shadows.RenderToMaps(draw_function, blur);
+  shadows.BindMaps(3);
 
   auto ws = glob::window::GetWindowDimensions();
   glViewport(0, 0, ws.x, ws.y);
   post_process.BeforeDraw();
   {
     model_shader.use();
-    model_shader.uniform("num_shadows", (int)shadow_casters.size());
+    shadows.SetUniforms(model_shader);
     model_shader.uniformv("light_pos", lights_to_render.size(),
                           light_positions.data());
     model_shader.uniformv("light_col", lights_to_render.size(),
@@ -522,7 +517,7 @@ void Render() {
     }
 
     model_emission_shader.use();
-    model_emission_shader.uniform("num_shadows", (int)shadow_casters.size());
+    shadows.SetUniforms(model_emission_shader);
     model_emission_shader.uniformv("light_pos", lights_to_render.size(),
                                    light_positions.data());
     model_emission_shader.uniformv("light_col", lights_to_render.size(),

@@ -24,9 +24,8 @@ uint64_t Blur::CreatePass(uint16_t width, uint16_t height,
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, pass.info.internal_format,
-                 pass.info.width, pass.info.height, 0, GL_RG,
-                 GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, pass.info.internal_format, pass.info.width,
+                 pass.info.height, 0, GL_RG, GL_FLOAT, NULL);
   }
   // create PassTextures instance and copy textures
   memcpy(passes_[pass.id].textures, textures, 2 * sizeof(GLuint));
@@ -34,8 +33,9 @@ uint64_t Blur::CreatePass(uint16_t width, uint16_t height,
   return pass.id;
 }
 
-GLuint Blur::BlurTexture(uint64_t pass_id, GLuint source_texture,
-                         int source_level, GLuint result_texture) {
+GLuint Blur::BlurTexture(uint64_t pass_id, int num_passes,
+                         GLuint source_texture, int source_level,
+                         GLuint result_texture) {
   auto iter = passes_.find(pass_id);
   if (iter == passes_.end()) {
     return 0;
@@ -53,8 +53,8 @@ GLuint Blur::BlurTexture(uint64_t pass_id, GLuint source_texture,
   kawase_blur_compute_.use();
   kawase_blur_compute_.uniform("size", tex_size);
   // the kernels for each pass
-  std::vector<int> kernels = {0, 1};
-  for (int i = 0; i < kernels.size(); i++) {
+  std::vector<int> kernels = {0, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+  for (int i = 0; i < kernels.size() && i < num_passes; i++) {
     kawase_blur_compute_.uniform("kernel", kernels[i]);
 
     int read_level = 0;
@@ -71,7 +71,7 @@ GLuint Blur::BlurTexture(uint64_t pass_id, GLuint source_texture,
     kawase_blur_compute_.uniform("read_tex", 0);
     kawase_blur_compute_.uniform("read_level", read_level);
 
-    if (result_texture != 0 && i == kernels.size() - 1) {
+    if (result_texture != 0 && i == glm::min((int)kernels.size(), num_passes) - 1) {
       glBindImageTexture(0, result_texture, 0, GL_FALSE, 0, GL_WRITE_ONLY,
                          pass_info.info.internal_format);
     } else {

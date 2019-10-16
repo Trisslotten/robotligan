@@ -1,5 +1,6 @@
 #ifndef GLOB_SHADOWS_HPP_
 #define GLOB_SHADOWS_HPP_
+#include <functional>
 
 // no move plz
 #include <glad/glad.h>
@@ -7,29 +8,44 @@
 
 #include <GLFW/glfw3.h>
 
-#include "shader.hpp"
 #include "postprocess/blur.hpp"
+#include "shader.hpp"
 
 namespace glob {
 
 class Shadows {
  public:
+  Shadows();
 
   void Init(Blur& blur);
 
-  void BeforePass();
+  void RenderToMaps(std::function<void(ShaderProgram&)> draw_function,
+                    Blur& blur);
+
+  void BindMaps(int start_slot);
+
+  void SetUniforms(ShaderProgram& shader);
+
+  int GetNumMaps() { return num_maps_used_; }
+  int GetMaxMaps() { return max_maps_; }
 
  private:
-  static const int num_shadow_maps_ = 4;
-  GLuint shadow_framebuffer_;
-  GLuint shadow_renderbuffer_;
-  GLuint shadow_texture_;
-  GLuint shadow_blurred_textures_[num_shadow_maps_] = {0};
-  int shadow_size_ = 1024;
-  int shadow_blurred_level_ = 1;
-  int shadow_blurred_size_ = shadow_size_ / glm::pow(2, shadow_blurred_level_);
-  ShaderProgram shadow_shader_;
-  uint64_t shadow_blur_id_ = 0;
+  int GetBlurredSize() { return size_ / glm::pow(2, blurred_level_); }
+
+  static const int max_maps_ = 4;
+  int num_maps_used_ = 0;
+  GLuint framebuffer_ = 0;
+  GLuint renderbuffer_ = 0;
+  GLuint texture_ = 0;
+  GLuint blurred_textures_[max_maps_] = {0};
+  int size_ = 0;
+  int blurred_level_ = 0;
+  ShaderProgram shader_;
+  uint64_t blur_id_ = 0;
+
+  int start_slots_[max_maps_];
+  glm::vec3 positions_[max_maps_];
+  glm::mat4 transforms_[max_maps_];
 };
 
 }  // namespace glob
