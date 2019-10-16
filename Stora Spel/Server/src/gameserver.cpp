@@ -266,7 +266,7 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
     case PacketBlockType::FRAME_ID: {
       int id;
       packet >> id;
-      play_state_.SetFrameID(id);
+      play_state_.SetFrameID(client_id, id);
       break;
     }
       /*

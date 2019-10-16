@@ -14,5 +14,6 @@ struct PlayerData {
 struct FrameState {
   glm::vec3 velocity = glm::vec3(0.f);
   glm::vec3 position = glm::vec3(10.f, 0.0f, 0.0f);
+  bool is_airborne = false;
 };
 #endif //PLAYERDATA_HPP_

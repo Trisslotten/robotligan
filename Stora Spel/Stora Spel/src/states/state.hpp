@@ -220,7 +220,7 @@ class PlayState : public State {
   void UpdateGameplayTimer();
 
   void DrawTopScores();
-  FrameState SimulateMovement(std::vector<int> &action, glm::vec3 pos, glm::vec3 vel, float dt);
+  FrameState SimulateMovement(std::vector<int> &action, const FrameState& state, float dt);
   void MovePlayer(float dt);
   
   ////////////////////////////////////////

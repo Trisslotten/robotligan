@@ -126,23 +126,16 @@ void PlayState::Update(float dt) {
     actions_.clear();
   }
 
-  float f = 0.25f * dt;  // pow(0.75f, dt);
+  float f = 0.8;  // 0.25f * dt;  // pow(0.75f, dt);
   for (auto entity : view_entities) {
     auto& trans_c = view_entities.get<TransformComponent>(entity);
     auto& id_c = view_entities.get<IDComponent>(entity);
     if (id_c.id == my_id_) {
       auto trans = new_transforms_[id_c.id];
-      //player_new_pos_ = trans.first;
-      //player_new_rotation_ = trans.second;
-      // if (glm::length(trans_c.position - trans.first) > 3.0f) {
-      // trans_c.position = glm::lerp(trans_c.position, trans.first, 1.0f - f);
-      // trans_c.position = trans.first;
-      // std::cout << "rubber banding\n";
-      //}
-      // trans_c.position = trans.first;
-      glm::vec3 temp =
-          lerp(predicted_state_.position, server_predicted_.position, 0.5f);
+     
+      glm::vec3 temp = lerp(predicted_state_.position, server_predicted_.position, 0.5f);
       trans_c.position = glm::lerp(trans_c.position, temp, 0.2f);
+      //trans_c.position = predicted_state_.position;
       trans_c.rotation = trans.second;
     } else {
       auto trans = new_transforms_[id_c.id];
@@ -308,13 +301,14 @@ void PlayState::DrawTopScores() {
                glm::vec4(1, 0, 0, 1));
 }
 
-FrameState PlayState::SimulateMovement(std::vector<int>& action, glm::vec3 pos,
-                                       glm::vec3 vel, float dt) {
+FrameState PlayState::SimulateMovement(std::vector<int>& action, const FrameState& state, float dt) {
   auto view_controller =
       registry_gameplay_
           .view<CameraComponent, PlayerComponent, TransformComponent>();
 
-  glm::vec3 final_velocity = glm::vec3(0.f, 0.f, 0.f);
+  glm::vec3 final_velocity = glm::vec3(0.f, state.velocity.y, 0.f);
+  FrameState new_state;
+  new_state.is_airborne = state.is_airborne;
   for (auto entity : view_controller) {
     CameraComponent& cam_c = view_controller.get<CameraComponent>(entity);
     // PlayerComponent& player_c = view_controller.get<PlayerComponent>(entity);
@@ -325,6 +319,7 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action, glm::vec3 pos,
 
     // Caputre keyboard input and apply velocity
 
+    //auto& phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
     glm::vec3 accum_velocity = glm::vec3(0.f);
 
     // base movement direction on camera orientation.
@@ -350,6 +345,15 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action, glm::vec3 pos,
       if (a == PlayerAction::SPRINT && current_stamina_ > 60.0f * dt) {
         sprint = true;
       }
+      //if (a == PlayerAction::JUMP && !state.is_airborne &&
+      //    current_stamina_ > 20.f) {
+      //  // Add velocity upwards
+      //  final_velocity += up * 6.0f;
+      //  // Set them to be airborne
+      //  new_state.is_airborne = true;
+      //  // Subtract energy cost from resources
+      //  //player_c.energy_current -= player_c.cost_jump;
+      //}
     }
 
     if (glm::length(accum_velocity) > 0.f)
@@ -369,15 +373,6 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action, glm::vec3 pos,
     // IF player is pressing space
     // AND is not airborne
     // AND has more enery than the cost for jumping
-    // if (player_c.actions[PlayerAction::JUMP] && !physics_c.is_airborne &&
-    //    player_c.energy_current > player_c.cost_jump && !player_c.no_clip) {
-    //  // Add velocity upwards
-    //  final_velocity += up * player_c.jump_speed;
-    //  // Set them to be airborne
-    //  physics_c.is_airborne = true;
-    //  // Subtract energy cost from resources
-    //  player_c.energy_current -= player_c.cost_jump;
-    //}
 
     // slowdown
     glm::vec3 sidemov = glm::vec3(final_velocity.x, 0, final_velocity.z);
@@ -385,21 +380,19 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action, glm::vec3 pos,
     // if (cur_move_speed > 0.f) {
     // movement "floatiness", lower value = less floaty
     float t = 0.0005f;
-   vel.x = glm::mix(vel.x, final_velocity.x, 1.f - glm::pow(t, dt));
-   vel.z = glm::mix(vel.z, final_velocity.z, 1.f - glm::pow(t, dt));
-   vel.y = final_velocity.y;
+   new_state.velocity.x = glm::mix(state.velocity.x, final_velocity.x, 1.f - glm::pow(t, dt));
+   new_state.velocity.z = glm::mix(state.velocity.z, final_velocity.z, 1.f - glm::pow(t, dt));
+   new_state.velocity.y = final_velocity.y;
     
-   auto& phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
     physics::PhysicsObject po;
     po.acceleration = glm::vec3(0.f);
-    po.airborne = phys_c.is_airborne;
+    po.airborne = new_state.is_airborne;
     po.friction = 0.f;
     po.max_speed = 1000;
-    po.position = pos;
-    po.velocity = vel;
+    po.position = state.position;
+    po.velocity = new_state.velocity;
 
     physics::Update(&po, dt);
-    FrameState new_state;
     new_state.velocity = po.velocity;
     new_state.position = po.position;
     return new_state;
@@ -416,14 +409,16 @@ void PlayState::MovePlayer(float dt) {
   for (auto& a : actions_) {
     new_frame.actions.push_back(a);
   }
-  auto& trans_c = view_controller.get<TransformComponent>(my_entity_);
-  FrameState new_state = SimulateMovement(new_frame.actions, trans_c.position, predicted_state_.velocity, dt);
-  predicted_state_.position = new_state.position;
-  predicted_state_.velocity = new_state.velocity;
 
+  auto& trans_c = view_controller.get<TransformComponent>(my_entity_);
+  predicted_state_.position = trans_c.position;
+  FrameState new_state = SimulateMovement(new_frame.actions, predicted_state_, dt);
+  predicted_state_ = new_state;
+  //std::cout << "y: " << predicted_state_.velocity.y << std::endl;
+  //std::cout << new_state.velocity.y << std::endl;
   history_.push_back(new_frame);
 
-  new_state = SimulateMovement(new_frame.actions, server_predicted_.position, server_predicted_.velocity, dt);
+  new_state = SimulateMovement(new_frame.actions, server_predicted_, dt);
   server_predicted_ = new_state;
 }
 
@@ -434,11 +429,24 @@ void PlayState::OnServerFrame() {
   server_predicted_.position = new_transforms_[my_id_].first;
   server_predicted_.velocity =
       registry_gameplay_.get<PhysicsComponent>(my_entity_).velocity;
+  server_predicted_.is_airborne =
+      registry_gameplay_.get<PhysicsComponent>(my_entity_).is_airborne;
 
   for (auto& frame : history_) {
-    FrameState new_frame = SimulateMovement(frame.actions, server_predicted_.position, server_predicted_.velocity, frame.delta_time);
+    FrameState new_frame = SimulateMovement(frame.actions, server_predicted_, frame.delta_time);
     server_predicted_ = new_frame;
   }
+
+  //for (auto& frame : history_) {
+  //  for (auto a : frame.actions) {
+  //    if (a == PlayerAction::JUMP) {
+  //      return;
+  //    }
+  //  }
+  //}
+  //
+  //predicted_state_.is_airborne = false;
+  //predicted_state_.velocity.y = 0.f;
 }
 
 void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,

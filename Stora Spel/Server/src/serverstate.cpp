@@ -260,7 +260,7 @@ void ServerPlayState::Update(float dt) {
     to_send << count_down_time_;
     to_send << PacketBlockType::MATCH_TIMER;
 
-    to_send << frame_id;
+    to_send << player_frame_id_[client_id];
     to_send << PacketBlockType::FRAME_ID;
   }
   created_projectiles_.clear();
