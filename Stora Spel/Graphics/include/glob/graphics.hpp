@@ -52,6 +52,8 @@ EXPORT void Init();
  */
 EXPORT ModelHandle GetModel(const std::string& filepath);
 
+EXPORT ModelHandle GetTransparentModel(const std::string& filepath);
+
 EXPORT ParticleSystemHandle CreateParticleSystem();
 
 EXPORT void DestroyParticleSystem(ParticleSystemHandle handle);

@@ -270,6 +270,8 @@ private:
   bool game_has_ended_ = false;
   bool goals_swapped_ = false;
   EntityID my_target_ = -1;
+
+  glob::ModelHandle test_ball_;
 };
 
 #endif  // STATE_HPP_

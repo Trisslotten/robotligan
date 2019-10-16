@@ -58,6 +58,8 @@ void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
   // \TO BE MOVED
   ///////////////////////////////////////////////////////////////
+
+  test_ball_ = glob::GetTransparentModel("Assets/Ball_new/Ball_Sphere.fbx");
 }
 
 void PlayState::TestParticles() {
@@ -247,6 +249,8 @@ void PlayState::Update() {
   }
   DrawTopScores();
   DrawTarget();
+
+  glob::Submit(test_ball_, glm::mat4());
 }
 void PlayState::UpdateNetwork() {
   auto& packet = engine_->GetPacket();
@@ -447,7 +451,8 @@ void PlayState::CreateBallEntity() {
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f);
   auto ball = registry_gameplay_.create();
-  glob::ModelHandle model_ball_p = glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
+  glob::ModelHandle model_ball_p = glob::GetTransparentModel("Assets/Ball_new/Ball_Sphere.fbx");
+  //glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
   registry_gameplay_.assign<ModelComponent>(ball, model_ball_p);
   registry_gameplay_.assign<TransformComponent>(ball, zero_vec, zero_vec,
     glm::vec3(0.95f));

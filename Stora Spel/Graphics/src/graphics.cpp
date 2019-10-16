@@ -433,6 +433,13 @@ ModelHandle GetModel(const std::string &filepath) {
                                       filepath);
 }
 
+ModelHandle GetTransparentModel(const std::string &filepath) {
+  auto result = GetAsset<ModelHandle, Model>(model_handles, models,
+                                             current_model_guid, filepath);
+  models[result].SetTransparent(true);
+  return result;
+}
+
 ParticleSettings ProccessMap(
     ParticleSettings ps,
     const std::unordered_map<std::string, std::string> &map) {
@@ -870,6 +877,14 @@ void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
 }
 
 void SubmitBAM(
+    std::vector<ModelHandle> handles, glm::mat4 transform,
+    std::vector<glm::mat4> bone_transforms) {  // Submit Bone Animated Mesh
+    for(auto handle : handles) {
+      SubmitBAM(handle, transform, bone_transforms);
+    }
+}
+
+void SubmitBAM(
     ModelHandle model_h, glm::mat4 transform,
     std::vector<glm::mat4> bone_transforms) {  // Submit Bone Animated Mesh
   BoneAnimatedRenderItem BARI;
@@ -896,6 +911,11 @@ void Submit(ModelHandle model_h, glm::vec3 pos) {
   Submit(model_h, transform);
 }
 
+void Submit(const std::vector<ModelHandle>& handles, glm::mat4 transform) {
+  for(auto handle : handles) {
+    Submit(handle, transform);
+  }
+}
 void Submit(ModelHandle model_h, glm::mat4 transform) {
   auto find_res = models.find(model_h);
   if (find_res == models.end()) {
@@ -1032,10 +1052,17 @@ void Render() {
     light_radii.push_back(light_item.radius);
     light_ambients.push_back(light_item.ambient);
   }
+
+  std::vector<RenderItem> normal_items;
+  std::vector<RenderItem> transparent_items;
   std::vector<RenderItem> emissive_items;
   for (auto &render_item : items_to_render) {
-    if (render_item.model->IsEmissive()) {
+    if (render_item.model->IsTransparent()) {
+      transparent_items.push_back(render_item);
+    } else if (render_item.model->IsEmissive()) {
       emissive_items.push_back(render_item);
+    } else {
+      normal_items.push_back(render_item);
     }
   }
 
@@ -1084,10 +1111,7 @@ void Render() {
   post_process.BeforeDraw();
   {
     model_shader.use();
-    for (auto &render_item : items_to_render) {
-      if (render_item.model->IsEmissive()) {
-        continue;
-      }
+    for (auto &render_item : normal_items) {
       model_shader.uniform("model_transform", render_item.transform);
       render_item.model->Draw(model_shader);
     }
@@ -1112,6 +1136,17 @@ void Render() {
       // (int)BARI.bone_transforms.size());
       BARI.model->Draw(animated_model_shader);
     }
+
+    // TODO: Sort all transparent triangles
+    // maybe sort internally in modell and then and externally
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    model_emission_shader.use();
+    for (auto &render_item : transparent_items) {
+      model_emission_shader.uniform("model_transform", render_item.transform);
+      render_item.model->Draw(model_emission_shader);
+    }
+    glDisable(GL_BLEND);
   }
   post_process.AfterDraw(blur);
 

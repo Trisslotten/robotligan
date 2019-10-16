@@ -44,6 +44,7 @@ class Model {
 
   bool use_gl_ = true;
   bool is_emissive_ = false;
+  bool is_transparent_ = false;
 
  public:
   Model();
@@ -62,6 +63,8 @@ class Model {
   glob::MeshData GetMeshData();
 
   bool IsEmissive() { return is_emissive_; }
+  bool IsTransparent() { return is_transparent_; }
+  void SetTransparent(bool is_transparent) { is_transparent_ = is_transparent; }
 };
 
 }  // namespace glob
