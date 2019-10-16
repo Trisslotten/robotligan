@@ -144,11 +144,11 @@ void PlayState::Update() {
     glob::Submit(in_game_menu_gui_, in_game_menu_pos, 1.0f);
   }
   // Submit 2D Element TEST
-  glob::Submit(e2D_test_, glm::vec3(10.5f, 1.0f, 0.0f), 2, -90.0f,
-    glm::vec3(0, 1, 0));
-  glob::Submit(e2D_test_, glm::vec3(-10.5f, 1.0f, 0.0f), 2, 90.0f,
-    glm::vec3(0, 1, 0));
-  glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
+  //glob::Submit(e2D_test_, glm::vec3(10.5f, 1.0f, 0.0f), 2, -90.0f,
+    //glm::vec3(0, 1, 0));
+  //glob::Submit(e2D_test_, glm::vec3(-10.5f, 1.0f, 0.0f), 2, 90.0f,
+    //glm::vec3(0, 1, 0));
+  glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -28.0f), 7, 0.0f, glm::vec3(1));
 
   UpdateGameplayTimer();
 
@@ -175,8 +175,8 @@ void PlayState::Update() {
     auto& id_c = view_player.get<IDComponent>(entity);
 
     // Normalize and project player pos to screen space (Z in world space is X in screen space and vice versa)
-    float norm_pos_x = trans_c.position.z / 7.1f;
-    float norm_pos_y = trans_c.position.x / 10.6f;
+    float norm_pos_x = trans_c.position.z / 28.1f;
+    float norm_pos_y = trans_c.position.x / 40.6f;
     float minimap_pos_x = (norm_pos_x * 120.f) + glob::window::GetWindowDimensions().x - 130.f - 11.f;
     float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 20.f;
 
@@ -194,8 +194,8 @@ void PlayState::Update() {
     auto& trans_c = view_ball.get<TransformComponent>(entity);
 
     // Normalize and project player pos to screen space (Z in world space is X in screen space and vice versa)
-    float norm_pos_x = trans_c.position.z / 7.1f;
-    float norm_pos_y = trans_c.position.x / 10.6f;
+    float norm_pos_x = trans_c.position.z / 28.1f;
+    float norm_pos_y = trans_c.position.x / 40.6f;
     float minimap_pos_x = (norm_pos_x * 120.f) + glob::window::GetWindowDimensions().x - 130.f - 20.f;
     float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 20.f;
 
@@ -432,9 +432,9 @@ void PlayState::CreatePlayerEntities() {
 void PlayState::CreateArenaEntity() {
   auto arena = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 arena_scale = glm::vec3(1.0f);
+  glm::vec3 arena_scale = glm::vec3(4.0f,4.0f,4.0f);
   glob::ModelHandle model_arena =
-    glob::GetModel("assets/Map_rectangular/map_rextangular.fbx");
+    glob::GetModel("assets/Map/Map_unified_TMP.fbx");
   registry_gameplay_.assign<ModelComponent>(arena, model_arena);
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
     arena_scale);
@@ -498,21 +498,21 @@ void PlayState::TestCreateLights() {
   // Create lights
   blue_goal_light_ = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(
-    blue_goal_light_, glm::vec3(0.1f, 0.1f, 1.0f), 15.f, 0.0f);
+    blue_goal_light_, glm::vec3(0.1f, 0.1f, 1.0f), 30.f, 0.0f);
   registry_gameplay_.assign<TransformComponent>(
-    blue_goal_light_, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+    blue_goal_light_, glm::vec3(48.f, -6.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
     glm::vec3(1.f));
 
   red_goal_light_ = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(
-    red_goal_light_, glm::vec3(1.f, 0.1f, 0.1f), 15.f, 0.f);
+    red_goal_light_, glm::vec3(1.f, 0.1f, 0.1f), 30.f, 0.f);
   registry_gameplay_.assign<TransformComponent>(
-    red_goal_light_, glm::vec3(-12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+    red_goal_light_, glm::vec3(-48.f, -6.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
     glm::vec3(1.f));
 
   auto light = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(light, glm::vec3(0.4f, 0.4f, 0.4f),
-    30.f, 0.1f);
+    90.f, 0.1f);
   registry_gameplay_.assign<TransformComponent>(
     light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
 }
