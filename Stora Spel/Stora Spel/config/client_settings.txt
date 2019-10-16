@@ -26,3 +26,12 @@ Example: '>MY_VALUE=13.37'
 
 //--Debug Options--//
 >RENDER_WIREFRAME=0.0
+
+//--Sound Settings--//
+>SOUND_VOLUME=20.000000
+
+//--Graphics Settings--//
+>GRAPHICS_FOV=90.000000
+
+//--Input Settings--//
+>INPUT_MOUSE_SENS=0.480000

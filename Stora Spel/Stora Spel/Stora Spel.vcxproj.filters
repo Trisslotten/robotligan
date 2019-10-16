@@ -17,6 +17,7 @@
     <ClCompile Include="src\states\connectmenustate.cpp" />
     <ClCompile Include="src\ecs\systems\sound_system.cpp" />
     <ClCompile Include="src\ecs\systems\animation_system.cpp" />
+    <ClCompile Include="src\states\settingsstate.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
@@ -45,7 +46,6 @@
     <ClInclude Include="src\ecs\components\light_component.hpp" />
     <ClInclude Include="src\ecs\components\model_component.hpp" />
     <ClInclude Include="src\ecs\components\player_component.hpp" />
-    <ClInclude Include="src\ecs\systems\button_system.hpp" />
     <ClInclude Include="src\ecs\systems\print_position_system.hpp" />
     <ClInclude Include="src\ecs\systems\render_system.hpp" />
     <ClInclude Include="shared\shared\transform_component.hpp" />
@@ -79,6 +79,8 @@
     <ClInclude Include="src\ecs\systems\sound_system.hpp" />
     <ClInclude Include="src\eventdispatcher.hpp" />
     <ClInclude Include="shared\shared\physics_component.hpp" />
+    <ClInclude Include="src\ecs\components\slider_component.hpp" />
+    <ClInclude Include="src\ecs\systems\gui_system.hpp" />
     <ClInclude Include="src\ecs\components\particle_component.hpp" />
     <ClInclude Include="src\ecs\systems\particle_system.hpp" />
   </ItemGroup>
@@ -102,6 +104,8 @@
     <None Include="Assets\shaders\fullscreenquad.vert" />
     <None Include="Assets\shaders\kawaseblur.comp" />
     <None Include="src\ecs\systems\input_system.hpp" />
+    <None Include="Assets\shaders\shadow.frag" />
+    <None Include="Assets\shaders\shading.vert" />
     <None Include="Assets\shaders\particle.geom" />
     <None Include="Assets\shaders\compute_shader.comp" />
   </ItemGroup>

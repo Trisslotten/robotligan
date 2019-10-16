@@ -112,7 +112,7 @@ EXPORT void Submit(GUIHandle gui_h, glm::vec2 pos, float scale,
 EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale,
                    float rotDegrees, glm::vec3 rotAxis);
 
-EXPORT Camera GetCamera();
+EXPORT Camera& GetCamera();
 EXPORT void SetCamera(Camera camera);
 
 EXPORT void SetModelUseGL(bool use_gl);

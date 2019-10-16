@@ -14,9 +14,9 @@
 #include <unordered_map>
 
 #include "Model/model.hpp"
+#include "Particles/particle_settings.hpp"
 #include "glob/camera.hpp"
 #include "glob/window.hpp"
-#include "Particles/particle_settings.hpp"
 #include "particles/particle_system.hpp"
 #include "shader.hpp"
 
@@ -25,7 +25,9 @@
 
 #include <msdfgen/msdfgen-ext.h>
 #include <msdfgen/msdfgen.h>
+#include "postprocess/blur.hpp"
 #include "postprocess/postprocess.hpp"
+#include "shadows/shadows.hpp"
 
 namespace glob {
 
@@ -80,7 +82,7 @@ ShaderProgram fullscreen_shader;
 ShaderProgram model_emission_shader;
 ShaderProgram model_shader;
 ShaderProgram particle_shader;
-//ShaderProgram compute_shader;
+// ShaderProgram compute_shader;
 ShaderProgram animated_model_shader;
 ShaderProgram text_shader;
 ShaderProgram wireframe_shader;
@@ -94,11 +96,12 @@ GLuint cube_vbo, cube_vao;
 GLuint quad_vbo, quad_vao;
 
 PostProcess post_process;
+Blur blur;
+Shadows shadows;
 
 float num_frames = 0;
 
-Camera camera{
-    glm::vec3(25, 5, 0), glm::vec3(0, 3, 0), 90, 16.f / 9.f, 0.1f, 100.f};
+Camera camera;
 
 /*
 TextureHandle current_texture_guid = 1;
@@ -121,7 +124,8 @@ struct ParticleSystemInfo {
   ParticleSystem system;
   bool in_use;
 
-  ParticleSystemInfo(ShaderProgram *ptr, GLuint tex, bool use) : system(ptr, tex), in_use(use) {}
+  ParticleSystemInfo(ShaderProgram *ptr, GLuint tex, bool use)
+      : system(ptr, tex), in_use(use) {}
 };
 std::vector<ParticleSystemInfo> buffer_particle_systems;
 std::unordered_map<std::string, Font2DHandle> font_2D_handles;
@@ -137,6 +141,7 @@ struct GLuintBuffers {
   GLuint ebo;
   GLuint size;
 };
+
 std::unordered_map<ModelHandle, GLuintBuffers> wireframe_buffers;
 
 std::vector<RenderItem> items_to_render;
@@ -230,7 +235,7 @@ void CreateDefaultParticleTexture() {
 }
 
 GLint TextureFromFile(std::string filename) {
-  const char *path = "Assets/Texture"; 
+  const char *path = "Assets/Texture";
   std::string directory = std::string(path);
   filename = directory + '/' + filename;
 
@@ -267,16 +272,14 @@ GLint TextureFromFile(std::string filename) {
 }
 
 void Init() {
+  camera = Camera(glm::vec3(25, 5, 0), glm::vec3(0, 3, 0), 90, 16.f / 9.f, 0.1f,
+                  100.f);
+
   // std::cout << "Max uniform size: " << MAX_VERTEX_UNIFORM_COMPONENTS_ARB <<
   // "\n";
   fullscreen_shader.add("fullscreenquad.vert");
   fullscreen_shader.add("fullscreenquad.frag");
   fullscreen_shader.compile();
-
-  model_shader.add("modelshader.vert");
-  model_shader.add("modelshader.frag");
-  model_shader.add("shading.frag");
-  model_shader.compile();
 
   particle_shader.add("particle.vert");
   particle_shader.add("particle.geom");
@@ -290,13 +293,21 @@ void Init() {
   CreateDefaultParticleTexture();
   textures["smoke"] = TextureFromFile("smoke.png");
 
+  model_shader.add("modelshader.vert");
+  model_shader.add("modelshader.frag");
+  model_shader.add("shading.vert");
+  model_shader.add("shading.frag");
+  model_shader.compile();
+
   animated_model_shader.add("animatedmodelshader.vert");
   animated_model_shader.add("modelshader.frag");
+  animated_model_shader.add("shading.vert");
   animated_model_shader.add("shading.frag");
   animated_model_shader.compile();
 
   model_emission_shader.add("modelshader.vert");
   model_emission_shader.add("modelemissive.frag");
+  model_emission_shader.add("shading.vert");
   model_emission_shader.add("shading.frag");
   model_emission_shader.compile();
 
@@ -305,6 +316,7 @@ void Init() {
   mesh_render_group.push_back(&model_emission_shader);
 
   wireframe_shader.add("modelshader.vert");
+  wireframe_shader.add("shading.vert");
   wireframe_shader.add("wireframe.frag");
   wireframe_shader.compile();
 
@@ -376,9 +388,12 @@ void Init() {
                         (GLvoid *)0);
   glBindVertexArray(0);
 
-  buffer_particle_systems.reserve(10);
+  blur.Init();
 
-  post_process.Init();
+  post_process.Init(blur);
+  shadows.Init(blur);
+
+  buffer_particle_systems.reserve(10);
 }
 
 // H=Handle, A=Asset
@@ -418,7 +433,9 @@ ModelHandle GetModel(const std::string &filepath) {
                                       filepath);
 }
 
-ParticleSettings ProccessMap(ParticleSettings ps, const std::unordered_map<std::string, std::string>& map) {
+ParticleSettings ProccessMap(
+    ParticleSettings ps,
+    const std::unordered_map<std::string, std::string> &map) {
   bool color_delta = false;
   glm::vec4 end_color = glm::vec4(1.f);
   bool vel_delta = false;
@@ -561,7 +578,7 @@ ParticleSettings ReadParticleFile(std::string filename) {
   const char *path = "Assets/Particle config";
   std::string directory = std::string(path);
   filename = directory + '/' + filename;
-   // Create three strings to hold entire line, key and value
+  // Create three strings to hold entire line, key and value
   std::string cur_str;
   std::string key_str;
   std::string val_str;
@@ -608,7 +625,7 @@ ParticleSettings ReadParticleFile(std::string filename) {
   ParticleSettings ps = {};
   ps.texture = textures["default"];
   ps.compute_shader = compute_shaders["default"].get();
-  
+
   ps = ProccessMap(ps, settings_map);
 
   return ps;
@@ -624,16 +641,17 @@ ParticleSystemHandle CreateParticleSystem() {
       buffer_particle_systems[i].in_use = true;
     }
   }
-  
+
   if (index < 0) {
     index = buffer_particle_systems.size();
-    buffer_particle_systems.emplace_back(compute_shaders["default"].get(), textures["default"], true);
+    buffer_particle_systems.emplace_back(compute_shaders["default"].get(),
+                                         textures["default"], true);
   }
 
   if (index == -1) return -1;
   particle_systems[handle] = index;
   current_particle_guid++;
-  
+
   return handle;
 }
 
@@ -682,7 +700,7 @@ void SetParticleDirection(ParticleSystemHandle handle, glm::vec3 dir) {
 }
 
 void SetParticleSettings(ParticleSystemHandle handle,
-  std::unordered_map<std::string, std::string> map) {
+                         std::unordered_map<std::string, std::string> map) {
   auto find_res = particle_systems.find(handle);
   if (find_res == particle_systems.end()) {
     std::cout << "ERROR graphics.cpp: invalid handle\n";
@@ -834,10 +852,10 @@ void UpdateParticles(ParticleSystemHandle handle, float dt) {
   int index = find_res->second;
   buffer_particle_systems[index].system.Update(dt);
 }
-    /*
+/*
 TextureHandle GetTexture(const std::string &filepath) {
-  return GetAsset<TextureHandle, Texture>(texture_handles, textures,
-                                          current_texture_guid, filepath);
+return GetAsset<TextureHandle, Texture>(texture_handles, textures,
+                                      current_texture_guid, filepath);
 }
 */
 
@@ -901,7 +919,7 @@ void SubmitParticles(ParticleSystemHandle handle) {
     std::cout << "ERROR graphics.cpp: could not find submitted particles\n";
     return;
   }
-  
+
   particles_to_render.push_back(find_res->second);
 }
 
@@ -1021,6 +1039,29 @@ void Render() {
     }
   }
 
+  auto draw_function = [&](ShaderProgram &shader) {
+    for (auto &render_item : items_to_render) {
+      shader.uniform("model_transform", render_item.transform);
+      render_item.model->Draw(shader);
+    }
+  };
+  auto anim_draw_function = [&](ShaderProgram &shader) {
+    for (auto &BARI : bone_animated_items_to_render) {
+      shader.uniform("model_transform", BARI.transform);
+      int numBones = 0;
+      for (auto &bone : BARI.bone_transforms) {
+        shader.uniform("bone_transform[" + std::to_string(numBones) + "]",
+                       bone);
+        numBones++;
+      }
+      // animated_model_shader.uniform("NR_OF_BONES",
+      // (int)BARI.bone_transforms.size());
+      BARI.model->Draw(animated_model_shader);
+    }
+  };
+  shadows.RenderToMaps(draw_function, anim_draw_function, blur);
+  shadows.BindMaps(3);
+
   for (auto &shader : mesh_render_group) {
     shader->use();
     for (auto &light_item : lights_to_render) {
@@ -1035,8 +1076,11 @@ void Render() {
     }
     shader->uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
     shader->uniform("cam_transform", cam_transform);
+    shadows.SetUniforms(*shader);
   }
 
+  auto ws = glob::window::GetWindowDimensions();
+  glViewport(0, 0, ws.x, ws.y);
   post_process.BeforeDraw();
   {
     model_shader.use();
@@ -1069,7 +1113,14 @@ void Render() {
       BARI.model->Draw(animated_model_shader);
     }
   }
-  
+  post_process.AfterDraw(blur);
+
+  fullscreen_shader.use();
+  post_process.BindColorTex(0);
+  fullscreen_shader.uniform("texture_color", 0);
+  post_process.BindEmissionTex(1);
+  fullscreen_shader.uniform("texture_emission", 1);
+  DrawFullscreenQuad();
 
   // render wireframe cubes
   for (auto &m : cubes) DrawCube(m);
@@ -1108,14 +1159,6 @@ void Render() {
     text_item.font->Draw(text_shader, text_item.pos, text_item.size,
                          text_item.text, text_item.color, text_item.visible);
   }
-  post_process.AfterDraw();
-
-  fullscreen_shader.use();
-  post_process.BindColorTex(0);
-  fullscreen_shader.uniform("texture_color", 0);
-  post_process.BindEmissionTex(1);
-  fullscreen_shader.uniform("texture_emission", 1);
-  DrawFullscreenQuad();
 
   lights_to_render.clear();
   items_to_render.clear();
@@ -1130,6 +1173,6 @@ void Render() {
   num_frames++;
 }
 
-Camera GetCamera() { return camera; }
+Camera &GetCamera() { return camera; }
 
 }  // namespace glob

@@ -17,6 +17,7 @@ enum class StateType {
   CONNECT_MENU,
   LOBBY,
   PLAY,
+  SETTINGS,
 };
 
 class State {
@@ -62,7 +63,6 @@ public:
 
 private:
   void CreateMainMenu();
-  void CreateSettingsMenu();
   void CreateInformationMenu();
 
   entt::registry registry_mainmenu_;
@@ -158,6 +158,29 @@ private:
   glob::Font2DHandle font_test_ = 0;
   entt::registry registry_connect_menu_;
 };
+
+/////////////////////// SETTINGS ///////////////////
+class SettingsState : public State {
+ public:
+  void Startup() override;
+  void Init() override;
+  void Update() override;
+  void UpdateNetwork() override;
+  void Cleanup() override;
+  StateType Type() { return StateType::SETTINGS; }
+
+ private:
+  void CreateSettingsMenu();
+  void SaveSettings();
+  glob::Font2DHandle font_test_ = 0;
+  entt::registry registry_settings_;
+
+  float setting_fov_ = 90.f;
+  float setting_volume_ = 100.f;
+  float setting_mouse_sens_ = 1.0f;
+};
+
+
 /////////////////////// PLAY ///////////////////////
 
 class PlayState : public State {

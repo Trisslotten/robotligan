@@ -16,23 +16,28 @@ uniform mat4 bone_transform[64];
 
 //uniform int NR_OF_BONES;
 
+// shading.vert
+void handleShading(vec3 position);
+
 void main()
 {
     vec4 t_vertex = vec4(pos, 1.f);
 	vec4 t_normal = vec4(0.f);
-	mat4 transform = mat4(0.f);
+	mat4 anim_transform = mat4(0.f);
 
 	int i = 0;
 	while(bones[i] != -1 && i < 4){
-		transform += (bone_transform[bones[i]] * weights[i]);
+		anim_transform += (bone_transform[bones[i]] * weights[i]);
 		i++;
 	}
+	mat4 transform = model_transform * anim_transform;
 
 	t_vertex = transform * t_vertex;
-	t_normal = transform * vec4(normal, 0.f);
-	frag_pos = (model_transform * t_vertex).xyz;
-
+	v_normal = normalize(transpose(inverse(mat3(transform))) * normal.xyz);
 	v_tex = tex;
-	v_normal = normalize(transpose(inverse(mat3(model_transform))) * t_normal.xyz);
-	gl_Position = cam_transform * model_transform * t_vertex;
+	frag_pos = t_vertex.xyz;
+
+	handleShading(t_vertex.xyz);
+
+	gl_Position = cam_transform * t_vertex;
 }

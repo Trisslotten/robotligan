@@ -10,8 +10,8 @@
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "ecs/systems/animation_system.hpp"
-#include "ecs/systems/button_system.hpp"
 #include "ecs/systems/particle_system.hpp"
+#include "ecs/systems/gui_system.hpp"
 #include "ecs/systems/render_system.hpp"
 #include "ecs/systems/sound_system.hpp"
 #include "entitycreation.hpp"
@@ -70,8 +70,10 @@ void Engine::Init() {
   lobby_state_.SetEngine(this);
   connect_menu_state_.SetEngine(this);
   play_state_.SetEngine(this);
+  settings_state_.SetEngine(this);
 
   main_menu_state_.Startup();
+  settings_state_.Startup();
   connect_menu_state_.Startup();
   lobby_state_.Startup();
 
@@ -80,6 +82,8 @@ void Engine::Init() {
   main_menu_state_.Init();
   current_state_ = &main_menu_state_;
   wanted_state_type_ = StateType::MAIN_MENU;
+
+  UpdateSettingsValues();
 }
 
 void Engine::Update(float dt) {
@@ -99,7 +103,7 @@ void Engine::Update(float dt) {
       if (Input::IsMouseButtonDown(button)) mouse_presses_[button]++;
 
     // accumulate mouse movement
-    float mouse_sensitivity = 0.003f;
+    float mouse_sensitivity = 0.003f * mouse_sensitivity_;
     glm::vec2 mouse_movement = mouse_sensitivity * Input::MouseMov();
     accum_yaw_ -= mouse_movement.x;
     accum_pitch_ -= mouse_movement.y;
@@ -134,6 +138,9 @@ void Engine::Update(float dt) {
         break;
       case StateType::PLAY:
         current_state_ = &play_state_;
+        break;
+      case StateType::SETTINGS:
+        current_state_ = &settings_state_;
         break;
     }
     // init new state
@@ -517,7 +524,7 @@ void Engine::UpdateSystems(float dt) {
     DrawScoreboard();
   }
 
-  button_system::Update(*registry_current_);
+  gui_system::Update(*registry_current_);
   ParticleSystem(*registry_current_, dt);
   RenderSystem(*registry_current_);
   animation_system_.UpdateAnimations(*registry_current_, dt);
