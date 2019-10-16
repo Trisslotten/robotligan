@@ -387,10 +387,10 @@ physics::IntersectData physics::Intersect(const MeshHitbox& m,
       }
       data.normal += temp;
       data.collision = true;
-      data.normal = glm::normalize(data.normal);
+      //data.normal = glm::normalize(data.normal);
       data.move_vector = (rsqrt - dist) * data.normal;
 
-      return data;
+      //return data;
     }
   }
 
