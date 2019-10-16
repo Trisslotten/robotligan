@@ -116,11 +116,10 @@ void AnimationSystem::StrengthModulator(AnimationComponent* ac) {
 
 void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
   auto players =
-      registry.view<AnimationComponent, ModelComponent, PlayerComponent,
+      registry.view<AnimationComponent, PlayerComponent,
                     TransformComponent, PhysicsComponent>();
   for (auto& entity : players) {
     auto& ac = players.get<AnimationComponent>(entity);
-    auto& m = players.get<ModelComponent>(entity);
     auto& pl = players.get<PlayerComponent>(entity);
     auto& t = players.get<TransformComponent>(entity);
     auto& ph = players.get<PhysicsComponent>(entity);
