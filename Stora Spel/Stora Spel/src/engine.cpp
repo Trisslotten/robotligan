@@ -436,6 +436,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
           play_state_.CreateCannonBall(e_id);
           break;
         }
+        case ProjectileID::TELEPORT_PROJECTILE: {
+          play_state_.CreateTeleportProjectile(e_id);
+          break;
+        }
         case ProjectileID::FORCE_PUSH_OBJECT: {
           play_state_.CreateForcePushObject(e_id);
           break;

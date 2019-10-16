@@ -7,6 +7,7 @@ extern entt::dispatcher dispatcher;
 enum class Event {
 	DESTROY_ENTITY,
 	CREATE_CANNONBALL,
+  CREATE_TELEPORT_PROJECTILE,
 	CREATE_FORCE_PUSH,
 	CREATE_MISSILE,
 	CHANGED_TARGET,

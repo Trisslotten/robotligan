@@ -536,6 +536,16 @@ void PlayState::CreateCannonBall(EntityID id) {
   registry_gameplay_.assign<IDComponent>(cannonball, id);
 }
 
+void PlayState::CreateTeleportProjectile(EntityID id) {
+  auto teleport_projectile = registry_gameplay_.create();
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  /*glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  registry_gameplay_.assign<ModelComponent>(teleport_projectile, model_ball);*/
+  registry_gameplay_.assign<TransformComponent>(teleport_projectile, zero_vec, zero_vec,
+    glm::vec3(0.3f));
+  registry_gameplay_.assign<IDComponent>(teleport_projectile, id);
+}
+
 void PlayState::CreateForcePushObject(EntityID id) {
   auto force_object = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);

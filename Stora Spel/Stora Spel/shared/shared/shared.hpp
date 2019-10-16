@@ -158,9 +158,10 @@ struct GameEvent {
 
 enum class ProjectileID {
   CANNON_BALL,
+  TELEPORT_PROJECTILE,
   FORCE_PUSH_OBJECT,
   MISSILE_OBJECT,
-  NUM_PROJECTILE_IDS,
+  NUM_PROJECTILE_IDS
 };
 
 struct Projectile {
