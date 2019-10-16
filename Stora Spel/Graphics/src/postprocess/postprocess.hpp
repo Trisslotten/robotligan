@@ -30,7 +30,7 @@ GLuint draw_emission_texture_ = 0;
 
 GLuint blurred_emission_texture = 0;
 
-uint64_t blur_id;
+uint64_t blur_id_;
 
 };
 
