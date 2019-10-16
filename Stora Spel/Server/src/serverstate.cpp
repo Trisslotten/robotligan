@@ -4,12 +4,14 @@
 #include "shared/transform_component.hpp"
 
 #include <collision.hpp>
+#include <ecs\components\pick_up_event.hpp>
 #include <glob\graphics.hpp>
 #include <shared\id_component.hpp>
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "gameserver.hpp"
-#include <ecs\components\pick_up_event.hpp>
+
+#include <algorithm>
 
 void ServerLobbyState::Init() {
   //
@@ -75,30 +77,43 @@ void ServerPlayState::Init() {
 
     server.Send(to_send);
   }
-
-
 }
 
 void ServerPlayState::Update(float dt) {
   auto& registry = game_server_->GetRegistry();
 
-  registry.view<PlayerComponent>().each(
-      [&](auto entity, PlayerComponent& player_c) {
-        // Check if we are taking inputs from the
-        // client or if we are reading them from a replay
-        if (!this->replay_) {
-          auto inputs = players_inputs_[player_c.client_id];
-          player_c.actions = inputs.first;
-          player_c.pitch += inputs.second.x;
-          player_c.yaw += inputs.second.y;
-          // Check if the game should be be recorded
-          if (this->record_) {
-            this->Record(player_c.actions, player_c.pitch, player_c.yaw, dt);
-          }
-        } else {
-          this->Replay(player_c.actions, player_c.pitch, player_c.yaw);
-        }
+  // Stuff id and player components a vector
+  std::vector<Bundle> bundle_vec;
+
+  registry.view<IDComponent, PlayerComponent>().each(
+      [&](auto entity, IDComponent& id_c, PlayerComponent& player_c) {
+        bundle_vec.push_back(Bundle(id_c, player_c));
       });
+
+  // Sort the vector dependant on the id component
+  // in each bundle
+  std::sort(bundle_vec.begin(), bundle_vec.end(), BundleCompare);
+
+  for (unsigned int i = 0; i < bundle_vec.size(); i++) {
+    // Retrive the player component from the sorted vector
+    PlayerComponent& player_c = bundle_vec.at(i).player_c;
+
+    // Check if we are taking inputs from the
+    // client or if we are reading them from a replay
+    if (!this->replay_) {
+      auto inputs = players_inputs_[player_c.client_id];
+      player_c.actions = inputs.first;
+      player_c.pitch += inputs.second.x;
+      player_c.yaw += inputs.second.y;
+      // Check if the game should be be recorded
+      if (this->record_) {
+        this->Record(player_c.actions, player_c.pitch, player_c.yaw, dt);
+      }
+    } else {
+      this->Replay(player_c.actions, player_c.pitch, player_c.yaw);
+    }
+  }
+
   players_inputs_.clear();
 
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
@@ -179,7 +194,8 @@ void ServerPlayState::Update(float dt) {
       to_send << goal_team_c;
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
-      if (goal_goal_c.switched_this_tick) {  // MAY NEED TO CHANGE, NOT A GOOD SOLUTION
+      if (goal_goal_c
+              .switched_this_tick) {  // MAY NEED TO CHANGE, NOT A GOOD SOLUTION
         if (!sent_switch) {
           to_send << PacketBlockType::SWITCH_GOALS;
           sent_switch = true;
@@ -565,7 +581,8 @@ bool ServerPlayState::StartRecording(unsigned int in_replay_length_seconds) {
   if (!this->record_) {
     // Initiate the Replay Machine
     std::cout << "Recording...\n";
-    this->replay_machine_->Init(in_replay_length_seconds, kServerUpdateRate, 1, true);
+    this->replay_machine_->Init(in_replay_length_seconds, kServerUpdateRate, 1,
+                                true);
     this->record_ = true;
     return true;  // NTS: Return false if recording cannot start?
   }

@@ -37,7 +37,7 @@ void ReplayMachine::Init(unsigned int in_seconds,
   unsigned int frames_between_snapshots =
       in_frames_per_second * in_snapshot_interval_seconds;
   this->replay_deterministic_ =
-      new DeterministicReplay(max_num_of_frames, 10, frames_between_snapshots);
+      new DeterministicReplay(max_num_of_frames, 10, 6, frames_between_snapshots);
 
   // Set the time the machine shall record
   this->recording_max_seconds_ = in_seconds;

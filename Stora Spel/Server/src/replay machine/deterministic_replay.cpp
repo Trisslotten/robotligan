@@ -70,7 +70,7 @@ void DeterministicReplay::ReadInputFrame(std::bitset<10>& in_bitset,
 
 DeterministicReplay::DeterministicReplay(
     unsigned int in_num_of_frames, unsigned int in_num_of_keys,
-    unsigned int in_snapshot_interval_frames) {
+    unsigned int in_num_of_players, unsigned int in_snapshot_interval_frames) {
   // For one controlled entity we will require at maximum
   //	1 + B * (ceil(base2_log(N))+1) + 32 + 32
   // bits per frame, where B (buttons pressed/released) is
@@ -84,6 +84,9 @@ DeterministicReplay::DeterministicReplay(
   // might be required for one frame
   unsigned int bits_per_frame =
       (1 + in_num_of_keys * (this->bits_per_int_ + 1) + 64);
+
+  // Then increase the size to make space for inputs for more
+  // than one player
 
   // Create a bitpack capable of holding that size
   this->input_log_ = new BitPack(in_num_of_frames, bits_per_frame);

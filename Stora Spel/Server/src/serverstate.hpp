@@ -4,11 +4,21 @@
 #include <entity/registry.hpp>
 #include <entt.hpp>
 #include "ecs/components.hpp"
+#include "replay machine/replay_machine.hpp"
 #include "shared/shared.hpp"
 #include "util/timer.hpp"
-#include "replay machine/replay_machine.hpp"
 
 class GameServer;
+
+// Helper struct
+struct Bundle {
+  IDComponent& id_c;
+  PlayerComponent& player_c;
+};
+
+bool BundleCompare(const Bundle lhs, const Bundle rhs) {
+  return (lhs.id_c.id < rhs.id_c.id);
+}
 
 enum class ServerStateType {
   LOBBY = 0,
@@ -66,7 +76,6 @@ class ServerPlayState : public ServerState {
 
   bool StartRecording(unsigned int in_replay_length_seconds);
 
-
  private:
   entt::entity CreateIDEntity();
 
@@ -80,7 +89,6 @@ class ServerPlayState : public ServerState {
   void Replay(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value);
   void CreatePickUpComponents();
   EntityID GetNextEntityGuid() { return entity_guid_++; }
-
 
   std::unordered_map<int, EntityID> clients_player_ids_;
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;

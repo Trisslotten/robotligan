@@ -32,6 +32,7 @@ class DeterministicReplay {
  public:
   DeterministicReplay(unsigned int in_num_of_frames,
                       unsigned int in_num_of_keys,
+                      unsigned int in_num_of_players,
                       unsigned int in_snapshot_interval_frames);
   ~DeterministicReplay();
 
