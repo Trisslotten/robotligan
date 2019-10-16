@@ -13,6 +13,8 @@
     <ClCompile Include="src\util\player_settings.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Chat.cpp" />
+    <ClCompile Include="src\client replay machine\client_replay_machine.cpp" />
+    <ClCompile Include="src\client replay machine\geometric_replay.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
@@ -55,6 +57,8 @@
     <ClInclude Include="src\Chat.hpp" />
     <ClInclude Include="shared\shared\reg_pack.hpp" />
     <ClInclude Include="shared\shared\bit_pack.hpp" />
+    <ClInclude Include="src\client replay machine\client_replay_machine.hpp" />
+    <ClInclude Include="src\client replay machine\geometric_replay.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

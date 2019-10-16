@@ -153,9 +153,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Chat.cpp" />
+    <ClCompile Include="src\client replay machine\geometric_replay.cpp" />
     <ClCompile Include="src\engine.cpp" />
     <ClCompile Include="src\entitycreation.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\client replay machine\client_replay_machine.cpp" />
     <ClCompile Include="src\states\lobbystate.cpp" />
     <ClCompile Include="src\states\mainmenustate.cpp" />
     <ClCompile Include="src\states\playstate.cpp" />
@@ -174,6 +176,8 @@
     <ClInclude Include="shared\shared\bit_pack.hpp" />
     <ClInclude Include="shared\shared\pick_up_component.hpp" />
     <ClInclude Include="shared\shared\reg_pack.hpp" />
+    <ClInclude Include="src\client replay machine\client_replay_machine.hpp" />
+    <ClInclude Include="src\client replay machine\geometric_replay.hpp" />
     <ClInclude Include="src\ecs\components.hpp" />
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
     <ClInclude Include="src\ecs\components\button_component.hpp" />
