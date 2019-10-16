@@ -21,13 +21,13 @@ namespace ability_controller {
 
   bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
     PlayerID player_id, entt::entity caster);
-  void CreateMissileEntity(entt::registry& registry, entt::entity caster);
+  void CreateMissileEntity(entt::registry& registry, PlayerID id);
   void DoSuperStrike(entt::registry& registry);
   entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id);
   void DoSwitchGoals(entt::registry& registry);
   entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id);
   void GravityChange(entt::registry& registry);
-  void DoTeleport(entt::registry& registry, entt::entity caster);
+  void DoTeleport(entt::registry& registry, PlayerID id);
 
   void Update(entt::registry& registry, float dt) {
     auto view_players =
@@ -36,7 +36,7 @@ namespace ability_controller {
       auto& ability_component = registry.get<AbilityComponent>(player);
       auto& transform_component = registry.get<TransformComponent>(player);
       auto& player_component = registry.get<PlayerComponent>(player);
-
+      
       // Loop over each entity with a PlayerComponent
       // and Ability Component
 
@@ -102,10 +102,13 @@ namespace ability_controller {
     PlayerID player_id, entt::entity caster) {
     switch (in_a_id) {
     case AbilityID::NULL_ABILITY:
+      return false;
       break;
     case AbilityID::BUILD_WALL:
+      return true;
       break;
     case AbilityID::FAKE_BALL:
+      return true;
       break;
     case AbilityID::FORCE_PUSH: {
       entt::entity entity = CreateForcePushEntity(registry, player_id);
@@ -113,17 +116,21 @@ namespace ability_controller {
       e.event = Event::CREATE_FORCE_PUSH;
       e.entity = entity;
       dispatcher.enqueue<EventInfo>(e);
+      return true;
       break;
     }
     case AbilityID::GRAVITY_CHANGE:
       GravityChange(registry);
+      return true;
       break;
     case AbilityID::HOMING_BALL:
+      return true;
       break;
     case AbilityID::INVISIBILITY:
+      return true;
       break;
     case AbilityID::MISSILE:
-      CreateMissileEntity(registry, caster);
+      CreateMissileEntity(registry, player_id);
       return true;
       break;
     case AbilityID::SUPER_STRIKE:
@@ -135,7 +142,8 @@ namespace ability_controller {
       return true;
       break;
     case AbilityID::TELEPORT:
-      DoTeleport(registry, caster);
+      DoTeleport(registry, player_id);
+      return true;
       break;
     default:
       return false;
@@ -143,32 +151,38 @@ namespace ability_controller {
     }
   }
 
-  void CreateMissileEntity(entt::registry& registry, entt::entity caster) {
-    // Create new entity
-    auto& player_c = registry.get<PlayerComponent>(caster);
-    auto& trans_c = registry.get<TransformComponent>(caster);
-    auto& cam_c = registry.get<CameraComponent>(caster);
+  void CreateMissileEntity(entt::registry& registry, PlayerID id) {
+    auto view_controller =
+      registry.view<CameraComponent, PlayerComponent, TransformComponent>();
+    for (auto entity : view_controller) {
+      CameraComponent& cc = view_controller.get<CameraComponent>(entity);
+      PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
+      TransformComponent& tc = view_controller.get<TransformComponent>(entity);
 
-    auto missile = registry.create();
-    registry.assign<MissileComponent>(missile, 20.f, player_c.target,
-      player_c.client_id);
-    auto& missile_trans_c = registry.assign<TransformComponent>(missile);
-    missile_trans_c.position = trans_c.position + cam_c.GetLookDir();
-    missile_trans_c.rotation = cam_c.orientation;
+      if (pc.client_id == id) {
+        float speed = 20.f;
+        auto missile = registry.create();
 
-    auto& missile_phys_c = registry.assign<PhysicsComponent>(missile);
-    missile_phys_c.velocity = cam_c.GetLookDir();
-    missile_phys_c.is_airborne = true;
+        registry.assign<MissileComponent>(missile, speed, pc.target,
+          pc.client_id);
+        registry.assign<TransformComponent>(
+          missile,
+          tc.position + cc.GetLookDir(),
+          cc.orientation);
+        registry.assign<PhysicsComponent>(missile,
+          cc.GetLookDir(), glm::vec3(0.f), true);
+        registry.assign<physics::Sphere>(missile, glm::vec3(tc.position + cc.offset), 0.5f); // center?
+        registry.assign<ProjectileComponent>(missile, ProjectileID::MISSILE_OBJECT,
+          pc.client_id);
 
-    auto& sphere = registry.assign<physics::Sphere>(missile);
-    sphere.radius = 0.5f;
-    registry.assign<ProjectileComponent>(missile, ProjectileID::MISSILE_OBJECT,
-      player_c.client_id);
+        EventInfo e;
+        e.event = Event::CREATE_MISSILE;
+        e.entity = missile;
+        dispatcher.enqueue<EventInfo>(e);
 
-    EventInfo e;
-    e.event = Event::CREATE_MISSILE;
-    e.entity = missile;
-    dispatcher.enqueue<EventInfo>(e);
+        break;
+      }
+    }
   }
 
   void DoSuperStrike(entt::registry& registry) {
@@ -329,34 +343,38 @@ namespace ability_controller {
     gravity_used = true;
   }
 
-  void DoTeleport(entt::registry& registry, entt::entity caster) {
-    auto& cc = registry.get<CameraComponent>(caster);
-    auto& pc = registry.get<PlayerComponent>(caster);
-    auto& tc = registry.get<TransformComponent>(caster);
+  void DoTeleport(entt::registry& registry, PlayerID id) {
+    auto view_controller =
+      registry.view<CameraComponent, PlayerComponent, TransformComponent>();
+    for (auto entity : view_controller) {
+      CameraComponent& cc = view_controller.get<CameraComponent>(entity);
+      PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
+      TransformComponent& tc = view_controller.get<TransformComponent>(entity);
 
-    float speed = 50.0f;
-    auto teleport_projectile = registry.create();
+      if (pc.client_id == id) {
+        float speed = 50.0f;
+        auto teleport_projectile = registry.create();
 
-    auto& projectile_phys_c = registry.assign<PhysicsComponent>(teleport_projectile);
-    projectile_phys_c.velocity = glm::vec3(cc.GetLookDir() * speed);
-    projectile_phys_c.is_airborne = false;
-    projectile_phys_c.friction = 0.0f;
+        registry.assign<PhysicsComponent>(teleport_projectile,
+          glm::vec3(cc.GetLookDir() * speed),
+          glm::vec3(0.f), false, 0.0f);
+        registry.assign<TransformComponent>(
+          teleport_projectile,
+          glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),
+          glm::vec3(0, 0, 0), glm::vec3(.3f, .3f, .3f));
+        registry.assign<physics::Sphere>(teleport_projectile,
+          glm::vec3(tc.position + cc.offset), .3f);
+        registry.assign<ProjectileComponent>(teleport_projectile, ProjectileID::TELEPORT_PROJECTILE,
+          pc.client_id);
 
-    auto& projectile_trans_c = registry.assign<TransformComponent>(teleport_projectile);
-    projectile_trans_c.position = glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset);
-    projectile_trans_c.rotation = cc.orientation;
+        EventInfo e;
+        e.event = Event::CREATE_TELEPORT_PROJECTILE;
+        e.entity = teleport_projectile;
+        dispatcher.enqueue<EventInfo>(e);
 
-    auto& sphere = registry.assign<physics::Sphere>(teleport_projectile);
-    sphere.center = glm::vec3(tc.position + cc.offset);
-    sphere.radius = .3f;
-
-    registry.assign<ProjectileComponent>(teleport_projectile, ProjectileID::TELEPORT_PROJECTILE,
-      pc.client_id);
-
-    EventInfo e;
-    e.event = Event::CREATE_TELEPORT_PROJECTILE;
-    e.entity = teleport_projectile;
-    dispatcher.enqueue<EventInfo>(e);
+        break;
+      }
+    }
   }
 
 };  // namespace ability_controller
