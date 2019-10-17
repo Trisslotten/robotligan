@@ -405,7 +405,7 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
 
   auto item = handles.find(filepath);
   if (item == handles.end()) {
-    std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";
+    //std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";
     A &asset = assets[guid];
     asset.LoadFromFile(filepath);
     if (asset.IsLoaded()) {
@@ -429,13 +429,11 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
 }
 
 ModelHandle GetModel(const std::string &filepath) {
-  return GetAsset<ModelHandle, Model>(model_handles, models, current_model_guid,
-                                      filepath);
+  return GetAsset(model_handles, models, current_model_guid, filepath);
 }
 
 ModelHandle GetTransparentModel(const std::string &filepath) {
-  auto result = GetAsset<ModelHandle, Model>(model_handles, models,
-                                             current_model_guid, filepath);
+  auto result = GetAsset(model_handles, models, current_model_guid, filepath);
   models[result].SetTransparent(true);
   return result;
 }
@@ -752,7 +750,7 @@ animData GetAnimationData(ModelHandle handle) {
     return data;
   }
 
-  glob::Model *model = &res->second;
+  const glob::Model *model = &res->second;
 
   // copy armature
   for (auto source : model->bones_) {
@@ -787,8 +785,7 @@ animData GetAnimationData(ModelHandle handle) {
     if (bone.name == "Hip") {
       data.humanoid = true;
       data.hip = bone.id;
-      std::cout
-          << "Hip detected and set...\nHumanoid animation-set loading...\n";
+      //std::cout << "Hip detected and set...\nHumanoid animation-set loading...\n";
     }
   }
 
@@ -796,19 +793,19 @@ animData GetAnimationData(ModelHandle handle) {
     for (auto bone : data.bones) {
       if (bone.name == "Spine") {
         data.upperBody = bone.id;
-        std::cout << "Upper body found!\n";
+        //std::cout << "Upper body found!\n";
       } else if (bone.name == "Leg upper L") {
         data.leftLeg = bone.id;
-        std::cout << "Left leg found!\n";
+        //std::cout << "Left leg found!\n";
       } else if (bone.name == "Leg upper R") {
         data.rightLeg = bone.id;
-        std::cout << "Right leg found!\n";
+        //std::cout << "Right leg found!\n";
       } else if (bone.name == "Shoulder L") {
         data.leftArm = bone.id;
-        std::cout << "Left arm found!\n";
+        //std::cout << "Left arm found!\n";
       } else if (bone.name == "Shoulder R") {
         data.rightArm = bone.id;
-        std::cout << "Right arm found!\n";
+        //std::cout << "Right arm found!\n";
       }
     }
   }
@@ -877,11 +874,11 @@ void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
 }
 
 void SubmitBAM(
-    std::vector<ModelHandle> handles, glm::mat4 transform,
+    const std::vector<ModelHandle> &handles, glm::mat4 transform,
     std::vector<glm::mat4> bone_transforms) {  // Submit Bone Animated Mesh
-    for(auto handle : handles) {
-      SubmitBAM(handle, transform, bone_transforms);
-    }
+  for (auto handle : handles) {
+    SubmitBAM(handle, transform, bone_transforms);
+  }
 }
 
 void SubmitBAM(
@@ -911,8 +908,8 @@ void Submit(ModelHandle model_h, glm::vec3 pos) {
   Submit(model_h, transform);
 }
 
-void Submit(const std::vector<ModelHandle>& handles, glm::mat4 transform) {
-  for(auto handle : handles) {
+void Submit(const std::vector<ModelHandle> &handles, glm::mat4 transform) {
+  for (auto handle : handles) {
     Submit(handle, transform);
   }
 }
@@ -964,9 +961,7 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
 void SetCamera(Camera cam) { camera = cam; }
 
 void SetModelUseGL(bool use_gl) {
-  std::cout << "Before " << kModelUseGL << "\n";
   kModelUseGL = use_gl;
-  std::cout << "after " << kModelUseGL << "\n";
 }
 
 void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x) {
