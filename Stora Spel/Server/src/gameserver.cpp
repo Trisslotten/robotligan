@@ -28,7 +28,7 @@ GameServer::~GameServer() {}
 void GameServer::Init(double in_update_rate) {
   glob::SetModelUseGL(false);
 
-  GlobalSettings::Access()->UpdateValuesFromFile();
+ 
 
   server_.Setup(1337);
 

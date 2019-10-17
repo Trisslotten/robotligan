@@ -18,6 +18,7 @@
 #include "shared/transform_component.hpp"
 #include "shared/id_component.hpp"
 #include "ecs/components/pick_up_event.hpp"
+#include "ecs/systems/missile_system.hpp"
 
 void DestroyEntity(entt::registry& registry, entt::entity entity);
 void ApplyForcePush(entt::registry& registry, glm::vec3 pos);
@@ -88,12 +89,14 @@ void UpdateCollisions(entt::registry& registry) {
     for (auto player : view_player) {
       auto& player_hitbox = view_player.get<physics::OBB>(player);
       PlayerComponent& player_player = view_player.get<PlayerComponent>(player);
-
       physics::IntersectData data = Intersect(ball_hitbox, player_hitbox);
       if (data.collision) {
         ball_collisions[ball_counter].collision_list.push_back(
             {player, data.normal, data.move_vector, PLAYER});
         ball_ball.last_touch = player_player.client_id;
+        ball_ball.is_homing = false;
+        ball_ball.homer_cid = -1;
+        //missile_system::SetBallsAreHoming(false);
       }
     }
 
@@ -104,6 +107,9 @@ void UpdateCollisions(entt::registry& registry) {
       if (data.collision) {
         ball_collisions[ball_counter].collision_list.push_back(
             {arena, data.normal, data.move_vector, ARENA});
+        ball_ball.is_homing = false;
+        ball_ball.homer_cid = -1;
+        //missile_system::SetBallsAreHoming(false);
         //std::cout << "x: " << data.normal.x << " y: " << data.normal.y
         //          << " z: " << data.normal.z << std::endl;
       }
@@ -161,7 +167,7 @@ void HandleBallCollisions(entt::registry& registry, const CollisionList& list,
   } else {
     HandleMultiBallCollision(registry, list);
   }
-
+  auto& ball_ball_c = registry.get<BallComponent>(list.entity);
   return;
 }
 
@@ -289,6 +295,7 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
       ball_physics.velocity.y = 0.f;
       ball_physics.is_airborne = false;
       ball_c.rotation = glm::quat();
+
     }
   }
 

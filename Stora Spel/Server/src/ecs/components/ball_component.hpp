@@ -9,6 +9,8 @@ struct BallComponent {
   bool is_airborne;
   glm::quat rotation;
   PlayerID last_touch;
+  bool is_homing = false;
+  long homer_cid = -1;
 };
 
 #endif  // BALL_COMPONENT_HPP_

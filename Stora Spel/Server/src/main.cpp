@@ -17,7 +17,7 @@ int main(unsigned argc, char** argv) {
   double update_rate = kServerUpdateRate;
   double update_time = 1.0 / update_rate;
   double update_time_ms = update_time * 1000.0;
-
+  GlobalSettings::Access()->UpdateValuesFromFile();
   GameServer server;
   dispatcher.sink<EventInfo>().connect<&GameServer::ReceiveEvent>(server);
   dispatcher.sink<GameEvent>().connect<&GameServer::ReceiveGameEvent>(server);
