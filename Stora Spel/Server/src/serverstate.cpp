@@ -51,8 +51,8 @@ void ServerPlayState::Init() {
 
   ResetEntities();
 
-  // Create replay machine
-  this->replay_machine_ = new ReplayMachine();
+  // Replay machine
+  this->replay_machine_ = nullptr;
 
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     auto ball_view = registry.view<BallComponent, IDComponent>();
@@ -105,13 +105,14 @@ void ServerPlayState::Update(float dt) {
       player_c.yaw += inputs.second.y;
       // Check if the game should be be recorded
       if (this->record_) {
-        this->Record(player_c.actions, player_c.pitch, player_c.yaw, dt, loop_index);
+        this->Record(player_c.actions, player_c.pitch, player_c.yaw, dt,
+                     loop_index);
       }
     } else {
       this->Replay(player_c.actions, player_c.pitch, player_c.yaw, loop_index);
     }
 
-	loop_index++;
+    loop_index++;
   }
 
   // players_inputs_.clear();
@@ -579,12 +580,12 @@ void ServerPlayState::HandleNewTeam() {
 
 // Replay stuff---
 bool ServerPlayState::StartRecording(unsigned int in_replay_length_seconds) {
-  if (!this->record_) {
-    // Initiate the Replay Machine
+  if (!this->record_ && !this->replay_) {
+    // Create Replay Machine
     std::cout << "Recording...\n";
-    this->replay_machine_->Init(in_replay_length_seconds, kServerUpdateRate, 1,
-                                (this->blue_players_ + this->red_players_),
-                                true);
+    this->replay_machine_ =
+        new ReplayMachine(in_replay_length_seconds, kServerUpdateRate, 1,
+                          (this->blue_players_ + this->red_players_), true);
     this->record_ = true;
     return true;  // NTS: Return false if recording cannot start?
   }
@@ -598,7 +599,8 @@ void ServerPlayState::Record(std::bitset<10>& in_bitset, float& in_x_value,
 
   // Save the frame with the ReplayMachine
   if (this->replay_machine_->SaveReplayFrame(in_bitset, in_x_value, in_y_value,
-                                             registry, in_dt, in_player_index)) {
+                                             registry, in_dt,
+                                             in_player_index)) {
     std::cout << "Replaying...\n";
     // If true is returned it means the internal
     // BitPack is fully written and there is no
@@ -624,6 +626,10 @@ void ServerPlayState::Replay(std::bitset<10>& in_bitset, float& in_x_value,
     // more data to replay.
     // Turn off replaying.
     this->replay_ = false;
+
+    // Once replay has been played, remove the replay machine
+    delete this->replay_machine_;
+    this->replay_machine_ = nullptr;
   }
 }
 //---

@@ -7,8 +7,8 @@
 #include <entity/registry.hpp>
 #include <entity/snapshot.hpp>
 
-#include "deterministic_replay.hpp"
 #include "assert_module.hpp"
+#include "deterministic_replay.hpp"
 
 class ReplayMachine {
  private:
@@ -25,7 +25,9 @@ class ReplayMachine {
   bool assert_mode_on_;
 
  public:
-  ReplayMachine();
+  ReplayMachine(unsigned int in_seconds, unsigned int in_frames_per_second,
+                float in_snapshot_interval_seconds,
+                unsigned int in_num_of_players, bool in_assert_mode);
   ~ReplayMachine();
 
   // NTS:	Delete copy constructor
@@ -33,8 +35,7 @@ class ReplayMachine {
   ReplayMachine(ReplayMachine&) = delete;
   void operator=(ReplayMachine const&) = delete;
 
-  void Init(unsigned int in_seconds, unsigned int in_frames_per_second,
-            float in_snapshot_interval_seconds, unsigned int in_num_of_players, bool in_asset_mode);
+  // void Init();
 
   bool SaveReplayFrame(std::bitset<10>& in_bitset, float& in_x_value,
                        float& in_y_value, entt::registry& in_registry,

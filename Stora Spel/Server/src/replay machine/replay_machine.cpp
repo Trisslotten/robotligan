@@ -3,14 +3,44 @@
 // Private---------------------------------------------------------------------
 
 // Public----------------------------------------------------------------------
-ReplayMachine::ReplayMachine() {
+ReplayMachine::ReplayMachine(unsigned int in_seconds,
+                             unsigned int in_frames_per_second,
+                             float in_snapshot_interval_seconds,
+                             unsigned int in_num_of_players,
+                             bool in_assert_mode) {
   // H
   // I
-  this->replay_deterministic_ = nullptr;
-  this->recording_max_seconds_ = 0.0f;
+
+  // Calculate values required for a deterministic
+  // replay and allocate space for one of that size
+  unsigned int max_num_of_frames = in_frames_per_second * in_seconds;
+  unsigned int frames_between_snapshots =
+      in_frames_per_second * in_snapshot_interval_seconds;
+  this->replay_deterministic_ = new DeterministicReplay(
+      max_num_of_frames, 10, in_num_of_players, frames_between_snapshots);
+
+  // Set the time the machine shall record
+  this->recording_max_seconds_ = in_seconds;
   this->recording_elapsed_seconds_ = 0.0f;
-  this->assert_module_ = nullptr;
-  this->assert_mode_on_ = false;
+
+  // For handling replays with several players
+  this->player_io_arr_ = new PlayerIO[in_num_of_players];
+  this->num_of_players_ = in_num_of_players;
+
+  // If we are running in assert mode allocate space
+  // to save a registry every frame
+  if (in_assert_mode) {
+    this->assert_module_ = new AssertModule(max_num_of_frames);
+    this->assert_mode_on_ = true;
+  }
+
+  /* Old constructor when init() still was a thing
+  this->replay_deterministic_ = nullptr;
+      this->recording_max_seconds_ = 0.0f;
+      this->recording_elapsed_seconds_ = 0.0f;
+      this->assert_module_ = nullptr;
+      this->assert_mode_on_ = false;
+  */
 }
 
 ReplayMachine::~ReplayMachine() {
@@ -28,6 +58,7 @@ ReplayMachine::~ReplayMachine() {
   }
 }
 
+/*
 void ReplayMachine::Init(unsigned int in_seconds,
                          unsigned int in_frames_per_second,
                          float in_snapshot_interval_seconds,
@@ -54,6 +85,7 @@ void ReplayMachine::Init(unsigned int in_seconds,
     this->assert_mode_on_ = true;
   }
 }
+*/
 
 bool ReplayMachine::SaveReplayFrame(std::bitset<10>& in_bitset,
                                     float& in_x_value, float& in_y_value,
