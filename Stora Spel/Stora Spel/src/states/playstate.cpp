@@ -77,17 +77,17 @@ void PlayState::TestParticles() {
   //= {glm::vec3(0.f, 1.f, 0.f)};
 
   glob::SetParticleSettings(handle, "green_donut.txt");
-  glob::SetEmitPosition(handle, glm::vec3(-30.f, 0.f, 0.f));
+  glob::SetEmitPosition(handle, glm::vec3(30.f, 0.f, 0.f));
 
   e = registry_gameplay_.create();
   handle = glob::CreateParticleSystem();
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "green_donut.txt");
-  glob::SetEmitPosition(handle, glm::vec3(30.f, 0.f, 0.f));
+  glob::SetEmitPosition(handle, glm::vec3(-30.f, 0.f, 0.f));
   //auto ball_view = registry_gameplay_.view<
 
   registry_gameplay_.assign<ParticleComponent>(e, handles, offsets, directions);
-  std::cout << handles.size() << " particle systems\n";
+  //std::cout << handles.size() << " particle systems" << std::endl;
   // Temp
   registry_gameplay_.assign<int>(e, 0);
 }
@@ -100,7 +100,7 @@ void PlayState::Init() {
 
   CreateInGameMenu();
   CreateInitialEntities();
-  TestParticles();
+  //TestParticles();
 
   engine_->GetChat()->SetPosition(
       glm::vec2(30, glob::window::GetWindowDimensions().y - 30));
@@ -687,7 +687,7 @@ void PlayState::Reset() {
     for (int i = 0; i < particle_c.handles.size(); ++i) {
       glob::DestroyParticleSystem(particle_c.handles[i]);
     }
-
+  
     registry_gameplay_.destroy(entity);
   }
 }

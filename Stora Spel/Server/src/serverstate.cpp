@@ -286,7 +286,7 @@ void ServerPlayState::Update(float dt) {
   created_projectiles_.clear();
   pick_ups_.clear();
 
-  if (reset_timer_.Elapsed() > 1.0f) {
+  if (reset_timer_.Elapsed() > 3.0f) {
     ResetEntities();
     reset_timer_.Restart();
     reset_timer_.Pause();
