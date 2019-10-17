@@ -176,7 +176,7 @@ void LobbyState::CreateBackgroundEntities() {
   auto camera = registry_lobby_.create();
   auto& cam_c = registry_lobby_.assign<CameraComponent>(camera);
   auto& cam_trans = registry_lobby_.assign<TransformComponent>(camera);
-  cam_trans.position = glm::vec3(-12.f, 0.f, -3.f);
+  cam_trans.position = glm::vec3(-10.f, 0.f, -3.f);
   glm::vec3 dir = glm::vec3(0) - trans.position;
   cam_c.orientation = glm::quat(glm::vec3(0.f, -0.3f, 0.f));
 }

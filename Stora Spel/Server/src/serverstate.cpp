@@ -378,7 +378,7 @@ void ServerPlayState::CreateArenaEntity() {
   // registry_.assign<ModelComponent>(entity, model_arena);
   registry.assign<TransformComponent>(entity, zero_vec, zero_vec,
                                       arena_scale);
-
+  
   // Add a hitbox
   registry.assign<physics::Arena>(entity, -v2, v2, -v3, v4, -v1, v1);
   auto md = glob::GetMeshData(model_arena);
