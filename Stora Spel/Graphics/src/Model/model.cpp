@@ -198,7 +198,7 @@ void Model::LoadModel(std::string path) {
 
   MakeArmature(scene->mRootNode);
 
-  std::cout << "Bone size: " << bones_.size() << "\n";
+  //std::cout << "Bone size: " << bones_.size() << "\n";
 
   if (bones_.size() > 0) {
     int rootBone = 0;
@@ -208,20 +208,20 @@ void Model::LoadModel(std::string path) {
         break;
       }
     }
-    std::cout << PrintArmature(*bones_.at(rootBone), 0) << "\n";
+    //std::cout << PrintArmature(*bones_.at(rootBone), 0) << "\n";
   }
 
   if (scene->HasAnimations()) {
     // load animations
     int numAnimations = scene->mNumAnimations;
-    std::cout << numAnimations << " animations detected.\n";
+    //std::cout << numAnimations << " animations detected.\n";
     for (int i = 0; i < numAnimations; i++) {
       Animation* anim = new Animation();
       anim->name_ = scene->mAnimations[i]->mName.data;
       anim->duration_ = scene->mAnimations[i]->mDuration;
       anim->tick_per_second_ = scene->mAnimations[i]->mTicksPerSecond;
 
-      std::cout << "Animation " << i << " : " << anim->name_ << "\n";
+      //std::cout << "Animation " << i << " : " << anim->name_ << "\n";
 
       // load channels
       for (int j = 0; j < scene->mAnimations[i]->mNumChannels; j++) {
@@ -255,7 +255,7 @@ void Model::LoadModel(std::string path) {
         if (channel.position_keys.size() == 0 &&
             channel.rotation_keys.size() == 0 &&
             channel.scaling_keys.size() == 0) {
-          std::cout << "Empty channel!\n";
+          //std::cout << "Empty channel!\n";
         }
         anim->channels_.push_back(channel);
       }
@@ -316,7 +316,7 @@ Joint* Model::MakeArmature(aiNode* node) {
       }
     }
     if (knownChildren) {
-      std::cout << "Armature created from " << node->mName.data << "\n";
+      //std::cout << "Armature created from " << node->mName.data << "\n";
       j->id = bones_.size();
       bones_.push_back(j);
     } else {

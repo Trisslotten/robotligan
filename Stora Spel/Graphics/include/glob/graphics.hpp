@@ -9,36 +9,31 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
-#include "joint.hpp"
-#include "animation.hpp"
-#include "glob/mesh_data.hpp"
-
 #include <string>
 #include <unordered_map>
+#include <vector>
+
+#include "animation.hpp"
 #include "camera.hpp"
+#include "glob/mesh_data.hpp"
+#include "joint.hpp"
+#include "handletypes.hpp"
 
 namespace glob {
 
-	struct animData {
-		std::vector<Joint> bones;
-		std::vector<Animation> animations;
-		glm::mat4 globalInverseTransform;
-		bool humanoid = false;
-		int hip = -1;
-		int upperBody = -1;
-		int leftLeg = -1;
-		int rightLeg = -1;
-		int leftArm = -1;
-		int rightArm = -1;
-		int armatureRoot;
-	};
-
-typedef unsigned long ModelHandle;
-typedef unsigned long ParticleSystemHandle;
-typedef unsigned long Font2DHandle;
-typedef unsigned long GUIHandle;
-typedef unsigned long E2DHandle;
-// typedef unsigned long TextureHandle;
+struct animData {
+  std::vector<Joint> bones;
+  std::vector<Animation> animations;
+  glm::mat4 globalInverseTransform;
+  bool humanoid = false;
+  int hip = -1;
+  int upperBody = -1;
+  int leftLeg = -1;
+  int rightLeg = -1;
+  int leftArm = -1;
+  int rightArm = -1;
+  int armatureRoot;
+};
 
 /*
  * Initialize renderer.
@@ -51,6 +46,8 @@ EXPORT void Init();
  * Skips loading if model is loaded.
  */
 EXPORT ModelHandle GetModel(const std::string& filepath);
+
+EXPORT ModelHandle GetTransparentModel(const std::string& filepath);
 
 EXPORT ParticleSystemHandle CreateParticleSystem();
 
@@ -66,15 +63,16 @@ EXPORT void SetParticleSettings(
     ParticleSystemHandle handle,
     std::unordered_map<std::string, std::string> map);
 
-EXPORT void SetParticleSettings(ParticleSystemHandle handle, std::string filename);
+EXPORT void SetParticleSettings(ParticleSystemHandle handle,
+                                std::string filename);
 
 EXPORT Font2DHandle GetFont(const std::string& filepath);
 EXPORT GUIHandle GetGUIItem(const std::string& filepath);
 
 /*
-*Get model information relevant to the animation component
-*
-*/
+ *Get model information relevant to the animation component
+ *
+ */
 
 EXPORT animData GetAnimationData(ModelHandle handle);
 
@@ -84,19 +82,18 @@ EXPORT glob::MeshData GetMeshData(ModelHandle model_h);
 
 EXPORT void UpdateParticles(ParticleSystemHandle handle, float dt);
 
-/*
- * Returns a texture handle for the specified image file.
- * Skips loading if image is loaded.
-EXPORT TextureHandle GetTexture(const std::string& filepath);
- */
-
-/*
- * Submit a model to be rendered.
- */
-EXPORT void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius, glm::float32 ambient);
-EXPORT void SubmitBAM(ModelHandle model_h, glm::mat4 transform, std::vector<glm::mat4> bone_transforms); //Submit Bone Animated Mesh
+EXPORT void SubmitLightSource(glm::vec3 pos, glm::vec3 color,
+                              glm::float32 radius, glm::float32 ambient);
+// Submit Bone Animated Mesh
+EXPORT void SubmitBAM(ModelHandle model_h, glm::mat4 transform,
+                      std::vector<glm::mat4> bone_transforms);
+EXPORT void SubmitBAM(const std::vector<ModelHandle>& handles,
+                      glm::mat4 transform,
+                      std::vector<glm::mat4> bone_transforms);
 EXPORT void Submit(ModelHandle model_h, glm::vec3 pos);
 EXPORT void Submit(ModelHandle model_h, glm::mat4 transform);
+EXPORT void Submit(const std::vector<ModelHandle>& handles,
+                   glm::mat4 transform);
 EXPORT void SubmitParticles(ParticleSystemHandle handle);
 EXPORT void SubmitCube(glm::mat4 t);
 EXPORT void SubmitWireframeMesh(ModelHandle model_h);
