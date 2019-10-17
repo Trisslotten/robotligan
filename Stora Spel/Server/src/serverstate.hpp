@@ -95,7 +95,8 @@ class ServerPlayState : public ServerState {
   // void CreatePlayer(long client_id);
 
   void ResetEntities();
-
+  void StartResetTimer();
+  bool IsResetting() { return reset_; }
   bool StartRecording(unsigned int in_replay_length_seconds);
 
   void SetClientReceiveUpdates(long client_id, bool initialized) {
@@ -138,6 +139,8 @@ class ServerPlayState : public ServerState {
   int count_down_time_ = 5;
   Timer match_timer_;
   Timer countdown_timer_;
+  Timer reset_timer_;
+  bool reset_ = false;
 
   std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
   std::vector<Projectile> created_projectiles_;

@@ -99,6 +99,7 @@ struct GameEvent {
     SPRINT_END,
     RUN_START,
     RUN_END,
+    RESET,
     NUM_EVENTS
   } type;
   union {
@@ -153,6 +154,10 @@ struct GameEvent {
     struct {
       EntityID player_id;
     } run_end;
+
+    // RESET
+    struct {}
+    reset;
   };
 };
 
