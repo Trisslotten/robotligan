@@ -104,6 +104,8 @@ void LobbyState::Init() {
   SelectAbilityHandler(my_selected_ability_);
 
   engine_->GetChat()->SetPosition(glm::vec2(20, 140));
+
+  engine_->GetAnimationSystem().Reset();
 }
 
 void LobbyState::Update() {
