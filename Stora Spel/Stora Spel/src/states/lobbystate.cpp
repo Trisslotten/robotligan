@@ -75,7 +75,7 @@ void LobbyState::SelectAbilityHandler(int id) {
     b_c.gui_handle_current = ability_back_selected_;
   }
 
-  //send selection to server
+  // send selection to server
   auto& packet = engine_->GetPacket();
   packet << id;
   packet << PacketBlockType::LOBBY_SELECT_ABILITY;
@@ -146,45 +146,56 @@ void LobbyState::CreateBackgroundEntities() {
   registry_lobby_.assign<TransformComponent>(
       light_test, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
-
-  // ladda in och skapa entity för bana
-  auto arena = registry_lobby_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 arena_scale = glm::vec3(1.0f);
-  glob::ModelHandle model_arena =
-      glob::GetModel("assets/Map/Map_unified_TMP.fbx");
-  registry_lobby_.assign<ModelComponent>(arena, model_arena);
-  registry_lobby_.assign<TransformComponent>(arena, zero_vec, zero_vec,
-                                             arena_scale);
-  // ladda in och skapa entity för boll
-  auto ball = registry_lobby_.create();
-  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/TestBall.fbx");
-  registry_lobby_.assign<ModelComponent>(ball, model_ball);
-  registry_lobby_.assign<TransformComponent>(ball, glm::vec3(0, -4, 0),
-                                             zero_vec, glm::vec3(1.0f));
-  registry_lobby_.assign<BallComponent>(ball);
+  {
+    // ladda in och skapa entity för bana
+    auto arena = registry_lobby_.create();
+    glm::vec3 arena_scale = glm::vec3(1.0f);
+    glob::ModelHandle model_arena =
+        glob::GetModel("assets/Map/Map_unified_TMP.fbx");
+    auto& model_c = registry_lobby_.assign<ModelComponent>(arena);
+    model_c.handles.push_back(model_arena);
+    registry_lobby_.assign<TransformComponent>(arena, zero_vec, zero_vec,
+                                               arena_scale);
+  }
 
-  // ladda in och skapa entity för robotar
-  auto robot = registry_lobby_.create();
-  auto& trans = registry_lobby_.assign<TransformComponent>(
-      robot, zero_vec, glm::vec3(0.f, 180.f, 0.f), glm::vec3(0.01f));
-  glob::ModelHandle model_robot =
-      glob::GetModel("assets/Mech/Mech.fbx");
-  registry_lobby_.assign<ModelComponent>(robot, model_robot);
-  //registry_lobby_.assign<AnimationComponent>(robot, glob::GetAnimationData(model_robot));
-  trans.position = glm::vec3(10.f, -4.f, 0.f);
+  {
+    // ladda in och skapa entity för boll
+    auto ball = registry_lobby_.create();
+    glob::ModelHandle model_ball = glob::GetModel("assets/Ball/TestBall.fbx");
+    auto& model_c = registry_lobby_.assign<ModelComponent>(ball);
+    model_c.handles.push_back(model_ball);
+    registry_lobby_.assign<TransformComponent>(ball, glm::vec3(0, -4, 0),
+                                               zero_vec, glm::vec3(1.0f));
+    registry_lobby_.assign<BallComponent>(ball);
+  }
 
-  // lägga ut en kamera i scenen
-  auto camera = registry_lobby_.create();
-  auto& cam_c = registry_lobby_.assign<CameraComponent>(camera);
-  auto& cam_trans = registry_lobby_.assign<TransformComponent>(camera);
-  cam_trans.position = glm::vec3(-10.f, 0.f, -3.f);
-  glm::vec3 dir = glm::vec3(0) - trans.position;
-  cam_c.orientation = glm::quat(glm::vec3(0.f, -0.3f, 0.f));
+  {
+    // ladda in och skapa entity för robotar
+    auto robot = registry_lobby_.create();
+    auto& trans = registry_lobby_.assign<TransformComponent>(
+        robot, zero_vec, glm::vec3(0.f, 180.f, 0.f), glm::vec3(0.01f));
+    glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
+    auto& model_c = registry_lobby_.assign<ModelComponent>(robot);
+    model_c.handles.push_back(model_robot);
+    // registry_lobby_.assign<AnimationComponent>(robot,
+    // glob::GetAnimationData(model_robot));
+    trans.position = glm::vec3(10.f, -4.f, 0.f);
+  }
+
+  {
+    // lägga ut en kamera i scenen
+    auto camera = registry_lobby_.create();
+    auto& cam_c = registry_lobby_.assign<CameraComponent>(camera);
+    auto& cam_trans = registry_lobby_.assign<TransformComponent>(camera);
+    cam_trans.position = glm::vec3(-10.f, 0.f, -3.f);
+    glm::vec3 dir = glm::vec3(0) - cam_trans.position;
+    cam_c.orientation = glm::quat(glm::vec3(0.f, -0.3f, 0.f));
+  }
 }
 
 void LobbyState::CreateGUIElements() {
-  //ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
+  // ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
   team_select_back_ =
       glob::GetGUIItem("Assets/GUI_elements/lobby_team_no_names.png");
   font_team_names_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
@@ -204,7 +215,7 @@ void LobbyState::CreateGUIElements() {
                                          std::to_string(i) + ".png");
   }
 
-  //ready button
+  // ready button
   auto button = registry_lobby_.create();
   ButtonComponent& b_c = registry_lobby_.assign<ButtonComponent>(button);
   /*ready_button_c = GenerateButtonEntity(
@@ -273,7 +284,7 @@ void LobbyState::CreateGUIElements() {
       b_c->bounds = glm::vec2(82, 82);
       b_c->find_name = "ability_" + std::to_string(i);
       c++;
-	}
+    }
   }
 }
 void LobbyState::DrawTeamSelect() {

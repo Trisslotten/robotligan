@@ -16,10 +16,10 @@
 #include "ecs/systems/buff_controller_system.hpp"
 #include "ecs/systems/collision_system.hpp"
 #include "ecs/systems/goal_system.hpp"
+#include "ecs/systems/missile_system.hpp"
 #include "ecs/systems/physics_system.hpp"
 #include "ecs/systems/player_controller_system.hpp"
 #include "ecs/systems/target_system.hpp"
-#include "ecs/systems/missile_system.hpp"
 
 namespace {}  // namespace
 
@@ -157,7 +157,7 @@ void GameServer::HandleStateChange() {
         }
         if (went_from_play_to_lobby) {
           lobby_state_.SetTeamsUpdated(true);
-		}
+        }
         current_state_ = &play_state_;
         break;
     }
@@ -176,8 +176,8 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       packet >> pitch;
       packet >> actions;
       play_state_.SetPlayerInput(client_id, actions, pitch, yaw);
-      //std::cout << "PACKET: INPUT, " << actions << ", " << yaw << ", " <<
-      //pitch << "\n";
+      // std::cout << "PACKET: INPUT, " << actions << ", " << yaw << ", " <<
+      // pitch << "\n";
       break;
     }
     case PacketBlockType::CLIENT_READY: {
@@ -279,9 +279,11 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
   }
 }
 
-void GameServer::ReceiveGameEvent(const GameEvent& event)
-{
+void GameServer::ReceiveGameEvent(const GameEvent& event) {
   game_events_.push_back(event);
+  if (event.type == GameEvent::GOAL) {
+    play_state_.StartResetTimer();
+  }
 }
 
 void GameServer::UpdateSystems(float dt) {
@@ -293,9 +295,9 @@ void GameServer::UpdateSystems(float dt) {
 
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);
-  if (goal_system::Update(registry_)) {
-    play_state_.ResetEntities();
-  }
+  if (!play_state_.IsResetting())
+    goal_system::Update(registry_);
+
   dispatcher.update<EventInfo>();
   // glob::LoadWireframeMesh(model_arena, mh.pos, mh.indices);
 }

@@ -30,7 +30,7 @@ void Update(entt::registry& registry) {
         input_c.text.pop_back();
       }
     }
-    glob::Submit(input_c.font_hndl, input_c.pos, 0.5f, 150.0f);
+    //glob::Submit(input_c.font_hndl, input_c.pos, 0.5f, 150.0f);
     glob::Submit(input_c.font_hndl, input_c.pos, 20, input_c.text,
                  glm::vec4(0.0f, 0.0f, 0.0f, 1));
   }

@@ -31,7 +31,7 @@ void RenderSystem(entt::registry& registry) {
   for (auto& model : view_model) {
     auto& t = view_model.get<TransformComponent>(model);
     auto& m = view_model.get<ModelComponent>(model);
-    glob::Submit(m.handle, glm::translate(t.position) *
+    glob::Submit(m.handles, glm::translate(t.position) *
                                glm::toMat4(t.rotation) *
                                glm::translate(-m.offset) * glm::scale(t.scale));
   }
@@ -43,7 +43,7 @@ void RenderSystem(entt::registry& registry) {
     auto& m = animated_models.get<ModelComponent>(model);
     auto& a = animated_models.get<AnimationComponent>(model);
 
-    glob::SubmitBAM(m.handle,
+    glob::SubmitBAM(m.handles,
                     glm::translate(t.position) * glm::toMat4(t.rotation) *
                         glm::translate(-m.offset) * glm::scale(t.scale),
                     a.bone_transforms);

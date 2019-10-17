@@ -18,6 +18,8 @@
 struct PlayerStatInfo {
   int points = 0;
   int goals = 0;
+  int assists = 0;
+  int saves = 0;
   unsigned int team = TEAM_RED;
   EntityID enttity_id  = 0;
 };

@@ -1,7 +1,7 @@
 >end_size= 0
->direction= 0 1 0
->dir_val= 0.9
->velocity= 3
+>direction= 0 0 0
+>dir_val= 0.0
+>velocity= 20
 >color= 0.4 1 0.3 1
 >radius= 0
 >burst= 1
