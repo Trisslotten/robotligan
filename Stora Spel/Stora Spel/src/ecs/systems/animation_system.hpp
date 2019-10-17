@@ -62,6 +62,8 @@ class AnimationSystem {
   void ReceiveGameEvent(GameEvent event);
 
   void UpdateAnimations(entt::registry& registry, float dt);
+
+  void Reset();
 };
 
 #endif  // ANIMATION_SYSTEM_HPP_

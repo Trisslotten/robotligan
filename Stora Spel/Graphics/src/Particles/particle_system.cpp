@@ -245,6 +245,7 @@ namespace glob {
 
   void ParticleSystem::Settings(const ParticleSettings& ps) {
     settings_ = ps;
+    if (settings_.burst) spawns_ = settings_.burst_particles;
   }
 
   ParticleSettings ParticleSystem::GetSettings() {

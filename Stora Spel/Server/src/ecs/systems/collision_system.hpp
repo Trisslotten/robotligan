@@ -13,6 +13,7 @@
 
 #include "boundingboxes.hpp"
 #include "collision.hpp"
+#include "ecs/components.hpp"
 #include "ecs/components/pick_up_event.hpp"
 #include "ecs/components/projectile_component.hpp"
 #include "shared/transform_component.hpp"
@@ -69,10 +70,10 @@ void UpdateCollisions(entt::registry& registry) {
       registry.view<BallComponent, physics::Sphere, PhysicsComponent>();
   auto view_player =
       registry.view<physics::OBB, PhysicsComponent, PlayerComponent>();
-  auto view_arena_mesh = registry.view<physics::MeshHitbox>();
+  auto view_arena = registry.view<physics::MeshHitbox, physics::Arena, FailSafeArenaComponent>();
 
   entt::entity arena_entity;
-  for (auto a : view_arena_mesh) arena_entity = a;
+  for (auto a : view_arena) arena_entity = a;
 
   std::vector<CollisionList> ball_collisions;
   int ball_counter = 0;
@@ -84,6 +85,25 @@ void UpdateCollisions(entt::registry& registry) {
 
     ball_collisions.push_back({});
     ball_collisions[ball_counter].entity = ball_entity;
+    // Collision between ball and arena
+    for (auto arena : view_arena) {
+      auto& arena_mesh_hitbox = view_arena.get<physics::MeshHitbox>(arena);
+      physics::IntersectData data = Intersect(arena_mesh_hitbox, ball_hitbox);
+      if (data.collision) {
+        ball_collisions[ball_counter].collision_list.push_back(
+            {arena, data.normal, data.move_vector, ARENA});
+        //std::cout << "x: " << data.normal.x << " y: " << data.normal.y
+        //          << " z: " << data.normal.z << std::endl;
+      } else {
+        auto& arena_hitbox = view_arena.get<FailSafeArenaComponent>(arena);
+        data = Intersect(arena_hitbox.arena, ball_hitbox);
+        if (data.collision) {
+          ball_collisions[ball_counter].collision_list.push_back(
+              {arena, data.normal, data.move_vector, ARENA});
+        }
+      }
+    }
+
     // Collision between ball and players
     for (auto player : view_player) {
       auto& player_hitbox = view_player.get<physics::OBB>(player);
@@ -98,17 +118,6 @@ void UpdateCollisions(entt::registry& registry) {
       }
     }
 
-    // Collision between ball and arena
-    for (auto arena : view_arena_mesh) {
-      auto& arena_hitbox = view_arena_mesh.get(arena);
-      physics::IntersectData data = Intersect(arena_hitbox, ball_hitbox);
-      if (data.collision) {
-        ball_collisions[ball_counter].collision_list.push_back(
-            {arena, data.normal, data.move_vector, ARENA});
-        //std::cout << "x: " << data.normal.x << " y: " << data.normal.y
-        //          << " z: " << data.normal.z << std::endl;
-      }
-    }
 
     // collision with ball and projectiles
     ProjectileBallCollision(registry, ball_entity);
@@ -139,8 +148,7 @@ void UpdateCollisions(entt::registry& registry) {
   return;
 }
 
-void HandleBallCollisions(entt::registry& registry, const CollisionList& list,
-                          entt::entity arena) {
+void HandleBallCollisions(entt::registry& registry, const CollisionList& list, entt::entity arena) {
   if (list.collision_list.size() == 1) {
     auto& object = list.collision_list[0];
 
@@ -250,40 +258,51 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
 
   bool bounced = false;
 
-  if (object.normal.x) {
-    glm::vec3 temp_normal =
-        glm::normalize(glm::vec3(object.normal.x, 0.f, 0.f));
-    float dot_val = glm::dot(ball_physics.velocity, temp_normal);
-    if (dot_val < 0.f) {
-      ball_physics.velocity =
-          ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
-      bounced = true;
+  //if (object.normal.x) {
+  //  glm::vec3 temp_normal =
+  //      glm::normalize(glm::vec3(object.normal.x, 0.f, 0.f));
+  //  float dot_val = glm::dot(ball_physics.velocity, temp_normal);
+  //  if (dot_val < 0.f) {
+  //    ball_physics.velocity =
+  //      ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
+  //    bounced = true;
+  //  }
+  //}
+  //
+  //if (object.normal.y) {
+  //  glm::vec3 temp_normal =
+  //      glm::normalize(glm::vec3(0.f, object.normal.y, 0.f));
+  //  float dot_val = glm::dot(ball_physics.velocity, temp_normal);
+  //  if (dot_val < 0.f) {
+  //    ball_physics.velocity =
+  //      ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
+  //    bounced = true;
+  //  }
+  //}
+  //
+  //if (object.normal.z) {
+  //  glm::vec3 temp_normal =
+  //      glm::normalize(glm::vec3(0.f, 0.f, object.normal.z));
+  //  float dot_val = glm::dot(ball_physics.velocity, temp_normal);
+  //  if (dot_val < 0.f) {
+  //    ball_physics.velocity =
+  //      ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
+  //    bounced = true;
+  //  }
+  //}
+
+  float dot_val = glm::dot(object.normal, ball_physics.velocity);
+  if (dot_val < 0.f) {
+    ball_physics.velocity =
+        ball_physics.velocity - object.normal * dot_val * 0.8f * 2.f;
+    bounced = true;
+
+    if (object.normal.y > 0.f) {
+      ball_physics.is_airborne = true;
     }
   }
 
-  if (object.normal.y) {
-    glm::vec3 temp_normal =
-        glm::normalize(glm::vec3(0.f, object.normal.y, 0.f));
-    float dot_val = glm::dot(ball_physics.velocity, temp_normal);
-    if (dot_val < 0.f) {
-      ball_physics.velocity =
-          ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
-      bounced = true;
-    }
-  }
-
-  if (object.normal.z) {
-    glm::vec3 temp_normal =
-        glm::normalize(glm::vec3(0.f, 0.f, object.normal.z));
-    float dot_val = glm::dot(ball_physics.velocity, temp_normal);
-    if (dot_val < 0.f) {
-      ball_physics.velocity =
-          ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
-      bounced = true;
-    }
-  }
-
-  if (object.normal.y > 0.2f) {
+  if (object.normal.y == 1.f) {
     // Ball hits the ground
     if (ball_physics.velocity.y < 0.8f) {
       ball_physics.velocity.y = 0.f;

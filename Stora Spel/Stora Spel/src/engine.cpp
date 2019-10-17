@@ -41,6 +41,8 @@ void Engine::Init() {
       sound_system_);
   dispatcher.sink<GameEvent>().connect<&AnimationSystem::ReceiveGameEvent>(
       animation_system_);
+  dispatcher.sink<GameEvent>().connect<&PlayState::ReceiveGameEvent>(
+      play_state_);
 
   SetKeybinds();
 
@@ -336,7 +338,9 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       unsigned int score, team;
       packet >> score;
       packet >> team;
-      if (scores_[team] != score) reset = true;
+      if (scores_[team] != score) {
+        play_state_.TestParticles();
+      }
       scores_[team] = score;
       break;
     }

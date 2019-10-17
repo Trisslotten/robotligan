@@ -17,7 +17,8 @@ const unsigned kDistanceForBlock = 250;
 const float kTimeToSimulate = 1.5f;
 bool just_blocked = false;
 glm::vec3 last_blocked = glm::vec3(0.0f);
-bool Update(entt::registry& registry) {
+
+void Update(entt::registry& registry) {
   auto view_balls = registry.view<BallComponent, TransformComponent,
                                   physics::Sphere, PhysicsComponent>();
 
@@ -78,7 +79,7 @@ bool Update(entt::registry& registry) {
             }
           }
 
-          return true;
+          return;
         } else if (distance < kDistanceForBlock) {
           auto view_players =
               registry.view<PlayerComponent, TeamComponent, PointsComponent>();
@@ -130,8 +131,6 @@ bool Update(entt::registry& registry) {
     }
     just_blocked = false;
   }
-
-  return false;
 }
 }  // namespace goal_system
 #endif  // GOAL_SYSTEM_HPP_

@@ -63,6 +63,7 @@ void ServerLobbyState::Cleanup() {
 }
 
 void ServerPlayState::Init() {
+  reset_timer_.Pause();
   auto& server = game_server_->GetServer();
   auto& registry = game_server_->GetRegistry();
 
@@ -141,7 +142,7 @@ void ServerPlayState::Update(float dt) {
           this->Replay(player_c.actions, player_c.pitch, player_c.yaw);
         }
       });
-  //players_inputs_.clear();
+  // players_inputs_.clear();
 
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     EntityID client_player_id = clients_player_ids_[client_id];
@@ -197,8 +198,8 @@ void ServerPlayState::Update(float dt) {
     }
     to_send << PacketBlockType::PLAYER_STAMINA;
 
-    auto view_players2 =
-        registry.view<PlayerComponent, TeamComponent, PointsComponent, IDComponent>();
+    auto view_players2 = registry.view<PlayerComponent, TeamComponent,
+                                       PointsComponent, IDComponent>();
 
     for (auto player : view_players2) {
       auto& player_player_c = registry.get<PlayerComponent>(player);
@@ -208,7 +209,7 @@ void ServerPlayState::Update(float dt) {
 
       if (player_points_c.changed) {
         to_send << player_team_c.team;
-        to_send << player_player_c.client_id; //client id
+        to_send << player_player_c.client_id;  // client id
         to_send << player_points_c.GetPoints();
         to_send << player_points_c.GetGoals();
         to_send << player_id_c.id;
@@ -285,6 +286,16 @@ void ServerPlayState::Update(float dt) {
   created_projectiles_.clear();
   pick_ups_.clear();
 
+  if (reset_timer_.Elapsed() > 3.0f) {
+    ResetEntities();
+    reset_timer_.Restart();
+    reset_timer_.Pause();
+    reset_ = false;
+
+    GameEvent reset_event;
+    reset_event.type = GameEvent::RESET;
+    dispatcher.trigger<GameEvent>(reset_event);
+  }
   if (match_timer_.Elapsed() > match_time_) {
     EndGame();
   }
@@ -372,8 +383,9 @@ void ServerPlayState::CreateArenaEntity() {
   float v3 = 2.723f * arena_scale.y;
   float v4 = 5.723f * arena_scale.y;
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  
-  glob::ModelHandle model_arena = glob::GetModel("assets/Map/Map_singular_TMP.fbx");
+
+  glob::ModelHandle model_arena =
+      glob::GetModel("assets/Map/Map_singular_TMP.fbx");
   ;
 
   // Add components for an arena
@@ -388,10 +400,26 @@ void ServerPlayState::CreateArenaEntity() {
       glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f)) *
       glm::rotate(90.f * glm::pi<float>() / 180.f, glm::vec3(0.f, 0.f, 1.f));
 
- 
   for (auto& v : md.pos) v = matrix * glm::vec4(v, 1.f);
   for (auto& v : md.pos) v *= arena_scale;
- 
+
+  physics::Arena a;
+  a.xmax = -1;
+  a.xmin = 1;
+  a.ymax = -1;
+  a.ymin = 1;
+  a.zmax = -1;
+  a.zmin = 1;
+  for (auto& v : md.pos) {
+    if (v.x > a.xmax) a.xmax = v.x;
+    if (v.x < a.xmin) a.xmin = v.x;
+    if (v.y > a.ymax) a.ymax = v.y;
+    if (v.y < a.ymin) a.ymin = v.y;
+    if (v.z > a.zmax) a.zmax = v.z;
+    if (v.z < a.zmin) a.zmin = v.z;
+  }
+
+  registry.assign<FailSafeArenaComponent>(entity, a);
   auto& mh = registry.assign<physics::MeshHitbox>(entity, std::move(md.pos),
                                                   std::move(md.indices));
 }
@@ -415,7 +443,7 @@ void ServerPlayState::CreateBallEntity() {
   // registry_.assign<ModelComponent>(entity, model_ball);
   registry.assign<PhysicsComponent>(entity, glm::vec3(0), glm::vec3(0.f),
                                     ball_is_airborne, ball_friction);
-  registry.assign<TransformComponent>(entity, zero_vec,glm::vec3(0),
+  registry.assign<TransformComponent>(entity, zero_vec, glm::vec3(0),
                                       ball_scale);
 
   // Add a hitbox
@@ -753,6 +781,11 @@ void ServerPlayState::HandleNewTeam() {
       new_teams_.end());
 }
 */
+
+void ServerPlayState::StartResetTimer() {
+  reset_timer_.Restart();
+  reset_ = true;
+}
 
 // Replay stuff---
 bool ServerPlayState::StartRecording(unsigned int in_replay_length_seconds) {
