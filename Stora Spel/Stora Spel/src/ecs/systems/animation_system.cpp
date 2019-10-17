@@ -90,6 +90,21 @@ void AnimationSystem::PlayAnimation(std::string name, float speed,
     anim_ptr->body_argument_ = bodyArgument;
   }
 
+  bool found = false;
+  for (auto& group : p_groups) {
+    if (group.priority == priority) {
+      group.animations.push_back(anim_ptr);
+      found = true;
+      break;
+	}
+  }
+  if (!found) {
+    priorityGroup pg;
+    pg.priority = priority;
+    pg.animations.push_back(anim_ptr);
+    p_groups.push_back(pg);
+  }
+
   // std::cout << "Playing " << anim_ptr->name_ << "\n";
 }
 
@@ -103,14 +118,14 @@ void AnimationSystem::StopAnimation(std::string name, AnimationComponent* ac) {
 }
 
 void AnimationSystem::StrengthModulator(AnimationComponent* ac) {
-  for (auto& targetAnimation : ac->active_animations) {
-    float totStrength = 0.f;
-    for (auto& otherAnimation : ac->active_animations) {
-      if (targetAnimation->priority_ == otherAnimation->priority_) {
-        totStrength += otherAnimation->strength_;
-      }
+  for (auto& group : p_groups) {
+    float totStrength = 0;
+    for (auto& anim : group.animations) {
+      totStrength += anim->strength_;
+	}
+    for (auto& anim : group.animations) {
+      anim->strength_ /= totStrength;
     }
-    targetAnimation->strength_ = targetAnimation->strength_ / totStrength;
   }
 }
 
@@ -318,6 +333,15 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
         a.active_animations.erase(a.active_animations.begin() + i);
         i--;
         removedAnimation = true;
+		//remove from priority group
+        for (auto& group : p_groups) {
+          for (int a_i = 0; a_i < group.animations.size(); a_i++) {
+            if (anim == group.animations.at(a_i)) {
+              group.animations.erase(group.animations.begin() + a_i);
+              break;
+			}
+		  }
+		}
       } else {
         anim->current_frame_time_ += anim->speed_ * anim->tick_per_second_ * dt;
       }
@@ -339,8 +363,6 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
               channel->current_scaling_pos++;
             }
 
-            float scaleInterpolation = 0.f;
-
             int rotationPos = channel->current_rotation_pos;
             aiQuatKey rotationKey = channel->rotation_keys.at(rotationPos);
             glm::mat4 rotation =
@@ -349,8 +371,6 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
             if (anim->current_frame_time_ >= rotationKey.mTime) {
               channel->current_rotation_pos++;
             }
-
-            float rotationInterpolation = 0.f;
 
             int positionPos = channel->current_position_pos;
             aiVectorKey positionKey = channel->position_keys.at(positionPos);
@@ -361,8 +381,6 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
             if (anim->current_frame_time_ >= positionKey.mTime) {
               channel->current_position_pos++;
             }
-
-            float positionInterpolation = 0.f;
 
             glm::mat4 combPRS = position * rotation * scaling;
 
