@@ -644,6 +644,7 @@ ParticleSystemHandle CreateParticleSystem() {
     if (buffer_particle_systems[i].in_use == false) {
       index = i;
       buffer_particle_systems[i].in_use = true;
+      break;
     }
   }
 
