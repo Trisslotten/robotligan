@@ -11,7 +11,7 @@
 #include "ecs/components.hpp"
 #include "gameserver.hpp"
 
-#include <algorithm>
+#include <map>
 
 void ServerLobbyState::Init() {
   //
@@ -82,38 +82,39 @@ void ServerPlayState::Init() {
 void ServerPlayState::Update(float dt) {
   auto& registry = game_server_->GetRegistry();
 
-  // Stuff id and player components a vector
-  std::vector<Bundle> bundle_vec;
+  std::map<EntityID, entt::entity> ordered_map;
 
+  // Add all entities with an IDComponent and a PlayerComponent to a map
   registry.view<IDComponent, PlayerComponent>().each(
       [&](auto entity, IDComponent& id_c, PlayerComponent& player_c) {
-        bundle_vec.push_back(Bundle(id_c, player_c));
+        ordered_map[id_c.id] = entity;
       });
 
-  // Sort the vector dependant on the id component
-  // in each bundle
-  std::sort(bundle_vec.begin(), bundle_vec.end(), BundleCompare);
-
-  for (unsigned int i = 0; i < bundle_vec.size(); i++) {
-    // Retrive the player component from the sorted vector
-    PlayerComponent& player_c = bundle_vec.at(i).player_c;
+  // Go through the ordered entities
+  unsigned int loop_index = 0;
+  for (auto pair : ordered_map) {
+    PlayerComponent& player_c = registry.get<PlayerComponent>(pair.second);
 
     // Check if we are taking inputs from the
     // client or if we are reading them from a replay
     if (!this->replay_) {
       auto inputs = players_inputs_[player_c.client_id];
+
       player_c.actions = inputs.first;
       player_c.pitch += inputs.second.x;
       player_c.yaw += inputs.second.y;
       // Check if the game should be be recorded
       if (this->record_) {
-        this->Record(player_c.actions, player_c.pitch, player_c.yaw, dt);
+        this->Record(player_c.actions, player_c.pitch, player_c.yaw, dt, loop_index);
       }
     } else {
-      this->Replay(player_c.actions, player_c.pitch, player_c.yaw);
+      this->Replay(player_c.actions, player_c.pitch, player_c.yaw, loop_index);
     }
+
+	loop_index++;
   }
 
+  // players_inputs_.clear();
   players_inputs_.clear();
 
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
@@ -582,6 +583,7 @@ bool ServerPlayState::StartRecording(unsigned int in_replay_length_seconds) {
     // Initiate the Replay Machine
     std::cout << "Recording...\n";
     this->replay_machine_->Init(in_replay_length_seconds, kServerUpdateRate, 1,
+                                (this->blue_players_ + this->red_players_),
                                 true);
     this->record_ = true;
     return true;  // NTS: Return false if recording cannot start?
@@ -590,12 +592,13 @@ bool ServerPlayState::StartRecording(unsigned int in_replay_length_seconds) {
 }
 
 void ServerPlayState::Record(std::bitset<10>& in_bitset, float& in_x_value,
-                             float& in_y_value, const float& in_dt) {
+                             float& in_y_value, const float& in_dt,
+                             unsigned int in_player_index) {
   auto& registry = this->game_server_->GetRegistry();
 
   // Save the frame with the ReplayMachine
   if (this->replay_machine_->SaveReplayFrame(in_bitset, in_x_value, in_y_value,
-                                             registry, in_dt)) {
+                                             registry, in_dt, in_player_index)) {
     std::cout << "Replaying...\n";
     // If true is returned it means the internal
     // BitPack is fully written and there is no
@@ -608,13 +611,13 @@ void ServerPlayState::Record(std::bitset<10>& in_bitset, float& in_x_value,
 }
 
 void ServerPlayState::Replay(std::bitset<10>& in_bitset, float& in_x_value,
-                             float& in_y_value) {
+                             float& in_y_value, unsigned int in_player_index) {
   auto& registry = this->game_server_->GetRegistry();
   // Ensure we are not recording the replay
   this->record_ = false;
   // Read a frame with the ReplayMachine
   if (this->replay_machine_->LoadReplayFrame(in_bitset, in_x_value, in_y_value,
-                                             registry)) {
+                                             registry, in_player_index)) {
     std::cout << "Finished.\n";
     // If true is returned it means the internal
     // BiPack has been fully read and there is no
