@@ -6,6 +6,7 @@
 #include <collision.hpp>
 #include <ecs\components\pick_up_event.hpp>
 #include <glob\graphics.hpp>
+#include <physics.hpp>
 #include <shared\id_component.hpp>
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
@@ -64,6 +65,11 @@ void ServerLobbyState::Cleanup() {
 void ServerPlayState::Init() {
   auto& server = game_server_->GetServer();
   auto& registry = game_server_->GetRegistry();
+
+  // initialize option values
+  match_time_ = (int)GlobalSettings::Access()->ValueOf("MATCH_TIME");
+  count_down_time_ = (int)GlobalSettings::Access()->ValueOf("COUNTDOWN_TIME");
+  physics::SetGravity(GlobalSettings::Access()->ValueOf("PHYSICS_GRAVITY"));
 
   // Start the countdown and match timer
   match_timer_.Restart();
@@ -135,7 +141,7 @@ void ServerPlayState::Update(float dt) {
           this->Replay(player_c.actions, player_c.pitch, player_c.yaw);
         }
       });
-  players_inputs_.clear();
+  //players_inputs_.clear();
 
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     EntityID client_player_id = clients_player_ids_[client_id];
@@ -192,18 +198,20 @@ void ServerPlayState::Update(float dt) {
     to_send << PacketBlockType::PLAYER_STAMINA;
 
     auto view_players2 =
-        registry.view<PlayerComponent, TeamComponent, PointsComponent>();
+        registry.view<PlayerComponent, TeamComponent, PointsComponent, IDComponent>();
 
     for (auto player : view_players2) {
       auto& player_player_c = registry.get<PlayerComponent>(player);
       auto& player_points_c = registry.get<PointsComponent>(player);
       auto& player_team_c = registry.get<TeamComponent>(player);
+      auto& player_id_c = registry.get<IDComponent>(player);
 
       if (player_points_c.changed) {
         to_send << player_team_c.team;
-        to_send << player_player_c.client_id;
+        to_send << player_player_c.client_id; //client id
         to_send << player_points_c.GetPoints();
         to_send << player_points_c.GetGoals();
+        to_send << player_id_c.id;
         to_send << player_points_c.GetBlocks();
         to_send << player_points_c.GetAssists();
         to_send << PacketBlockType::UPDATE_POINTS;
@@ -249,13 +257,12 @@ void ServerPlayState::Update(float dt) {
       to_send << projectiles.projectile_id;
       to_send << PacketBlockType::CREATE_PROJECTILE;
     }
-    created_projectiles_.clear();
+
     // send destroy entity
     for (auto entity_id : destroy_entities_) {
       to_send << entity_id;
       to_send << PacketBlockType::DESTROY_ENTITIES;
     }
-    destroy_entities_.clear();
 
     // Send countdown & match time in sec
     to_send << (int)countdown_timer_.Elapsed();
@@ -274,6 +281,8 @@ void ServerPlayState::Update(float dt) {
       goal_goal_c.switched_this_tick = false;
     }
   }
+  destroy_entities_.clear();
+  created_projectiles_.clear();
   pick_ups_.clear();
 
   if (match_timer_.Elapsed() > match_time_) {
@@ -355,29 +364,34 @@ void ServerPlayState::CreateArenaEntity() {
   auto& registry = game_server_->GetRegistry();
 
   auto entity = registry.create();
-
+  glm::vec3 arena_scale = glm::vec3(4.0f, 4.0f, 4.0f);
   // Prepare hard-coded values
   // Scale on the hitbox for the map
-  float v1 = 7.171f;
-  float v2 = 10.6859;  // 13.596f;
-  float v3 = 5.723f;
+  float v1 = 6.8f * arena_scale.z;
+  float v2 = 10.67f * arena_scale.x;  // 13.596f;
+  float v3 = 2.723f * arena_scale.y;
+  float v4 = 5.723f * arena_scale.y;
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 arena_scale = glm::vec3(1.0f);
-  glob::ModelHandle model_arena =
-      glob::GetModel("assets/Map_rectangular/map_rextangular.fbx");
+  
+  glob::ModelHandle model_arena = glob::GetModel("assets/Map/Map_singular_TMP.fbx");
+  ;
 
   // Add components for an arena
   // registry_.assign<ModelComponent>(entity, model_arena);
-  registry.assign<TransformComponent>(entity, zero_vec, zero_vec, arena_scale);
-
+  registry.assign<TransformComponent>(entity, zero_vec, zero_vec,
+                                      arena_scale);
+  
   // Add a hitbox
-  registry.assign<physics::Arena>(entity, -v2, v2, -v3, v3, -v1, v1);
+  registry.assign<physics::Arena>(entity, -v2, v2, -v3, v4, -v1, v1);
   auto md = glob::GetMeshData(model_arena);
   glm::mat4 matrix =
       glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f)) *
       glm::rotate(90.f * glm::pi<float>() / 180.f, glm::vec3(0.f, 0.f, 1.f));
 
+ 
   for (auto& v : md.pos) v = matrix * glm::vec4(v, 1.f);
+  for (auto& v : md.pos) v *= arena_scale;
+ 
   auto& mh = registry.assign<physics::MeshHitbox>(entity, std::move(md.pos),
                                                   std::move(md.indices));
 }
@@ -401,7 +415,7 @@ void ServerPlayState::CreateBallEntity() {
   // registry_.assign<ModelComponent>(entity, model_ball);
   registry.assign<PhysicsComponent>(entity, glm::vec3(0), glm::vec3(0.f),
                                     ball_is_airborne, ball_friction);
-  registry.assign<TransformComponent>(entity, glm::vec3(0), zero_vec,
+  registry.assign<TransformComponent>(entity, zero_vec,glm::vec3(0),
                                       ball_scale);
 
   // Add a hitbox
@@ -602,7 +616,7 @@ void ServerPlayState::ResetEntities() {
 
 void ServerPlayState::CreatePickUpComponents() {
   auto& registry = game_server_->GetRegistry();
-  glm::vec3 pos = glm::vec3(3.f, -2.f, 3.f);
+  glm::vec3 pos = glm::vec3((float)(rand() % 20), -6.8f, (float)(rand() % 10));
   auto entity = registry.create();
   registry.assign<TransformComponent>(entity, pos, glm::vec3(0.f),
                                       glm::vec3(1.f));
@@ -635,6 +649,15 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       created_projectiles_.push_back(projectile);
       break;
     }
+    case Event::CREATE_TELEPORT_PROJECTILE: {
+      auto& registry = game_server_->GetRegistry();
+      Projectile projectile;
+      projectile.entity_id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, projectile.entity_id);
+      projectile.projectile_id = ProjectileID::TELEPORT_PROJECTILE;
+      created_projectiles_.push_back(projectile);
+      break;
+    }
     case Event::CREATE_FORCE_PUSH: {
       auto& registry = game_server_->GetRegistry();
       Projectile projectile;
@@ -642,6 +665,23 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       registry.assign<IDComponent>(e.entity, projectile.entity_id);
       projectile.projectile_id = ProjectileID::FORCE_PUSH_OBJECT;
       created_projectiles_.push_back(projectile);
+      break;
+    }
+    case Event::CREATE_MISSILE: {
+      auto& registry = game_server_->GetRegistry();
+      Projectile projectile;
+      projectile.entity_id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, projectile.entity_id);
+      projectile.projectile_id = ProjectileID::MISSILE_OBJECT;
+      created_projectiles_.push_back(projectile);
+      break;
+    }
+    case Event::CHANGED_TARGET: {
+      std::unordered_map<int, NetAPI::Common::Packet>& packets =
+          game_server_->GetPackets();
+      auto p_c = game_server_->GetRegistry().get<PlayerComponent>(e.entity);
+      packets[p_c.client_id] << e.e_id;
+      packets[p_c.client_id] << PacketBlockType::YOUR_TARGET;
       break;
     }
     default:
@@ -655,21 +695,21 @@ void ServerPlayState::CreateGoals() {
   auto entity_blue = registry.create();
   registry.assign<physics::OBB>(entity_blue, glm::vec3(0.f, 0.f, 0.f),
                                 glm::vec3(1, 0, 0), glm::vec3(0, 1, 0),
-                                glm::vec3(0, 0, 1), 1.f, 1.f, 2.f);
+                                glm::vec3(0, 0, 1), 4.f, 4.f, 8.f);
   registry.assign<TeamComponent>(entity_blue, TEAM_BLUE);
   registry.assign<GoalComponenet>(entity_blue);
   auto& trans_comp = registry.assign<TransformComponent>(entity_blue);
-  trans_comp.position = glm::vec3(-12.f, -4.f, 0.f);
+  trans_comp.position = glm::vec3(-48.f, -6.f, 0.f);
 
   // red team's goal, place at blue goal in world
   auto entity_red = registry.create();
   registry.assign<physics::OBB>(entity_red, glm::vec3(0.f, 0.f, 0.f),
                                 glm::vec3(1, 0, 0), glm::vec3(0, 1, 0),
-                                glm::vec3(0, 0, 1), 1.f, 1.f, 2.f);
+                                glm::vec3(0, 0, 1), 4.f, 4.f, 8.f);
   registry.assign<TeamComponent>(entity_red, TEAM_RED);
   registry.assign<GoalComponenet>(entity_red);
   auto& trans_comp2 = registry.assign<TransformComponent>(entity_red);
-  trans_comp2.position = glm::vec3(12.f, -4.f, 0.f);
+  trans_comp2.position = glm::vec3(48.f, -6.f, 0.f);
 }
 
 /*

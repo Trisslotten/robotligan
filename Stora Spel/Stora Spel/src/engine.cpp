@@ -9,16 +9,18 @@
 #include <glob\window.hpp>
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
-#include "ecs/systems/button_system.hpp"
+#include "ecs/systems/animation_system.hpp"
+#include "ecs/systems/particle_system.hpp"
+#include "ecs/systems/gui_system.hpp"
 #include "ecs/systems/render_system.hpp"
 #include "ecs/systems/sound_system.hpp"
 #include "entitycreation.hpp"
+#include "eventdispatcher.hpp"
 #include "shared/camera_component.hpp"
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
-#include "eventdispatcher.hpp"
 
 Engine::Engine() {}
 
@@ -28,6 +30,7 @@ void Engine::Init() {
   glob::Init();
   Input::Initialize();
   sound_system_.Init(this);
+  animation_system_.Init(this);
 
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
@@ -36,6 +39,8 @@ void Engine::Init() {
 
   dispatcher.sink<GameEvent>().connect<&SoundSystem::ReceiveGameEvent>(
       sound_system_);
+  dispatcher.sink<GameEvent>().connect<&AnimationSystem::ReceiveGameEvent>(
+      animation_system_);
 
   SetKeybinds();
 
@@ -65,8 +70,10 @@ void Engine::Init() {
   lobby_state_.SetEngine(this);
   connect_menu_state_.SetEngine(this);
   play_state_.SetEngine(this);
+  settings_state_.SetEngine(this);
 
   main_menu_state_.Startup();
+  settings_state_.Startup();
   connect_menu_state_.Startup();
   lobby_state_.Startup();
 
@@ -75,6 +82,8 @@ void Engine::Init() {
   main_menu_state_.Init();
   current_state_ = &main_menu_state_;
   wanted_state_type_ = StateType::MAIN_MENU;
+
+  UpdateSettingsValues();
 }
 
 void Engine::Update(float dt) {
@@ -82,13 +91,19 @@ void Engine::Update(float dt) {
 
   if (take_game_input_ == true) {
     // accumulate key presses
+    for (auto const& [key, action] : keybinds_) {
+      key_presses_[key] = 0;
+    }
+    for (auto const& [button, action] : mousebinds_) {
+      mouse_presses_[button] = 0;
+    }
     for (auto const& [key, action] : keybinds_)
       if (Input::IsKeyDown(key)) key_presses_[key]++;
     for (auto const& [button, action] : mousebinds_)
       if (Input::IsMouseButtonDown(button)) mouse_presses_[button]++;
 
     // accumulate mouse movement
-    float mouse_sensitivity = 0.003f;
+    float mouse_sensitivity = 0.003f * mouse_sensitivity_;
     glm::vec2 mouse_movement = mouse_sensitivity * Input::MouseMov();
     accum_yaw_ -= mouse_movement.x;
     accum_pitch_ -= mouse_movement.y;
@@ -124,10 +139,14 @@ void Engine::Update(float dt) {
       case StateType::PLAY:
         current_state_ = &play_state_;
         break;
+      case StateType::SETTINGS:
+        current_state_ = &settings_state_;
+        break;
     }
     // init new state
     current_state_->Init();
   }
+
   Input::Reset();
 }
 
@@ -139,12 +158,10 @@ void Engine::UpdateNetwork() {
   for (auto const& [key, action] : keybinds_) {
     auto& presses = key_presses_[key];
     if (presses > 0) actions.set(action, true);
-    presses = 0;
   }
   for (auto const& [button, action] : mousebinds_) {
     auto& presses = mouse_presses_[button];
     if (presses > 0) actions.set(action, true);
-    presses = 0;
   }
 
   uint16_t action_bits = actions.to_ulong();
@@ -319,6 +336,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       unsigned int score, team;
       packet >> score;
       packet >> team;
+      if (scores_[team] != score) reset = true;
       scores_[team] = score;
       break;
     }
@@ -361,19 +379,23 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
     case PacketBlockType::UPDATE_POINTS: {
       PlayerID id;
+      EntityID eid;
+      int goals, points;
       int goals, points, assists, saves, ping;
       unsigned int team;
       packet >> assists;
       packet >> saves;
+      packet >> eid;
       packet >> goals;
       packet >> points;
       packet >> id;
       packet >> team;
 
-      PlayerScoreBoardInfo psbi;
+      PlayerStatInfo psbi;
       psbi.goals = goals;
       psbi.points = points;
       psbi.team = team;
+      psbi.enttity_id = eid;
       psbi.assists = assists;
       psbi.saves = saves;
       player_scores_[id] = psbi;
@@ -429,8 +451,16 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
           play_state_.CreateCannonBall(e_id);
           break;
         }
+        case ProjectileID::TELEPORT_PROJECTILE: {
+          play_state_.CreateTeleportProjectile(e_id);
+          break;
+        }
         case ProjectileID::FORCE_PUSH_OBJECT: {
           play_state_.CreateForcePushObject(e_id);
+          break;
+        }
+        case ProjectileID::MISSILE_OBJECT: {
+          play_state_.CreateMissileObject(e_id);
           break;
         }
       }
@@ -447,6 +477,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       // ChangeState(StateType::LOBBY);
       break;
     }
+    case PacketBlockType::YOUR_TARGET: {
+      EntityID target;
+      packet >> target;
+      play_state_.SetMyTarget(target);
+      break;
+	}
   }
 }
 
@@ -496,8 +532,10 @@ void Engine::UpdateSystems(float dt) {
     DrawScoreboard();
   }
 
-  button_system::Update(*registry_current_);
+  gui_system::Update(*registry_current_);
+  ParticleSystem(*registry_current_, dt);
   RenderSystem(*registry_current_);
+  animation_system_.UpdateAnimations(*registry_current_, dt);
 }
 
 void Engine::SetKeybinds() {

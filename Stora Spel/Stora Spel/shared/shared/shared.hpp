@@ -4,9 +4,9 @@
 #define TEAM_RED (unsigned int)0
 #define TEAM_BLUE (unsigned int)1
 
-#define POINTS_GOAL		10
-#define POINTS_ASSIST	2
-#define POINTS_SAVE		4
+#define POINTS_GOAL 10
+#define POINTS_ASSIST 2
+#define POINTS_SAVE 4
 
 const double kClientUpdateRate = 64;
 const double kServerUpdateRate = 64;
@@ -17,19 +17,19 @@ typedef int EntityID;
 typedef int PlayerID;
 
 namespace PlayerAction {
-  enum : int16_t {
-    WALK_FORWARD = 0,
-    WALK_BACKWARD,
-    WALK_LEFT,
-    WALK_RIGHT,
-    ABILITY_PRIMARY,
-    ABILITY_SECONDARY,
-    SPRINT,
-    JUMP,
-    SHOOT,
-    KICK,
-    NUM_ACTIONS,
-  };
+enum : int16_t {
+  WALK_FORWARD = 0,
+  WALK_BACKWARD,
+  WALK_LEFT,
+  WALK_RIGHT,
+  ABILITY_PRIMARY,
+  ABILITY_SECONDARY,
+  SPRINT,
+  JUMP,
+  SHOOT,
+  KICK,
+  NUM_ACTIONS,
+};
 }  // namespace PlayerAction
 
 namespace PacketBlockType {
@@ -41,7 +41,7 @@ enum : int16_t {
   CLIENT_READY,      // client is ready in lobby
   CLIENT_NOT_READY,  // client is not ready in lobby
   GAME_START,        // game start after lobby
-  CLIENT_RECEIVE_UPDATES, 
+  CLIENT_RECEIVE_UPDATES,
   TEST_STRING,
   TEST_REPLAY_KEYS,
   TEAM_SCORE,
@@ -64,9 +64,9 @@ enum : int16_t {
   GAME_EVENT,
   PHYSICS_DATA,
   GAME_END,
+  YOUR_TARGET,
   NUM_BLOCK_TYPES,
 };
-
 
 }  // namespace PacketBlockType
 
@@ -86,14 +86,24 @@ enum class AbilityID {
   NUM_OF_ABILITY_IDS
 };
 
-
 struct GameEvent {
-  enum {GOAL = 0, KICK, HIT, NUDGE, BOUNCE, LAND, JUMP, NUM_EVENTS} type;
+  enum {
+    GOAL = 0,
+    KICK,
+    HIT,
+    NUDGE,
+    BOUNCE,
+    LAND,
+    JUMP,
+    SPRINT_START,
+    SPRINT_END,
+    RUN_START,
+    RUN_END,
+    NUM_EVENTS
+  } type;
   union {
-
     // Goal
     struct {
-    
     } goal;
 
     // Kick
@@ -126,13 +136,32 @@ struct GameEvent {
       EntityID player_id;
     } jump;
 
+    // Player Sprint start
+    struct {
+      EntityID player_id;
+    } sprint_start;
+
+    // Player Sprint end
+    struct {
+      EntityID player_id;
+    } sprint_end;
+
+    struct {
+      EntityID player_id;
+    } run_start;
+
+    struct {
+      EntityID player_id;
+    } run_end;
   };
 };
 
 enum class ProjectileID {
   CANNON_BALL,
+  TELEPORT_PROJECTILE,
   FORCE_PUSH_OBJECT,
-  NUM_PROJECTILE_IDS,
+  MISSILE_OBJECT,
+  NUM_PROJECTILE_IDS
 };
 
 struct Projectile {

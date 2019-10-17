@@ -18,6 +18,8 @@
 #include "ecs/systems/goal_system.hpp"
 #include "ecs/systems/physics_system.hpp"
 #include "ecs/systems/player_controller_system.hpp"
+#include "ecs/systems/target_system.hpp"
+#include "ecs/systems/missile_system.hpp"
 
 namespace {}  // namespace
 
@@ -113,12 +115,12 @@ void GameServer::HandlePacketsToSend() {
       to_send << event;
       to_send << PacketBlockType::GAME_EVENT;
     }
-    game_events_.clear();
 
     if (!to_send.IsEmpty()) {
       server_.Send(to_send);
     }
   }
+  game_events_.clear();
 }
 
 void GameServer::HandleStateChange() {
@@ -174,8 +176,8 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       packet >> pitch;
       packet >> actions;
       play_state_.SetPlayerInput(client_id, actions, pitch, yaw);
-      // std::cout << "PACKET: INPUT, " << actions << ", " << yaw << ", " <<
-      // pitch << "\n";
+      //std::cout << "PACKET: INPUT, " << actions << ", " << yaw << ", " <<
+      //pitch << "\n";
       break;
     }
     case PacketBlockType::CLIENT_READY: {
@@ -285,6 +287,8 @@ void GameServer::UpdateSystems(float dt) {
   player_controller::Update(registry_, dt);
   ability_controller::Update(registry_, dt);
   buff_controller::Update(registry_, dt);
+  target_system::Update(registry_);
+  missile_system::Update(registry_, dt);
 
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);
@@ -301,6 +305,9 @@ void GameServer::ReceiveEvent(const EventInfo& e) {
       break;
     }
     case Event::CREATE_CANNONBALL: {
+      break;
+    }
+    case Event::CREATE_TELEPORT_PROJECTILE: {
       break;
     }
     default:

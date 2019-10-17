@@ -9,8 +9,8 @@
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 
-#include <shared/pick_up_component.hpp>
 #include <shared/physics_component.hpp>
+#include <shared/pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
@@ -27,6 +27,7 @@ void PlayState::Startup() {
   // Create 2D element
   e2D_test_ = glob::GetE2DItem("assets/GUI_elements/point_table.png");
   e2D_test2_ = glob::GetE2DItem("assets/GUI_elements/Scoreboard_V1.png");
+  e2D_target_ = glob::GetE2DItem("assets/GUI_elements/target.png");
 
   // Create GUI elementds
   gui_test_ = glob::GetGUIItem("assets/GUI_elements/Scoreboard_V1.png");
@@ -39,6 +40,16 @@ void PlayState::Startup() {
       glob::GetGUIItem("assets/GUI_elements/stamina_bar_icon.png");
   gui_quickslots_ =
       glob::GetGUIItem("assets/GUI_elements/quickslots_blank.png");
+  gui_minimap_ = glob::GetGUIItem("assets/GUI_elements/Minimap_V2.png");
+  gui_minimap_goal_red_ =
+      glob::GetGUIItem("assets/GUI_elements/goal_red_icon.png");
+  gui_minimap_goal_blue_ =
+      glob::GetGUIItem("assets/GUI_elements/goal_blue_icon.png");
+  gui_minimap_player_red_ =
+      glob::GetGUIItem("assets/GUI_elements/player_iconv2_red.png");
+  gui_minimap_player_blue_ =
+      glob::GetGUIItem("assets/GUI_elements/player_iconv2_blue.png");
+  gui_minimap_ball_ = glob::GetGUIItem("assets/GUI_elements/Ball_Icon.png");
 
   int num_abilities = (int)AbilityID::NUM_OF_ABILITY_IDS;
   ability_handles_.resize(num_abilities);
@@ -53,6 +64,19 @@ void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
 }
 
+void PlayState::TestParticles() {
+  auto e = registry_gameplay_.create();
+  auto handle = glob::CreateParticleSystem();
+
+  std::vector handles = {handle};
+  std::vector offsets = {glm::vec3(0.f)};
+  std::vector directions = {glm::vec3(0.f, 1.f, 0.f)};
+
+  glob::SetParticleSettings(handle, "green_donut.txt");
+
+  registry_gameplay_.assign<ParticleComponent>(e, handles, offsets, directions);
+}
+
 void PlayState::Init() {
   glob::window::SetMouseLocked(true);
   engine_->SetSendInput(true);
@@ -61,6 +85,7 @@ void PlayState::Init() {
 
   CreateInGameMenu();
   CreateInitialEntities();
+  TestParticles();
 
   engine_->GetChat()->SetPosition(
       glm::vec2(30, glob::window::GetWindowDimensions().y - 30));
@@ -123,17 +148,85 @@ void PlayState::Update() {
     glob::Submit(in_game_menu_gui_, in_game_menu_pos, 1.0f);
   }
   // Submit 2D Element TEST
-  glob::Submit(e2D_test_, glm::vec3(10.5f, 1.0f, 0.0f), 2, -90.0f,
-               glm::vec3(0, 1, 0));
-  glob::Submit(e2D_test_, glm::vec3(-10.5f, 1.0f, 0.0f), 2, 90.0f,
-               glm::vec3(0, 1, 0));
-  glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -7.0f), 7, 0.0f, glm::vec3(1));
+  // glob::Submit(e2D_test_, glm::vec3(10.5f, 1.0f, 0.0f), 2, -90.0f,
+  // glm::vec3(0, 1, 0));
+  // glob::Submit(e2D_test_, glm::vec3(-10.5f, 1.0f, 0.0f), 2, 90.0f,
+  // glm::vec3(0, 1, 0));
+  glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -28.0f), 7, 0.0f,
+               glm::vec3(1));
 
   UpdateGameplayTimer();
 
+  // draw stamina bar
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
   glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
   glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
+
+  // draw Minimap
+  glob::Submit(gui_minimap_,
+               glm::vec2(glob::window::GetWindowDimensions().x - 250, 10), 0.3);
+  // draw Minimap goals
+  if (!goals_swapped_) {
+    glob::Submit(gui_minimap_goal_red_,
+                 glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
+                 0.2);
+    glob::Submit(
+        gui_minimap_goal_blue_,
+        glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
+  } else {
+    glob::Submit(
+        gui_minimap_goal_red_,
+        glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
+    glob::Submit(gui_minimap_goal_blue_,
+                 glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
+                 0.2);
+  }
+
+  // Draw Player icons
+  auto view_player =
+      registry_gameplay_
+          .view<TransformComponent, PlayerComponent, IDComponent>();
+  for (auto entity : view_player) {
+    auto& trans_c = view_player.get<TransformComponent>(entity);
+    auto& id_c = view_player.get<IDComponent>(entity);
+    auto& player_c = view_player.get<PlayerComponent>(entity);
+
+    // Normalize and project player pos to screen space (Z in world space is X
+    // in screen space and vice versa)
+    float norm_pos_x = trans_c.position.z / 28.1f;
+    float norm_pos_y = trans_c.position.x / 40.6f;
+    float minimap_pos_x = (norm_pos_x * 120.f) +
+                          glob::window::GetWindowDimensions().x - 130.f - 11.f;
+    float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 20.f;
+
+    // Draw the right color icons
+    if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
+      glob::Submit(gui_minimap_player_red_,
+                   glm::vec2(minimap_pos_x, minimap_pos_y),
+                   0.1);  // TODO: CALC REAL POS
+    } else {
+      glob::Submit(gui_minimap_player_blue_,
+                   glm::vec2(minimap_pos_x, minimap_pos_y),
+                   0.1);  // TODO: CALC REAL POS
+    }
+  }
+
+  // Draw Ball icon
+  auto view_ball = registry_gameplay_.view<TransformComponent, BallComponent>();
+  for (auto entity : view_ball) {
+    auto& trans_c = view_ball.get<TransformComponent>(entity);
+
+    // Normalize and project player pos to screen space (Z in world space is X
+    // in screen space and vice versa)
+    float norm_pos_x = trans_c.position.z / 28.1f;
+    float norm_pos_y = trans_c.position.x / 40.6f;
+    float minimap_pos_x = (norm_pos_x * 120.f) +
+                          glob::window::GetWindowDimensions().x - 130.f - 20.f;
+    float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 20.f;
+
+    glob::Submit(gui_minimap_ball_, glm::vec2(minimap_pos_x, minimap_pos_y),
+                 0.1);
+  }
 
   // draw quickslot info
   glob::Submit(gui_quickslots_, glm::vec2(7, 50), 0.3, 100);
@@ -179,6 +272,7 @@ void PlayState::Update() {
     }
   }
   DrawTopScores();
+  DrawTarget();
 }
 void PlayState::UpdateNetwork() {
   auto& packet = engine_->GetPacket();
@@ -265,6 +359,44 @@ void PlayState::DrawTopScores() {
                glm::vec4(1, 0, 0, 1));
 }
 
+void PlayState::DrawTarget() {
+  if (my_target_ != -1) {
+    auto view_players =
+        registry_gameplay_
+            .view<PlayerComponent, TransformComponent, IDComponent>();
+    glm::vec3 target_pos;
+    glm::vec3 my_pos;
+    glm::vec3 my_forward;
+
+    for (auto player : view_players) {
+      auto& p_c = registry_gameplay_.get<PlayerComponent>(player);
+      auto& t_c = registry_gameplay_.get<TransformComponent>(player);
+      auto& id_c = registry_gameplay_.get<IDComponent>(player);
+
+      if (id_c.id == my_target_) {
+        target_pos = t_c.position;
+      }
+      if (id_c.id == my_id_) {
+        my_pos = t_c.position;
+        my_forward = t_c.Forward();
+        if (registry_gameplay_.has<CameraComponent>(player)) {
+          auto& c_c = registry_gameplay_.get<CameraComponent>(player);
+          my_forward = c_c.GetLookDir();
+        }
+      }
+    }
+    glm::vec3 diff = target_pos - my_pos;
+    glm::vec3 dir = glm::normalize(diff);
+    float dot = glm::dot(my_forward, dir);
+
+    float angles = glm::atan(dir.x, dir.z);
+    glm::vec3 cross = glm::normalize(glm::cross(my_forward, dir));
+
+    glob::Submit(e2D_target_, target_pos, 1.0f, glm::degrees(angles) + 180.f,
+                 glm::vec3(0, 1, 0));
+  }
+}
+
 void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,
                                    glm::quat orientation) {
   transforms_[player_id] = std::make_pair(pos, orientation);
@@ -300,23 +432,24 @@ void PlayState::CreatePlayerEntities() {
 
     glm::vec3 alter_scale =
         glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
-    glm::vec3 character_scale = glm::vec3(0.1f);
+    glm::vec3 character_scale = glm::vec3(0.0033f);
 
-    glob::ModelHandle player_model =
-        glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
+    glob::ModelHandle player_model = glob::GetModel("Assets/Mech/Mech.fbx");
 
     registry_gameplay_.assign<IDComponent>(entity, entity_id);
-    registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(),
-                                                  glm::quat(), character_scale);
-    registry_gameplay_.assign<PhysicsComponent>(entity);
     registry_gameplay_.assign<PlayerComponent>(entity);
+    registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(0.f),
+                                                  glm::quat(), character_scale);
     registry_gameplay_.assign<ModelComponent>(entity, player_model,
-                                              alter_scale * character_scale);
+                                              glm::vec3(0.f, 0.9f, 0.f));
+    registry_gameplay_.assign<AnimationComponent>(
+        entity, glob::GetAnimationData(player_model));
+    registry_gameplay_.assign<PhysicsComponent>(entity);
     registry_gameplay_.assign<SoundComponent>(entity,
                                               sound_engine.CreatePlayer());
 
     if (entity_id == my_id_) {
-      glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
+      glm::vec3 camera_offset = glm::vec3(0.5f, 0.7f, 0.f);
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset);
     }
   }
@@ -325,9 +458,9 @@ void PlayState::CreatePlayerEntities() {
 void PlayState::CreateArenaEntity() {
   auto arena = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 arena_scale = glm::vec3(1.0f);
+  glm::vec3 arena_scale = glm::vec3(4.0f, 4.0f, 4.0f);
   glob::ModelHandle model_arena =
-      glob::GetModel("assets/Map_rectangular/map_rextangular.fbx");
+    glob::GetModel("assets/Map/Map_singular_TMP.fbx");
   registry_gameplay_.assign<ModelComponent>(arena, model_arena);
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                 arena_scale);
@@ -340,10 +473,11 @@ void PlayState::CreateBallEntity() {
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f);
   auto ball = registry_gameplay_.create();
-  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
-  registry_gameplay_.assign<ModelComponent>(ball, model_ball);
+  glob::ModelHandle model_ball_p =
+      glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
+  registry_gameplay_.assign<ModelComponent>(ball, model_ball_p);
   registry_gameplay_.assign<TransformComponent>(ball, zero_vec, zero_vec,
-                                                glm::vec3(1.0f));
+                                                glm::vec3(0.95f));
   registry_gameplay_.assign<PhysicsComponent>(ball);
   registry_gameplay_.assign<BallComponent>(ball);
   registry_gameplay_.assign<IDComponent>(ball, ball_id_);
@@ -369,7 +503,8 @@ void PlayState::CreateInGameMenu() {
                                           font_test_, false);
 
   in_game_buttons_->button_func = [&] {
-    // All the logic here
+    engine_->ChangeState(StateType::SETTINGS);
+    ToggleInGameMenu();
   };
 
   // END GAME -- change registry to registry_mainmenu_
@@ -390,32 +525,31 @@ void PlayState::TestCreateLights() {
   // Create lights
   blue_goal_light_ = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(
-      blue_goal_light_, glm::vec3(0.1f, 0.1f, 1.0f), 15.f, 0.0f);
+      blue_goal_light_, glm::vec3(0.1f, 0.1f, 1.0f), 30.f, 0.0f);
   registry_gameplay_.assign<TransformComponent>(
-      blue_goal_light_, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      blue_goal_light_, glm::vec3(48.f, -6.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
 
   red_goal_light_ = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(
-      red_goal_light_, glm::vec3(1.f, 0.1f, 0.1f), 15.f, 0.f);
+      red_goal_light_, glm::vec3(1.f, 0.1f, 0.1f), 30.f, 0.f);
   registry_gameplay_.assign<TransformComponent>(
-      red_goal_light_, glm::vec3(-12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      red_goal_light_, glm::vec3(-48.f, -6.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
 
   auto light = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(light, glm::vec3(0.4f, 0.4f, 0.4f),
-                                            30.f, 0.1f);
+                                            90.f, 0.1f);
   registry_gameplay_.assign<TransformComponent>(
       light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
 }
 
 void PlayState::CreatePickUp(glm::vec3 position) {
   auto pick_up = registry_gameplay_.create();
-  glob::ModelHandle model_pick_up =
-      glob::GetModel("assets/lowpolydeer/deer.fbx");  // Replace with real model
+  glob::ModelHandle model_pick_up = glob::GetModel("assets/Pickup/Pickup.fbx");
   registry_gameplay_.assign<ModelComponent>(pick_up, model_pick_up);
   registry_gameplay_.assign<TransformComponent>(
-      pick_up, position, glm::vec3(0.0f, 0.0f, -1.6f), glm::vec3(0.002f));
+      pick_up, position, glm::vec3(0.0f, 0.0f, 0.f), glm::vec3(0.4f));
   registry_gameplay_.assign<PickUpComponent>(pick_up);
 }
 
@@ -429,6 +563,16 @@ void PlayState::CreateCannonBall(EntityID id) {
   registry_gameplay_.assign<IDComponent>(cannonball, id);
 }
 
+void PlayState::CreateTeleportProjectile(EntityID id) {
+  auto teleport_projectile = registry_gameplay_.create();
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  registry_gameplay_.assign<ModelComponent>(teleport_projectile, model_ball);
+  registry_gameplay_.assign<TransformComponent>(teleport_projectile, zero_vec,
+                                                zero_vec, glm::vec3(0.3f));
+  registry_gameplay_.assign<IDComponent>(teleport_projectile, id);
+}
+
 void PlayState::CreateForcePushObject(EntityID id) {
   auto force_object = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
@@ -437,6 +581,16 @@ void PlayState::CreateForcePushObject(EntityID id) {
   registry_gameplay_.assign<TransformComponent>(force_object, zero_vec,
                                                 zero_vec, glm::vec3(0.5f));
   registry_gameplay_.assign<IDComponent>(force_object, id);
+}
+
+void PlayState::CreateMissileObject(EntityID id) {
+  auto missile_object = registry_gameplay_.create();
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glob::ModelHandle model_ball = glob::GetModel("assets/Rocket/Rocket.fbx");
+  registry_gameplay_.assign<ModelComponent>(missile_object, model_ball);
+  registry_gameplay_.assign<TransformComponent>(missile_object, zero_vec,
+                                                zero_vec, glm::vec3(0.5f));
+  registry_gameplay_.assign<IDComponent>(missile_object, id);
 }
 
 void PlayState::DestroyEntity(EntityID id) {
@@ -452,6 +606,11 @@ void PlayState::DestroyEntity(EntityID id) {
 }
 
 void PlayState::SwitchGoals() {
+  if (!goals_swapped_) {
+    goals_swapped_ = true;
+  } else {
+    goals_swapped_ = false;
+  }
   TransformComponent& blue_light_trans_c =
       registry_gameplay_.get<TransformComponent>(blue_goal_light_);
   TransformComponent& red_light_trans_c =

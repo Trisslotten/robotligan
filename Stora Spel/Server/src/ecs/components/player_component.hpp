@@ -6,7 +6,7 @@
 #include "util/global_settings.hpp"
 #include "util/timer.hpp"
 
-struct PlayerComponent {
+struct PlayerComponent {//Server side
   long client_id = -1;
   float walkspeed = GlobalSettings::Access()->ValueOf("PLAYER_SPEED_WALK");
   float jump_speed = GlobalSettings::Access()->ValueOf("PLAYER_SPEED_JUMP");
@@ -31,6 +31,12 @@ struct PlayerComponent {
   std::bitset<PlayerAction::NUM_ACTIONS> actions;
   float yaw = 0;
   float pitch = 0;
+
+  EntityID target = -1;
+
+  //States
+  bool sprinting = false;
+  bool running = false;
 };
 
 #endif  // PLAYER_COMPONENT_H_

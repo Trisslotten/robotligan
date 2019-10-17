@@ -1,42 +1,46 @@
 #include "sound_system.hpp"
-#include <shared/transform_component.hpp>
 #include <shared/camera_component.hpp>
-#include "engine.hpp"
 #include <shared/id_component.hpp>
 #include <shared/physics_component.hpp>
-
+#include <shared/transform_component.hpp>
+#include "engine.hpp"
 
 void SoundSystem::Update(entt::registry& registry) {
   sound_engine_.Update();
 
   // Set listener attributes to match the local player
-  auto cam_view = registry.view<CameraComponent, TransformComponent>();
+  auto cam_view = registry.view<CameraComponent, TransformComponent, PhysicsComponent>();
   for (auto cam_entity : cam_view) {
     CameraComponent& camera_c = cam_view.get<CameraComponent>(cam_entity);
-    TransformComponent& trans_c =
-      cam_view.get<TransformComponent>(cam_entity);
+    TransformComponent& trans_c = cam_view.get<TransformComponent>(cam_entity);
+    PhysicsComponent& phys_c = cam_view.get<PhysicsComponent>(cam_entity);
 
-    // TODO: Get velocity and airbourne bool-check from physics component
-    sound_engine_.SetListenerAttributes(trans_c.position, camera_c.orientation, glm::vec3(0));
+    sound_engine_.SetListenerAttributes(trans_c.position, camera_c.orientation,
+      phys_c.velocity);
   }
 
-  // Set 3D space attributes for sounds coming from each object/player on the field
-  auto sound_view = registry.view<TransformComponent, SoundComponent>();
+  // Set 3D space attributes for sounds coming from each object/player on the
+  // field
+  auto sound_view = registry.view<TransformComponent, SoundComponent, PhysicsComponent>();
   for (auto sound_entity : sound_view) {
     TransformComponent& trans_c =
       sound_view.get<TransformComponent>(sound_entity);
     SoundComponent& sound_c = sound_view.get<SoundComponent>(sound_entity);
+    PhysicsComponent& phys_c = sound_view.get<PhysicsComponent>(sound_entity);
 
-    sound_c.sound_player->Set3DAttributes(trans_c.position, glm::vec3(0.f));
+    sound_c.sound_player->Set3DAttributes(trans_c.position, phys_c.velocity);
   }
   // Play footstep sounds from each player on the field
-  auto player_view = registry.view<PlayerComponent, SoundComponent, PhysicsComponent>();
+  auto player_view =
+    registry.view<PlayerComponent, SoundComponent, PhysicsComponent>();
   for (auto player_entity : player_view) {
     PlayerComponent& player_c = player_view.get<PlayerComponent>(player_entity);
     SoundComponent& sound_c = player_view.get<SoundComponent>(player_entity);
-    PhysicsComponent& physics_c = player_view.get<PhysicsComponent>(player_entity);
+    PhysicsComponent& physics_c =
+      player_view.get<PhysicsComponent>(player_entity);
 
-    if (player_c.step_timer.Elapsed() > 0.5f && glm::length(physics_c.velocity) > 1.0f && !physics_c.is_airborne) {
+    if (player_c.step_timer.Elapsed() > 0.5f &&
+      glm::length(physics_c.velocity) > 1.0f && !physics_c.is_airborne) {
       player_c.step_timer.Restart();
       sound_c.sound_player->Play(sound_step_, 0, 0.2f);
     }
@@ -69,8 +73,7 @@ void SoundSystem::PlayAmbientSound(entt::registry& registry) {
   }
 }
 
-void SoundSystem::ReceiveGameEvent(const GameEvent& event)
-{
+void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
   auto registry = engine_->GetCurrentRegistry();
 
   // Listen for events and play associated sounds
@@ -79,7 +82,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event)
     auto view = registry->view<CameraComponent, SoundComponent>();
     for (auto entity : view) {
       auto& sound_c = view.get<SoundComponent>(entity);
-      sound_c.sound_player->Play(sound_goal_, 0, 0.5);
+      sound_c.sound_player->Play(sound_goal_, 0, 0.5f);
       break;
     }
     break;
@@ -90,7 +93,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event)
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.kick.player_id) {
-        sound_c.sound_player->Play(sound_kick_);
+        sound_c.sound_player->Play(sound_kick_, 0, 1.0f);
         break;
       }
     }
@@ -102,7 +105,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event)
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.hit.player_id) {
-        sound_c.sound_player->Play(sound_hit_);
+        sound_c.sound_player->Play(sound_hit_, 0, 1.0f);
         break;
       }
     }

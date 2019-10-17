@@ -150,13 +150,13 @@ void LobbyState::CreateBackgroundEntities() {
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f);
   glob::ModelHandle model_arena =
-      glob::GetModel("assets/Map_rectangular/map_rextangular.fbx");
+      glob::GetModel("assets/Map/Map_unified_TMP.fbx");
   registry_lobby_.assign<ModelComponent>(arena, model_arena);
   registry_lobby_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                              arena_scale);
   // ladda in och skapa entity för boll
   auto ball = registry_lobby_.create();
-  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/TestBall.fbx");
   registry_lobby_.assign<ModelComponent>(ball, model_ball);
   registry_lobby_.assign<TransformComponent>(ball, glm::vec3(0, -4, 0),
                                              zero_vec, glm::vec3(1.0f));
@@ -165,17 +165,18 @@ void LobbyState::CreateBackgroundEntities() {
   // ladda in och skapa entity för robotar
   auto robot = registry_lobby_.create();
   auto& trans = registry_lobby_.assign<TransformComponent>(
-      robot, zero_vec, zero_vec, glm::vec3(0.15f));
+      robot, zero_vec, glm::vec3(0.f, 180.f, 0.f), glm::vec3(0.01f));
   glob::ModelHandle model_robot =
-      glob::GetModel("assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
+      glob::GetModel("assets/Mech/Mech.fbx");
   registry_lobby_.assign<ModelComponent>(robot, model_robot);
+  //registry_lobby_.assign<AnimationComponent>(robot, glob::GetAnimationData(model_robot));
   trans.position = glm::vec3(10.f, -4.f, 0.f);
 
   // lägga ut en kamera i scenen
   auto camera = registry_lobby_.create();
   auto& cam_c = registry_lobby_.assign<CameraComponent>(camera);
   auto& cam_trans = registry_lobby_.assign<TransformComponent>(camera);
-  cam_trans.position = glm::vec3(-12.f, 0.f, -3.f);
+  cam_trans.position = glm::vec3(-10.f, 0.f, -3.f);
   glm::vec3 dir = glm::vec3(0) - trans.position;
   cam_c.orientation = glm::quat(glm::vec3(0.f, -0.3f, 0.f));
 }

@@ -374,8 +374,8 @@ physics::IntersectData physics::Intersect(const MeshHitbox& m,
                  m.pos[m.indices[i + 2]]};
     float dist = ComputeSquaredDistance(s.center, tri, &closest_point);
 
+    glm::vec3 temp = glm::normalize(glm::cross(tri.p1 - tri.p0, tri.p2 - tri.p0));
     if (dist <= rsqrt) {
-      glm::vec3 temp = glm::normalize(glm::cross(tri.p1 - tri.p0, tri.p2 - tri.p0));
       if (fabs(temp.x) < 0.05f && fabs(temp.x) > 0.0) {
         temp.x = 0.f;
       }
@@ -387,13 +387,20 @@ physics::IntersectData physics::Intersect(const MeshHitbox& m,
       }
       data.normal += temp;
       data.collision = true;
+      data.normal = glm::normalize(data.normal);
       data.move_vector = (rsqrt - dist) * data.normal;
 
-      //return data;
-    }
+      return data;
+    } /*else if (dist != 1000.f && glm::dot(temp, tri.p0 - s.center) > 0.f) {
+      data.collision = true;
+      data.normal = temp;
+      data.move_vector = data.normal * glm::dot(temp, tri.p0 - s.center);
+
+      return data;
+    }*/
   }
 
-  data.normal = glm::normalize(data.normal);
+  //data.normal = glm::normalize(data.normal);
 
   return data;
 }
