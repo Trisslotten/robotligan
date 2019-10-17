@@ -139,6 +139,9 @@ class Engine {
   StateType previous_state_;
 
   float mouse_sensitivity_ = 1.0f;
+ 
+  std::list<NetAPI::Common::Packet> packet_test;
+  std::list<float> time_test;
 };
 
 #endif  // ENGINE_HPP_

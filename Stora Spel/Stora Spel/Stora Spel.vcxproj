@@ -229,6 +229,7 @@
     <ClInclude Include="ecs\systems\print_position_system.hpp" />
     <ClInclude Include="shared\shared\shared.hpp" />
     <ClInclude Include="src\eventdispatcher.hpp" />
+    <ClInclude Include="src\playerdata.hpp" />
     <ClInclude Include="src\states\state.hpp" />
     <ClInclude Include="src\util\global_settings.hpp" />
     <ClInclude Include="src\util\input.hpp" />

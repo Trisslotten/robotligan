@@ -28,7 +28,7 @@ GameServer::~GameServer() {}
 void GameServer::Init(double in_update_rate) {
   glob::SetModelUseGL(false);
 
-  GlobalSettings::Access()->UpdateValuesFromFile();
+ 
 
   server_.Setup(1337);
 
@@ -263,6 +263,12 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       AbilityID id;
       packet >> id;
       lobby_state_.SetClientAbility(client_id, id);
+      break;
+    }
+    case PacketBlockType::FRAME_ID: {
+      int id;
+      packet >> id;
+      play_state_.SetFrameID(client_id, id);
       break;
     }
       /*

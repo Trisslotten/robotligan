@@ -24,7 +24,7 @@ void MainMenuState::Init() {
   }
 }
 
-void MainMenuState::Update() {
+void MainMenuState::Update(float dt) {
   //
   if (engine_->GetCurrentRegistry() == &registry_information_) {
     glob::Submit(information_image_, glm::vec2(560, 300), 1.0f);
