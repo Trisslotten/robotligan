@@ -21,13 +21,14 @@ void SoundSystem::Update(entt::registry& registry) {
 
   // Set 3D space attributes for sounds coming from each object/player on the
   // field
-  auto sound_view = registry.view<TransformComponent, SoundComponent>();
+  auto sound_view = registry.view<TransformComponent, SoundComponent, PhysicsComponent>();
   for (auto sound_entity : sound_view) {
     TransformComponent& trans_c =
       sound_view.get<TransformComponent>(sound_entity);
     SoundComponent& sound_c = sound_view.get<SoundComponent>(sound_entity);
+    PhysicsComponent& phys_c = cam_view.get<PhysicsComponent>(sound_entity);
 
-    sound_c.sound_player->Set3DAttributes(trans_c.position, glm::vec3(0.f));
+    sound_c.sound_player->Set3DAttributes(trans_c.position, phys_c.velocity);
   }
   // Play footstep sounds from each player on the field
   auto player_view =
