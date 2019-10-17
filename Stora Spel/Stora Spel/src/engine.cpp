@@ -380,7 +380,6 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::UPDATE_POINTS: {
       PlayerID id;
       EntityID eid;
-      int goals, points;
       int goals, points, assists, saves, ping;
       unsigned int team;
       packet >> assists;

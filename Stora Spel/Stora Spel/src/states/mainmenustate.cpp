@@ -7,7 +7,7 @@
 
 void MainMenuState::Startup() {
   CreateMainMenu();
-  CreateSettingsMenu();
+  //CreateSettingsMenu();
 }
 
 void MainMenuState::Init() {
@@ -53,6 +53,7 @@ void MainMenuState::CreateMainMenu() {
   b_c->button_func = [&]() { exit(0); };
 }
 
+/*
 void MainMenuState::CreateSettingsMenu() {
   // BACK BUTTON in SETTINGS - go back to main menu
   ButtonComponent* b_c = GenerateButtonEntity(registry_settings_, "BACK",
@@ -61,3 +62,4 @@ void MainMenuState::CreateSettingsMenu() {
     engine_->SetCurrentRegistry(&registry_mainmenu_);
   };
 }
+*/
