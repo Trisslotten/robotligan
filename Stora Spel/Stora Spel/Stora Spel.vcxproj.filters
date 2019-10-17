@@ -83,6 +83,7 @@
     <ClInclude Include="src\ecs\systems\gui_system.hpp" />
     <ClInclude Include="src\ecs\components\particle_component.hpp" />
     <ClInclude Include="src\ecs\systems\particle_system.hpp" />
+    <ClInclude Include="src\playerdata.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

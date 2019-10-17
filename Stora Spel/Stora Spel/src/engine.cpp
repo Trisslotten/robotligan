@@ -90,6 +90,20 @@ void Engine::Init() {
 
 void Engine::Update(float dt) {
   // std::cout << "current message: " << Input::GetCharacters() <<"\n";
+  /*float latency = 0.080f;
+  int counter = 0;
+  for (auto& time : time_test) {
+    time += dt;
+
+	if (time > latency) {
+      while (packet_test.front().IsEmpty() == false) {
+            HandlePacketBlock(packet_test.front());
+      }
+      packet_test.pop_front();
+      counter++;
+	}
+  }
+  for (int i = 0; i < counter; ++i) time_test.pop_front();*/
 
   if (take_game_input_ == true) {
     // accumulate key presses
@@ -110,6 +124,12 @@ void Engine::Update(float dt) {
     accum_yaw_ -= mouse_movement.x;
     accum_pitch_ -= mouse_movement.y;
 
+	//constexpr float pi = glm::pi<float>();
+    //test_yaw_ -= mouse_movement.x;
+    //test_pitch_ -= mouse_movement.y;
+    //test_pitch_ = glm::clamp(test_pitch_, -0.49f * pi, 0.49f * pi);
+
+	//play_state_.SetCameraOrientation(test_pitch_, test_yaw_);
     if (Input::IsKeyPressed(GLFW_KEY_K)) {
       new_team_ = TEAM_BLUE;
     }
@@ -118,7 +138,8 @@ void Engine::Update(float dt) {
     }
   }
 
-  current_state_->Update();
+  
+  current_state_->Update(dt);
 
   UpdateSystems(dt);
 
@@ -159,7 +180,10 @@ void Engine::UpdateNetwork() {
   std::bitset<PlayerAction::NUM_ACTIONS> actions;
   for (auto const& [key, action] : keybinds_) {
     auto& presses = key_presses_[key];
-    if (presses > 0) actions.set(action, true);
+    if (presses > 0) {
+      play_state_.AddAction(action);
+      actions.set(action, true);
+    }
   }
   for (auto const& [button, action] : mousebinds_) {
     auto& presses = mouse_presses_[button];
@@ -198,6 +222,10 @@ void Engine::UpdateNetwork() {
     to_send << accum_pitch_;
     to_send << accum_yaw_;
     to_send << PacketBlockType::INPUT;
+    play_state_.AddAction(100);
+    play_state_.SetPitchYaw(accum_pitch_, accum_yaw_);
+  } else {
+    play_state_.ClearActions();
   }
   if (client_.IsConnected() && !to_send.IsEmpty()) {
     client_.Send(to_send);
@@ -212,10 +240,12 @@ void Engine::UpdateNetwork() {
     // std::cout <<"Num recevied packets: "<< packets.size() << "\n";
     for (auto& packet : packets) {
       while (!packet.IsEmpty()) {
-        // std::cout << "Remaining packet size: " << packet.GetPacketSize() <<
-        // "\n";
-        HandlePacketBlock(packet);
+      // std::cout << "Remaining packet size: " << packet.GetPacketSize() <<
+      // "\n";
+		HandlePacketBlock(packet);
       }
+      //packet_test.push_back(packet);
+      //time_test.push_back(0.0f);
     }
   }
 }
@@ -486,6 +516,14 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetMyTarget(target);
       break;
 	}
+  }
+}
+    case PacketBlockType::FRAME_ID: {
+      int id;
+      packet >> id;
+      play_state_.UpdateHistory(id);
+      break;
+    }
   }
 }
 
