@@ -18,7 +18,6 @@ namespace slob {
       system->createSound(path.c_str(), FMOD_CREATECOMPRESSEDSAMPLE, nullptr, &sound_);
       sound_->setMode(FMOD_LOOP_NORMAL);
     }
-
     void Play(FMOD::System* system, FMOD::ChannelGroup* group, int loop_count, float volume) {
       FMOD::Channel* channel = nullptr;
       FMOD_RESULT result = system->playSound(sound_, group, true, &channel);
@@ -29,30 +28,18 @@ namespace slob {
       channel->setVolume(volume);
       channel->setPaused(false);
     }
-
-    /*void SetVolume(float vol) { volume_ = vol; }*/
-
-    void Set3DAttributes(glm::vec3 pos, glm::vec3 vel) {
-      pos_ = pos;
-      vel_ = vel;
-    }
-
     bool IsLoaded() { return sound_ != nullptr; }
 
   private:
     FMOD::Sound* sound_ = nullptr;
-    //float volume_ = 1.0f;
-    glm::vec3 pos_{ 1.0f };
-    glm::vec3 vel_{ 0.0f };
   };
 
   struct SoundEngine::Impl {
     std::unordered_map<std::string, SoundHandle> sound_handles;
     std::unordered_map<SoundHandle, Sound> sounds;
     FMOD::System* system = nullptr;
-    FMOD::ChannelGroup* channel_group = nullptr;
+    FMOD::ChannelGroup* master_group = nullptr;
     std::vector<SoundPlayer*> sound_players;
-    //float master_volume = 1.0f;
 
     SoundHandle sound_handle_guid = 0;
   };
@@ -121,10 +108,9 @@ namespace slob {
     impl_->system->set3DSettings(1.f, 1.0f, 1.0f);
     impl_->system->set3DListenerAttributes(0, &listener_pos, &listener_vel,
       &listener_forward, &listener_up);
-    impl_->system->createChannelGroup(nullptr, &impl_->channel_group);
   }
 
-  void SoundEngine::Update() { impl_->system->update(); }
+  void SoundEngine::Update() { impl_->system->update();  }
 
   SoundHandle SoundEngine::GetSound(const std::string& path) {
     return GetAsset(impl_->sound_handles, impl_->sounds,
@@ -132,7 +118,8 @@ namespace slob {
   }
 
   void SoundEngine::SetMasterVolume(float vol) {
-    impl_->channel_group->setVolume(vol);
+    impl_->system->getMasterChannelGroup(&impl_->master_group);
+    impl_->master_group->setVolume(vol);
   }
 
   void SoundEngine::SetListenerAttributes(glm::vec3 pos, glm::quat orientation,
@@ -152,26 +139,27 @@ namespace slob {
 
   struct SoundPlayer::Impl {
     SoundEngine::Impl* sound_engine;
+    FMOD::ChannelGroup* channel_group;
   };
 
   SoundPlayer::SoundPlayer(void* engine_impl) {
     i_ = new Impl();
     i_->sound_engine = (SoundEngine::Impl*)engine_impl;
-    i_->sound_engine->channel_group->setMode(FMOD_3D);
-    
+    i_->sound_engine->system->createChannelGroup(nullptr, &i_->channel_group);
+    i_->channel_group->setMode(FMOD_3D);
   }
   SoundPlayer::~SoundPlayer() { delete i_; }
 
   void SoundPlayer::Play(SoundHandle handle, int loop_count, float volume) {
     auto iter = i_->sound_engine->sounds.find(handle);
     if (iter != i_->sound_engine->sounds.end()) {
-      iter->second.Play(i_->sound_engine->system, i_->sound_engine->channel_group, loop_count, volume);
+      iter->second.Play(i_->sound_engine->system, i_->channel_group, loop_count, volume);
     }
   }
 
   void SoundPlayer::Set3DAttributes(glm::vec3 pos, glm::vec3 vel) {
     auto result =
-      i_->sound_engine->channel_group->set3DAttributes((FMOD_VECTOR*)& pos, (FMOD_VECTOR*)& vel);
+      i_->channel_group->set3DAttributes((FMOD_VECTOR*)& pos, (FMOD_VECTOR*)& vel);
   }
 
 }  // namespace slob
