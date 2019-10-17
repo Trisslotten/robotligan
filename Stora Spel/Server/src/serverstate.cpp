@@ -24,6 +24,16 @@ void ServerLobbyState::Init() {
 
 void ServerLobbyState::Update(float dt) {
   int min_players = 1;
+  for (auto& cli : this->game_server_->GetServer().GetClients())
+  {
+	  if (!cli.second->client.IsConnected() && cli.second->is_active)
+	  {
+		  cli.second->is_active = false;
+		  this->client_teams_.erase(cli.second->ID);
+		  this->clients_ready_.erase(cli.second->ID);
+		  teams_updated_ = true;
+	  }
+  }
   bool can_start = clients_ready_.size() >= min_players;
   for (auto ready : clients_ready_) {
     can_start = can_start && ready.second;

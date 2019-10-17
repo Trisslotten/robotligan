@@ -73,6 +73,7 @@ bool NetAPI::Socket::Server::Update() {
         current_client_guid_++;
       }
       connection_client_->address = address;
+	  connection_client_->is_active = true;
       newly_connected_.push_back(connection_client_);
 
       connection_client_ = nullptr;
