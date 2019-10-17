@@ -379,8 +379,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
     case PacketBlockType::UPDATE_POINTS: {
       PlayerID id;
+      EntityID eid;
       int goals, points;
       unsigned int team;
+      packet >> eid;
       packet >> goals;
       packet >> points;
       packet >> id;
@@ -390,6 +392,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       psbi.goals = goals;
       psbi.points = points;
       psbi.team = team;
+      psbi.enttity_id = eid;
       player_scores_[id] = psbi;
       break;
     }

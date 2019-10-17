@@ -9,9 +9,8 @@
 #include <unordered_map>
 #include <util/global_settings.hpp>
 #include <vector>
-#include "ecs/systems/sound_system.hpp"
-#include "ecs/systems/animation_system.hpp"
 #include "Chat.hpp"
+#include "ecs/systems/animation_system.hpp"
 #include "ecs/systems/sound_system.hpp"
 #include "shared/shared.hpp"
 #include "states/state.hpp"
@@ -20,6 +19,7 @@ struct PlayerStatInfo {
   int points = 0;
   int goals = 0;
   unsigned int team = TEAM_RED;
+  EntityID enttity_id  = 0;
 };
 
 class Engine {
@@ -62,7 +62,14 @@ class Engine {
 
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
-  unsigned int GetPlayerTeam(EntityID id) { return player_scores_[id].team; }
+  unsigned int GetPlayerTeam(EntityID id) {
+    for (auto p_score : player_scores_) {
+      if (p_score.second.enttity_id == id) {
+        return p_score.second.team;
+	  }
+	}
+    return TEAM_RED;
+  }
 
   void DrawScoreboard();
 

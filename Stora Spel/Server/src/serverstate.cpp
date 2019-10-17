@@ -198,18 +198,20 @@ void ServerPlayState::Update(float dt) {
     to_send << PacketBlockType::PLAYER_STAMINA;
 
     auto view_players2 =
-        registry.view<PlayerComponent, TeamComponent, PointsComponent>();
+        registry.view<PlayerComponent, TeamComponent, PointsComponent, IDComponent>();
 
     for (auto player : view_players2) {
       auto& player_player_c = registry.get<PlayerComponent>(player);
       auto& player_points_c = registry.get<PointsComponent>(player);
       auto& player_team_c = registry.get<TeamComponent>(player);
+      auto& player_id_c = registry.get<IDComponent>(player);
 
       if (player_points_c.changed) {
         to_send << player_team_c.team;
-        to_send << player_player_c.client_id;
+        to_send << player_player_c.client_id; //client id
         to_send << player_points_c.GetPoints();
         to_send << player_points_c.GetGoals();
+        to_send << player_id_c.id;
         to_send << PacketBlockType::UPDATE_POINTS;
       }
     }
