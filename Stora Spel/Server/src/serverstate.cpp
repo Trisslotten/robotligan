@@ -63,6 +63,7 @@ void ServerLobbyState::Cleanup() {
 }
 
 void ServerPlayState::Init() {
+  reset_timer_.Pause();
   auto& server = game_server_->GetServer();
   auto& registry = game_server_->GetRegistry();
 
@@ -283,6 +284,16 @@ void ServerPlayState::Update(float dt) {
   created_projectiles_.clear();
   pick_ups_.clear();
 
+  if (reset_timer_.Elapsed() > 1.0f) {
+    ResetEntities();
+    reset_timer_.Restart();
+    reset_timer_.Pause();
+    reset_ = false;
+
+    GameEvent reset_event;
+    reset_event.type = GameEvent::RESET;
+    dispatcher.trigger<GameEvent>(reset_event);
+  }
   if (match_timer_.Elapsed() > match_time_) {
     EndGame();
   }
@@ -767,6 +778,11 @@ void ServerPlayState::HandleNewTeam() {
       new_teams_.end());
 }
 */
+
+void ServerPlayState::StartResetTimer() {
+  reset_timer_.Restart();
+  reset_ = true;
+}
 
 // Replay stuff---
 bool ServerPlayState::StartRecording(unsigned int in_replay_length_seconds) {

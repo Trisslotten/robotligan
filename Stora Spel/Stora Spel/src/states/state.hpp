@@ -218,8 +218,10 @@ public:
     countdown_time_ = countdown_time;
   }
   void SetMyTarget(EntityID id) { my_target_ = id; }
-
+  void ReceiveGameEvent(const GameEvent& e);
+  void Reset();
   void EndGame();
+  void TestParticles();
 
 private:
   void CreateInitialEntities();
@@ -229,7 +231,6 @@ private:
   void CreateInGameMenu();
 
   void TestCreateLights();
-  void TestParticles();
 
   void ToggleInGameMenu();
   void UpdateInGameMenu(bool show_menu);

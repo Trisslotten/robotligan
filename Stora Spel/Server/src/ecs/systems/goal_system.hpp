@@ -14,7 +14,7 @@
 #include "ecs/components/team_component.hpp"
 
 namespace goal_system {
-bool Update(entt::registry& registry) {
+void Update(entt::registry& registry) {
   auto view_balls = registry.view<BallComponent, TransformComponent,
                                   physics::Sphere, PhysicsComponent>();
 
@@ -67,14 +67,10 @@ bool Update(entt::registry& registry) {
               }
             }
           }
-
-          return true;
         }
       }
     }
   }
-
-  return false;
 }
 }  // namespace goal_system
 #endif  // GOAL_SYSTEM_HPP_

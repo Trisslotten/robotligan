@@ -69,12 +69,25 @@ void PlayState::TestParticles() {
   auto handle = glob::CreateParticleSystem();
 
   std::vector handles = {handle};
-  std::vector offsets = {glm::vec3(0.f)};
-  std::vector directions = {glm::vec3(0.f, 1.f, 0.f)};
+  std::vector<glm::vec3> offsets;
+  //= {glm::vec3(0.f)};
+  std::vector<glm::vec3> directions;
+  //= {glm::vec3(0.f, 1.f, 0.f)};
 
   glob::SetParticleSettings(handle, "green_donut.txt");
+  glob::SetEmitPosition(handle, glm::vec3(-30.f, 0.f, 0.f));
+
+  e = registry_gameplay_.create();
+  handle = glob::CreateParticleSystem();
+  handles.push_back(handle);
+  glob::SetParticleSettings(handle, "green_donut.txt");
+  glob::SetEmitPosition(handle, glm::vec3(30.f, 0.f, 0.f));
+  //auto ball_view = registry_gameplay_.view<
 
   registry_gameplay_.assign<ParticleComponent>(e, handles, offsets, directions);
+  std::cout << handles.size() << " particle systems\n";
+  // Temp
+  registry_gameplay_.assign<int>(e, 0);
 }
 
 void PlayState::Init() {
@@ -460,7 +473,7 @@ void PlayState::CreateArenaEntity() {
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(4.0f, 4.0f, 4.0f);
   glob::ModelHandle model_arena =
-    glob::GetModel("assets/Map/Map_singular_TMP.fbx");
+      glob::GetModel("assets/Map/Map_singular_TMP.fbx");
   registry_gameplay_.assign<ModelComponent>(arena, model_arena);
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                 arena_scale);
@@ -619,6 +632,39 @@ void PlayState::SwitchGoals() {
   glm::vec3 blue_light_pos = blue_light_trans_c.position;
   blue_light_trans_c.position = red_light_trans_c.position;
   red_light_trans_c.position = blue_light_pos;
+}
+
+void PlayState::ReceiveGameEvent(const GameEvent& e) {
+  switch (e.type) {
+    case GameEvent::RESET: {
+      Reset();
+      break;
+    }
+  }
+}
+
+void PlayState::Reset() {
+  std::cout << "resetting\n";
+
+  auto view_particle = registry_gameplay_.view<ParticleComponent>();
+  for (auto& entity : view_particle) {
+    auto& particle_c = view_particle.get(entity);
+
+    for (int i = 0; i < particle_c.handles.size(); ++i) {
+      glob::ResetParticles(particle_c.handles[i]);
+    }
+  }
+
+  auto view_delete = registry_gameplay_.view<ParticleComponent, int>();
+  for (auto& entity : view_delete) {
+    auto& particle_c = view_delete.get<ParticleComponent>(entity);
+    
+    for (int i = 0; i < particle_c.handles.size(); ++i) {
+      glob::DestroyParticleSystem(particle_c.handles[i]);
+    }
+
+    registry_gameplay_.destroy(entity);
+  }
 }
 
 void PlayState::EndGame() {
