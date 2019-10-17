@@ -20,7 +20,7 @@ void SettingsState::Init() {
   CreateSettingsMenu();
 }
 
-void SettingsState::Update() {
+void SettingsState::Update(float dt) {
   // top title
   glob::Submit(font_test_,
                glm::vec2(40, glob::window::GetWindowDimensions().y - 20), 72,

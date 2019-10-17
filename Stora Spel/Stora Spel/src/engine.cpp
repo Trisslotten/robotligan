@@ -516,8 +516,6 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetMyTarget(target);
       break;
 	}
-  }
-}
     case PacketBlockType::FRAME_ID: {
       int id;
       packet >> id;
@@ -526,7 +524,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
   }
 }
-
+  
 void Engine::Render() { glob::Render(); }
 
 void Engine::SetCurrentRegistry(entt::registry* registry) {

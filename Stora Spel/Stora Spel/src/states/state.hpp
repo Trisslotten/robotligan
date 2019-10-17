@@ -167,7 +167,7 @@ class SettingsState : public State {
  public:
   void Startup() override;
   void Init() override;
-  void Update() override;
+  void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
   StateType Type() { return StateType::SETTINGS; }
