@@ -258,7 +258,6 @@ void ServerPlayState::Update(float dt) {
       to_send << projectiles.projectile_id;
       to_send << PacketBlockType::CREATE_PROJECTILE;
     }
-
     // send destroy entity
     for (auto entity_id : destroy_entities_) {
       to_send << entity_id;
@@ -271,7 +270,12 @@ void ServerPlayState::Update(float dt) {
     to_send << match_time_;
     to_send << count_down_time_;
     to_send << PacketBlockType::MATCH_TIMER;
+
+    to_send << player_frame_id_[client_id];
+    to_send << PacketBlockType::FRAME_ID;
   }
+  created_projectiles_.clear();
+  destroy_entities_.clear();
 
   // switch goal cleanup
   auto view_goals = registry.view<GoalComponenet, TeamComponent>();

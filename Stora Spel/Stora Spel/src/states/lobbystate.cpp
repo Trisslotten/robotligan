@@ -108,7 +108,7 @@ void LobbyState::Init() {
   engine_->GetAnimationSystem().Reset();
 }
 
-void LobbyState::Update() {
+void LobbyState::Update(float dt) {
   //
   DrawTeamSelect();
   DrawAbilitySelect();

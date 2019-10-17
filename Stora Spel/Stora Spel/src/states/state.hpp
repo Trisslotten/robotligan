@@ -1,6 +1,7 @@
 #ifndef STATE_HPP_
 #define STATE_HPP_
 
+#include <list>
 #include <NetAPI\packet.hpp>
 #include <ecs/components/button_component.hpp>
 #include <entt.hpp>
@@ -9,6 +10,8 @@
 #include <util/timer.hpp>
 #include "Chat.hpp"
 #include "shared/shared.hpp"
+#include <ecs/components/button_component.hpp>
+#include <playerdata.hpp>
 
 class Engine;
 
@@ -28,7 +31,7 @@ public:
   // when state changed to this state
   virtual void Init() = 0;
 
-  virtual void Update() = 0;
+  virtual void Update(float dt) = 0;
 
   virtual void UpdateNetwork() = 0;
 
@@ -55,7 +58,7 @@ class MainMenuState : public State {
 public:
   void Startup() override;
   void Init() override;
-  void Update() override;
+  void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
 
@@ -85,7 +88,7 @@ class LobbyState : public State {
 public:
   void Startup() override;
   void Init() override;
-  void Update() override;
+  void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
 
@@ -132,7 +135,7 @@ class ConnectMenuState : public State {
 public:
   void Startup() override;
   void Init() override;
-  void Update() override;
+  void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
   StateType Type() { return StateType::CONNECT_MENU; }
@@ -164,7 +167,7 @@ class SettingsState : public State {
  public:
   void Startup() override;
   void Init() override;
-  void Update() override;
+  void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
   StateType Type() { return StateType::SETTINGS; }
@@ -187,7 +190,7 @@ class PlayState : public State {
 public:
   void Startup() override;
   void Init() override;
-  void Update() override;
+  void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
 
@@ -223,7 +226,17 @@ public:
   void EndGame();
   void TestParticles();
 
-private:
+  void OnServerFrame();
+  void AddAction(int action) { actions_.push_back(action); }
+  void ClearActions() {
+    actions_.clear();
+    actions_.push_back(100);
+  }
+
+  void UpdateHistory(int id) { while (history_.size() > 0 && history_.front().id <= id) history_.pop_front(); }
+  void SetPitchYaw(float pitch, float yaw);
+
+ private:
   void CreateInitialEntities();
   void CreatePlayerEntities();
   void CreateArenaEntity();
@@ -238,6 +251,9 @@ private:
 
   void DrawTopScores();
   void DrawTarget();
+  FrameState SimulateMovement(std::vector<int> &action, FrameState& state, float dt);
+  void MovePlayer(float dt);
+  
   ////////////////////////////////////////
 
   entt::registry registry_gameplay_;
@@ -247,6 +263,10 @@ private:
   float current_stamina_ = 0.f;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> transforms_;
+  std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> new_transforms_;
+  FrameState server_predicted_;
+  entt::entity my_entity_;
+
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
 
   entt::entity blue_goal_light_;
@@ -273,6 +293,13 @@ private:
   EntityID my_target_ = -1;
 
   glob::ModelHandle test_ball_;
+  std::list<PlayerData> history_;
+  FrameState predicted_state_;
+  float latency_; //do we need?
+  std::vector<int> actions_;
+  int frame_id = 0;
+  float accum_pitch_ = 0.0f;
+  float accum_yaw_ = 0.0f;
 };
 
 #endif  // STATE_HPP_
