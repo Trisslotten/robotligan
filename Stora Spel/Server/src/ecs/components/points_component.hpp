@@ -26,7 +26,7 @@ struct PointsComponent {
   }
   void AddAssists(int a) { assists += a; }
   int GetAssists() { return assists; }
-  void AddBlock(int b) { blocks++; }
+  void AddBlock(int b) { blocks+=b; }
   int GetBlocks() { return blocks; }
 };
 
