@@ -639,6 +639,8 @@ void ServerPlayState::ResetEntities() {
     transform_component.position = pos;
 
     ball_component.rotation = glm::vec3(0.f);
+    ball_component.is_homing = false;
+    ball_component.homer_cid = -1;
   }
 }
 
