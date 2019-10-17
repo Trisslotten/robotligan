@@ -77,6 +77,17 @@ DeterministicReplay::DeterministicReplay(
   //	1 + B * (ceil(base2_log(N))+1) + 32 + 32
   // bits per frame, where B (buttons pressed/released) is
   // equal to N (all buttons).
+  //
+  // If N=10
+  // For one player we need:
+  // Min (B=0):	65
+  // Max (B=N):	105
+  //
+  // While for six players that gives:
+  // Min (B=0):	390
+  // Max (B=N):	630
+  //
+  // Minimum is about 62% of maximum
 
   // Calculate how many bits we need to store
   // an int given how many keys we shall track
@@ -111,8 +122,7 @@ DeterministicReplay::DeterministicReplay(
   // NTS: Add space for 1 extra
   unsigned int num_of_snapshots_ =
       (in_num_of_frames / in_snapshot_interval_frames) + 1;
-  this->snapshot_interval_frames_ =
-      in_snapshot_interval_frames;
+  this->snapshot_interval_frames_ = in_snapshot_interval_frames;
   this->frames_since_last_snapshot_ = this->snapshot_interval_frames_;
 
   // Allocate space for the snapshots
@@ -167,7 +177,6 @@ bool DeterministicReplay::SaveFrame(PlayerIO in_pio[],
     this->WriteInputFrame(in_pio[i].key_bitset, in_pio[i].x_value,
                           in_pio[i].y_value, i);
   }
-  
 
   return this->input_log_->IsWriteAtEnd();
 }
