@@ -2,13 +2,30 @@
 #define MISSILE_SYSTEM_HPP_
 
 #include <ecs/components.hpp>
+#include <ecs/components/ball_component.hpp>
 #include <entt.hpp>
 #include <shared/id_component.hpp>
 #include <shared/transform_component.hpp>
+#include <util/global_settings.hpp>
+#include <util/timer.hpp>
 
 namespace missile_system {
+void UpdateHomingBalls(entt::registry& registry, float dt);
+
+bool balls_are_homing = false;
+Timer homing_timer;
+float homing_time = 5.0f;
+    
+
+void SetBallsAreHoming(bool val) {
+  balls_are_homing = val;
+  homing_timer.Restart();
+}
+
 void Update(entt::registry& registry, float dt) {
   //
+  homing_time = GlobalSettings::Access()->ValueOf("ABILITY_HOMING_DURATION");
+
   auto view_missiles =
       registry.view<MissileComponent, TransformComponent, PhysicsComponent>();
 
@@ -34,7 +51,7 @@ void Update(entt::registry& registry, float dt) {
         glm::vec3 v = missile_trans_c.rotation * glm::vec3(1.0f, 0.0f, 0.0f);
         glm::vec3 vn = glm::normalize(v);
 
-		//rotation axis
+        // rotation axis
         glm::vec3 cross = glm::cross(vn, dir);
 
         glm::quat q = glm::angleAxis(missile_missile_c.turn_rate * dt,
@@ -64,6 +81,51 @@ void Update(entt::registry& registry, float dt) {
       registry.destroy(missile);
     }
   }
+
+  if (balls_are_homing) {
+    UpdateHomingBalls(registry, dt);
+  }
 }
+
+void UpdateHomingBalls(entt::registry& registry, float dt) {
+  auto view_balls =
+      registry.view<BallComponent, PhysicsComponent, TransformComponent>();
+  for (auto ball : view_balls) {
+    auto& ball_ball_c = registry.get<BallComponent>(ball);
+    auto& ball_trans_c = registry.get<TransformComponent>(ball);
+    auto& ball_phys_c = registry.get<PhysicsComponent>(ball);
+
+    if (ball_ball_c.is_homing) {
+      entt::entity play;
+      auto view_players =
+          registry.view<PlayerComponent, TransformComponent, CameraComponent>();
+      for (auto player : view_players) {
+        auto player_player_c = registry.get<PlayerComponent>(player);
+        if (player_player_c.client_id == ball_ball_c.homer_cid) {
+          play = player;
+          break;
+        }
+      }
+
+      auto& player_trans_c = registry.get<TransformComponent>(play);
+      auto& player_camera_c = registry.get<CameraComponent>(play);
+
+      glm::vec3 look_dir = player_camera_c.GetLookDir();
+      glm::vec3 ball_travel_dir = glm::normalize(ball_phys_c.velocity);
+      float ball_speed = glm::length(ball_phys_c.velocity);
+
+      glm::vec3 combined_dir = glm::normalize(look_dir + ball_travel_dir);
+
+      ball_phys_c.velocity = combined_dir * ball_speed;
+
+      if (homing_timer.Elapsed() >= homing_time) {
+        balls_are_homing = false;
+        ball_ball_c.is_homing = false;
+        ball_ball_c.homer_cid = -1;
+      }
+    }
+  }
+}
+
 }  // namespace missile_system
 #endif  // !MISSILE_SYSTEM_HPP_
