@@ -41,6 +41,8 @@ void Engine::Init() {
       sound_system_);
   dispatcher.sink<GameEvent>().connect<&AnimationSystem::ReceiveGameEvent>(
       animation_system_);
+  dispatcher.sink<GameEvent>().connect<&PlayState::ReceiveGameEvent>(
+      play_state_);
 
   SetKeybinds();
 
@@ -336,7 +338,9 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       unsigned int score, team;
       packet >> score;
       packet >> team;
-      if (scores_[team] != score) reset = true;
+      if (scores_[team] != score) {
+        play_state_.TestParticles();
+      }
       scores_[team] = score;
       break;
     }
@@ -380,8 +384,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::UPDATE_POINTS: {
       PlayerID id;
       EntityID eid;
-      int goals, points;
+      int goals, points, assists, saves, ping;
       unsigned int team;
+      packet >> assists;
+      packet >> saves;
       packet >> eid;
       packet >> goals;
       packet >> points;
@@ -393,6 +399,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       psbi.points = points;
       psbi.team = team;
       psbi.enttity_id = eid;
+      psbi.assists = assists;
+      psbi.saves = saves;
       player_scores_[id] = psbi;
       break;
     }
@@ -559,8 +567,18 @@ void Engine::DrawScoreboard() {
       scoreboard_pos + glm::vec2(24, 260);  //::vec2(320, 430);
   glm::vec2 start_pos_red =
       scoreboard_pos + glm::vec2(24, 140);  // glm::vec2(320, 320);
-  glm::vec2 offset_goals = glm::vec2(160, 0);
-  glm::vec2 offset_points = glm::vec2(320, 0);
+  glm::vec2 offset_goals = glm::vec2(150, 0);
+  glm::vec2 offset_assists = glm::vec2(250, 0);
+  glm::vec2 offset_saves = glm::vec2(350, 0);
+  glm::vec2 offset_points = glm::vec2(450, 0);
+  glm::vec2 offset_ping = glm::vec2(500, 0);
+  /*
+        goals
+        assists
+        saves
+        points
+        ping
+  */
   if (current_state_->Type() == StateType::PLAY) {
     for (auto& p_score : player_scores_) {
       if (p_score.second.team == TEAM_BLUE) {
@@ -570,8 +588,17 @@ void Engine::DrawScoreboard() {
         glob::Submit(font_test2_, text_pos + offset_goals, 32,
                      std::to_string(p_score.second.goals),
                      glm::vec4(0, 0, 1, 1));
+        glob::Submit(font_test2_, text_pos + offset_assists, 32,
+                     std::to_string(p_score.second.assists),
+                     glm::vec4(0, 0, 1, 1));
+        glob::Submit(font_test2_, text_pos + offset_saves, 32,
+                     std::to_string(p_score.second.saves),
+                     glm::vec4(0, 0, 1, 1));
         glob::Submit(font_test2_, text_pos + offset_points, 32,
                      std::to_string(p_score.second.points),
+                     glm::vec4(0, 0, 1, 1));
+        glob::Submit(font_test2_, text_pos + offset_ping, 32,
+                     std::to_string(client_pings_[p_score.first]),
                      glm::vec4(0, 0, 1, 1));
         blue_count++;
       }
@@ -582,8 +609,17 @@ void Engine::DrawScoreboard() {
         glob::Submit(font_test2_, text_pos + offset_goals, 32,
                      std::to_string(p_score.second.goals),
                      glm::vec4(1, 0, 0, 1));
+        glob::Submit(font_test2_, text_pos + offset_assists, 32,
+                     std::to_string(p_score.second.assists),
+                     glm::vec4(1, 0, 0, 1));
+        glob::Submit(font_test2_, text_pos + offset_saves, 32,
+                     std::to_string(p_score.second.saves),
+                     glm::vec4(1, 0, 0, 1));
         glob::Submit(font_test2_, text_pos + offset_points, 32,
                      std::to_string(p_score.second.points),
+                     glm::vec4(1, 0, 0, 1));
+        glob::Submit(font_test2_, text_pos + offset_ping, 32,
+                     std::to_string(client_pings_[p_score.first]),
                      glm::vec4(1, 0, 0, 1));
         red_count++;
       }

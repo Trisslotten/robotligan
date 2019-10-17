@@ -405,7 +405,7 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
 
   auto item = handles.find(filepath);
   if (item == handles.end()) {
-    std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";
+    //std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";
     A &asset = assets[guid];
     asset.LoadFromFile(filepath);
     if (asset.IsLoaded()) {
@@ -429,8 +429,13 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
 }
 
 ModelHandle GetModel(const std::string &filepath) {
-  return GetAsset<ModelHandle, Model>(model_handles, models, current_model_guid,
-                                      filepath);
+  return GetAsset(model_handles, models, current_model_guid, filepath);
+}
+
+ModelHandle GetTransparentModel(const std::string &filepath) {
+  auto result = GetAsset(model_handles, models, current_model_guid, filepath);
+  models[result].SetTransparent(true);
+  return result;
 }
 
 ParticleSettings ProccessMap(
@@ -745,7 +750,7 @@ animData GetAnimationData(ModelHandle handle) {
     return data;
   }
 
-  glob::Model *model = &res->second;
+  const glob::Model *model = &res->second;
 
   // copy armature
   for (auto source : model->bones_) {
@@ -780,8 +785,7 @@ animData GetAnimationData(ModelHandle handle) {
     if (bone.name == "Hip") {
       data.humanoid = true;
       data.hip = bone.id;
-      std::cout
-          << "Hip detected and set...\nHumanoid animation-set loading...\n";
+      //std::cout << "Hip detected and set...\nHumanoid animation-set loading...\n";
     }
   }
 
@@ -789,19 +793,19 @@ animData GetAnimationData(ModelHandle handle) {
     for (auto bone : data.bones) {
       if (bone.name == "Spine") {
         data.upperBody = bone.id;
-        std::cout << "Upper body found!\n";
+        //std::cout << "Upper body found!\n";
       } else if (bone.name == "Leg upper L") {
         data.leftLeg = bone.id;
-        std::cout << "Left leg found!\n";
+        //std::cout << "Left leg found!\n";
       } else if (bone.name == "Leg upper R") {
         data.rightLeg = bone.id;
-        std::cout << "Right leg found!\n";
+        //std::cout << "Right leg found!\n";
       } else if (bone.name == "Shoulder L") {
         data.leftArm = bone.id;
-        std::cout << "Left arm found!\n";
+        //std::cout << "Left arm found!\n";
       } else if (bone.name == "Shoulder R") {
         data.rightArm = bone.id;
-        std::cout << "Right arm found!\n";
+        //std::cout << "Right arm found!\n";
       }
     }
   }
@@ -870,6 +874,14 @@ void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
 }
 
 void SubmitBAM(
+    const std::vector<ModelHandle> &handles, glm::mat4 transform,
+    std::vector<glm::mat4> bone_transforms) {  // Submit Bone Animated Mesh
+  for (auto handle : handles) {
+    SubmitBAM(handle, transform, bone_transforms);
+  }
+}
+
+void SubmitBAM(
     ModelHandle model_h, glm::mat4 transform,
     std::vector<glm::mat4> bone_transforms) {  // Submit Bone Animated Mesh
   BoneAnimatedRenderItem BARI;
@@ -896,6 +908,11 @@ void Submit(ModelHandle model_h, glm::vec3 pos) {
   Submit(model_h, transform);
 }
 
+void Submit(const std::vector<ModelHandle> &handles, glm::mat4 transform) {
+  for (auto handle : handles) {
+    Submit(handle, transform);
+  }
+}
 void Submit(ModelHandle model_h, glm::mat4 transform) {
   auto find_res = models.find(model_h);
   if (find_res == models.end()) {
@@ -944,9 +961,7 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
 void SetCamera(Camera cam) { camera = cam; }
 
 void SetModelUseGL(bool use_gl) {
-  std::cout << "Before " << kModelUseGL << "\n";
   kModelUseGL = use_gl;
-  std::cout << "after " << kModelUseGL << "\n";
 }
 
 void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x) {
@@ -1032,10 +1047,17 @@ void Render() {
     light_radii.push_back(light_item.radius);
     light_ambients.push_back(light_item.ambient);
   }
+
+  std::vector<RenderItem> normal_items;
+  std::vector<RenderItem> transparent_items;
   std::vector<RenderItem> emissive_items;
   for (auto &render_item : items_to_render) {
-    if (render_item.model->IsEmissive()) {
+    if (render_item.model->IsTransparent()) {
+      transparent_items.push_back(render_item);
+    } else if (render_item.model->IsEmissive()) {
       emissive_items.push_back(render_item);
+    } else {
+      normal_items.push_back(render_item);
     }
   }
 
@@ -1084,10 +1106,7 @@ void Render() {
   post_process.BeforeDraw();
   {
     model_shader.use();
-    for (auto &render_item : items_to_render) {
-      if (render_item.model->IsEmissive()) {
-        continue;
-      }
+    for (auto &render_item : normal_items) {
       model_shader.uniform("model_transform", render_item.transform);
       render_item.model->Draw(model_shader);
     }
@@ -1112,6 +1131,17 @@ void Render() {
       // (int)BARI.bone_transforms.size());
       BARI.model->Draw(animated_model_shader);
     }
+
+    // TODO: Sort all transparent triangles
+    // maybe sort internally in modell and then and externally
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    model_emission_shader.use();
+    for (auto &render_item : transparent_items) {
+      model_emission_shader.uniform("model_transform", render_item.transform);
+      render_item.model->Draw(model_emission_shader);
+    }
+    glDisable(GL_BLEND);
   }
 
   // render wireframe cubes

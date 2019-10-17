@@ -5,9 +5,6 @@
 
 #include "ecs/components.hpp"
 
-// ugly reset hack
-bool reset = false;
-
 void ParticleSystem(entt::registry& registry, float dt) {
   auto view_movable = registry.view<ParticleComponent, TransformComponent>();
   for (auto& entity : view_movable) {
@@ -28,13 +25,8 @@ void ParticleSystem(entt::registry& registry, float dt) {
     auto& particle_c = view_particle.get(entity);
 
     for (int i = 0; i < particle_c.handles.size(); ++i) {
-      if (reset) {
-        glob::ResetParticles(particle_c.handles[i]);
-      }
       glob::UpdateParticles(particle_c.handles[i], dt);
     }
   }
-  
-  reset = false;
 }
 #endif  // PARTICLE_SYSTEM_HPP_

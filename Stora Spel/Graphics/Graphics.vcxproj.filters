@@ -90,6 +90,9 @@
     <ClInclude Include="src\shadows\shadows.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\glob\handletypes.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">

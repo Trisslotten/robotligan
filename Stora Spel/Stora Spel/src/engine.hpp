@@ -18,6 +18,8 @@
 struct PlayerStatInfo {
   int points = 0;
   int goals = 0;
+  int assists = 0;
+  int saves = 0;
   unsigned int team = TEAM_RED;
   EntityID enttity_id  = 0;
 };
@@ -52,6 +54,7 @@ class Engine {
   void SetEnableChat(bool should_enable) { this->enable_chat_ = should_enable; }
   SoundSystem& GetSoundSystem() { return sound_system_; }
   slob::SoundEngine& GetSoundEngine() { return sound_system_.GetSoundEngine(); }
+  AnimationSystem& GetAnimationSystem() { return animation_system_; }
   entt::registry* GetCurrentRegistry() { return registry_current_; }
 
   std::unordered_map<PlayerID, std::string> player_names_;

@@ -10,7 +10,8 @@ uniform sampler2D texture_emission;
 void main() {
 	vec3 color = texture(texture_color, v_uv).rgb;
 
-	color += texture(texture_emission, v_uv, 1). rgb;
+	vec4 emission = texture(texture_emission, v_uv, 1);
+	color += emission.rgb*0.9;
 
 	out_color = vec4(color, 1);
 }
