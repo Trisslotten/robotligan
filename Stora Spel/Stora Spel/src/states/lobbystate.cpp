@@ -125,17 +125,24 @@ void LobbyState::Cleanup() {
 }
 
 void LobbyState::HandleUpdateLobbyTeamPacket(NetAPI::Common::Packet& packet) {
-  int id = 0;
+  int id = -1;
   unsigned int team = 0;
   bool ready = false;
   packet >> ready;
   packet >> team;
   packet >> id;
+  if (id != -1) {
+    LobbyPlayer plyr;
+    plyr.ready = ready;
+    plyr.team = team;
+    lobby_players_[id] = plyr;
+  }
+}
 
-  LobbyPlayer plyr;
-  plyr.ready = ready;
-  plyr.team = team;
-  lobby_players_[id] = plyr;
+void LobbyState::HandlePlayerDisconnect(NetAPI::Common::Packet& packet) {
+  unsigned short id = -1;
+  packet >> id;
+  lobby_players_.erase(id);
 }
 
 void LobbyState::CreateBackgroundEntities() {

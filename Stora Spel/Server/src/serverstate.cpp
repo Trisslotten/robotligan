@@ -24,15 +24,17 @@ void ServerLobbyState::Init() {
 
 void ServerLobbyState::Update(float dt) {
   int min_players = 1;
-  for (auto& cli : this->game_server_->GetServer().GetClients())
-  {
-	  if (!cli.second->client.IsConnected() && cli.second->is_active)
-	  {
-		  cli.second->is_active = false;
-		  this->client_teams_.erase(cli.second->ID);
-		  this->clients_ready_.erase(cli.second->ID);
-		  teams_updated_ = true;
-	  }
+  for (auto& cli : this->game_server_->GetServer().GetClients()) {
+    if (!cli.second->client.IsConnected() && cli.second->is_active) {
+      cli.second->is_active = false;
+      this->client_teams_.erase(cli.second->ID);
+      this->clients_ready_.erase(cli.second->ID);
+      teams_updated_ = true;
+      NetAPI::Common::Packet p;
+      p << cli.second->ID;
+      p << PacketBlockType::PLAYER_LOBBY_DISCONNECT;
+      this->game_server_->GetServer().SendToAll(p);
+    }
   }
   bool can_start = clients_ready_.size() >= min_players;
   for (auto ready : clients_ready_) {
@@ -400,9 +402,8 @@ void ServerPlayState::CreateArenaEntity() {
 
   // Add components for an arena
   // registry_.assign<ModelComponent>(entity, model_arena);
-  registry.assign<TransformComponent>(entity, zero_vec, zero_vec,
-                                      arena_scale);
-  
+  registry.assign<TransformComponent>(entity, zero_vec, zero_vec, arena_scale);
+
   // Add a hitbox
   registry.assign<physics::Arena>(entity, -v2, v2, -v3, v4, -v1, v1);
   auto md = glob::GetMeshData(model_arena);
