@@ -173,7 +173,7 @@ void PlayState::Update(float dt) {
     if (id_c.id == my_id_) {
       auto trans = new_transforms_[id_c.id];
 	  auto& cam_c = registry_gameplay_.get<CameraComponent>(my_entity_);
-      if (glm::length(trans_c.position - trans.first) > 3) {
+      if (glm::length(trans_c.position - trans.first) > 10) {
         trans_c.position = trans.first;
       } else {
 		glm::vec3 temp = lerp(predicted_state_.position, server_predicted_.position, 0.5f);
@@ -197,10 +197,11 @@ void PlayState::Update(float dt) {
       trans_c.rotation = glm::quat(glm::vec3(0, yaw, 0));
     } else {
       auto trans = new_transforms_[id_c.id];
-      if (glm::length(trans_c.position - trans.first) > 3) {
+      if (glm::length(trans_c.position - trans.first) > 10) {
         trans_c.position = trans.first;
 	  } else {
-		trans_c.position = glm::lerp(trans_c.position, trans.first, 1.0f - f);
+		//trans_c.position = glm::lerp(trans_c.position, trans.first, 1.0f - f);
+            trans_c.position = trans.first;
 	  }
       trans_c.rotation = glm::slerp(trans_c.rotation, trans.second, 1.0f - f);
     }
