@@ -669,8 +669,6 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 }
 
 void PlayState::Reset() {
-  std::cout << "resetting\n";
-
   auto view_particle = registry_gameplay_.view<ParticleComponent>();
   for (auto& entity : view_particle) {
     auto& particle_c = view_particle.get(entity);
