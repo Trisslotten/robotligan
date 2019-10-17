@@ -4,8 +4,8 @@
 #include "shared/shared.hpp"
 
 struct PickUpEvent {
-  int pick_up_id;
-  PlayerID player_id;
+  EntityID pick_up_id;
+  long client_id;
   AbilityID ability_id;
 };
 

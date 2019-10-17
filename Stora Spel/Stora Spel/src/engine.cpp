@@ -436,18 +436,21 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
     case PacketBlockType::CREATE_PICK_UP: {
       glm::vec3 pos;
+      EntityID id;
+      packet >> id;
       packet >> pos;
-      play_state_.CreatePickUp(pos);
+      play_state_.CreatePickUp(id, pos);
       break;
     }
     case PacketBlockType::DESTROY_PICK_UP: {
-      int id;
+      EntityID id;
       packet >> id;
       if (current_state_->Type() == StateType::PLAY) {
         auto pick_up_view = registry_current_->view<PickUpComponent>();
         for (auto entity : pick_up_view) {
           if (id == pick_up_view.get(entity).id) {
             registry_current_->destroy(entity);
+            break;
           }
         }
       }

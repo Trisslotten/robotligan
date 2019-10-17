@@ -8,24 +8,25 @@
 #include <glm/ext/quaternion_common.hpp>
 #include <glm/glm.hpp>
 #include <iostream>
-#include <vector>
 #include <shared/physics_component.hpp>
+#include <vector>
 
 #include "boundingboxes.hpp"
 #include "collision.hpp"
 #include "ecs/components.hpp"
 #include "ecs/components/pick_up_event.hpp"
 #include "ecs/components/projectile_component.hpp"
-#include "shared/transform_component.hpp"
 #include "shared/id_component.hpp"
 #include "ecs/components/pick_up_event.hpp"
 #include "ecs/systems/missile_system.hpp"
+#include "shared/transform_component.hpp"
 
 void DestroyEntity(entt::registry& registry, entt::entity entity);
 void ApplyForcePush(entt::registry& registry, glm::vec3 pos);
 void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
-                            PhysicsComponent &physics_c);
-void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos, long player_id);
+                            PhysicsComponent& physics_c);
+void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
+                         long player_id);
 
 std::ostream& operator<<(std::ostream& o, glm::vec3 v) {
   return o << v.x << " " << v.y << " " << v.z;
@@ -71,7 +72,9 @@ void UpdateCollisions(entt::registry& registry) {
       registry.view<BallComponent, physics::Sphere, PhysicsComponent>();
   auto view_player =
       registry.view<physics::OBB, PhysicsComponent, PlayerComponent>();
-  auto view_arena = registry.view<physics::MeshHitbox, physics::Arena, FailSafeArenaComponent>();
+  auto view_arena =
+      registry
+          .view<physics::MeshHitbox, physics::Arena, FailSafeArenaComponent>();
 
   entt::entity arena_entity;
   for (auto a : view_arena) arena_entity = a;
@@ -125,7 +128,6 @@ void UpdateCollisions(entt::registry& registry) {
       }
     }
 
-
     // collision with ball and projectiles
     ProjectileBallCollision(registry, ball_entity);
 
@@ -155,7 +157,8 @@ void UpdateCollisions(entt::registry& registry) {
   return;
 }
 
-void HandleBallCollisions(entt::registry& registry, const CollisionList& list, entt::entity arena) {
+void HandleBallCollisions(entt::registry& registry, const CollisionList& list,
+                          entt::entity arena) {
   if (list.collision_list.size() == 1) {
     auto& object = list.collision_list[0];
 
@@ -265,7 +268,7 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
 
   bool bounced = false;
 
-  //if (object.normal.x) {
+  // if (object.normal.x) {
   //  glm::vec3 temp_normal =
   //      glm::normalize(glm::vec3(object.normal.x, 0.f, 0.f));
   //  float dot_val = glm::dot(ball_physics.velocity, temp_normal);
@@ -276,7 +279,7 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
   //  }
   //}
   //
-  //if (object.normal.y) {
+  // if (object.normal.y) {
   //  glm::vec3 temp_normal =
   //      glm::normalize(glm::vec3(0.f, object.normal.y, 0.f));
   //  float dot_val = glm::dot(ball_physics.velocity, temp_normal);
@@ -287,7 +290,7 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
   //  }
   //}
   //
-  //if (object.normal.z) {
+  // if (object.normal.z) {
   //  glm::vec3 temp_normal =
   //      glm::normalize(glm::vec3(0.f, 0.f, object.normal.z));
   //  float dot_val = glm::dot(ball_physics.velocity, temp_normal);
@@ -521,7 +524,7 @@ void ProjectileArenaCollision(entt::registry& registry) {
             break;
           }
           case ProjectileID::MISSILE_OBJECT: {
-            //ApplyForcePush(registry, proj_hitbox.center);
+            // ApplyForcePush(registry, proj_hitbox.center);
             DestroyEntity(registry, projectile);
             break;
           }
@@ -553,13 +556,19 @@ void PickUpPlayerCollision(entt::registry& registry) {
       auto data = Intersect(pick_up_obb, player_obb);
       if (data.collision) {
         auto entity = registry.create();
+
+        int num_abilities =
+            static_cast<typename std::underlying_type<AbilityID>::type>(
+                AbilityID::NUM_OF_ABILITY_IDS);
+        AbilityID pickup_ability = static_cast<AbilityID>(rand() % (num_abilities-1) + 1);
+
         registry.assign<PickUpEvent>(
-            entity, pick_up_view.get<PickUpComponent>(pick_up).id,
+            entity, registry.get<IDComponent>(pick_up).id,
             view_player.get<PlayerComponent>(player).client_id,
-            AbilityID::SWITCH_GOALS);
+            pickup_ability);
 
         auto& ability_c = view_player.get<AbilityComponent>(player);
-        ability_c.secondary_ability = AbilityID::SWITCH_GOALS;
+        ability_c.secondary_ability = pickup_ability;
 
         registry.destroy(pick_up);
       }
@@ -657,8 +666,10 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
   }
 }
 
-void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos, long player_id) {
-  auto player_view = registry.view<PlayerComponent, TransformComponent, PhysicsComponent, physics::OBB>();
+void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
+                         long player_id) {
+  auto player_view = registry.view<PlayerComponent, TransformComponent,
+                                   PhysicsComponent, physics::OBB>();
   for (auto player : player_view) {
     auto& player_c = player_view.get<PlayerComponent>(player);
     auto& phys_c = player_view.get<PhysicsComponent>(player);
@@ -670,7 +681,6 @@ void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos, long playe
       break;
     }
   }
-
 }
 
 void DestroyEntity(entt::registry& registry, entt::entity entity) {

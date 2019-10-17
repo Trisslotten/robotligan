@@ -128,7 +128,7 @@ class ServerPlayState : public ServerState {
   std::unordered_map<int, EntityID> clients_player_ids_;
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
 
-  std::vector<entt::entity> pick_ups_;
+  std::vector<entt::entity> created_pick_ups_;
 
   EntityID entity_guid_ = 0;
 

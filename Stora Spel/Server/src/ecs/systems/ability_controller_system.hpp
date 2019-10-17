@@ -67,18 +67,20 @@ void Update(entt::registry& registry, float dt) {
     // When finished set primary ability to not activated
     ability_component.use_primary = false;
 
-    // Then check if secondary ability is being used
-    if (ability_component.use_secondary) {
-      // Trigger the ability
-      if (TriggerAbility(registry, ability_component.secondary_ability,
-                         player_component.client_id, player)) {
-        // If ability triggered successfully, remove the
-        // slotted secondary ability
-        ability_component.secondary_ability = AbilityID::NULL_ABILITY;
+      // Then check if secondary ability is being used
+      if (ability_component.use_secondary) {
+        // Trigger the ability
+        if (TriggerAbility(registry, ability_component.secondary_ability,
+          player_component.client_id, player)) {
+          // If ability triggered successfully, remove the
+          // slotted secondary ability
+          ability_component.secondary_ability = AbilityID::NULL_ABILITY;
+
+          // TODO: send that ability is used
+        }
       }
-    }
-    // When finished set secondary ability to not activated
-    ability_component.use_secondary = false;
+      // When finished set secondary ability to not activated
+      ability_component.use_secondary = false;
 
     // Check if the player should shoot
     if (ability_component.shoot && ability_component.shoot_cooldown <= 0.0f) {

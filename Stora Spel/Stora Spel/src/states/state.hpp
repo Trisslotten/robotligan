@@ -208,7 +208,7 @@ public:
   }
   void SetCurrentStamina(float stamina) { current_stamina_ = stamina; }
 
-  void CreatePickUp(glm::vec3 position);
+  void CreatePickUp(EntityID id, glm::vec3 position);
   void CreateCannonBall(EntityID id);
   void CreateTeleportProjectile(EntityID id);
   void CreateForcePushObject(EntityID id);
