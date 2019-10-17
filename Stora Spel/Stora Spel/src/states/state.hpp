@@ -205,6 +205,7 @@ class PlayState : public State {
   }
 
   void UpdateHistory(int id) { while (history_.size() > 0 && history_.front().id <= id) history_.pop_front(); }
+  void SetPitchYaw(float pitch, float yaw);
 
  private:
   void CreateInitialEntities();
@@ -220,7 +221,7 @@ class PlayState : public State {
   void UpdateGameplayTimer();
 
   void DrawTopScores();
-  FrameState SimulateMovement(std::vector<int> &action, const FrameState& state, float dt);
+  FrameState SimulateMovement(std::vector<int> &action, FrameState& state, float dt);
   void MovePlayer(float dt);
   
   ////////////////////////////////////////
@@ -263,6 +264,8 @@ class PlayState : public State {
   float latency_;
   std::vector<int> actions_;
   int frame_id = 0;
+  float accum_pitch_ = 0.0f;
+  float accum_yaw_ = 0.0f;
 };
 
 #endif  // STATE_HPP_

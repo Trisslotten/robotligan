@@ -81,7 +81,7 @@ void Engine::Init() {
 
 void Engine::Update(float dt) {
   // std::cout << "current message: " << Input::GetCharacters() <<"\n";
-  float latency = 0.080f;
+  /*float latency = 0.080f;
   int counter = 0;
   for (auto& time : time_test) {
     time += dt;
@@ -94,7 +94,7 @@ void Engine::Update(float dt) {
       counter++;
 	}
   }
-  for (int i = 0; i < counter; ++i) time_test.pop_front();
+  for (int i = 0; i < counter; ++i) time_test.pop_front();*/
 
   if (take_game_input_ == true) {
     // accumulate key presses
@@ -109,6 +109,12 @@ void Engine::Update(float dt) {
     accum_yaw_ -= mouse_movement.x;
     accum_pitch_ -= mouse_movement.y;
 
+	//constexpr float pi = glm::pi<float>();
+    //test_yaw_ -= mouse_movement.x;
+    //test_pitch_ -= mouse_movement.y;
+    //test_pitch_ = glm::clamp(test_pitch_, -0.49f * pi, 0.49f * pi);
+
+	//play_state_.SetCameraOrientation(test_pitch_, test_yaw_);
     if (Input::IsKeyPressed(GLFW_KEY_K)) {
       new_team_ = TEAM_BLUE;
     }
@@ -202,6 +208,7 @@ void Engine::UpdateNetwork() {
     to_send << accum_yaw_;
     to_send << PacketBlockType::INPUT;
     play_state_.AddAction(100);
+    play_state_.SetPitchYaw(accum_pitch_, accum_yaw_);
   } else {
     play_state_.ClearActions();
   }
@@ -217,13 +224,13 @@ void Engine::UpdateNetwork() {
     auto packets = client_.Receive();
     // std::cout <<"Num recevied packets: "<< packets.size() << "\n";
     for (auto& packet : packets) {
-      /*while (!packet.IsEmpty()) {
+      while (!packet.IsEmpty()) {
       // std::cout << "Remaining packet size: " << packet.GetPacketSize() <<
       // "\n";
 		HandlePacketBlock(packet);
-      }*/
-      packet_test.push_back(packet);
-      time_test.push_back(0.0f);
+      }
+      //packet_test.push_back(packet);
+      //time_test.push_back(0.0f);
     }
   }
 }
