@@ -569,8 +569,10 @@ void PlayState::TestCreateLights() {
       light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
 }
 
-void PlayState::CreatePickUp(glm::vec3 position) {
+void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {
   auto pick_up = registry_gameplay_.create();
+
+  registry_gameplay_.assign<IDComponent>(pick_up, id);
 
   glob::ModelHandle model_pick_up =
     glob::GetModel("assets/Pickup/Pickup.fbx");

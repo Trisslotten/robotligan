@@ -73,6 +73,8 @@ namespace ability_controller {
           // If ability triggered successfully, remove the
           // slotted secondary ability
           ability_component.secondary_ability = AbilityID::NULL_ABILITY;
+
+          // TODO: send that ability is used
         }
       }
       // When finished set secondary ability to not activated

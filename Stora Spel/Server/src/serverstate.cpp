@@ -63,6 +63,7 @@ void ServerLobbyState::Cleanup() {
 }
 
 void ServerPlayState::Init() {
+  reset_timer_.Restart();
   reset_timer_.Pause();
   auto& server = game_server_->GetServer();
   auto& registry = game_server_->GetRegistry();
@@ -148,8 +149,9 @@ void ServerPlayState::Update(float dt) {
     EntityID client_player_id = clients_player_ids_[client_id];
 
     if (!clients_receive_updates_[client_id]) {
-      // TODO maybe send important packets even if not initialized
-      continue;
+      // TODO: maybe send important packets even if not initialized
+      // edit: removed continue, windows very good at buffering received packets
+      //continue;
     }
 
     auto view_cam = registry.view<CameraComponent, IDComponent>();
@@ -219,21 +221,25 @@ void ServerPlayState::Update(float dt) {
       }
     }
 
-    for (auto entity : pick_ups_) {
+    for (auto entity : created_pick_ups_) {
       auto& t = registry.get<TransformComponent>(entity);
+      auto& id = registry.get<IDComponent>(entity);
       to_send << t.position;
+      to_send << id.id;
       to_send << PacketBlockType::CREATE_PICK_UP;
+      //std::cout << "PACKET: CREATED_PICK_UP\n";
     }
 
     auto pick_up_events = registry.view<PickUpEvent>();
     for (auto entity : pick_up_events) {
       auto& pick_event = pick_up_events.get(entity);
-      to_send << 0;
+      to_send << pick_event.pick_up_id;
       to_send << PacketBlockType::DESTROY_PICK_UP;
-      if (client_id == pick_event.player_id) {
+      if (client_id == pick_event.client_id) {
         to_send << pick_event.ability_id;
         to_send << PacketBlockType::RECEIVE_PICK_UP;
       }
+      registry.remove<PickUpEvent>(entity);
     }
     auto view_goals = registry.view<GoalComponenet, TeamComponent>();
     entt::entity blue_goal;
@@ -284,7 +290,7 @@ void ServerPlayState::Update(float dt) {
   }
   destroy_entities_.clear();
   created_projectiles_.clear();
-  pick_ups_.clear();
+  created_pick_ups_.clear();
 
   if (reset_timer_.Elapsed() > 3.0f) {
     ResetEntities();
@@ -390,9 +396,8 @@ void ServerPlayState::CreateArenaEntity() {
 
   // Add components for an arena
   // registry_.assign<ModelComponent>(entity, model_arena);
-  registry.assign<TransformComponent>(entity, zero_vec, zero_vec,
-                                      arena_scale);
-  
+  registry.assign<TransformComponent>(entity, zero_vec, zero_vec, arena_scale);
+
   // Add a hitbox
   registry.assign<physics::Arena>(entity, -v2, v2, -v3, v4, -v1, v1);
   auto md = glob::GetMeshData(model_arena);
@@ -613,6 +618,8 @@ void ServerPlayState::ResetEntities() {
 
   CreatePickUpComponents();
 
+//  std::cout << "reset entities\n";
+
   // Reset Balls
   auto ball_view =
       registry.view<BallComponent, PhysicsComponent, TransformComponent>();
@@ -644,15 +651,16 @@ void ServerPlayState::ResetEntities() {
 
 void ServerPlayState::CreatePickUpComponents() {
   auto& registry = game_server_->GetRegistry();
-  glm::vec3 pos = glm::vec3((float)(rand() % 20), -6.8f, (float)(rand() % 10));
-  auto entity = registry.create();
+  glm::vec3 pos = glm::vec3(30 * float(rand()) / RAND_MAX - 15.f, -8.5f,
+                            30 * float(rand()) / RAND_MAX - 15.f);
+  auto entity = CreateIDEntity();
   registry.assign<TransformComponent>(entity, pos, glm::vec3(0.f),
                                       glm::vec3(1.f));
   registry.assign<PickUpComponent>(entity);
   registry.assign<physics::OBB>(entity, pos, glm::vec3(1.f, 0.f, 0.f),
                                 glm::vec3(0.f, 1.f, 0.f),
                                 glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
-  pick_ups_.push_back(entity);
+  created_pick_ups_.push_back(entity);
 }
 
 void ServerPlayState::EndGame() {
