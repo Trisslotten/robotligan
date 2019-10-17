@@ -430,3 +430,6 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
     a.bone_transforms = boneTransforms;
   }
 }
+
+
+void AnimationSystem::Reset() { p_groups.clear();}

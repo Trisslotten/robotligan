@@ -99,10 +99,12 @@ void Update() {
   glfwPollEvents();
   UpdateMousePos();
 
+  /*
   int state = glfwGetKey(glfw_window, GLFW_KEY_0);
   if (state == GLFW_PRESS) {
     glfwSetWindowShouldClose(glfw_window, GLFW_TRUE);
   }
+  */
 }
 
 void Cleanup() {
