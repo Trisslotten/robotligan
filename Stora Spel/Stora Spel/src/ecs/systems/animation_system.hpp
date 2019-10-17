@@ -27,6 +27,13 @@ class AnimationSystem {
 
   Engine* engine_;
 
+  struct priorityGroup {
+    std::vector<glob::Animation*> animations;
+    char priority;
+  };
+
+  std::vector<priorityGroup> p_groups;
+
  public:
   void Init(Engine* engine);
 
