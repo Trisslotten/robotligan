@@ -193,7 +193,7 @@ physics::IntersectData physics::Intersect(const physics::Arena& a,
   }
 
   if (data.collision) {
-    data.normal = n; 
+    data.normal = glm::normalize(n); 
   }
 
   return data;
