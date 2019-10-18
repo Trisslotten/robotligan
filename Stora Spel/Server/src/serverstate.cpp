@@ -151,7 +151,7 @@ void ServerPlayState::Update(float dt) {
     if (!clients_receive_updates_[client_id]) {
       // TODO: maybe send important packets even if not initialized
       // edit: removed continue, windows very good at buffering received packets
-      //continue;
+      // continue;
     }
 
     auto view_cam = registry.view<CameraComponent, IDComponent>();
@@ -227,7 +227,7 @@ void ServerPlayState::Update(float dt) {
       to_send << t.position;
       to_send << id.id;
       to_send << PacketBlockType::CREATE_PICK_UP;
-      //std::cout << "PACKET: CREATED_PICK_UP\n";
+      // std::cout << "PACKET: CREATED_PICK_UP\n";
     }
 
     auto pick_up_events = registry.view<PickUpEvent>();
@@ -573,6 +573,21 @@ void ServerPlayState::ResetEntities() {
   unsigned int blue_counter = 0;
   unsigned int red_counter = 0;
 
+  bool switched_goals = false;
+  auto view_goal =
+      registry.view<TransformComponent, GoalComponenet, TeamComponent>();
+  for (auto entity : view_goal) {
+    auto& team = view_goal.get<TeamComponent>(entity);
+    if (team.team == TEAM_BLUE) {
+      auto& trans = view_goal.get<TransformComponent>(entity);
+      if (trans.position.x > 0) {
+        switched_goals = true;
+        
+        break;
+      }
+    }
+  }
+
   auto player_view = registry.view<PlayerComponent, PhysicsComponent,
                                    TransformComponent, CameraComponent>();
   for (auto entity : player_view) {
@@ -587,7 +602,8 @@ void ServerPlayState::ResetEntities() {
 
     if (registry.has<TeamComponent>(entity)) {
       TeamComponent& team = registry.get<TeamComponent>(entity);
-      if (team.team == TEAM_RED) blue_team = false;
+      if (team.team == TEAM_RED && !switched_goals) blue_team = false;
+      if (team.team == TEAM_BLUE && switched_goals) blue_team = false;
     }
 
     float orientation_value = 0.f;
@@ -622,7 +638,7 @@ void ServerPlayState::ResetEntities() {
 
   CreatePickUpComponents();
 
-//  std::cout << "reset entities\n";
+  //  std::cout << "reset entities\n";
 
   // Reset Balls
   auto ball_view =
