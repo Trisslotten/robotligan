@@ -150,8 +150,7 @@ void ServerPlayState::Update(float dt) {
 
     if (!clients_receive_updates_[client_id]) {
       // TODO: maybe send important packets even if not initialized
-      // edit: removed continue, windows very good at buffering received packets
-      // continue;
+      continue;
     }
 
     auto view_cam = registry.view<CameraComponent, IDComponent>();
