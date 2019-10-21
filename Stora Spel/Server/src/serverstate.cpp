@@ -143,7 +143,8 @@ void ServerPlayState::Update(float dt) {
             match_timer_.Pause();
           } else {
             player_c.actions = inputs.first;
-            match_timer_.Resume();
+            if (reset_ == false)
+              match_timer_.Resume();
             countdown_timer_.Pause();
           }
           player_c.pitch += inputs.second.x;
@@ -313,6 +314,8 @@ void ServerPlayState::Update(float dt) {
     reset_timer_.Restart();
     reset_timer_.Pause();
     reset_ = false;
+
+    match_timer_.Resume();
 
     GameEvent reset_event;
     reset_event.type = GameEvent::RESET;
@@ -825,6 +828,7 @@ void ServerPlayState::HandleNewTeam() {
 */
 
 void ServerPlayState::StartResetTimer() {
+  match_timer_.Pause();
   reset_timer_.Restart();
   reset_ = true;
 }
