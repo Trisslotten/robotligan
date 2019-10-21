@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 
+
 void NetAPI::Socket::Server::SendPing() {
   NetAPI::Common::Packet to_send;
   to_send.GetHeader()->packet_id = NetAPI::Socket::EVERYONE;
@@ -139,4 +140,15 @@ void NetAPI::Socket::Server::Send(unsigned id, const char* data, size_t len) {
 
 void NetAPI::Socket::Server::Send(NetAPI::Common::Packet& p) {
   data_to_send_.push_back(p);
+}
+
+bool NetAPI::Socket::Server::KickPlayer(long ID) {
+  auto it = client_data_.find(ID);
+  if (it != client_data_.end()) {
+    this->client_data_.erase(ID);
+    connected_players_--;
+    return true;
+  } else {
+    return false;
+  }
 }

@@ -21,6 +21,7 @@ class EXPORT Server {
   void Send(unsigned id, const char* data, size_t len);
   void Send(NetAPI::Common::Packet& p);
   short GetConnectedPlayers() { return connected_players_; }
+  bool KickPlayer(long ID);
   /// ClientData* operator[](short ID) { return client_data_.at(ID); }
   std::unordered_map<long, ClientData*>& GetClients() { return client_data_; }
   std::vector<ClientData*> GetNewlyConnected() { return newly_connected_; }

@@ -29,6 +29,7 @@ void ServerLobbyState::Update(float dt) {
       cli.second->is_active = false;
       this->client_teams_.erase(cli.second->ID);
       this->clients_ready_.erase(cli.second->ID);
+      this->game_server_->GetServer().KickPlayer(cli.second->ID);
       teams_updated_ = true;
       NetAPI::Common::Packet p;
       p << cli.second->ID;
