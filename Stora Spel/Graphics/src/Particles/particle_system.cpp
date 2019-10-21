@@ -65,6 +65,29 @@ namespace glob {
     Reset();
   }
 
+  ParticleSystem::ParticleSystem(ParticleSystem&& other) {
+    settings_ = other.settings_;
+    color_vbo_ = other.color_vbo_;
+    created_bursts_ = other.created_bursts_;
+    current_index_ = other.current_index_;
+    gen_ = other.gen_;
+    position_vbo_ = other.position_vbo_;
+    size_vbo_ = other.size_vbo_;
+    spawns_ = other.spawns_;
+    time_buffer_ = other.time_buffer_;
+    velocity_buffer_ = other.velocity_buffer_;
+    vertex_array_object_ = other.vertex_array_object_;
+
+
+    // Reset other so buffers doesnt get deleted
+    other.color_vbo_ = 0;
+    other.position_vbo_ = 0;
+    other.size_vbo_ = 0;
+    other.time_buffer_ = 0;
+    other.velocity_buffer_ = 0;
+    other.vertex_array_object_ = 0;
+  }
+
   ParticleSystem::~ParticleSystem() {
     glDeleteBuffers(1, &position_vbo_);
     glDeleteBuffers(1, &color_vbo_);

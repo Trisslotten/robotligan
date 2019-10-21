@@ -10,8 +10,8 @@
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "ecs/systems/animation_system.hpp"
-#include "ecs/systems/particle_system.hpp"
 #include "ecs/systems/gui_system.hpp"
+#include "ecs/systems/particle_system.hpp"
 #include "ecs/systems/render_system.hpp"
 #include "ecs/systems/sound_system.hpp"
 #include "entitycreation.hpp"
@@ -95,13 +95,13 @@ void Engine::Update(float dt) {
   for (auto& time : time_test) {
     time += dt;
 
-	if (time > latency) {
+        if (time > latency) {
       while (packet_test.front().IsEmpty() == false) {
             HandlePacketBlock(packet_test.front());
       }
       packet_test.pop_front();
       counter++;
-	}
+        }
   }
   for (int i = 0; i < counter; ++i) time_test.pop_front();*/
 
@@ -124,12 +124,12 @@ void Engine::Update(float dt) {
     accum_yaw_ -= mouse_movement.x;
     accum_pitch_ -= mouse_movement.y;
 
-	//constexpr float pi = glm::pi<float>();
-    //test_yaw_ -= mouse_movement.x;
-    //test_pitch_ -= mouse_movement.y;
-    //test_pitch_ = glm::clamp(test_pitch_, -0.49f * pi, 0.49f * pi);
+    // constexpr float pi = glm::pi<float>();
+    // test_yaw_ -= mouse_movement.x;
+    // test_pitch_ -= mouse_movement.y;
+    // test_pitch_ = glm::clamp(test_pitch_, -0.49f * pi, 0.49f * pi);
 
-	//play_state_.SetCameraOrientation(test_pitch_, test_yaw_);
+    // play_state_.SetCameraOrientation(test_pitch_, test_yaw_);
     if (Input::IsKeyPressed(GLFW_KEY_K)) {
       new_team_ = TEAM_BLUE;
     }
@@ -138,7 +138,6 @@ void Engine::Update(float dt) {
     }
   }
 
-  
   current_state_->Update(dt);
 
   UpdateSystems(dt);
@@ -160,6 +159,8 @@ void Engine::Update(float dt) {
         current_state_ = &lobby_state_;
         break;
       case StateType::PLAY:
+        scores_[0] = 0;
+        scores_[1] = 0;
         current_state_ = &play_state_;
         break;
       case StateType::SETTINGS:
@@ -240,12 +241,12 @@ void Engine::UpdateNetwork() {
     // std::cout <<"Num recevied packets: "<< packets.size() << "\n";
     for (auto& packet : packets) {
       while (!packet.IsEmpty()) {
-      // std::cout << "Remaining packet size: " << packet.GetPacketSize() <<
-      // "\n";
-		HandlePacketBlock(packet);
+        // std::cout << "Remaining packet size: " << packet.GetPacketSize() <<
+        // "\n";
+        HandlePacketBlock(packet);
       }
-      //packet_test.push_back(packet);
-      //time_test.push_back(0.0f);
+      // packet_test.push_back(packet);
+      // time_test.push_back(0.0f);
     }
   }
 }
@@ -518,7 +519,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> target;
       play_state_.SetMyTarget(target);
       break;
-	}
+    }
     case PacketBlockType::FRAME_ID: {
       int id;
       packet >> id;
@@ -527,7 +528,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
   }
 }
-  
+
 void Engine::Render() { glob::Render(); }
 
 void Engine::SetCurrentRegistry(entt::registry* registry) {
