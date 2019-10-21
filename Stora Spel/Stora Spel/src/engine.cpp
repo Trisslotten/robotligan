@@ -471,6 +471,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       lobby_state_.HandleUpdateLobbyTeamPacket(packet);
       break;
     }
+    case PacketBlockType::PLAYER_LOBBY_DISCONNECT: {
+      lobby_state_.HandlePlayerDisconnect(packet);
+      break;
+    }
     case PacketBlockType::LOBBY_YOUR_ID: {
       int id = 0;
       packet >> id;

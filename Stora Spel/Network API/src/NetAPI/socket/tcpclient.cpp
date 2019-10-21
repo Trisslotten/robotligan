@@ -157,6 +157,7 @@ NetAPI::Socket::TcpClient& NetAPI::Socket::TcpClient::operator=(
     const TcpClient& other) {
   delete rec_buffer_;
   delete temp_buffer_;
+  temp_buffer_ = rec_buffer_ = nullptr;
   rec_buffer_ = new char[other.buffer_size_];
   temp_buffer_ = new char[other.buffer_size_];
   temp_buffer_index_ = other.temp_buffer_index_;

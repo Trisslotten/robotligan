@@ -213,8 +213,7 @@ void Update(entt::registry& registry, float dt) {
 
         glm::vec3 player_ball_vec = ball_trans_c.position - trans_c.position;
         glm::vec3 player_ball_dir = glm::normalize(player_ball_vec);
-        glm::vec3 player_look_dir =
-            trans_c.Forward();  // cam_c.LookDirection();
+        glm::vec3 player_look_dir = cam_c.GetLookDir();
         float dist = length(player_ball_vec);
         float dot = glm::dot(player_look_dir, player_ball_dir);
         if (dist < player_c.kick_reach &&
