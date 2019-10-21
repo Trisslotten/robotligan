@@ -24,7 +24,7 @@ enum class StateType {
 };
 
 class State {
-public:
+ public:
   // when program starts
   virtual void Startup() = 0;
 
@@ -46,16 +46,16 @@ public:
   State() = default;
   ~State() {}
 
-protected:
+ protected:
   Engine* engine_ = nullptr;
 
-private:
+ private:
 };
 
 /////////////////////// MAIN MENU ///////////////////////
 
 class MainMenuState : public State {
-public:
+ public:
   void Startup() override;
   void Init() override;
   void Update(float dt) override;
@@ -64,7 +64,7 @@ public:
 
   StateType Type() { return StateType::MAIN_MENU; }
 
-private:
+ private:
   void CreateMainMenu();
   void CreateInformationMenu();
 
@@ -85,7 +85,7 @@ struct LobbyPlayer {
 };
 
 class LobbyState : public State {
-public:
+ public:
   void Startup() override;
   void Init() override;
   void Update(float dt) override;
@@ -95,15 +95,15 @@ public:
   StateType Type() { return StateType::LOBBY; }
 
   void HandleUpdateLobbyTeamPacket(NetAPI::Common::Packet& packet);
+  void HandlePlayerDisconnect(NetAPI::Common::Packet& packet);
   void SetMyId(int client_id) { my_id_ = client_id; }
 
-private:
+ private:
   entt::registry registry_lobby_;
   void CreateBackgroundEntities();
   void CreateGUIElements();
   void DrawTeamSelect();
   void DrawAbilitySelect();
-
   glob::GUIHandle team_select_back_;
   glob::GUIHandle ability_select_back_;
   glob::GUIHandle ability_back_normal_;
@@ -132,7 +132,7 @@ private:
 };
 /////////////////////// ConnectMenuState
 class ConnectMenuState : public State {
-public:
+ public:
   void Startup() override;
   void Init() override;
   void Update(float dt) override;
@@ -140,11 +140,11 @@ public:
   void Cleanup() override;
   StateType Type() { return StateType::CONNECT_MENU; }
 
-private:
+ private:
   struct InputField {
-    InputField() {};
+    InputField(){};
     InputField(glm::vec2 in_size, glm::vec2 in_pos,
-      std::string initial_text = "") {
+               std::string initial_text = "") {
       size = in_size;
       pos = in_pos;
     }
@@ -183,11 +183,10 @@ class SettingsState : public State {
   float setting_mouse_sens_ = 1.0f;
 };
 
-
 /////////////////////// PLAY ///////////////////////
 
 class PlayState : public State {
-public:
+ public:
   void Startup() override;
   void Init() override;
   void Update(float dt) override;
@@ -201,7 +200,7 @@ public:
   void SetEntityPhysics(EntityID player_id, glm::vec3 vel, bool is_airborne);
   void SetCameraOrientation(glm::quat orientation);
   void SetEntityIDs(std::vector<EntityID> player_ids, EntityID my_id,
-    EntityID ball_id) {
+                    EntityID ball_id) {
     player_ids_ = player_ids;
     my_id_ = my_id;
     ball_id_ = ball_id;
@@ -277,7 +276,9 @@ public:
   glob::E2DHandle e2D_test_, e2D_test2_, e2D_target_;
   glob::GUIHandle in_game_menu_gui_ = 0;
   glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
-    gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_, gui_minimap_, gui_minimap_goal_red_, gui_minimap_goal_blue_, gui_minimap_player_red_, gui_minimap_player_blue_, gui_minimap_ball_;
+      gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_, gui_minimap_,
+      gui_minimap_goal_red_, gui_minimap_goal_blue_, gui_minimap_player_red_,
+      gui_minimap_player_blue_, gui_minimap_ball_;
 
   std::vector<glob::GUIHandle> ability_handles_;
 
