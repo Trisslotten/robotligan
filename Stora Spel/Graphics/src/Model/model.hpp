@@ -56,6 +56,8 @@ class Model {
 
   void Draw(ShaderProgram& shader);
 
+  glm::vec3 CalcCenter(glm::mat4 transform);
+
   std::vector<Joint*> bones_;
   std::vector<Animation*> animations_;
   glm::mat4 globalInverseTransform_;

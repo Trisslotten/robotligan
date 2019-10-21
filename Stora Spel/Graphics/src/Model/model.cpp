@@ -395,6 +395,19 @@ void Model::Draw(ShaderProgram& shader) {
   }
 }
 
+glm::vec3 Model::CalcCenter(glm::mat4 transform) {
+  glm::vec3 center{ 0 };
+  int num_points = 0;
+  for (int i = 0; i < mesh_.size(); i++) {
+    MeshData temp = mesh_[i].GetMeshData();
+    for(auto pos : temp.pos) {
+      center += pos;
+      num_points++;
+    }
+  }
+  return center / float(num_points);
+}
+
 MeshData Model::GetMeshData() {
   MeshData mesh_data;
   for (unsigned int i = 0; i < mesh_.size(); i++) {
