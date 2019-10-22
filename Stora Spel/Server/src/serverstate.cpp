@@ -340,6 +340,7 @@ void ServerPlayState::Update(float dt) {
   }
   if (match_timer_.Elapsed() > match_time_) {
     EndGame();
+
   }
 }
 

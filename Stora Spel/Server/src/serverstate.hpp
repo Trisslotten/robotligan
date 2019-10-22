@@ -71,7 +71,6 @@ class ServerLobbyState : public ServerState {
 
   std::unordered_map<int, AbilityID> client_abilities_;
   std::unordered_map<int, unsigned int> client_teams_;
-
  private:
   std::unordered_map<int, bool> clients_ready_;
   Timer start_game_timer;

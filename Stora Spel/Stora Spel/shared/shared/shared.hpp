@@ -70,6 +70,7 @@ enum : int16_t {
   YOUR_TARGET,
   FRAME_ID,
   SERVER_CAN_JOIN,
+  STATE,
   NUM_BLOCK_TYPES,
 };
 

@@ -62,7 +62,8 @@ class Engine {
   AbilityID GetSecondaryAbility() { return second_ability_; }
 
   std::vector<unsigned int> GetTeamScores() { return scores_; }
-
+  auto GetPlayingPlayers() { return playing_players_; }
+  void SetPlayingPlayers(std::unordered_map<int, LobbyPlayer> plyrs) { playing_players_ = plyrs; }
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
   unsigned int GetPlayerTeam(EntityID id) {
@@ -79,7 +80,8 @@ class Engine {
   Chat* GetChat() { return &chat_; }
 
   StateType GetPreviousStateType() { return previous_state_; }
-
+  int GetStateType() { return statetype_; }
+  void SetStateType(int state) { statetype_ = state; }
  private:
   void SetKeybinds();
 
@@ -100,7 +102,7 @@ class Engine {
   ConnectMenuState connect_menu_state_;
   SettingsState settings_state_;
   entt::registry* registry_current_;
-
+  std::unordered_map<int, LobbyPlayer> playing_players_;
   bool should_send_input_ = false;
 
   std::unordered_map<int, int> keybinds_;
@@ -128,7 +130,7 @@ class Engine {
   std::string message_ = "";
 
   bool enable_chat_ = false;
-
+  int statetype_;
   SoundSystem sound_system_;
   AnimationSystem animation_system_;
 

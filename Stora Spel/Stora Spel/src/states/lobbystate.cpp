@@ -94,6 +94,7 @@ void LobbyState::Startup() {
 
 void LobbyState::Init() {
   //
+  server_state_ = engine_->GetStateType();
   glob::window::SetMouseLocked(false);
   auto& cli = engine_->GetClient();
   engine_->SetSendInput(false);
@@ -106,11 +107,12 @@ void LobbyState::Init() {
   SelectAbilityHandler(my_selected_ability_);
 
   engine_->GetChat()->SetPosition(glm::vec2(20, 140));
-
+  
   engine_->GetAnimationSystem().Reset();
 }
 
 void LobbyState::Update(float dt) {
+  server_state_ = engine_->GetStateType();
   DrawTeamSelect();
   DrawAbilitySelect();
 
@@ -129,8 +131,13 @@ void LobbyState::Update(float dt) {
     glm::vec2 bottom_pos =
         glm::vec2((glob::window::GetWindowDimensions().x /2) - 250, 30);
 
-	glob::Submit(font_test_, bottom_pos, 28,
-                 "All players are ready. Match will start soon.");
+	if (engine_->GetStateType() == 0) {
+		glob::Submit(font_test_, bottom_pos, 28,
+			"All players are ready. Match will start soon.");
+	} else {
+		glob::Submit(font_test_, bottom_pos, 28,
+			"Match is currently in session");
+	}
   }
 }
 
@@ -325,7 +332,7 @@ void LobbyState::CreateGUIElements() {
   button_comp.gui_handle_hover = ready_back_hover_;
   button_comp.gui_handle_icon = ready_empty_icon_;
   button_comp.bounds = glm::vec2(50, 50);
-  button_comp.button_func = [&] { ReadyButtonFunc(); };
+  button_comp.button_func = [&] { if (engine_->GetStateType() == 0) { ReadyButtonFunc(); } };
 }
 void LobbyState::DrawTeamSelect() {
   glm::vec2 team_select_box_pos =

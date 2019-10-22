@@ -51,6 +51,28 @@ void GameServer::Update(float dt) {
     lobby_state_.SetClientIsReady(client_data->ID, false);
     play_state_.SetClientReceiveUpdates(client_data->ID, false);
     lobby_state_.HandleNewClientTeam(client_data->ID);
+	NetAPI::Common::Packet p;
+	int s;
+	if (this->current_state_type_ == ServerStateType::LOBBY) {
+		s = 0;
+	}
+	else {
+		s = 1;
+	}
+	p << s << PacketBlockType::STATE;
+	server_.Send(p);
+	NetAPI::Common::Packet to_send;
+	for (auto client_team : play_state_.client_teams_) {
+		to_send << client_team.first;   // send id
+		to_send << client_team.second;  // send team
+		bool ready = true;
+		to_send << ready;
+		to_send << PacketBlockType::LOBBY_UPDATE_TEAM;
+	}
+	to_send << client_data->ID;
+	to_send << 0;
+	to_send << false;
+	server_.Send(to_send);
   }
 
   // handle received data
@@ -160,6 +182,16 @@ void GameServer::HandleStateChange() {
         break;
     }
     current_state_->Init();
+	NetAPI::Common::Packet p;
+	int s;
+	if (this->current_state_type_ == ServerStateType::LOBBY) {
+		s = 0;
+	}
+	else {
+		s = 1;
+	}
+	p << s << PacketBlockType::STATE;
+	server_.Send(p);
   }
 }
 
@@ -256,7 +288,6 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       }
       break;
     }
-
     case PacketBlockType::LOBBY_SELECT_ABILITY: {
       AbilityID id;
       packet >> id;

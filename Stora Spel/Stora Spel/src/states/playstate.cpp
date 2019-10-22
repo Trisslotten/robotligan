@@ -124,7 +124,7 @@ void PlayState::Update(float dt) {
     cli.Disconnect();
     engine_->ChangeState(StateType::MAIN_MENU);
   }
-
+  this->server_state_ = engine_->GetStateType();
   if (!physics_.empty()) {
     auto view_entities =
         registry_gameplay_.view<PhysicsComponent, IDComponent>();

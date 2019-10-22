@@ -47,7 +47,6 @@ class State {
 
  protected:
   Engine* engine_ = nullptr;
-
  private:
 };
 
@@ -96,7 +95,6 @@ class LobbyState : public State {
   void HandleUpdateLobbyTeamPacket(NetAPI::Common::Packet& packet);
   void HandlePlayerDisconnect(NetAPI::Common::Packet& packet);
   void SetMyId(int client_id) { my_id_ = client_id; }
-
  private:
   entt::registry registry_lobby_;
   void CreateBackgroundEntities();
@@ -113,7 +111,7 @@ class LobbyState : public State {
   glob::GUIHandle ready_icon_;
   glob::GUIHandle ready_empty_icon_;
 
-
+  int server_state_ = 0;
   std::vector<glob::GUIHandle> ability_icons_;
   glob::Font2DHandle font_team_names_;
   glob::Font2DHandle font_test_;
@@ -125,7 +123,6 @@ class LobbyState : public State {
 
   void SendJoinTeam(unsigned int team);
   int my_id_ = 0;
-
   int my_selected_ability_ = 1;
 
   entt::entity GetAbilityButton(std::string find_string);
@@ -247,6 +244,7 @@ class PlayState : public State {
   void SetPitchYaw(float pitch, float yaw);
 
  private:
+  int server_state_ = 1;
   void CreateInitialEntities();
   void CreatePlayerEntities();
   void CreateArenaEntity();
