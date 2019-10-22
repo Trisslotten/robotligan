@@ -16,9 +16,8 @@ void LobbyState::ReadyButtonFunc() {
     auto& packet = engine_->GetPacket();
     packet << PacketBlockType::CLIENT_READY;
     for (auto button : view_ready_button) {
-      ButtonComponent& b_c = registry_lobby_.get<ButtonComponent>(button);
-      b_c.text_normal_color = glm::vec4(0.f, 1.f, 0.f, 1.f);
-      b_c.text_hover_color = glm::vec4(0.f, .6f, 0.f, 1.f);
+      auto& b_c = registry_lobby_.get<ButtonComponent>(button);
+      b_c.gui_handle_icon = ready_icon_;
       break;
     }
     // b_c.text_current_color = glm::vec4(0.f, 1.f, 0.f, 1.f);
@@ -28,9 +27,8 @@ void LobbyState::ReadyButtonFunc() {
     packet << PacketBlockType::CLIENT_NOT_READY;
 
     for (auto button : view_ready_button) {
-      ButtonComponent& b_c = registry_lobby_.get<ButtonComponent>(button);
-      b_c.text_normal_color = glm::vec4(1.f, 0.f, 0.f, 1.f);
-      b_c.text_hover_color = glm::vec4(.6f, 0.f, 0.f, 1.f);
+      auto& b_c = registry_lobby_.get<ButtonComponent>(button);
+      b_c.gui_handle_icon = ready_empty_icon_;
       break;
     }
     // b_c.text_current_color = glm::vec4(1.f, 0.f, 0.f, 1.f);
@@ -61,9 +59,13 @@ entt::entity LobbyState::GetAbilityButton(std::string find_string) {
 void LobbyState::SelectAbilityHandler(int id) {
   my_selected_ability_ = id;
   auto view_buttons = registry_lobby_.view<ButtonComponent>();
+
+  //reset all ability buttons
   for (auto button : view_buttons) {
     ButtonComponent& b_c = registry_lobby_.get<ButtonComponent>(button);
-    b_c.gui_handle_normal = ability_back_normal_;
+    if (b_c.find_name.find("ability") != std::string::npos) {
+      b_c.gui_handle_normal = ability_back_normal_;
+	}
   }
   entt::entity selected_button =
       GetAbilityButton("ability_" + std::to_string((int)id));
@@ -109,9 +111,27 @@ void LobbyState::Init() {
 }
 
 void LobbyState::Update(float dt) {
-  //
   DrawTeamSelect();
   DrawAbilitySelect();
+
+  //draw ready string
+  glm::vec2 pos = glm::vec2(glob::window::GetWindowDimensions().x - 330, 120);
+  glob::Submit(font_test_, pos, 72, "Ready: ");
+
+  bool everyone_ready = true;
+  for (auto lp : lobby_players_) {
+    if (!lp.second.ready) {
+      everyone_ready = false;
+      break;
+	}
+  }
+  if (everyone_ready) {
+    glm::vec2 bottom_pos =
+        glm::vec2((glob::window::GetWindowDimensions().x /2) - 250, 30);
+
+	glob::Submit(font_test_, bottom_pos, 28,
+                 "All players are ready. Match will start soon.");
+  }
 }
 
 void LobbyState::UpdateNetwork() {}
@@ -215,6 +235,15 @@ void LobbyState::CreateGUIElements() {
   ability_back_hover_ = glob::GetGUIItem(
       "Assets/GUI_elements/ability_icons/ability_back_hover.png");
 
+  ready_back_normal_ =
+      glob::GetGUIItem("Assets/GUI_elements/lobby/ready_unchecked.png");
+  ready_back_hover_ =
+      glob::GetGUIItem("Assets/GUI_elements/lobby/ready_hover.png");
+
+  ready_icon_ = glob::GetGUIItem("Assets/GUI_elements/lobby/ready_icon.png");
+  ready_empty_icon_ =
+      glob::GetGUIItem("Assets/GUI_elements/lobby/dummy_icon.png");
+
   int num_abilites = (int)AbilityID::NUM_OF_ABILITY_IDS;
   ability_icons_.resize(num_abilites);
   for (int i = 0; i < num_abilites; i++) {
@@ -222,26 +251,9 @@ void LobbyState::CreateGUIElements() {
                                          std::to_string(i) + ".png");
   }
 
-  // ready button
-  auto button = registry_lobby_.create();
-  ButtonComponent& b_c = registry_lobby_.assign<ButtonComponent>(button);
-  /*ready_button_c = GenerateButtonEntity(
-      registry_lobby_, "READY", glob::window::Relative720(glm::vec2(1120, 40)),
-      font_test_);*/
-  b_c.text = "READY";
-  b_c.font_size = 72;  // menu_settings::font_size;
-  b_c.bounds = glm::vec2(b_c.font_size * b_c.text.size() / 2, b_c.font_size);
-  b_c.f_handle = font_test_;
-  glm::vec2 pos = glob::window::Relative720(glm::vec2(1120, 40));
-  registry_lobby_.assign<TransformComponent>(
-      button, glm::vec3(glob::window::GetWindowDimensions().x - 200, 82, 0));
-  b_c.text_current_color = glm::vec4(1.f, 0.f, 0.f, 1.f);
-  b_c.text_normal_color = glm::vec4(1.f, 0.f, 0.f, 1.f);
-  b_c.text_hover_color = glm::vec4(0.6f, 0.f, 0.f, 1.f);
-  b_c.visible = true;
-  registry_lobby_.assign<ReadyButtonComponent>(button);
+  
 
-  b_c.button_func = [&]() { this->ReadyButtonFunc(); };
+  
 
   // auto button_join_red = registry_lobby_.create();
   ButtonComponent* button_c = GenerateButtonEntity(
@@ -293,6 +305,27 @@ void LobbyState::CreateGUIElements() {
       c++;
     }
   }
+
+  // ready button
+  auto button = registry_lobby_.create();
+  registry_lobby_.assign<ReadyButtonComponent>(button);
+  ButtonComponent& button_comp =
+      registry_lobby_.assign<ButtonComponent>(button);
+  /*ready_button_c = GenerateButtonEntity(
+      registry_lobby_, "READY", glob::window::Relative720(glm::vec2(1120, 40)),
+      font_test_);*/
+  button_comp.text = "";
+  button_comp.font_size = 0;  // menu_settings::font_size;
+  button_comp.f_handle = font_test_;
+  registry_lobby_.assign<TransformComponent>(
+      button, glm::vec3(glob::window::GetWindowDimensions().x - 200, 82, 0));
+  button_comp.visible = true;
+  button_comp.gui_handle_normal = ready_back_normal_;
+  button_comp.gui_handle_current = ready_back_normal_;
+  button_comp.gui_handle_hover = ready_back_hover_;
+  button_comp.gui_handle_icon = ready_empty_icon_;
+  button_comp.bounds = glm::vec2(50, 50);
+  button_comp.button_func = [&] { ReadyButtonFunc(); };
 }
 void LobbyState::DrawTeamSelect() {
   glm::vec2 team_select_box_pos =
