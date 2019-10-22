@@ -250,6 +250,7 @@ class PlayState : public State {
 
   void DrawTopScores();
   void DrawTarget();
+  void DrawQuickslots();
   FrameState SimulateMovement(std::vector<int> &action, FrameState& state, float dt);
   void MovePlayer(float dt);
   
@@ -301,6 +302,8 @@ class PlayState : public State {
   int frame_id = 0;
   float accum_pitch_ = 0.0f;
   float accum_yaw_ = 0.0f;
+
+  float primary_cd_ = 0.0f;
 };
 
 #endif  // STATE_HPP_
