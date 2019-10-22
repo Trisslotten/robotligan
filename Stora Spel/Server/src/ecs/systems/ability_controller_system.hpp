@@ -75,12 +75,10 @@ void Update(entt::registry& registry, float dt) {
           // If ability triggered successfully, remove the
           // slotted secondary ability
           ability_component.secondary_ability = AbilityID::NULL_ABILITY;
-
-          // TODO: send that ability is used
         }
       }
-      // When finished set secondary ability to not activated
-      ability_component.use_secondary = false;
+      // Do not set use_secondary to false, it is done in serverstate to send over that the ability has been used
+      // ability_component.use_secondary = false;
 
     // Check if the player should shoot
     if (ability_component.shoot && ability_component.shoot_cooldown <= 0.0f) {

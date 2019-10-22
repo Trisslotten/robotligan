@@ -412,6 +412,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       }
       break;
     }
+    case PacketBlockType::SECONDARY_USED: {
+      second_ability_ = AbilityID::NULL_ABILITY;
+      break;
+    }
     case PacketBlockType::UPDATE_POINTS: {
       PlayerID id;
       EntityID eid;
@@ -447,9 +451,9 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       EntityID id;
       packet >> id;
       if (current_state_->Type() == StateType::PLAY) {
-        auto pick_up_view = registry_current_->view<PickUpComponent>();
+        auto pick_up_view = registry_current_->view<PickUpComponent, IDComponent>();
         for (auto entity : pick_up_view) {
-          if (id == pick_up_view.get(entity).id) {
+          if (id == pick_up_view.get<IDComponent>(entity).id) {
             registry_current_->destroy(entity);
             break;
           }
