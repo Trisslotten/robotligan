@@ -1,0 +1,8 @@
+>texture=smoke
+>color= 1 1 1 0.4
+>end_color= 1 1 1 0
+>velocity= 0.1
+>end_velocity= 0
+>end_size= 0
+>direction= 0 1 0
+>dir_val= -0.2

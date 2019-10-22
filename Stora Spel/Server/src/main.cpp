@@ -4,6 +4,8 @@
 #include "util/event.hpp"
 #include "gameserver.hpp"
 #include "util/timer.hpp"
+#include "serverstate.hpp"
+
 
 entt::dispatcher dispatcher{};
 
@@ -16,26 +18,27 @@ int main(unsigned argc, char** argv) {
   double update_rate = kServerUpdateRate;
   double update_time = 1.0 / update_rate;
   double update_time_ms = update_time * 1000.0;
-
+  GlobalSettings::Access()->UpdateValuesFromFile();
   GameServer server;
-  dispatcher.sink<EventInfo>().connect <&GameServer::ReceiveEvent>(server);
+  dispatcher.sink<EventInfo>().connect<&GameServer::ReceiveEvent>(server);
+  dispatcher.sink<GameEvent>().connect<&GameServer::ReceiveGameEvent>(server);
   server.Init(update_rate);
-
+  dispatcher.sink<EventInfo>().connect<&ServerPlayState::ReceiveEvent>(
+      *server.GetPlayState());
   int num_frames = 0;
   Timer debug_timer;
 
   bool running = true;
   while (running) {
     accum_ms += timer.RestartMS();
-
     while (accum_ms >= update_time_ms) {
       server.Update(update_time);
       num_frames++;
       accum_ms -= update_time_ms;
     }
 
-    auto sleep_time =
-        std::chrono::microseconds((int)glm::min(1000.0, update_time_ms * 1000.0));
+    auto sleep_time = std::chrono::microseconds(
+        (int)glm::min(1000.0, update_time_ms * 1000.0));
     std::this_thread::sleep_for(sleep_time);
 
     /*
@@ -46,6 +49,7 @@ int main(unsigned argc, char** argv) {
     }
     */
   }
-  dispatcher.sink<EventInfo>().disconnect<&GameServer::ReceiveEvent>(server);
+  dispatcher.sink<EventInfo>().disconnect<&ServerPlayState::ReceiveEvent>(
+      *server.GetPlayState());
   return EXIT_SUCCESS;
 }

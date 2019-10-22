@@ -58,7 +58,7 @@ class Font2D {
   bool IsLoaded() { return is_loaded_; };
 
   void Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
-            std::string text, glm::vec4 color = glm::vec4(1,1,1,1));
+            std::string text, glm::vec4 color = glm::vec4(1,1,1,1), bool visible = true);
 };
 
 }  // namespace glob

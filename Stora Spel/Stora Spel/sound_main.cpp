@@ -32,8 +32,8 @@ int main() {
 
     sound_player->Set3DAttributes(pos, vel);
     if (t.Elapsed() > 0.5f) {
-      sound_player->Play(sound_step, 0);
       t.Restart();
+      sound_player->Play(sound_step, 0);
     }
 
     sound_engine.Update();

@@ -76,10 +76,10 @@
     <IncludePath>..\Network API\include;$(SolutionDir)entt-master\src\entt;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>..\Network API\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)glm;$(SolutionDir)Physics\include;$(SolutionDir)Stora Spel\shared;$(SolutionDir)Graphics\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\Network API\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)glm;$(SolutionDir)Physics\include;$(SolutionDir)Stora Spel\shared;$(SolutionDir)Graphics\include;$(SolutionDir)Graphics\external\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>..\Network API\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)glm;$(SolutionDir)Physics\include;$(SolutionDir)Stora Spel\shared;$(SolutionDir)Graphics\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\Network API\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)glm;$(SolutionDir)Physics\include;$(SolutionDir)Stora Spel\shared;$(SolutionDir)Graphics\include;$(SolutionDir)Graphics\external\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -156,7 +156,10 @@
     <ClInclude Include="src\ecs\components\ability_component.hpp" />
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
     <ClInclude Include="src\ecs\components\buff_component.hpp" />
+    <ClInclude Include="src\ecs\components\fail_safe_arena.hpp" />
     <ClInclude Include="src\ecs\components\goal_component.hpp" />
+    <ClInclude Include="src\ecs\components\match_timer_component.hpp" />
+    <ClInclude Include="src\ecs\components\missile_component.hpp" />
     <ClInclude Include="src\ecs\components\physics_component.hpp" />
     <ClInclude Include="src\ecs\components\pick_up_event.hpp" />
     <ClInclude Include="src\ecs\components\player_component.hpp" />
@@ -168,8 +171,10 @@
     <ClInclude Include="src\ecs\systems\collision_system.hpp" />
     <ClInclude Include="src\ecs\systems\collision_temp_debug_system.h" />
     <ClInclude Include="src\ecs\systems\goal_system.hpp" />
+    <ClInclude Include="src\ecs\systems\missile_system.hpp" />
     <ClInclude Include="src\ecs\systems\physics_system.hpp" />
     <ClInclude Include="src\ecs\systems\player_controller_system.hpp" />
+    <ClInclude Include="src\ecs\systems\target_system.hpp" />
     <ClInclude Include="src\gameserver.hpp" />
     <ClInclude Include="src\message.hpp" />
     <ClInclude Include="src\util\event.hpp" />
@@ -188,7 +193,7 @@
     <ClInclude Include="src\replay machine\replay_machine.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="util\settings.txt" />
+    <Text Include="config\server_settings.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

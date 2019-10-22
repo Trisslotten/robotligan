@@ -7,7 +7,7 @@
 #include <functional>
 
 struct ButtonComponent {
-  glob::Font2DHandle f_handle;
+  glob::Font2DHandle f_handle = 0;
   std::string text = "Button";
   unsigned int font_size = 72;
   glm::vec4 text_normal_color = glm::vec4(1,1,1,1);
@@ -17,6 +17,12 @@ struct ButtonComponent {
   glm::vec2 bounds = glm::vec2(200, 50);
   bool visible = true;
   std::function<void()> button_func;
+  glob::GUIHandle gui_handle_icon = 0;
+  glob::GUIHandle gui_handle_normal = 0;
+  glob::GUIHandle gui_handle_hover = 0;
+  glob::GUIHandle gui_handle_current = 0;
+
+  std::string find_name = "";
 };
 
 #endif  // !BUTTON_COMPONENT_HPP_

@@ -6,12 +6,18 @@
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <lodepng.hpp>
 
+#include <fstream>
 #include <iostream>
+#include <sstream>
 #include <unordered_map>
 
 #include "Model/model.hpp"
+#include "Particles/particle_settings.hpp"
 #include "glob/camera.hpp"
+#include "glob/window.hpp"
+#include "particles/particle_system.hpp"
 #include "shader.hpp"
 
 #include "2D/elements2D.hpp"
@@ -19,6 +25,9 @@
 
 #include <msdfgen/msdfgen-ext.h>
 #include <msdfgen/msdfgen.h>
+#include "postprocess/blur.hpp"
+#include "postprocess/postprocess.hpp"
+#include "shadows/shadows.hpp"
 
 namespace glob {
 
@@ -45,12 +54,21 @@ struct E2DItem {
   glm::mat4 rot;
 };
 
+struct BoneAnimatedRenderItem {
+  Model *model;
+  glm::mat4 transform;
+  std::vector<glm::mat4>
+      bone_transforms;  // may be a performance bottleneck, pointer instead?
+  int numBones;
+};
+
 struct TextItem {
-  Font2D *font;
-  glm::vec2 pos;
-  unsigned int size;
+  Font2D *font = nullptr;
+  glm::vec2 pos{0};
+  unsigned int size = 0;
   std::string text;
   glm::vec4 color;
+  bool visible;
 };
 
 struct LightItem {
@@ -60,21 +78,30 @@ struct LightItem {
   glm::float32 ambient;
 };
 
-ShaderProgram test_shader;
+ShaderProgram fullscreen_shader;
+ShaderProgram model_emission_shader;
 ShaderProgram model_shader;
+ShaderProgram particle_shader;
+// ShaderProgram compute_shader;
+ShaderProgram animated_model_shader;
 ShaderProgram text_shader;
 ShaderProgram wireframe_shader;
 ShaderProgram gui_shader;
 ShaderProgram e2D_shader;
 
+std::vector<ShaderProgram *> mesh_render_group;
+
 GLuint triangle_vbo, triangle_vao;
 GLuint cube_vbo, cube_vao;
 GLuint quad_vbo, quad_vao;
 
+PostProcess post_process;
+Blur blur;
+Shadows shadows;
+
 float num_frames = 0;
 
-Camera camera{
-    glm::vec3(25, 5, 0), glm::vec3(0, 3, 0), 90, 16.f / 9.f, 0.1f, 100.f};
+Camera camera;
 
 /*
 TextureHandle current_texture_guid = 1;
@@ -83,11 +110,24 @@ std::unordered_map<TextureHandle, Texture> textures;
 */
 
 ModelHandle current_model_guid = 1;
+ParticleSystemHandle current_particle_guid = 1;
 Font2DHandle current_font_guid = 1;
 GUIHandle current_gui_guid = 1;
 E2DHandle current_e2D_guid = 1;
 std::unordered_map<std::string, ModelHandle> model_handles;
 std::unordered_map<ModelHandle, Model> models;
+std::unordered_map<ParticleSystemHandle, int> particle_systems;
+std::unordered_map<std::string, GLuint> textures;
+std::unordered_map<std::string, std::unique_ptr<ShaderProgram>> compute_shaders;
+
+struct ParticleSystemInfo {
+  ParticleSystem system;
+  bool in_use;
+
+  ParticleSystemInfo(ShaderProgram *ptr, GLuint tex, bool use)
+      : system(ptr, tex), in_use(use) {}
+};
+std::vector<ParticleSystemInfo> buffer_particle_systems;
 std::unordered_map<std::string, Font2DHandle> font_2D_handles;
 std::unordered_map<Font2DHandle, Font2D> fonts;
 std::unordered_map<std::string, GUIHandle> gui_handles;
@@ -101,10 +141,13 @@ struct GLuintBuffers {
   GLuint ebo;
   GLuint size;
 };
+
 std::unordered_map<ModelHandle, GLuintBuffers> wireframe_buffers;
 
 std::vector<RenderItem> items_to_render;
 std::vector<LightItem> lights_to_render;
+std::vector<int> particles_to_render;
+std::vector<BoneAnimatedRenderItem> bone_animated_items_to_render;
 std::vector<glm::mat4> cubes;
 std::vector<ModelHandle> wireframe_meshes;
 std::vector<TextItem> text_to_render;
@@ -159,16 +202,121 @@ void DrawWireFrameMeshes(ModelHandle model_h) {
   glBindVertexArray(0);
 }
 
+void CreateDefaultParticleTexture() {
+  GLuint texture;
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  glm::vec2 middle(63.5f, 63.5f);
+  std::vector<float> data(128 * 128 * 4);
+  for (size_t y = 0; y < 128; ++y) {
+    for (size_t x = 0; x < 128; ++x) {
+      glm::vec2 result = middle - glm::vec2(x, y);
+      float value = 1.0f;
+      if (glm::length(result) > 63.5f) {
+        value = 0.0f;
+      } else {
+        value = 1.0f - (glm::length(result) / 63.5f);
+      }
+
+      for (int i = 0; i < 3; ++i) data[y * 128 * 4 + x * 4 + i] = 1.0f;
+
+      data[y * 128 * 4 + x * 4 + 3] = value;
+    }
+  }
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 128, 128, 0, GL_RGBA, GL_FLOAT,
+               data.data());
+
+  textures["default"] = texture;
+}
+
+GLint TextureFromFile(std::string filename) {
+  const char *path = "Assets/Texture";
+  std::string directory = std::string(path);
+  filename = directory + '/' + filename;
+
+  // Generate texture id
+  GLuint texture_id;
+  glGenTextures(1, &texture_id);
+
+  // Load texture
+  std::vector<unsigned char> image;
+  unsigned width, height;
+
+  unsigned error = lodepng::decode(image, width, height, filename);
+  if (error != 0) {
+    std::cout << "ERROR: Could not load texture: " << filename << "\n";
+    return false;
+  }
+
+  // Generate texture data
+  glBindTexture(GL_TEXTURE_2D, texture_id);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+               GL_UNSIGNED_BYTE, image.data());
+  // glGenerateMipmap(GL_TEXTURE_2D);
+
+  // Set some parameters for the texture
+
+  glBindTexture(GL_TEXTURE_2D, 0);  // Unbind the texture
+
+  return texture_id;
+}
+
 void Init() {
-  test_shader.add("testshader.frag");
-  test_shader.add("testshader.vert");
-  test_shader.compile();
+  camera = Camera(glm::vec3(25, 5, 0), glm::vec3(0, 3, 0), 90, 16.f / 9.f, 0.1f,
+                  100.f);
+
+  // std::cout << "Max uniform size: " << MAX_VERTEX_UNIFORM_COMPONENTS_ARB <<
+  // "\n";
+  fullscreen_shader.add("fullscreenquad.vert");
+  fullscreen_shader.add("fullscreenquad.frag");
+  fullscreen_shader.compile();
+
+  particle_shader.add("particle.vert");
+  particle_shader.add("particle.geom");
+  particle_shader.add("particle.frag");
+  particle_shader.compile();
+
+  compute_shaders["default"] = std::make_unique<ShaderProgram>();
+  compute_shaders["default"]->add("compute_shader.comp");
+  compute_shaders["default"]->compile();
+
+  CreateDefaultParticleTexture();
+  textures["smoke"] = TextureFromFile("smoke.png");
 
   model_shader.add("modelshader.vert");
   model_shader.add("modelshader.frag");
+  model_shader.add("shading.vert");
+  model_shader.add("shading.frag");
   model_shader.compile();
 
+  animated_model_shader.add("animatedmodelshader.vert");
+  animated_model_shader.add("modelemissive.frag");
+  animated_model_shader.add("shading.vert");
+  animated_model_shader.add("shading.frag");
+  animated_model_shader.compile();
+
+  model_emission_shader.add("modelshader.vert");
+  model_emission_shader.add("modelemissive.frag");
+  model_emission_shader.add("shading.vert");
+  model_emission_shader.add("shading.frag");
+  model_emission_shader.compile();
+
+  mesh_render_group.push_back(&animated_model_shader);
+  mesh_render_group.push_back(&model_shader);
+  mesh_render_group.push_back(&model_emission_shader);
+
   wireframe_shader.add("modelshader.vert");
+  wireframe_shader.add("shading.vert");
   wireframe_shader.add("wireframe.frag");
   wireframe_shader.compile();
 
@@ -187,9 +335,9 @@ void Init() {
   glGenVertexArrays(1, &triangle_vao);
   glBindVertexArray(triangle_vao);
   std::vector<glm::vec3> vertices{
-      {0, 1, 1},
-      {0, -1, 1},
-      {0, -1, -1},
+      {-1, -1, 0},
+      {3, -1, 0},
+      {-1, 3, 0},
   };
   glGenBuffers(1, &triangle_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, triangle_vbo);
@@ -239,6 +387,13 @@ void Init() {
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
                         (GLvoid *)0);
   glBindVertexArray(0);
+
+  blur.Init();
+
+  post_process.Init(blur);
+  shadows.Init(blur);
+
+  buffer_particle_systems.reserve(10);
 }
 
 // H=Handle, A=Asset
@@ -250,7 +405,7 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
 
   auto item = handles.find(filepath);
   if (item == handles.end()) {
-    std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";
+    //std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";
     A &asset = assets[guid];
     asset.LoadFromFile(filepath);
     if (asset.IsLoaded()) {
@@ -263,8 +418,10 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
     }
   } else {
     // if asset is loaded
+    /*
     std::cout << "DEBUG graphics.cpp: Asset '" << filepath
               << "' already loaded\n";
+    */
     result = item->second;
   }
 
@@ -272,9 +429,310 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
 }
 
 ModelHandle GetModel(const std::string &filepath) {
-  return GetAsset<ModelHandle, Model>(model_handles, models, current_model_guid,
-                                      filepath);
+  return GetAsset(model_handles, models, current_model_guid, filepath);
 }
+
+ModelHandle GetTransparentModel(const std::string &filepath) {
+  auto result = GetAsset(model_handles, models, current_model_guid, filepath);
+  models[result].SetTransparent(true);
+  return result;
+}
+
+ParticleSettings ProccessMap(
+    ParticleSettings ps,
+    const std::unordered_map<std::string, std::string> &map) {
+  bool color_delta = false;
+  glm::vec4 end_color = glm::vec4(1.f);
+  bool vel_delta = false;
+  float end_vel = 0.0f;
+  bool size_delta = false;
+  float end_size;
+  for (auto it : map) {
+    if (it.first == "color") {
+      std::stringstream ss(it.second);
+      glm::vec4 col;
+      ss >> col.x;
+      ss >> col.y;
+      ss >> col.z;
+      ss >> col.w;
+
+      ps.color = col;
+    } else if (it.first == "end_color") {
+      color_delta = true;
+      std::stringstream ss(it.second);
+      glm::vec4 col;
+      ss >> col.x;
+      ss >> col.y;
+      ss >> col.z;
+      ss >> col.w;
+
+      end_color = col;
+    } else if (it.first == "emit_pos") {
+      std::stringstream ss(it.second);
+      glm::vec3 pos;
+      ss >> pos.x;
+      ss >> pos.y;
+      ss >> pos.z;
+
+      ps.emit_pos = pos;
+    } else if (it.first == "size") {
+      std::stringstream ss(it.second);
+      float size;
+      ss >> size;
+
+      ps.size = size;
+    } else if (it.first == "end_size") {
+      size_delta = true;
+      std::stringstream ss(it.second);
+      float size;
+      ss >> size;
+
+      end_size = size;
+    } else if (it.first == "time") {
+      std::stringstream ss(it.second);
+      float time;
+      ss >> time;
+
+      ps.time = time;
+    } else if (it.first == "spawn_rate") {
+      std::stringstream ss(it.second);
+      float rate;
+      ss >> rate;
+
+      ps.spawn_rate = rate;
+    } else if (it.first == "velocity") {
+      std::stringstream ss(it.second);
+      float vel;
+      ss >> vel;
+
+      ps.velocity = vel;
+    } else if (it.first == "end_velocity") {
+      vel_delta = true;
+      std::stringstream ss(it.second);
+      float vel;
+      ss >> vel;
+
+      end_vel = vel;
+    } else if (it.first == "direction") {
+      std::stringstream ss(it.second);
+      glm::vec3 dir;
+      ss >> dir.x;
+      ss >> dir.y;
+      ss >> dir.z;
+
+      ps.direction = dir;
+    } else if (it.first == "dir_val") {
+      std::stringstream ss(it.second);
+      float val;
+      ss >> val;
+
+      ps.direction_strength = val;
+    } else if (it.first == "radius") {
+      std::stringstream ss(it.second);
+      float val;
+      ss >> val;
+
+      ps.radius = val;
+    } else if (it.first == "burst") {
+      std::stringstream ss(it.second);
+      bool burst;
+      ss >> burst;
+
+      ps.burst = burst;
+    } else if (it.first == "burst_particles") {
+      std::stringstream ss(it.second);
+      float val;
+      ss >> val;
+
+      ps.burst_particles = val;
+    } else if (it.first == "number_of_bursts") {
+      std::stringstream ss(it.second);
+      int val;
+      ss >> val;
+
+      ps.number_of_bursts = val;
+    } else if (it.first == "texture") {
+      std::string texture;
+      std::stringstream ss(it.second);
+      ss >> texture;
+
+      auto it = textures.find(texture);
+      if (it != textures.end()) {
+        ps.texture = it->second;
+      }
+    } else if (it.first == "shader") {
+      std::string shader;
+      std::stringstream ss(it.second);
+      ss >> shader;
+
+      auto it = compute_shaders.find(shader);
+      if (it != compute_shaders.end()) {
+        ps.compute_shader = it->second.get();
+      }
+    }
+  }
+
+  if (color_delta) ps.color_delta = (ps.color - end_color) / ps.time;
+  if (vel_delta) ps.velocity_delta = (ps.velocity - end_vel) / ps.time;
+  if (size_delta) ps.size_delta = (ps.size - end_size) / ps.time;
+
+  return ps;
+}
+
+ParticleSettings ReadParticleFile(std::string filename) {
+  const char *path = "Assets/Particle config";
+  std::string directory = std::string(path);
+  filename = directory + '/' + filename;
+  // Create three strings to hold entire line, key and value
+  std::string cur_str;
+  std::string key_str;
+  std::string val_str;
+
+  // Clear the settings map
+  std::unordered_map<std::string, std::string> settings_map;
+
+  // Open a file stream
+  std::ifstream settings_file(filename);
+
+  // If the file isn't able to be opened, write error
+  if (!settings_file.is_open()) {
+    std::cout << "graphics.cpp ReadParticles()\n";
+    return {};
+  }
+
+  // Read through the settings file
+  while (settings_file) {
+    // Read up to the end of the line. Save as the current line
+    std::getline(settings_file, cur_str, '\n');
+
+    // Check if the first char is '>'
+    if (!(cur_str.size() == 0) && cur_str.at(0) == '>') {
+      // If it is, read the string up the '=' delimiter. That is the key.
+      key_str = cur_str.substr(0, cur_str.find('='));
+
+      // Remove the '>' from the key
+      key_str.erase(0, 1);
+
+      // Remove the part holding the key from the strong, along with the
+      // delimiter
+      cur_str.erase(0, cur_str.find('=') + 1);
+
+      // Save the remaining string as the value
+      val_str = cur_str;
+
+      // Save what has been read into the map
+      settings_map[key_str] = val_str;
+    }
+  }
+
+  settings_file.close();
+
+  ParticleSettings ps = {};
+  ps.texture = textures["default"];
+  ps.compute_shader = compute_shaders["default"].get();
+
+  ps = ProccessMap(ps, settings_map);
+
+  return ps;
+}
+
+ParticleSystemHandle CreateParticleSystem() {
+  auto handle = current_particle_guid;
+
+  int index = -1;
+  for (int i = 0; i < buffer_particle_systems.size(); ++i) {
+    if (buffer_particle_systems[i].in_use == false) {
+      index = i;
+      buffer_particle_systems[i].in_use = true;
+      break;
+    }
+  }
+
+  if (index < 0) {
+    index = buffer_particle_systems.size();
+    buffer_particle_systems.emplace_back(compute_shaders["default"].get(),
+                                         textures["default"], true);
+  }
+
+  if (index == -1) return -1;
+  particle_systems[handle] = index;
+  current_particle_guid++;
+
+  return handle;
+}
+
+void DestroyParticleSystem(ParticleSystemHandle handle) {
+  auto find_res = particle_systems.find(handle);
+  if (find_res == particle_systems.end()) {
+    std::cout << "ERROR graphics.cpp: invalid handle\n";
+    return;
+  }
+  int index = find_res->second;
+  buffer_particle_systems[index].in_use = false;
+  particle_systems.erase(handle);
+}
+
+void ResetParticles(ParticleSystemHandle handle) {
+  auto find_res = particle_systems.find(handle);
+  if (find_res == particle_systems.end()) {
+    std::cout << "ERROR graphics.cpp: invalid handle\n";
+    return;
+  }
+
+  int index = find_res->second;
+  buffer_particle_systems[index].system.Reset();
+}
+
+void SetEmitPosition(ParticleSystemHandle handle, glm::vec3 pos) {
+  auto find_res = particle_systems.find(handle);
+  if (find_res == particle_systems.end()) {
+    std::cout << "ERROR graphics.cpp: invalid handle\n";
+    return;
+  }
+
+  int index = find_res->second;
+  buffer_particle_systems[index].system.SetPosition(pos);
+}
+
+void SetParticleDirection(ParticleSystemHandle handle, glm::vec3 dir) {
+  auto find_res = particle_systems.find(handle);
+  if (find_res == particle_systems.end()) {
+    std::cout << "ERROR graphics.cpp: invalid handle\n";
+    return;
+  }
+
+  int index = find_res->second;
+  buffer_particle_systems[index].system.SetDirection(dir);
+}
+
+void SetParticleSettings(ParticleSystemHandle handle,
+                         std::unordered_map<std::string, std::string> map) {
+  auto find_res = particle_systems.find(handle);
+  if (find_res == particle_systems.end()) {
+    std::cout << "ERROR graphics.cpp: invalid handle\n";
+    return;
+  }
+
+  int index = find_res->second;
+  ParticleSettings ps = buffer_particle_systems[index].system.GetSettings();
+  auto settings = ProccessMap(ps, map);
+
+  buffer_particle_systems[index].system.Settings(settings);
+}
+
+void SetParticleSettings(ParticleSystemHandle handle, std::string filename) {
+  auto find_res = particle_systems.find(handle);
+  if (find_res == particle_systems.end()) {
+    std::cout << "ERROR graphics.cpp: invalid handle\n";
+    return;
+  }
+
+  auto settings = ReadParticleFile(filename);
+
+  int index = find_res->second;
+  buffer_particle_systems[index].system.Settings(settings);
+}
+
 GUIHandle GetGUIItem(const std::string &filepath) {
   return GetAsset<GUIHandle, Elements2D>(gui_handles, gui_elements,
                                          current_gui_guid, filepath);
@@ -284,6 +742,93 @@ Font2DHandle GetFont(const std::string &filepath) {
   return GetAsset<Font2DHandle, Font2D>(font_2D_handles, fonts,
                                         current_font_guid, filepath);
 }
+
+animData GetAnimationData(ModelHandle handle) {
+  auto res = models.find(handle);
+  animData data;
+  if (res == models.end()) {
+    std::cout << "ERROR graphics.cpp: could not find submitted model\n";
+    return data;
+  }
+
+  const glob::Model *model = &res->second;
+
+  // copy armature
+  for (auto source : model->bones_) {
+    glob::Joint j;
+    j.id = source->id;
+    j.name = source->name;
+    j.offset = source->offset;
+    j.transform = source->transform;
+    j.f_transform = source->f_transform;
+    for (auto c : source->children) {
+      // std::cout << c << "\n";
+      j.children.push_back(c);
+    }
+    data.bones.push_back(j);
+  }
+
+  // copy animations
+  for (auto source : model->animations_) {
+    glob::Animation a;
+    a.name_ = source->name_;
+    a.duration_ = source->duration_;
+    a.current_frame_time_ = source->current_frame_time_;
+    a.tick_per_second_ = source->tick_per_second_;
+    a.channels_ = source->channels_;
+    a.armature_transform_ = source->armature_transform_;
+    data.animations.push_back(a);
+  }
+
+  data.globalInverseTransform = model->globalInverseTransform_;
+
+  for (auto bone : data.bones) {
+    if (bone.name == "Hip") {
+      data.humanoid = true;
+      data.hip = bone.id;
+      //std::cout << "Hip detected and set...\nHumanoid animation-set loading...\n";
+    }
+  }
+
+  if (data.humanoid) {
+    for (auto bone : data.bones) {
+      if (bone.name == "Spine") {
+        data.upperBody = bone.id;
+        //std::cout << "Upper body found!\n";
+      } else if (bone.name == "Leg upper L") {
+        data.leftLeg = bone.id;
+        //std::cout << "Left leg found!\n";
+      } else if (bone.name == "Leg upper R") {
+        data.rightLeg = bone.id;
+        //std::cout << "Right leg found!\n";
+      } else if (bone.name == "Shoulder L") {
+        data.leftArm = bone.id;
+        //std::cout << "Left arm found!\n";
+      } else if (bone.name == "Shoulder R") {
+        data.rightArm = bone.id;
+        //std::cout << "Right arm found!\n";
+      }
+    }
+  }
+
+  int num = 0;
+  for (auto b : model->bones_) {
+    if (b->name == "Armature") {
+      break;
+    }
+    num++;
+  }
+
+  data.armatureRoot = num;
+
+  return data;
+}
+/*
+TextureHandle GetTexture(const std::string &filepath) {
+  return GetAsset<TextureHandle, Texture>(texture_handles, textures,
+                                          current_texture_guid, filepath);
+}
+*/
 
 MeshData GetMeshData(ModelHandle model_h) {
   auto item = models.find(model_h);
@@ -301,10 +846,21 @@ E2DHandle GetE2DItem(const std::string &filepath) {
   return GetAsset<E2DHandle, Elements2D>(e2D_handles, e2D_elements,
                                          current_e2D_guid, filepath);
 }
+
+void UpdateParticles(ParticleSystemHandle handle, float dt) {
+  auto find_res = particle_systems.find(handle);
+  if (find_res == particle_systems.end()) {
+    std::cout << "ERROR graphics.cpp: could not find submitted particles\n";
+    return;
+  }
+
+  int index = find_res->second;
+  buffer_particle_systems[index].system.Update(dt);
+}
 /*
 TextureHandle GetTexture(const std::string &filepath) {
-  return GetAsset<TextureHandle, Texture>(texture_handles, textures,
-                                          current_texture_guid, filepath);
+return GetAsset<TextureHandle, Texture>(texture_handles, textures,
+                                      current_texture_guid, filepath);
 }
 */
 
@@ -318,11 +874,46 @@ void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
   lights_to_render.push_back(item);
 }
 
+void SubmitBAM(
+    const std::vector<ModelHandle> &handles, glm::mat4 transform,
+    std::vector<glm::mat4> bone_transforms) {  // Submit Bone Animated Mesh
+  for (auto handle : handles) {
+    SubmitBAM(handle, transform, bone_transforms);
+  }
+}
+
+void SubmitBAM(
+    ModelHandle model_h, glm::mat4 transform,
+    std::vector<glm::mat4> bone_transforms) {  // Submit Bone Animated Mesh
+  BoneAnimatedRenderItem BARI;
+
+  auto find_res = models.find(model_h);
+  if (find_res == models.end()) {
+    std::cout << "ERROR graphics.cpp: could not find submitted model\n";
+    return;
+  }
+  BARI.model = &find_res->second;
+  BARI.bone_transforms = bone_transforms;
+
+  const glm::mat4 pre_rotation =
+      glm::rotate(glm::pi<float>() / 2.f, glm::vec3(0, 1, 0)) *
+      glm::rotate(-glm::pi<float>() / 2.f, glm::vec3(1, 0, 0));
+
+  BARI.transform = transform * pre_rotation;
+  BARI.numBones = BARI.bone_transforms.size();
+  bone_animated_items_to_render.push_back(BARI);
+}
+
 void Submit(ModelHandle model_h, glm::vec3 pos) {
   glm::mat4 transform = glm::translate(pos);
   Submit(model_h, transform);
 }
 
+void Submit(const std::vector<ModelHandle> &handles, glm::mat4 transform) {
+  for (auto handle : handles) {
+    Submit(handle, transform);
+  }
+}
 void Submit(ModelHandle model_h, glm::mat4 transform) {
   auto find_res = models.find(model_h);
   if (find_res == models.end()) {
@@ -340,8 +931,18 @@ void Submit(ModelHandle model_h, glm::mat4 transform) {
   items_to_render.push_back(to_render);
 }
 
+void SubmitParticles(ParticleSystemHandle handle) {
+  auto find_res = particle_systems.find(handle);
+  if (find_res == particle_systems.end()) {
+    std::cout << "ERROR graphics.cpp: could not find submitted particles\n";
+    return;
+  }
+
+  particles_to_render.push_back(find_res->second);
+}
+
 void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
-            std::string text, glm::vec4 color) {
+            std::string text, glm::vec4 color, bool visible) {
   auto find_res = fonts.find(font_h);
   if (find_res == fonts.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted font! \n";
@@ -354,15 +955,14 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
   to_render.size = size;
   to_render.text = text;
   to_render.color = color;
+  to_render.visible = visible;
   text_to_render.push_back(to_render);
 }
 
 void SetCamera(Camera cam) { camera = cam; }
 
 void SetModelUseGL(bool use_gl) {
-  std::cout << "Before " << kModelUseGL << "\n";
   kModelUseGL = use_gl;
-  std::cout << "after " << kModelUseGL << "\n";
 }
 
 void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x) {
@@ -435,31 +1035,114 @@ void LoadWireframeMesh(ModelHandle model_h,
 }
 
 void Render() {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
 
   // render models and light
-  model_shader.use();
-
-  int lightNR = 0;
+  std::vector<glm::vec3> light_positions;
+  std::vector<glm::vec3> light_colors;
+  std::vector<float> light_radii;
+  std::vector<float> light_ambients;
   for (auto &light_item : lights_to_render) {
-    model_shader.uniform("light_pos[" + std::to_string(lightNR) + "]",
-                         light_item.pos);
-    model_shader.uniform("light_col[" + std::to_string(lightNR) + "]",
-                         light_item.color);
-    model_shader.uniform("light_radius[" + std::to_string(lightNR) + "]",
-                         light_item.radius);
-    model_shader.uniform("light_amb[" + std::to_string(lightNR) + "]",
-                         light_item.ambient);
-    lightNR++;
+    light_positions.push_back(light_item.pos);
+    light_colors.push_back(light_item.color);
+    light_radii.push_back(light_item.radius);
+    light_ambients.push_back(light_item.ambient);
   }
-  model_shader.uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
 
-  model_shader.uniform("cam_transform", cam_transform);
-  // model_shader.uniform("num_frames", num_frames);
+  std::vector<RenderItem> normal_items;
+  std::vector<RenderItem> transparent_items;
+  std::vector<RenderItem> emissive_items;
   for (auto &render_item : items_to_render) {
-    model_shader.uniform("model_transform", render_item.transform);
-    render_item.model->Draw(model_shader);
+    if (render_item.model->IsTransparent()) {
+      transparent_items.push_back(render_item);
+    } else if (render_item.model->IsEmissive()) {
+      emissive_items.push_back(render_item);
+    } else {
+      normal_items.push_back(render_item);
+    }
+  }
+
+  auto draw_function = [&](ShaderProgram &shader) {
+    for (auto &render_item : items_to_render) {
+      shader.uniform("model_transform", render_item.transform);
+      render_item.model->Draw(shader);
+    }
+  };
+  auto anim_draw_function = [&](ShaderProgram &shader) {
+    for (auto &BARI : bone_animated_items_to_render) {
+      shader.uniform("model_transform", BARI.transform);
+      int numBones = 0;
+      for (auto &bone : BARI.bone_transforms) {
+        shader.uniform("bone_transform[" + std::to_string(numBones) + "]",
+                       bone);
+        numBones++;
+      }
+      // animated_model_shader.uniform("NR_OF_BONES",
+      // (int)BARI.bone_transforms.size());
+      BARI.model->Draw(animated_model_shader);
+    }
+  };
+  shadows.RenderToMaps(draw_function, anim_draw_function, blur);
+  shadows.BindMaps(3);
+
+  for (auto &shader : mesh_render_group) {
+    shader->use();
+    for (auto &light_item : lights_to_render) {
+      shader->uniformv("light_pos", lights_to_render.size(),
+                       light_positions.data());
+      shader->uniformv("light_col", lights_to_render.size(),
+                       light_colors.data());
+      shader->uniformv("light_radius", lights_to_render.size(),
+                       light_radii.data());
+      shader->uniformv("light_amb", lights_to_render.size(),
+                       light_ambients.data());
+    }
+    shader->uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
+    shader->uniform("cam_transform", cam_transform);
+    shadows.SetUniforms(*shader);
+  }
+
+  auto ws = glob::window::GetWindowDimensions();
+  glViewport(0, 0, ws.x, ws.y);
+  post_process.BeforeDraw();
+  {
+    model_shader.use();
+    for (auto &render_item : normal_items) {
+      model_shader.uniform("model_transform", render_item.transform);
+      render_item.model->Draw(model_shader);
+    }
+
+    model_emission_shader.use();
+    for (auto &render_item : emissive_items) {
+      model_emission_shader.uniform("model_transform", render_item.transform);
+      render_item.model->Draw(model_emission_shader);
+    }
+
+    animated_model_shader.use();
+    // render bone animated items
+    for (auto &BARI : bone_animated_items_to_render) {
+      animated_model_shader.uniform("model_transform", BARI.transform);
+      int numBones = 0;
+      for (auto &bone : BARI.bone_transforms) {
+        animated_model_shader.uniform(
+            "bone_transform[" + std::to_string(numBones) + "]", bone);
+        numBones++;
+      }
+      // animated_model_shader.uniform("NR_OF_BONES",
+      // (int)BARI.bone_transforms.size());
+      BARI.model->Draw(animated_model_shader);
+    }
+
+    // TODO: Sort all transparent triangles
+    // maybe sort internally in modell and then and externally
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    model_emission_shader.use();
+    for (auto &render_item : transparent_items) {
+      model_emission_shader.uniform("model_transform", render_item.transform);
+      render_item.model->Draw(model_emission_shader);
+    }
+    glDisable(GL_BLEND);
   }
 
   // render wireframe cubes
@@ -478,6 +1161,16 @@ void Render() {
                               e2D_item.rot);
   }
 
+  // render particles
+  particle_shader.use();
+  particle_shader.uniform("cam_transform", cam_transform);
+  particle_shader.uniform("cam_pos", camera.GetPosition());
+  particle_shader.uniform("cam_up", camera.GetUpVector());
+  for (auto p : particles_to_render) {
+    buffer_particle_systems[p].system.Draw(particle_shader);
+  }
+
+  glBindVertexArray(quad_vao);
   gui_shader.use();
   for (auto &gui_item : gui_items_to_render) {
     gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale,
@@ -487,20 +1180,33 @@ void Render() {
   text_shader.use();
   for (auto &text_item : text_to_render) {
     text_item.font->Draw(text_shader, text_item.pos, text_item.size,
-                         text_item.text, text_item.color);
+                         text_item.text, text_item.color, text_item.visible);
   }
+
+  post_process.AfterDraw(blur);
+
+  fullscreen_shader.use();
+  post_process.BindColorTex(0);
+  fullscreen_shader.uniform("texture_color", 0);
+  post_process.BindEmissionTex(1);
+  fullscreen_shader.uniform("texture_emission", 1);
+  DrawFullscreenQuad();
+
+  
 
   lights_to_render.clear();
   items_to_render.clear();
+  bone_animated_items_to_render.clear();
   e2D_items_to_render.clear();
   gui_items_to_render.clear();
   text_to_render.clear();
   cubes.clear();
   wireframe_meshes.clear();
+  particles_to_render.clear();
 
   num_frames++;
 }
 
-Camera GetCamera() { return camera; }
+Camera &GetCamera() { return camera; }
 
 }  // namespace glob
