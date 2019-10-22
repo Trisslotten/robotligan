@@ -147,8 +147,7 @@ void ServerPlayState::Update(float dt) {
             match_timer_.Pause();
           } else {
             player_c.actions = inputs.first;
-            if (reset_ == false)
-              match_timer_.Resume();
+            if (reset_ == false) match_timer_.Resume();
             countdown_timer_.Pause();
           }
           player_c.pitch += inputs.second.x;
@@ -273,7 +272,8 @@ void ServerPlayState::HandleDataToSend() {
       to_send << t.position;
       to_send << id.id;
       to_send << PacketBlockType::CREATE_PICK_UP;
-      // std::cout << "PACKET: CREATED_PICK_UP\n";
+      pick_ups_sent = true;
+      // std::cout << "PACKET: CREATED_PICK_UP id: " << id.id << std::endl;
     }
 
     auto pick_up_events = registry.view<PickUpEvent>();
@@ -303,6 +303,25 @@ void ServerPlayState::HandleDataToSend() {
         }
       }
     }
+
+    // Tell client if secondary ability was used
+    // already added game event for this, sry :P not ideal to set use_secondary
+    // to false here since ability_controller::TriggerAbility can return false,
+    // i.e. too far away to use super strike or homing ball
+
+    /*auto view_abilities = registry.view<PlayerComponent, AbilityComponent>();
+    for (auto entity : view_abilities) {
+      auto& player = view_abilities.get<PlayerComponent>(entity);
+
+      if (player.client_id == client_id) {
+        auto& ability = view_abilities.get<AbilityComponent>(entity);
+
+        if (ability.use_secondary) {
+          ability.use_secondary = false;
+          to_send << PacketBlockType::SECONDARY_USED;
+        }
+      }
+    }*/
 
     // send created projectiles
     for (auto projectiles : created_projectiles_) {
@@ -373,7 +392,7 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
                                    client_teams_[player_c.client_id]);
 
     AbilityID primary_id = client_abilities_[player_c.client_id];
-    AbilityID secondary_id = AbilityID::SWITCH_GOALS;
+    AbilityID secondary_id = AbilityID::NULL_ABILITY;
     float primary_cooldown =
         GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
 
@@ -602,7 +621,7 @@ void ServerPlayState::ResetEntities() {
       auto& trans = view_goal.get<TransformComponent>(entity);
       if (trans.position.x > 0) {
         switched_goals = true;
-        
+
         break;
       }
     }

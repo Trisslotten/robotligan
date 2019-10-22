@@ -21,7 +21,7 @@ struct PlayerStatInfo {
   int assists = 0;
   int saves = 0;
   unsigned int team = TEAM_RED;
-  EntityID enttity_id  = 0;
+  EntityID enttity_id = 0;
 };
 
 class Engine {
@@ -30,7 +30,7 @@ class Engine {
   ~Engine();
   Engine(const Engine&) = delete;
   Engine& operator=(const Engine&) = delete;
-
+  int IsConnected() { return server_connected_; }
   void Init();
   void Update(float dt);
   void UpdateNetwork();
@@ -59,6 +59,7 @@ class Engine {
 
   std::unordered_map<PlayerID, std::string> player_names_;
 
+  void SetSecondaryAbility(AbilityID id) { second_ability_ = id; }
   AbilityID GetSecondaryAbility() { return second_ability_; }
 
   std::vector<unsigned int> GetTeamScores() { return scores_; }
@@ -69,8 +70,8 @@ class Engine {
     for (auto p_score : player_scores_) {
       if (p_score.second.enttity_id == id) {
         return p_score.second.team;
-	  }
-	}
+      }
+    }
     return TEAM_RED;
   }
 
@@ -89,6 +90,7 @@ class Engine {
 
   NetAPI::Socket::Client client_;
   NetAPI::Common::Packet packet_;
+  int server_connected_ = 0;
 
   std::vector<unsigned> client_pings_;
   StateType wanted_state_type_ = StateType::MAIN_MENU;
@@ -139,7 +141,7 @@ class Engine {
   StateType previous_state_;
 
   float mouse_sensitivity_ = 1.0f;
- 
+
   std::list<NetAPI::Common::Packet> packet_test;
   std::list<float> time_test;
 };

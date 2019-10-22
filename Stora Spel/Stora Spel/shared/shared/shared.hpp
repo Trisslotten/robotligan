@@ -10,6 +10,7 @@
 
 const double kClientUpdateRate = 64;
 const double kServerUpdateRate = 64;
+const unsigned kServerTimeout = 6;
 
 typedef int EntityID;
 
@@ -47,6 +48,7 @@ enum : int16_t {
   TEAM_SCORE,
   CHOOSE_TEAM,
   SWITCH_GOALS,
+  SECONDARY_USED,
   MESSAGE,
   UPDATE_POINTS,
   CREATE_PICK_UP,
@@ -67,6 +69,7 @@ enum : int16_t {
   GAME_END,
   YOUR_TARGET,
   FRAME_ID,
+  SERVER_CAN_JOIN,
   NUM_BLOCK_TYPES,
 };
 
@@ -106,6 +109,8 @@ struct GameEvent {
     RUN_START,
     RUN_END,
     RESET,
+    PRIMARY_USED,
+	SECONDARY_USED,
     NUM_EVENTS
   } type;
   union {
@@ -181,8 +186,17 @@ struct GameEvent {
     } run_end;
 
     // RESET
-    struct {}
-    reset;
+    struct {
+    } reset;
+
+    struct {
+      EntityID player_id;
+      float cd;
+    } primary_used;
+
+	struct {
+      EntityID player_id;
+    } secondary_used;
   };
 };
 
