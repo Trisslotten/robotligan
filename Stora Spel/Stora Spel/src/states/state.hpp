@@ -219,6 +219,7 @@ class PlayState : public State {
     match_time_ = time;
     countdown_time_ = countdown_time;
   }
+  void SetPlayerLookDir(EntityID id, glm::vec3 look_dir);
   void SetMyTarget(EntityID id) { my_target_ = id; }
   void ReceiveGameEvent(const GameEvent& e);
   void Reset();
@@ -263,6 +264,7 @@ class PlayState : public State {
 
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> transforms_;
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> new_transforms_;
+  std::unordered_map<EntityID, glm::vec3> player_look_dirs_;
   FrameState server_predicted_;
   entt::entity my_entity_;
 

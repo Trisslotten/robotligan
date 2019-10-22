@@ -178,6 +178,17 @@ void ServerPlayState::Update(float dt) {
     }
     to_send << PacketBlockType::CAMERA_TRANSFORM;
 
+    for (auto cam : view_cam) {
+      auto& cam_c = view_cam.get<CameraComponent>(cam);
+      auto& id_c = view_cam.get<IDComponent>(cam);
+      to_send << cam_c.GetLookDir();
+      to_send << id_c.id;
+    }
+    int num_dirs = view_cam.size();
+    to_send << num_dirs;
+    to_send << PacketBlockType::PLAYER_LOOK_DIR;
+    
+
     auto view_entities = registry.view<TransformComponent, IDComponent>();
     int num_entities = view_entities.size();
     for (auto entity : view_entities) {

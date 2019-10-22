@@ -14,6 +14,8 @@ struct PlayerComponent {  // Client side
   bool sprinting = false;
   bool running = false;
   bool jumping = false;
+
+  glm::vec3 look_dir = glm::vec3(1,0,0);
 };
 
 #endif  // PLAYER_COMPONENT_HPP_
