@@ -22,8 +22,8 @@ namespace glob {
 
 namespace window {
 
-unsigned int window_width = 1920;
-unsigned int window_height = 1080;
+unsigned int window_width = 1280;
+unsigned int window_height = 720;
 
 void Create() {
   if (glfw_window) {
@@ -55,7 +55,7 @@ void Create() {
   const char* title_str = "Robotligan";
 
   glfw_window =
-      glfwCreateWindow(window_width, window_height, title_str, primary, NULL);
+      glfwCreateWindow(window_width, window_height, title_str, NULL, NULL);
 
   if (!glfw_window) {
     std::cout << "ERROR window.cpp: Could not create glfw window\n";
