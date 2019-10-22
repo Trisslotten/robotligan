@@ -2,7 +2,6 @@
 #include <iostream>
 #include <string>
 
-
 void NetAPI::Socket::Server::SendPing() {
   NetAPI::Common::Packet to_send;
   to_send.GetHeader()->packet_id = NetAPI::Socket::EVERYONE;
@@ -32,53 +31,69 @@ bool NetAPI::Socket::Server::Update() {
   }
   newly_connected_.clear();
   // Accept client
-  if (connected_players_ < NetAPI::Common::kMaxPlayers) {
-    if (!connection_client_) {
-      connection_client_ = new ClientData();
+  if (!connection_client_) {
+    connection_client_ = new ClientData();
+  }
+  auto s = listener_.Accept(connection_client_->client.GetRaw());
+  bool accepted = false;
+  if (s) {
+    sockaddr_in client_addr{};
+    int size = sizeof(client_addr);
+    auto ret =
+        getpeername(connection_client_->client.GetRaw()->GetLowLevelSocket(),
+                    (sockaddr*)&client_addr, &size);
+    char buffer[14];
+    inet_ntop(AF_INET, &client_addr.sin_addr, buffer, 14);
+    auto addr = buffer;
+    auto port = ntohs(client_addr.sin_port);
+    // auto ID = getHashedID(addr, port);
+    std::string address = addr + (":" + std::to_string(port));
+
+    std::cout << "DEBUG: tcp connection accepted: "
+              << addr + (":" + std::to_string(port)) << "\n";
+
+    auto find_res = ids_.find(address);
+    // if already found
+    if (find_res != ids_.end()) {
+      accepted = true;
+      auto client_data = client_data_[find_res->second];
+      client_data->client.Disconnect();
+      delete client_data;
+      connection_client_->ID = find_res->second;
+      client_data_[find_res->second] = connection_client_;
+
+      std::cout << "DEBUG: Found existing client, overwriting\n";
+    } else if (connected_players_ < NetAPI::Common::kMaxPlayers) {
+      std::cout << "DEBUG: adding new client\n";
+
+      connection_client_->ID = current_client_guid_;
+      ids_[address] = current_client_guid_;
+      client_data_[current_client_guid_] = connection_client_;
+
+      connected_players_++;
+      current_client_guid_++;
+      accepted = true;
+    } else {
+      std::cout << "DEBUG: Server full, disconnecting" << std::endl;
+      NetAPI::Common::Packet p;
+      int canJoin = -2;
+      p << canJoin << PacketBlockType::SERVER_CAN_JOIN;
+      connection_client_->client.Send(p);
     }
-    auto s = listener_.Accept(connection_client_->client.GetRaw());
-    if (s) {
-      sockaddr_in client_addr{};
-      int size = sizeof(client_addr);
-      auto ret =
-          getpeername(connection_client_->client.GetRaw()->GetLowLevelSocket(),
-                      (sockaddr*)&client_addr, &size);
-      char buffer[14];
-      inet_ntop(AF_INET, &client_addr.sin_addr, buffer, 14);
-      auto addr = buffer;
-      auto port = ntohs(client_addr.sin_port);
-      // auto ID = getHashedID(addr, port);
-      std::string address = addr + (":" + std::to_string(port));
-
-      std::cout << "DEBUG: tcp connection accepted: "
-                << addr + (":" + std::to_string(port)) << "\n";
-
-      auto find_res = ids_.find(address);
-      // if already found
-      if (find_res != ids_.end()) {
-        auto client_data = client_data_[find_res->second];
-        client_data->client.Disconnect();
-        delete client_data;
-        connection_client_->ID = find_res->second;
-        client_data_[find_res->second] = connection_client_;
-
-        std::cout << "DEBUG: Found existing client, overwriting\n";
-      } else {
-        std::cout << "DEBUG: adding new client\n";
-
-        connection_client_->ID = current_client_guid_;
-        ids_[address] = current_client_guid_;
-        client_data_[current_client_guid_] = connection_client_;
-
-        connected_players_++;
-        current_client_guid_++;
-      }
+    if (accepted) {
+      int canJoin = 2;
+      NetAPI::Common::Packet p;
+      p << canJoin << PacketBlockType::SERVER_CAN_JOIN;
+      connection_client_->client.Send(p);
       connection_client_->address = address;
       connection_client_->is_active = true;
       newly_connected_.push_back(connection_client_);
-
-      connection_client_ = nullptr;
+    } else {
+      int canJoin = -2;
+      NetAPI::Common::Packet p;
+      p << canJoin << PacketBlockType::SERVER_CAN_JOIN;
     }
+    connection_client_ = nullptr;
   }
   // Receive Data
   for (auto& c : client_data_) {

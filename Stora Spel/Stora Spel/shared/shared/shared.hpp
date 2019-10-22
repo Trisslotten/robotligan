@@ -10,6 +10,7 @@
 
 const double kClientUpdateRate = 64;
 const double kServerUpdateRate = 64;
+const unsigned kServerTimeout = 6;
 
 typedef int EntityID;
 
@@ -67,6 +68,7 @@ enum : int16_t {
   GAME_END,
   YOUR_TARGET,
   FRAME_ID,
+  SERVER_CAN_JOIN,
   NUM_BLOCK_TYPES,
 };
 
