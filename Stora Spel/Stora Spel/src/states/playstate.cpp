@@ -134,7 +134,7 @@ void PlayState::Update(float dt) {
       auto iter = player_look_dirs_.find(id_c.id);
       if (iter != player_look_dirs_.end()) {
         player_c.look_dir = iter->second;
-        std::cout << "lookdir.x: " << iter->second.x << "\n";
+        //std::cout << "lookdir.x: " << iter->second.x << "\n";
       }
     }
     player_look_dirs_.clear();
