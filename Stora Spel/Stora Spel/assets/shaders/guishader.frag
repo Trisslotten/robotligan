@@ -8,6 +8,7 @@ uniform float opacity;
 
 void main()
 {
-	vec4 sampled = vec4(1.0, 1.0, 1.0, texture(gui_element_texture, tex_coords).a * opacity);
+	vec4 sampled = vec4(1.0, 1.0, 1.0, texture(gui_element_texture, tex_coords).a);
 	frag_color = texture(gui_element_texture, tex_coords) * sampled;
+	frag_color.a *= opacity;
 }
