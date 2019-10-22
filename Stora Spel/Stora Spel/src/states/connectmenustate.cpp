@@ -23,6 +23,7 @@ void ConnectMenuState::Startup() {
         !client.IsConnected()) {
       client.Connect(ip_field_.input_field.c_str(),
                      std::stoi(port_field_.input_field));
+	  isconnected_ = 1;
     }
   };
   glm::vec2 ip_pos =
@@ -116,9 +117,41 @@ void ConnectMenuState::Update(float dt) {
                              glob::window::GetWindowDimensions().x * 0.1,
                          glob::window::GetWindowDimensions().y / 2.8f),
                25, std::string("PORT:"), glm::vec4(1, 1, 1, 1));
-  if (client.IsConnected()) {
-    engine_->ChangeState(StateType::LOBBY);
-  }
+      auto isconnected_ = engine_->IsConnected();
+	  if (isconnected_ == 0)
+	  {
+		 auto pos = glm::vec2((glob::window::GetWindowDimensions().x / 2.0f) -
+			  glob::window::GetWindowDimensions().x,
+			 (glob::window::GetWindowDimensions()).y / 2.0f);
+		 glob::Submit(font_test_,
+			 glm::vec2((glob::window::GetWindowDimensions().x / 2.0f),
+				 glob::window::GetWindowDimensions().y / 5.f),
+			 45, std::string("Not Connected"), glm::vec4(1, 1, 1, 1));
+	  }
+	  else if (isconnected_ == 1)
+	  {
+		  //Connecting
+	  }
+	  else if (isconnected_ == 2)
+	  {
+		  //Connected
+		  engine_->ChangeState(StateType::LOBBY);
+	  }
+	  else if (isconnected_ == -1)
+	  {
+		  
+	  }
+	  else if (isconnected_ == -2)
+	  {
+		  auto pos = glm::vec2((glob::window::GetWindowDimensions().x / 2.0f) -
+			  glob::window::GetWindowDimensions().x,
+			  (glob::window::GetWindowDimensions()).y / 2.0f);
+		  glob::Submit(font_test_,
+			  glm::vec2((glob::window::GetWindowDimensions().x / 2.0f),
+				  glob::window::GetWindowDimensions().y / 5.f),
+			  45, std::string("Not Connected: Server full"), glm::vec4(1, 1, 1, 1));
+		  client.Disconnect();
+	  }
 }
 
 void ConnectMenuState::UpdateNetwork() {}

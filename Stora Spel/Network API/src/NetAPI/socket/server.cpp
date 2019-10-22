@@ -32,11 +32,11 @@ bool NetAPI::Socket::Server::Update() {
   }
   newly_connected_.clear();
   // Accept client
-  if (connected_players_ < NetAPI::Common::kMaxPlayers) {
     if (!connection_client_) {
       connection_client_ = new ClientData();
     }
     auto s = listener_.Accept(connection_client_->client.GetRaw());
+	bool accepted = false;
     if (s) {
       sockaddr_in client_addr{};
       int size = sizeof(client_addr);
@@ -56,6 +56,7 @@ bool NetAPI::Socket::Server::Update() {
       auto find_res = ids_.find(address);
       // if already found
       if (find_res != ids_.end()) {
+	    accepted = true;
         auto client_data = client_data_[find_res->second];
         client_data->client.Disconnect();
         delete client_data;
@@ -63,7 +64,7 @@ bool NetAPI::Socket::Server::Update() {
         client_data_[find_res->second] = connection_client_;
 
         std::cout << "DEBUG: Found existing client, overwriting\n";
-      } else {
+      } else if(connected_players_ < NetAPI::Common::kMaxPlayers) {
         std::cout << "DEBUG: adding new client\n";
 
         connection_client_->ID = current_client_guid_;
@@ -73,13 +74,26 @@ bool NetAPI::Socket::Server::Update() {
         connected_players_++;
         current_client_guid_++;
       }
-      connection_client_->address = address;
-      connection_client_->is_active = true;
-      newly_connected_.push_back(connection_client_);
-
+	  else
+	  {
+		  std::cout << "DEBUG: Server full, disconnecting" << std::endl;
+		  NetAPI::Common::Packet p;
+		  int canJoin = -2;
+		  p << canJoin << PacketBlockType::SERVER_CAN_JOIN;
+		  connection_client_->client.Send(p);
+	  }
+	  if (accepted)
+	  {
+		  int canJoin = 2;
+		  NetAPI::Common::Packet p;
+		  p << canJoin << PacketBlockType::SERVER_CAN_JOIN;
+		  connection_client_->client.Send(p);
+		  connection_client_->address = address;
+		  connection_client_->is_active = true;
+		  newly_connected_.push_back(connection_client_);
+	  }
       connection_client_ = nullptr;
     }
-  }
   // Receive Data
   for (auto& c : client_data_) {
     if (c.second && !c.second->client.IsConnected() && c.second->is_active) {

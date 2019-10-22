@@ -141,6 +141,7 @@ class ConnectMenuState : public State {
   StateType Type() { return StateType::CONNECT_MENU; }
 
  private:
+	 int isconnected_ = 0;
   struct InputField {
     InputField(){};
     InputField(glm::vec2 in_size, glm::vec2 in_pos,

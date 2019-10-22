@@ -67,6 +67,7 @@ enum : int16_t {
   GAME_END,
   YOUR_TARGET,
   FRAME_ID,
+  SERVER_CAN_JOIN,
   NUM_BLOCK_TYPES,
 };
 
