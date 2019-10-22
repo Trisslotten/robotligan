@@ -62,16 +62,13 @@ void GameServer::Update(float dt) {
 	p << s << PacketBlockType::STATE;
 	server_.Send(p);
 	NetAPI::Common::Packet to_send;
-	for (auto client_team : play_state_.client_teams_) {
+	for (auto client_team : lobby_state_.client_teams_) {
 		to_send << client_team.first;   // send id
 		to_send << client_team.second;  // send team
 		bool ready = true;
 		to_send << ready;
 		to_send << PacketBlockType::LOBBY_UPDATE_TEAM;
 	}
-	to_send << client_data->ID;
-	to_send << 0;
-	to_send << false;
 	server_.Send(to_send);
   }
 
