@@ -156,7 +156,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.jump.player_id) {
-        sound_c.sound_player->Play(sound_player_jump_, 0, 0.05);
+        sound_c.sound_player->Play(sound_player_jump_, 0, 0.05f);
         break;
       }
     }
