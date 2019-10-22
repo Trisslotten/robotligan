@@ -30,7 +30,7 @@ class Engine {
   ~Engine();
   Engine(const Engine&) = delete;
   Engine& operator=(const Engine&) = delete;
-
+  int IsConnected() { return server_connected_; }
   void Init();
   void Update(float dt);
   void UpdateNetwork();
@@ -90,6 +90,7 @@ class Engine {
 
   NetAPI::Socket::Client client_;
   NetAPI::Common::Packet packet_;
+  int server_connected_ = 0;
 
   std::vector<unsigned> client_pings_;
   StateType wanted_state_type_ = StateType::MAIN_MENU;

@@ -143,8 +143,7 @@ void ServerPlayState::Update(float dt) {
             match_timer_.Pause();
           } else {
             player_c.actions = inputs.first;
-            if (reset_ == false)
-              match_timer_.Resume();
+            if (reset_ == false) match_timer_.Resume();
             countdown_timer_.Pause();
           }
           player_c.pitch += inputs.second.x;
@@ -159,6 +158,7 @@ void ServerPlayState::Update(float dt) {
       });
   // players_inputs_.clear();
 
+  bool pick_ups_sent = false;
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     EntityID client_player_id = clients_player_ids_[client_id];
 
@@ -240,7 +240,8 @@ void ServerPlayState::Update(float dt) {
       to_send << t.position;
       to_send << id.id;
       to_send << PacketBlockType::CREATE_PICK_UP;
-      // std::cout << "PACKET: CREATED_PICK_UP\n";
+      pick_ups_sent = true;
+      // std::cout << "PACKET: CREATED_PICK_UP id: " << id.id << std::endl;
     }
 
     auto pick_up_events = registry.view<PickUpEvent>();
@@ -267,6 +268,21 @@ void ServerPlayState::Update(float dt) {
         if (!sent_switch) {
           to_send << PacketBlockType::SWITCH_GOALS;
           sent_switch = true;
+        }
+      }
+    }
+
+    // Tell client if secondary ability was used
+    auto view_abilities = registry.view<PlayerComponent, AbilityComponent>();
+    for (auto entity : view_abilities) {
+      auto& player = view_abilities.get<PlayerComponent>(entity);
+
+      if (player.client_id == client_id) {
+        auto& ability = view_abilities.get<AbilityComponent>(entity);
+
+        if (ability.use_secondary) {
+          ability.use_secondary = false;
+          to_send << PacketBlockType::SECONDARY_USED;
         }
       }
     }
@@ -307,7 +323,8 @@ void ServerPlayState::Update(float dt) {
   }
   destroy_entities_.clear();
   created_projectiles_.clear();
-  created_pick_ups_.clear();
+  if (pick_ups_sent)
+    created_pick_ups_.clear();
 
   if (reset_timer_.Elapsed() > 3.0f) {
     ResetEntities();
@@ -368,7 +385,7 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
                                    client_teams_[player_c.client_id]);
 
     AbilityID primary_id = client_abilities_[player_c.client_id];
-    AbilityID secondary_id = AbilityID::SWITCH_GOALS;
+    AbilityID secondary_id = AbilityID::NULL_ABILITY;
     float primary_cooldown =
         GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
 
@@ -597,7 +614,7 @@ void ServerPlayState::ResetEntities() {
       auto& trans = view_goal.get<TransformComponent>(entity);
       if (trans.position.x > 0) {
         switched_goals = true;
-        
+
         break;
       }
     }

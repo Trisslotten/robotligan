@@ -1,17 +1,16 @@
 #ifndef STATE_HPP_
 #define STATE_HPP_
 
-#include <list>
 #include <NetAPI\packet.hpp>
 #include <ecs/components/button_component.hpp>
 #include <entt.hpp>
 #include <glm/glm.hpp>
 #include <glob/graphics.hpp>
+#include <list>
+#include <playerdata.hpp>
 #include <util/timer.hpp>
 #include "Chat.hpp"
 #include "shared/shared.hpp"
-#include <ecs/components/button_component.hpp>
-#include <playerdata.hpp>
 
 class Engine;
 
@@ -109,6 +108,11 @@ class LobbyState : public State {
   glob::GUIHandle ability_back_normal_;
   glob::GUIHandle ability_back_hover_;
   glob::GUIHandle ability_back_selected_;
+  glob::GUIHandle ready_back_normal_;
+  glob::GUIHandle ready_back_hover_;
+  glob::GUIHandle ready_icon_;
+  glob::GUIHandle ready_empty_icon_;
+
 
   std::vector<glob::GUIHandle> ability_icons_;
   glob::Font2DHandle font_team_names_;
@@ -141,6 +145,7 @@ class ConnectMenuState : public State {
   StateType Type() { return StateType::CONNECT_MENU; }
 
  private:
+  int isconnected_ = 0;
   struct InputField {
     InputField(){};
     InputField(glm::vec2 in_size, glm::vec2 in_pos,
@@ -154,6 +159,9 @@ class ConnectMenuState : public State {
     glm::vec2 pos = glm::vec2(0.0f, 0.0f);
     glob::GUIHandle hndl = 0;
   };
+  int frames_ = 0;
+  bool connection_success_ = true;
+  std::string last_msg_ = "Failed to connect: Timeout";
   std::string ip_ = "localhost";
   std::string port_ = "1337";
   InputField ip_field_;
@@ -232,7 +240,10 @@ class PlayState : public State {
     actions_.push_back(100);
   }
 
-  void UpdateHistory(int id) { while (history_.size() > 0 && history_.front().id <= id) history_.pop_front(); }
+  void UpdateHistory(int id) {
+    while (history_.size() > 0 && history_.front().id <= id)
+      history_.pop_front();
+  }
   void SetPitchYaw(float pitch, float yaw);
 
  private:
@@ -253,7 +264,7 @@ class PlayState : public State {
   void DrawQuickslots();
   FrameState SimulateMovement(std::vector<int> &action, FrameState& state, float dt);
   void MovePlayer(float dt);
-  
+
   ////////////////////////////////////////
 
   entt::registry registry_gameplay_;
@@ -297,7 +308,7 @@ class PlayState : public State {
   glob::ModelHandle test_ball_;
   std::list<PlayerData> history_;
   FrameState predicted_state_;
-  float latency_; //do we need?
+  float latency_;  // do we need?
   std::vector<int> actions_;
   int frame_id = 0;
   float accum_pitch_ = 0.0f;

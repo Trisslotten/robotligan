@@ -25,6 +25,7 @@
 
 #include <msdfgen/msdfgen-ext.h>
 #include <msdfgen/msdfgen.h>
+#include <map>
 #include "postprocess/blur.hpp"
 #include "postprocess/postprocess.hpp"
 #include "shadows/shadows.hpp"
@@ -406,7 +407,7 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
 
   auto item = handles.find(filepath);
   if (item == handles.end()) {
-    //std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";
+    // std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";
     A &asset = assets[guid];
     asset.LoadFromFile(filepath);
     if (asset.IsLoaded()) {
@@ -787,7 +788,8 @@ animData GetAnimationData(ModelHandle handle) {
     if (bone.name == "Hip") {
       data.humanoid = true;
       data.hip = bone.id;
-      //std::cout << "Hip detected and set...\nHumanoid animation-set loading...\n";
+      // std::cout << "Hip detected and set...\nHumanoid animation-set
+      // loading...\n";
     }
   }
 
@@ -795,19 +797,19 @@ animData GetAnimationData(ModelHandle handle) {
     for (auto bone : data.bones) {
       if (bone.name == "Spine") {
         data.upperBody = bone.id;
-        //std::cout << "Upper body found!\n";
+        // std::cout << "Upper body found!\n";
       } else if (bone.name == "Leg upper L") {
         data.leftLeg = bone.id;
-        //std::cout << "Left leg found!\n";
+        // std::cout << "Left leg found!\n";
       } else if (bone.name == "Leg upper R") {
         data.rightLeg = bone.id;
-        //std::cout << "Right leg found!\n";
+        // std::cout << "Right leg found!\n";
       } else if (bone.name == "Shoulder L") {
         data.leftArm = bone.id;
-        //std::cout << "Left arm found!\n";
+        // std::cout << "Left arm found!\n";
       } else if (bone.name == "Shoulder R") {
         data.rightArm = bone.id;
-        //std::cout << "Right arm found!\n";
+        // std::cout << "Right arm found!\n";
       }
     }
   }
@@ -962,9 +964,7 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
 
 void SetCamera(Camera cam) { camera = cam; }
 
-void SetModelUseGL(bool use_gl) {
-  kModelUseGL = use_gl;
-}
+void SetModelUseGL(bool use_gl) { kModelUseGL = use_gl; }
 
 void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x, float opacity) {
   auto find_res = gui_elements.find(gui_h);
@@ -1052,11 +1052,13 @@ void Render() {
   }
 
   std::vector<RenderItem> normal_items;
-  std::vector<RenderItem> transparent_items;
+  std::map<float, std::vector<RenderItem>> transparent_items;
   std::vector<RenderItem> emissive_items;
   for (auto &render_item : items_to_render) {
     if (render_item.model->IsTransparent()) {
-      transparent_items.push_back(render_item);
+      float max_dist = render_item.model->MaxDistance(render_item.transform,
+                                                      camera.GetPosition());
+      transparent_items[-max_dist].push_back(render_item);
     } else if (render_item.model->IsEmissive()) {
       emissive_items.push_back(render_item);
     } else {
@@ -1140,9 +1142,11 @@ void Render() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     model_emission_shader.use();
-    for (auto &render_item : transparent_items) {
-      model_emission_shader.uniform("model_transform", render_item.transform);
-      render_item.model->Draw(model_emission_shader);
+    for (auto &[dist, render_items] : transparent_items) {
+      for (auto &render_item : render_items) {
+        model_emission_shader.uniform("model_transform", render_item.transform);
+        render_item.model->Draw(model_emission_shader);
+      }
     }
     glDisable(GL_BLEND);
   }
@@ -1193,8 +1197,6 @@ void Render() {
   post_process.BindEmissionTex(1);
   fullscreen_shader.uniform("texture_emission", 1);
   DrawFullscreenQuad();
-
-  
 
   lights_to_render.clear();
   items_to_render.clear();

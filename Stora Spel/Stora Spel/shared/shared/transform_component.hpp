@@ -5,9 +5,9 @@
 #include <glm/gtc/quaternion.hpp>
 
 struct TransformComponent {
-  glm::vec3 position;
-  glm::quat rotation;
-  glm::vec3 scale;
+  glm::vec3 position = glm::vec3(0);
+  glm::quat rotation = glm::identity<glm::quat>();
+  glm::vec3 scale = glm::vec3(1);
 
   void SetRotation(glm::vec3 rot) {
     rotation = rot;
