@@ -25,10 +25,10 @@
 
 #include <msdfgen/msdfgen-ext.h>
 #include <msdfgen/msdfgen.h>
+#include <map>
 #include "postprocess/blur.hpp"
 #include "postprocess/postprocess.hpp"
 #include "shadows/shadows.hpp"
-#include <map>
 
 namespace glob {
 
@@ -1050,19 +1050,19 @@ void Render() {
   }
 
   std::vector<RenderItem> normal_items;
-  std::map<float, RenderItem> transparent_items;
+  std::map<float, std::vector<RenderItem>> transparent_items;
   std::vector<RenderItem> emissive_items;
   for (auto &render_item : items_to_render) {
     if (render_item.model->IsTransparent()) {
-      glm::vec3 center = render_item.model->CalcCenter(render_item.transform);
-      transparent_items.push_back(render_item);
+      float max_dist = render_item.model->MaxDistance(render_item.transform,
+                                                      camera.GetPosition());
+      transparent_items[-max_dist].push_back(render_item);
     } else if (render_item.model->IsEmissive()) {
       emissive_items.push_back(render_item);
     } else {
       normal_items.push_back(render_item);
     }
   }
-
 
   auto draw_function = [&](ShaderProgram &shader) {
     for (auto &render_item : items_to_render) {
@@ -1140,9 +1140,11 @@ void Render() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     model_emission_shader.use();
-    for (auto &render_item : transparent_items) {
-      model_emission_shader.uniform("model_transform", render_item.transform);
-      render_item.model->Draw(model_emission_shader);
+    for (auto &[dist, render_items] : transparent_items) {
+      for (auto &render_item : render_items) {
+        model_emission_shader.uniform("model_transform", render_item.transform);
+        render_item.model->Draw(model_emission_shader);
+      }
     }
     glDisable(GL_BLEND);
   }

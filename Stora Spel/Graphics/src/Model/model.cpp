@@ -395,17 +395,18 @@ void Model::Draw(ShaderProgram& shader) {
   }
 }
 
-glm::vec3 Model::CalcCenter(glm::mat4 transform) {
-  glm::vec3 center{ 0 };
-  int num_points = 0;
+float Model::MaxDistance(glm::mat4 transform, glm::vec3 point) {
+  float result = 0.f;
   for (int i = 0; i < mesh_.size(); i++) {
     MeshData temp = mesh_[i].GetMeshData();
     for(auto pos : temp.pos) {
-      center += pos;
-      num_points++;
+      glm::vec3 transformed = transform * glm::vec4(pos, 1);
+      if(int len = length(point - transformed) > result) {
+        result = len;
+      }
     }
   }
-  return center / float(num_points);
+  return result;
 }
 
 MeshData Model::GetMeshData() {
