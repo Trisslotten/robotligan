@@ -4,7 +4,7 @@
 #include "glob/graphics.hpp"
 
 struct ModelComponent {
-  glob::ModelHandle handle;
+  std::vector<glob::ModelHandle> handles;
   glm::vec3 offset = glm::vec3(0.f);
 };
 

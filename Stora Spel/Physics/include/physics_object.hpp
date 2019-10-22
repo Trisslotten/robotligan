@@ -8,8 +8,10 @@ namespace physics {
 struct PhysicsObject {
   glm::vec3 position;
   glm::vec3 velocity;
+  glm::vec3 acceleration;
   float friction;
   bool airborne;
+  float max_speed;
 };
 }  // namespace physics
 

@@ -80,11 +80,11 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>..\Network API\include;$(IncludePath)</IncludePath>
-    <IncludePath>$(SolutionDir)Graphics\external\include;$(SolutionDir)glm;$(SolutionDir)Graphics\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;$(SolutionDir)Physics\include;$(ProjectDir)src;$(ProjectDir)shared;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Graphics\external\include;$(SolutionDir)glm;$(SolutionDir)Graphics\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;$(SolutionDir)Physics\include;$(SolutionDir)Sound\include;$(ProjectDir)src;$(ProjectDir)shared;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>..\Network API\include;$(IncludePath)</IncludePath>
-    <IncludePath>$(SolutionDir)Graphics\external\include;$(SolutionDir)glm;$(SolutionDir)Graphics\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;$(SolutionDir)Physics\include;$(ProjectDir)src;$(ProjectDir)shared;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)Graphics\external\include;$(SolutionDir)glm;$(SolutionDir)Graphics\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;$(SolutionDir)Physics\include;$(SolutionDir)Sound\include;$(ProjectDir)src;$(ProjectDir)shared;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -153,12 +153,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Chat.cpp" />
+    <ClCompile Include="src\ecs\systems\animation_system.cpp" />
+    <ClCompile Include="src\ecs\systems\sound_system.cpp" />
     <ClCompile Include="src\engine.cpp" />
     <ClCompile Include="src\entitycreation.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\states\connectmenustate.cpp" />
     <ClCompile Include="src\states\lobbystate.cpp" />
     <ClCompile Include="src\states\mainmenustate.cpp" />
     <ClCompile Include="src\states\playstate.cpp" />
+    <ClCompile Include="src\states\settingsstate.cpp" />
     <ClCompile Include="src\util\global_settings.cpp" />
     <ClCompile Include="src\util\input.cpp" />
     <ClCompile Include="src\util\player_settings.cpp" />
@@ -171,17 +175,25 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="shared\shared\physics_component.hpp" />
     <ClInclude Include="shared\shared\pick_up_component.hpp" />
     <ClInclude Include="src\ecs\components.hpp" />
+    <ClInclude Include="src\ecs\components\animation_component.hpp" />
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
     <ClInclude Include="src\ecs\components\button_component.hpp" />
+    <ClInclude Include="src\ecs\components\input_component.hpp" />
+    <ClInclude Include="src\ecs\components\particle_component.hpp" />
     <ClInclude Include="src\ecs\components\player_component.hpp" />
     <ClInclude Include="ecs\components\ball_component.hpp" />
     <ClInclude Include="ecs\components\button_component.hpp" />
     <ClInclude Include="src\ecs\components\light_component.hpp" />
     <ClInclude Include="src\ecs\components\model_component.hpp" />
     <ClInclude Include="ecs\components\player_component.hpp" />
-    <ClInclude Include="src\ecs\systems\button_system.hpp" />
+    <ClInclude Include="src\ecs\components\slider_component.hpp" />
+    <ClInclude Include="src\ecs\components\sound_component.hpp" />
+    <ClInclude Include="src\ecs\systems\animation_system.hpp" />
+    <ClInclude Include="src\ecs\systems\particle_system.hpp" />
+    <ClInclude Include="src\ecs\systems\gui_system.hpp" />
     <ClInclude Include="src\ecs\systems\print_position_system.hpp" />
     <ClInclude Include="src\ecs\systems\render_system.hpp" />
     <ClInclude Include="shared\shared\camera_component.hpp" />
@@ -190,19 +202,36 @@
     <ClInclude Include="shared\shared\id_component.hpp" />
     <ClInclude Include="shared\shared\transform_component.hpp" />
     <ClInclude Include="src\Chat.hpp" />
+    <ClInclude Include="Components\ability_component.hpp" />
+    <ClInclude Include="Components\animation_component.hpp" />
+    <ClInclude Include="Components\ball_component.hpp" />
+    <ClInclude Include="Components\camera_component.hpp" />
+    <ClInclude Include="Components\model_component.hpp" />
+    <ClInclude Include="Components\player_component.hpp" />
     <ClInclude Include="Components\position.hpp" />
     <ClInclude Include="Components\physics_component.hpp" />
     <ClInclude Include="Components\projectile_component.hpp" />
     <ClInclude Include="Components\transform_component.hpp" />
     <ClInclude Include="Components\velocity.hpp" />
+    <ClInclude Include="Entt systems\animation_system.hpp" />
+    <ClInclude Include="Entt systems\collision_system.hpp" />
+    <ClInclude Include="Entt systems\collision_temp_debug_system.h" />
+    <ClInclude Include="Entt systems\physics_system.hpp" />
+    <ClInclude Include="Entt systems\player_controller_system.hpp" />
+    <ClInclude Include="Entt systems\ability_controller_system.hpp" />
+    <ClInclude Include="Entt systems\print_position_system.hpp" />
+    <ClInclude Include="util\global_settings.hpp" />
+    <ClInclude Include="util\input.hpp" />
+    <ClInclude Include="src\ecs\systems\sound_system.hpp" />
     <ClInclude Include="src\engine.hpp" />
     <ClInclude Include="src\entitycreation.hpp" />
     <ClInclude Include="ecs\systems\button_system.hpp" />
     <ClInclude Include="ecs\systems\print_position_system.hpp" />
     <ClInclude Include="shared\shared\shared.hpp" />
+    <ClInclude Include="src\eventdispatcher.hpp" />
+    <ClInclude Include="src\playerdata.hpp" />
     <ClInclude Include="src\states\state.hpp" />
     <ClInclude Include="src\util\global_settings.hpp" />
-    <ClInclude Include="ecs\systems\render_system.hpp" />
     <ClInclude Include="src\util\input.hpp" />
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
     <ClInclude Include="src\util\meminfo.hpp" />
@@ -225,22 +254,33 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\shaders\compute_shader.comp" />
     <None Include="assets\shaders\e2Dshader.frag" />
     <None Include="assets\shaders\e2Dshader.vert" />
     <None Include="assets\shaders\guishader.frag" />
     <None Include="assets\shaders\guishader.vert" />
+    <None Include="Assets\shaders\animatedmodelshader.vert" />
+    <None Include="Assets\shaders\kawaseblur.comp" />
+    <None Include="Assets\shaders\modelemissive.frag" />
     <None Include="assets\shaders\modelshader.frag" />
     <None Include="assets\shaders\modelshader.vert" />
+    <None Include="Assets\shaders\particle.geom" />
+    <None Include="Assets\shaders\shading.frag" />
+    <None Include="Assets\shaders\fullscreenquad.frag" />
+    <None Include="Assets\shaders\fullscreenquad.vert" />
+    <None Include="Assets\shaders\shading.vert" />
+    <None Include="Assets\shaders\shadow.frag" />
     <None Include="Assets\shaders\text2Dshader.frag" />
     <None Include="Assets\shaders\text2Dshader.vert" />
     <None Include="Assets\shaders\wireframe.frag" />
     <None Include="shaders\testshader.frag" />
     <None Include="shaders\testshader.vert" />
+    <None Include="src\ecs\systems\input_system.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="src\util\errorlog.txt" />
-    <Text Include="src\util\settings.txt" />
-    <Text Include="util\player_settings.txt" />
+    <Text Include="config\client_settings.txt" />
+    <Text Include="config\player_settings.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

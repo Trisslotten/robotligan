@@ -2,6 +2,14 @@
 #include <iostream>
 #include <string>
 
+
+void NetAPI::Socket::Server::SendPing() {
+  NetAPI::Common::Packet to_send;
+  to_send.GetHeader()->packet_id = NetAPI::Socket::EVERYONE;
+  int random_number = -1 + std::rand() % ((-1000 - 1) + 1);
+  to_send << random_number << PacketBlockType::PING;
+  this->SendToAll(to_send);
+}
 unsigned short getHashedID(char* addr, unsigned short port) {
   unsigned short retval = 0;
   std::string s(addr);
@@ -23,7 +31,6 @@ bool NetAPI::Socket::Server::Update() {
     return false;
   }
   newly_connected_.clear();
-
   // Accept client
   if (connected_players_ < NetAPI::Common::kMaxPlayers) {
     if (!connection_client_) {
@@ -67,6 +74,7 @@ bool NetAPI::Socket::Server::Update() {
         current_client_guid_++;
       }
       connection_client_->address = address;
+      connection_client_->is_active = true;
       newly_connected_.push_back(connection_client_);
 
       connection_client_ = nullptr;
@@ -95,6 +103,7 @@ bool NetAPI::Socket::Server::Update() {
   }
 
   // Send Data
+  SendPing();
   NetAPI::Common::PacketHeader header;
   for (auto& d : data_to_send_) {
     d >> header;
@@ -131,4 +140,15 @@ void NetAPI::Socket::Server::Send(unsigned id, const char* data, size_t len) {
 
 void NetAPI::Socket::Server::Send(NetAPI::Common::Packet& p) {
   data_to_send_.push_back(p);
+}
+
+bool NetAPI::Socket::Server::KickPlayer(long ID) {
+  auto it = client_data_.find(ID);
+  if (it != client_data_.end()) {
+    this->client_data_.erase(ID);
+    connected_players_--;
+    return true;
+  } else {
+    return false;
+  }
 }

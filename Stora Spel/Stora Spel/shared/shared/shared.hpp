@@ -4,9 +4,9 @@
 #define TEAM_RED (unsigned int)0
 #define TEAM_BLUE (unsigned int)1
 
-#define POINTS_GOAL		10
-#define POINTS_ASSIST	2
-#define POINTS_SAVE		4
+#define POINTS_GOAL 10
+#define POINTS_ASSIST 2
+#define POINTS_SAVE 4
 
 const double kClientUpdateRate = 64;
 const double kServerUpdateRate = 64;
@@ -41,6 +41,7 @@ enum : int16_t {
   CLIENT_READY,      // client is ready in lobby
   CLIENT_NOT_READY,  // client is not ready in lobby
   GAME_START,        // game start after lobby
+  CLIENT_RECEIVE_UPDATES,
   TEST_STRING,
   TEST_REPLAY_KEYS,
   TEAM_SCORE,
@@ -51,6 +52,21 @@ enum : int16_t {
   CREATE_PICK_UP,
   DESTROY_PICK_UP,
   RECEIVE_PICK_UP,
+  LOBBY_UPDATE_TEAM,
+  PLAYER_LOBBY_DISCONNECT,
+  LOBBY_SELECT_TEAM,
+  LOBBY_YOUR_ID,
+  PING,
+  PING_RECIEVE,
+  LOBBY_SELECT_ABILITY,
+  CREATE_PROJECTILE,
+  DESTROY_ENTITIES,
+  MATCH_TIMER,
+  GAME_EVENT,
+  PHYSICS_DATA,
+  GAME_END,
+  YOUR_TARGET,
+  FRAME_ID,
   NUM_BLOCK_TYPES,
 };
 
@@ -72,4 +88,91 @@ enum class AbilityID {
   NUM_OF_ABILITY_IDS
 };
 
+struct GameEvent {
+  enum {
+    GOAL = 0,
+    KICK,
+    HIT,
+    NUDGE,
+    BOUNCE,
+    LAND,
+    JUMP,
+    SPRINT_START,
+    SPRINT_END,
+    RUN_START,
+    RUN_END,
+    RESET,
+    NUM_EVENTS
+  } type;
+  union {
+    // Goal
+    struct {
+    } goal;
+
+    // Kick
+    struct {
+      EntityID player_id;
+    } kick;
+
+    // Hit
+    struct {
+      EntityID player_id;
+    } hit;
+
+    // Nudge
+    struct {
+      EntityID ball_id;
+    } nudge;
+
+    // Ball bounce
+    struct {
+      EntityID ball_id;
+    } bounce;
+
+    // Player Land
+    struct {
+      EntityID player_id;
+    } land;
+
+    // Player Jump
+    struct {
+      EntityID player_id;
+    } jump;
+
+    // Player Sprint start
+    struct {
+      EntityID player_id;
+    } sprint_start;
+
+    // Player Sprint end
+    struct {
+      EntityID player_id;
+    } sprint_end;
+
+    struct {
+      EntityID player_id;
+    } run_start;
+
+    struct {
+      EntityID player_id;
+    } run_end;
+
+    // RESET
+    struct {}
+    reset;
+  };
+};
+
+enum class ProjectileID {
+  CANNON_BALL,
+  TELEPORT_PROJECTILE,
+  FORCE_PUSH_OBJECT,
+  MISSILE_OBJECT,
+  NUM_PROJECTILE_IDS
+};
+
+struct Projectile {
+  EntityID entity_id;
+  ProjectileID projectile_id;
+};
 #endif  // SHARED_HPP_

@@ -99,9 +99,8 @@ ShaderProgram::~ShaderProgram() {
 }
 
 void ShaderProgram::add(GLenum type, const std::string& path) {
-  glDeleteShader(ids[type]);
-  paths[type] = SHADERS_PATH + path;
-  ids[type] = 0;
+  //glDeleteShader(ids[type]);
+  paths.insert(std::make_pair(type, SHADERS_PATH + path));
 }
 
 void ShaderProgram::add(const std::string& path) {
@@ -124,10 +123,14 @@ void ShaderProgram::compile() {
 
   std::string paths_str;
 
+  for (auto& shader_id : ids) {
+    glDeleteShader(shader_id.second);
+  }
+
   glDeleteProgram(id);
   for (auto& path : paths) {
-    glDeleteShader(ids[path.first]);
-    ids[path.first] = compileShader(path.first, path.second);
+    GLuint shader_id = compileShader(path.first, path.second);
+    ids.insert(std::make_pair(path.first, shader_id));
 
     paths_str += path.second + "\n";
   }
