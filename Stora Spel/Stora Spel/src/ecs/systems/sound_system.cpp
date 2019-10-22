@@ -82,7 +82,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
     auto view = registry->view<CameraComponent, SoundComponent>();
     for (auto entity : view) {
       auto& sound_c = view.get<SoundComponent>(entity);
-      sound_c.sound_player->Play(sound_goal_, 0, 0.5f);
+      sound_c.sound_player->Play(sound_goal_, 0, 0.15f);
       break;
     }
     break;
@@ -105,7 +105,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.hit.player_id) {
-        sound_c.sound_player->Play(sound_hit_, 0, 1.0f);
+        sound_c.sound_player->Play(sound_hit_, 0, 0.5f);
         break;
       }
     }
@@ -144,7 +144,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.land.player_id) {
-        sound_c.sound_player->Play(sound_player_land_, 0, 0.1f);
+        sound_c.sound_player->Play(sound_player_land_, 0, 0.05f);
         break;
       }
     }
@@ -156,7 +156,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.jump.player_id) {
-        sound_c.sound_player->Play(sound_player_jump_, 0, 0.1f);
+        sound_c.sound_player->Play(sound_player_jump_, 0, 0.05f);
         break;
       }
     }

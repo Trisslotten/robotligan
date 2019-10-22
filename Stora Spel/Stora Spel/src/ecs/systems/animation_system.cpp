@@ -198,6 +198,18 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
     }
 
     // RUNNING ANIMATIONS
+
+
+	//JUMPING ANIMATIONS
+    if (pl.jumping) {
+		float startStrength = 0.f;
+		float midStrength = 0.f;
+		float endStrength = 0.f;
+        glm::vec3 up = glm::vec3(0.f, 0.f, 1.f);
+
+	}
+
+
   }
 }
 void AnimationSystem::ReceiveGameEvent(GameEvent event) {
@@ -207,9 +219,37 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
       break;
     };
     case GameEvent::JUMP: {
+      auto view =
+          registry->view<IDComponent, AnimationComponent, PlayerComponent>();
+      for (auto entity : view) {
+        if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
+          auto& ac = view.get<AnimationComponent>(entity);
+          auto& pc = view.get<PlayerComponent>(entity);
+          pc.jumping = true;
+          PlayAnimation("JumpStart", 1.f, &ac, 25, 1.f, LOOP);
+          PlayAnimation("JumpMid", 1.f, &ac, 25, 0.f, LOOP);
+          PlayAnimation("JumpEnd", 1.f, &ac, 25, 0.f, LOOP);
+
+          break;
+        }
+      }
       break;
     };
     case GameEvent::LAND: {
+      auto view =
+          registry->view<IDComponent, AnimationComponent, PlayerComponent>();
+      for (auto entity : view) {
+        if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
+          auto& ac = view.get<AnimationComponent>(entity);
+          auto& pc = view.get<PlayerComponent>(entity);
+          pc.jumping = false;
+          StopAnimation("JumpStart", &ac);
+          StopAnimation("JumpMid", &ac);
+          StopAnimation("JumpEnd", &ac);
+
+          break;
+        }
+      }
       break;
     };
     case GameEvent::RUN_START: {

@@ -28,7 +28,7 @@ public:
   ParticleSystem(const ParticleSystem&) = delete;
   ParticleSystem& operator=(const ParticleSystem&) = delete;
 
-  ParticleSystem(ParticleSystem&& other) = default;
+  ParticleSystem(ParticleSystem&& other);
   ParticleSystem& operator=(ParticleSystem&& other) = delete;
 
   void Settings(const ParticleSettings& ps);
