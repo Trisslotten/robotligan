@@ -966,7 +966,8 @@ void SetCamera(Camera cam) { camera = cam; }
 
 void SetModelUseGL(bool use_gl) { kModelUseGL = use_gl; }
 
-void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x, float opacity) {
+void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x,
+            float opacity) {
   auto find_res = gui_elements.find(gui_h);
   if (find_res == gui_elements.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted gui element\n";
@@ -1149,32 +1150,40 @@ void Render() {
       }
     }
     glDisable(GL_BLEND);
+
+    // render wireframe cubes
+    for (auto &m : cubes) DrawCube(m);
+    // render wireframe meshes
+    for (auto &m : wireframe_meshes) DrawWireFrameMeshes(m);
+
+    // render text and gui elements
+    glBindVertexArray(quad_vao);
+
+    // render 2D elements
+    e2D_shader.use();
+    e2D_shader.uniform("cam_transform", cam_transform);
+    for (auto &e2D_item : e2D_items_to_render) {
+      e2D_item.e2D->DrawInWorld(e2D_shader, e2D_item.pos, e2D_item.scale,
+                                e2D_item.rot);
+    }
+
+    // render particles
+    particle_shader.use();
+    particle_shader.uniform("cam_transform", cam_transform);
+    particle_shader.uniform("cam_pos", camera.GetPosition());
+    particle_shader.uniform("cam_up", camera.GetUpVector());
+    for (auto p : particles_to_render) {
+      buffer_particle_systems[p].system.Draw(particle_shader);
+    }
   }
+  post_process.AfterDraw(blur);
 
-  // render wireframe cubes
-  for (auto &m : cubes) DrawCube(m);
-  // render wireframe meshes
-  for (auto &m : wireframe_meshes) DrawWireFrameMeshes(m);
-
-  // render text and gui elements
-  glBindVertexArray(quad_vao);
-
-  // render 2D elements
-  e2D_shader.use();
-  e2D_shader.uniform("cam_transform", cam_transform);
-  for (auto &e2D_item : e2D_items_to_render) {
-    e2D_item.e2D->DrawInWorld(e2D_shader, e2D_item.pos, e2D_item.scale,
-                              e2D_item.rot);
-  }
-
-  // render particles
-  particle_shader.use();
-  particle_shader.uniform("cam_transform", cam_transform);
-  particle_shader.uniform("cam_pos", camera.GetPosition());
-  particle_shader.uniform("cam_up", camera.GetUpVector());
-  for (auto p : particles_to_render) {
-    buffer_particle_systems[p].system.Draw(particle_shader);
-  }
+  fullscreen_shader.use();
+  post_process.BindColorTex(0);
+  fullscreen_shader.uniform("texture_color", 0);
+  post_process.BindEmissionTex(1);
+  fullscreen_shader.uniform("texture_emission", 1);
+  DrawFullscreenQuad();
 
   glBindVertexArray(quad_vao);
   gui_shader.use();
@@ -1188,15 +1197,6 @@ void Render() {
     text_item.font->Draw(text_shader, text_item.pos, text_item.size,
                          text_item.text, text_item.color, text_item.visible);
   }
-
-  post_process.AfterDraw(blur);
-
-  fullscreen_shader.use();
-  post_process.BindColorTex(0);
-  fullscreen_shader.uniform("texture_color", 0);
-  post_process.BindEmissionTex(1);
-  fullscreen_shader.uniform("texture_emission", 1);
-  DrawFullscreenQuad();
 
   lights_to_render.clear();
   items_to_render.clear();
