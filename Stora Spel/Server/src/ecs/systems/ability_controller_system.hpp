@@ -277,7 +277,7 @@ entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
     TransformComponent& tc = view_controller.get<TransformComponent>(entity);
 
     if (pc.client_id == id) {
-      float speed = 20.0f;
+      float speed = pc.rocket_speed;
       auto cannonball = registry.create();
       registry.assign<PhysicsComponent>(cannonball,
                                         glm::vec3(cc.GetLookDir() * speed),
@@ -285,7 +285,7 @@ entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
       registry.assign<TransformComponent>(
           cannonball,
           glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),
-          glm::vec3(0, 0, 0), glm::vec3(.3f, .3f, .3f));
+          cc.orientation, glm::vec3(.3f, .3f, .3f));
       registry.assign<physics::Sphere>(cannonball,
                                        glm::vec3(tc.position + cc.offset), .3f);
       registry.assign<ProjectileComponent>(cannonball,

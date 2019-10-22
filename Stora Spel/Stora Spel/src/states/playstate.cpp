@@ -859,7 +859,7 @@ void PlayState::CreateCannonBall(EntityID id) {
   auto cannonball = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
-  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  glob::ModelHandle model_ball = glob::GetModel("assets/Rocket/Rocket.fbx");
   auto& model_c = registry_gameplay_.assign<ModelComponent>(cannonball);
   model_c.handles.push_back(model_ball);
 
