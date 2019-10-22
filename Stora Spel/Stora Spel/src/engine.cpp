@@ -458,6 +458,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
 	case PacketBlockType::SERVER_CAN_JOIN:
 		packet >> server_connected_;
+		std::cout << server_connected_;
 		break;
     case PacketBlockType::RECEIVE_PICK_UP: {
       packet >> second_ability_;

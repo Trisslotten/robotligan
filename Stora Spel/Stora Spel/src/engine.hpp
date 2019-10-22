@@ -21,7 +21,7 @@ struct PlayerStatInfo {
   int assists = 0;
   int saves = 0;
   unsigned int team = TEAM_RED;
-  EntityID enttity_id  = 0;
+  EntityID enttity_id = 0;
 };
 
 class Engine {
@@ -69,8 +69,8 @@ class Engine {
     for (auto p_score : player_scores_) {
       if (p_score.second.enttity_id == id) {
         return p_score.second.team;
-	  }
-	}
+      }
+    }
     return TEAM_RED;
   }
 
@@ -140,7 +140,7 @@ class Engine {
   StateType previous_state_;
 
   float mouse_sensitivity_ = 1.0f;
- 
+
   std::list<NetAPI::Common::Packet> packet_test;
   std::list<float> time_test;
 };
