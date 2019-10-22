@@ -89,6 +89,8 @@ void ServerPlayState::Init() {
   // Start the countdown and match timer
   match_timer_.Restart();
   countdown_timer_.Restart();
+  switch_goal_timer_.Restart();
+  switch_goal_timer_.Pause();
 
   CreateInitialEntities(server.GetConnectedPlayers());
 
@@ -143,8 +145,7 @@ void ServerPlayState::Update(float dt) {
             match_timer_.Pause();
           } else {
             player_c.actions = inputs.first;
-            if (reset_ == false)
-              match_timer_.Resume();
+            if (reset_ == false) match_timer_.Resume();
             countdown_timer_.Pause();
           }
           player_c.pitch += inputs.second.x;
@@ -263,11 +264,22 @@ void ServerPlayState::Update(float dt) {
       to_send << goal_team_c;
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
+      // switch_goal_timer_.Resume();
+      /*std::cout << "Timer START" << std::endl;
+      std::cout << "T: " << (int)switch_goal_timer_.Elapsed() << std::endl;
+      */
       if (goal_goal_c.switched_this_tick) {
-        if (!sent_switch) {
-          to_send << PacketBlockType::SWITCH_GOALS;
-          sent_switch = true;
-        }
+        switch_goal_timer_.Resume();
+      }
+      if (!sent_switch) {
+        to_send << switch_goal_time_;
+        to_send << (int)switch_goal_timer_.Elapsed();
+        to_send << PacketBlockType::SWITCH_GOALS;
+        sent_switch = true;
+	  }
+      if (switch_goal_timer_.Elapsed() >= switch_goal_time_) {
+        switch_goal_timer_.Restart();
+        switch_goal_timer_.Pause();
       }
     }
 
@@ -597,7 +609,7 @@ void ServerPlayState::ResetEntities() {
       auto& trans = view_goal.get<TransformComponent>(entity);
       if (trans.position.x > 0) {
         switched_goals = true;
-        
+
         break;
       }
     }

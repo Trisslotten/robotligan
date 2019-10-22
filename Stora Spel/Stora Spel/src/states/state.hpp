@@ -219,6 +219,7 @@ class PlayState : public State {
     match_time_ = time;
     countdown_time_ = countdown_time;
   }
+  
   void SetMyTarget(EntityID id) { my_target_ = id; }
   void ReceiveGameEvent(const GameEvent& e);
   void Reset();
@@ -247,6 +248,7 @@ class PlayState : public State {
   void ToggleInGameMenu();
   void UpdateInGameMenu(bool show_menu);
   void UpdateGameplayTimer();
+  void UpdateSwitchGoalTimer();
 
   void DrawTopScores();
   void DrawTarget();
@@ -287,6 +289,7 @@ class PlayState : public State {
   int my_primary_ability_id = 0;
   int match_time_ = 300;
   int countdown_time_ = 5;
+  bool countdown_in_progress_ = false;
 
   Timer end_game_timer_;
   bool game_has_ended_ = false;

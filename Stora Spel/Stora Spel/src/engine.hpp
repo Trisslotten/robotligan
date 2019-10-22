@@ -65,6 +65,8 @@ class Engine {
 
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
+  int GetSwitchGoalCountdownTimer() const;
+  int GetSwitchGoalTime() const;
   unsigned int GetPlayerTeam(EntityID id) {
     for (auto p_score : player_scores_) {
       if (p_score.second.enttity_id == id) {
@@ -122,6 +124,8 @@ class Engine {
 
   int gameplay_timer_sec_ = 0;
   int countdown_timer_sec_ = 0;
+  int switch_goal_timer_sec_ = 0;
+  int switch_goal_time_ = 0;
 
   Chat chat_;
   std::string message_ = "";
