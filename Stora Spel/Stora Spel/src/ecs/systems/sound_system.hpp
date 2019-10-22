@@ -35,6 +35,7 @@ private:
   slob::SoundHandle sound_player_land_;
   slob::SoundHandle sound_player_jump_;
   slob::SoundHandle sound_ability_missile_impact_;
+  slob::SoundHandle sound_ability_teleport_impact_;
 
   Engine* engine_;
 };

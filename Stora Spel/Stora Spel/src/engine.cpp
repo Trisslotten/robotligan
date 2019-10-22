@@ -510,6 +510,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         }
         case ProjectileID::MISSILE_OBJECT: {
           play_state_.CreateMissileObject(e_id);
+          // TODO: Dont trigger this event on the client like this. Fix so that event is sent/received AFTER the create_projectile packet on server instead
+          // Note: Sometimes this plays on player entity rather than the missile entity [???]
+          GameEvent missile_event;
+          missile_event.type = GameEvent::MISSILE_FIRE;
+          missile_event.missile_fire.projectile_id = e_id;
+          dispatcher.trigger(missile_event);
           break;
         }
       }

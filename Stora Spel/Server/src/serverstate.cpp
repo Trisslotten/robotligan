@@ -190,6 +190,8 @@ void ServerPlayState::Update(float dt) {
 }
 
 void ServerPlayState::HandleDataToSend() {
+  bool pick_ups_sent = false;
+
   auto& registry = game_server_->GetRegistry();
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     EntityID client_player_id = clients_player_ids_[client_id];
@@ -347,7 +349,7 @@ void ServerPlayState::HandleDataToSend() {
   }
   created_projectiles_.clear();
   destroy_entities_.clear();
-  created_pick_ups_.clear();
+  if (pick_ups_sent) created_pick_ups_.clear();
 }
 
 void ServerPlayState::Cleanup() {

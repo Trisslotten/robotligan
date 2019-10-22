@@ -370,11 +370,12 @@ void GravityChange(entt::registry& registry) {
 
 void DoTeleport(entt::registry& registry, PlayerID id) {
   auto view_controller =
-      registry.view<CameraComponent, PlayerComponent, TransformComponent>();
+      registry.view<CameraComponent, PlayerComponent, TransformComponent, IDComponent>();
   for (auto entity : view_controller) {
     CameraComponent& cc = view_controller.get<CameraComponent>(entity);
     PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
     TransformComponent& tc = view_controller.get<TransformComponent>(entity);
+    IDComponent& idc = view_controller.get<IDComponent>(entity);
 
     if (pc.client_id == id) {
       float speed = 50.0f;
@@ -396,6 +397,12 @@ void DoTeleport(entt::registry& registry, PlayerID id) {
       e.event = Event::CREATE_TELEPORT_PROJECTILE;
       e.entity = teleport_projectile;
       dispatcher.enqueue<EventInfo>(e);
+
+      // Save game event
+      GameEvent teleport_event;
+      teleport_event.type = GameEvent::TELEPORT_CAST;
+      teleport_event.teleport_cast.player_id = idc.id;
+      dispatcher.trigger(teleport_event);
 
       break;
     }

@@ -104,6 +104,8 @@ struct GameEvent {
     SUPER_KICK,
     MISSILE_FIRE,
     MISSILE_IMPACT,
+    TELEPORT_CAST,
+    TELEPORT_IMPACT,
     SPRINT_START,
     SPRINT_END,
     RUN_START,
@@ -161,6 +163,16 @@ struct GameEvent {
     struct {
       EntityID projectile_id;
     } missile_impact;
+
+    // Ability Teleport Cast
+    struct {
+      EntityID player_id;
+    } teleport_cast;
+
+    // Ability Teleport Impact
+    struct {
+      EntityID player_id;
+    } teleport_impact;
 
     // Ability Super Kick
     struct {

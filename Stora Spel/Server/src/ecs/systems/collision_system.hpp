@@ -676,15 +676,23 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
 void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
                          long player_id) {
   auto player_view = registry.view<PlayerComponent, TransformComponent,
-                                   PhysicsComponent, physics::OBB>();
+                                   PhysicsComponent, physics::OBB, IDComponent>();
   for (auto player : player_view) {
     auto& player_c = player_view.get<PlayerComponent>(player);
     auto& phys_c = player_view.get<PhysicsComponent>(player);
     auto& obb_c = player_view.get<physics::OBB>(player);
+    auto& id_c = player_view.get<IDComponent>(player);
 
     if (player_c.client_id == player_id) {
       phys_c.is_airborne = true;
       obb_c.center = hit_pos;
+
+      // Save game event
+      GameEvent teleport_impact_event;
+      teleport_impact_event.type = GameEvent::TELEPORT_IMPACT;
+      teleport_impact_event.teleport_impact.player_id = id_c.id;
+      dispatcher.trigger(teleport_impact_event);
+
       break;
     }
   }
