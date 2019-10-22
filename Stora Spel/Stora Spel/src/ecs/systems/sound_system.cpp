@@ -199,7 +199,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
-      std::cout << "entity id: " << id_c.id << std::endl << "proj id: " << event.missile_fire.projectile_id << std::endl;
+      //std::cout << "entity id: " << id_c.id << std::endl << "proj id: " << event.missile_fire.projectile_id << std::endl;
       if (id_c.id == event.missile_fire.projectile_id) {
         sound_c.sound_player->Play(ability_sounds_[AbilityID::MISSILE], 0, 5.0f);
         break;
@@ -212,8 +212,9 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
-      std::cout << "entity id: " << id_c.id << std::endl << "proj id: " << event.missile_impact.projectile_id << std::endl;
+      //std::cout << "entity id: " << id_c.id << std::endl << "proj id: " << event.missile_impact.projectile_id << std::endl;
       if (id_c.id == event.missile_impact.projectile_id) {
+        sound_c.sound_player->Stop(ability_sounds_[AbilityID::MISSILE]);
         sound_c.sound_player->Play(sound_ability_missile_impact_, 0, 10.0f);
         break;
       }

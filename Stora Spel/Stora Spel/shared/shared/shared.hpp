@@ -112,7 +112,7 @@ struct GameEvent {
     RUN_END,
     RESET,
     PRIMARY_USED,
-	SECONDARY_USED,
+	  SECONDARY_USED,
     NUM_EVENTS
   } type;
   union {
