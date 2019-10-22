@@ -62,25 +62,37 @@ void Update(entt::registry& registry, float dt) {
         // If ability triggered successfully set the
         // AbilityComponent's cooldown to be on max capacity
         ability_component.cooldown_remaining = ability_component.cooldown_max;
+        GameEvent primary_used_event;
+        primary_used_event.type = GameEvent::PRIMARY_USED;
+        primary_used_event.primary_used.player_id =
+            registry.get<IDComponent>(player).id;
+        primary_used_event.primary_used.cd =
+            ability_component.cooldown_remaining;
+        dispatcher.trigger(primary_used_event);
       }
     }
     // When finished set primary ability to not activated
     ability_component.use_primary = false;
 
-      // Then check if secondary ability is being used
-      if (ability_component.use_secondary) {
-        // Trigger the ability
-        if (TriggerAbility(registry, ability_component.secondary_ability,
-          player_component.client_id, player)) {
-          // If ability triggered successfully, remove the
-          // slotted secondary ability
-          ability_component.secondary_ability = AbilityID::NULL_ABILITY;
+    // Then check if secondary ability is being used
+    if (ability_component.use_secondary) {
+      // Trigger the ability
+      if (TriggerAbility(registry, ability_component.secondary_ability,
+                         player_component.client_id, player)) {
+        // If ability triggered successfully, remove the
+        // slotted secondary ability
+        ability_component.secondary_ability = AbilityID::NULL_ABILITY;
 
-          // TODO: send that ability is used
-        }
+		GameEvent secondary_used_event;
+        secondary_used_event.type = GameEvent::SECONDARY_USED;
+                secondary_used_event.secondary_used.player_id =
+            registry.get<IDComponent>(player).id;
+        dispatcher.trigger(secondary_used_event);
+        // TODO: send that ability is used
       }
-      // When finished set secondary ability to not activated
-      ability_component.use_secondary = false;
+    }
+    // When finished set secondary ability to not activated
+    ability_component.use_secondary = false;
 
     // Check if the player should shoot
     if (ability_component.shoot && ability_component.shoot_cooldown <= 0.0f) {
@@ -416,7 +428,7 @@ bool DoHomingBall(entt::registry& registry, PlayerID id) {
         b_p_c.velocity += kick_dir * p_p_c.kick_force * 1.3f;
         b_p_c.is_airborne = true;
         missile_system::SetBallsAreHoming(true);
-		return true;
+        return true;
       }
     }
   }

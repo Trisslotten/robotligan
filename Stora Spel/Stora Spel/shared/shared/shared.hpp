@@ -102,6 +102,8 @@ struct GameEvent {
     RUN_START,
     RUN_END,
     RESET,
+    PRIMARY_USED,
+	SECONDARY_USED,
     NUM_EVENTS
   } type;
   union {
@@ -158,8 +160,17 @@ struct GameEvent {
     } run_end;
 
     // RESET
-    struct {}
-    reset;
+    struct {
+    } reset;
+
+    struct {
+      EntityID player_id;
+      float cd;
+    } primary_used;
+
+	struct {
+      EntityID player_id;
+    } secondary_used;
   };
 };
 
