@@ -401,7 +401,8 @@ float Model::MaxDistance(glm::mat4 transform, glm::vec3 point) {
     MeshData temp = mesh_[i].GetMeshData();
     for(auto pos : temp.pos) {
       glm::vec3 transformed = transform * glm::vec4(pos, 1);
-      if(int len = length(point - transformed) > result) {
+      int len = length(point - transformed);
+      if(len > result) {
         result = len;
       }
     }
