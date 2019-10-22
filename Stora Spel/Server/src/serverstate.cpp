@@ -572,6 +572,10 @@ void ServerPlayState::CreatePlayerEntity() {
     red_players_++;
   }*/
 
+  // TEMP : Just so the replay knows the number of players all get added to the blue team
+  this->blue_players_++;
+  // TEMP
+
   registry.assign<PointsComponent>(entity);
 
   // TODO: call later
@@ -849,7 +853,7 @@ bool ServerPlayState::StartRecording(unsigned int in_replay_length_seconds) {
     std::cout << "Recording...\n";
     this->replay_machine_ =
         new ReplayMachine(in_replay_length_seconds, kServerUpdateRate, 1,
-                          (this->blue_players_ + this->red_players_), true);
+                          (this->blue_players_ + this->red_players_), false);
     this->record_ = true;
     return true;  // NTS: Return false if recording cannot start?
   }
