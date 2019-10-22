@@ -23,7 +23,7 @@ bool gravity_used = false;
 bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
                     PlayerID player_id, entt::entity caster);
 void CreateMissileEntity(entt::registry& registry, PlayerID id);
-void DoSuperStrike(entt::registry& registry);
+bool DoSuperStrike(entt::registry& registry);
 entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id);
 void DoSwitchGoals(entt::registry& registry);
 entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id);
@@ -153,8 +153,7 @@ bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
       return true;
       break;
     case AbilityID::SUPER_STRIKE:
-      DoSuperStrike(registry);
-      return true;
+      return DoSuperStrike(registry);
       break;
     case AbilityID::SWITCH_GOALS:
       DoSwitchGoals(registry);
@@ -203,7 +202,7 @@ void CreateMissileEntity(entt::registry& registry, PlayerID id) {
   }
 }
 
-void DoSuperStrike(entt::registry& registry) {
+bool DoSuperStrike(entt::registry& registry) {
   // NTS: The logic of this function assumes that there is only one
   // entity with a PlayerComponent and that is the entity representing
   // the player on this client
@@ -230,6 +229,8 @@ void DoSuperStrike(entt::registry& registry) {
           ball_view.get<PhysicsComponent>(ball_entity);
       TransformComponent& trans_c_ball =
           ball_view.get<TransformComponent>(ball_entity);
+      BallComponent& ball_ball_c =
+          ball_view.get<BallComponent>(ball_entity);
 
       // Calculate the vector from the player to the ball
       glm::vec3 player_ball_vec =
@@ -259,9 +260,12 @@ void DoSuperStrike(entt::registry& registry) {
         physics_c_ball.velocity += kick_dir * GlobalSettings::Access()->ValueOf(
                                                   "ABILITY_SUPER_STRIKE_FORCE");
         physics_c_ball.is_airborne = true;
+        ball_ball_c.is_super_striked = true;
+        return true;
       }
     }
   }
+  return false;
 }
 
 entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {

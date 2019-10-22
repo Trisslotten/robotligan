@@ -222,6 +222,7 @@ void PlayerBallCollision(entt::registry& registry,
                          entt::entity arena) {
   auto& ball_physics = registry.get<PhysicsComponent>(ball);
   auto& ball_hitbox = registry.get<physics::Sphere>(ball);
+  auto& ball_ball = registry.get<BallComponent>(ball);
 
   auto& player_physics = registry.get<PhysicsComponent>(object.entity);
 
@@ -236,6 +237,10 @@ void PlayerBallCollision(entt::registry& registry,
 
   } else {
     BallCollision(&ball_physics, object.normal);  // player_physics.velocity);
+    if (ball_ball.is_super_striked) {
+      player_physics.velocity = ball_physics.velocity * 0.5f;
+      player_physics.is_airborne = true;
+	}
   }
 
   physics::IntersectData data =
@@ -338,6 +343,11 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
       ball_physics.velocity - glm::dot(ball_physics.velocity, nn) * nn;
 
   if (glm::length(dir) == 0) return;
+
+  if (ball_c.is_super_striked) {
+    ball_physics.velocity *= 0.3f;
+    ball_c.is_super_striked = false;
+  }
 
   glm::vec3 rotate = glm::normalize(glm::cross(nn, dir));
   float amount = glm::length(dir);
