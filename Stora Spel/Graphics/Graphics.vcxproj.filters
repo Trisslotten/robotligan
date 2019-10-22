@@ -60,6 +60,12 @@
     <ClInclude Include="include\glob\camera.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\glob\Animation.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\glob\joint.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\2D\elements2D.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -67,6 +73,24 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\usegl.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Particles\particle_system.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Particles\particle_settings.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\postprocess\postprocess.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\postprocess\blur.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\shadows\shadows.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\glob\handletypes.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -108,6 +132,18 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\2D\elements2D.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Particles\particle_system.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\postprocess\postprocess.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\postprocess\blur.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\shadows\shadows.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

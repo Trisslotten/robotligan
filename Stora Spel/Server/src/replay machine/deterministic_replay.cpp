@@ -4,7 +4,8 @@
 
 void DeterministicReplay::WriteInputFrame(const std::bitset<10>& in_bitset,
                                           const float& in_x_value,
-                                          const float& in_y_value) {
+                                          const float& in_y_value,
+                                          const unsigned int in_player_num) {
   // Format:
   // {			:	(for every change 1+X bits are stored,
   // 				where X is the number of bits needed
@@ -19,7 +20,7 @@ void DeterministicReplay::WriteInputFrame(const std::bitset<10>& in_bitset,
   // Loop over the bitset
   for (unsigned int i = 0; i < in_bitset.size(); i++) {
     // IF its bit is different from last input state's
-    if (in_bitset[i] != this->last_input_state_[i]) {
+    if (in_bitset[i] != this->player_io_[in_player_num].last_input_state[i]) {
       // Write that there has been a change
       this->input_log_->WriteBit(1);
 
@@ -27,7 +28,7 @@ void DeterministicReplay::WriteInputFrame(const std::bitset<10>& in_bitset,
       this->input_log_->WriteInt(i, this->bits_per_int_);
 
       // Then flip that bit in the local bitset
-      this->last_input_state_.flip(i);
+      this->player_io_[in_player_num].last_input_state.flip(i);
     }
   }
   // Once everything has been looped over, no more changes occur
@@ -41,7 +42,8 @@ void DeterministicReplay::WriteInputFrame(const std::bitset<10>& in_bitset,
 }
 
 void DeterministicReplay::ReadInputFrame(std::bitset<10>& in_bitset,
-                                         float& in_x_value, float& in_y_value) {
+                                         float& in_x_value, float& in_y_value,
+                                         const unsigned int in_player_num) {
   // Read the first bit. If it is 1 a change has occured
   // and the following bits specify the index in the bitset.
   unsigned int counter = 0;
@@ -50,7 +52,7 @@ void DeterministicReplay::ReadInputFrame(std::bitset<10>& in_bitset,
     // Get the number telling of the index where the change occured
     index = this->input_log_->ReadInt(this->bits_per_int_);
     // In the output bitset flip that bit
-    this->last_output_state_.flip(index);
+    this->player_io_[in_player_num].last_output_state.flip(index);
     // Increment counter
     counter++;
   }
@@ -61,7 +63,7 @@ void DeterministicReplay::ReadInputFrame(std::bitset<10>& in_bitset,
   float y_float = this->input_log_->ReadFloat32();
 
   // Finally put the values into the provided references
-  in_bitset = this->last_output_state_;
+  in_bitset = this->player_io_[in_player_num].last_output_state;
   in_x_value = x_float;
   in_y_value = y_float;
 }
@@ -70,11 +72,22 @@ void DeterministicReplay::ReadInputFrame(std::bitset<10>& in_bitset,
 
 DeterministicReplay::DeterministicReplay(
     unsigned int in_num_of_frames, unsigned int in_num_of_keys,
-    unsigned int in_snapshot_interval_frames) {
-  // For one controlled entity we will require at maximum
+    unsigned int in_num_of_players, unsigned int in_snapshot_interval_frames) {
+  // For one (1) controlled entity we will require at maximum
   //	1 + B * (ceil(base2_log(N))+1) + 32 + 32
   // bits per frame, where B (buttons pressed/released) is
   // equal to N (all buttons).
+  //
+  // If N=10
+  // For one player we need:
+  // Min (B=0):	65
+  // Max (B=N):	105
+  //
+  // While for six players that gives:
+  // Min (B=0):	390
+  // Max (B=N):	630
+  //
+  // Minimum is about 62% of maximum
 
   // Calculate how many bits we need to store
   // an int given how many keys we shall track
@@ -85,12 +98,22 @@ DeterministicReplay::DeterministicReplay(
   unsigned int bits_per_frame =
       (1 + in_num_of_keys * (this->bits_per_int_ + 1) + 64);
 
+  // Then increase the size to make space for inputs for more
+  // than one player
+  bits_per_frame *= in_num_of_players;
+
   // Create a bitpack capable of holding that size
   this->input_log_ = new BitPack(in_num_of_frames, bits_per_frame);
 
-  // Set the values of the two helper bitsets
-  this->last_input_state_ = std::bitset<10>("0000000000");
-  this->last_output_state_ = std::bitset<10>("0000000000");
+  // Create pairs of helper bitsets to track last input/output
+  // states for each player and set them to 0
+  this->player_io_ = new PlayerIOState[in_num_of_players];
+  for (unsigned int i = 0; i < in_num_of_players; i++) {
+    this->player_io_[i].last_input_state = std::bitset<10>("0000000000");
+    this->player_io_[i].last_output_state = std::bitset<10>("0000000000");
+  }
+
+  this->num_of_players_ = in_num_of_players;
 
   //---
 
@@ -100,7 +123,7 @@ DeterministicReplay::DeterministicReplay(
   unsigned int num_of_snapshots_ =
       (in_num_of_frames / in_snapshot_interval_frames) + 1;
   this->snapshot_interval_frames_ = in_snapshot_interval_frames;
-  this->frames_since_last_snapshot_ = in_snapshot_interval_frames;
+  this->frames_since_last_snapshot_ = this->snapshot_interval_frames_;
 
   // Allocate space for the snapshots
   this->registry_log_ = new RegPack(num_of_snapshots_);
@@ -117,6 +140,9 @@ DeterministicReplay::~DeterministicReplay() {
   if (this->input_log_ != nullptr) {
     delete this->input_log_;
   }
+  if (this->player_io_ != nullptr) {
+    delete[] this->player_io_;
+  }
   if (this->registry_log_ != nullptr) {
     delete this->registry_log_;
   }
@@ -125,8 +151,7 @@ DeterministicReplay::~DeterministicReplay() {
   }
 }
 
-bool DeterministicReplay::SaveFrame(std::bitset<10>& in_bitset,
-                                    float& in_x_value, float& in_y_value,
+bool DeterministicReplay::SaveFrame(PlayerIO in_pio[],
                                     entt::registry& in_registry) {
   // Returns true if end if buffer was reached
 
@@ -147,16 +172,18 @@ bool DeterministicReplay::SaveFrame(std::bitset<10>& in_bitset,
   }
 
   // BITPACK
-  // Write input to bitpack each each frame
-  this->WriteInputFrame(in_bitset, in_x_value, in_y_value);
+  // Write input to bitpack for each player
+  for (unsigned int i = 0; i < this->num_of_players_; i++) {
+    this->WriteInputFrame(in_pio[i].key_bitset, in_pio[i].x_value,
+                          in_pio[i].y_value, i);
+  }
 
   return this->input_log_->IsWriteAtEnd();
 }
 
-bool DeterministicReplay::LoadFrame(std::bitset<10>& in_bitset,
-                                    float& in_x_value, float& in_y_value,
+bool DeterministicReplay::LoadFrame(PlayerIO in_pio[],
                                     entt::registry& in_registry) {
-  // Returns true if end if buffer was reached
+  // Returns true if end of buffer was reached
 
   // Get what bit index is about to be read from
   unsigned int next_bit_index = this->input_log_->GetNextReadBitIndex();
@@ -169,8 +196,11 @@ bool DeterministicReplay::LoadFrame(std::bitset<10>& in_bitset,
   }
 
   // Get replay data and put it into the given references
-  // Read the bitpack each frame
-  this->ReadInputFrame(in_bitset, in_x_value, in_y_value);
+  // Read the bitpack for each player
+  for (unsigned int i = 0; i < this->num_of_players_; i++) {
+    this->ReadInputFrame(in_pio[i].key_bitset, in_pio[i].x_value,
+                         in_pio[i].y_value, i);
+  }
 
   return this->input_log_->IsReadAtEnd();
 }

@@ -74,6 +74,7 @@ void Chat::SubmitText(glob::Font2DHandle font) {
    int index = messages_.size() - 5;
   if (index < 0) index = 0;
   int counter = 0;
+
   for (index; index < messages_.size(); ++index) {
     glm::vec4 color(1.f,1.f,1.f,1.f);
 
@@ -86,9 +87,9 @@ void Chat::SubmitText(glob::Font2DHandle font) {
 	  } else {
 		  name_color = glm::vec4(1,1,0,1);
 	  }
-      glob::Submit(font, glm::vec2(50.f, 700.f - 20.f * counter), 20, messages_[index].name, name_color);
+      glob::Submit(font, draw_pos_ + glm::vec2(0, -20.f * counter), 20, messages_[index].name, name_color);
 	}
-    glob::Submit(font, glm::vec2(50.f + messages_[index].offset, 700.f - 20.f * counter), 20, messages_[index].message, color);
+    glob::Submit(font, draw_pos_ + glm::vec2(messages_[index].offset,- 20.f * counter), 20, messages_[index].message, color);
     counter++;
   
   }
@@ -100,7 +101,7 @@ void Chat::SubmitText(glob::Font2DHandle font) {
 
   
 
-  glob::Submit(font, glm::vec2(50.f, 700.f - 20.f * 5), 20, temp, glm::vec4(1, 1, 1, 1));
+  glob::Submit(font, draw_pos_ + glm::vec2(0, -20.f * 5), 20, temp, glm::vec4(1, 1, 1, 1));
  }
 
  void Chat::SetShowChat() {

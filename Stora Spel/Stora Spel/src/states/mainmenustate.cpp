@@ -6,23 +6,29 @@
 
 void MainMenuState::Startup() {
   CreateMainMenu();
-  CreateSettingsMenu();
+  CreateInformationMenu();
+
+  information_image_ = glob::GetGUIItem("assets/GUI_elements/info_menu.png");
 }
 
 void MainMenuState::Init() {
   auto& client = engine_->GetClient();
   //
+  glob::window::SetMouseLocked(false);
   engine_->SetSendInput(false);
   engine_->SetCurrentRegistry(&registry_mainmenu_);
   engine_->SetEnableChat(false);
 
-  if(client.IsConnected()){
+  if (client.IsConnected()) {
     client.Disconnect();
   }
 }
 
-void MainMenuState::Update() {
+void MainMenuState::Update(float dt) {
   //
+  if (engine_->GetCurrentRegistry() == &registry_information_) {
+    glob::Submit(information_image_, glm::vec2(560, 300), 1.0f);
+  }
 }
 
 void MainMenuState::UpdateNetwork() {
@@ -39,14 +45,18 @@ void MainMenuState::CreateMainMenu() {
 
   // PLAY BUTTON - change registry to registry_gameplay_
   ButtonComponent* b_c = GenerateButtonEntity(registry_mainmenu_, "PLAY",
-                                              glm::vec2(100, 200), font_test_);
-  b_c->button_func = [&]() { engine_->ChangeState(StateType::LOBBY); };
+                                              glm::vec2(100, 260), font_test_);
+  b_c->button_func = [&]() { engine_->ChangeState(StateType::CONNECT_MENU); };
 
   // SETTINGS BUTTON - change registry to registry_settings_
   b_c = GenerateButtonEntity(registry_mainmenu_, "SETTINGS",
+                             glm::vec2(100, 200), font_test_);
+  b_c->button_func = [&]() { engine_->ChangeState(StateType::SETTINGS); };
+
+  b_c = GenerateButtonEntity(registry_mainmenu_, "INFORMATION",
                              glm::vec2(100, 140), font_test_);
   b_c->button_func = [&]() {
-    engine_->SetCurrentRegistry(&registry_settings_);
+    engine_->SetCurrentRegistry(&registry_information_);
   };
 
   // EXIT BUTTON - close the game
@@ -55,10 +65,10 @@ void MainMenuState::CreateMainMenu() {
   b_c->button_func = [&]() { exit(0); };
 }
 
-void MainMenuState::CreateSettingsMenu() {
-  // BACK BUTTON in SETTINGS - go back to main menu
-  ButtonComponent* b_c = GenerateButtonEntity(registry_settings_, "BACK",
-                                              glm::vec2(100, 200), font_test_);
+void MainMenuState::CreateInformationMenu() {
+  // BACK BUTTON in Information - go back to main menu
+  ButtonComponent* b_c = GenerateButtonEntity(registry_information_, "BACK",
+                                              glm::vec2(100, 140), font_test_);
   b_c->button_func = [&]() {
     engine_->SetCurrentRegistry(&registry_mainmenu_);
   };
