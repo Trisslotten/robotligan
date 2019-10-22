@@ -21,6 +21,7 @@ public:
   void ReceiveGameEvent(const GameEvent& event);
 private:
   Timer nudge_timer_;
+  std::unordered_map<AbilityID, slob::SoundHandle> ability_sounds_;
 
   slob::SoundEngine sound_engine_;
 
@@ -33,6 +34,7 @@ private:
   slob::SoundHandle sound_ball_bounce_;
   slob::SoundHandle sound_player_land_;
   slob::SoundHandle sound_player_jump_;
+  slob::SoundHandle sound_ability_missile_impact_;
 
   Engine* engine_;
 };

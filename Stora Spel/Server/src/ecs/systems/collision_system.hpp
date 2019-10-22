@@ -502,17 +502,18 @@ void ProjectileBallCollision(entt::registry& registry, entt::entity ball) {
 
 void ProjectileArenaCollision(entt::registry& registry) {
   auto view_arena = registry.view<physics::Arena>();
-  auto view_projectile = registry.view<physics::Sphere, ProjectileComponent>();
+  auto view_projectile = registry.view<physics::Sphere, ProjectileComponent, IDComponent>();
 
   for (auto arena : view_arena) {
     auto& arena_hitbox = view_arena.get(arena);
     for (auto projectile : view_projectile) {
       auto& proj_hitbox = view_projectile.get<physics::Sphere>(projectile);
-      auto& id = view_projectile.get<ProjectileComponent>(projectile);
+      auto& proj_id = view_projectile.get<ProjectileComponent>(projectile);
+      auto& id_c = view_projectile.get<IDComponent>(projectile);
 
       physics::IntersectData data = Intersect(arena_hitbox, proj_hitbox);
       if (data.collision) {
-        switch (id.projectile_id) {
+        switch (proj_id.projectile_id) {
           case ProjectileID::CANNON_BALL: {
             // registry.destroy(projectile);
             DestroyEntity(registry, projectile);
@@ -525,12 +526,18 @@ void ProjectileArenaCollision(entt::registry& registry) {
           }
           case ProjectileID::MISSILE_OBJECT: {
             // ApplyForcePush(registry, proj_hitbox.center);
+            // Save game event
+            GameEvent missile_impact_event;
+            missile_impact_event.type = GameEvent::MISSILE_IMPACT;
+            missile_impact_event.missile_impact.projectile_id = id_c.id;
+            dispatcher.trigger(missile_impact_event);
+
             DestroyEntity(registry, projectile);
             break;
           }
           case ProjectileID::TELEPORT_PROJECTILE: {
             // Teleport to collision site
-            TeleportToCollision(registry, proj_hitbox.center, id.creator);
+            TeleportToCollision(registry, proj_hitbox.center, proj_id.creator);
             DestroyEntity(registry, projectile);
             break;
           }

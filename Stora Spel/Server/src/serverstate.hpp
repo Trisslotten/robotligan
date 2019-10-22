@@ -23,6 +23,7 @@ class ServerState {
   virtual void Init() = 0;
   virtual void Update(float dt) = 0;
   virtual void Cleanup() = 0;
+  virtual void HandleDataToSend() = 0;
   ServerState() = default;
   ~ServerState() {}
 
@@ -39,6 +40,7 @@ class ServerLobbyState : public ServerState {
   void Init() override;
   void Update(float dt) override;
   void Cleanup() override;
+  void HandleDataToSend() override;
   ServerLobbyState() = default;
   ~ServerLobbyState() {}
 
@@ -85,6 +87,7 @@ class ServerPlayState : public ServerState {
  public:
   void Init() override;
   void Update(float dt) override;
+  void HandleDataToSend() override;
   void Cleanup() override;
   ServerPlayState() = default;
   ~ServerPlayState() {}

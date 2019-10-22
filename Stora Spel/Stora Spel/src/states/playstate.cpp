@@ -864,6 +864,8 @@ void PlayState::CreateForcePushObject(EntityID id) {
 }
 
 void PlayState::CreateMissileObject(EntityID id) {
+  auto& sound_engine = engine_->GetSoundEngine();
+
   auto missile_object = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glob::ModelHandle model_ball = glob::GetModel("assets/Rocket/Rocket.fbx");
@@ -872,6 +874,7 @@ void PlayState::CreateMissileObject(EntityID id) {
   registry_gameplay_.assign<TransformComponent>(missile_object, zero_vec,
                                                 zero_vec, glm::vec3(0.5f));
   registry_gameplay_.assign<IDComponent>(missile_object, id);
+  registry_gameplay_.assign<SoundComponent>(missile_object, sound_engine.CreatePlayer());
 }
 
 void PlayState::DestroyEntity(EntityID id) {

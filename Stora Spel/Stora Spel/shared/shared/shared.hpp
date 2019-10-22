@@ -97,6 +97,10 @@ struct GameEvent {
     BOUNCE,
     LAND,
     JUMP,
+    GRAVITY_DROP,
+    SUPER_KICK,
+    MISSILE_FIRE,
+    MISSILE_IMPACT,
     SPRINT_START,
     SPRINT_END,
     RUN_START,
@@ -138,6 +142,25 @@ struct GameEvent {
     struct {
       EntityID player_id;
     } jump;
+
+    // Ability Gravity Change
+    struct {
+    } gravity;
+
+    // Ability Missile Fire
+    struct {
+      EntityID projectile_id;
+    } missile_fire;
+
+    // Ability Missile Impact
+    struct {
+      EntityID projectile_id;
+    } missile_impact;
+
+    // Ability Super Kick
+    struct {
+      EntityID player_id;
+    } super_kick;
 
     // Player Sprint start
     struct {

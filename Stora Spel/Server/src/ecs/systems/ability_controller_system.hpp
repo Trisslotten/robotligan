@@ -244,6 +244,14 @@ void DoSuperStrike(entt::registry& registry) {
         physics_c_ball.velocity += kick_dir * GlobalSettings::Access()->ValueOf(
                                                   "ABILITY_SUPER_STRIKE_FORCE");
         physics_c_ball.is_airborne = true;
+
+        // Save game event
+        if (registry.has<IDComponent>(player_entity)) {
+          GameEvent super_kick_event;
+          super_kick_event.type = GameEvent::SUPER_KICK;
+          super_kick_event.super_kick.player_id = registry.get<IDComponent>(player_entity).id;
+          dispatcher.trigger(super_kick_event);
+        }
       }
     }
   }
@@ -342,6 +350,10 @@ void GravityChange(entt::registry& registry) {
       GlobalSettings::Access()->ValueOf("ABILITY_GRAVITY_CHANGE"));
   gravity_timer.Restart();
   gravity_used = true;
+  
+  GameEvent event;
+  event.type = GameEvent::GRAVITY_DROP;
+  dispatcher.trigger<GameEvent>(event);
 }
 
 void DoTeleport(entt::registry& registry, PlayerID id) {

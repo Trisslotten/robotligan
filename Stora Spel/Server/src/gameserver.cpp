@@ -68,6 +68,7 @@ void GameServer::Update(float dt) {
   }
   DoOncePerSecond();
   current_state_->Update(dt);
+  current_state_->HandleDataToSend();
 
   //---------------------------------------------
   //--------------UPDATE GAME LOGIC--------------
@@ -96,6 +97,12 @@ void GameServer::HandlePacketsToSend() {
     auto header = to_send.GetHeader();
     header->receiver = id;
 
+    // send events
+    for (auto event : game_events_) {
+      to_send << event;
+      to_send << PacketBlockType::GAME_EVENT;
+    }
+
     if (!packets_[id].IsEmpty()) {
       to_send << packets_[id];
     }
@@ -110,11 +117,6 @@ void GameServer::HandlePacketsToSend() {
       to_send << PacketBlockType::MESSAGE;
     }
 
-    // send events
-    for (auto event : game_events_) {
-      to_send << event;
-      to_send << PacketBlockType::GAME_EVENT;
-    }
 
     if (!to_send.IsEmpty()) {
       server_.Send(to_send);
