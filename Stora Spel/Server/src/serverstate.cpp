@@ -389,8 +389,7 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
 
     AbilityID primary_id = client_abilities_[player_c.client_id];
     AbilityID secondary_id = AbilityID::NULL_ABILITY;
-    float primary_cooldown =
-        GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
+    float primary_cooldown = game_server_->GetAbilityCooldowns()[primary_id];
 
     // Add components for a player
     registry.assign<AbilityComponent>(

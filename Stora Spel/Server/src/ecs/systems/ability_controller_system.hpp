@@ -31,6 +31,8 @@ void GravityChange(entt::registry& registry);
 void DoTeleport(entt::registry& registry, PlayerID id);
 bool DoHomingBall(entt::registry& registry, PlayerID id);
 
+std::unordered_map<AbilityID, float> ability_cooldowns;
+
 void Update(entt::registry& registry, float dt) {
   auto view_players =
       registry.view<PlayerComponent, TransformComponent, AbilityComponent>();
@@ -61,7 +63,8 @@ void Update(entt::registry& registry, float dt) {
                          player_component.client_id, player)) {
         // If ability triggered successfully set the
         // AbilityComponent's cooldown to be on max capacity
-        ability_component.cooldown_remaining = ability_component.cooldown_max;
+        ability_component.cooldown_remaining =
+            ability_cooldowns[ability_component.primary_ability];
         GameEvent primary_used_event;
         primary_used_event.type = GameEvent::PRIMARY_USED;
         primary_used_event.primary_used.player_id =
