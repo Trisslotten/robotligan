@@ -13,6 +13,7 @@ struct PlayerComponent {  // Client side
   float sprint_coeff = 0.f;
   bool sprinting = false;
   bool running = false;
+  bool jumping = false;
 };
 
 #endif  // PLAYER_COMPONENT_HPP_
