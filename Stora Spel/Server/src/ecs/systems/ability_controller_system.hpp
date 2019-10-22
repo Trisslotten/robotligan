@@ -92,7 +92,7 @@ void Update(entt::registry& registry, float dt) {
       }
     }
     // When finished set secondary ability to not activated
-    //ability_component.use_secondary = false;
+    ability_component.use_secondary = false;
 
     // Check if the player should shoot
     if (ability_component.shoot && ability_component.shoot_cooldown <= 0.0f) {

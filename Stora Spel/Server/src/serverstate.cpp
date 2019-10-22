@@ -273,7 +273,11 @@ void ServerPlayState::Update(float dt) {
     }
 
     // Tell client if secondary ability was used
-    auto view_abilities = registry.view<PlayerComponent, AbilityComponent>();
+    // already added game event for this, sry :P not ideal to set use_secondary
+    // to false here since ability_controller::TriggerAbility can return false,
+    // i.e. too far away to use super strike or homing ball
+
+    /*auto view_abilities = registry.view<PlayerComponent, AbilityComponent>();
     for (auto entity : view_abilities) {
       auto& player = view_abilities.get<PlayerComponent>(entity);
 
@@ -285,7 +289,7 @@ void ServerPlayState::Update(float dt) {
           to_send << PacketBlockType::SECONDARY_USED;
         }
       }
-    }
+    }*/
 
     // send created projectiles
     for (auto projectiles : created_projectiles_) {
@@ -323,8 +327,7 @@ void ServerPlayState::Update(float dt) {
   }
   destroy_entities_.clear();
   created_projectiles_.clear();
-  if (pick_ups_sent)
-    created_pick_ups_.clear();
+  if (pick_ups_sent) created_pick_ups_.clear();
 
   if (reset_timer_.Elapsed() > 3.0f) {
     ResetEntities();
