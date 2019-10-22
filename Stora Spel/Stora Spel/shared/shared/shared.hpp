@@ -67,6 +67,7 @@ enum : int16_t {
   GAME_END,
   YOUR_TARGET,
   FRAME_ID,
+  PLAYER_LOOK_DIR,
   NUM_BLOCK_TYPES,
 };
 

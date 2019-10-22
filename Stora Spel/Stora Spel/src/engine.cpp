@@ -299,6 +299,18 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetCameraOrientation(orientation);
       break;
     }
+    case PacketBlockType::PLAYER_LOOK_DIR: {
+      int num_dirs = -1;
+      packet >> num_dirs;
+      for(int i =0 ; i < num_dirs; i++) {
+        EntityID id = 0;
+        glm::vec3 look_dir;
+        packet >> id;
+        packet >> look_dir;
+        play_state_.SetPlayerLookDir(id, look_dir);
+      }
+      break;
+    }
     case PacketBlockType::GAME_START: {
       int num_players = -1;
       std::vector<EntityID> player_ids;
