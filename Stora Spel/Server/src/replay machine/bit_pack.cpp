@@ -30,6 +30,11 @@ BitPack::BitPack(unsigned int in_num_of_frames,
   // Set counters to start
   this->next_bit_to_write_ = 0;
   this->next_bit_to_read_ = 0;
+
+  // Set the counter for the end bit
+  // The end bit is the bit after the
+  // last written bit in the buffer
+  this->end_bit_ = 0;
 }
 
 BitPack::~BitPack() {
@@ -54,13 +59,13 @@ void BitPack::ResetRead() {
 }
 
 bool BitPack::IsWriteAtEnd() {
-  // Return true if the end has been reached
+  // Return true if the end of the buffer has been reached
   return (this->next_bit_to_write_ == this->num_of_bits_);
 }
 
 bool BitPack::IsReadAtEnd() {
-  // Return true if the end has been reached
-  return (this->next_bit_to_read_ == this->num_of_bits_);
+  // Return true if the last written bit has been reached
+  return (this->next_bit_to_read_ == this->end_bit_);
 }
 
 unsigned int BitPack::GetNextWrittenBitIndex() const {
@@ -92,6 +97,9 @@ bool BitPack::WriteBit(bool in_bit) {
 
   // Increment writing counter
   this->next_bit_to_write_++;
+
+  // Increment the end bit
+  this->end_bit_++;
 
   // Return write successful
   return true;
@@ -151,9 +159,9 @@ bool BitPack::ReadBit() {
   // Returns the bit read from the buffer
   // at the buffers current read position
 
-  // If reading counter would start going out of bounds
-  // return 0 instead of continuing
-  if (this->next_bit_to_read_ == this->num_of_bits_) {
+  // If reading counter has reached the end bit
+  // (one bit past the last written bit) return false
+  if (this->next_bit_to_read_ == this->end_bit_) {
     return false;
   }
 
