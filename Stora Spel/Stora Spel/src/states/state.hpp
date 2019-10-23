@@ -164,8 +164,6 @@ class ConnectMenuState : public State {
   std::string last_msg_ = "Failed to connect: Timeout";
   std::string ip_ = "localhost";
   std::string port_ = "1337";
-  InputField ip_field_;
-  InputField port_field_;
   glob::Font2DHandle font_test_ = 0;
   entt::registry registry_connect_menu_;
 };
@@ -189,6 +187,8 @@ class SettingsState : public State {
   float setting_fov_ = 90.f;
   float setting_volume_ = 100.f;
   float setting_mouse_sens_ = 1.0f;
+
+  std::string setting_username_ = "BogdanBoss";
 };
 
 /////////////////////// PLAY ///////////////////////

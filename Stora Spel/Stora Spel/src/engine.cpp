@@ -21,6 +21,7 @@
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
+#include "ecs/systems/input_system.hpp"
 
 Engine::Engine() {}
 
@@ -589,6 +590,7 @@ void Engine::UpdateSystems(float dt) {
   }
 
   gui_system::Update(*registry_current_);
+  input_system::Update(*registry_current_);
   ParticleSystem(*registry_current_, dt);
   RenderSystem(*registry_current_);
   animation_system_.UpdateAnimations(*registry_current_, dt);
