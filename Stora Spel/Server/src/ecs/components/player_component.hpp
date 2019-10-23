@@ -41,6 +41,28 @@ struct PlayerComponent {  // Server side
   // States
   bool sprinting = false;
   bool running = false;
+
+  // Comparasion Operators
+  bool operator==(const PlayerComponent& rhs) {
+    return (this->client_id == rhs.client_id) &&
+           (this->walkspeed == rhs.walkspeed) &&
+           (this->jump_speed == rhs.jump_speed) &&
+           (this->no_clip == rhs.no_clip) &&
+           (this->energy_max == rhs.energy_max) &&
+           (this->energy_current == rhs.energy_current) &&
+           (this->cost_jump == rhs.cost_jump) &&
+           (this->cost_sprint == rhs.cost_sprint) &&
+           (this->energy_regen_tick == rhs.energy_regen_tick) &&
+           (this->kick_pitch == rhs.kick_pitch) &&
+           (this->kick_reach == rhs.kick_reach) &&
+           (this->kick_fov == rhs.kick_fov) &&
+           (this->kick_force == rhs.kick_force) &&
+           (this->actions == rhs.actions) && (this->yaw == rhs.yaw) &&
+           (this->pitch == rhs.pitch) && (this->target == rhs.target) &&
+           (this->sprinting == rhs.sprinting) && (this->running == rhs.running);
+  }
+
+  bool operator!=(const PlayerComponent& rhs) { return !((*this) == rhs); }
 };
 
 #endif  // PLAYER_COMPONENT_H_
