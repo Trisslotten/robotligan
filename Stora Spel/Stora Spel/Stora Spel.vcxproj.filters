@@ -20,6 +20,8 @@
     <ClCompile Include="src\states\settingsstate.cpp" />
     <ClCompile Include="src\client replay machine\client_replay_machine.cpp" />
     <ClCompile Include="src\client replay machine\geometric_replay.cpp" />
+    <ClCompile Include="src\client replay machine\data_frame.cpp" />
+    <ClCompile Include="src\client replay machine\frame_channel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
@@ -90,6 +92,8 @@
     <ClInclude Include="shared\shared\bit_pack.hpp" />
     <ClInclude Include="src\client replay machine\client_replay_machine.hpp" />
     <ClInclude Include="src\client replay machine\geometric_replay.hpp" />
+    <ClInclude Include="src\client replay machine\data_frame.hpp" />
+    <ClInclude Include="src\client replay machine\frame_channel.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

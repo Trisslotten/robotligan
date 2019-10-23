@@ -153,6 +153,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Chat.cpp" />
+    <ClCompile Include="src\client replay machine\data_frame.cpp" />
+    <ClCompile Include="src\client replay machine\frame_channel.cpp" />
     <ClCompile Include="src\ecs\systems\animation_system.cpp" />
     <ClCompile Include="src\ecs\systems\sound_system.cpp" />
     <ClCompile Include="src\client replay machine\geometric_replay.cpp" />
@@ -182,6 +184,8 @@
     <ClInclude Include="shared\shared\pick_up_component.hpp" />
     <ClInclude Include="shared\shared\reg_pack.hpp" />
     <ClInclude Include="src\client replay machine\client_replay_machine.hpp" />
+    <ClInclude Include="src\client replay machine\data_frame.hpp" />
+    <ClInclude Include="src\client replay machine\frame_channel.hpp" />
     <ClInclude Include="src\client replay machine\geometric_replay.hpp" />
     <ClInclude Include="src\ecs\components.hpp" />
     <ClInclude Include="src\ecs\components\animation_component.hpp" />
