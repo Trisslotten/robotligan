@@ -54,12 +54,16 @@ void Update(entt::registry& registry) {
             input_c.pos, mouse_pos, input_c.text, input_c.font_hndl,
             input_c.font_size);  //(int)pixel_offset / width_of_char;
 
-        if (input_c.input_pos > input_c.text.length()) {
+        if (input_c.input_pos > input_c.text.length() && !active) {
           input_c.input_pos = input_c.text.length();
         }
-
+        active = true;
         last_active = input_c.input_name;
-        // found_a_box = true;
+
+        found_a_box = true;
+      } else {
+        if (!found_a_box)
+			active = false;
       }
     }
 
@@ -142,10 +146,9 @@ void Update(entt::registry& registry) {
       }
     }
   }
-  /* active = found_a_box;
-   if (!active) {
-     last_active = "";
-   }*/
+  if (!active) {
+    last_active = "";
+  }
 }
 }  // namespace input_system
 
