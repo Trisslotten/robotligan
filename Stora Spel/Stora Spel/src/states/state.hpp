@@ -248,6 +248,8 @@ class PlayState : public State {
   void UpdateInGameMenu(bool show_menu);
   void UpdateGameplayTimer();
 
+  void DrawNameOverPlayer();
+
   void DrawTopScores();
   void DrawTarget();
   FrameState SimulateMovement(std::vector<int> &action, FrameState& state, float dt);

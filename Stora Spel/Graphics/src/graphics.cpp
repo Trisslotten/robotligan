@@ -71,6 +71,15 @@ struct TextItem {
   bool visible;
 };
 
+struct Text3DItem {
+  Font2D *font = nullptr;
+  glm::vec3 pos{0};
+  float size = 0.f;
+  std::string text;
+  glm::vec4 color;
+  glm::mat4 rotation;
+};
+
 struct LightItem {
   glm::vec3 pos;
   glm::vec3 color;
@@ -85,6 +94,7 @@ ShaderProgram particle_shader;
 // ShaderProgram compute_shader;
 ShaderProgram animated_model_shader;
 ShaderProgram text_shader;
+ShaderProgram text3D_shader;
 ShaderProgram wireframe_shader;
 ShaderProgram gui_shader;
 ShaderProgram e2D_shader;
@@ -151,6 +161,7 @@ std::vector<BoneAnimatedRenderItem> bone_animated_items_to_render;
 std::vector<glm::mat4> cubes;
 std::vector<ModelHandle> wireframe_meshes;
 std::vector<TextItem> text_to_render;
+std::vector<Text3DItem> text3D_to_render;
 std::vector<GUIItem> gui_items_to_render;
 std::vector<E2DItem> e2D_items_to_render;
 
@@ -323,6 +334,11 @@ void Init() {
   text_shader.add("text2Dshader.vert");
   text_shader.add("text2Dshader.frag");
   text_shader.compile();
+
+  text3D_shader.add("text3Dshader.vert");
+  text3D_shader.add("text3Dshader.frag");
+  text3D_shader.compile();
+
 
   gui_shader.add("guishader.vert");
   gui_shader.add("guishader.frag");
@@ -959,6 +975,25 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
   text_to_render.push_back(to_render);
 }
 
+void Submit(Font2DHandle font_h, glm::vec3 pos, float size, std::string text,
+  glm::vec4 color,
+  glm::mat4 rot) {
+  auto find_res = fonts.find(font_h);
+  if (find_res == fonts.end()) {
+    std::cout << "ERROR graphics.cpp: could not find submitted font! \n";
+    return;
+  }
+
+  Text3DItem to_render;
+  to_render.font = &find_res->second;
+  to_render.pos = pos;
+  to_render.size = size;
+  to_render.text = text;
+  to_render.color = color;
+  to_render.rotation = rot;
+  text3D_to_render.push_back(to_render);
+}
+
 void SetCamera(Camera cam) { camera = cam; }
 
 void SetModelUseGL(bool use_gl) {
@@ -1161,6 +1196,13 @@ void Render() {
                               e2D_item.rot);
   }
 
+  text3D_shader.use();
+  text3D_shader.uniform("cam_transform", cam_transform);
+  for (auto &text3D : text3D_to_render) {
+    text3D.font->Draw3D(text3D_shader, text3D.pos, text3D.size, text3D.text,
+                        text3D.color, text3D.rotation);
+  }
+
   // render particles
   particle_shader.use();
   particle_shader.uniform("cam_transform", cam_transform);
@@ -1198,6 +1240,7 @@ void Render() {
   items_to_render.clear();
   bone_animated_items_to_render.clear();
   e2D_items_to_render.clear();
+  text3D_to_render.clear();
   gui_items_to_render.clear();
   text_to_render.clear();
   cubes.clear();
