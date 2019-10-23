@@ -299,9 +299,16 @@ void ServerPlayState::HandleDataToSend() {
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
       if (goal_goal_c.switched_this_tick) {
-        if (!sent_switch) {
-          to_send << PacketBlockType::SWITCH_GOALS;
-          sent_switch = true;
+        switch_goal_timer_.Restart();
+      }
+      if (!sent_switch) {
+        to_send << switch_goal_time_;
+        to_send << (int)switch_goal_timer_.Elapsed();
+        to_send << PacketBlockType::SWITCH_GOALS;
+        sent_switch = true;
+
+        if (switch_goal_timer_.Elapsed() >= switch_goal_time_) {
+          switch_goal_timer_.Pause();
         }
       }
     }

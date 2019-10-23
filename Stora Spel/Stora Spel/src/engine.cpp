@@ -406,10 +406,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
     */
     case PacketBlockType::SWITCH_GOALS: {
-      // TODO: maybe move, is hack now
-      if (current_state_->Type() == StateType::PLAY) {
-        play_state_.SwitchGoals();
-      }
+      packet >> switch_goal_timer_sec_;
+      packet >> switch_goal_time_;
       break;
     }
     case PacketBlockType::SECONDARY_USED: {
@@ -688,3 +686,9 @@ void Engine::DrawScoreboard() {
 int Engine::GetGameplayTimer() const { return gameplay_timer_sec_; }
 
 int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }
+
+int Engine::GetSwitchGoalCountdownTimer() const {
+  return switch_goal_timer_sec_;
+}
+
+int Engine::GetSwitchGoalTime() const { return switch_goal_time_; }

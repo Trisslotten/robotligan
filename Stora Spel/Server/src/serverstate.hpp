@@ -4,12 +4,10 @@
 #include <entity/registry.hpp>
 #include <entt.hpp>
 #include "ecs/components.hpp"
+#include "replay machine/replay_machine.hpp"
 #include "shared/shared.hpp"
 #include "util/event.hpp"
 #include "util/timer.hpp"
-#include "replay machine/replay_machine.hpp"
-#include "util/event.hpp"
-
 
 class GameServer;
 
@@ -112,6 +110,7 @@ class ServerPlayState : public ServerState {
   void ReceiveEvent(const EventInfo& e);
   // EntityID GetNextEntityGuid() { return entity_guid_++; }
   void SetFrameID(int client_id, int id) { player_frame_id_[client_id] = id; }
+
  private:
   entt::entity CreateIDEntity();
 
@@ -145,6 +144,10 @@ class ServerPlayState : public ServerState {
   Timer countdown_timer_;
   Timer reset_timer_;
   bool reset_ = false;
+
+  int switch_goal_time_ =
+      (int)GlobalSettings::Access()->ValueOf("ABILITY_SWITCH_GOAL_COUNTDOWN");
+  Timer switch_goal_timer_;
 
   std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
   std::vector<Projectile> created_projectiles_;

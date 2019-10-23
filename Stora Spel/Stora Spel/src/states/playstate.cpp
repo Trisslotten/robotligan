@@ -229,6 +229,7 @@ void PlayState::Update(float dt) {
                glm::vec3(1));
 
   UpdateGameplayTimer();
+  UpdateSwitchGoalTimer();
 
   // draw stamina bar
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
@@ -417,6 +418,40 @@ void PlayState::UpdateGameplayTimer() {
   if (count > 0) {
     glob::Submit(font_test_, countdown_pos, 500, std::to_string(count),
                  glm::vec4(1));
+  }
+}
+
+void PlayState::UpdateSwitchGoalTimer() {
+  // Countdown timer
+  int temp_time = engine_->GetSwitchGoalTime();
+  int count = engine_->GetSwitchGoalCountdownTimer();
+
+  // Start countdown
+  if (count == 1) {
+    countdown_in_progress_ = true;
+  }
+
+  // Write out timer
+  if (countdown_in_progress_) {
+    glm::vec2 countdown_pos = glob::window::GetWindowDimensions();
+    countdown_pos /= 2;
+    countdown_pos.x += 10;
+    countdown_pos.y += 265;
+
+    glm::vec2 countdown_text_pos = glob::window::GetWindowDimensions();
+    countdown_text_pos /= 2;
+    countdown_text_pos.x -= 170;
+    countdown_text_pos.y += 300;
+    glob::Submit(font_test_, countdown_text_pos, 50,
+                 std::string("SWITCHING GOALS IN..."), glm::vec4(0.8));
+    glob::Submit(font_test_, countdown_pos, 100,
+                 std::to_string(temp_time - count), glm::vec4(0.8));
+
+    // After timer reaches zero swap goals
+    if (temp_time - count <= 0) {
+      SwitchGoals();
+      countdown_in_progress_ = false;
+    }
   }
 }
 
