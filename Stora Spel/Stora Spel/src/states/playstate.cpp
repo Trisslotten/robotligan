@@ -182,21 +182,7 @@ void PlayState::Update(float dt) {
       glm::vec3 temp =
           lerp(predicted_state_.position, server_predicted_.position, 0.5f);
       trans_c.position = glm::lerp(trans_c.position, temp, 0.2f);
-
-      // glm::quat pred_rot = glm::quat(glm::vec3(0, predicted_state_.yaw, 0)) *
-      //                     glm::quat(glm::vec3(0, 0, predicted_state_.pitch));
-      // pred_rot = glm::normalize(pred_rot);
-      //
-      // glm::quat serv_rot = glm::quat(glm::vec3(0, server_predicted_.yaw, 0))
-      // *
-      //                     glm::quat(glm::vec3(0, 0,
-      //                     server_predicted_.pitch));
-      // serv_rot = glm::normalize(serv_rot);
-      //
-      // glm::quat temp_rot = glm::slerp(pred_rot, serv_rot, 0.5f);
-      //
-      // cam_c.orientation = glm::slerp(cam_c.orientation, temp_rot, 0.3f);
-
+      trans_c.position = new_transforms_[id_c.id].first;
       glm::quat orientation =
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
