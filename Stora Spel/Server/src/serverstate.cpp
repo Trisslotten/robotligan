@@ -101,6 +101,17 @@ void ServerPlayState::Init() {
     NetAPI::Common::Packet to_send;
     to_send.GetHeader()->receiver = client_id;
 
+	auto team_view = registry.view<TeamComponent, IDComponent, PlayerComponent>();
+    for (auto team : team_view) {
+      auto& team_c = team_view.get<TeamComponent>(team);
+      auto& id_c = team_view.get<IDComponent>(team);
+
+	  if (id_c.id == clients_player_ids_[client_id])
+      to_send << team_c.team;
+
+      break;
+    }
+
     auto ball_view = registry.view<BallComponent, IDComponent>();
     for (auto ball : ball_view) {
       auto& ball_c = ball_view.get<BallComponent>(ball);
@@ -125,6 +136,7 @@ void ServerPlayState::Init() {
 
     server.Send(to_send);
   }
+  reset_ = false;
 }
 
 void ServerPlayState::Update(float dt) {
@@ -146,8 +158,8 @@ void ServerPlayState::Update(float dt) {
             match_timer_.Resume();
             countdown_timer_.Pause();
           }
-          player_c.pitch += inputs.second.x;
-          player_c.yaw += inputs.second.y;
+          player_c.pitch = inputs.second.x;
+          player_c.yaw = inputs.second.y;
           // Check if the game should be be recorded
           if (this->record_) {
             this->Record(player_c.actions, player_c.pitch, player_c.yaw, dt);
@@ -156,7 +168,7 @@ void ServerPlayState::Update(float dt) {
           this->Replay(player_c.actions, player_c.pitch, player_c.yaw);
         }
       });
-  // players_inputs_.clear();
+  //players_inputs_.clear();
 
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     EntityID client_player_id = clients_player_ids_[client_id];
@@ -166,16 +178,16 @@ void ServerPlayState::Update(float dt) {
       continue;
     }
 
-    auto view_cam = registry.view<CameraComponent, IDComponent>();
-    for (auto cam : view_cam) {
-      auto& cam_c = view_cam.get<CameraComponent>(cam);
-      auto& id_c = view_cam.get<IDComponent>(cam);
-      if (client_player_id == id_c.id) {
-        to_send << cam_c.orientation;
-        break;
-      }
-    }
-    to_send << PacketBlockType::CAMERA_TRANSFORM;
+    //auto view_cam = registry.view<CameraComponent, IDComponent>();
+    //for (auto cam : view_cam) {
+    //  auto& cam_c = view_cam.get<CameraComponent>(cam);
+    //  auto& id_c = view_cam.get<IDComponent>(cam);
+    //  if (client_player_id == id_c.id) {
+    //    to_send << cam_c.orientation;
+    //    break;
+    //  }
+    //}
+    //to_send << PacketBlockType::CAMERA_TRANSFORM;
 
     auto view_entities = registry.view<TransformComponent, IDComponent>();
     int num_entities = view_entities.size();
@@ -313,11 +325,12 @@ void ServerPlayState::Update(float dt) {
     reset_timer_.Restart();
     reset_timer_.Pause();
     reset_ = false;
-
+  
     GameEvent reset_event;
     reset_event.type = GameEvent::RESET;
     dispatcher.trigger<GameEvent>(reset_event);
   }
+
   if (match_timer_.Elapsed() > match_time_) {
     EndGame();
   }

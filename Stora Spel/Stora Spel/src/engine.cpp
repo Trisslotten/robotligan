@@ -124,12 +124,8 @@ void Engine::Update(float dt) {
     accum_yaw_ -= mouse_movement.x;
     accum_pitch_ -= mouse_movement.y;
 
-	//constexpr float pi = glm::pi<float>();
-    //test_yaw_ -= mouse_movement.x;
-    //test_pitch_ -= mouse_movement.y;
-    //test_pitch_ = glm::clamp(test_pitch_, -0.49f * pi, 0.49f * pi);
+	play_state_.AddPitchYaw(-mouse_movement.y, -mouse_movement.x);
 
-	//play_state_.SetCameraOrientation(test_pitch_, test_yaw_);
     if (Input::IsKeyPressed(GLFW_KEY_K)) {
       new_team_ = TEAM_BLUE;
     }
@@ -218,12 +214,11 @@ void Engine::UpdateNetwork() {
   */
 
   if (should_send_input_) {
+    //play_state_.AddPitchYaw(accum_pitch_, accum_yaw_);
     to_send << action_bits;
-    to_send << accum_pitch_;
-    to_send << accum_yaw_;
+    to_send << play_state_.GetPitch();
+    to_send << play_state_.GetYaw();
     to_send << PacketBlockType::INPUT;
-    play_state_.AddAction(100);
-    play_state_.SetPitchYaw(accum_pitch_, accum_yaw_);
   } else {
     play_state_.ClearActions();
   }
@@ -299,6 +294,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::GAME_START: {
+      unsigned int team;
       int num_players = -1;
       std::vector<EntityID> player_ids;
       EntityID my_id;
@@ -310,11 +306,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet.Remove(player_ids.data(), player_ids.size());
       packet >> my_id;
       packet >> ball_id;
-
+      packet >> team;
       play_state_.SetEntityIDs(player_ids, my_id, ball_id);
       play_state_.SetMyPrimaryAbility(ability_id);
-
+      play_state_.SetTeam(team);
       ChangeState(StateType::PLAY);
+	  
       std::cout << "PACKET: GAME_START\n";
       break;
     }
