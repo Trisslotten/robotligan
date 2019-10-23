@@ -75,9 +75,7 @@ void ServerLobbyState::Cleanup() {
   //
 }
 
-void ServerLobbyState::HandleDataToSend() {
-
-}
+void ServerLobbyState::HandleDataToSend() {}
 
 void ServerPlayState::Init() {
   reset_timer_.Restart();
@@ -162,16 +160,6 @@ void ServerPlayState::Update(float dt) {
       });
   // players_inputs_.clear();
 
-  // switch goal cleanup
-  auto view_goals = registry.view<GoalComponenet, TeamComponent>();
-  for (auto goal : view_goals) {
-    GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
-    TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
-    if (goal_goal_c.switched_this_tick) {
-      goal_goal_c.switched_this_tick = false;
-    }
-  }
-
   if (reset_timer_.Elapsed() > 3.0f) {
     ResetEntities();
     reset_timer_.Restart();
@@ -248,7 +236,7 @@ void ServerPlayState::HandleDataToSend() {
     to_send << PacketBlockType::PLAYER_STAMINA;
 
     auto view_players2 = registry.view<PlayerComponent, TeamComponent,
-      PointsComponent, IDComponent>();
+                                       PointsComponent, IDComponent>();
 
     for (auto player : view_players2) {
       auto& player_player_c = registry.get<PlayerComponent>(player);
@@ -306,8 +294,8 @@ void ServerPlayState::HandleDataToSend() {
         to_send << (int)switch_goal_timer_.Elapsed();
         to_send << PacketBlockType::SWITCH_GOALS;
         sent_switch = true;
-
-        if (switch_goal_timer_.Elapsed() >= switch_goal_time_) {
+        
+		if (switch_goal_timer_.Elapsed() >= switch_goal_time_) {
           switch_goal_timer_.Pause();
         }
       }
@@ -356,6 +344,17 @@ void ServerPlayState::HandleDataToSend() {
   }
   created_projectiles_.clear();
   destroy_entities_.clear();
+
+  // switch goal cleanup
+  auto view_goals = registry.view<GoalComponenet, TeamComponent>();
+  for (auto goal : view_goals) {
+    GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
+    TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
+    if (goal_goal_c.switched_this_tick) {
+      goal_goal_c.switched_this_tick = false;
+    }
+  }
+
   if (pick_ups_sent) created_pick_ups_.clear();
 }
 

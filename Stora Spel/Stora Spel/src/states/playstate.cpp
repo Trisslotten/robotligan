@@ -19,6 +19,7 @@
 #include "entitycreation.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
+#include "eventdispatcher.hpp"
 
 void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
@@ -450,6 +451,12 @@ void PlayState::UpdateSwitchGoalTimer() {
     // After timer reaches zero swap goals
     if (temp_time - count <= 0) {
       SwitchGoals();
+
+      // Save game event
+      GameEvent switch_goals_event_done;
+      switch_goals_event_done.type = GameEvent::SWITCH_GOALS_DONE;
+      dispatcher.trigger(switch_goals_event_done);
+
       countdown_in_progress_ = false;
     }
   }
@@ -711,7 +718,7 @@ void PlayState::DrawQuickslots() {
                glm::vec2(66, 50), 0.75f, 100);
   if (primary_cd_ > 0.0f) {
     glob::Submit(font_test_, glm::vec2(51, 89), 72,
-                 std::to_string((int)primary_cd_), glm::vec4(0,0,0,0.7f));
+                 std::to_string((int)primary_cd_), glm::vec4(0, 0, 0, 0.7f));
     glob::Submit(font_test_, glm::vec2(50, 90), 72,
                  std::to_string((int)primary_cd_));
   }
@@ -928,7 +935,8 @@ void PlayState::CreateForcePushObject(EntityID id) {
   registry_gameplay_.assign<TransformComponent>(force_object, zero_vec,
                                                 zero_vec, glm::vec3(0.5f));
   registry_gameplay_.assign<IDComponent>(force_object, id);
-  registry_gameplay_.assign<SoundComponent>(force_object, sound_engine.CreatePlayer());
+  registry_gameplay_.assign<SoundComponent>(force_object,
+                                            sound_engine.CreatePlayer());
 }
 
 void PlayState::CreateMissileObject(EntityID id) {
@@ -942,7 +950,8 @@ void PlayState::CreateMissileObject(EntityID id) {
   registry_gameplay_.assign<TransformComponent>(missile_object, zero_vec,
                                                 zero_vec, glm::vec3(0.5f));
   registry_gameplay_.assign<IDComponent>(missile_object, id);
-  registry_gameplay_.assign<SoundComponent>(missile_object, sound_engine.CreatePlayer());
+  registry_gameplay_.assign<SoundComponent>(missile_object,
+                                            sound_engine.CreatePlayer());
 }
 
 void PlayState::DestroyEntity(EntityID id) {
