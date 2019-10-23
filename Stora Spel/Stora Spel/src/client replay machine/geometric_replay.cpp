@@ -12,7 +12,10 @@ GeometricReplay::~GeometricReplay() {}
 
 bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
   /* Reverse strat
-        
+        
+
+
+
   // Create a map for sorting through entities based on id
   std::map<EntityID, entt::entity> map;
 
