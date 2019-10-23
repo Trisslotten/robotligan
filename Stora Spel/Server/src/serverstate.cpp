@@ -106,8 +106,9 @@ void ServerPlayState::Init() {
       auto& team_c = team_view.get<TeamComponent>(team);
       auto& id_c = team_view.get<IDComponent>(team);
 
-	  if (id_c.id == clients_player_ids_[client_id])
-      to_send << team_c.team;
+	  if (id_c.id == clients_player_ids_[client_id]) {
+		to_send << team_c.team;
+      }
 
       break;
     }

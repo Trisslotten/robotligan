@@ -87,10 +87,10 @@ void PlayState::TestParticles() {
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "green_donut.txt");
   glob::SetEmitPosition(handle, glm::vec3(-30.f, 0.f, 0.f));
-  //auto ball_view = registry_gameplay_.view<
+  // auto ball_view = registry_gameplay_.view<
 
   registry_gameplay_.assign<ParticleComponent>(e, handles, offsets, directions);
-  //std::cout << handles.size() << " particle systems" << std::endl;
+  // std::cout << handles.size() << " particle systems" << std::endl;
   // Temp
   registry_gameplay_.assign<int>(e, 0);
 }
@@ -103,7 +103,7 @@ void PlayState::Init() {
 
   CreateInGameMenu();
   CreateInitialEntities();
-  //TestParticles();
+  // TestParticles();
 
   engine_->GetChat()->SetPosition(
       glm::vec2(30, glob::window::GetWindowDimensions().y - 30));
@@ -138,7 +138,7 @@ void PlayState::Update(float dt) {
       physics_c.velocity = phys.first;
       physics_c.is_airborne = phys.second;
     }
-    //physics_.clear();  //?
+    // physics_.clear();  //?
   }
 
   bool move_player = false;
@@ -176,24 +176,28 @@ void PlayState::Update(float dt) {
     auto& trans_c = view_entities.get<TransformComponent>(entity);
     auto& id_c = view_entities.get<IDComponent>(entity);
     if (id_c.id == my_id_) {
-      //auto trans = new_transforms_[id_c.id];
-	  auto& cam_c = registry_gameplay_.get<CameraComponent>(my_entity_);
-	  glm::vec3 temp = lerp(predicted_state_.position, server_predicted_.position, 0.5f);
-	  trans_c.position = glm::lerp(trans_c.position, temp, 0.2f);
+      // auto trans = new_transforms_[id_c.id];
+      auto& cam_c = registry_gameplay_.get<CameraComponent>(my_entity_);
+      glm::vec3 temp =
+          lerp(predicted_state_.position, server_predicted_.position, 0.5f);
+      trans_c.position = glm::lerp(trans_c.position, temp, 0.2f);
 
-	  //glm::quat pred_rot = glm::quat(glm::vec3(0, predicted_state_.yaw, 0)) *
+      // glm::quat pred_rot = glm::quat(glm::vec3(0, predicted_state_.yaw, 0)) *
       //                     glm::quat(glm::vec3(0, 0, predicted_state_.pitch));
-      //pred_rot = glm::normalize(pred_rot);
-      //    
-	  //glm::quat serv_rot = glm::quat(glm::vec3(0, server_predicted_.yaw, 0)) *
-      //                     glm::quat(glm::vec3(0, 0, server_predicted_.pitch));
-      //serv_rot = glm::normalize(serv_rot);
-	  //
-	  //glm::quat temp_rot = glm::slerp(pred_rot, serv_rot, 0.5f);
-   	  //
-      //cam_c.orientation = glm::slerp(cam_c.orientation, temp_rot, 0.3f);
-     
-      glm::quat orientation = glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0,0,pitch_));
+      // pred_rot = glm::normalize(pred_rot);
+      //
+      // glm::quat serv_rot = glm::quat(glm::vec3(0, server_predicted_.yaw, 0))
+      // *
+      //                     glm::quat(glm::vec3(0, 0,
+      //                     server_predicted_.pitch));
+      // serv_rot = glm::normalize(serv_rot);
+      //
+      // glm::quat temp_rot = glm::slerp(pred_rot, serv_rot, 0.5f);
+      //
+      // cam_c.orientation = glm::slerp(cam_c.orientation, temp_rot, 0.3f);
+
+      glm::quat orientation =
+          glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
       cam_c.orientation = orientation;
       trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
@@ -201,10 +205,10 @@ void PlayState::Update(float dt) {
       auto trans = new_transforms_[id_c.id];
       if (glm::length(trans_c.position - trans.first) > 10) {
         trans_c.position = trans.first;
-	  } else {
-		trans_c.position = glm::lerp(trans_c.position, trans.first, 1.0f - f);
-            //trans_c.position = trans.first;
-	  }
+      } else {
+        trans_c.position = glm::lerp(trans_c.position, trans.first, 1.0f - f);
+        // trans_c.position = trans.first;
+      }
       trans_c.rotation = glm::slerp(trans_c.rotation, trans.second, 1.0f - f);
     }
   }
@@ -437,7 +441,8 @@ void PlayState::DrawTopScores() {
                glm::vec4(1, 0, 0, 1));
 }
 
-FrameState PlayState::SimulateMovement(std::vector<int>& action, FrameState& state, float dt) {
+FrameState PlayState::SimulateMovement(std::vector<int>& action,
+                                       FrameState& state, float dt) {
   auto view_controller =
       registry_gameplay_
           .view<CameraComponent, PlayerComponent, TransformComponent>();
@@ -455,16 +460,16 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action, FrameState& sta
 
     // Caputre keyboard input and apply velocity
 
-    //auto& phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
+    // auto& phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
     glm::vec3 accum_velocity = glm::vec3(0.f);
 
-	constexpr float pi = glm::pi<float>();
-    //state.pitch = glm::clamp(state.pitch, -0.49f * pi, 0.49f * pi);
+    constexpr float pi = glm::pi<float>();
+    // state.pitch = glm::clamp(state.pitch, -0.49f * pi, 0.49f * pi);
     //// base movement direction on camera orientation.
     ////glm::vec3 frwd = cam_c.GetLookDir();
     glm::quat orientation = glm::quat(glm::vec3(0, state.yaw, 0)) *
                             glm::quat(glm::vec3(0, 0, state.pitch));
-    //orientation = glm::normalize(orientation);
+    // orientation = glm::normalize(orientation);
     glm::vec3 frwd = orientation * glm::vec3(1, 0, 0);
     frwd.y = 0;
     frwd = glm::normalize(frwd);
@@ -493,7 +498,7 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action, FrameState& sta
         // Set them to be airborne
         new_state.is_airborne = true;
         // Subtract energy cost from resources
-        //player_c.energy_current -= player_c.cost_jump;
+        // player_c.energy_current -= player_c.cost_jump;
       }
     }
 
@@ -521,10 +526,12 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action, FrameState& sta
     // if (cur_move_speed > 0.f) {
     // movement "floatiness", lower value = less floaty
     float t = 0.0005f;
-   new_state.velocity.x = glm::mix(state.velocity.x, final_velocity.x, 1.f - glm::pow(t, dt));
-   new_state.velocity.z = glm::mix(state.velocity.z, final_velocity.z, 1.f - glm::pow(t, dt));
-   new_state.velocity.y = final_velocity.y;
-    
+    new_state.velocity.x =
+        glm::mix(state.velocity.x, final_velocity.x, 1.f - glm::pow(t, dt));
+    new_state.velocity.z =
+        glm::mix(state.velocity.z, final_velocity.z, 1.f - glm::pow(t, dt));
+    new_state.velocity.y = final_velocity.y;
+
     physics::PhysicsObject po;
     po.acceleration = glm::vec3(0.f);
     po.airborne = new_state.is_airborne;
@@ -543,7 +550,9 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action, FrameState& sta
 }
 
 void PlayState::MovePlayer(float dt) {
-  auto view_controller = registry_gameplay_.view<CameraComponent, PlayerComponent, TransformComponent>();
+  auto view_controller =
+      registry_gameplay_
+          .view<CameraComponent, PlayerComponent, TransformComponent>();
 
   PlayerData new_frame;
   new_frame.delta_time = dt;
@@ -555,14 +564,14 @@ void PlayState::MovePlayer(float dt) {
     new_frame.actions.push_back(a);
   }
   auto& cam_o = registry_gameplay_.get<CameraComponent>(my_entity_).orientation;
-  
 
   auto& trans_c = view_controller.get<TransformComponent>(my_entity_);
   predicted_state_.position = trans_c.position;
-  FrameState new_state = SimulateMovement(new_frame.actions, predicted_state_, dt);
+  FrameState new_state =
+      SimulateMovement(new_frame.actions, predicted_state_, dt);
   predicted_state_ = new_state;
-  //std::cout << "y: " << predicted_state_.velocity.y << std::endl;
-  //std::cout << new_state.velocity.y << std::endl;
+  // std::cout << "y: " << predicted_state_.velocity.y << std::endl;
+  // std::cout << new_state.velocity.y << std::endl;
   history_.push_back(new_frame);
 
   server_predicted_.pitch = predicted_state_.pitch;
@@ -574,7 +583,6 @@ void PlayState::MovePlayer(float dt) {
 void PlayState::OnServerFrame() {
   auto& trans_c = registry_gameplay_.get<TransformComponent>(my_entity_);
 
-
   server_predicted_.position = new_transforms_[my_id_].first;
   server_predicted_.velocity =
       registry_gameplay_.get<PhysicsComponent>(my_entity_).velocity;
@@ -584,11 +592,12 @@ void PlayState::OnServerFrame() {
   auto& cam_o = registry_gameplay_.get<CameraComponent>(my_entity_).orientation;
   predicted_state_.pitch = pitch_;
   predicted_state_.yaw = yaw_;
-  
+
   for (auto& frame : history_) {
     server_predicted_.pitch = frame.pitch;
     server_predicted_.yaw = frame.yaw;
-    FrameState new_state = SimulateMovement(frame.actions, server_predicted_, frame.delta_time);
+    FrameState new_state =
+        SimulateMovement(frame.actions, server_predicted_, frame.delta_time);
     server_predicted_ = new_state;
   }
 
@@ -605,10 +614,25 @@ void PlayState::OnServerFrame() {
       }
     }
   }
-  
+
   predicted_state_.is_airborne = false;
   predicted_state_.velocity.y = 0.f;
 }
+
+/*void PlayState::MoveBall(float dt) {
+  auto view_ball =
+      registry_gameplay_
+          .view<BallComponent, TransformComponent, PhysicsComponent>();
+
+  for (auto ball : view_ball) {
+    auto& phys_c = view_ball.get<PhysicsComponent>(ball);
+    auto& trans_c = view_ball.get<TransformComponent>(ball);
+    
+        physics::PhysicsObject po;
+    po.acceleration =  ;
+
+  }
+}*/
 
 void PlayState::DrawTarget() {
   if (my_target_ != -1) {
@@ -691,9 +715,9 @@ void PlayState::CreatePlayerEntities() {
     registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(0.f),
                                                   glm::quat(), character_scale);
-  auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
-  model_c.handles.push_back(player_model);
-  model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
+    auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
+    model_c.handles.push_back(player_model);
+    model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
 
     registry_gameplay_.assign<AnimationComponent>(
         entity, glob::GetAnimationData(player_model));
@@ -703,7 +727,8 @@ void PlayState::CreatePlayerEntities() {
 
     if (entity_id == my_id_) {
       glm::vec3 camera_offset = glm::vec3(0.5f, 0.7f, 0.f);
-      registry_gameplay_.assign<CameraComponent>(entity, camera_offset, glm::quat(glm::vec3(0.f)));
+      registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
+                                                 glm::quat(glm::vec3(0.f)));
       my_entity_ = entity;
     }
   }
@@ -714,7 +739,7 @@ void PlayState::CreateArenaEntity() {
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(4.0f, 4.0f, 4.0f);
   glob::ModelHandle model_arena =
-    glob::GetModel("assets/Map/Map_singular_TMP.fbx");
+      glob::GetModel("assets/Map/Map_singular_TMP.fbx");
   auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
   model_c.handles.push_back(model_arena);
 
@@ -729,9 +754,11 @@ void PlayState::CreateBallEntity() {
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f);
   auto ball = registry_gameplay_.create();
-  glob::ModelHandle model_ball_projectors_p = glob::GetModel("Assets/Ball_new/Ball_projectors.fbx");
-  glob::ModelHandle model_ball_sphere_p = glob::GetTransparentModel("Assets/Ball_new/Ball_Sphere.fbx");
-  //glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
+  glob::ModelHandle model_ball_projectors_p =
+      glob::GetModel("Assets/Ball_new/Ball_projectors.fbx");
+  glob::ModelHandle model_ball_sphere_p =
+      glob::GetTransparentModel("Assets/Ball_new/Ball_Sphere.fbx");
+  // glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
   auto& model_c = registry_gameplay_.assign<ModelComponent>(ball);
   model_c.handles.push_back(model_ball_sphere_p);
   model_c.handles.push_back(model_ball_projectors_p);
@@ -809,8 +836,7 @@ void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {
 
   registry_gameplay_.assign<IDComponent>(pick_up, id);
 
-  glob::ModelHandle model_pick_up =
-    glob::GetModel("assets/Pickup/Pickup.fbx");
+  glob::ModelHandle model_pick_up = glob::GetModel("assets/Pickup/Pickup.fbx");
   auto& model_c = registry_gameplay_.assign<ModelComponent>(pick_up);
   model_c.handles.push_back(model_pick_up);
 
@@ -824,7 +850,7 @@ void PlayState::CreateCannonBall(EntityID id) {
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
   glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
-    auto& model_c = registry_gameplay_.assign<ModelComponent>(cannonball);
+  auto& model_c = registry_gameplay_.assign<ModelComponent>(cannonball);
   model_c.handles.push_back(model_ball);
 
   registry_gameplay_.assign<TransformComponent>(cannonball, zero_vec, zero_vec,
@@ -837,7 +863,8 @@ void PlayState::CreateTeleportProjectile(EntityID id) {
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
   glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
-      auto& model_c = registry_gameplay_.assign<ModelComponent>(teleport_projectile);
+  auto& model_c =
+      registry_gameplay_.assign<ModelComponent>(teleport_projectile);
   model_c.handles.push_back(model_ball);
 
   registry_gameplay_.assign<TransformComponent>(teleport_projectile, zero_vec,
@@ -918,14 +945,15 @@ void PlayState::Reset() {
   auto view_delete = registry_gameplay_.view<ParticleComponent, int>();
   for (auto& entity : view_delete) {
     auto& particle_c = view_delete.get<ParticleComponent>(entity);
-    
+
     for (int i = 0; i < particle_c.handles.size(); ++i) {
       glob::DestroyParticleSystem(particle_c.handles[i]);
     }
-  
+
     registry_gameplay_.destroy(entity);
   }
-  if ((my_team_ == TEAM_BLUE && goals_swapped_ == false) || (my_team_ == TEAM_RED && goals_swapped_ == true)) {
+  if ((my_team_ == TEAM_BLUE && goals_swapped_ == false) ||
+      (my_team_ == TEAM_RED && goals_swapped_ == true)) {
     yaw_ = glm::pi<float>();
   } else {
     yaw_ = 0.0f;
@@ -950,4 +978,4 @@ void PlayState::SetPitchYaw(float pitch, float yaw) {
   yaw_ = yaw;
   constexpr float pi = glm::pi<float>();
   pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
- }
+}
