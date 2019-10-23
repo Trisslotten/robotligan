@@ -17,6 +17,7 @@ void SettingsState::Init() {
   setting_volume_ = GlobalSettings::Access()->ValueOf("SOUND_VOLUME");
   setting_fov_ = GlobalSettings::Access()->ValueOf("GRAPHICS_FOV");
   setting_mouse_sens_ = GlobalSettings::Access()->ValueOf("INPUT_MOUSE_SENS");
+  setting_username_ = GlobalSettings::Access()->StringValueOf("USERNAME");
   CreateSettingsMenu();
 }
 
@@ -122,7 +123,7 @@ void SettingsState::CreateSettingsMenu() {
   input.max_length = 12;
   input.pos = game_start_pos - down_jump * 1.0f;
   input.input_name = "Username";
-  input.text = "BogdanBoss";
+  input.text = setting_username_;
   input.linked_value = &setting_username_;
 }
 
@@ -131,6 +132,8 @@ void SettingsState::SaveSettings() {
   GlobalSettings::Access()->WriteValue("SOUND_VOLUME", setting_volume_);
   GlobalSettings::Access()->WriteValue("GRAPHICS_FOV", setting_fov_);
   GlobalSettings::Access()->WriteValue("INPUT_MOUSE_SENS", setting_mouse_sens_);
+  GlobalSettings::Access()->StringWriteValue("USERNAME", setting_username_);
+
   //printf("Username saved: %s \n", setting_username_.c_str());
   engine_->UpdateSettingsValues();
 }

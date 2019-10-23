@@ -472,6 +472,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::LOBBY_UPDATE_TEAM: {
+
       lobby_state_.HandleUpdateLobbyTeamPacket(packet);
       break;
     }

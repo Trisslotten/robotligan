@@ -37,6 +37,11 @@ class GameServer {
   }
   entt::registry& GetRegistry() { return registry_; }
 
+    std::unordered_map<long, std::string> GetClientNames() {
+    return client_names_;
+  }
+
+
  private:
   void UpdateSystems(float dt);
 
@@ -61,6 +66,9 @@ class GameServer {
   int test_player_guid_ = 0;
 
   std::vector<unsigned int> scores;
+  std::unordered_map<long, std::string> client_names_;
+
+  bool NameAlreadyExists(std::string name);
 };
 
 #endif  // GAME_SERVER_HPP_
