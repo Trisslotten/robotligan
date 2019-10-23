@@ -23,7 +23,6 @@ struct PlayerStatInfo {
   unsigned int team = TEAM_RED;
   EntityID enttity_id = 0;
 };
-
 class Engine {
  public:
   Engine();
@@ -58,11 +57,9 @@ class Engine {
   entt::registry* GetCurrentRegistry() { return registry_current_; }
 
   std::unordered_map<PlayerID, std::string> player_names_;
-
   AbilityID GetSecondaryAbility() { return second_ability_; }
-
   std::vector<unsigned int> GetTeamScores() { return scores_; }
-  auto GetPlayingPlayers() { return playing_players_; }
+  std::vector<int>* GetPlayingPlayers();
   void SetPlayingPlayers(std::unordered_map<int, LobbyPlayer> plyrs) { playing_players_ = plyrs; }
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;

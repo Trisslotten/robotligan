@@ -104,7 +104,6 @@ void Engine::Update(float dt) {
         }
   }
   for (int i = 0; i < counter; ++i) time_test.pop_front();*/
-
   if (take_game_input_ == true) {
     // accumulate key presses
     for (auto const& [key, action] : keybinds_) {
@@ -162,6 +161,9 @@ void Engine::Update(float dt) {
         scores_[0] = 0;
         scores_[1] = 0;
         current_state_ = &play_state_;
+		play_state_.Cleanup();
+		play_state_.Init();
+		this->registry_current_ = play_state_.GetReg();
         break;
       case StateType::SETTINGS:
         current_state_ = &settings_state_;
@@ -684,6 +686,19 @@ void Engine::DrawScoreboard() {
       }
     }
   }
+}
+
+std::vector<int>* Engine::GetPlayingPlayers()
+{
+	auto val = play_state_.GetPlayerIDs();
+	if (val && !val->empty())
+	{
+		return val;
+	}
+	else
+	{
+		return nullptr;
+	}
 }
 
 int Engine::GetGameplayTimer() const { return gameplay_timer_sec_; }

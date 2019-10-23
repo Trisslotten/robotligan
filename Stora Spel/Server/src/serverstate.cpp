@@ -74,7 +74,6 @@ void ServerLobbyState::Update(float dt) {
 void ServerLobbyState::Cleanup() {
   //
 }
-
 void ServerPlayState::Init() {
   reset_timer_.Restart();
   reset_timer_.Pause();
@@ -163,8 +162,9 @@ void ServerPlayState::Update(float dt) {
     EntityID client_player_id = clients_player_ids_[client_id];
 
     if (!clients_receive_updates_[client_id]) {
+
       // TODO: maybe send important packets even if not initialized
-      continue;
+      //continue;
     }
 
     auto view_cam = registry.view<CameraComponent, IDComponent>();

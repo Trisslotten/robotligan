@@ -211,7 +211,7 @@ class PlayState : public State {
     ball_id_ = ball_id;
   }
   void SetCurrentStamina(float stamina) { current_stamina_ = stamina; }
-
+  auto* GetReg() { return &registry_gameplay_; }
   void CreatePickUp(EntityID id, glm::vec3 position);
   void CreateCannonBall(EntityID id);
   void CreateTeleportProjectile(EntityID id);
@@ -242,7 +242,7 @@ class PlayState : public State {
       history_.pop_front();
   }
   void SetPitchYaw(float pitch, float yaw);
-
+  auto *GetPlayerIDs() { return &player_ids_; }
  private:
   int server_state_ = 1;
   void CreateInitialEntities();
