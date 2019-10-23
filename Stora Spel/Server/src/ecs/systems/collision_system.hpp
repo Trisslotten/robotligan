@@ -435,11 +435,12 @@ void PlayerPlayerCollision(entt::registry& registry) {
 }
 
 void PlayerProjectileCollision(entt::registry& registry) {
-  auto view_player = registry.view<physics::OBB, PhysicsComponent>();
+  auto view_player = registry.view<physics::OBB, PhysicsComponent, IDComponent>();
   auto view_projectile = registry.view<physics::Sphere, ProjectileComponent>();
 
   for (auto player : view_player) {
     auto& player_hitbox = registry.get<physics::OBB>(player);
+    auto& player_id = registry.get<IDComponent>(player);
 
     for (auto projectile : view_projectile) {
       auto& proj_hitbox = view_projectile.get<physics::Sphere>(projectile);
@@ -455,6 +456,13 @@ void PlayerProjectileCollision(entt::registry& registry) {
           }
           case ProjectileID::FORCE_PUSH_OBJECT: {
             ApplyForcePush(registry, proj_hitbox.center);
+
+            // Save game event
+            GameEvent force_push_impact_event;
+            force_push_impact_event.type = GameEvent::FORCE_PUSH_IMPACT;
+            force_push_impact_event.force_push_impact.projectile_id = player_id.id;
+            dispatcher.trigger(force_push_impact_event);
+
             DestroyEntity(registry, projectile);
             break;
           }
@@ -467,29 +475,37 @@ void PlayerProjectileCollision(entt::registry& registry) {
 }
 
 void ProjectileBallCollision(entt::registry& registry, entt::entity ball) {
-  auto view_projectile = registry.view<physics::Sphere, ProjectileComponent>();
+  auto view_projectile = registry.view<physics::Sphere, ProjectileComponent, IDComponent>();
   auto& ball_hitbox = registry.get<physics::Sphere>(ball);
   auto& ball_c = registry.get<BallComponent>(ball);
   auto& ball_physics = registry.get<PhysicsComponent>(ball);
 
   for (auto projectile : view_projectile) {
     auto& proj_hitbox = view_projectile.get<physics::Sphere>(projectile);
-    auto& id = view_projectile.get<ProjectileComponent>(projectile);
+    auto& proj_c = view_projectile.get<ProjectileComponent>(projectile);
+    auto& id_c = view_projectile.get<IDComponent>(projectile);
 
     physics::IntersectData data = Intersect(ball_hitbox, proj_hitbox);
     if (data.collision) {
-      switch (id.projectile_id) {
+      switch (proj_c.projectile_id) {
         case ProjectileID::CANNON_BALL: {
           glm::vec3 dir = normalize(ball_hitbox.center - proj_hitbox.center);
           ball_physics.velocity = dir * 20.0f;
           ball_physics.is_airborne = true;
-          ball_c.last_touch = id.creator;
+          ball_c.last_touch = proj_c.creator;
           // registry.destroy(projectile);
           DestroyEntity(registry, projectile);
           break;
         }
         case ProjectileID::FORCE_PUSH_OBJECT: {
           ApplyForcePush(registry, proj_hitbox.center);
+
+          // Save game event
+          GameEvent force_push_impact_event;
+          force_push_impact_event.type = GameEvent::FORCE_PUSH_IMPACT;
+          force_push_impact_event.force_push_impact.projectile_id = id_c.id;
+          dispatcher.trigger(force_push_impact_event);
+
           DestroyEntity(registry, projectile);
           break;
         }
@@ -521,6 +537,13 @@ void ProjectileArenaCollision(entt::registry& registry) {
           }
           case ProjectileID::FORCE_PUSH_OBJECT: {
             ApplyForcePush(registry, proj_hitbox.center);
+
+            // Save game event
+            GameEvent force_push_impact_event;
+            force_push_impact_event.type = GameEvent::FORCE_PUSH_IMPACT;
+            force_push_impact_event.force_push_impact.projectile_id = id_c.id;
+            dispatcher.trigger(force_push_impact_event);
+
             DestroyEntity(registry, projectile);
             break;
           }

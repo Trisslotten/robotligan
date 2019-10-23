@@ -27,7 +27,7 @@ private:
 
   slob::SoundHandle sound_step_;
   slob::SoundHandle sound_crowd_;
-  slob::SoundHandle sound_kick_;
+  slob::SoundHandle sound_woosh_;
   slob::SoundHandle sound_hit_;
   slob::SoundHandle sound_nudge_;
   slob::SoundHandle sound_goal_;
@@ -36,6 +36,7 @@ private:
   slob::SoundHandle sound_player_jump_;
   slob::SoundHandle sound_ability_missile_impact_;
   slob::SoundHandle sound_ability_teleport_impact_;
+  slob::SoundHandle sound_ability_force_push_impact_;
 
   Engine* engine_;
 };
