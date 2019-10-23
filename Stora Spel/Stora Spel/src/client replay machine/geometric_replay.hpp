@@ -10,10 +10,16 @@
 
 class GeometricReplay {
  private:
-
   struct ChannelEntry {
-    unsigned int frame_number;
-    DataFrame* data_ptr;
+    unsigned int frame_number = -1;
+    DataFrame* data_ptr = nullptr;
+    bool ending_entry = false;
+
+    ~ChannelEntry() {
+      if (data_ptr != nullptr) {
+        delete data_ptr;
+      }
+    }
   };
 
   struct FrameChannel {
@@ -22,10 +28,17 @@ class GeometricReplay {
   };
 
   std::vector<FrameChannel> channels_;
+  unsigned int threshhold_age_;
+  unsigned int current_frame_number_ = 0;
 
  public:
-  GeometricReplay();
+  GeometricReplay(unsigned int in_length_sec, unsigned int in_frames_per_sec);
   ~GeometricReplay();
+
+  // NTS:	Delete copy constructor
+  //		and assignment operator
+  GeometricReplay(GeometricReplay&) = delete;
+  void operator=(GeometricReplay const&) = delete;
 
   bool SaveFrame(entt::registry& in_registry);
   bool LoadFrame(entt::registry& in_registry);
