@@ -7,9 +7,10 @@
 
 struct PlayerData {
   std::vector<int> actions;
+  glm::quat delta_rotation;
   float delta_time;
-  float delta_pitch;
-  float delta_yaw;
+  float pitch;
+  float yaw;
   int id = 0;
 };
 

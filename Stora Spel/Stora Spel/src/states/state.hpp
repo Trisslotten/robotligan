@@ -236,17 +236,14 @@ class PlayState : public State {
 
   void OnServerFrame();
   void AddAction(int action) { actions_.push_back(action); }
-  void ClearActions() {
-    actions_.clear();
-    actions_.push_back(100);
-  }
+  void ClearActions() { actions_.clear(); }
 
-  void UpdateHistory(int id) {
-    while (history_.size() > 0 && history_.front().id <= id)
-      history_.pop_front();
-  }
+  void UpdateHistory(int id) { while (history_.size() > 0 && history_.front().id <= id) history_.pop_front(); }
+  void AddPitchYaw(float pitch, float yaw);
   void SetPitchYaw(float pitch, float yaw);
-
+  float GetPitch() { return pitch_; }
+  float GetYaw() { return yaw_; }
+  void SetTeam(unsigned int team) {my_team_ = team;}
  private:
   void CreateInitialEntities();
   void CreatePlayerEntities();
@@ -299,6 +296,7 @@ class PlayState : public State {
   bool show_in_game_menu_buttons_ = false;
 
   int my_primary_ability_id = 0;
+  unsigned int my_team_;
   int match_time_ = 300;
   int countdown_time_ = 5;
   // For switch goal
@@ -312,11 +310,12 @@ class PlayState : public State {
   glob::ModelHandle test_ball_;
   std::list<PlayerData> history_;
   FrameState predicted_state_;
-  float latency_;  // do we need?
+
   std::vector<int> actions_;
   int frame_id = 0;
-  float accum_pitch_ = 0.0f;
-  float accum_yaw_ = 0.0f;
+  float pitch_ = 0.0f;
+  float yaw_ = 0.0f;
+  
 
   float primary_cd_ = 0.0f;
 };
