@@ -11,6 +11,7 @@
 #include <util/timer.hpp>
 #include "Chat.hpp"
 #include "shared/shared.hpp"
+#include "eventdispatcher.hpp"
 
 class Engine;
 

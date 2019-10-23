@@ -35,9 +35,17 @@ void Update(entt::registry& registry) {
         button_c.text_current_color = button_c.text_hover_color;
         if (button_c.gui_handle_hover) {
           button_c.gui_handle_current = button_c.gui_handle_hover;
+          // Trigger mouse hover event
+          MenuEvent hover_event;
+          hover_event.type = MenuEvent::HOVER;
+          menu_dispatcher.trigger(hover_event);
         }
         if (Input::IsButtonPressed(GLFW_MOUSE_BUTTON_1)) {
           button_c.button_func();
+          // Trigger mouse click event
+          MenuEvent click_event;
+          click_event.type = MenuEvent::CLICK;
+          menu_dispatcher.trigger(click_event);
         }
         a_button_is_selected = true;
       } else {
