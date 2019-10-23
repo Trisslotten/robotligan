@@ -89,8 +89,6 @@ void ServerPlayState::Init() {
   // Start the countdown and match timer
   match_timer_.Restart();
   countdown_timer_.Restart();
-  switch_goal_timer_.Restart();
-  switch_goal_timer_.Pause();
 
   CreateInitialEntities(server.GetConnectedPlayers());
 
@@ -264,22 +262,18 @@ void ServerPlayState::Update(float dt) {
       to_send << goal_team_c;
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
-      // switch_goal_timer_.Resume();
-      /*std::cout << "Timer START" << std::endl;
-      std::cout << "T: " << (int)switch_goal_timer_.Elapsed() << std::endl;
-      */
       if (goal_goal_c.switched_this_tick) {
-        switch_goal_timer_.Resume();
+        switch_goal_timer_.Restart();
       }
       if (!sent_switch) {
         to_send << switch_goal_time_;
         to_send << (int)switch_goal_timer_.Elapsed();
         to_send << PacketBlockType::SWITCH_GOALS;
         sent_switch = true;
-	  }
-      if (switch_goal_timer_.Elapsed() >= switch_goal_time_) {
-        switch_goal_timer_.Restart();
-        switch_goal_timer_.Pause();
+
+        if (switch_goal_timer_.Elapsed() >= switch_goal_time_) {
+          switch_goal_timer_.Pause();
+        }
       }
     }
 

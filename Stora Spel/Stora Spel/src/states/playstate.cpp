@@ -426,7 +426,7 @@ void PlayState::UpdateGameplayTimer() {
 
 void PlayState::UpdateSwitchGoalTimer() {
   // Countdown timer
-  int temp = engine_->GetSwitchGoalTime();
+  int temp_time = engine_->GetSwitchGoalTime();
   int count = engine_->GetSwitchGoalCountdownTimer();
 
   // Start countdown
@@ -447,11 +447,11 @@ void PlayState::UpdateSwitchGoalTimer() {
     countdown_text_pos.y += 300;
     glob::Submit(font_test_, countdown_text_pos, 50,
                  std::string("SWITCHING GOALS IN..."), glm::vec4(0.8));
-        glob::Submit(font_test_, countdown_pos, 100,
-                     std::to_string(temp - count), glm::vec4(0.8));
+    glob::Submit(font_test_, countdown_pos, 100,
+                 std::to_string(temp_time - count), glm::vec4(0.8));
 
     // After timer reaches zero swap goals
-    if (temp - count <= 0) {
+    if (temp_time - count <= 0) {
       SwitchGoals();
       countdown_in_progress_ = false;
     }
