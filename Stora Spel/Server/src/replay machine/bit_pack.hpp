@@ -32,8 +32,6 @@ class BitPack {
   unsigned int ReadInt(unsigned int in_bit_count);
   float ReadFloat32();
   //---
-
-  //---
   bool SaveToFile(std::string in_path);
   bool LoadFromFile(std::string in_path);
 

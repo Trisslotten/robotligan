@@ -42,10 +42,6 @@ struct PlayerComponent {  // Server side
 
   // Comparasion Operators
   bool operator==(const PlayerComponent& rhs) {
-    // if (this->client_id != rhs.client_id) {
-    //  return false;
-    // }
-
     return (this->client_id == rhs.client_id) &&
            (this->walkspeed == rhs.walkspeed) &&
            (this->jump_speed == rhs.jump_speed) &&

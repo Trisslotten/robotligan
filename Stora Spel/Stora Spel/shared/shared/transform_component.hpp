@@ -4,26 +4,14 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-// HACK
-// static unsigned int transform_counter = 0;
-// HACK
-
 struct TransformComponent {
-  // HACK
-  // unsigned int transform_id = transform_counter++;
-  // HACK
-
   glm::vec3 position;
   glm::quat rotation;
   glm::vec3 scale;
 
-  void SetRotation(glm::vec3 rot) {
-    rotation = rot;
-  }
+  void SetRotation(glm::vec3 rot) { rotation = rot; }
 
-  void Rotate(glm::vec3 rot) {
-    rotation *= glm::quat(rot);
-  }
+  void Rotate(glm::vec3 rot) { rotation *= glm::quat(rot); }
 
   glm::vec3 Forward() {
     return rotation *
