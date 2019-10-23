@@ -438,10 +438,17 @@ void PlayState::UpdateSwitchGoalTimer() {
   if (countdown_in_progress_) {
     glm::vec2 countdown_pos = glob::window::GetWindowDimensions();
     countdown_pos /= 2;
-    countdown_pos.x += 75;
-    countdown_pos.y += 100;
-    glob::Submit(font_test_, countdown_pos, 500, std::to_string(temp - count),
-                 glm::vec4(0.5));
+    countdown_pos.x += 10;
+    countdown_pos.y += 265;
+
+    glm::vec2 countdown_text_pos = glob::window::GetWindowDimensions();
+    countdown_text_pos /= 2;
+    countdown_text_pos.x -= 170;
+    countdown_text_pos.y += 300;
+    glob::Submit(font_test_, countdown_text_pos, 50,
+                 std::string("SWITCHING GOALS IN..."), glm::vec4(0.8));
+        glob::Submit(font_test_, countdown_pos, 100,
+                     std::to_string(temp - count), glm::vec4(0.8));
 
     // After timer reaches zero swap goals
     if (temp - count <= 0) {

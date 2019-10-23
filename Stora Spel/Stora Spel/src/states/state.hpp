@@ -1,17 +1,16 @@
 #ifndef STATE_HPP_
 #define STATE_HPP_
 
-#include <list>
 #include <NetAPI\packet.hpp>
 #include <ecs/components/button_component.hpp>
 #include <entt.hpp>
 #include <glm/glm.hpp>
 #include <glob/graphics.hpp>
+#include <list>
+#include <playerdata.hpp>
 #include <util/timer.hpp>
 #include "Chat.hpp"
 #include "shared/shared.hpp"
-#include <ecs/components/button_component.hpp>
-#include <playerdata.hpp>
 
 class Engine;
 
@@ -219,7 +218,7 @@ class PlayState : public State {
     match_time_ = time;
     countdown_time_ = countdown_time;
   }
-  
+
   void SetMyTarget(EntityID id) { my_target_ = id; }
   void ReceiveGameEvent(const GameEvent& e);
   void Reset();
@@ -233,7 +232,10 @@ class PlayState : public State {
     actions_.push_back(100);
   }
 
-  void UpdateHistory(int id) { while (history_.size() > 0 && history_.front().id <= id) history_.pop_front(); }
+  void UpdateHistory(int id) {
+    while (history_.size() > 0 && history_.front().id <= id)
+      history_.pop_front();
+  }
   void SetPitchYaw(float pitch, float yaw);
 
  private:
@@ -252,9 +254,10 @@ class PlayState : public State {
 
   void DrawTopScores();
   void DrawTarget();
-  FrameState SimulateMovement(std::vector<int> &action, FrameState& state, float dt);
+  FrameState SimulateMovement(std::vector<int>& action, FrameState& state,
+                              float dt);
   void MovePlayer(float dt);
-  
+
   ////////////////////////////////////////
 
   entt::registry registry_gameplay_;
@@ -289,6 +292,7 @@ class PlayState : public State {
   int my_primary_ability_id = 0;
   int match_time_ = 300;
   int countdown_time_ = 5;
+  // For switch goal
   bool countdown_in_progress_ = false;
 
   Timer end_game_timer_;
@@ -299,7 +303,7 @@ class PlayState : public State {
   glob::ModelHandle test_ball_;
   std::list<PlayerData> history_;
   FrameState predicted_state_;
-  float latency_; //do we need?
+  float latency_;  // do we need?
   std::vector<int> actions_;
   int frame_id = 0;
   float accum_pitch_ = 0.0f;
