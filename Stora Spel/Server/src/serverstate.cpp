@@ -75,6 +75,10 @@ void ServerLobbyState::Cleanup() {
   //
 }
 
+void ServerLobbyState::HandleDataToSend() {
+
+}
+
 void ServerPlayState::Init() {
   reset_timer_.Restart();
   reset_timer_.Pause();
@@ -158,7 +162,37 @@ void ServerPlayState::Update(float dt) {
       });
   // players_inputs_.clear();
 
+  // switch goal cleanup
+  auto view_goals = registry.view<GoalComponenet, TeamComponent>();
+  for (auto goal : view_goals) {
+    GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
+    TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
+    if (goal_goal_c.switched_this_tick) {
+      goal_goal_c.switched_this_tick = false;
+    }
+  }
+
+  if (reset_timer_.Elapsed() > 3.0f) {
+    ResetEntities();
+    reset_timer_.Restart();
+    reset_timer_.Pause();
+    reset_ = false;
+
+    match_timer_.Resume();
+
+    GameEvent reset_event;
+    reset_event.type = GameEvent::RESET;
+    dispatcher.trigger<GameEvent>(reset_event);
+  }
+  if (match_timer_.Elapsed() > match_time_) {
+    EndGame();
+  }
+}
+
+void ServerPlayState::HandleDataToSend() {
   bool pick_ups_sent = false;
+
+  auto& registry = game_server_->GetRegistry();
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     EntityID client_player_id = clients_player_ids_[client_id];
 
@@ -214,7 +248,7 @@ void ServerPlayState::Update(float dt) {
     to_send << PacketBlockType::PLAYER_STAMINA;
 
     auto view_players2 = registry.view<PlayerComponent, TeamComponent,
-                                       PointsComponent, IDComponent>();
+      PointsComponent, IDComponent>();
 
     for (auto player : view_players2) {
       auto& player_player_c = registry.get<PlayerComponent>(player);
@@ -315,35 +349,7 @@ void ServerPlayState::Update(float dt) {
   }
   created_projectiles_.clear();
   destroy_entities_.clear();
-
-  // switch goal cleanup
-  auto view_goals = registry.view<GoalComponenet, TeamComponent>();
-  for (auto goal : view_goals) {
-    GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
-    TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
-    if (goal_goal_c.switched_this_tick) {
-      goal_goal_c.switched_this_tick = false;
-    }
-  }
-  destroy_entities_.clear();
-  created_projectiles_.clear();
   if (pick_ups_sent) created_pick_ups_.clear();
-
-  if (reset_timer_.Elapsed() > 3.0f) {
-    ResetEntities();
-    reset_timer_.Restart();
-    reset_timer_.Pause();
-    reset_ = false;
-
-    match_timer_.Resume();
-
-    GameEvent reset_event;
-    reset_event.type = GameEvent::RESET;
-    dispatcher.trigger<GameEvent>(reset_event);
-  }
-  if (match_timer_.Elapsed() > match_time_) {
-    EndGame();
-  }
 }
 
 void ServerPlayState::Cleanup() {
@@ -767,6 +773,13 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       registry.assign<IDComponent>(e.entity, projectile.entity_id);
       projectile.projectile_id = ProjectileID::MISSILE_OBJECT;
       created_projectiles_.push_back(projectile);
+
+      // Save game event
+      GameEvent missile_fire_event;
+      missile_fire_event.type = GameEvent::MISSILE_FIRE;
+      missile_fire_event.missile_fire.projectile_id = projectile.entity_id;
+      dispatcher.trigger(missile_fire_event);
+
       break;
     }
     case Event::CHANGED_TARGET: {

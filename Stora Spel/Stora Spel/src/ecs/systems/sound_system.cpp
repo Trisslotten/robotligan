@@ -52,13 +52,23 @@ void SoundSystem::Init(Engine* engine) {
   sound_engine_.Init();
   sound_step_ = sound_engine_.GetSound("assets/sound/footstep.wav");
   sound_crowd_ = sound_engine_.GetSound("assets/sound/crowd.mp3");
-  sound_kick_ = sound_engine_.GetSound("assets/sound/kick_swing.mp3");
+  sound_woosh_ = sound_engine_.GetSound("assets/sound/kick_swing.mp3");
   sound_hit_ = sound_engine_.GetSound("assets/sound/ball_hit_sound.mp3");
   sound_nudge_ = sound_engine_.GetSound("assets/sound/ball_nudge.mp3");
   sound_goal_ = sound_engine_.GetSound("assets/sound/goal.mp3");
   sound_ball_bounce_ = sound_engine_.GetSound("assets/sound/bounce.mp3");
   sound_player_land_ = sound_engine_.GetSound("assets/sound/robot_land.mp3");
   sound_player_jump_ = sound_engine_.GetSound("assets/sound/robot_jump.mp3");
+  sound_ability_missile_impact_ = sound_engine_.GetSound("assets/sound/missile_explode.wav");
+  sound_ability_teleport_impact_ = sound_engine_.GetSound("assets/sound/teleport_2.mp3");
+  sound_ability_force_push_impact_ = sound_engine_.GetSound("assets/sound/forcepush.mp3");
+
+  ability_sounds_[AbilityID::GRAVITY_CHANGE] = sound_engine_.GetSound("assets/sound/gravitydrop.wav");
+  ability_sounds_[AbilityID::SUPER_STRIKE] = sound_engine_.GetSound("assets/sound/superkick.mp3");
+  ability_sounds_[AbilityID::MISSILE] = sound_engine_.GetSound("assets/sound/missile_fire.mp3");
+  ability_sounds_[AbilityID::TELEPORT] = sound_engine_.GetSound("assets/sound/teleport_1.mp3");
+  ability_sounds_[AbilityID::HOMING_BALL] = sound_engine_.GetSound("assets/sound/homingball.wav");
+  ability_sounds_[AbilityID::SWITCH_GOALS] = sound_engine_.GetSound("assets/sound/switch_goals.mp3");
 }
 
 void SoundSystem::PlayAmbientSound(entt::registry& registry) {
@@ -68,7 +78,7 @@ void SoundSystem::PlayAmbientSound(entt::registry& registry) {
     auto& cam_c = local_view.get<CameraComponent>(local_entity);
     auto& sound_c = local_view.get<SoundComponent>(local_entity);
 
-    sound_c.sound_player->Play(sound_crowd_, -1, 0.2f);
+    sound_c.sound_player->Play(sound_crowd_, -1, 0.1f);
     break;
   }
 }
@@ -82,7 +92,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
     auto view = registry->view<CameraComponent, SoundComponent>();
     for (auto entity : view) {
       auto& sound_c = view.get<SoundComponent>(entity);
-      sound_c.sound_player->Play(sound_goal_, 0, 0.15f);
+      sound_c.sound_player->Play(sound_goal_, 0, 0.1f);
       break;
     }
     break;
@@ -93,7 +103,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.kick.player_id) {
-        sound_c.sound_player->Play(sound_kick_, 0, 1.0f);
+        sound_c.sound_player->Play(sound_woosh_, 0, 1.0f);
         break;
       }
     }
@@ -159,6 +169,130 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         sound_c.sound_player->Play(sound_player_jump_, 0, 0.05f);
         break;
       }
+    }
+    break;
+  }
+  case GameEvent::PRIMARY_USED:
+  case GameEvent::SECONDARY_USED: {
+    break;
+  }
+  case GameEvent::GRAVITY_DROP: {
+    auto view = registry->view<CameraComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& sound_c = view.get<SoundComponent>(entity);
+      sound_c.sound_player->Play(ability_sounds_[AbilityID::GRAVITY_CHANGE], 0, 0.6f);
+      break;
+    }
+    break;
+  }
+  case GameEvent::SUPER_KICK: {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.super_kick.player_id) {
+        sound_c.sound_player->Play(ability_sounds_[AbilityID::SUPER_STRIKE], 0, 0.2f);
+        break;
+      }
+    }
+    break;
+  }
+  case GameEvent::MISSILE_FIRE: {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      //Keep cout here for later use when solving order of entity creaton/deletion and game event triggers
+      //std::cout << "entity id: " << id_c.id << std::endl << "proj id: " << event.missile_fire.projectile_id << std::endl;
+      if (id_c.id == event.missile_fire.projectile_id) {
+        sound_c.sound_player->Play(ability_sounds_[AbilityID::MISSILE], 0, 2.0f);
+        break;
+      }
+    }
+    break;
+  }
+  case GameEvent::MISSILE_IMPACT: {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      //Keep cout here for later use when solving order of entity creaton/deletion and game event triggers
+      //std::cout << "entity id: " << id_c.id << std::endl << "proj id: " << event.missile_impact.projectile_id << std::endl;
+      if (id_c.id == event.missile_impact.projectile_id) {
+        sound_c.sound_player->Stop(ability_sounds_[AbilityID::MISSILE]);
+        sound_c.sound_player->Play(sound_ability_missile_impact_, 0, 3.0f);
+        break;
+      }
+    }
+    break;
+  }
+  case GameEvent::TELEPORT_CAST: {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.teleport_cast.player_id) {
+        sound_c.sound_player->Play(ability_sounds_[AbilityID::TELEPORT], 0, 0.4f);
+        break;
+      }
+    }
+    break;
+  }
+  case GameEvent::TELEPORT_IMPACT: {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.teleport_cast.player_id) {
+        sound_c.sound_player->Play(sound_ability_teleport_impact_, 0, 0.4f);
+        break;
+      }
+    }
+    break;
+  }
+  case GameEvent::HOMING_BALL: {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.homing_ball.ball_id) {
+        sound_c.sound_player->Play(ability_sounds_[AbilityID::HOMING_BALL], 0, 10.0f);
+        break;
+      }
+    }
+    break;
+  }
+  case GameEvent::FORCE_PUSH: {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.force_push.player_id) {
+        sound_c.sound_player->Play(sound_woosh_);
+        break;
+      }
+    }
+    break;
+  }
+  case GameEvent::FORCE_PUSH_IMPACT: {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      std::cout << "entity id: " << id_c.id << std::endl << "proj id: " << event.force_push_impact.projectile_id << std::endl;
+      if (id_c.id == event.force_push_impact.projectile_id) {
+        sound_c.sound_player->Play(sound_ability_force_push_impact_, 0, 1.5f);
+        break;
+      }
+    }
+    break;
+  }
+  case GameEvent::SWITCH_GOALS: {
+    auto view = registry->view<CameraComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& sound_c = view.get<SoundComponent>(entity);
+      sound_c.sound_player->Play(ability_sounds_[AbilityID::SWITCH_GOALS], 0, 0.3f);
+      break;
     }
     break;
   }

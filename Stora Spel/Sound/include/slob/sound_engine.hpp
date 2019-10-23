@@ -17,6 +17,7 @@ class EXPORT SoundPlayer {
  public:
   ~SoundPlayer();
   void Play(SoundHandle handle, int loop_count = 0, float volume = 1.0f);
+  void Stop(SoundHandle handle);
   void Set3DAttributes(glm::vec3 pos, glm::vec3 vel);
 
  private:

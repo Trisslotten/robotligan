@@ -72,12 +72,19 @@ void Update(entt::registry& registry, float dt) {
     missile_phys_c.velocity =
         missile_trans_c.rotation * glm::vec3(missile_missile_c.speed, 0, 0);
     if (exploded) {
+      // Save game event
+      GameEvent missile_impact_event;
+      missile_impact_event.type = GameEvent::MISSILE_IMPACT;
+      missile_impact_event.missile_impact.projectile_id = registry.get<IDComponent>(missile).id;
+      dispatcher.trigger(missile_impact_event);
+      
       EventInfo info;
       if (registry.has<IDComponent>(missile) == false) return;
       auto id = registry.get<IDComponent>(missile);
       info.event = Event::DESTROY_ENTITY;
       info.e_id = id.id;
       dispatcher.enqueue<EventInfo>(info);
+
       registry.destroy(missile);
     }
   }
