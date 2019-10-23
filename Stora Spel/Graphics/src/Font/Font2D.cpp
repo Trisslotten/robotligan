@@ -209,7 +209,7 @@ bool glob::Font2D::LoadFromFile(const std::string& path) {
 }
 
 void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
-                        std::string text, glm::vec4 color, bool visible) {
+                        std::string text, glm::vec4 color, bool visible, bool equal_spacing, float spacing) {
   const char* chars = text.c_str();
   unsigned int len = text.length();
 
@@ -255,7 +255,10 @@ void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
       double r = 0;
       r = advances_[cur];
       //(face->glyph->advance.x >> 6);
-      offset_accum += r * .03 * double(size);
+      if (!equal_spacing)
+       offset_accum += r * .03 * double(size);
+      else
+        offset_accum += spacing;
     }
     // std::cout << offset_accum << "\n";
   }
