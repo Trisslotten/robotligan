@@ -116,8 +116,8 @@ void PlayState::Init() {
   client.Send(to_send);
 
   engine_->GetSoundSystem().PlayAmbientSound(registry_gameplay_);
-  Reset();
   goals_swapped_ = false;
+  Reset();
 }
 
 void PlayState::Update(float dt) {
@@ -150,6 +150,7 @@ void PlayState::Update(float dt) {
       auto& trans_c = view_entities.get<TransformComponent>(entity);
       auto& id_c = view_entities.get<IDComponent>(entity);
       auto trans = transforms_[id_c.id];
+
       new_transforms_[id_c.id] = std::make_pair(trans.first, trans.second);
       /*
       std::cout << trans_c.position.x << ", ";
@@ -162,7 +163,6 @@ void PlayState::Update(float dt) {
     move_player = true;
   }
 
-  // interpolate
   auto view_entities =
       registry_gameplay_.view<TransformComponent, IDComponent>();
   if (move_player == true) {
@@ -170,7 +170,8 @@ void PlayState::Update(float dt) {
     actions_.clear();
   }
 
-  float f = 0.8;  // 0.25f * dt;  // pow(0.75f, dt);
+  // interpolate
+  float f = 0.5;  // 0.25f * dt;  // pow(0.75f, dt);
   for (auto entity : view_entities) {
     auto& trans_c = view_entities.get<TransformComponent>(entity);
     auto& id_c = view_entities.get<IDComponent>(entity);
