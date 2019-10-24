@@ -53,6 +53,8 @@ void SoundSystem::Init(Engine* engine) {
   engine_ = engine;
   sound_engine_.Init();
 
+  sound_engine_.CreatePlayer();
+
   button_hover_ = sound_engine_.GetSound("assets/sound/button_hover.mp3");
   button_click_ = sound_engine_.GetSound("assets/sound/button_click.mp3");
 
@@ -343,10 +345,12 @@ void SoundSystem::ReceiveMenuEvent(const MenuEvent& event) {
   switch (event.type) {
   case MenuEvent::HOVER: {
     // Play hover sound
+    sound_engine_.GetPlayer()->Play(button_hover_);
     break;
   }
   case MenuEvent::CLICK: {
     // Play click sound
+    sound_engine_.GetPlayer()->Play(button_click_);
     break;
   }
   }

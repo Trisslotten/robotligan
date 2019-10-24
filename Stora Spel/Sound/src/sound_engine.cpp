@@ -140,6 +140,11 @@ namespace slob {
     return result;
   }
 
+  SoundPlayer* SoundEngine::GetPlayer()
+  {
+    return impl_->sound_players[0];
+  }
+
   struct SoundPlayer::Impl {
     SoundEngine::Impl* sound_engine;
     FMOD::ChannelGroup* channel_group;
