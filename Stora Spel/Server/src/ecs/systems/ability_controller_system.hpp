@@ -23,13 +23,15 @@ bool gravity_used = false;
 bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
                     PlayerID player_id, entt::entity caster);
 void CreateMissileEntity(entt::registry& registry, PlayerID id);
-void DoSuperStrike(entt::registry& registry);
+bool DoSuperStrike(entt::registry& registry);
 entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id);
 void DoSwitchGoals(entt::registry& registry);
 entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id);
 void GravityChange(entt::registry& registry);
 void DoTeleport(entt::registry& registry, PlayerID id);
 bool DoHomingBall(entt::registry& registry, PlayerID id);
+
+std::unordered_map<AbilityID, float> ability_cooldowns;
 
 void Update(entt::registry& registry, float dt) {
   auto view_players =
@@ -61,7 +63,8 @@ void Update(entt::registry& registry, float dt) {
                          player_component.client_id, player)) {
         // If ability triggered successfully set the
         // AbilityComponent's cooldown to be on max capacity
-        ability_component.cooldown_remaining = ability_component.cooldown_max;
+        ability_component.cooldown_remaining =
+            ability_cooldowns[ability_component.primary_ability];
         GameEvent primary_used_event;
         primary_used_event.type = GameEvent::PRIMARY_USED;
         primary_used_event.primary_used.player_id =
@@ -150,8 +153,7 @@ bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
       return true;
       break;
     case AbilityID::SUPER_STRIKE:
-      DoSuperStrike(registry);
-      return true;
+      return DoSuperStrike(registry);
       break;
     case AbilityID::SWITCH_GOALS:
       DoSwitchGoals(registry);
@@ -200,7 +202,7 @@ void CreateMissileEntity(entt::registry& registry, PlayerID id) {
   }
 }
 
-void DoSuperStrike(entt::registry& registry) {
+bool DoSuperStrike(entt::registry& registry) {
   // NTS: The logic of this function assumes that there is only one
   // entity with a PlayerComponent and that is the entity representing
   // the player on this client
@@ -227,6 +229,8 @@ void DoSuperStrike(entt::registry& registry) {
           ball_view.get<PhysicsComponent>(ball_entity);
       TransformComponent& trans_c_ball =
           ball_view.get<TransformComponent>(ball_entity);
+      BallComponent& ball_ball_c =
+          ball_view.get<BallComponent>(ball_entity);
 
       // Calculate the vector from the player to the ball
       glm::vec3 player_ball_vec =
@@ -256,6 +260,8 @@ void DoSuperStrike(entt::registry& registry) {
         physics_c_ball.velocity += kick_dir * GlobalSettings::Access()->ValueOf(
                                                   "ABILITY_SUPER_STRIKE_FORCE");
         physics_c_ball.is_airborne = true;
+        ball_ball_c.is_super_striked = true;
+        return true;
 
         // Save game event
         if (registry.has<IDComponent>(player_entity)) {
@@ -267,6 +273,7 @@ void DoSuperStrike(entt::registry& registry) {
       }
     }
   }
+  return false;
 }
 
 entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
@@ -278,7 +285,7 @@ entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
     TransformComponent& tc = view_controller.get<TransformComponent>(entity);
 
     if (pc.client_id == id) {
-      float speed = 20.0f;
+      float speed = pc.rocket_speed;
       auto cannonball = registry.create();
       registry.assign<PhysicsComponent>(cannonball,
                                         glm::vec3(cc.GetLookDir() * speed),
@@ -286,7 +293,7 @@ entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
       registry.assign<TransformComponent>(
           cannonball,
           glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),
-          glm::vec3(0, 0, 0), glm::vec3(.3f, .3f, .3f));
+          cc.orientation, glm::vec3(.3f, .3f, .3f));
       registry.assign<physics::Sphere>(cannonball,
                                        glm::vec3(tc.position + cc.offset), .3f);
       registry.assign<ProjectileComponent>(cannonball,

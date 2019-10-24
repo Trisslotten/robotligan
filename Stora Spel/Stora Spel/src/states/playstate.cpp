@@ -719,10 +719,11 @@ void PlayState::DrawQuickslots() {
   glob::Submit(ability_handles_[(int)engine_->GetSecondaryAbility()],
                glm::vec2(66, 50), 0.75f, 100);
   if (primary_cd_ > 0.0f) {
-    glob::Submit(font_test_, glm::vec2(51, 89), 72,
-                 std::to_string((int)primary_cd_), glm::vec4(0, 0, 0, 0.7f));
-    glob::Submit(font_test_, glm::vec2(50, 90), 72,
-                 std::to_string((int)primary_cd_));
+    std::string cd_string = std::to_string((int)primary_cd_);
+    float jump_left = (cd_string.length()-1) * 15;
+    glob::Submit(font_test_, glm::vec2(50 - jump_left, 89), 72,
+                cd_string , glm::vec4(0,0,0,0.7f));
+    glob::Submit(font_test_, glm::vec2(51 - jump_left, 90), 72, cd_string);
   }
 }
 
@@ -903,7 +904,7 @@ void PlayState::CreateCannonBall(EntityID id) {
   auto cannonball = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
-  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  glob::ModelHandle model_ball = glob::GetModel("assets/Rocket/Rocket.fbx");
   auto& model_c = registry_gameplay_.assign<ModelComponent>(cannonball);
   model_c.handles.push_back(model_ball);
 
