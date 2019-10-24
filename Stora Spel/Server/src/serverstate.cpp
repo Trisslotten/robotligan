@@ -123,6 +123,7 @@ void ServerPlayState::Init() {
     to_send << PacketBlockType::GAME_START;
 
     server.Send(to_send);
+	
   }
 }
 
@@ -164,7 +165,7 @@ void ServerPlayState::Update(float dt) {
     if (!clients_receive_updates_[client_id]) {
 
       // TODO: maybe send important packets even if not initialized
-      //continue;
+      continue;
     }
 
     auto view_cam = registry.view<CameraComponent, IDComponent>();

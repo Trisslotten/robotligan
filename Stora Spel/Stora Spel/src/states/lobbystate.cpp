@@ -138,15 +138,16 @@ void LobbyState::Update(float dt) {
 		glob::Submit(font_test_, bottom_pos, 28,
 			"Match is currently in session");
 	}
-	auto game_clients = engine_->GetPlayingPlayers();
+	//auto game_clients = engine_->GetPlayingPlayers();
 
+	/*
 	if (engine_->GetStateType() == 1)
 	{
 		if (game_clients && std::find(game_clients->begin(), game_clients->end(), this->my_id_) != game_clients->end())
 		{
 			engine_->ChangeState(StateType::PLAY);
 		}
-	}
+	}*/
   }
 }
 

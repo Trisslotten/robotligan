@@ -145,7 +145,6 @@ void Engine::Update(float dt) {
   if (wanted_state_type_ != current_state_->Type()) {
     // cleanup old state
     current_state_->Cleanup();
-
     // set new state
     switch (wanted_state_type_) {
       case StateType::MAIN_MENU:
@@ -158,12 +157,12 @@ void Engine::Update(float dt) {
         current_state_ = &lobby_state_;
         break;
       case StateType::PLAY:
-        scores_[0] = 0;
-        scores_[1] = 0;
         current_state_ = &play_state_;
 		play_state_.Cleanup();
 		play_state_.Init();
-		this->registry_current_ = play_state_.GetReg();
+		//this->registry_current_ = play_state_.GetReg();
+		scores_[0] = 0;
+		scores_[1] = 0;
         break;
       case StateType::SETTINGS:
         current_state_ = &settings_state_;
