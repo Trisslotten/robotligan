@@ -707,8 +707,13 @@ void ServerPlayState::ResetEntities() {
   }
 
   // reset pick-up
-  auto pick_up_view = registry.view<PickUpComponent>();
-  for (auto entity : pick_up_view) registry.destroy(entity);
+  auto pick_up_view = registry.view<PickUpComponent, IDComponent>();
+  for (auto pick_up : pick_up_view) {
+    auto entity = registry.create();
+    registry.assign<PickUpEvent>(
+        entity, registry.get<IDComponent>(pick_up).id, - 1, AbilityID::NULL_ABILITY);
+    registry.destroy(pick_up);
+  }
 
   CreatePickUpComponents();
 
