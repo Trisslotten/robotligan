@@ -157,7 +157,7 @@ void Engine::Update(float dt) {
         break;
       case StateType::PLAY:
         current_state_ = &play_state_;
-		ReInit();
+		    //ReInit();
         scores_[0] = 0;
         scores_[1] = 0;
         break;
