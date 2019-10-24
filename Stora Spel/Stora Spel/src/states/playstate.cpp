@@ -97,7 +97,6 @@ void PlayState::TestParticles() {
 }
 
 void PlayState::Init() {
-  frame_times.reserve(2000);
   glob::window::SetMouseLocked(true);
   engine_->SetSendInput(true);
   engine_->SetCurrentRegistry(&registry_gameplay_);
@@ -143,7 +142,6 @@ void PlayState::Update(float dt) {
     // physics_.clear();  //?
   }
 
-  bool move_player = false;
   if (!transforms_.empty()) {
     auto view_entities =
         registry_gameplay_.view<TransformComponent, IDComponent>();
@@ -155,13 +153,7 @@ void PlayState::Update(float dt) {
       auto trans = transforms_[id_c.id];
 
       new_transforms_[id_c.id] = std::make_pair(trans.first, trans.second);
-      if (id_c.id == ball_id_) {
-        //std::cout << glm::length(pos - new_transforms_[id_c.id].first) << std::endl;
-        /*if (counter < 2000) {
-          frame_times.push_back(
-              glm::length(pos - new_transforms_[id_c.id].first));
-        }*/ 
-	  }
+      
       /*
       std::cout << trans_c.position.x << ", ";
       std::cout << trans_c.position.y << ", ";
@@ -170,25 +162,12 @@ void PlayState::Update(float dt) {
     }
     transforms_.clear();
     OnServerFrame();
-    move_player = true;
-  }
-  /*struct {
-    bool operator()(float a, float b) const { return a < b; }
-  } customLess;
-  if (counter == 2000) {
-    std::sort(frame_times.begin(), frame_times.end(), customLess);
-    for (int i = 0; i < 2000; ++i)
-      std::cout << i << ": " << frame_times[i] << std::endl;
-  }
-  counter++;*/
-
-  if (move_player == true) {
     MovePlayer(1 / 64.0f);
     actions_.clear();
   }
   timer += dt;
-  if (timer > 1 / 64.0f) {
-	//MoveBall(dt);
+  if (timer > 1.0f / 64.0f) {
+	MoveBall(dt);
     timer -= dt;
   }
   // interpolate
@@ -205,7 +184,6 @@ void PlayState::Update(float dt) {
       glm::vec3 temp =
           lerp(predicted_state_.position, server_predicted_.position, 0.5f);
       trans_c.position = glm::lerp(trans_c.position, temp, 0.2f);
-      trans_c.position = new_transforms_[id_c.id].first;
       glm::quat orientation =
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
