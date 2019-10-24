@@ -606,8 +606,8 @@ void Engine::UpdateSystems(float dt) {
 
   gui_system::Update(*registry_current_);
   ParticleSystem(*registry_current_, dt);
-  RenderSystem(*registry_current_);
   animation_system_.UpdateAnimations(*registry_current_, dt);
+  RenderSystem(*registry_current_);
 }
 
 void Engine::SetKeybinds() {

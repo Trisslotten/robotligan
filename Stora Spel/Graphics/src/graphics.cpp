@@ -813,7 +813,18 @@ animData GetAnimationData(ModelHandle handle) {
         //std::cout << "Right arm found!\n";
       }
     }
-    std::cout << "Shoulder R has " << data.rightArm.size() << " children\n";
+    for (int i = 0; i < data.rightArm.size(); i++) {
+      data.arms.push_back(data.rightArm.at(i));
+	}
+    for (int i = 0; i < data.leftArm.size(); i++) {
+      data.arms.push_back(data.leftArm.at(i));
+    }
+    for (int i = 0; i < data.rightLeg.size(); i++) {
+      data.legs.push_back(data.rightLeg.at(i));
+    }
+    for (int i = 0; i < data.leftLeg.size(); i++) {
+      data.legs.push_back(data.leftLeg.at(i));
+    }
   }
 
   int num = 0;

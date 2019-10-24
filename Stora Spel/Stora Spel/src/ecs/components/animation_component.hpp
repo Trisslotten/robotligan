@@ -17,6 +17,8 @@ struct AnimationComponent {
   std::vector<glm::mat4> bone_transforms;
 
     std::vector<priorityGroup> p_groups;
+
+	bool init = true;
 };
 
 #endif  // ANIMATION_COMPONENT_HPP_

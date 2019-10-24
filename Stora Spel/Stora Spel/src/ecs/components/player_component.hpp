@@ -17,7 +17,7 @@ struct PlayerComponent {  // Client side
   float jump_force = 0.f;
 
   glm::vec3 look_dir = glm::vec3(1.f, 0.f, 0.f);
-  glm::vec3 move_dir = glm::vec3(1.f, 0.f, 0.f);
+  glm::vec3 move_dir = glm::vec3(0.f, 0.f, 1.f);
 };
 
 #endif  // PLAYER_COMPONENT_HPP_

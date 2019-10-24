@@ -83,7 +83,8 @@ int AnimationSystem::GetActiveAnimationByName(std::string name,
 void AnimationSystem::PlayAnimation(std::string name, float speed,
                                     AnimationComponent* ac, char priority,
                                     float strength, int mode,
-                                    std::vector<int>* bodyInclude) {
+                                    std::vector<int>* bodyInclude,
+                                    std::vector<int>* bodyExclude) {
   int anim = GetAnimationByName(name, ac);
   if (anim == -1) {
     // std::cout << "WARNING: Could not find animation " << name << "!\n";
@@ -110,12 +111,25 @@ void AnimationSystem::PlayAnimation(std::string name, float speed,
       bool found = false;
       for (int j = 0; j < anim_ptr->body_include_->size(); j++) {
         if (bodyInclude->at(i) == anim_ptr->body_include_->at(j)) {
-          found == true;
+          found = true;
           break;
         }
       }
       if (!found) {
-        anim_ptr->body_include_->push_back(bodyInclude->at(i));
+        if (bodyExclude != nullptr) {
+          bool excluded = false;
+          for (int j = 0; j < bodyExclude->size(); j++) {
+            if (bodyInclude->at(i) == bodyExclude->at(j)) {
+              excluded = true;
+              break;
+            }
+          }
+          if (!excluded) {
+            anim_ptr->body_include_->push_back(bodyInclude->at(i));
+          }
+        } else {
+          anim_ptr->body_include_->push_back(bodyInclude->at(i));
+        }
       }
     }
   }
@@ -171,41 +185,37 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
     auto& ph = players.get<PhysicsComponent>(entity);
     auto& m = players.get<ModelComponent>(entity);
 
-    PlayAnimation("Resting", 0.5f, &ac, 10, 1.f, LOOP);
+    if (ac.init) {
+      PlayAnimation("Resting", 0.5f, &ac, 10, 1.f, LOOP);
 
-	/*
-    PlayAnimation("LookUp", 0.5f, &ac, 16, 0.f, LOOP, &ac.model_data.upperBody);
-    PlayAnimation("LookDown", 0.5f, &ac, 16, 0.f, LOOP,
-                  &ac.model_data.upperBody);
-    PlayAnimation("LookLeft", 0.5f, &ac, 16, 0.f, LOOP,
-                  &ac.model_data.upperBody);
-    PlayAnimation("LookRight", 0.5f, &ac, 16, 0.f, LOOP,
-                  &ac.model_data.upperBody);
-    PlayAnimation("LookAhead", 1.f, &ac, 16, 0.f, LOOP,
-                  &ac.model_data.upperBody);
-	*/
+      PlayAnimation("LookUp", 0.5f, &ac, 21, 0.f, LOOP,
+                    &ac.model_data.upperBody, &ac.model_data.arms);
+      PlayAnimation("LookDown", 0.5f, &ac, 21, 0.f, LOOP,
+                    &ac.model_data.upperBody, &ac.model_data.arms);
+      PlayAnimation("LookLeft", 0.5f, &ac, 21, 0.f, LOOP,
+                    &ac.model_data.upperBody, &ac.model_data.arms);
+      PlayAnimation("LookRight", 0.5f, &ac, 21, 0.f, LOOP,
+                    &ac.model_data.upperBody, &ac.model_data.arms);
+      PlayAnimation("LookAhead", 1.f, &ac, 21, 0.f, LOOP,
+                    &ac.model_data.upperBody, &ac.model_data.arms);
+      ac.init = false;
+    }
 
     glm::vec3 LRlookDir =
         glm::normalize(pl.look_dir * glm::vec3(1.f, 0.f, 1.f));
     glm::vec3 UDlookDir = glm::normalize(pl.look_dir);
     glm::vec3 moveDir = ph.velocity;
-    if (abs(moveDir.x) > 0.01f || abs(moveDir.z) > 0.01f) {
-      moveDir = glm::normalize(ph.velocity) * glm::vec3(1.f, 0.f, 1.f);
-      pl.move_dir = moveDir;
-    } else {
-      moveDir = pl.move_dir;
-      ;
-    }
 
     // SLIDE ANIMATIONS
     constexpr float pi = glm::pi<float>();
     if (!pl.sprinting) {
-      m.rot_offset = -t.rotation;
+      glm::quat offset = -t.rotation;
 
       float yaw = atan2(moveDir.x, moveDir.z);
-      m.rot_offset += glm::quat(glm::vec3(0.f, yaw - pi / 2.f, 0.f));
+      offset += glm::quat(glm::vec3(0.f, yaw - pi / 2.f, 0.f));
 
-	  /*
+      m.rot_offset = offset;
+
       float strength = 0.f;
       float totStrength = 0.f;
       for (int i = 0; i < 4; i++) {
@@ -222,11 +232,19 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
             break;
           }
           case 2: {  // R
-            strength = 0.f;
+            strength =
+                abs(std::clamp(glm::dot(glm::vec3(1.f, 0.f, 0.f) * (t.rotation),
+                                        glm::vec3(0.f, 0.f, 1.f) *
+                                            (t.rotation + m.rot_offset)),
+                               -1.f, 0.f));
             break;
           }
           case 3: {  // L
-            strength = 0.f;
+            strength =
+                std::clamp(glm::dot(glm::vec3(1.f, 0.f, 0.f) * (t.rotation),
+                                    glm::vec3(0.f, 0.f, 1.f) *
+                                        (t.rotation + m.rot_offset)),
+                           0.f, 1.f);
             break;
           }
         }
@@ -236,7 +254,7 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       float LAStrength = 1.f - glm::clamp(totStrength, 0.f, 1.f);
       int LAAnim = GetActiveAnimationByName("LookAhead", &ac);
       ac.active_animations.at(LAAnim)->strength_ = LAStrength;
-	  */
+
     } else {
       m.rot_offset = glm::quat();
 
@@ -247,6 +265,8 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       glm::vec3 h_lookDir;
       for (int i = 0; i < 4; i++) {
         int anim = GetActiveAnimationByName(slide_anims_[i], &ac);
+        // int look_anim = GetActiveAnimationByName(look_anims_[i], &ac);
+        // ac.active_animations.at(look_anim)->strength_ = 0.f;
         switch (i) {
           case 0: {  // F
             h_lookDir = glm::normalize(LRlookDir);
@@ -413,6 +433,12 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           PlayAnimation("SlideR", 1.f, &ac, 20, 0.f, LOOP);
           PlayAnimation("SlideL", 1.f, &ac, 20, 0.f, LOOP);
 
+          StopAnimation("LookUp", &ac);
+          StopAnimation("LookDown", &ac);
+          StopAnimation("LookRight", &ac);
+          StopAnimation("LookLeft", &ac);
+          StopAnimation("LookAhead", &ac);
+
           break;
         }
       }
@@ -431,6 +457,17 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           StopAnimation("SlideR", &ac);
           StopAnimation("SlideL", &ac);
           pc.sprint_coeff = 0.f;
+
+          PlayAnimation("LookUp", 0.5f, &ac, 21, 0.f, LOOP,
+                        &ac.model_data.upperBody, &ac.model_data.arms);
+          PlayAnimation("LookDown", 0.5f, &ac, 21, 0.f, LOOP,
+                        &ac.model_data.upperBody, &ac.model_data.arms);
+          PlayAnimation("LookLeft", 0.5f, &ac, 21, 0.f, LOOP,
+                        &ac.model_data.upperBody, &ac.model_data.arms);
+          PlayAnimation("LookRight", 0.5f, &ac, 21, 0.f, LOOP,
+                        &ac.model_data.upperBody, &ac.model_data.arms);
+          PlayAnimation("LookAhead", 1.f, &ac, 21, 0.f, LOOP,
+                        &ac.model_data.upperBody, &ac.model_data.arms);
 
           break;
         }

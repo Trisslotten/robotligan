@@ -51,7 +51,8 @@ class AnimationSystem {
 
   void PlayAnimation(std::string name, float speed, AnimationComponent* ac,
                      char priority, float strength, int mode,
-                     std::vector<int>* bodyInclude = nullptr);
+                     std::vector<int>* bodyInclude = nullptr,
+                     std::vector<int>* bodyExclude = nullptr);
 
   void StopAnimation(std::string name, AnimationComponent* ac);
 

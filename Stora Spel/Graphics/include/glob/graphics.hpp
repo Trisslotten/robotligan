@@ -34,6 +34,8 @@ struct animData {
   std::vector<int> rightLeg;
   std::vector<int> leftArm;
   std::vector<int> rightArm;
+  std::vector<int> arms;
+  std::vector<int> legs;
 
   void makeGroup(int root, std::vector<int>* group) {
     group->push_back(root);
