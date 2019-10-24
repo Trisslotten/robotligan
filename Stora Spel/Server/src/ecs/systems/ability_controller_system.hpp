@@ -23,13 +23,15 @@ bool gravity_used = false;
 bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
                     PlayerID player_id, entt::entity caster);
 void CreateMissileEntity(entt::registry& registry, PlayerID id);
-void DoSuperStrike(entt::registry& registry);
+bool DoSuperStrike(entt::registry& registry);
 entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id);
 void DoSwitchGoals(entt::registry& registry);
 entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id);
 void GravityChange(entt::registry& registry);
 void DoTeleport(entt::registry& registry, PlayerID id);
 bool DoHomingBall(entt::registry& registry, PlayerID id);
+
+std::unordered_map<AbilityID, float> ability_cooldowns;
 
 void Update(entt::registry& registry, float dt) {
   auto view_players =
@@ -61,24 +63,39 @@ void Update(entt::registry& registry, float dt) {
                          player_component.client_id, player)) {
         // If ability triggered successfully set the
         // AbilityComponent's cooldown to be on max capacity
-        ability_component.cooldown_remaining = ability_component.cooldown_max;
+        ability_component.cooldown_remaining =
+            ability_cooldowns[ability_component.primary_ability];
+        GameEvent primary_used_event;
+        primary_used_event.type = GameEvent::PRIMARY_USED;
+        primary_used_event.primary_used.player_id =
+            registry.get<IDComponent>(player).id;
+        primary_used_event.primary_used.cd =
+            ability_component.cooldown_remaining;
+        dispatcher.trigger(primary_used_event);
       }
     }
     // When finished set primary ability to not activated
     ability_component.use_primary = false;
 
-      // Then check if secondary ability is being used
-      if (ability_component.use_secondary) {
-        // Trigger the ability
-        if (TriggerAbility(registry, ability_component.secondary_ability,
-          player_component.client_id, player)) {
-          // If ability triggered successfully, remove the
-          // slotted secondary ability
-          ability_component.secondary_ability = AbilityID::NULL_ABILITY;
-        }
+    // Then check if secondary ability is being used
+    if (ability_component.use_secondary) {
+      // Trigger the ability
+      if (TriggerAbility(registry, ability_component.secondary_ability,
+                         player_component.client_id, player)) {
+        // If ability triggered successfully, remove the
+        // slotted secondary ability
+        ability_component.secondary_ability = AbilityID::NULL_ABILITY;
+
+		GameEvent secondary_used_event;
+        secondary_used_event.type = GameEvent::SECONDARY_USED;
+                secondary_used_event.secondary_used.player_id =
+            registry.get<IDComponent>(player).id;
+        dispatcher.trigger(secondary_used_event);
+        // TODO: send that ability is used
       }
-      // Do not set use_secondary to false, it is done in serverstate to send over that the ability has been used
-      // ability_component.use_secondary = false;
+    }
+    // When finished set secondary ability to not activated
+    ability_component.use_secondary = false;
 
     // Check if the player should shoot
     if (ability_component.shoot && ability_component.shoot_cooldown <= 0.0f) {
@@ -136,8 +153,7 @@ bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
       return true;
       break;
     case AbilityID::SUPER_STRIKE:
-      DoSuperStrike(registry);
-      return true;
+      return DoSuperStrike(registry);
       break;
     case AbilityID::SWITCH_GOALS:
       DoSwitchGoals(registry);
@@ -186,7 +202,7 @@ void CreateMissileEntity(entt::registry& registry, PlayerID id) {
   }
 }
 
-void DoSuperStrike(entt::registry& registry) {
+bool DoSuperStrike(entt::registry& registry) {
   // NTS: The logic of this function assumes that there is only one
   // entity with a PlayerComponent and that is the entity representing
   // the player on this client
@@ -213,6 +229,8 @@ void DoSuperStrike(entt::registry& registry) {
           ball_view.get<PhysicsComponent>(ball_entity);
       TransformComponent& trans_c_ball =
           ball_view.get<TransformComponent>(ball_entity);
+      BallComponent& ball_ball_c =
+          ball_view.get<BallComponent>(ball_entity);
 
       // Calculate the vector from the player to the ball
       glm::vec3 player_ball_vec =
@@ -242,9 +260,20 @@ void DoSuperStrike(entt::registry& registry) {
         physics_c_ball.velocity += kick_dir * GlobalSettings::Access()->ValueOf(
                                                   "ABILITY_SUPER_STRIKE_FORCE");
         physics_c_ball.is_airborne = true;
+        ball_ball_c.is_super_striked = true;
+        return true;
+
+        // Save game event
+        if (registry.has<IDComponent>(player_entity)) {
+          GameEvent super_kick_event;
+          super_kick_event.type = GameEvent::SUPER_KICK;
+          super_kick_event.super_kick.player_id = registry.get<IDComponent>(player_entity).id;
+          dispatcher.trigger(super_kick_event);
+        }
       }
     }
   }
+  return false;
 }
 
 entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
@@ -256,7 +285,7 @@ entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
     TransformComponent& tc = view_controller.get<TransformComponent>(entity);
 
     if (pc.client_id == id) {
-      float speed = 20.0f;
+      float speed = pc.rocket_speed;
       auto cannonball = registry.create();
       registry.assign<PhysicsComponent>(cannonball,
                                         glm::vec3(cc.GetLookDir() * speed),
@@ -264,7 +293,7 @@ entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
       registry.assign<TransformComponent>(
           cannonball,
           glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),
-          glm::vec3(0, 0, 0), glm::vec3(.3f, .3f, .3f));
+          cc.orientation, glm::vec3(.3f, .3f, .3f));
       registry.assign<physics::Sphere>(cannonball,
                                        glm::vec3(tc.position + cc.offset), .3f);
       registry.assign<ProjectileComponent>(cannonball,
@@ -305,16 +334,22 @@ void DoSwitchGoals(entt::registry& registry) {
     unsigned int first_goals = first_goal_comp->goals;
     first_goal_comp->goals = second_goal_comp->goals;
     second_goal_comp->goals = first_goals;
+
+    // Save game event
+    GameEvent switch_goals_event;
+    switch_goals_event.type = GameEvent::SWITCH_GOALS;
+    dispatcher.trigger(switch_goals_event);
   }
 }
 
 entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id) {
   auto view_controller =
-      registry.view<CameraComponent, PlayerComponent, TransformComponent>();
+      registry.view<CameraComponent, PlayerComponent, TransformComponent, IDComponent>();
   for (auto entity : view_controller) {
     CameraComponent& cc = view_controller.get<CameraComponent>(entity);
     PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
     TransformComponent& tc = view_controller.get<TransformComponent>(entity);
+    IDComponent& idc = view_controller.get<IDComponent>(entity);
 
     if (pc.client_id == id) {
       float speed =
@@ -330,6 +365,13 @@ entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id) {
                                        glm::vec3(tc.position + cc.offset), .5f);
       registry.assign<ProjectileComponent>(force_object,
                                            ProjectileID::FORCE_PUSH_OBJECT, id);
+
+      // Save game event
+      GameEvent force_push_cast_event;
+      force_push_cast_event.type = GameEvent::FORCE_PUSH;
+      force_push_cast_event.force_push.player_id = idc.id;
+      dispatcher.trigger(force_push_cast_event);
+
       return force_object;
     }
   }
@@ -340,15 +382,20 @@ void GravityChange(entt::registry& registry) {
       GlobalSettings::Access()->ValueOf("ABILITY_GRAVITY_CHANGE"));
   gravity_timer.Restart();
   gravity_used = true;
+  
+  GameEvent event;
+  event.type = GameEvent::GRAVITY_DROP;
+  dispatcher.trigger<GameEvent>(event);
 }
 
 void DoTeleport(entt::registry& registry, PlayerID id) {
   auto view_controller =
-      registry.view<CameraComponent, PlayerComponent, TransformComponent>();
+      registry.view<CameraComponent, PlayerComponent, TransformComponent, IDComponent>();
   for (auto entity : view_controller) {
     CameraComponent& cc = view_controller.get<CameraComponent>(entity);
     PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
     TransformComponent& tc = view_controller.get<TransformComponent>(entity);
+    IDComponent& idc = view_controller.get<IDComponent>(entity);
 
     if (pc.client_id == id) {
       float speed = 50.0f;
@@ -371,6 +418,12 @@ void DoTeleport(entt::registry& registry, PlayerID id) {
       e.entity = teleport_projectile;
       dispatcher.enqueue<EventInfo>(e);
 
+      // Save game event
+      GameEvent teleport_event;
+      teleport_event.type = GameEvent::TELEPORT_CAST;
+      teleport_event.teleport_cast.player_id = idc.id;
+      dispatcher.trigger(teleport_event);
+
       break;
     }
   }
@@ -378,18 +431,20 @@ void DoTeleport(entt::registry& registry, PlayerID id) {
 
 bool DoHomingBall(entt::registry& registry, PlayerID id) {
   auto view_players =
-      registry.view<PlayerComponent, TransformComponent, CameraComponent>();
+      registry.view<PlayerComponent, TransformComponent, CameraComponent, IDComponent>();
   for (auto player : view_players) {
     auto& p_p_c = registry.get<PlayerComponent>(player);
     auto& p_t_c = registry.get<TransformComponent>(player);
     auto& p_c_c = registry.get<CameraComponent>(player);
+    auto& p_id_c = registry.get<IDComponent>(player);
 
     auto view_balls =
-        registry.view<BallComponent, TransformComponent, PhysicsComponent>();
+        registry.view<BallComponent, TransformComponent, PhysicsComponent, IDComponent>();
     for (auto ball : view_balls) {
       auto& b_b_c = registry.get<BallComponent>(ball);
       auto& b_t_c = registry.get<TransformComponent>(ball);
       auto& b_p_c = registry.get<PhysicsComponent>(ball);
+      auto& b_id_c = registry.get<IDComponent>(ball);
 
       glm::vec3 player_ball_vec = b_t_c.position - p_t_c.position;
 
@@ -406,6 +461,12 @@ bool DoHomingBall(entt::registry& registry, PlayerID id) {
       // IF the distance is less than the player's reach
       // AND the ball lies within the player's field of view
       if (dist < p_p_c.kick_reach && dot > p_p_c.kick_fov) {
+        // Save kick event
+        GameEvent hit_event;
+        hit_event.type = GameEvent::HIT;
+        hit_event.hit.player_id = p_id_c.id;
+        dispatcher.trigger(hit_event);
+
         glm::vec3 kick_dir =
             p_c_c.GetLookDir() + glm::vec3(0, p_p_c.kick_pitch, 0);
 
@@ -414,7 +475,14 @@ bool DoHomingBall(entt::registry& registry, PlayerID id) {
         b_p_c.velocity += kick_dir * p_p_c.kick_force * 1.3f;
         b_p_c.is_airborne = true;
         missile_system::SetBallsAreHoming(true);
-		return true;
+
+        // Save Homing event
+        GameEvent homing_event;
+        homing_event.type = GameEvent::HOMING_BALL;
+        homing_event.homing_ball.ball_id = b_id_c.id;
+        dispatcher.trigger(homing_event);
+
+        return true;
       }
     }
   }

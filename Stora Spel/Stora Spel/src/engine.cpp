@@ -21,6 +21,7 @@
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
+#include "ecs/systems/input_system.hpp"
 
 Engine::Engine() {}
 
@@ -36,6 +37,8 @@ void Engine::Init() {
   GlobalSettings::Access()->UpdateValuesFromFile();
 
   // glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
+
+  menu_dispatcher.sink<MenuEvent>().connect<&SoundSystem::ReceiveMenuEvent>(sound_system_);
 
   dispatcher.sink<GameEvent>().connect<&SoundSystem::ReceiveGameEvent>(
       sound_system_);
@@ -124,12 +127,8 @@ void Engine::Update(float dt) {
     accum_yaw_ -= mouse_movement.x;
     accum_pitch_ -= mouse_movement.y;
 
-    // constexpr float pi = glm::pi<float>();
-    // test_yaw_ -= mouse_movement.x;
-    // test_pitch_ -= mouse_movement.y;
-    // test_pitch_ = glm::clamp(test_pitch_, -0.49f * pi, 0.49f * pi);
+	play_state_.AddPitchYaw(-mouse_movement.y, -mouse_movement.x);
 
-    // play_state_.SetCameraOrientation(test_pitch_, test_yaw_);
     if (Input::IsKeyPressed(GLFW_KEY_K)) {
       new_team_ = TEAM_BLUE;
     }
@@ -219,12 +218,11 @@ void Engine::UpdateNetwork() {
   */
 
   if (should_send_input_) {
+    //play_state_.AddPitchYaw(accum_pitch_, accum_yaw_);
     to_send << action_bits;
-    to_send << accum_pitch_;
-    to_send << accum_yaw_;
+    to_send << play_state_.GetPitch();
+    to_send << play_state_.GetYaw();
     to_send << PacketBlockType::INPUT;
-    play_state_.AddAction(100);
-    play_state_.SetPitchYaw(accum_pitch_, accum_yaw_);
   } else {
     play_state_.ClearActions();
   }
@@ -300,6 +298,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::GAME_START: {
+      unsigned int team;
       int num_players = -1;
       std::vector<EntityID> player_ids;
       EntityID my_id;
@@ -311,11 +310,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet.Remove(player_ids.data(), player_ids.size());
       packet >> my_id;
       packet >> ball_id;
-
+      packet >> team;
       play_state_.SetEntityIDs(player_ids, my_id, ball_id);
       play_state_.SetMyPrimaryAbility(ability_id);
-
+      play_state_.SetTeam(team);
       ChangeState(StateType::PLAY);
+	  
       std::cout << "PACKET: GAME_START\n";
       break;
     }
@@ -406,10 +406,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
     */
     case PacketBlockType::SWITCH_GOALS: {
-      // TODO: maybe move, is hack now
-      if (current_state_->Type() == StateType::PLAY) {
-        play_state_.SwitchGoals();
-      }
+      packet >> switch_goal_timer_sec_;
+      packet >> switch_goal_time_;
       break;
     }
     case PacketBlockType::SECONDARY_USED: {
@@ -510,6 +508,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         }
         case ProjectileID::MISSILE_OBJECT: {
           play_state_.CreateMissileObject(e_id);
+          // TODO: Dont trigger this event on the client like this. Fix so that event is sent/received AFTER the create_projectile packet on server instead
+          // Note: Sometimes this plays on player entity rather than the missile entity [???]
+          GameEvent missile_event;
+          missile_event.type = GameEvent::MISSILE_FIRE;
+          missile_event.missile_fire.projectile_id = e_id;
+          dispatcher.trigger(missile_event);
           break;
         }
       }
@@ -588,6 +592,7 @@ void Engine::UpdateSystems(float dt) {
   }
 
   gui_system::Update(*registry_current_);
+  input_system::Update(*registry_current_);
   ParticleSystem(*registry_current_, dt);
   RenderSystem(*registry_current_);
   animation_system_.UpdateAnimations(*registry_current_, dt);
@@ -682,3 +687,9 @@ void Engine::DrawScoreboard() {
 int Engine::GetGameplayTimer() const { return gameplay_timer_sec_; }
 
 int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }
+
+int Engine::GetSwitchGoalCountdownTimer() const {
+  return switch_goal_timer_sec_;
+}
+
+int Engine::GetSwitchGoalTime() const { return switch_goal_time_; }

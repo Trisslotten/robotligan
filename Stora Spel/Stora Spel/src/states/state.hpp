@@ -11,6 +11,7 @@
 #include <util/timer.hpp>
 #include "Chat.hpp"
 #include "shared/shared.hpp"
+#include "eventdispatcher.hpp"
 
 class Engine;
 
@@ -164,8 +165,6 @@ class ConnectMenuState : public State {
   std::string last_msg_ = "Failed to connect: Timeout";
   std::string ip_ = "localhost";
   std::string port_ = "1337";
-  InputField ip_field_;
-  InputField port_field_;
   glob::Font2DHandle font_test_ = 0;
   entt::registry registry_connect_menu_;
 };
@@ -189,6 +188,8 @@ class SettingsState : public State {
   float setting_fov_ = 90.f;
   float setting_volume_ = 100.f;
   float setting_mouse_sens_ = 1.0f;
+
+  std::string setting_username_ = "BogdanBoss";
 };
 
 /////////////////////// PLAY ///////////////////////
@@ -227,6 +228,7 @@ class PlayState : public State {
     match_time_ = time;
     countdown_time_ = countdown_time;
   }
+
   void SetMyTarget(EntityID id) { my_target_ = id; }
   void ReceiveGameEvent(const GameEvent& e);
   void Reset();
@@ -235,17 +237,14 @@ class PlayState : public State {
 
   void OnServerFrame();
   void AddAction(int action) { actions_.push_back(action); }
-  void ClearActions() {
-    actions_.clear();
-    actions_.push_back(100);
-  }
+  void ClearActions() { actions_.clear(); }
 
-  void UpdateHistory(int id) {
-    while (history_.size() > 0 && history_.front().id <= id)
-      history_.pop_front();
-  }
+  void UpdateHistory(int id) { while (history_.size() > 0 && history_.front().id <= id) history_.pop_front(); }
+  void AddPitchYaw(float pitch, float yaw);
   void SetPitchYaw(float pitch, float yaw);
-
+  float GetPitch() { return pitch_; }
+  float GetYaw() { return yaw_; }
+  void SetTeam(unsigned int team) {my_team_ = team;}
  private:
   void CreateInitialEntities();
   void CreatePlayerEntities();
@@ -258,13 +257,16 @@ class PlayState : public State {
   void ToggleInGameMenu();
   void UpdateInGameMenu(bool show_menu);
   void UpdateGameplayTimer();
+  void UpdateSwitchGoalTimer();
+
+  void DrawNameOverPlayer();
 
   void DrawTopScores();
   void DrawTarget();
-  FrameState SimulateMovement(std::vector<int>& action, FrameState& state,
-                              float dt);
+  void DrawQuickslots();
+  FrameState SimulateMovement(std::vector<int> &action, FrameState& state, float dt);
   void MovePlayer(float dt);
-
+  void MoveBall(float dt);
   ////////////////////////////////////////
 
   entt::registry registry_gameplay_;
@@ -297,8 +299,11 @@ class PlayState : public State {
   bool show_in_game_menu_buttons_ = false;
 
   int my_primary_ability_id = 0;
+  unsigned int my_team_;
   int match_time_ = 300;
   int countdown_time_ = 5;
+  // For switch goal
+  bool countdown_in_progress_ = false;
 
   Timer end_game_timer_;
   bool game_has_ended_ = false;
@@ -308,11 +313,14 @@ class PlayState : public State {
   glob::ModelHandle test_ball_;
   std::list<PlayerData> history_;
   FrameState predicted_state_;
-  float latency_;  // do we need?
+
   std::vector<int> actions_;
   int frame_id = 0;
-  float accum_pitch_ = 0.0f;
-  float accum_yaw_ = 0.0f;
+  float pitch_ = 0.0f;
+  float yaw_ = 0.0f;
+  
+
+  float primary_cd_ = 0.0f;
 };
 
 #endif  // STATE_HPP_

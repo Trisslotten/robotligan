@@ -46,6 +46,7 @@ struct GUIItem {
   glm::vec2 pos;
   float scale;
   float scale_x;
+  float opacity;
 };
 
 struct E2DItem {
@@ -70,6 +71,17 @@ struct TextItem {
   std::string text;
   glm::vec4 color;
   bool visible;
+  bool equal_spacing;
+  float spacing;
+};
+
+struct Text3DItem {
+  Font2D *font = nullptr;
+  glm::vec3 pos{0};
+  float size = 0.f;
+  std::string text;
+  glm::vec4 color;
+  glm::mat4 rotation;
 };
 
 struct LightItem {
@@ -86,6 +98,7 @@ ShaderProgram particle_shader;
 // ShaderProgram compute_shader;
 ShaderProgram animated_model_shader;
 ShaderProgram text_shader;
+ShaderProgram text3D_shader;
 ShaderProgram wireframe_shader;
 ShaderProgram gui_shader;
 ShaderProgram e2D_shader;
@@ -152,6 +165,7 @@ std::vector<BoneAnimatedRenderItem> bone_animated_items_to_render;
 std::vector<glm::mat4> cubes;
 std::vector<ModelHandle> wireframe_meshes;
 std::vector<TextItem> text_to_render;
+std::vector<Text3DItem> text3D_to_render;
 std::vector<GUIItem> gui_items_to_render;
 std::vector<E2DItem> e2D_items_to_render;
 
@@ -324,6 +338,11 @@ void Init() {
   text_shader.add("text2Dshader.vert");
   text_shader.add("text2Dshader.frag");
   text_shader.compile();
+
+  text3D_shader.add("text3Dshader.vert");
+  text3D_shader.add("text3Dshader.frag");
+  text3D_shader.compile();
+
 
   gui_shader.add("guishader.vert");
   gui_shader.add("guishader.frag");
@@ -943,8 +962,28 @@ void SubmitParticles(ParticleSystemHandle handle) {
   particles_to_render.push_back(find_res->second);
 }
 
+double GetWidthOfText(Font2DHandle font_handle, std::string text, int size) {
+  const char *chars = text.c_str();
+  int len = text.length();
+  double offset_accum = 0;
+  for (int i = 0; i < len; i++) {
+    unsigned char cur = *(unsigned char *)(chars + i);
+
+    if (cur == ' ') {
+      offset_accum += size / 3;
+    } else {
+      double r = 0;
+      r = fonts[font_handle].GetAdvances()[cur];
+      offset_accum += r * .03 * double(size);
+    }
+    // std::cout << offset_accum << "\n";
+  }
+  return offset_accum - 0.7*len;
+}
+
 void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
-            std::string text, glm::vec4 color, bool visible) {
+            std::string text, glm::vec4 color, bool visible, bool equal_spacing,
+            float spacing) {
   auto find_res = fonts.find(font_h);
   if (find_res == fonts.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted font! \n";
@@ -958,14 +997,36 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
   to_render.text = text;
   to_render.color = color;
   to_render.visible = visible;
+  to_render.equal_spacing = equal_spacing;
+  to_render.spacing = spacing;
   text_to_render.push_back(to_render);
+}
+
+void Submit(Font2DHandle font_h, glm::vec3 pos, float size, std::string text,
+  glm::vec4 color,
+  glm::mat4 rot) {
+  auto find_res = fonts.find(font_h);
+  if (find_res == fonts.end()) {
+    std::cout << "ERROR graphics.cpp: could not find submitted font! \n";
+    return;
+  }
+
+  Text3DItem to_render;
+  to_render.font = &find_res->second;
+  to_render.pos = pos;
+  to_render.size = size;
+  to_render.text = text;
+  to_render.color = color;
+  to_render.rotation = rot;
+  text3D_to_render.push_back(to_render);
 }
 
 void SetCamera(Camera cam) { camera = cam; }
 
 void SetModelUseGL(bool use_gl) { kModelUseGL = use_gl; }
 
-void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x) {
+void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x,
+            float opacity) {
   auto find_res = gui_elements.find(gui_h);
   if (find_res == gui_elements.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted gui element\n";
@@ -977,6 +1038,7 @@ void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x) {
   to_render.pos = pos;
   to_render.scale = scale;
   to_render.scale_x = scale_x;
+  to_render.opacity = opacity;
   gui_items_to_render.push_back(to_render);
 }
 
@@ -1147,46 +1209,39 @@ void Render() {
       }
     }
     glDisable(GL_BLEND);
+
+    // render wireframe cubes
+    for (auto &m : cubes) DrawCube(m);
+    // render wireframe meshes
+    for (auto &m : wireframe_meshes) DrawWireFrameMeshes(m);
+
+    // render text and gui elements
+    glBindVertexArray(quad_vao);
+
+    // render 2D elements
+    e2D_shader.use();
+    e2D_shader.uniform("cam_transform", cam_transform);
+    for (auto &e2D_item : e2D_items_to_render) {
+      e2D_item.e2D->DrawInWorld(e2D_shader, e2D_item.pos, e2D_item.scale,
+                                e2D_item.rot);
+    }
+
+  text3D_shader.use();
+  text3D_shader.uniform("cam_transform", cam_transform);
+  for (auto &text3D : text3D_to_render) {
+    text3D.font->Draw3D(text3D_shader, text3D.pos, text3D.size, text3D.text,
+                        text3D.color, text3D.rotation);
   }
 
-  // render wireframe cubes
-  for (auto &m : cubes) DrawCube(m);
-  // render wireframe meshes
-  for (auto &m : wireframe_meshes) DrawWireFrameMeshes(m);
-
-  // render text and gui elements
-  glBindVertexArray(quad_vao);
-
-  // render 2D elements
-  e2D_shader.use();
-  e2D_shader.uniform("cam_transform", cam_transform);
-  for (auto &e2D_item : e2D_items_to_render) {
-    e2D_item.e2D->DrawInWorld(e2D_shader, e2D_item.pos, e2D_item.scale,
-                              e2D_item.rot);
+    // render particles
+    particle_shader.use();
+    particle_shader.uniform("cam_transform", cam_transform);
+    particle_shader.uniform("cam_pos", camera.GetPosition());
+    particle_shader.uniform("cam_up", camera.GetUpVector());
+    for (auto p : particles_to_render) {
+      buffer_particle_systems[p].system.Draw(particle_shader);
+    }
   }
-
-  // render particles
-  particle_shader.use();
-  particle_shader.uniform("cam_transform", cam_transform);
-  particle_shader.uniform("cam_pos", camera.GetPosition());
-  particle_shader.uniform("cam_up", camera.GetUpVector());
-  for (auto p : particles_to_render) {
-    buffer_particle_systems[p].system.Draw(particle_shader);
-  }
-
-  glBindVertexArray(quad_vao);
-  gui_shader.use();
-  for (auto &gui_item : gui_items_to_render) {
-    gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale,
-                               gui_item.scale_x);
-  }
-
-  text_shader.use();
-  for (auto &text_item : text_to_render) {
-    text_item.font->Draw(text_shader, text_item.pos, text_item.size,
-                         text_item.text, text_item.color, text_item.visible);
-  }
-
   post_process.AfterDraw(blur);
 
   fullscreen_shader.use();
@@ -1196,10 +1251,25 @@ void Render() {
   fullscreen_shader.uniform("texture_emission", 1);
   DrawFullscreenQuad();
 
+  glBindVertexArray(quad_vao);
+  gui_shader.use();
+  for (auto &gui_item : gui_items_to_render) {
+    gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale,
+                               gui_item.scale_x, gui_item.opacity);
+  }
+
+  text_shader.use();
+  for (auto &text_item : text_to_render) {
+    text_item.font->Draw(text_shader, text_item.pos, text_item.size,
+                         text_item.text, text_item.color, text_item.visible,
+                         text_item.equal_spacing, text_item.spacing);
+  }
+
   lights_to_render.clear();
   items_to_render.clear();
   bone_animated_items_to_render.clear();
   e2D_items_to_render.clear();
+  text3D_to_render.clear();
   gui_items_to_render.clear();
   text_to_render.clear();
   cubes.clear();

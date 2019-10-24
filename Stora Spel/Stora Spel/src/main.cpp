@@ -16,6 +16,7 @@
 #include <chrono>
 #include <thread>
 
+entt::dispatcher menu_dispatcher{};
 entt::dispatcher dispatcher{};
 
 int main(unsigned argc, char** argv) {

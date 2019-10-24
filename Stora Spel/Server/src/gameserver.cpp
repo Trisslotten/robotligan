@@ -36,6 +36,31 @@ void GameServer::Init(double in_update_rate) {
   current_state_ = &lobby_state_;
   srand(time(NULL));
   pings_.resize(NetAPI::Common::kMaxPlayers);
+
+  // very annoying thing
+  ability_cooldowns_[AbilityID::BUILD_WALL] =
+      GlobalSettings::Access()->ValueOf("ABILITY_BUILD_WALL_COOLDOWN");
+  ability_cooldowns_[AbilityID::FAKE_BALL] =
+      GlobalSettings::Access()->ValueOf("ABILITY_FAKE_BALL_COOLDOWN");
+  ability_cooldowns_[AbilityID::FORCE_PUSH] =
+      GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_COOLDOWN");
+  ability_cooldowns_[AbilityID::GRAVITY_CHANGE] =
+      GlobalSettings::Access()->ValueOf("ABILITY_GRAVITY_COOLDOWN");
+  ability_cooldowns_[AbilityID::HOMING_BALL] =
+      GlobalSettings::Access()->ValueOf("ABILITY_HOMING_BALL_COOLDOWN");
+  ability_cooldowns_[AbilityID::INVISIBILITY] =
+      GlobalSettings::Access()->ValueOf("ABILITY_INVISIBILITY_COOLDOWN");
+  ability_cooldowns_[AbilityID::MISSILE] =
+      GlobalSettings::Access()->ValueOf("ABILITY_MISSILE_COOLDOWN");
+  ability_cooldowns_[AbilityID::SUPER_STRIKE] =
+      GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
+  ability_cooldowns_[AbilityID::SWITCH_GOALS] =
+      GlobalSettings::Access()->ValueOf("ABILITY_SWITCH_GOALS_COOLDOWN");
+  ability_cooldowns_[AbilityID::TELEPORT] =
+      GlobalSettings::Access()->ValueOf("ABILITY_TELEPORT_COOLDOWN");
+
+  ability_controller::ability_cooldowns = ability_cooldowns_;
+
   // CreateEntities();
 }
 
@@ -66,6 +91,7 @@ void GameServer::Update(float dt) {
   }
   DoOncePerSecond();
   current_state_->Update(dt);
+  current_state_->HandleDataToSend();
 
   //---------------------------------------------
   //--------------UPDATE GAME LOGIC--------------
@@ -94,6 +120,12 @@ void GameServer::HandlePacketsToSend() {
     auto header = to_send.GetHeader();
     header->receiver = id;
 
+    // send events
+    for (auto event : game_events_) {
+      to_send << event;
+      to_send << PacketBlockType::GAME_EVENT;
+    }
+
     if (!packets_[id].IsEmpty()) {
       to_send << packets_[id];
     }
@@ -108,11 +140,6 @@ void GameServer::HandlePacketsToSend() {
       to_send << PacketBlockType::MESSAGE;
     }
 
-    // send events
-    for (auto event : game_events_) {
-      to_send << event;
-      to_send << PacketBlockType::GAME_EVENT;
-    }
 
     if (!to_send.IsEmpty()) {
       server_.Send(to_send);

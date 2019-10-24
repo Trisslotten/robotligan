@@ -29,7 +29,7 @@ Example: '>MY_VALUE=13.37'
 >RENDER_WIREFRAME=0.0
 
 //--Sound Settings--//
->SOUND_VOLUME=15.500000
+>SOUND_VOLUME=53.500000
 
 //--Graphics Settings--//
 >GRAPHICS_FOV=90.000000

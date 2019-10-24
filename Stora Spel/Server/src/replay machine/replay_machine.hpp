@@ -7,33 +7,27 @@
 #include <entity/registry.hpp>
 #include <entity/snapshot.hpp>
 
-#include "bit_pack.hpp"
-#include "reg_pack.hpp"
+#include "assert_module.hpp"
+#include "deterministic_replay.hpp"
 
 class ReplayMachine {
  private:
-  // Variables : Input for deterministic replay
-  BitPack* input_log_;
-  unsigned int bits_per_int_;
-  std::bitset<10> last_input_state_;
-  std::bitset<10> last_output_state_;
+  // Variables	:	Deterministic replay
+  DeterministicReplay* replay_deterministic_;
+  float recording_max_seconds_;
+  float recording_elapsed_seconds_;
 
-  // Variables : Saving the state
-  RegPack* registry_log_;
-  float snapshot_interval_seconds_;
-  float time_since_last_snapshot_;
+  PlayerIO* player_io_arr_;
+  unsigned int num_of_players_;
 
-  // Variables : translating between bits and snapshots
-  unsigned int* frame_indices_;
-  unsigned int curr_snapshot_index_;
-
-  void WriteInputFrame(const std::bitset<10>& in_bitset,
-                       const float& in_x_value, const float& in_y_value);
-  void ReadInputFrame(std::bitset<10>& in_bitset, float& in_x_value,
-                      float& in_y_value);
+  // Variables	:	Assert mode
+  AssertModule* assert_module_;
+  bool assert_mode_on_;
 
  public:
-  ReplayMachine();
+  ReplayMachine(unsigned int in_seconds, unsigned int in_frames_per_second,
+                float in_snapshot_interval_seconds,
+                unsigned int in_num_of_players, bool in_assert_mode);
   ~ReplayMachine();
 
   // NTS:	Delete copy constructor
@@ -41,14 +35,14 @@ class ReplayMachine {
   ReplayMachine(ReplayMachine&) = delete;
   void operator=(ReplayMachine const&) = delete;
 
-  void Init(unsigned int in_seconds, unsigned int in_ticks_per_second,
-            float in_snapshot_interval_seconds);
+  // void Init();
 
   bool SaveReplayFrame(std::bitset<10>& in_bitset, float& in_x_value,
                        float& in_y_value, entt::registry& in_registry,
-                       const float& in_dt);
+                       const float& in_dt, unsigned int in_player_index);
   bool LoadReplayFrame(std::bitset<10>& in_bitset, float& in_x_value,
-                       float& in_y_value, entt::registry& in_registry);
+                       float& in_y_value, entt::registry& in_registry,
+                       unsigned int in_player_index);
 };
 
 #endif  // !REPLAY_MACHINE_HPP_
