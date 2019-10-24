@@ -284,8 +284,7 @@ void PlayState::Update(float dt) {
       glob::Submit(gui_minimap_player_red_,
         glm::vec2(minimap_pos_x, minimap_pos_y),
         0.1);  // TODO: CALC REAL POS
-    }
-    else {
+    } else {
       glob::Submit(gui_minimap_player_blue_,
         glm::vec2(minimap_pos_x, minimap_pos_y),
         0.1);  // TODO: CALC REAL POS
