@@ -79,6 +79,7 @@ class Engine {
   StateType GetPreviousStateType() { return previous_state_; }
   int GetStateType() { return statetype_; }
   void SetStateType(int state) { statetype_ = state; }
+  void ReInit() { play_state_.Cleanup(); play_state_.Init();}
  private:
   void SetKeybinds();
 

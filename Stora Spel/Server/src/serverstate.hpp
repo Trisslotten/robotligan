@@ -10,7 +10,6 @@
 #include "replay machine/replay_machine.hpp"
 #include "util/event.hpp"
 
-
 class GameServer;
 
 enum class ServerStateType {
@@ -71,6 +70,7 @@ class ServerLobbyState : public ServerState {
 
   std::unordered_map<int, AbilityID> client_abilities_;
   std::unordered_map<int, unsigned int> client_teams_;
+
  private:
   std::unordered_map<int, bool> clients_ready_;
   Timer start_game_timer;
@@ -108,6 +108,7 @@ class ServerPlayState : public ServerState {
   void ReceiveEvent(const EventInfo& e);
   // EntityID GetNextEntityGuid() { return entity_guid_++; }
   void SetFrameID(int client_id, int id) { player_frame_id_[client_id] = id; }
+
  private:
   entt::entity CreateIDEntity();
 

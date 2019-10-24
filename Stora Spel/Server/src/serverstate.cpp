@@ -123,7 +123,6 @@ void ServerPlayState::Init() {
     to_send << PacketBlockType::GAME_START;
 
     server.Send(to_send);
-	
   }
 }
 
@@ -163,7 +162,6 @@ void ServerPlayState::Update(float dt) {
     EntityID client_player_id = clients_player_ids_[client_id];
 
     if (!clients_receive_updates_[client_id]) {
-
       // TODO: maybe send important packets even if not initialized
       continue;
     }
@@ -324,8 +322,7 @@ void ServerPlayState::Update(float dt) {
   }
   destroy_entities_.clear();
   created_projectiles_.clear();
-  if (pick_ups_sent)
-    created_pick_ups_.clear();
+  if (pick_ups_sent) created_pick_ups_.clear();
 
   if (reset_timer_.Elapsed() > 3.0f) {
     ResetEntities();
@@ -341,7 +338,6 @@ void ServerPlayState::Update(float dt) {
   }
   if (match_timer_.Elapsed() > match_time_) {
     EndGame();
-
   }
 }
 

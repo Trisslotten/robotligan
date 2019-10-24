@@ -47,6 +47,7 @@ class State {
 
  protected:
   Engine* engine_ = nullptr;
+
  private:
 };
 
@@ -95,6 +96,7 @@ class LobbyState : public State {
   void HandleUpdateLobbyTeamPacket(NetAPI::Common::Packet& packet);
   void HandlePlayerDisconnect(NetAPI::Common::Packet& packet);
   void SetMyId(int client_id) { my_id_ = client_id; }
+
  private:
   entt::registry registry_lobby_;
   void CreateBackgroundEntities();
@@ -242,7 +244,8 @@ class PlayState : public State {
       history_.pop_front();
   }
   void SetPitchYaw(float pitch, float yaw);
-  auto *GetPlayerIDs() { return &player_ids_; }
+  auto* GetPlayerIDs() { return &player_ids_; }
+
  private:
   int server_state_ = 1;
   void CreateInitialEntities();

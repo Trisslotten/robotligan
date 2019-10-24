@@ -1,10 +1,10 @@
-#include <glob/window.hpp>
 #include <GLFW/glfw3.h>
+#include <glob/window.hpp>
+#include "../ecs/systems/input_system.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
 #include "state.hpp"
 #include "util/input.hpp"
-#include "../ecs/systems/input_system.hpp"
 void ConnectMenuState::Startup() {
   auto& client = engine_->GetClient();
   glob::window::SetMouseLocked(false);
