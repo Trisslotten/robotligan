@@ -107,7 +107,6 @@ void Engine::Update(float dt) {
         }
   }
   for (int i = 0; i < counter; ++i) time_test.pop_front();*/
-
   if (take_game_input_ == true) {
     // accumulate key presses
     for (auto const& [key, action] : keybinds_) {
@@ -145,7 +144,6 @@ void Engine::Update(float dt) {
   if (wanted_state_type_ != current_state_->Type()) {
     // cleanup old state
     current_state_->Cleanup();
-
     // set new state
     switch (wanted_state_type_) {
       case StateType::MAIN_MENU:
@@ -158,9 +156,10 @@ void Engine::Update(float dt) {
         current_state_ = &lobby_state_;
         break;
       case StateType::PLAY:
+        current_state_ = &play_state_;
+
         scores_[0] = 0;
         scores_[1] = 0;
-        current_state_ = &play_state_;
         break;
       case StateType::SETTINGS:
         current_state_ = &settings_state_;
@@ -449,7 +448,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       EntityID id;
       packet >> id;
       if (current_state_->Type() == StateType::PLAY) {
-        auto pick_up_view = registry_current_->view<PickUpComponent, IDComponent>();
+        auto pick_up_view =
+            registry_current_->view<PickUpComponent, IDComponent>();
         for (auto entity : pick_up_view) {
           if (id == pick_up_view.get<IDComponent>(entity).id) {
             registry_current_->destroy(entity);
@@ -459,10 +459,17 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       }
       break;
     }
-	case PacketBlockType::SERVER_CAN_JOIN:
-		packet >> server_connected_;
-		std::cout << server_connected_;
-		break;
+    case PacketBlockType::SERVER_CAN_JOIN: {
+      packet >> server_connected_;
+      std::cout << server_connected_;
+      break;
+    }
+    case PacketBlockType::STATE: {
+      int state = -1;
+      packet >> state;
+      SetStateType(state);
+      break;
+    }
     case PacketBlockType::RECEIVE_PICK_UP: {
       packet >> second_ability_;
       break;
@@ -681,6 +688,15 @@ void Engine::DrawScoreboard() {
         red_count++;
       }
     }
+  }
+}
+
+std::vector<int>* Engine::GetPlayingPlayers() {
+  auto val = play_state_.GetPlayerIDs();
+  if (val && !val->empty()) {
+    return val;
+  } else {
+    return nullptr;
   }
 }
 
