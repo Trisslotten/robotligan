@@ -68,6 +68,7 @@ enum : int16_t {
   YOUR_TARGET,
   FRAME_ID,
   PLAYER_LOOK_DIR,
+  PLAYER_MOVE_DIR,
   NUM_BLOCK_TYPES,
 };
 

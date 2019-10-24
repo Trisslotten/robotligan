@@ -3,8 +3,8 @@
 
 #include <entt.hpp>
 #include <glm/gtx/rotate_vector.hpp>
-#include "ecs/components/ability_component.hpp"
 #include <shared/physics_component.hpp>
+#include "ecs/components/ability_component.hpp"
 #include "ecs/components/player_component.hpp"
 #include "shared/camera_component.hpp"
 #include "shared/transform_component.hpp"
@@ -29,8 +29,6 @@ void Update(entt::registry& registry, float dt) {
     PhysicsComponent& physics_c = view_controller.get<PhysicsComponent>(entity);
     AbilityComponent& ability_c = view_controller.get<AbilityComponent>(entity);
     IDComponent& id_c = view_controller.get<IDComponent>(entity);
-
-
 
     constexpr float pi = glm::pi<float>();
     player_c.pitch = glm::clamp(player_c.pitch, -0.49f * pi, 0.49f * pi);
@@ -74,61 +72,67 @@ void Update(entt::registry& registry, float dt) {
     glm::vec3 right = glm::normalize(glm::cross(frwd, up));
 
     if (true) {  // abs(accum_velocity.length()) < player_c.walkspeed * 4) {
-		if (player_c.actions[PlayerAction::WALK_FORWARD] || player_c.actions[PlayerAction::WALK_BACKWARD] || player_c.actions[PlayerAction::WALK_RIGHT] || player_c.actions[PlayerAction::WALK_LEFT]) {
-			if (!player_c.running) {
-				GameEvent run_event;
-				run_event.type = GameEvent::RUN_START;
-				run_event.sprint_start.player_id = registry.get<IDComponent>(entity).id;
-				dispatcher.trigger(run_event);
-				player_c.running = true;
-			}
-			if (player_c.actions[PlayerAction::WALK_FORWARD]) {
-				accum_velocity += frwd;
-			}
-			if (player_c.actions[PlayerAction::WALK_BACKWARD]) {
-				accum_velocity -= frwd;
-			}
-			if (player_c.actions[PlayerAction::WALK_RIGHT]) {
-				accum_velocity += right;
-			}
-			if (player_c.actions[PlayerAction::WALK_LEFT]) {
-				accum_velocity -= right;
-			}
-		}
-		else if(player_c.running){
-			GameEvent run_event;
-			run_event.type = GameEvent::RUN_END;
-			run_event.sprint_start.player_id = registry.get<IDComponent>(entity).id;
-			dispatcher.trigger(run_event);
-			player_c.running = false;
-		}
-	  if (glm::length(accum_velocity) > 0.f) {
-		  accum_velocity = glm::normalize(accum_velocity) * player_c.walkspeed;
-	  }
+      if (player_c.actions[PlayerAction::WALK_FORWARD] ||
+          player_c.actions[PlayerAction::WALK_BACKWARD] ||
+          player_c.actions[PlayerAction::WALK_RIGHT] ||
+          player_c.actions[PlayerAction::WALK_LEFT]) {
+        if (!player_c.running) {
+          GameEvent run_event;
+          run_event.type = GameEvent::RUN_START;
+          run_event.sprint_start.player_id =
+              registry.get<IDComponent>(entity).id;
+          dispatcher.trigger(run_event);
+          player_c.running = true;
+        }
+        if (player_c.actions[PlayerAction::WALK_FORWARD]) {
+          accum_velocity += frwd;
+        }
+        if (player_c.actions[PlayerAction::WALK_BACKWARD]) {
+          accum_velocity -= frwd;
+        }
+        if (player_c.actions[PlayerAction::WALK_RIGHT]) {
+          accum_velocity += right;
+        }
+        if (player_c.actions[PlayerAction::WALK_LEFT]) {
+          accum_velocity -= right;
+        }
+      } else if (player_c.running) {
+        GameEvent run_event;
+        run_event.type = GameEvent::RUN_END;
+        run_event.sprint_start.player_id = registry.get<IDComponent>(entity).id;
+        dispatcher.trigger(run_event);
+        player_c.running = false;
+      }
+      if (glm::length(accum_velocity) > 0.f) {
+        accum_velocity = glm::normalize(accum_velocity) * player_c.walkspeed;
+      }
 
-      if (player_c.actions[PlayerAction::SPRINT]){
-		  if (!player_c.sprinting) {
-			  GameEvent sprint_event;
-			  sprint_event.type = GameEvent::SPRINT_START;
-			  sprint_event.sprint_start.player_id = registry.get<IDComponent>(entity).id;
-			  dispatcher.trigger(sprint_event);
-		  }
-		  player_c.sprinting = true;
+      if (player_c.actions[PlayerAction::SPRINT]) {
+        if (!player_c.sprinting) {
+          GameEvent sprint_event;
+          sprint_event.type = GameEvent::SPRINT_START;
+          sprint_event.sprint_start.player_id =
+              registry.get<IDComponent>(entity).id;
+          dispatcher.trigger(sprint_event);
+        }
+        player_c.sprinting = true;
 
-		  if( player_c.energy_current > player_c.cost_sprint * dt) {
-
-			accum_velocity *= 2.f;
-			player_c.energy_current -= player_c.cost_sprint * dt;
-		  }
-	  }
-	  else if(!player_c.actions[PlayerAction::SPRINT] && player_c.sprinting) {
-		  player_c.sprinting = false;
-		  GameEvent sprint_event;
-		  sprint_event.type = GameEvent::SPRINT_END;
-		  sprint_event.sprint_end.player_id = registry.get<IDComponent>(entity).id;
-		  dispatcher.trigger(sprint_event);
-	  }
+        if (player_c.energy_current > player_c.cost_sprint * dt) {
+          accum_velocity *= 2.f;
+          player_c.energy_current -= player_c.cost_sprint * dt;
+        }
+      } else if (!player_c.actions[PlayerAction::SPRINT] &&
+                 player_c.sprinting) {
+        player_c.sprinting = false;
+        GameEvent sprint_event;
+        sprint_event.type = GameEvent::SPRINT_END;
+        sprint_event.sprint_end.player_id =
+            registry.get<IDComponent>(entity).id;
+        dispatcher.trigger(sprint_event);
+      }
     }
+
+    player_c.wanted_move_dir = accum_velocity;
 
     // physics stuff
 
@@ -193,7 +197,8 @@ void Update(entt::registry& registry, float dt) {
     // std::cout << "stam: " << player_c.energy_current << "\n";
 
     // kick ball
-    if (player_c.actions[PlayerAction::KICK] && player_c.kick_timer.Elapsed() > player_c.kick_cooldown) {
+    if (player_c.actions[PlayerAction::KICK] &&
+        player_c.kick_timer.Elapsed() > player_c.kick_cooldown) {
       player_c.kick_timer.Restart();
       GameEvent kick_event;
       kick_event.type = GameEvent::KICK;
