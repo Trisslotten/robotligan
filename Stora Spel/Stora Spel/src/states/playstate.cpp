@@ -97,6 +97,7 @@ void PlayState::TestParticles() {
 }
 
 void PlayState::Init() {
+  frame_times.reserve(2000);
   glob::window::SetMouseLocked(true);
   engine_->SetSendInput(true);
   engine_->SetCurrentRegistry(&registry_gameplay_);
@@ -146,6 +147,7 @@ void PlayState::Update(float dt) {
   if (!transforms_.empty()) {
     auto view_entities =
         registry_gameplay_.view<TransformComponent, IDComponent>();
+    glm::vec3 pos = new_transforms_[ball_id_].first;
     new_transforms_.clear();
     for (auto entity : view_entities) {
       auto& trans_c = view_entities.get<TransformComponent>(entity);
@@ -153,6 +155,13 @@ void PlayState::Update(float dt) {
       auto trans = transforms_[id_c.id];
 
       new_transforms_[id_c.id] = std::make_pair(trans.first, trans.second);
+      if (id_c.id == ball_id_) {
+        //std::cout << glm::length(pos - new_transforms_[id_c.id].first) << std::endl;
+        /*if (counter < 2000) {
+          frame_times.push_back(
+              glm::length(pos - new_transforms_[id_c.id].first));
+        }*/ 
+	  }
       /*
       std::cout << trans_c.position.x << ", ";
       std::cout << trans_c.position.y << ", ";
@@ -163,15 +172,29 @@ void PlayState::Update(float dt) {
     OnServerFrame();
     move_player = true;
   }
+  /*struct {
+    bool operator()(float a, float b) const { return a < b; }
+  } customLess;
+  if (counter == 2000) {
+    std::sort(frame_times.begin(), frame_times.end(), customLess);
+    for (int i = 0; i < 2000; ++i)
+      std::cout << i << ": " << frame_times[i] << std::endl;
+  }
+  counter++;*/
 
-  auto view_entities =
-      registry_gameplay_.view<TransformComponent, IDComponent>();
   if (move_player == true) {
     MovePlayer(1 / 64.0f);
     actions_.clear();
   }
-  MoveBall(dt);
+  timer += dt;
+  if (timer > 1 / 64.0f) {
+	//MoveBall(dt);
+    timer -= dt;
+  }
   // interpolate
+  auto view_entities =
+      registry_gameplay_.view<TransformComponent, IDComponent>();
+
   float f = 0.5;  // 0.25f * dt;  // pow(0.75f, dt);
   for (auto entity : view_entities) {
     auto& trans_c = view_entities.get<TransformComponent>(entity);
@@ -193,7 +216,7 @@ void PlayState::Update(float dt) {
       if (glm::length(trans_c.position - trans.first) > 10) {
         trans_c.position = trans.first;
       } else {
-        trans_c.position = glm::lerp(trans_c.position, trans.first, 1.0f - f);
+        trans_c.position = glm::lerp(trans_c.position, trans.first, 0.5f);
         // trans_c.position = trans.first;
       }
       trans_c.rotation = glm::slerp(trans_c.rotation, trans.second, 1.0f - f);
@@ -645,7 +668,7 @@ void PlayState::OnServerFrame() {
 }
 
 void PlayState::MoveBall(float dt) {
- /* auto view_ball =
+  auto view_ball =
       registry_gameplay_
           .view<BallComponent, TransformComponent, PhysicsComponent, IDComponent>();
 
@@ -666,7 +689,7 @@ void PlayState::MoveBall(float dt) {
 
 	new_transforms_[id_c.id].first = po.position;
     phys_c.velocity = po.velocity;
-  }*/
+  }
 }
 
 void PlayState::DrawTarget() {
