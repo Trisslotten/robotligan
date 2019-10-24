@@ -220,9 +220,10 @@ void PlayState::Update(float dt) {
 
   UpdateGameplayTimer();
   UpdateSwitchGoalTimer();
+  DrawNameOverPlayer();
 
-  // draw stamina bar
-  glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
+      // draw stamina bar
+      glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
   glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
   glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
 
@@ -408,6 +409,61 @@ void PlayState::UpdateGameplayTimer() {
   if (count > 0) {
     glob::Submit(font_test_, countdown_pos, 500, std::to_string(count),
                  glm::vec4(1));
+  }
+}
+
+void PlayState::DrawNameOverPlayer() {
+  auto player_view =
+      registry_gameplay_
+          .view<PlayerComponent, TransformComponent, IDComponent>();
+
+  auto& my_transform = registry_gameplay_.get<TransformComponent>(my_entity_);
+  for (auto entity : player_view) {
+    if (my_entity_ == entity) {
+      continue;
+    }
+
+    auto& id_c = player_view.get<IDComponent>(entity);
+    auto& transform = player_view.get<TransformComponent>(entity);
+
+    for (auto& [id, name] : engine_->player_names_) {
+      if (id == id_c.id) {
+        glm::vec3 look = glm::vec3(transform.position - my_transform.position);
+        float distance = glm::length(look);
+        glm::vec3 up = glm::vec3(0.f, 1.f, 0.f);
+        look.y = 0;
+        look = glm::normalize(look);
+
+        glm::vec3 right = glm::cross(look, up);
+        glm::mat4 matrix(1.0f);
+        matrix[0] = glm::vec4(right, 0.f);
+        matrix[1] = glm::vec4(up, 0.f);
+        matrix[2] = glm::vec4(look, 0.f);
+
+        float size = 1.f;
+        float offset = 0.f;
+        glm::vec4 color = glm::vec4(1.0f);
+        if (distance < 10.f) {
+          offset = 1.3f;
+          size = 0.3f;
+        } else if (distance > 40.f) {
+          break;
+        } else {
+          auto factor = (distance - 10.f) / 60.f;
+          offset = glm::lerp(1.3f, 3.0f, factor);
+          size = glm::lerp(0.3f, 1.5f, factor);
+        }
+
+        auto team = engine_->GetPlayerTeam(id);
+        if (team == TEAM_BLUE) color = glm::vec4(0.f, 0.f, 1.f, 1.f);
+        else if (team == TEAM_RED)
+          color = color = glm::vec4(1.f, 0.f, 0.f, 1.f);
+
+        glob::Submit(font_test_, transform.position + up * offset, size, name, color, matrix);
+
+        break;
+      }
+    }
   }
 }
 

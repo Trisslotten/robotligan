@@ -258,6 +258,8 @@ class PlayState : public State {
   void UpdateGameplayTimer();
   void UpdateSwitchGoalTimer();
 
+  void DrawNameOverPlayer();
+
   void DrawTopScores();
   void DrawTarget();
   void DrawQuickslots();
