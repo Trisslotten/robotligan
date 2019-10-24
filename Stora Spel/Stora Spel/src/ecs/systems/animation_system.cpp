@@ -149,7 +149,8 @@ void AnimationSystem::StopAnimation(std::string name, AnimationComponent* ac) {
 
 void AnimationSystem::StrengthModulator(AnimationComponent* ac) {
   for (auto& group : ac->p_groups) {
-    float totStrength = 0;
+    float totStrength = 0.f;
+    float finStr = 0.f;
     for (auto& anim : group.animations) {
       totStrength += anim->strength_;
     }
@@ -171,6 +172,8 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
     auto& m = players.get<ModelComponent>(entity);
 
     PlayAnimation("Resting", 0.5f, &ac, 10, 1.f, LOOP);
+
+	/*
     PlayAnimation("LookUp", 0.5f, &ac, 16, 0.f, LOOP, &ac.model_data.upperBody);
     PlayAnimation("LookDown", 0.5f, &ac, 16, 0.f, LOOP,
                   &ac.model_data.upperBody);
@@ -180,8 +183,10 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
                   &ac.model_data.upperBody);
     PlayAnimation("LookAhead", 1.f, &ac, 16, 0.f, LOOP,
                   &ac.model_data.upperBody);
+	*/
 
-    glm::vec3 LRlookDir = glm::normalize(pl.look_dir * glm::vec3(1.f, 0.f, 1.f));
+    glm::vec3 LRlookDir =
+        glm::normalize(pl.look_dir * glm::vec3(1.f, 0.f, 1.f));
     glm::vec3 UDlookDir = glm::normalize(pl.look_dir);
     glm::vec3 moveDir = ph.velocity;
     if (abs(moveDir.x) > 0.01f || abs(moveDir.z) > 0.01f) {
@@ -200,23 +205,24 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       float yaw = atan2(moveDir.x, moveDir.z);
       m.rot_offset += glm::quat(glm::vec3(0.f, yaw - pi / 2.f, 0.f));
 
-	  float strength = 0.f;
+	  /*
+      float strength = 0.f;
       float totStrength = 0.f;
       for (int i = 0; i < 4; i++) {
         int anim = GetActiveAnimationByName(look_anims_[i], &ac);
         switch (i) {
           case 0: {  // U
-            strength = glm::clamp(glm::dot(glm::vec3(0.f, 1.f, 0.f), UDlookDir), 0.f, 1.f);
-            break;
-          }
-          case 1: {  // D
-            strength = glm::clamp(glm::dot(glm::vec3(0.f, -1.f, 0.f), UDlookDir),
+            strength = glm::clamp(glm::dot(glm::vec3(0.f, 1.f, 0.f), UDlookDir),
                                   0.f, 1.f);
             break;
           }
+          case 1: {  // D
+            strength = glm::clamp(
+                glm::dot(glm::vec3(0.f, -1.f, 0.f), UDlookDir), 0.f, 1.f);
+            break;
+          }
           case 2: {  // R
-            strength = glm::clamp(glm::dot(LRlookDir, moveDir * glm::vec3(0.f,0.f,-1.f)), 0.f, 1.f);
-            std::cout << "R: " << strength << "\n";
+            strength = 0.f;
             break;
           }
           case 3: {  // L
@@ -224,13 +230,13 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
             break;
           }
         }
-		totStrength += strength;
+        totStrength += strength;
         ac.active_animations.at(anim)->strength_ = strength;
       }
       float LAStrength = 1.f - glm::clamp(totStrength, 0.f, 1.f);
       int LAAnim = GetActiveAnimationByName("LookAhead", &ac);
       ac.active_animations.at(LAAnim)->strength_ = LAStrength;
-
+	  */
     } else {
       m.rot_offset = glm::quat();
 
@@ -538,7 +544,7 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
               positionPos = channel->current_position_pos;
             }
 
-            glm::mat4 combPRS = position * rotation ;
+            glm::mat4 combPRS = position * rotation * scaling;
 
             glm::mat4 finalMat = combPRS * anim->strength_;
 
