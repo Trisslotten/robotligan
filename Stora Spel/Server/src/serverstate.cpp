@@ -105,13 +105,14 @@ void ServerPlayState::Init() {
     NetAPI::Common::Packet to_send;
     to_send.GetHeader()->receiver = client_id;
 
-	auto team_view = registry.view<TeamComponent, IDComponent, PlayerComponent>();
+    auto team_view =
+        registry.view<TeamComponent, IDComponent, PlayerComponent>();
     for (auto team : team_view) {
       auto& team_c = team_view.get<TeamComponent>(team);
       auto& id_c = team_view.get<IDComponent>(team);
 
-	  if (id_c.id == clients_player_ids_[client_id]) {
-		to_send << team_c.team;
+      if (id_c.id == clients_player_ids_[client_id]) {
+        to_send << team_c.team;
       }
 
       break;
@@ -212,8 +213,8 @@ void ServerPlayState::HandleDataToSend() {
       continue;
     }
 
-    //auto view_cam = registry.view<CameraComponent, IDComponent>();
-    //for (auto cam : view_cam) {
+    // auto view_cam = registry.view<CameraComponent, IDComponent>();
+    // for (auto cam : view_cam) {
     //  auto& cam_c = view_cam.get<CameraComponent>(cam);
     //  auto& id_c = view_cam.get<IDComponent>(cam);
     //  if (client_player_id == id_c.id) {
@@ -221,7 +222,7 @@ void ServerPlayState::HandleDataToSend() {
     //    break;
     //  }
     //}
-    //to_send << PacketBlockType::CAMERA_TRANSFORM;
+    // to_send << PacketBlockType::CAMERA_TRANSFORM;
 
     auto view_entities = registry.view<TransformComponent, IDComponent>();
     int num_entities = view_entities.size();
@@ -279,6 +280,16 @@ void ServerPlayState::HandleDataToSend() {
       }
     }
 
+    for (auto entity : created_walls_) {
+      auto& t = registry.get<TransformComponent>(entity);
+      auto& id = registry.get<IDComponent>(entity);
+
+      to_send << t.rotation;
+      to_send << t.position;
+      to_send << id.id;
+      to_send << PacketBlockType::CREATE_WALL;
+    }
+
     for (auto entity : created_pick_ups_) {
       auto& t = registry.get<TransformComponent>(entity);
       auto& id = registry.get<IDComponent>(entity);
@@ -317,8 +328,8 @@ void ServerPlayState::HandleDataToSend() {
         to_send << (int)switch_goal_timer_.Elapsed();
         to_send << PacketBlockType::SWITCH_GOALS;
         sent_switch = true;
-        
-		if (switch_goal_timer_.Elapsed() >= switch_goal_time_) {
+
+        if (switch_goal_timer_.Elapsed() >= switch_goal_time_) {
           switch_goal_timer_.Pause();
         }
       }
@@ -378,6 +389,7 @@ void ServerPlayState::HandleDataToSend() {
     }
   }
 
+  created_walls_.clear();
   if (pick_ups_sent) created_pick_ups_.clear();
 }
 
@@ -618,7 +630,8 @@ void ServerPlayState::CreatePlayerEntity() {
     red_players_++;
   }*/
 
-  // TEMP : Just so the replay knows the number of players all get added to the blue team
+  // TEMP : Just so the replay knows the number of players all get added to the
+  // blue team
   this->blue_players_++;
   // TEMP
 
@@ -821,6 +834,14 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       auto p_c = game_server_->GetRegistry().get<PlayerComponent>(e.entity);
       packets[p_c.client_id] << e.e_id;
       packets[p_c.client_id] << PacketBlockType::YOUR_TARGET;
+      break;
+    }
+    case Event::BUILD_WALL: {
+      auto& registry = game_server_->GetRegistry();
+      auto id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, id);
+
+      created_walls_.push_back(e.entity);
       break;
     }
     default:

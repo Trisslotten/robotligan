@@ -17,9 +17,9 @@
 #include "ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
+#include "eventdispatcher.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
-#include "eventdispatcher.hpp"
 
 void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
@@ -666,7 +666,7 @@ void PlayState::OnServerFrame() {
   for (auto ball : view_ball) {
     auto& phys_c = view_ball.get<PhysicsComponent>(ball);
     auto& trans_c = view_ball.get<TransformComponent>(ball);
-    
+    
         physics::PhysicsObject po;
     po.acceleration =  ;
 
@@ -887,6 +887,24 @@ void PlayState::TestCreateLights() {
                                             90.f, 0.1f);
   registry_gameplay_.assign<TransformComponent>(
       light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
+}
+
+void PlayState::CreateWall(EntityID id, glm::vec3 position,
+                           glm::quat rotation) {
+  auto wall = registry_gameplay_.create();
+
+  registry_gameplay_.assign<IDComponent>(wall, id);
+  registry_gameplay_.assign<TransformComponent>(
+      wall, position, rotation, glm::vec3(1.f, 4.f, 5.f));
+
+  glob::ModelHandle model = glob::GetModel("assets/Pickup/Pickup.fbx");
+  int a = 10;
+  std::vector<glob::ModelHandle> hs;
+  hs.push_back(model);
+  registry_gameplay_.assign<ModelComponent>(wall, hs);
+  //model_c.handles.push_back(model);
+
+  registry_gameplay_.assign<int>(wall, a);
 }
 
 void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {

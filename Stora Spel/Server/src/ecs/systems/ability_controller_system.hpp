@@ -30,6 +30,7 @@ entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id);
 void GravityChange(entt::registry& registry);
 void DoTeleport(entt::registry& registry, PlayerID id);
 bool DoHomingBall(entt::registry& registry, PlayerID id);
+bool BuildWall(entt::registry& registry, PlayerID id);
 
 void Update(entt::registry& registry, float dt) {
   auto view_players =
@@ -121,7 +122,7 @@ bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
       return false;
       break;
     case AbilityID::BUILD_WALL:
-      return true;
+      return BuildWall(registry, player_id);
       break;
     case AbilityID::FAKE_BALL:
       return true;
@@ -482,6 +483,49 @@ bool DoHomingBall(entt::registry& registry, PlayerID id) {
 
   return false;
 }
+
+bool BuildWall(entt::registry& registry, PlayerID id) {
+  auto view_players = registry.view<PlayerComponent, TransformComponent,
+                                    CameraComponent, IDComponent>();
+  for (auto entity : view_players) {
+    auto& player_c = view_players.get<PlayerComponent>(entity);
+
+    if (player_c.client_id == id) {
+      auto& trans_c = view_players.get<TransformComponent>(entity);
+      auto& camera = view_players.get<CameraComponent>(entity);
+
+      glm::vec3 position = camera.GetLookDir() * 4.5f + trans_c.position + camera.offset;
+      position.y = -12.f;
+      auto orientation = trans_c.rotation;
+      //orientation.y = camera.GetLookDir().y;
+
+      auto wall = registry.create();
+      registry.assign<WallComponent>(wall);
+      registry.assign<TimerComponent>(wall, 100.f);
+      registry.assign<HealthComponent>(wall, 100);
+      registry.assign<TransformComponent>(wall, position, orientation);
+      auto& obb = registry.assign<physics::OBB>(wall);
+      obb.extents[0] = 1.f;
+      obb.extents[1] = 8.3f;
+      obb.extents[2] = 5.f;
+
+      EventInfo e;
+      e.event = Event::BUILD_WALL;
+      e.entity = wall;
+      
+      dispatcher.enqueue<EventInfo>(e);
+
+      GameEvent wall_event;
+      wall_event.type = GameEvent::BUILD_WALL;
+      dispatcher.trigger(wall_event);
+
+      return true;
+    }
+  }
+
+  return false;
+}
+
 };  // namespace ability_controller
 
 #endif  // !ABILITY_CONTROLLER_SYSTEM_HPP_

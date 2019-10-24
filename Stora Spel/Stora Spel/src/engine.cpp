@@ -124,7 +124,7 @@ void Engine::Update(float dt) {
     accum_yaw_ -= mouse_movement.x;
     accum_pitch_ -= mouse_movement.y;
 
-	play_state_.AddPitchYaw(-mouse_movement.y, -mouse_movement.x);
+    play_state_.AddPitchYaw(-mouse_movement.y, -mouse_movement.x);
 
     if (Input::IsKeyPressed(GLFW_KEY_K)) {
       new_team_ = TEAM_BLUE;
@@ -215,7 +215,7 @@ void Engine::UpdateNetwork() {
   */
 
   if (should_send_input_) {
-    //play_state_.AddPitchYaw(accum_pitch_, accum_yaw_);
+    // play_state_.AddPitchYaw(accum_pitch_, accum_yaw_);
     to_send << action_bits;
     to_send << play_state_.GetPitch();
     to_send << play_state_.GetYaw();
@@ -312,7 +312,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetMyPrimaryAbility(ability_id);
       play_state_.SetTeam(team);
       ChangeState(StateType::PLAY);
-	  
+
       std::cout << "PACKET: GAME_START\n";
       break;
     }
@@ -434,6 +434,17 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       player_scores_[id] = psbi;
       break;
     }
+    case PacketBlockType::CREATE_WALL: {
+      glm::quat rot;
+      glm::vec3 pos;
+      EntityID id;
+
+      packet >> id;
+      packet >> pos;
+      packet >> rot;
+      play_state_.CreateWall(id, pos, rot);
+      break;
+    }
     case PacketBlockType::CREATE_PICK_UP: {
       glm::vec3 pos;
       EntityID id;
@@ -446,7 +457,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       EntityID id;
       packet >> id;
       if (current_state_->Type() == StateType::PLAY) {
-        auto pick_up_view = registry_current_->view<PickUpComponent, IDComponent>();
+        auto pick_up_view =
+            registry_current_->view<PickUpComponent, IDComponent>();
         for (auto entity : pick_up_view) {
           if (id == pick_up_view.get<IDComponent>(entity).id) {
             registry_current_->destroy(entity);
@@ -456,10 +468,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       }
       break;
     }
-	case PacketBlockType::SERVER_CAN_JOIN:
-		packet >> server_connected_;
-		std::cout << server_connected_;
-		break;
+    case PacketBlockType::SERVER_CAN_JOIN:
+      packet >> server_connected_;
+      std::cout << server_connected_;
+      break;
     case PacketBlockType::RECEIVE_PICK_UP: {
       packet >> second_ability_;
       break;
@@ -505,8 +517,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         }
         case ProjectileID::MISSILE_OBJECT: {
           play_state_.CreateMissileObject(e_id);
-          // TODO: Dont trigger this event on the client like this. Fix so that event is sent/received AFTER the create_projectile packet on server instead
-          // Note: Sometimes this plays on player entity rather than the missile entity [???]
+          // TODO: Dont trigger this event on the client like this. Fix so that
+          // event is sent/received AFTER the create_projectile packet on server
+          // instead Note: Sometimes this plays on player entity rather than the
+          // missile entity [???]
           GameEvent missile_event;
           missile_event.type = GameEvent::MISSILE_FIRE;
           missile_event.missile_fire.projectile_id = e_id;
