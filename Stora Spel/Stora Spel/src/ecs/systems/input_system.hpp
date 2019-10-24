@@ -90,7 +90,6 @@ void Update(entt::registry& registry) {
         if (new_chars.length() > 0) {
           blinker_shown = true;
           blinker_timer.Restart();
-          *input_c.linked_value = input_c.text;
         }
       }
       if (Input::IsKeyDown(GLFW_KEY_BACKSPACE) && input_c.text.size() > 0 &&
@@ -145,10 +144,12 @@ void Update(entt::registry& registry) {
         blinker_timer.Restart();
       }
     }
+    *input_c.linked_value = input_c.text;
   }
   if (!active) {
     last_active = "";
   }
+  
 }
 }  // namespace input_system
 
