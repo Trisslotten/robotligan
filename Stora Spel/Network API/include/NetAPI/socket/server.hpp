@@ -10,6 +10,7 @@
 #include <NetAPI/socket/clientdata.hpp>
 #include <NetAPI/socket/tcplistener.hpp>
 #include <shared/shared.hpp>
+#include <thread>
 namespace NetAPI {
 namespace Socket {
 class EXPORT Server {
@@ -25,7 +26,7 @@ class EXPORT Server {
   /// ClientData* operator[](short ID) { return client_data_.at(ID); }
   std::unordered_map<long, ClientData*>& GetClients() { return client_data_; }
   std::vector<ClientData*> GetNewlyConnected() { return newly_connected_; }
-
+  std::thread threads[Common::kMaxPlayers];
  private:
   void SendPing();
   std::unordered_map<std::string, long> ids_;

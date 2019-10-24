@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <chrono>
 NetAPI::Socket::TcpClient::TcpClient() {
   rec_buffer_ = new char[buffer_size_];
   temp_buffer_ = new char[buffer_size_];
