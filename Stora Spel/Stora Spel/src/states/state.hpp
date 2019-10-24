@@ -66,6 +66,7 @@ class MainMenuState : public State {
  private:
   void CreateMainMenu();
   void CreateInformationMenu();
+  void CreateBackgroundEnitites();
 
   entt::registry registry_mainmenu_;
   entt::registry registry_settings_;

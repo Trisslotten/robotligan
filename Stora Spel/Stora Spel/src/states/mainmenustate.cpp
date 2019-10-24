@@ -1,6 +1,8 @@
 #include "state.hpp"
 
 #include <glob/window.hpp>
+#include "../ecs/components.hpp"
+#include "../ecs/systems/animation_system.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
 
@@ -18,6 +20,8 @@ void MainMenuState::Init() {
   engine_->SetSendInput(false);
   engine_->SetCurrentRegistry(&registry_mainmenu_);
   engine_->SetEnableChat(false);
+
+  CreateBackgroundEnitites();
 
   if (client.IsConnected()) {
     client.Disconnect();
@@ -72,4 +76,108 @@ void MainMenuState::CreateInformationMenu() {
   b_c->button_func = [&]() {
     engine_->SetCurrentRegistry(&registry_mainmenu_);
   };
+}
+
+void MainMenuState::CreateBackgroundEnitites() {
+  // add the lights to scene
+  auto light_test = registry_mainmenu_.create();  // Get from engine
+  registry_mainmenu_.assign<LightComponent>(light_test, glm::vec3(0.05f), 30.f,
+                                            0.2f);
+  registry_mainmenu_.assign<TransformComponent>(
+      light_test, glm::vec3(0.f, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      glm::vec3(1.f));
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+
+  auto light_test2 = registry_mainmenu_.create();  // Get from engine
+  registry_mainmenu_.assign<LightComponent>(
+      light_test2, glm::vec3(0.f, 0.f, 1.0f), 5.f, 0.2f);
+  registry_mainmenu_.assign<TransformComponent>(
+      light_test2, glm::vec3(12.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      glm::vec3(1.f));
+
+  {
+    // ladda in och skapa entity för bana
+    auto arena = registry_mainmenu_.create();
+    glm::vec3 arena_scale = glm::vec3(1.0f);
+    glob::ModelHandle model_arena =
+        glob::GetModel("assets/Map/Map_unified_TMP.fbx");
+    auto& model_c = registry_mainmenu_.assign<ModelComponent>(arena);
+    model_c.handles.push_back(model_arena);
+    registry_mainmenu_.assign<TransformComponent>(arena, zero_vec, zero_vec,
+                                                  arena_scale);
+  }
+
+  // Modeller
+  {
+    // ladda in och skapa entity för robotar
+    auto robot = registry_mainmenu_.create();
+    auto& trans_c = registry_mainmenu_.assign<TransformComponent>(
+        robot, glm::vec3(9.f, -2.8f, -2.f),
+        glm::vec3(0.f, glm::radians(-135.0f), 0.f), glm::vec3(0.0013f));
+    glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
+    auto& model_c = registry_mainmenu_.assign<ModelComponent>(robot);
+    model_c.handles.push_back(model_robot);
+
+    // Animation
+    auto& animation_c = registry_mainmenu_.assign<AnimationComponent>(
+        robot, glob::GetAnimationData(model_robot));
+
+    engine_->GetAnimationSystem().PlayAnimation("Resting", 0.5f, &animation_c,
+                                                10, 1.f, 0 /*LOOP*/);
+
+    auto robot2 = registry_mainmenu_.create();
+    auto& trans_c2 = registry_mainmenu_.assign<TransformComponent>(
+        robot2, glm::vec3(9.f, -2.8f, 0.f),
+        glm::vec3(0.f, glm::radians(180.0f), 0.f), glm::vec3(0.0013f));
+    auto& model_c2 = registry_mainmenu_.assign<ModelComponent>(robot2);
+    model_c2.handles.push_back(model_robot);
+
+    // Animation
+    auto& animation_c2 = registry_mainmenu_.assign<AnimationComponent>(
+        robot2, glob::GetAnimationData(model_robot));
+
+    engine_->GetAnimationSystem().PlayAnimation("Run", 1.f, &animation_c2, 10,
+                                                1.f, 0 /*LOOP*/);
+
+    // ladda in och skapa entity för robotar
+    auto robot3 = registry_mainmenu_.create();
+    auto& trans_c3 = registry_mainmenu_.assign<TransformComponent>(
+        robot3, glm::vec3(9.f, -2.8f, 2.f),
+        glm::vec3(0.f, glm::radians(135.0f), 0.f), glm::vec3(0.0013f));
+    auto& model_c3 = registry_mainmenu_.assign<ModelComponent>(robot3);
+    model_c3.handles.push_back(model_robot);
+
+    // Animation
+    auto& animation_c3 = registry_mainmenu_.assign<AnimationComponent>(
+        robot3, glob::GetAnimationData(model_robot));
+
+    engine_->GetAnimationSystem().PlayAnimation("Resting", 0.5f, &animation_c3,
+                                                10, 1.f, 0 /*LOOP*/);
+  }
+
+  // Particles
+
+  {
+    auto particles = registry_mainmenu_.create();
+    auto handle_particles = glob::CreateParticleSystem();
+
+	std::vector handles = {handle_particles};
+    std::vector<glm::vec3> offsets;
+    std::vector<glm::vec3> directions;
+    glob::SetParticleSettings(handle_particles, "smoke_main_menu.txt");
+    glob::SetEmitPosition(handle_particles, glm::vec3(8.8f, -2.8f, 0.f));
+    auto& e = registry_mainmenu_.assign<ParticleComponent>(particles, handles,
+                                                 offsets, directions);
+    auto& f = registry_mainmenu_.assign<int>(particles, 0);
+  }
+
+  {
+    // lägga ut en kamera i scenen
+    auto camera = registry_mainmenu_.create();
+    auto& cam_c = registry_mainmenu_.assign<CameraComponent>(camera);
+    auto& cam_trans = registry_mainmenu_.assign<TransformComponent>(camera);
+    cam_trans.position = glm::vec3(7.f, -2.f, 0.f);
+    glm::vec3 dir = glm::vec3(0) - cam_trans.position;
+    cam_c.orientation = glm::quat(glm::vec3(0.f, 0.f, 0.f));
+  }
 }
