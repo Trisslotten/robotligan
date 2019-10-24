@@ -105,17 +105,24 @@ void ServerPlayState::Init() {
     NetAPI::Common::Packet to_send;
     to_send.GetHeader()->receiver = client_id;
 
-	auto team_view = registry.view<TeamComponent, IDComponent, PlayerComponent>();
+    auto team_view =
+        registry.view<TeamComponent, IDComponent, PlayerComponent>();
+
+    unsigned int team_id = 0;        
     for (auto team : team_view) {
       auto& team_c = team_view.get<TeamComponent>(team);
       auto& id_c = team_view.get<IDComponent>(team);
 
-	  if (id_c.id == clients_player_ids_[client_id]) {
-		to_send << team_c.team;
-      }
+      to_send << team_c.team;
+      to_send << id_c.id;
 
-      break;
+      if (id_c.id == clients_player_ids_[client_id]) {
+        team_id = team_c.team;
+      }
     }
+    to_send << (int)team_view.size();
+
+    to_send << team_id;
 
     auto ball_view = registry.view<BallComponent, IDComponent>();
     for (auto ball : ball_view) {
@@ -212,8 +219,8 @@ void ServerPlayState::HandleDataToSend() {
       continue;
     }
 
-    //auto view_cam = registry.view<CameraComponent, IDComponent>();
-    //for (auto cam : view_cam) {
+    // auto view_cam = registry.view<CameraComponent, IDComponent>();
+    // for (auto cam : view_cam) {
     //  auto& cam_c = view_cam.get<CameraComponent>(cam);
     //  auto& id_c = view_cam.get<IDComponent>(cam);
     //  if (client_player_id == id_c.id) {
@@ -221,7 +228,7 @@ void ServerPlayState::HandleDataToSend() {
     //    break;
     //  }
     //}
-    //to_send << PacketBlockType::CAMERA_TRANSFORM;
+    // to_send << PacketBlockType::CAMERA_TRANSFORM;
 
     auto view_entities = registry.view<TransformComponent, IDComponent>();
     int num_entities = view_entities.size();
@@ -317,8 +324,8 @@ void ServerPlayState::HandleDataToSend() {
         to_send << (int)switch_goal_timer_.Elapsed();
         to_send << PacketBlockType::SWITCH_GOALS;
         sent_switch = true;
-        
-		if (switch_goal_timer_.Elapsed() >= switch_goal_time_) {
+
+        if (switch_goal_timer_.Elapsed() >= switch_goal_time_) {
           switch_goal_timer_.Pause();
         }
       }
@@ -617,7 +624,8 @@ void ServerPlayState::CreatePlayerEntity() {
     red_players_++;
   }*/
 
-  // TEMP : Just so the replay knows the number of players all get added to the blue team
+  // TEMP : Just so the replay knows the number of players all get added to the
+  // blue team
   this->blue_players_++;
   // TEMP
 
@@ -709,8 +717,8 @@ void ServerPlayState::ResetEntities() {
   auto pick_up_view = registry.view<PickUpComponent, IDComponent>();
   for (auto pick_up : pick_up_view) {
     auto entity = registry.create();
-    registry.assign<PickUpEvent>(
-        entity, registry.get<IDComponent>(pick_up).id, - 1, AbilityID::NULL_ABILITY);
+    registry.assign<PickUpEvent>(entity, registry.get<IDComponent>(pick_up).id,
+                                 -1, AbilityID::NULL_ABILITY);
     registry.destroy(pick_up);
   }
 
