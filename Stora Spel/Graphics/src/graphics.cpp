@@ -71,6 +71,8 @@ struct TextItem {
   std::string text;
   glm::vec4 color;
   bool visible;
+  bool equal_spacing;
+  float spacing;
 };
 
 struct LightItem {
@@ -944,8 +946,28 @@ void SubmitParticles(ParticleSystemHandle handle) {
   particles_to_render.push_back(find_res->second);
 }
 
+double GetWidthOfText(Font2DHandle font_handle, std::string text, int size) {
+  const char *chars = text.c_str();
+  int len = text.length();
+  double offset_accum = 0;
+  for (int i = 0; i < len; i++) {
+    unsigned char cur = *(unsigned char *)(chars + i);
+
+    if (cur == ' ') {
+      offset_accum += size / 3;
+    } else {
+      double r = 0;
+      r = fonts[font_handle].GetAdvances()[cur];
+      offset_accum += r * .03 * double(size);
+    }
+    // std::cout << offset_accum << "\n";
+  }
+  return offset_accum - 0.7*len;
+}
+
 void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
-            std::string text, glm::vec4 color, bool visible) {
+            std::string text, glm::vec4 color, bool visible, bool equal_spacing,
+            float spacing) {
   auto find_res = fonts.find(font_h);
   if (find_res == fonts.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted font! \n";
@@ -959,6 +981,8 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
   to_render.text = text;
   to_render.color = color;
   to_render.visible = visible;
+  to_render.equal_spacing = equal_spacing;
+  to_render.spacing = spacing;
   text_to_render.push_back(to_render);
 }
 
@@ -1195,7 +1219,8 @@ void Render() {
   text_shader.use();
   for (auto &text_item : text_to_render) {
     text_item.font->Draw(text_shader, text_item.pos, text_item.size,
-                         text_item.text, text_item.color, text_item.visible);
+                         text_item.text, text_item.color, text_item.visible,
+                         text_item.equal_spacing, text_item.spacing);
   }
 
   lights_to_render.clear();
