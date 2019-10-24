@@ -32,6 +32,8 @@ struct PlayerComponent {//Server side
   float yaw = 0;
   float pitch = 0;
 
+  glm::vec3 wanted_move_dir;
+
   EntityID target = -1;
 
   //States

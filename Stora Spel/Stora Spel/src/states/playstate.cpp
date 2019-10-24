@@ -134,10 +134,24 @@ void PlayState::Update(float dt) {
       auto iter = player_look_dirs_.find(id_c.id);
       if (iter != player_look_dirs_.end()) {
         player_c.look_dir = iter->second;
-        //std::cout << "lookdir.x: " << iter->second.x << "\n";
+        // std::cout << "lookdir.x: " << iter->second.x << "\n";
       }
     }
     player_look_dirs_.clear();
+  }
+
+  if (!player_move_dirs_.empty()) {
+    auto view_entities =
+        registry_gameplay_.view<PlayerComponent, IDComponent>();
+    for (auto entity : view_entities) {
+      auto& player_c = view_entities.get<PlayerComponent>(entity);
+      auto& id_c = view_entities.get<IDComponent>(entity);
+      auto iter = player_move_dirs_.find(id_c.id);
+      if (iter != player_move_dirs_.end()) {
+        player_c.move_dir = iter->second;
+      }
+    }
+    player_move_dirs_.clear();
   }
 
   if (!physics_.empty()) {
@@ -211,8 +225,8 @@ void PlayState::Update(float dt) {
       float yaw =
           atan2(2.0 * cam_o.y * cam_o.w - 2.0 * cam_o.x * cam_o.z,
                 1.0 - 2.0 * cam_o.y * cam_o.y - 2.0 * cam_o.z * cam_o.z);
-      
-	  trans_c.rotation = glm::quat(glm::vec3(0, yaw, 0));
+
+      trans_c.rotation = glm::quat(glm::vec3(0, yaw, 0));
     } else {
       auto trans = new_transforms_[id_c.id];
       if (glm::length(trans_c.position - trans.first) > 10) {
@@ -934,6 +948,10 @@ void PlayState::SwitchGoals() {
 
 void PlayState::SetPlayerLookDir(EntityID id, glm::vec3 look_dir) {
   player_look_dirs_[id] = look_dir;
+}
+
+void PlayState::SetPlayerMoveDir(EntityID id, glm::vec3 move_dir) {
+  player_move_dirs_[id] = move_dir;
 }
 
 void PlayState::ReceiveGameEvent(const GameEvent& e) {

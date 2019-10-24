@@ -311,6 +311,19 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       }
       break;
     }
+    case PacketBlockType::PLAYER_MOVE_DIR: {
+      int num_dirs = -1;
+      packet >> num_dirs;
+      for(int i =0 ; i < num_dirs; i++) {
+        EntityID id = 0;
+        glm::vec3 move_dir;
+        packet >> id;
+        packet >> move_dir;
+        play_state_.SetPlayerMoveDir(id, move_dir);
+      }
+      break;
+    }
+
     case PacketBlockType::GAME_START: {
       int num_players = -1;
       std::vector<EntityID> player_ids;
