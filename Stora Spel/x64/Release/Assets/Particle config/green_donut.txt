@@ -1,0 +1,9 @@
+>end_size= 0
+>direction= 0 0 0
+>dir_val= 0.0
+>velocity= 20
+>color= 0.4 1 0.3 1
+>radius= 0
+>burst= 1
+>burst_particles=50
+>number_of_bursts= 3
