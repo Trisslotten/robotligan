@@ -38,6 +38,8 @@ void Engine::Init() {
 
   // glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
 
+  menu_dispatcher.sink<MenuEvent>().connect<&SoundSystem::ReceiveMenuEvent>(sound_system_);
+
   dispatcher.sink<GameEvent>().connect<&SoundSystem::ReceiveGameEvent>(
       sound_system_);
   dispatcher.sink<GameEvent>().connect<&AnimationSystem::ReceiveGameEvent>(
