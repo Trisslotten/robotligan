@@ -28,6 +28,7 @@ class AnimationSystem {
   enum ANIM_MODES { LOOP, MUTE_ALL, PARTIAL_MUTE };
 
   std::string slide_anims_[4] = {"SlideF", "SlideB", "SlideR", "SlideL"};
+  std::string look_anims_[4] = {"LookUp", "LookDown", "LookRight", "LookLeft"};
 
   Engine* engine_;
 
@@ -42,13 +43,15 @@ class AnimationSystem {
 
   bool IsAChildOf(int parent, int lookFor, AnimationComponent* ac);
 
+  bool IsIncluded(int bone, std::vector<int>* included, std::vector<int>* excluded);
+
   int GetAnimationByName(std::string name, AnimationComponent* ac);
 
   int GetActiveAnimationByName(std::string name, AnimationComponent* ac);
 
   void PlayAnimation(std::string name, float speed, AnimationComponent* ac,
                      char priority, float strength, int mode,
-                     int bodyArgument = -1);
+                     std::vector<int>* bodyInclude = nullptr);
 
   void StopAnimation(std::string name, AnimationComponent* ac);
 

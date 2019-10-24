@@ -36,7 +36,13 @@ class Animation {
 
   char priority_ = 10;
   int mode_ = 0;
-  int body_argument_ = -1;
+  //int body_argument_ = -1;
+  std::vector<int>* body_include_ = new std::vector<int>;
+  std::vector<int>* body_exclude_ = new std::vector<int>;
+
+  bool bonesSpecified() {
+    return (body_include_->size() > 0 || body_exclude_->size() > 0);
+  }
 
   float rotation_dt = 0.f;
   float scale_dt = 0.f;

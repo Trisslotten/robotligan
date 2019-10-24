@@ -211,7 +211,8 @@ void PlayState::Update(float dt) {
       float yaw =
           atan2(2.0 * cam_o.y * cam_o.w - 2.0 * cam_o.x * cam_o.z,
                 1.0 - 2.0 * cam_o.y * cam_o.y - 2.0 * cam_o.z * cam_o.z);
-      trans_c.rotation = glm::quat(glm::vec3(0, yaw, 0));
+      
+	  trans_c.rotation = glm::quat(glm::vec3(0, yaw, 0));
     } else {
       auto trans = new_transforms_[id_c.id];
       if (glm::length(trans_c.position - trans.first) > 10) {
@@ -735,7 +736,7 @@ void PlayState::CreatePlayerEntities() {
                                               sound_engine.CreatePlayer());
 
     if (entity_id == my_id_) {
-      glm::vec3 camera_offset = glm::vec3(0.5f, 0.7f, 0.f);
+      glm::vec3 camera_offset = glm::vec3(-1.5f, 0.7f, 0.f);
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset);
       my_entity_ = entity;
     }
