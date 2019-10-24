@@ -540,6 +540,18 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.UpdateHistory(id);
       break;
     }
+    case PacketBlockType::CREATE_BALL: {
+      EntityID id;
+      packet >> id;
+      play_state_.CreateNewBallEntity(false, id);
+      break;
+	}
+    case PacketBlockType::CREATE_FAKE_BALL: {
+      EntityID id;
+      packet >> id;
+      play_state_.CreateNewBallEntity(true, id);
+      break;
+    }
   }
 }
 

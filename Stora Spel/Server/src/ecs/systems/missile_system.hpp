@@ -79,13 +79,14 @@ void Update(entt::registry& registry, float dt) {
       dispatcher.trigger(missile_impact_event);
       
       EventInfo info;
-      if (registry.has<IDComponent>(missile) == false) return;
-      auto id = registry.get<IDComponent>(missile);
-      info.event = Event::DESTROY_ENTITY;
-      info.e_id = id.id;
-      dispatcher.enqueue<EventInfo>(info);
-
-      registry.destroy(missile);
+      if (registry.has<IDComponent>(missile)) {
+        auto id = registry.get<IDComponent>(missile);
+        info.event = Event::DESTROY_ENTITY;
+        info.e_id = id.id;
+        info.entity = missile;
+        dispatcher.enqueue<EventInfo>(info);
+	  }
+      //registry.destroy(missile);
     }
   }
 

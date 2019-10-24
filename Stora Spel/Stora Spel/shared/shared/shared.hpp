@@ -72,6 +72,8 @@ namespace PacketBlockType {
     YOUR_TARGET,
     FRAME_ID,
     SERVER_CAN_JOIN,
+	CREATE_BALL,
+	CREATE_FAKE_BALL,
     NUM_BLOCK_TYPES,
   };
 

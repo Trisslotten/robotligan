@@ -225,8 +225,14 @@ void PlayerBallCollision(entt::registry& registry,
   auto& ball_ball = registry.get<BallComponent>(ball);
 
   auto& player_physics = registry.get<PhysicsComponent>(object.entity);
+  unsigned int player_team = TEAM_RED;
+  if (registry.has<TeamComponent>(object.entity)) {
+    player_team = registry.get<TeamComponent>(object.entity).team;
+  }
 
   ball_hitbox.center += object.move_vector;
+
+  unsigned int faker_team = ball_ball.faker_team;
 
   float ball_speed = glm::length(ball_physics.velocity);
   float player_speed = glm::length(player_physics.velocity);
@@ -258,6 +264,14 @@ void PlayerBallCollision(entt::registry& registry,
 
       BallCollision(&ball_physics, object.normal);
     }
+  }
+
+  if (faker_team != player_team && !ball_ball.is_real) {
+    EventInfo e;
+    e.event = Event::DESTROY_ENTITY;
+    e.entity = ball;
+    e.e_id = registry.get<IDComponent>(ball).id;
+    dispatcher.enqueue<EventInfo>(e);
   }
 
   return;
@@ -737,7 +751,8 @@ void DestroyEntity(entt::registry& registry, entt::entity entity) {
   auto id = registry.get<IDComponent>(entity);
   info.event = Event::DESTROY_ENTITY;
   info.e_id = id.id;
+  info.entity = entity;
   dispatcher.enqueue<EventInfo>(info);
-  registry.destroy(entity);
+  //registry.destroy(entity);
 }
 #endif  // COLLISION_SYSTEM_HPP_

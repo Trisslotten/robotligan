@@ -13,6 +13,7 @@ struct BallComponent {
   bool is_homing = false;
   long homer_cid = -1;
   bool is_super_striked = false;
+  unsigned int faker_team = TEAM_RED;
 };
 
 #endif  // BALL_COMPONENT_HPP_

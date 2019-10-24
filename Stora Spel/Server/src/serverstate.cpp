@@ -105,13 +105,14 @@ void ServerPlayState::Init() {
     NetAPI::Common::Packet to_send;
     to_send.GetHeader()->receiver = client_id;
 
-	auto team_view = registry.view<TeamComponent, IDComponent, PlayerComponent>();
+    auto team_view =
+        registry.view<TeamComponent, IDComponent, PlayerComponent>();
     for (auto team : team_view) {
       auto& team_c = team_view.get<TeamComponent>(team);
       auto& id_c = team_view.get<IDComponent>(team);
 
-	  if (id_c.id == clients_player_ids_[client_id]) {
-		to_send << team_c.team;
+      if (id_c.id == clients_player_ids_[client_id]) {
+        to_send << team_c.team;
       }
 
       break;
@@ -212,8 +213,8 @@ void ServerPlayState::HandleDataToSend() {
       continue;
     }
 
-    //auto view_cam = registry.view<CameraComponent, IDComponent>();
-    //for (auto cam : view_cam) {
+    // auto view_cam = registry.view<CameraComponent, IDComponent>();
+    // for (auto cam : view_cam) {
     //  auto& cam_c = view_cam.get<CameraComponent>(cam);
     //  auto& id_c = view_cam.get<IDComponent>(cam);
     //  if (client_player_id == id_c.id) {
@@ -221,7 +222,7 @@ void ServerPlayState::HandleDataToSend() {
     //    break;
     //  }
     //}
-    //to_send << PacketBlockType::CAMERA_TRANSFORM;
+    // to_send << PacketBlockType::CAMERA_TRANSFORM;
 
     auto view_entities = registry.view<TransformComponent, IDComponent>();
     int num_entities = view_entities.size();
@@ -317,8 +318,8 @@ void ServerPlayState::HandleDataToSend() {
         to_send << (int)switch_goal_timer_.Elapsed();
         to_send << PacketBlockType::SWITCH_GOALS;
         sent_switch = true;
-        
-		if (switch_goal_timer_.Elapsed() >= switch_goal_time_) {
+
+        if (switch_goal_timer_.Elapsed() >= switch_goal_time_) {
           switch_goal_timer_.Pause();
         }
       }
@@ -617,7 +618,8 @@ void ServerPlayState::CreatePlayerEntity() {
     red_players_++;
   }*/
 
-  // TEMP : Just so the replay knows the number of players all get added to the blue team
+  // TEMP : Just so the replay knows the number of players all get added to the
+  // blue team
   this->blue_players_++;
   // TEMP
 
@@ -709,8 +711,8 @@ void ServerPlayState::ResetEntities() {
   auto pick_up_view = registry.view<PickUpComponent, IDComponent>();
   for (auto pick_up : pick_up_view) {
     auto entity = registry.create();
-    registry.assign<PickUpEvent>(
-        entity, registry.get<IDComponent>(pick_up).id, - 1, AbilityID::NULL_ABILITY);
+    registry.assign<PickUpEvent>(entity, registry.get<IDComponent>(pick_up).id,
+                                 -1, AbilityID::NULL_ABILITY);
     registry.destroy(pick_up);
   }
 
@@ -725,7 +727,12 @@ void ServerPlayState::ResetEntities() {
     BallComponent& ball_component = ball_view.get<BallComponent>(entity);
 
     if (ball_component.is_real == false) {
-      registry.destroy(entity);
+      EventInfo e;
+      e.event = Event::DESTROY_ENTITY;
+      e.entity = entity;
+      e.e_id = registry.get<IDComponent>(entity).id;
+      //registry.destroy(entity);
+      dispatcher.enqueue(e);
       continue;
     }
 
@@ -773,7 +780,11 @@ void ServerPlayState::EndGame() {
 void ServerPlayState::ReceiveEvent(const EventInfo& e) {
   switch (e.event) {
     case Event::DESTROY_ENTITY: {
+      auto& registry = game_server_->GetRegistry();
       destroy_entities_.push_back(e.e_id);
+
+      registry.destroy(e.entity);
+
       break;
     }
     case Event::CREATE_CANNONBALL: {
@@ -825,6 +836,36 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       auto p_c = game_server_->GetRegistry().get<PlayerComponent>(e.entity);
       packets[p_c.client_id] << e.e_id;
       packets[p_c.client_id] << PacketBlockType::YOUR_TARGET;
+      break;
+    }
+    case Event::CREATE_FAKE_BALL: {
+      auto& registry = game_server_->GetRegistry();
+      std::unordered_map<int, NetAPI::Common::Packet>& packets =
+          game_server_->GetPackets();
+      EntityID new_id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, new_id);
+
+      unsigned int faker_team =
+          registry.get<BallComponent>(e.entity).faker_team;
+
+      auto view_players =
+          registry.view<PlayerComponent, TeamComponent, IDComponent>();
+
+      for (auto player : view_players) {
+        auto& player_player_c = registry.get<PlayerComponent>(player);
+        auto& player_team_c = registry.get<TeamComponent>(player);
+        auto& player_id_c = registry.get<IDComponent>(player);
+
+        if (player_team_c.team == faker_team) {
+          packets[player_player_c.client_id]
+              << new_id;
+          packets[player_player_c.client_id]
+              << PacketBlockType::CREATE_FAKE_BALL;
+        } else {
+          packets[player_player_c.client_id] << new_id;
+          packets[player_player_c.client_id] << PacketBlockType::CREATE_BALL;
+        }
+      }
       break;
     }
     default:

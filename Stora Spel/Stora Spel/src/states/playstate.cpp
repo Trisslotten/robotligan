@@ -17,9 +17,9 @@
 #include "ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
+#include "eventdispatcher.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
-#include "eventdispatcher.hpp"
 
 void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
@@ -645,28 +645,29 @@ void PlayState::OnServerFrame() {
 }
 
 void PlayState::MoveBall(float dt) {
- /* auto view_ball =
-      registry_gameplay_
-          .view<BallComponent, TransformComponent, PhysicsComponent, IDComponent>();
+  /* auto view_ball =
+       registry_gameplay_
+           .view<BallComponent, TransformComponent, PhysicsComponent,
+   IDComponent>();
 
-  for (auto ball : view_ball) {
-    auto& phys_c = view_ball.get<PhysicsComponent>(ball);
-    auto& trans_c = view_ball.get<TransformComponent>(ball);
-    auto& id_c = view_ball.get<IDComponent>(ball);
+   for (auto ball : view_ball) {
+     auto& phys_c = view_ball.get<PhysicsComponent>(ball);
+     auto& trans_c = view_ball.get<TransformComponent>(ball);
+     auto& id_c = view_ball.get<IDComponent>(ball);
 
-    physics::PhysicsObject po;
-    po.acceleration =  glm::vec3(0.0f);
-    po.airborne = phys_c.is_airborne;
-    po.friction = phys_c.friction;
-    po.max_speed = phys_c.max_speed;
-    po.position = new_transforms_[id_c.id].first;
-    po.velocity = phys_c.velocity;
+     physics::PhysicsObject po;
+     po.acceleration =  glm::vec3(0.0f);
+     po.airborne = phys_c.is_airborne;
+     po.friction = phys_c.friction;
+     po.max_speed = phys_c.max_speed;
+     po.position = new_transforms_[id_c.id].first;
+     po.velocity = phys_c.velocity;
 
-	physics::Update(&po, dt);
+         physics::Update(&po, dt);
 
-	new_transforms_[id_c.id].first = po.position;
-    phys_c.velocity = po.velocity;
-  }*/
+         new_transforms_[id_c.id].first = po.position;
+     phys_c.velocity = po.velocity;
+   }*/
 }
 
 void PlayState::DrawTarget() {
@@ -720,9 +721,9 @@ void PlayState::DrawQuickslots() {
                glm::vec2(66, 50), 0.75f, 100);
   if (primary_cd_ > 0.0f) {
     std::string cd_string = std::to_string((int)primary_cd_);
-    float jump_left = (cd_string.length()-1) * 15;
-    glob::Submit(font_test_, glm::vec2(50 - jump_left, 89), 72,
-                cd_string , glm::vec4(0,0,0,0.7f));
+    float jump_left = (cd_string.length() - 1) * 15;
+    glob::Submit(font_test_, glm::vec2(50 - jump_left, 89), 72, cd_string,
+                 glm::vec4(0, 0, 0, 0.7f));
     glob::Submit(font_test_, glm::vec2(51 - jump_left, 90), 72, cd_string);
   }
 }
@@ -823,6 +824,34 @@ void PlayState::CreateBallEntity() {
   registry_gameplay_.assign<PhysicsComponent>(ball);
   registry_gameplay_.assign<BallComponent>(ball);
   registry_gameplay_.assign<IDComponent>(ball, ball_id_);
+  registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
+}
+
+void PlayState::CreateNewBallEntity(bool fake, EntityID id) {
+  auto& sound_engine = engine_->GetSoundEngine();
+
+  // Ball
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glm::vec3 arena_scale = glm::vec3(1.0f);
+  auto ball = registry_gameplay_.create();
+  glob::ModelHandle model_ball_projectors_p =
+      glob::GetModel("Assets/Ball_new/Ball_projectors.fbx");
+
+  std::string model_path = "Assets/Ball_new/Ball_Sphere.fbx";
+  if (fake) {
+    model_path = "Assets/Ball_new/fake/Ball_Sphere.fbx";
+  }
+  glob::ModelHandle model_ball_sphere_p = glob::GetTransparentModel(model_path);
+  // glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
+  auto& model_c = registry_gameplay_.assign<ModelComponent>(ball);
+  model_c.handles.push_back(model_ball_sphere_p);
+  model_c.handles.push_back(model_ball_projectors_p);
+
+  registry_gameplay_.assign<TransformComponent>(ball, zero_vec, zero_vec,
+                                                glm::vec3(0.95f));
+  registry_gameplay_.assign<PhysicsComponent>(ball);
+  registry_gameplay_.assign<BallComponent>(ball);
+  registry_gameplay_.assign<IDComponent>(ball, id);
   registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
 }
 
@@ -960,13 +989,44 @@ void PlayState::CreateMissileObject(EntityID id) {
 
 void PlayState::DestroyEntity(EntityID id) {
   auto id_view = registry_gameplay_.view<IDComponent>();
+
+  glm::vec3 pos(0);
+  bool was_ball = false;
+
   for (auto entity : id_view) {
     auto& e_id = id_view.get(entity);
 
     if (e_id.id == id) {
+      if (registry_gameplay_.has<BallComponent>(entity)) {
+        was_ball = true;
+      }
+      if (registry_gameplay_.has<TransformComponent>(entity)) {
+        pos = registry_gameplay_.get<TransformComponent>(entity).position;
+      }
       registry_gameplay_.destroy(entity);
-      return;
+      break;
     }
+  }
+
+  if (was_ball) {
+    auto e = registry_gameplay_.create();
+    auto handle = glob::CreateParticleSystem();
+
+    std::vector<glob::ParticleSystemHandle> handles;
+    std::vector<glm::vec3> offsets;
+    //= {glm::vec3(0.f)};
+    std::vector<glm::vec3> directions;
+    //= {glm::vec3(0.f, 1.f, 0.f)};
+
+    glob::SetParticleSettings(handle, "ball_destroy.txt");
+    glob::SetEmitPosition(handle, pos);
+    handles.push_back(handle);
+
+    // auto ball_view = registry_gameplay_.view<
+
+    auto& p_c = registry_gameplay_.assign<ParticleComponent>(
+        e, handles, offsets, directions);
+    registry_gameplay_.assign<int>(e, 0);
   }
 }
 

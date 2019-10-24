@@ -244,6 +244,8 @@ class PlayState : public State {
   float GetPitch() { return pitch_; }
   float GetYaw() { return yaw_; }
   void SetTeam(unsigned int team) {my_team_ = team;}
+  void CreateNewBallEntity(bool fake, EntityID id);
+
  private:
   void CreateInitialEntities();
   void CreatePlayerEntities();
