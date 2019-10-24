@@ -263,7 +263,7 @@ class PlayState : public State {
   void DrawQuickslots();
   FrameState SimulateMovement(std::vector<int> &action, FrameState& state, float dt);
   void MovePlayer(float dt);
-
+  void MoveBall(float dt);
   ////////////////////////////////////////
 
   entt::registry registry_gameplay_;

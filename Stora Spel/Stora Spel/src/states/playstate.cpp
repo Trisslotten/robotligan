@@ -170,7 +170,7 @@ void PlayState::Update(float dt) {
     MovePlayer(1 / 64.0f);
     actions_.clear();
   }
-
+  MoveBall(dt);
   // interpolate
   float f = 0.5;  // 0.25f * dt;  // pow(0.75f, dt);
   for (auto entity : view_entities) {
@@ -644,20 +644,30 @@ void PlayState::OnServerFrame() {
   predicted_state_.velocity.y = 0.f;
 }
 
-/*void PlayState::MoveBall(float dt) {
-  auto view_ball =
+void PlayState::MoveBall(float dt) {
+ /* auto view_ball =
       registry_gameplay_
-          .view<BallComponent, TransformComponent, PhysicsComponent>();
+          .view<BallComponent, TransformComponent, PhysicsComponent, IDComponent>();
 
   for (auto ball : view_ball) {
     auto& phys_c = view_ball.get<PhysicsComponent>(ball);
     auto& trans_c = view_ball.get<TransformComponent>(ball);
-    
-        physics::PhysicsObject po;
-    po.acceleration =  ;
+    auto& id_c = view_ball.get<IDComponent>(ball);
 
-  }
-}*/
+    physics::PhysicsObject po;
+    po.acceleration =  glm::vec3(0.0f);
+    po.airborne = phys_c.is_airborne;
+    po.friction = phys_c.friction;
+    po.max_speed = phys_c.max_speed;
+    po.position = new_transforms_[id_c.id].first;
+    po.velocity = phys_c.velocity;
+
+	physics::Update(&po, dt);
+
+	new_transforms_[id_c.id].first = po.position;
+    phys_c.velocity = po.velocity;
+  }*/
+}
 
 void PlayState::DrawTarget() {
   if (my_target_ != -1) {
