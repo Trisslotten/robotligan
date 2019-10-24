@@ -6,7 +6,7 @@
 #include <entity/registry.hpp>
 #include <shared/id_component.hpp>
 
-#include "frame_channel.hpp"
+#include "data_frame.hpp"
 
 class GeometricReplay {
  private:
@@ -30,6 +30,8 @@ class GeometricReplay {
   std::vector<FrameChannel> channels_;
   unsigned int threshhold_age_;
   unsigned int current_frame_number_ = 0;
+
+  void FillChannelEntry(ChannelEntry& in_ce, entt::entity& in_entity, entt::registry& in_registry);
 
  public:
   GeometricReplay(unsigned int in_length_sec, unsigned int in_frames_per_sec);
