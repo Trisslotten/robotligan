@@ -1,7 +1,7 @@
 #include <NetAPI/socket/server.hpp>
 #include <iostream>
 #include <string>
-
+using namespace std::chrono_literals;
 void NetAPI::Socket::Server::SendPing() {
   NetAPI::Common::Packet to_send;
   to_send.GetHeader()->packet_id = NetAPI::Socket::EVERYONE;
@@ -12,30 +12,36 @@ void NetAPI::Socket::Server::SendPing() {
 void NetAPI::Socket::Server::HandleClientPacket()
 {
 	//std::pair<const long, NetAPI::Socket::ClientData *> s
-	for (auto& c : client_data_) {
-		HandleSingleClientPacket(c);
-	}
 }
-void NetAPI::Socket::Server::HandleSingleClientPacket(std::pair<const long, NetAPI::Socket::ClientData*> &c)
+void NetAPI::Socket::Server::HandleSingleClientPacket(unsigned short ID)
 {
-	if (c.second && !c.second->client.IsConnected() && c.second->is_active) {
-		std::cout << "DEBUG: removing client, lstrecvlen="
-			<< c.second->client.GetRaw()->GetLastRecvLen()
-			<< ", isConnected=" << c.second->client.IsConnected() << "\n";
-		c.second->client.Disconnect();
-		c.second->is_active = false;
-		connected_players_--;
-		return;
-	}
-	if (c.second && c.second->client.IsConnected()) {
-		int num_packets = 0;
-		for (auto packet : c.second->client.Receive()) {
-			num_packets++;
-			if (!packet.IsEmpty()) {
-				c.second->packets.push_back(packet);
+	auto c = this->client_data_[ID];
+	while (threads[ID].second)
+	{
+		if (!c->client.IsConnected() && c->is_active) {
+			std::cout << "DEBUG: removing client, lstrecvlen="
+				<< c->client.GetRaw()->GetLastRecvLen()
+				<< ", isConnected=" << c->client.IsConnected() << "\n";
+			c->client.Disconnect();
+			c->is_active = false;
+			connected_players_--;
+		}
+		else if((c->client.IsConnected()))
+		{
+			int num_packets = 0;
+			for (auto packet : c->client.Receive()) {
+				num_packets++;
+				if (!packet.IsEmpty()) {
+					c->packets.push_back(packet);
+				}
 			}
 		}
+		while (!new_frame)
+		{
+			std::this_thread::sleep_for(10ns);
+		}
 	}
+	c = nullptr;
 }
 void NetAPI::Socket::Server::ListenForClients()
 {
@@ -71,7 +77,8 @@ void NetAPI::Socket::Server::ListenForClients()
 			delete client_data;
 			connection_client_->ID = find_res->second;
 			client_data_[find_res->second] = connection_client_;
-
+			auto &s = threads[find_res->second].second = false;
+			threads[find_res->second] = std::pair<std::thread, bool>(std::thread([this, &c = find_res->second]{ HandleSingleClientPacket(c); }), true);
 			std::cout << "DEBUG: Found existing client, overwriting\n";
 		}
 		else if (connected_players_ < NetAPI::Common::kMaxPlayers) {
@@ -100,6 +107,7 @@ void NetAPI::Socket::Server::ListenForClients()
 			connection_client_->address = address;
 			connection_client_->is_active = true;
 			newly_connected_.push_back(connection_client_);
+			threads[ids_[address]] = std::pair<std::thread, bool>(std::thread([this, &c = ids_[address]]{ HandleSingleClientPacket(c); }), true);
 		}
 		else {
 			int can_join = -2;
@@ -111,6 +119,7 @@ void NetAPI::Socket::Server::ListenForClients()
 }
 void NetAPI::Socket::Server::SendStoredData()
 {
+	SendPing();
 	NetAPI::Common::PacketHeader header;
 	for (auto& d : data_to_send_) {
 		d >> header;
@@ -126,6 +135,7 @@ void NetAPI::Socket::Server::SendStoredData()
 			}
 		}
 	}
+
 	data_to_send_.clear();
 }
 unsigned short getHashedID(char* addr, unsigned short port) {
@@ -150,10 +160,9 @@ bool NetAPI::Socket::Server::Update() {
   }
   ListenForClients();
   // Receive Data
-  HandleClientPacket();
+  new_frame = false;
   // Send Data
-  SendPing();
-
+  new_frame = true;
   SendStoredData();
   return true;
 }
