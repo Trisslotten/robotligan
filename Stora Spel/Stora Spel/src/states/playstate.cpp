@@ -11,6 +11,7 @@
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 
+#include <boundingboxes.hpp>
 #include <physics.hpp>
 #include <shared/physics_component.hpp>
 #include <shared/pick_up_component.hpp>
@@ -897,6 +898,10 @@ void PlayState::CreateWall(EntityID id, glm::vec3 position,
   registry_gameplay_.assign<IDComponent>(wall, id);
   registry_gameplay_.assign<TransformComponent>(
       wall, position, rotation, glm::vec3(1.f, 4.f, 5.f));
+  auto& obb = registry_gameplay_.assign<physics::OBB>(wall);
+  obb.extents[0] = 1.f;
+  obb.extents[1] = 8.3f;
+  obb.extents[2] = 5.f;
 
   glob::ModelHandle model = glob::GetModel("assets/Pickup/Pickup.fbx");
   int a = 10;
