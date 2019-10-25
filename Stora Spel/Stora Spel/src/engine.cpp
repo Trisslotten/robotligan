@@ -316,18 +316,20 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetTeam(team);
       packet >> num_team_ids;
       for (int i = 0; i < num_team_ids; i++) {
-        EntityID id;
+        long client_id;
+        EntityID e_id;
         unsigned int team;
-        packet >> id;
+        packet >> client_id;
+        packet >> e_id;
         packet >> team;
         PlayerStatInfo psbi;
         psbi.goals = 0;
         psbi.points = 0;
         psbi.team = team;
-        psbi.enttity_id = id;
+        psbi.enttity_id = e_id;
         psbi.assists = 0;
         psbi.saves = 0;
-        player_scores_[id] = psbi;
+        player_scores_[client_id] = psbi;
       }
 
       ChangeState(StateType::PLAY);
