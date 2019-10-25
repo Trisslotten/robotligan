@@ -9,6 +9,7 @@
 void MainMenuState::Startup() {
   CreateMainMenu();
   CreateInformationMenu();
+  CreateBackgroundEnitites();
 
   information_image_ = glob::GetGUIItem("assets/GUI_elements/info_menu.png");
 }
@@ -20,8 +21,6 @@ void MainMenuState::Init() {
   engine_->SetSendInput(false);
   engine_->SetCurrentRegistry(&registry_mainmenu_);
   engine_->SetEnableChat(false);
-
-  CreateBackgroundEnitites();
 
   if (client.IsConnected()) {
     client.Disconnect();
