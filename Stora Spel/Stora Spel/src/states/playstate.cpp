@@ -430,7 +430,7 @@ void PlayState::DrawNameOverPlayer() {
     auto& transform = player_view.get<TransformComponent>(entity);
 
     for (auto& [id, name] : engine_->player_names_) {
-      EntityID e_id = engine_->GetPlayerScores()[id].enttity_id;
+      EntityID e_id = ClientIDToEntityID(id);
       if (e_id == id_c.id) {
         glm::vec3 look = glm::vec3(transform.position - my_transform.position);
         float distance = glm::length(look);
@@ -727,6 +727,10 @@ void PlayState::MoveBall(float dt) {
 	new_transforms_[id_c.id].first = po.position;
     phys_c.velocity = po.velocity;
   }*/
+}
+
+EntityID PlayState::ClientIDToEntityID(long client_id) {
+  return engine_->GetPlayerScores()[client_id].enttity_id;
 }
 
 void PlayState::DrawTarget() {

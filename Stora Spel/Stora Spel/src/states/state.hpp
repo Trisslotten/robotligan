@@ -10,8 +10,8 @@
 #include <playerdata.hpp>
 #include <util/timer.hpp>
 #include "Chat.hpp"
-#include "shared/shared.hpp"
 #include "eventdispatcher.hpp"
+#include "shared/shared.hpp"
 
 class Engine;
 
@@ -241,15 +241,19 @@ class PlayState : public State {
   void AddAction(int action) { actions_.push_back(action); }
   void ClearActions() { actions_.clear(); }
 
-  void UpdateHistory(int id) { while (history_.size() > 0 && history_.front().id <= id) history_.pop_front(); }
+  void UpdateHistory(int id) {
+    while (history_.size() > 0 && history_.front().id <= id)
+      history_.pop_front();
+  }
   void AddPitchYaw(float pitch, float yaw);
   void SetPitchYaw(float pitch, float yaw);
   auto* GetPlayerIDs() { return &player_ids_; }
 
   float GetPitch() { return pitch_; }
   float GetYaw() { return yaw_; }
-  void SetTeam(unsigned int team) {my_team_ = team;}
-  void SetTeam(EntityID id, unsigned int team) {teams_[id] = team; }
+  void SetTeam(unsigned int team) { my_team_ = team; }
+  void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
+
  private:
   int server_state_ = 1;
   void CreateInitialEntities();
@@ -270,9 +274,12 @@ class PlayState : public State {
   void DrawTopScores();
   void DrawTarget();
   void DrawQuickslots();
-  FrameState SimulateMovement(std::vector<int> &action, FrameState& state, float dt);
+  FrameState SimulateMovement(std::vector<int>& action, FrameState& state,
+                              float dt);
   void MovePlayer(float dt);
   void MoveBall(float dt);
+
+  EntityID ClientIDToEntityID(long client_id);
   ////////////////////////////////////////
 
   entt::registry registry_gameplay_;
@@ -326,7 +333,6 @@ class PlayState : public State {
   int frame_id = 0;
   float pitch_ = 0.0f;
   float yaw_ = 0.0f;
-  
 
   float primary_cd_ = 0.0f;
 };
