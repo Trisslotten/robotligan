@@ -218,6 +218,8 @@ class PlayState : public State {
   }
   void SetCurrentStamina(float stamina) { current_stamina_ = stamina; }
   auto* GetReg() { return &registry_gameplay_; }
+
+  void CreateWall(EntityID id, glm::vec3 position, glm::quat rotation);
   void CreatePickUp(EntityID id, glm::vec3 position);
   void CreateCannonBall(EntityID id);
   void CreateTeleportProjectile(EntityID id);

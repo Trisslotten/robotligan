@@ -297,6 +297,16 @@ void ServerPlayState::HandleDataToSend() {
       }
     }
 
+    for (auto entity : created_walls_) {
+      auto& t = registry.get<TransformComponent>(entity);
+      auto& id = registry.get<IDComponent>(entity);
+
+      to_send << t.rotation;
+      to_send << t.position;
+      to_send << id.id;
+      to_send << PacketBlockType::CREATE_WALL;
+    }
+
     for (auto entity : created_pick_ups_) {
       auto& t = registry.get<TransformComponent>(entity);
       auto& id = registry.get<IDComponent>(entity);
@@ -396,6 +406,7 @@ void ServerPlayState::HandleDataToSend() {
     }
   }
 
+  created_walls_.clear();
   if (pick_ups_sent) created_pick_ups_.clear();
 }
 
@@ -882,6 +893,15 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
           packets[player_player_c.client_id] << PacketBlockType::CREATE_BALL;
         }
       }
+      break;
+    }
+    case Event::BUILD_WALL: {
+      auto& registry = game_server_->GetRegistry();
+      auto id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, id);
+
+      created_walls_.push_back(e.entity);
+
       break;
     }
     default:
