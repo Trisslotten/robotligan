@@ -110,6 +110,8 @@
     <None Include="Assets\shaders\shading.vert" />
     <None Include="Assets\shaders\particle.geom" />
     <None Include="Assets\shaders\compute_shader.comp" />
+    <None Include="Assets\shaders\text3Dshader.vert" />
+    <None Include="Assets\shaders\text3Dshader.frag" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />

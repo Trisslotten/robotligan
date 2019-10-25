@@ -105,6 +105,11 @@ EXPORT double GetWidthOfText(Font2DHandle font_handle, std::string text, int siz
 EXPORT void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
                    std::string text, glm::vec4 color = glm::vec4(1, 1, 1, 1),
                    bool visible = true, bool equal_spacing = false, float spacing = 13.0f);
+
+EXPORT void Submit(Font2DHandle font_h, glm::vec3 pos, float size,
+                   std::string text, glm::vec4 color = glm::vec4(1, 1, 1, 1),
+                   glm::mat4 rot = glm::mat4(1.0f));
+
 EXPORT void Submit(GUIHandle gui_h, glm::vec2 pos, float scale,
                    float scale_x = 100.0f, float opacity = 1.0f);
 EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale,

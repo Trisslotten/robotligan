@@ -81,17 +81,17 @@ bool NetAPI::Socket::Server::Update() {
       connection_client_->client.Send(p);
     }
     if (accepted) {
-      int canJoin = 2;
+      int can_join = 2;
       NetAPI::Common::Packet p;
-      p << canJoin << PacketBlockType::SERVER_CAN_JOIN;
+      p << can_join << PacketBlockType::SERVER_CAN_JOIN;
       connection_client_->client.Send(p);
       connection_client_->address = address;
       connection_client_->is_active = true;
       newly_connected_.push_back(connection_client_);
     } else {
-      int canJoin = -2;
+      int can_join = -2;
       NetAPI::Common::Packet p;
-      p << canJoin << PacketBlockType::SERVER_CAN_JOIN;
+      p << can_join << PacketBlockType::SERVER_CAN_JOIN;
     }
     connection_client_ = nullptr;
   }

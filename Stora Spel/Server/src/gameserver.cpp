@@ -76,6 +76,24 @@ void GameServer::Update(float dt) {
     lobby_state_.SetClientIsReady(client_data->ID, false);
     play_state_.SetClientReceiveUpdates(client_data->ID, false);
     lobby_state_.HandleNewClientTeam(client_data->ID);
+    NetAPI::Common::Packet p;
+    int s;
+    if (this->current_state_type_ == ServerStateType::LOBBY) {
+      s = 0;
+    } else {
+      NetAPI::Common::Packet to_send;
+      for (auto client_team : lobby_state_.client_teams_) {
+        to_send << client_team.first;   // send id
+        to_send << client_team.second;  // send team
+        bool ready = true;
+        to_send << ready;
+        to_send << PacketBlockType::LOBBY_UPDATE_TEAM;
+      }
+      server_.Send(to_send);
+      s = 1;
+    }
+    p << s << PacketBlockType::STATE;
+    server_.Send(p);
   }
 
   // handle received data
@@ -140,7 +158,6 @@ void GameServer::HandlePacketsToSend() {
       to_send << PacketBlockType::MESSAGE;
     }
 
-
     if (!to_send.IsEmpty()) {
       server_.Send(to_send);
     }
@@ -187,6 +204,16 @@ void GameServer::HandleStateChange() {
         break;
     }
     current_state_->Init();
+    NetAPI::Common::Packet p;
+    int s;
+    if (this->current_state_type_ == ServerStateType::LOBBY) {
+      s = 0;
+    } else {
+      s = 1;
+    }
+    p << s << PacketBlockType::STATE;
+    server_.Send(p);
+    client_names_.clear();
   }
 }
 
@@ -283,7 +310,6 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       }
       break;
     }
-
     case PacketBlockType::LOBBY_SELECT_ABILITY: {
       AbilityID id;
       packet >> id;
@@ -294,6 +320,16 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       int id;
       packet >> id;
       play_state_.SetFrameID(client_id, id);
+      break;
+    }
+    case PacketBlockType::MY_NAME: {
+      std::string name;
+      packet >> name;
+      while (NameAlreadyExists(name)) {
+        name.append("xD");
+      }
+      client_names_[client_id] = name;
+      lobby_state_.SetTeamsUpdated(true);
       break;
     }
       /*
@@ -308,6 +344,15 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       }
       */
   }
+}
+
+bool GameServer::NameAlreadyExists(std::string name) {
+  for (auto n : client_names_) {
+    if (name == n.second) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void GameServer::ReceiveGameEvent(const GameEvent& event) {

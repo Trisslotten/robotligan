@@ -23,11 +23,15 @@ public:
     return ability_sounds_;
   }
 
- private:
+  void ReceiveMenuEvent(const MenuEvent& event);
+private:
   Timer nudge_timer_;
   std::unordered_map<AbilityID, slob::SoundHandle> ability_sounds_;
 
   slob::SoundEngine sound_engine_;
+
+  slob::SoundHandle button_hover_;
+  slob::SoundHandle button_click_;
 
   slob::SoundHandle sound_step_;
   slob::SoundHandle sound_crowd_;

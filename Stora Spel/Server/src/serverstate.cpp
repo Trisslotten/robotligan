@@ -60,6 +60,7 @@ void ServerLobbyState::Update(float dt) {
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     if (teams_updated_) {
       for (auto client_team : client_teams_) {
+        to_send << game_server_->GetClientNames()[client_team.first];
         to_send << client_team.first;   // send id
         to_send << client_team.second;  // send team
         bool ready = clients_ready_[client_team.first];
@@ -107,16 +108,24 @@ void ServerPlayState::Init() {
 
     auto team_view =
         registry.view<TeamComponent, IDComponent, PlayerComponent>();
+
+    unsigned int team_id = 0;        
     for (auto team : team_view) {
       auto& team_c = team_view.get<TeamComponent>(team);
       auto& id_c = team_view.get<IDComponent>(team);
+      auto& player_c = team_view.get<PlayerComponent>(team);
+
+      to_send << team_c.team;
+      to_send << id_c.id;
+      to_send << player_c.client_id;
 
       if (id_c.id == clients_player_ids_[client_id]) {
-        to_send << team_c.team;
+        team_id = team_c.team;
       }
-
-      break;
     }
+    to_send << (int)team_view.size();
+
+    to_send << team_id;
 
     auto ball_view = registry.view<BallComponent, IDComponent>();
     for (auto ball : ball_view) {
@@ -167,7 +176,15 @@ void ServerPlayState::Update(float dt) {
     if (!this->replay_) {
       auto inputs = players_inputs_[player_c.client_id];
 
-      player_c.actions = inputs.first;
+      if (countdown_timer_.Elapsed() <= count_down_time_) {
+        match_timer_.Pause();
+      } else {
+        player_c.actions = inputs.first;
+        if (!reset_) {
+          match_timer_.Resume();
+		}
+        countdown_timer_.Pause();
+      }
       player_c.pitch = inputs.second.x;
       player_c.yaw = inputs.second.y;
       // Check if the game should be be recorded
