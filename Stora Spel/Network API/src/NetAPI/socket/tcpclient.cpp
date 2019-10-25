@@ -92,15 +92,15 @@ bool NetAPI::Socket::TcpClient::Send(NetAPI::Common::Packet& p) {
   return true;
 }
 std::vector<NetAPI::Common::Packet> NetAPI::Socket::TcpClient::Receive(
-    unsigned short timeout) {
+    double timeout) {
   int bytes = 1;
   FD_ZERO(&read_set_);
   FD_SET(send_socket_, &read_set_);
-  timeout_.tv_usec = timeout;
+  timeout_.tv_usec = 50;
 
   std::vector<NetAPI::Common::Packet> result;
-
   if (select(send_socket_, &read_set_, NULL, NULL, &timeout_) == 1) {
+	std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
     last_buff_len_ = recv(send_socket_, rec_buffer_, buffer_size_, 0);
     // std::cout << "last_buff_len_=" << last_buff_len_ << "\n";
     if (last_buff_len_ > 0) {

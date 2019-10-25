@@ -25,7 +25,7 @@ void NetAPI::Socket::Server::HandleSingleClientPacket(std::pair<const long, NetA
 		c.second->client.Disconnect();
 		c.second->is_active = false;
 		connected_players_--;
-		return
+		return;
 	}
 	if (c.second && c.second->client.IsConnected()) {
 		int num_packets = 0;
