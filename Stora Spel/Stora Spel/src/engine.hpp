@@ -84,6 +84,10 @@ class Engine {
   int GetStateType() { return statetype_; }
   void SetStateType(int state) { statetype_ = state; }
   void ReInit() { play_state_.Cleanup(); play_state_.Init();}
+
+  std::unordered_map<PlayerID, PlayerStatInfo> GetPlayerScores() {
+    return player_scores_;
+  }
  private:
   void SetKeybinds();
 

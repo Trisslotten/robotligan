@@ -430,7 +430,8 @@ void PlayState::DrawNameOverPlayer() {
     auto& transform = player_view.get<TransformComponent>(entity);
 
     for (auto& [id, name] : engine_->player_names_) {
-      if (id == id_c.id) {
+      EntityID e_id = engine_->GetPlayerScores()[id].enttity_id;
+      if (e_id == id_c.id) {
         glm::vec3 look = glm::vec3(transform.position - my_transform.position);
         float distance = glm::length(look);
         glm::vec3 up = glm::vec3(0.f, 1.f, 0.f);
@@ -457,7 +458,7 @@ void PlayState::DrawNameOverPlayer() {
           size = glm::lerp(0.3f, 1.5f, factor);
         }
 
-        auto team = engine_->GetPlayerTeam(id);
+        auto team = engine_->GetPlayerTeam(e_id);
         if (team == TEAM_BLUE) color = glm::vec4(0.f, 0.f, 1.f, 1.f);
         else if (team == TEAM_RED)
           color = color = glm::vec4(1.f, 0.f, 0.f, 1.f);
