@@ -842,6 +842,7 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       registry.assign<IDComponent>(e.entity, id);
 
       created_walls_.push_back(e.entity);
+
       break;
     }
     default:

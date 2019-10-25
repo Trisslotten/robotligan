@@ -232,7 +232,7 @@ struct GameEvent {
 
     // BUILD WALL
     struct {
-
+      EntityID wall_id;
     } build_wall;
 
     // Primary ability used

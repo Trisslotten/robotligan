@@ -487,6 +487,7 @@ bool DoHomingBall(entt::registry& registry, PlayerID id) {
 bool BuildWall(entt::registry& registry, PlayerID id) {
   auto view_players = registry.view<PlayerComponent, TransformComponent,
                                     CameraComponent, IDComponent>();
+  auto view_goals = registry.view<GoalComponenet, TransformComponent>();
   for (auto entity : view_players) {
     auto& player_c = view_players.get<PlayerComponent>(entity);
 
@@ -496,12 +497,21 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
 
       glm::vec3 position = camera.GetLookDir() * 4.5f + trans_c.position + camera.offset;
       position.y = -12.f;
+
+      for (auto entity_goal : view_goals) {
+        auto& goal_transform = view_goals.get<TransformComponent>(entity_goal);
+
+        if (glm::distance(position, goal_transform.position) < 20.f) {
+          return false;
+        }
+      }
+
       auto orientation = trans_c.rotation;
       //orientation.y = camera.GetLookDir().y;
 
       auto wall = registry.create();
       registry.assign<WallComponent>(wall);
-      registry.assign<TimerComponent>(wall, 100.f);
+      registry.assign<TimerComponent>(wall, 5.f);
       registry.assign<HealthComponent>(wall, 100);
       registry.assign<TransformComponent>(wall, position, orientation);
       auto& obb = registry.assign<physics::OBB>(wall);
@@ -514,10 +524,6 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
       e.entity = wall;
       
       dispatcher.enqueue<EventInfo>(e);
-
-      GameEvent wall_event;
-      wall_event.type = GameEvent::BUILD_WALL;
-      dispatcher.trigger(wall_event);
 
       return true;
     }

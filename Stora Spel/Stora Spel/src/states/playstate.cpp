@@ -892,7 +892,8 @@ void PlayState::TestCreateLights() {
 void PlayState::CreateWall(EntityID id, glm::vec3 position,
                            glm::quat rotation) {
   auto wall = registry_gameplay_.create();
-
+  auto& sound_engine = engine_->GetSoundEngine();
+  registry_gameplay_.assign<SoundComponent>(wall, sound_engine.CreatePlayer());
   registry_gameplay_.assign<IDComponent>(wall, id);
   registry_gameplay_.assign<TransformComponent>(
       wall, position, rotation, glm::vec3(1.f, 4.f, 5.f));
@@ -902,9 +903,11 @@ void PlayState::CreateWall(EntityID id, glm::vec3 position,
   std::vector<glob::ModelHandle> hs;
   hs.push_back(model);
   registry_gameplay_.assign<ModelComponent>(wall, hs);
-  //model_c.handles.push_back(model);
 
-  registry_gameplay_.assign<int>(wall, a);
+  GameEvent wall_event;
+  wall_event.type = GameEvent::BUILD_WALL;
+  wall_event.build_wall.wall_id = id;
+  dispatcher.trigger(wall_event);
 }
 
 void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {
