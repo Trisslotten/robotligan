@@ -38,7 +38,8 @@ void Engine::Init() {
 
   // glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
 
-  menu_dispatcher.sink<MenuEvent>().connect<&SoundSystem::ReceiveMenuEvent>(sound_system_);
+  menu_dispatcher.sink<MenuEvent>().connect<&SoundSystem::ReceiveMenuEvent>(
+      sound_system_);
 
   dispatcher.sink<GameEvent>().connect<&SoundSystem::ReceiveGameEvent>(
       sound_system_);
@@ -157,7 +158,7 @@ void Engine::Update(float dt) {
         break;
       case StateType::PLAY:
         current_state_ = &play_state_;
-		    //ReInit();
+        // ReInit();
         scores_[0] = 0;
         scores_[1] = 0;
         break;
@@ -573,7 +574,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
   }
 }
 
-void Engine::Render() { glob::Render(); }
+void Engine::Render() {
+  //
+  glob::Render();
+}
 
 void Engine::SetCurrentRegistry(entt::registry* registry) {
   this->registry_current_ = registry;
