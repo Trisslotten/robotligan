@@ -350,7 +350,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
         if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
-          PlayAnimation("Kick", 5.f, &ac, 14, 1.f, PARTIAL_MUTE,
+          PlayAnimation("Kick", 4.f, &ac, 14, 1.f, PARTIAL_MUTE,
                         &ac.model_data.upperBody);
           break;
         }
