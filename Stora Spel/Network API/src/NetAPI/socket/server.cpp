@@ -2,6 +2,20 @@
 #include <iostream>
 #include <string>
 using namespace std::chrono_literals;
+void NetAPI::Socket::Server::ClearPackets(NetAPI::Socket::ClientData* data)
+{
+	Lock();
+	data->packets.clear();
+	Unlock();
+}
+void NetAPI::Socket::Server::Lock()
+{
+	locked = true;
+}
+void NetAPI::Socket::Server::Unlock()
+{
+	locked = false;
+}
 void NetAPI::Socket::Server::SendPing() {
   NetAPI::Common::Packet to_send;
   to_send.GetHeader()->packet_id = NetAPI::Socket::EVERYONE;
@@ -18,7 +32,8 @@ void NetAPI::Socket::Server::HandleSingleClientPacket(unsigned short ID)
 	auto c = this->client_data_[ID];
 	while (threads[ID].second)
 	{
-		if (!c->client.IsConnected() && c->is_active) {
+		auto is_locked = locked;
+		if (!is_locked && !c->client.IsConnected() && c->is_active) {
 			std::cout << "DEBUG: removing client, lstrecvlen="
 				<< c->client.GetRaw()->GetLastRecvLen()
 				<< ", isConnected=" << c->client.IsConnected() << "\n";
@@ -26,8 +41,12 @@ void NetAPI::Socket::Server::HandleSingleClientPacket(unsigned short ID)
 			c->is_active = false;
 			connected_players_--;
 		}
-		else if((c->client.IsConnected()))
+		else if (!is_locked && (c->client.IsConnected()))
 		{
+			/*
+				Clear packet när man pushar paket? hmmm
+			
+			*/
 			int num_packets = 0;
 			for (auto packet : c->client.Receive()) {
 				num_packets++;
@@ -36,9 +55,9 @@ void NetAPI::Socket::Server::HandleSingleClientPacket(unsigned short ID)
 				}
 			}
 		}
-		while (!new_frame)
+		else
 		{
-			std::this_thread::sleep_for(10ns);
+			std::this_thread::sleep_for(100ns);
 		}
 	}
 	c = nullptr;
@@ -155,15 +174,15 @@ bool NetAPI::Socket::Server::Setup(unsigned short port) {
 }
 
 bool NetAPI::Socket::Server::Update() {
+  new_frame = true;
   if (!setup_) {
     return false;
   }
   ListenForClients();
   // Receive Data
-  new_frame = false;
   // Send Data
-  new_frame = true;
   SendStoredData();
+  new_frame = false;
   return true;
 }
 

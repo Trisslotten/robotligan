@@ -71,7 +71,6 @@ void GameServer::Update(float dt) {
   for (auto& [client_id, client_data] : server_.GetClients()) {
     packets_[client_id] = NetAPI::Common::Packet();
   }
-
   for (auto client_data : server_.GetNewlyConnected()) {
     lobby_state_.SetClientIsReady(client_data->ID, false);
     play_state_.SetClientReceiveUpdates(client_data->ID, false);
@@ -95,8 +94,8 @@ void GameServer::Update(float dt) {
     p << s << PacketBlockType::STATE;
     server_.Send(p);
   }
-
   // handle received data
+  server_.Lock();
   for (auto& [id, client_data] : server_.GetClients()) {
     for (auto& packet : client_data->packets) {
       while (!packet.IsEmpty()) {
@@ -105,12 +104,12 @@ void GameServer::Update(float dt) {
         HandlePacketBlock(packet, block_type, id);
       }
     }
-    client_data->packets.clear();
+	server_.ClearPackets(client_data);
   }
   DoOncePerSecond();
   current_state_->Update(dt);
   current_state_->HandleDataToSend();
-
+  server_.Unlock();
   //---------------------------------------------
   //--------------UPDATE GAME LOGIC--------------
   //---------------------------------------------

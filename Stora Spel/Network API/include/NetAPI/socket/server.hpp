@@ -12,6 +12,7 @@
 #include <shared/shared.hpp>
 #include <chrono>
 #include <thread>
+#include <mutex>
 namespace NetAPI {
 namespace Socket {
 class EXPORT Server {
@@ -28,6 +29,9 @@ class EXPORT Server {
   std::unordered_map<long, ClientData*>& GetClients() { return client_data_; }
   std::vector<ClientData*> GetNewlyConnected() { return newly_connected_; }
   std::pair<std::thread, bool> threads[Common::kMaxPlayers];
+  void ClearPackets(NetAPI::Socket::ClientData* data);
+  void Lock();
+  void Unlock();
  private:
   void SendPing();
   void HandleClientPacket();
@@ -42,7 +46,7 @@ class EXPORT Server {
   ClientData* connection_client_ = nullptr;
   TcpListener listener_;
   bool setup_ = false;
-
+  bool locked = false;
   bool new_frame = true;
   short connected_players_ = 0;
   long current_client_guid_ = 0;
