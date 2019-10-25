@@ -22,10 +22,11 @@ void Update(entt::registry& registry, float dt) {
       EventInfo event;
       event.event = Event::DESTROY_ENTITY;
       event.e_id = id.id;
+      event.entity = entity;
 
       dispatcher.trigger(event);
 
-      registry.destroy(entity);
+      //registry.destroy(entity);
     }
   }
 
@@ -40,10 +41,11 @@ void Update(entt::registry& registry, float dt) {
       EventInfo event;
       event.event = Event::DESTROY_ENTITY;
       event.e_id = id.id;
+      event.entity = entity;
 
       dispatcher.trigger(event);
 
-      registry.destroy(entity);
+      //registry.destroy(entity);
     }
   }
 }
