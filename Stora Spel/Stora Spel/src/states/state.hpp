@@ -264,6 +264,7 @@ class PlayState : public State {
   FrameState SimulateMovement(std::vector<int> &action, FrameState& state, float dt);
   void MovePlayer(float dt);
   void MoveBall(float dt);
+  void Collision();
   ////////////////////////////////////////
 
   entt::registry registry_gameplay_;
@@ -275,7 +276,7 @@ class PlayState : public State {
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> transforms_;
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> new_transforms_;
   FrameState server_predicted_;
-  entt::entity my_entity_;
+  entt::entity my_entity_, arena_entity_;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
 
