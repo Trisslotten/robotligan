@@ -125,52 +125,35 @@ void MainMenuState::CreateBackgroundEnitites() {
     engine_->GetAnimationSystem().PlayAnimation("Resting", 0.5f, &animation_c,
                                                 10, 1.f, 0 /*LOOP*/);
 
-    auto robot2 = registry_mainmenu_.create();
+    robot = registry_mainmenu_.create();
     auto& trans_c2 = registry_mainmenu_.assign<TransformComponent>(
-        robot2, glm::vec3(9.f, -2.8f, 0.f),
+        robot, glm::vec3(9.f, -2.8f, 0.f),
         glm::vec3(0.f, glm::radians(180.0f), 0.f), glm::vec3(0.0013f));
-    auto& model_c2 = registry_mainmenu_.assign<ModelComponent>(robot2);
+    auto& model_c2 = registry_mainmenu_.assign<ModelComponent>(robot);
     model_c2.handles.push_back(model_robot);
 
     // Animation
     auto& animation_c2 = registry_mainmenu_.assign<AnimationComponent>(
-        robot2, glob::GetAnimationData(model_robot));
+        robot, glob::GetAnimationData(model_robot));
 
     engine_->GetAnimationSystem().PlayAnimation("Run", 1.f, &animation_c2, 10,
                                                 1.f, 0 /*LOOP*/);
 
     // ladda in och skapa entity för robotar
-    auto robot3 = registry_mainmenu_.create();
+    robot = registry_mainmenu_.create();
     auto& trans_c3 = registry_mainmenu_.assign<TransformComponent>(
-        robot3, glm::vec3(9.f, -2.8f, 2.f),
+        robot, glm::vec3(9.f, -2.8f, 2.f),
         glm::vec3(0.f, glm::radians(135.0f), 0.f), glm::vec3(0.0013f));
-    auto& model_c3 = registry_mainmenu_.assign<ModelComponent>(robot3);
+    auto& model_c3 = registry_mainmenu_.assign<ModelComponent>(robot);
     model_c3.handles.push_back(model_robot);
 
     // Animation
     auto& animation_c3 = registry_mainmenu_.assign<AnimationComponent>(
-        robot3, glob::GetAnimationData(model_robot));
+        robot, glob::GetAnimationData(model_robot));
 
     engine_->GetAnimationSystem().PlayAnimation("Resting", 0.5f, &animation_c3,
                                                 10, 1.f, 0 /*LOOP*/);
   }
-
-  // Particles
-
-  {
-    auto particles = registry_mainmenu_.create();
-    auto handle_particles = glob::CreateParticleSystem();
-
-	std::vector handles = {handle_particles};
-    std::vector<glm::vec3> offsets;
-    std::vector<glm::vec3> directions;
-    glob::SetParticleSettings(handle_particles, "smoke_main_menu.txt");
-    glob::SetEmitPosition(handle_particles, glm::vec3(8.8f, -2.8f, 0.f));
-    auto& e = registry_mainmenu_.assign<ParticleComponent>(particles, handles,
-                                                 offsets, directions);
-    auto& f = registry_mainmenu_.assign<int>(particles, 0);
-  }
-
   {
     // lägga ut en kamera i scenen
     auto camera = registry_mainmenu_.create();

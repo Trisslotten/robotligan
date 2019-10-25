@@ -1,4 +1,4 @@
->texture=smoke
+>texture=space
 >color= 1 1 1 0.4
 >end_color= 1 1 1 0
 >velocity= 0.1
