@@ -155,7 +155,8 @@ void LobbyState::UpdateNetwork() {}
 void LobbyState::Cleanup() {
   server_state_ = engine_->GetStateType();
   if (server_state_) {
-    engine_->ReInit();
+    // TODO: fix
+    //engine_->ReInit();
   }
   me_ready_ = false;
   for (auto& l_p : lobby_players_) {
