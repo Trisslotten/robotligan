@@ -30,7 +30,6 @@ void glob::Font2D::GenerateMsdfShapes(const std::string& font_path) {
 
       FT_Set_Char_Size(face, 32, 32, 1280, 720);
 
-      
       unsigned int end_char = 255;
       unsigned int start_char = 0;
       unsigned int num_chars = end_char - start_char;
@@ -38,7 +37,8 @@ void glob::Font2D::GenerateMsdfShapes(const std::string& font_path) {
       for (int i = 0; i < num_chars; i++) {
         if (loadGlyph(shape, font, start_char + i)) {
           shapes.push_back(shape);
-          if (FT_Error Error = FT_Load_Char(face, (unsigned)i, FT_LOAD_RENDER)) {
+          if (FT_Error Error =
+                  FT_Load_Char(face, (unsigned)i, FT_LOAD_RENDER)) {
             std::cout << "Failed to load Glyph: " << i << " Error: " << Error
                       << "\n";
             advances_.push_back(0);
@@ -80,7 +80,7 @@ void glob::Font2D::GenerateMsdfFont(const std::string& font_path,
           // shape.normalize();
           shapes.push_back(shape);
 
-		  FT_Face face = font->face;
+          FT_Face face = font->face;
 
           FT_Set_Char_Size(face, 32, 32, 1280, 720);
 
@@ -90,9 +90,7 @@ void glob::Font2D::GenerateMsdfFont(const std::string& font_path,
             advances_.push_back(0);
           } else {
             advances_.push_back(face->glyph->advance.x >> 6);
-		  }
-
-		  
+          }
 
           double l = 0, r = 0, t = 0, b = 0;
           shape.bounds(l, b, r, t);
@@ -100,18 +98,50 @@ void glob::Font2D::GenerateMsdfFont(const std::string& font_path,
 
           // shape.normalize();
           //                      max. angle
-          edgeColoringSimple(shape, 3.0);
+          edgeColoringSimple(shape, 3.0, 0ULL);
+
           //           image width, height
           msdfgen::Bitmap<float, 3> msdf(height_, width_);
           //                     range, scale, translation
-          msdfgen::generateMSDF(msdf, shape, 4.0, 16 / fscale,
-                                msdfgen::Vector2(10.0, 10.0));
 
-          for (unsigned int yy = 0; yy < height_; yy++)
+          double range = 4.0;
+          double scale = 16 / fscale;
+          auto translate = msdfgen::Vector2(10.0, 10.0);
+          double edge_threshold = 1.09;
+          bool overlap_support = false;
+          msdfgen::generateMSDF(msdf, shape, range, scale, translate,
+                                edge_threshold, overlap_support);
+
+          // msdfgen::msdfErrorCorrection(msdf, msdfgen::Vector2(0.0, 0.0));
+
+          int sum = 0;
+          for (unsigned int yy = 0; yy < height_; yy++) {
             for (unsigned int xx = 0; xx < width_; xx++) {
               char r = msdfgen::pixelFloatToByte(msdf(xx, yy)[0]);
               char g = msdfgen::pixelFloatToByte(msdf(xx, yy)[1]);
               char b = msdfgen::pixelFloatToByte(msdf(xx, yy)[2]);
+              sum += (int)*reinterpret_cast<unsigned char*>(&r);
+              sum += (int)*reinterpret_cast<unsigned char*>(&g);
+              sum += (int)*reinterpret_cast<unsigned char*>(&b);
+            }
+          }
+          float max_sum = 255 * 3 * height_ * width_;
+
+          //std::cout << char(i) << ": " << sum / max_sum << "\n";
+
+          bool inverted = (sum / max_sum) > 0.6f;
+
+          for (unsigned int yy = 0; yy < height_; yy++) {
+            for (unsigned int xx = 0; xx < width_; xx++) {
+              char r = msdfgen::pixelFloatToByte(msdf(xx, yy)[0]);
+              char g = msdfgen::pixelFloatToByte(msdf(xx, yy)[1]);
+              char b = msdfgen::pixelFloatToByte(msdf(xx, yy)[2]);
+
+              if(inverted) {
+                r = 255 - (unsigned char)r;
+                g = 255 - (unsigned char)g;
+                b = 255 - (unsigned char)b;
+              }
 
               int jumps_down = i / side_dim_;
               int jumps_right = i % side_dim_;
@@ -120,16 +150,16 @@ void glob::Font2D::GenerateMsdfFont(const std::string& font_path,
                   (side_dim_ * width_ - (jumps_down * width_ + yy) - 1) *
                       side_dim_ * width_ * 4 +
                   (jumps_right * height_ + xx) * 4;
-
-              pixels[pos] = r;
+              
+              pixels[pos + 0] = r;
               pixels[pos + 1] = g;
               pixels[pos + 2] = b;
               pixels[pos + 3] = 255;
             }
-
-          // msdfgen::savePng(msdf, output_name.c_str());
+          }
         }
       }
+
       if (lodepng::encode(output_path, pixels, width_ * side_dim_,
                           height_ * side_dim_, LCT_RGBA)) {
         std::cout << "[ERROR] Could not generate sprite-sheet for font\n";
@@ -211,7 +241,8 @@ bool glob::Font2D::LoadFromFile(const std::string& path) {
 }
 
 void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
-                        std::string text, glm::vec4 color, bool visible, bool equal_spacing, float spacing) {
+                        std::string text, glm::vec4 color, bool visible,
+                        bool equal_spacing, float spacing) {
   const char* chars = text.c_str();
   unsigned int len = text.length();
 
@@ -222,7 +253,7 @@ void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
   shader.uniform("fgColor", color);
   shader.uniform("msdf", 0);
   shader.uniform("screen_dims", glob::window::GetWindowDimensions());
-  //shader.uniform("t_pos", pos);
+  // shader.uniform("t_pos", pos);
   shader.uniform("size", size);
 
   double offset_accum = 0;
@@ -232,8 +263,6 @@ void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
   glDepthFunc(GL_ALWAYS);
   for (int i = 0; i < len; i++) {
     unsigned char cur = *(unsigned char*)(chars + i);
-
-    
 
     // FT_Load_Char(face, (FT_ULong)cur, FT_LOAD_RENDER);
     // double kerning = 0;
@@ -258,7 +287,7 @@ void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
       r = advances_[cur];
       //(face->glyph->advance.x >> 6);
       if (!equal_spacing)
-       offset_accum += r * .03 * double(size);
+        offset_accum += r * .03 * double(size);
       else
         offset_accum += spacing;
     }
@@ -272,8 +301,8 @@ void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
   glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void glob::Font2D::Draw3D(ShaderProgram& shader, glm::vec3 center,
-                          float size, std::string text, glm::vec4 color,
+void glob::Font2D::Draw3D(ShaderProgram& shader, glm::vec3 center, float size,
+                          std::string text, glm::vec4 color,
                           glm::mat4 rotation) {
   const char* chars = text.c_str();
   unsigned int len = text.length();
