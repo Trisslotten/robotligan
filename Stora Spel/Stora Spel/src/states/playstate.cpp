@@ -101,6 +101,9 @@ void PlayState::Init() {
   engine_->SetCurrentRegistry(&registry_gameplay_);
   engine_->SetEnableChat(true);
 
+  //end_game_timer_.Restart();
+  game_has_ended_ = false;
+
   CreateInGameMenu();
   CreateInitialEntities();
   // TestParticles();
