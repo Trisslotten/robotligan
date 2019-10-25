@@ -107,16 +107,22 @@ void ServerPlayState::Init() {
 
     auto team_view =
         registry.view<TeamComponent, IDComponent, PlayerComponent>();
+
+    unsigned int team_id = 0;        
     for (auto team : team_view) {
       auto& team_c = team_view.get<TeamComponent>(team);
       auto& id_c = team_view.get<IDComponent>(team);
 
-      if (id_c.id == clients_player_ids_[client_id]) {
-        to_send << team_c.team;
-      }
+      to_send << team_c.team;
+      to_send << id_c.id;
 
-      break;
+      if (id_c.id == clients_player_ids_[client_id]) {
+        team_id = team_c.team;
+      }
     }
+    to_send << (int)team_view.size();
+
+    to_send << team_id;
 
     auto ball_view = registry.view<BallComponent, IDComponent>();
     for (auto ball : ball_view) {
@@ -433,8 +439,7 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
 
     AbilityID primary_id = client_abilities_[player_c.client_id];
     AbilityID secondary_id = AbilityID::NULL_ABILITY;
-    float primary_cooldown =
-        GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
+    float primary_cooldown = game_server_->GetAbilityCooldowns()[primary_id];
 
     // Add components for a player
     registry.assign<AbilityComponent>(

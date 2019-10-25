@@ -11,6 +11,7 @@
 #include <util/timer.hpp>
 #include "Chat.hpp"
 #include "shared/shared.hpp"
+#include "eventdispatcher.hpp"
 
 class Engine;
 
@@ -114,7 +115,7 @@ class LobbyState : public State {
   glob::GUIHandle ready_icon_;
   glob::GUIHandle ready_empty_icon_;
 
-
+  int server_state_ = 0;
   std::vector<glob::GUIHandle> ability_icons_;
   glob::Font2DHandle font_team_names_;
   glob::Font2DHandle font_test_;
@@ -126,7 +127,6 @@ class LobbyState : public State {
 
   void SendJoinTeam(unsigned int team);
   int my_id_ = 0;
-
   int my_selected_ability_ = 1;
 
   entt::entity GetAbilityButton(std::string find_string);
@@ -165,8 +165,6 @@ class ConnectMenuState : public State {
   std::string last_msg_ = "Failed to connect: Timeout";
   std::string ip_ = "localhost";
   std::string port_ = "1337";
-  InputField ip_field_;
-  InputField port_field_;
   glob::Font2DHandle font_test_ = 0;
   entt::registry registry_connect_menu_;
 };
@@ -190,6 +188,8 @@ class SettingsState : public State {
   float setting_fov_ = 90.f;
   float setting_volume_ = 100.f;
   float setting_mouse_sens_ = 1.0f;
+
+  std::string setting_username_ = "BogdanBoss";
 };
 
 /////////////////////// PLAY ///////////////////////
@@ -215,7 +215,7 @@ class PlayState : public State {
     ball_id_ = ball_id;
   }
   void SetCurrentStamina(float stamina) { current_stamina_ = stamina; }
-
+  auto* GetReg() { return &registry_gameplay_; }
   void CreatePickUp(EntityID id, glm::vec3 position);
   void CreateCannonBall(EntityID id);
   void CreateTeleportProjectile(EntityID id);
@@ -242,10 +242,14 @@ class PlayState : public State {
   void UpdateHistory(int id) { while (history_.size() > 0 && history_.front().id <= id) history_.pop_front(); }
   void AddPitchYaw(float pitch, float yaw);
   void SetPitchYaw(float pitch, float yaw);
+  auto* GetPlayerIDs() { return &player_ids_; }
+
   float GetPitch() { return pitch_; }
   float GetYaw() { return yaw_; }
   void SetTeam(unsigned int team) {my_team_ = team;}
+  void SetTeam(EntityID id, unsigned int team) {teams_[id] = team; }
  private:
+  int server_state_ = 1;
   void CreateInitialEntities();
   void CreatePlayerEntities();
   void CreateArenaEntity();
@@ -259,12 +263,14 @@ class PlayState : public State {
   void UpdateGameplayTimer();
   void UpdateSwitchGoalTimer();
 
+  void DrawNameOverPlayer();
+
   void DrawTopScores();
   void DrawTarget();
   void DrawQuickslots();
   FrameState SimulateMovement(std::vector<int> &action, FrameState& state, float dt);
   void MovePlayer(float dt);
-
+  void MoveBall(float dt);
   ////////////////////////////////////////
 
   entt::registry registry_gameplay_;
@@ -279,6 +285,8 @@ class PlayState : public State {
   entt::entity my_entity_;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
+
+  std::unordered_map<EntityID, unsigned int> teams_;
 
   entt::entity blue_goal_light_;
   entt::entity red_goal_light_;

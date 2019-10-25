@@ -37,6 +37,10 @@ class GameServer {
   }
   entt::registry& GetRegistry() { return registry_; }
 
+  std::unordered_map<AbilityID, float> GetAbilityCooldowns() {
+    return ability_cooldowns_;
+  }
+
  private:
   void UpdateSystems(float dt);
 
@@ -61,6 +65,7 @@ class GameServer {
   int test_player_guid_ = 0;
 
   std::vector<unsigned int> scores;
+  std::unordered_map<AbilityID, float> ability_cooldowns_;
 };
 
 #endif  // GAME_SERVER_HPP_

@@ -94,6 +94,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;%(AdditionalIncludeDirectories);$(SolutionDir)Physics\include;$(SolutionDir)glm</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -109,6 +110,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)glm;$(SolutionDir)Graphics\external\include;$(SolutionDir)Graphics\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -272,6 +274,8 @@
     <None Include="Assets\shaders\shadow.frag" />
     <None Include="Assets\shaders\text2Dshader.frag" />
     <None Include="Assets\shaders\text2Dshader.vert" />
+    <None Include="Assets\shaders\text3Dshader.frag" />
+    <None Include="Assets\shaders\text3Dshader.vert" />
     <None Include="Assets\shaders\wireframe.frag" />
     <None Include="shaders\testshader.frag" />
     <None Include="shaders\testshader.vert" />
