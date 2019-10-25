@@ -455,6 +455,17 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       player_scores_[id] = psbi;
       break;
     }
+    case PacketBlockType::CREATE_WALL: {
+      glm::quat rot;
+      glm::vec3 pos;
+      EntityID id;
+
+      packet >> id;
+      packet >> pos;
+      packet >> rot;
+      play_state_.CreateWall(id, pos, rot);
+      break;
+    }
     case PacketBlockType::CREATE_PICK_UP: {
       glm::vec3 pos;
       EntityID id;

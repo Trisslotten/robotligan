@@ -16,6 +16,7 @@
 #include "ecs/systems/buff_controller_system.hpp"
 #include "ecs/systems/collision_system.hpp"
 #include "ecs/systems/goal_system.hpp"
+#include "ecs/systems/lifetime_system.hpp"
 #include "ecs/systems/missile_system.hpp"
 #include "ecs/systems/physics_system.hpp"
 #include "ecs/systems/player_controller_system.hpp"
@@ -371,6 +372,8 @@ void GameServer::UpdateSystems(float dt) {
 
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);
+  lifetime::Update(registry_, dt);
+
   if (!play_state_.IsResetting()) goal_system::Update(registry_);
 
   dispatcher.update<EventInfo>();

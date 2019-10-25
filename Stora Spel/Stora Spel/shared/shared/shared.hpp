@@ -54,6 +54,7 @@ namespace PacketBlockType {
     SECONDARY_USED,
     MESSAGE,
     UPDATE_POINTS,
+    CREATE_WALL,
     CREATE_PICK_UP,
     DESTROY_PICK_UP,
     RECEIVE_PICK_UP,
@@ -131,6 +132,7 @@ struct GameEvent {
     RUN_START,
     RUN_END,
     RESET,
+    BUILD_WALL,
     PRIMARY_USED,
     SECONDARY_USED,
 	FAKE_BALL_CREATED,
@@ -244,6 +246,11 @@ struct GameEvent {
     // RESET
     struct {
     } reset;
+
+    // BUILD WALL
+    struct {
+      EntityID wall_id;
+    } build_wall;
 
     // Primary ability used
     struct {

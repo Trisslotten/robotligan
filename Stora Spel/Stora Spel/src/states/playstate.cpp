@@ -11,6 +11,7 @@
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 
+#include <boundingboxes.hpp>
 #include <physics.hpp>
 #include <shared/physics_component.hpp>
 #include <shared/pick_up_component.hpp>
@@ -985,6 +986,31 @@ void PlayState::TestCreateLights() {
     90.f, 0.1f);
   registry_gameplay_.assign<TransformComponent>(
     light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
+}
+
+void PlayState::CreateWall(EntityID id, glm::vec3 position,
+                           glm::quat rotation) {
+  auto wall = registry_gameplay_.create();
+  auto& sound_engine = engine_->GetSoundEngine();
+  registry_gameplay_.assign<SoundComponent>(wall, sound_engine.CreatePlayer());
+  registry_gameplay_.assign<IDComponent>(wall, id);
+  registry_gameplay_.assign<TransformComponent>(
+      wall, position, rotation, glm::vec3(1.f, 4.f, 5.f));
+  auto& obb = registry_gameplay_.assign<physics::OBB>(wall);
+  obb.extents[0] = 1.f;
+  obb.extents[1] = 8.3f;
+  obb.extents[2] = 5.f;
+
+  glob::ModelHandle model = glob::GetModel("assets/Pickup/Pickup.fbx");
+  int a = 10;
+  std::vector<glob::ModelHandle> hs;
+  hs.push_back(model);
+  registry_gameplay_.assign<ModelComponent>(wall, hs);
+
+  GameEvent wall_event;
+  wall_event.type = GameEvent::BUILD_WALL;
+  wall_event.build_wall.wall_id = id;
+  dispatcher.trigger(wall_event);
 }
 
 void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {

@@ -31,7 +31,7 @@ std::ostream& operator<<(std::ostream& o, glm::vec3 v) {
   return o << v.x << " " << v.y << " " << v.z;
 }
 
-enum ObjectTag { PLAYER, BALL, ARENA, PROJECTLIE };
+enum ObjectTag { PLAYER, BALL, ARENA, PROJECTLIE, WALL };
 struct CollisionObject {
   entt::entity entity;
   glm::vec3 normal;
@@ -56,6 +56,7 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
 void PlayerPlayerCollision(entt::registry& registry);
 void PlayerProjectileCollision(entt::registry& registry);
 void PlayerArenaCollision(entt::registry& registry);
+void PlayerWallCollision(entt::registry& registry);
 void ProjectileBallCollision(entt::registry& registry, entt::entity ball);
 void ProjectileArenaCollision(entt::registry& registry);
 void PickUpPlayerCollision(entt::registry& registry);
@@ -74,6 +75,7 @@ void UpdateCollisions(entt::registry& registry) {
   auto view_arena =
       registry
           .view<physics::MeshHitbox, physics::Arena, FailSafeArenaComponent>();
+  auto view_wall = registry.view<physics::OBB, WallComponent>();
 
   entt::entity arena_entity;
   for (auto a : view_arena) arena_entity = a;
@@ -85,6 +87,7 @@ void UpdateCollisions(entt::registry& registry) {
   for (auto ball_entity : view_ball) {
     auto& ball_hitbox = view_ball.get<physics::Sphere>(ball_entity);
     BallComponent& ball_ball = view_ball.get<BallComponent>(ball_entity);
+    auto& ball_physics = view_ball.get<PhysicsComponent>(ball_entity);
 
     ball_collisions.push_back({});
     ball_collisions[ball_counter].entity = ball_entity;
@@ -108,6 +111,25 @@ void UpdateCollisions(entt::registry& registry) {
           ball_collisions[ball_counter].collision_list.push_back(
               {arena, data.normal, data.move_vector, ARENA});
         }
+      }
+    }
+
+    // Collision between ball and wall
+    for (auto wall : view_wall) {
+      auto& wall_hitbox = view_wall.get<physics::OBB>(wall);
+      
+      glm::vec3 step = ball_physics.velocity * 1.0f / 64.f;
+      ball_hitbox.center -= step;
+      step *= 0.1;
+      for (int i = 0; i < 10; ++i) {
+        physics::IntersectData data = Intersect(ball_hitbox, wall_hitbox);
+
+        if (data.collision) {
+          ball_collisions[ball_counter].collision_list.push_back(
+              {wall, data.normal, data.move_vector, WALL});
+          break;
+        }
+        ball_hitbox.center += step;
       }
     }
 
@@ -140,6 +162,8 @@ void UpdateCollisions(entt::registry& registry) {
   PlayerPlayerCollision(registry);
   // Collision between Player and Arena
   PlayerArenaCollision(registry);
+  // Collision between Player and Wall
+  PlayerWallCollision(registry);
   // Collision between player and projectile
   PlayerProjectileCollision(registry);
   // Collision between player and pic-up
@@ -175,6 +199,21 @@ void HandleBallCollisions(entt::registry& registry, const CollisionList& list,
     } else if (object.tag ==
                ARENA) {  // the only object colliding with the ball is the arena
       BallArenaCollision(registry, object, list.entity);
+    } else if (object.tag == WALL) {
+      BallArenaCollision(registry, object, list.entity);
+
+      auto& ball_physics = registry.get<PhysicsComponent>(list.entity);
+      float vel = glm::length(ball_physics.velocity);
+      if (vel > 20.f) {
+        auto& health = registry.get<HealthComponent>(object.entity);
+        health.health -= 50;
+      } else if (vel > 10) {
+        auto& health = registry.get<HealthComponent>(object.entity);
+        health.health -= 30;
+      } else if (vel > 6) {
+        auto& health = registry.get<HealthComponent>(object.entity);
+        health.health -= 10;
+      }
     }
   } else {
     HandleMultiBallCollision(registry, list);
@@ -197,7 +236,23 @@ void HandleMultiBallCollision(entt::registry& registry,
       // ball_physics.velocity = glm::vec3(0.f);
       BallCollision(&ball_physics, obj.normal);
 
-      break;
+      //break;
+    } else if (obj.tag == WALL) {
+      ball_hitbox.center += obj.move_vector;
+      // ball_physics.velocity = glm::vec3(0.f);
+      BallCollision(&ball_physics, obj.normal);
+
+      float vel = glm::length(ball_physics.velocity);
+      if (vel > 20.f) {
+        auto& health = registry.get<HealthComponent>(obj.entity);
+        health.health -= 50;
+      } else if (vel > 10) {
+        auto& health = registry.get<HealthComponent>(obj.entity);
+        health.health -= 30;
+      } else if (vel > 6) {
+        auto& health = registry.get<HealthComponent>(obj.entity);
+        health.health -= 10;
+      }
     }
   }
 
@@ -406,6 +461,26 @@ void PlayerArenaCollision(entt::registry& registry) {
   return;
 }
 
+void PlayerWallCollision(entt::registry& registry) {
+  auto view_player = registry.view<physics::OBB, PhysicsComponent, PlayerComponent>();
+  auto view_wall = registry.view<physics::OBB, WallComponent>();
+
+  for (auto player : view_player) {
+    auto& player_hitbox = view_player.get<physics::OBB>(player);
+
+    for (auto wall : view_wall) {
+      auto& wall_hitbox = registry.get<physics::OBB>(wall);
+
+      physics::IntersectData data = Intersect(wall_hitbox, player_hitbox);
+      if (data.collision) {
+        player_hitbox.center -= data.move_vector;
+        auto& health = registry.get<HealthComponent>(wall);
+        health.health -= 1;
+      }
+    }
+  }
+}
+
 void PlayerPlayerCollision(entt::registry& registry) {
   auto view_player = registry.view<physics::OBB, PhysicsComponent>();
 
@@ -433,10 +508,8 @@ void PlayerPlayerCollision(entt::registry& registry) {
           if (glm::dot(data.normal,
                        player1_hitbox.center - player2_hitbox.center) > 0.f) {
             dot_val1 = 0.f;
-            std::cout << "move player 2\n";
           } else {
             dot_val2 = 0.f;
-            std::cout << "move player 1\n";
           }
         } else if (dot_val1 == 0.f) {
           dot_val2 = 1.f;

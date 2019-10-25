@@ -31,6 +31,7 @@ void GravityChange(entt::registry& registry);
 void DoTeleport(entt::registry& registry, PlayerID id);
 bool DoHomingBall(entt::registry& registry, PlayerID id);
 void CreateFakeBalls(entt::registry& registry, EntityID id);
+bool BuildWall(entt::registry& registry, PlayerID id);
 
 std::unordered_map<AbilityID, float> ability_cooldowns;
 
@@ -125,7 +126,7 @@ bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
       return false;
       break;
     case AbilityID::BUILD_WALL:
-      return true;
+      return BuildWall(registry, player_id);
       break;
     case AbilityID::FAKE_BALL:
       CreateFakeBalls(registry, player_id);
@@ -486,6 +487,54 @@ bool DoHomingBall(entt::registry& registry, PlayerID id) {
 
         return true;
       }
+    }
+  }
+
+  return false;
+}
+
+bool BuildWall(entt::registry& registry, PlayerID id) {
+  auto view_players = registry.view<PlayerComponent, TransformComponent,
+                                    CameraComponent, IDComponent>();
+  auto view_goals = registry.view<GoalComponenet, TransformComponent>();
+  for (auto entity : view_players) {
+    auto& player_c = view_players.get<PlayerComponent>(entity);
+
+    if (player_c.client_id == id) {
+      auto& trans_c = view_players.get<TransformComponent>(entity);
+      auto& camera = view_players.get<CameraComponent>(entity);
+
+      glm::vec3 position = camera.GetLookDir() * 4.5f + trans_c.position + camera.offset;
+      position.y = -12.f;
+
+      for (auto entity_goal : view_goals) {
+        auto& goal_transform = view_goals.get<TransformComponent>(entity_goal);
+
+        if (glm::distance(position, goal_transform.position) < 20.f) {
+          return false;
+        }
+      }
+
+      auto orientation = trans_c.rotation;
+      //orientation.y = camera.GetLookDir().y;
+
+      auto wall = registry.create();
+      registry.assign<WallComponent>(wall);
+      registry.assign<TimerComponent>(wall, 5.f);
+      registry.assign<HealthComponent>(wall, 100);
+      registry.assign<TransformComponent>(wall, position, orientation);
+      auto& obb = registry.assign<physics::OBB>(wall);
+      obb.extents[0] = 1.f;
+      obb.extents[1] = 8.3f;
+      obb.extents[2] = 5.f;
+
+      EventInfo e;
+      e.event = Event::BUILD_WALL;
+      e.entity = wall;
+      
+      dispatcher.enqueue<EventInfo>(e);
+
+      return true;
     }
   }
 
