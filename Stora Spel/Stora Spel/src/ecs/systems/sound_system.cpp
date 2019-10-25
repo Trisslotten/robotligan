@@ -68,6 +68,9 @@ void SoundSystem::Init(Engine* engine) {
   sound_ability_force_push_impact_ =
       sound_engine_.GetSound("assets/sound/forcepush.mp3");
 
+  sound_ability_fake_ball_poof_ =
+      sound_engine_.GetSound("assets/sound/poof.mp3");
+
   ability_sounds_[AbilityID::GRAVITY_CHANGE] =
       sound_engine_.GetSound("assets/sound/gravitydrop.wav");
   ability_sounds_[AbilityID::SUPER_STRIKE] =
@@ -80,6 +83,9 @@ void SoundSystem::Init(Engine* engine) {
       sound_engine_.GetSound("assets/sound/homingball.wav");
   ability_sounds_[AbilityID::SWITCH_GOALS] =
       sound_engine_.GetSound("assets/sound/switch_goals.mp3");
+  ability_sounds_[AbilityID::FAKE_BALL] =
+      sound_engine_.GetSound("assets/sound/fake_ball.wav");
+
 }
 
 void SoundSystem::PlayAmbientSound(entt::registry& registry) {
@@ -326,6 +332,30 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         sound_c.sound_player->Play(ability_sounds_[AbilityID::SWITCH_GOALS], 0,
                                    0.3f);
         break;
+      }
+      break;
+    }
+    case GameEvent::FAKE_BALL_CREATED: {
+      auto view = registry->view<IDComponent, SoundComponent>();
+      for (auto entity : view) {
+        auto& id_c = view.get<IDComponent>(entity);
+        auto& sound_c = view.get<SoundComponent>(entity);
+        if (id_c.id == event.fake_ball_created.ball_id) {
+          sound_c.sound_player->Play(ability_sounds_[AbilityID::FAKE_BALL]);
+          break;
+        }
+      }
+      break;
+	}
+    case GameEvent::FAKE_BALL_POOF: {
+      auto view = registry->view<IDComponent, SoundComponent>();
+      for (auto entity : view) {
+        auto& id_c = view.get<IDComponent>(entity);
+        auto& sound_c = view.get<SoundComponent>(entity);
+        if (id_c.id == event.fake_ball_poofed.ball_id) {
+          sound_c.sound_player->Play(sound_ability_fake_ball_poof_);
+          break;
+        }
       }
       break;
     }

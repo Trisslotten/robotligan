@@ -731,7 +731,7 @@ void ServerPlayState::ResetEntities() {
       e.event = Event::DESTROY_ENTITY;
       e.entity = entity;
       e.e_id = registry.get<IDComponent>(entity).id;
-      //registry.destroy(entity);
+      // registry.destroy(entity);
       dispatcher.enqueue(e);
       continue;
     }
@@ -781,10 +781,10 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
   switch (e.event) {
     case Event::DESTROY_ENTITY: {
       auto& registry = game_server_->GetRegistry();
-      destroy_entities_.push_back(e.e_id);
-
-      registry.destroy(e.entity);
-
+      if (registry.valid(e.entity)) {
+        destroy_entities_.push_back(e.e_id);
+        registry.destroy(e.entity);
+      }
       break;
     }
     case Event::CREATE_CANNONBALL: {
@@ -857,8 +857,7 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
         auto& player_id_c = registry.get<IDComponent>(player);
 
         if (player_team_c.team == faker_team) {
-          packets[player_player_c.client_id]
-              << new_id;
+          packets[player_player_c.client_id] << new_id;
           packets[player_player_c.client_id]
               << PacketBlockType::CREATE_FAKE_BALL;
         } else {

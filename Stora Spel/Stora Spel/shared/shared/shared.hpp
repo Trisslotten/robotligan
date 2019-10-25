@@ -3,6 +3,7 @@
 
 #define TEAM_RED (unsigned int)0
 #define TEAM_BLUE (unsigned int)1
+#define TEAM_NONE (unsigned int)3
 
 #define POINTS_GOAL 10
 #define POINTS_ASSIST 2
@@ -122,6 +123,8 @@ struct GameEvent {
     RESET,
     PRIMARY_USED,
     SECONDARY_USED,
+	FAKE_BALL_CREATED,
+	FAKE_BALL_POOF,
     NUM_EVENTS
   } type;
   union {
@@ -242,6 +245,15 @@ struct GameEvent {
     struct {
       EntityID player_id;
     } secondary_used;
+
+	// ability fake ball created
+    struct {
+      EntityID ball_id;
+    } fake_ball_created;
+    // ability fake ball poofed
+    struct {
+      EntityID ball_id;
+    } fake_ball_poofed;
   };
 };
 

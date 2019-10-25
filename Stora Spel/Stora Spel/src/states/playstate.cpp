@@ -999,6 +999,16 @@ void PlayState::DestroyEntity(EntityID id) {
     if (e_id.id == id) {
       if (registry_gameplay_.has<BallComponent>(entity)) {
         was_ball = true;
+
+        if (registry_gameplay_.has<SoundComponent>(entity)) {
+          auto& sound_c = registry_gameplay_.get<SoundComponent>(entity);
+          auto ent = registry_gameplay_.create();
+
+          GameEvent ge;
+          ge.type = GameEvent::FAKE_BALL_POOF;
+          ge.fake_ball_poofed.ball_id = id;
+          dispatcher.trigger(ge);
+        }
       }
       if (registry_gameplay_.has<TransformComponent>(entity)) {
         pos = registry_gameplay_.get<TransformComponent>(entity).position;

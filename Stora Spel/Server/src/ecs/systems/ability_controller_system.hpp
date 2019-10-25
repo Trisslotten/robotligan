@@ -515,31 +515,41 @@ void CreateFakeBalls(entt::registry& registry, EntityID id) {
   glm::vec3 ball_pos, ball_vel;
   float friction = 1.0f;
   bool airborne = true;
-  auto view_balls =
-      registry.view<BallComponent, PhysicsComponent, TransformComponent>();
+  EntityID ball_id = 0;
+  auto view_balls = registry.view<BallComponent, PhysicsComponent,
+                                  TransformComponent, IDComponent>();
   for (auto ball : view_balls) {
     auto& ball_ball_c = registry.get<BallComponent>(ball);
     auto& ball_phys_c = registry.get<PhysicsComponent>(ball);
     auto& ball_trans_c = registry.get<TransformComponent>(ball);
+    auto& ball_id_c = registry.get<IDComponent>(ball);
 
     if (ball_ball_c.is_real) {
       ball_pos = ball_trans_c.position;
       ball_vel = ball_phys_c.velocity;
       friction = ball_phys_c.friction;
       airborne = ball_phys_c.is_airborne;
+
+      ball_id = ball_id_c.id;
       break;
     }
   }
 
   // create fake balls
   for (int i = 0; i < num_balls; i++) {
-    glm::vec3 dir =
-        glm::normalize(ball_vel) + glm::vec3((float)(rand() % 10) / 10.f,
-                                             (float)(rand() % 10) / 10.f,
-                                             (float)(rand() % 10) / 10.f);
+    glm::vec3 dir = glm::vec3((float)(rand() % 5) / 10.f, (float)(rand() % 5) / 10.f,
+                         (float)(rand() % 5) / 10.f);
     dir = glm::normalize(dir);
+    if (glm::length(ball_vel) > 0) {
+      dir += ball_vel;
+    }
+    dir = glm::normalize(dir);
+    glm::vec3 spawn_pos = ball_pos + dir;
 
-	glm::vec3 spawn_pos = ball_pos + dir;
+    if (spawn_pos.y > ball_pos.y) {
+      airborne = true;
+    }
+
     auto fake_ball = registry.create();
     auto& fake_trans_c = registry.assign<TransformComponent>(fake_ball);
     fake_trans_c.position = spawn_pos;
@@ -548,7 +558,7 @@ void CreateFakeBalls(entt::registry& registry, EntityID id) {
     fake_ball_c.faker_team = team;
     fake_ball_c.is_airborne = airborne;
     auto& fake_phys_c = registry.assign<PhysicsComponent>(fake_ball);
-    fake_phys_c.velocity = dir * glm::length(ball_vel) + dir * 0.1f;
+    fake_phys_c.velocity = dir * glm::length(ball_vel);
     fake_phys_c.is_airborne = airborne;
     fake_phys_c.friction = friction;
     auto& fake_sphere_c = registry.assign<physics::Sphere>(fake_ball);
@@ -559,6 +569,10 @@ void CreateFakeBalls(entt::registry& registry, EntityID id) {
     e.entity = fake_ball;
     dispatcher.enqueue<EventInfo>(e);
   }
+  GameEvent ge;
+  ge.fake_ball_created.ball_id = ball_id;
+  ge.type = GameEvent::FAKE_BALL_CREATED;
+  dispatcher.trigger(ge);
 }
 
 };  // namespace ability_controller
