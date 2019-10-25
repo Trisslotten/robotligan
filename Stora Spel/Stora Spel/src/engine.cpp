@@ -11,6 +11,7 @@
 #include "ecs/components.hpp"
 #include "ecs/systems/animation_system.hpp"
 #include "ecs/systems/gui_system.hpp"
+#include "ecs/systems/input_system.hpp"
 #include "ecs/systems/particle_system.hpp"
 #include "ecs/systems/render_system.hpp"
 #include "ecs/systems/sound_system.hpp"
@@ -21,7 +22,6 @@
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
-#include "ecs/systems/input_system.hpp"
 
 Engine::Engine() {}
 
@@ -126,7 +126,7 @@ void Engine::Update(float dt) {
     accum_yaw_ -= mouse_movement.x;
     accum_pitch_ -= mouse_movement.y;
 
-	play_state_.AddPitchYaw(-mouse_movement.y, -mouse_movement.x);
+    play_state_.AddPitchYaw(-mouse_movement.y, -mouse_movement.x);
 
     if (Input::IsKeyPressed(GLFW_KEY_K)) {
       new_team_ = TEAM_BLUE;
@@ -217,7 +217,7 @@ void Engine::UpdateNetwork() {
   */
 
   if (should_send_input_) {
-    //play_state_.AddPitchYaw(accum_pitch_, accum_yaw_);
+    // play_state_.AddPitchYaw(accum_pitch_, accum_yaw_);
     to_send << action_bits;
     to_send << play_state_.GetPitch();
     to_send << play_state_.GetYaw();
@@ -303,6 +303,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       EntityID my_id;
       EntityID ball_id;
       int ability_id;
+      int num_team_ids;
       packet >> ability_id;
       packet >> num_players;
       player_ids.resize(num_players);
@@ -313,8 +314,24 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetEntityIDs(player_ids, my_id, ball_id);
       play_state_.SetMyPrimaryAbility(ability_id);
       play_state_.SetTeam(team);
+      packet >> num_team_ids;
+      for (int i = 0; i < num_team_ids; i++) {
+        EntityID id;
+        unsigned int team;
+        packet >> id;
+        packet >> team;
+        PlayerStatInfo psbi;
+        psbi.goals = 0;
+        psbi.points = 0;
+        psbi.team = team;
+        psbi.enttity_id = id;
+        psbi.assists = 0;
+        psbi.saves = 0;
+        player_scores_[id] = psbi;
+      }
+
       ChangeState(StateType::PLAY);
-	  
+
       std::cout << "PACKET: GAME_START\n";
       break;
     }
@@ -515,8 +532,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         }
         case ProjectileID::MISSILE_OBJECT: {
           play_state_.CreateMissileObject(e_id);
-          // TODO: Dont trigger this event on the client like this. Fix so that event is sent/received AFTER the create_projectile packet on server instead
-          // Note: Sometimes this plays on player entity rather than the missile entity [???]
+          // TODO: Dont trigger this event on the client like this. Fix so that
+          // event is sent/received AFTER the create_projectile packet on server
+          // instead Note: Sometimes this plays on player entity rather than the
+          // missile entity [???]
           GameEvent missile_event;
           missile_event.type = GameEvent::MISSILE_FIRE;
           missile_event.missile_fire.projectile_id = e_id;

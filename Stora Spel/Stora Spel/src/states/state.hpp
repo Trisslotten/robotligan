@@ -246,6 +246,7 @@ class PlayState : public State {
   float GetPitch() { return pitch_; }
   float GetYaw() { return yaw_; }
   void SetTeam(unsigned int team) {my_team_ = team;}
+  void SetTeam(EntityID id, unsigned int team) {teams_[id] = team; }
  private:
   int server_state_ = 1;
   void CreateInitialEntities();
@@ -283,6 +284,8 @@ class PlayState : public State {
   entt::entity my_entity_;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
+
+  std::unordered_map<EntityID, unsigned int> teams_;
 
   entt::entity blue_goal_light_;
   entt::entity red_goal_light_;

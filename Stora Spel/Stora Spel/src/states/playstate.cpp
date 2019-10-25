@@ -816,6 +816,8 @@ void PlayState::CreatePlayerEntities() {
   std::cout << "DEBUG: playstate.cpp: Created " << player_ids_.size()
     << " players\n";
 
+
+
   for (auto entity_id : player_ids_) {
     auto entity = registry_gameplay_.create();
 
@@ -823,12 +825,19 @@ void PlayState::CreatePlayerEntities() {
       glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
     glm::vec3 character_scale = glm::vec3(0.0033f);
 
-    glob::ModelHandle player_model = glob::GetModel("Assets/Mech/Mech.fbx");
+    glob::ModelHandle player_model;
+    auto team = engine_->GetPlayerTeam(entity_id);
+    if(team == TEAM_BLUE) {
+      player_model = glob::GetModel("Assets/Mech/MechBlue.fbx");
+    } else {
+      player_model = glob::GetModel("Assets/Mech/MechRed.fbx");
+    }
 
     registry_gameplay_.assign<IDComponent>(entity, entity_id);
-    registry_gameplay_.assign<PlayerComponent>(entity);
+    auto& pc = registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(0.f),
-      glm::quat(), character_scale);
+                                                  glm::quat(), character_scale);
+
     auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
     model_c.handles.push_back(player_model);
     model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
