@@ -44,6 +44,7 @@ class AnimationSystem {
   bool IsAChildOf(int parent, int lookFor, AnimationComponent* ac);
 
   bool IsIncluded(int bone, std::vector<int>* included, std::vector<int>* excluded);
+  bool IsExcluded(int bone, std::vector<int>* excluded);
 
   int GetAnimationByName(std::string name, AnimationComponent* ac);
 

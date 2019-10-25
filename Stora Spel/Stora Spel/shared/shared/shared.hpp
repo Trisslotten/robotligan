@@ -104,6 +104,7 @@ struct GameEvent {
     RUN_START,
     RUN_END,
     RESET,
+	SHOOT,
     NUM_EVENTS
   } type;
   union {
@@ -155,9 +156,14 @@ struct GameEvent {
       EntityID player_id;
     } run_start;
 
+	//Player shoots a bullet
     struct {
       EntityID player_id;
     } run_end;
+
+	struct {
+      EntityID player_id;
+    } shoot;
 
     // RESET
     struct {}

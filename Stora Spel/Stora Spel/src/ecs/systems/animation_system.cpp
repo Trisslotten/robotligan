@@ -58,6 +58,16 @@ bool AnimationSystem::IsIncluded(int bone, std::vector<int>* included,
   return false;
 }
 
+bool AnimationSystem::IsExcluded(int bone,
+                                 std::vector<int>* excluded) {
+  for (int i = 0; i < excluded->size(); i++) {
+    if (bone == excluded->at(i)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 int AnimationSystem::GetAnimationByName(std::string name,
                                         AnimationComponent* ac) {
   std::vector<glob::Animation>* anims = &ac->model_data.animations;
@@ -235,7 +245,7 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
             strength =
                 abs(std::clamp(glm::dot(glm::vec3(1.f, 0.f, 0.f) * (t.rotation),
                                         glm::vec3(0.f, 0.f, 1.f) *
-                                            (t.rotation + m.rot_offset)),
+                                            (t.rotation + m.rot_offset) / 1.5f),
                                -1.f, 0.f));
             break;
           }
@@ -243,7 +253,7 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
             strength =
                 std::clamp(glm::dot(glm::vec3(1.f, 0.f, 0.f) * (t.rotation),
                                     glm::vec3(0.f, 0.f, 1.f) *
-                                        (t.rotation + m.rot_offset)),
+                                        (t.rotation + m.rot_offset) / 1.5f),
                            0.f, 1.f);
             break;
           }
@@ -329,7 +339,7 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       // std::cout << startStrength << "\n";
 
       endStrength = 1.f - velCoeff;
-
+	  
       int es = GetActiveAnimationByName("JumpEnd", &ac);
       ac.active_animations.at(es)->strength_ = endStrength;
     }
@@ -343,6 +353,20 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
 void AnimationSystem::ReceiveGameEvent(GameEvent event) {
   auto registry = engine_->GetCurrentRegistry();
   switch (event.type) {
+    case GameEvent::SHOOT: {
+      auto view =
+          registry->view<IDComponent, AnimationComponent, PlayerComponent>();
+      for (auto entity : view) {
+        if (view.get<IDComponent>(entity).id == event.shoot.player_id) {
+          auto& ac = view.get<AnimationComponent>(entity);
+          auto& pc = view.get<PlayerComponent>(entity);
+          PlayAnimation("Shoot", 4.f, &ac, 14, 1.f, PARTIAL_MUTE,
+                        &ac.model_data.upperBody);
+          break;
+        }
+      }
+      break;
+    };
     case GameEvent::KICK: {
       auto view =
           registry->view<IDComponent, AnimationComponent, PlayerComponent>();

@@ -40,6 +40,10 @@ void Update(entt::registry& registry, float dt) {
     trans_c.SetRotation(glm::vec3(0, player_c.yaw, 0));
 
     if (player_c.actions[PlayerAction::SHOOT]) {
+      GameEvent shoot_event;
+      shoot_event.type = GameEvent::SHOOT;
+      shoot_event.shoot.player_id = registry.get<IDComponent>(entity).id;
+      dispatcher.trigger(shoot_event);
       ability_c.shoot = true;
     }
     // Caputre keyboard input and apply velocity
