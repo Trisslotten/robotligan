@@ -16,8 +16,8 @@
 #include "animation.hpp"
 #include "camera.hpp"
 #include "glob/mesh_data.hpp"
-#include "joint.hpp"
 #include "handletypes.hpp"
+#include "joint.hpp"
 
 namespace glob {
 
@@ -26,7 +26,7 @@ struct animData {
   std::vector<Animation> animations;
   glm::mat4 globalInverseTransform;
   bool humanoid = false;
-  //groups
+  // groups
   int hip = -1;
   std::vector<int> upperBody;
   std::vector<int> spine;
@@ -41,7 +41,7 @@ struct animData {
     group->push_back(root);
     for (int i = 0; i < bones.at(root).children.size(); i++) {
       makeGroup(bones.at(root).children.at(i), group);
-	}
+    }
   }
 
   int armatureRoot;
