@@ -10,6 +10,7 @@
 #include <NetAPI/socket/clientdata.hpp>
 #include <NetAPI/socket/tcplistener.hpp>
 #include <shared/shared.hpp>
+#include <chrono>
 #include <thread>
 namespace NetAPI {
 namespace Socket {
@@ -29,6 +30,10 @@ class EXPORT Server {
   std::thread threads[Common::kMaxPlayers];
  private:
   void SendPing();
+  void HandleClientPacket();
+  void HandleSingleClientPacket(std::pair<const long, NetAPI::Socket::ClientData*> &c);
+  void ListenForClients();
+  void SendStoredData();
   std::unordered_map<std::string, long> ids_;
   std::unordered_map<long, ClientData*> client_data_;
   std::vector<ClientData*> newly_connected_;
