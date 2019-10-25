@@ -505,7 +505,7 @@ void PlayState::UpdateSwitchGoalTimer() {
       // Save game event
       GameEvent switch_goals_event_done;
       switch_goals_event_done.type = GameEvent::SWITCH_GOALS_DONE;
-      dispatcher.trigger(switch_goals_event_done);
+      //dispatcher.trigger(switch_goals_event_done);
 
       countdown_in_progress_ = false;
     }
