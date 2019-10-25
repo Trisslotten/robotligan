@@ -72,6 +72,7 @@ namespace PacketBlockType {
     YOUR_TARGET,
     FRAME_ID,
     SERVER_CAN_JOIN,
+	STATE,
     NUM_BLOCK_TYPES,
   };
 
@@ -93,6 +94,14 @@ enum class AbilityID {
   NUM_OF_ABILITY_IDS
 };
 
+struct MenuEvent {
+  enum {
+    HOVER,
+    CLICK,
+    NUM_EVENTS
+  } type;
+};
+
 struct GameEvent {
   enum {
     GOAL = 0,
@@ -112,7 +121,7 @@ struct GameEvent {
     FORCE_PUSH,
     FORCE_PUSH_IMPACT,
     SWITCH_GOALS,
-	SWITCH_GOALS_DONE,
+	  SWITCH_GOALS_DONE,
     SPRINT_START,
     SPRINT_END,
     RUN_START,

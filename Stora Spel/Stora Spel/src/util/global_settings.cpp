@@ -88,7 +88,7 @@ void GlobalSettings::WriteError(std::string in_file_name,
   unsigned int function_name_size = (unsigned)strlen(in_function_name.c_str());
   unsigned int msg_size = (unsigned)strlen(in_msg.c_str());
 
-  std::ofstream error_file("util/errorlog.txt");
+  std::ofstream error_file("config/errorlog.txt");
 
   error_file.write(in_file_name.c_str(), file_name_size);
   error_file.write("::", 2);

@@ -6,6 +6,8 @@
 
 #include <msdfgen/ext/import-font.h>
 
+#include <glm/gtx/transform.hpp>
+
 #include <direct.h>
 #include <stdlib.h>
 #include <lodepng.hpp>
@@ -259,6 +261,78 @@ void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
        offset_accum += r * .03 * double(size);
       else
         offset_accum += spacing;
+    }
+    // std::cout << offset_accum << "\n";
+  }
+  // std::cout << "\n";
+  glDepthFunc(GL_LESS);
+  glDisable(GL_BLEND);
+  glEnable(GL_CULL_FACE);
+
+  glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void glob::Font2D::Draw3D(ShaderProgram& shader, glm::vec3 center,
+                          float size, std::string text, glm::vec4 color,
+                          glm::mat4 rotation) {
+  const char* chars = text.c_str();
+  unsigned int len = text.length();
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, tex_id);
+  shader.uniform("pxRange", 1.4f);
+  shader.uniform("fgColor", color);
+  shader.uniform("msdf", 0);
+  shader.uniform("size", size);
+  shader.uniform("center", center);
+
+  shader.uniform("rotation", rotation);
+  glm::vec3 dir = glm::vec3(1.f, 0.f, 0.f);
+  glDisable(GL_CULL_FACE);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glDepthFunc(GL_LEQUAL);
+
+  double total_accum = 0.0;
+  for (int i = 0; i < len; i++) {
+    unsigned char cur = *(unsigned char*)(chars + i);
+
+    if (cur == ' ') {
+      total_accum += size / 3;
+    } else {
+      double r = 0;
+      r = advances_[cur];
+      //(face->glyph->advance.x >> 6);
+      total_accum += r * .03 * double(size) * 2;
+    }
+    // std::cout << offset_accum << "\n";
+  }
+  total_accum = total_accum - (total_accum / len);
+  double offset_accum = -total_accum / 2.0;
+  for (int i = 0; i < len; i++) {
+    unsigned char cur = *(unsigned char*)(chars + i);
+
+    // FT_Load_Char(face, (FT_ULong)cur, FT_LOAD_RENDER);
+    // double kerning = 0;
+    // if (i + 1 < len) msdfgen::getKerning(kerning, font, cur, chars[i + 1]);
+
+    // shader.uniform("character", (GLint)cur);
+    shader.uniform("character", cur);
+    shader.uniform("offset", dir * (float)offset_accum);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    // std::cout << "Char: " << (char)cur << " " << l << ", " << r << "\n";
+
+    // double kerning = 0;
+    // if (i + 1 < len) msdfgen::getKerning(kerning, font, (int)cur,
+    // (int)chars[i + 1]);
+
+    if (cur == ' ') {
+      offset_accum += size / 3;
+    } else {
+      double r = 0;
+      r = advances_[cur];
+      //(face->glyph->advance.x >> 6);
+      offset_accum += r * .03 * double(size) * 2;
     }
     // std::cout << offset_accum << "\n";
   }
