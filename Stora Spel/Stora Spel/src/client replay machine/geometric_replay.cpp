@@ -31,8 +31,8 @@ void GeometricReplay::FillChannelEntry(ChannelEntry& in_ce,
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
 
-    df_ptr = new PlayerFrame(
-        transform_c.position, transform_c.rotation, transform_c.scale);
+    df_ptr = new PlayerFrame(transform_c.position, transform_c.rotation,
+                             transform_c.scale);
 
   } else if (in_registry.has<BallComponent>(in_entity)) {
     // Otherwise, if there is a ball component we
@@ -40,11 +40,11 @@ void GeometricReplay::FillChannelEntry(ChannelEntry& in_ce,
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
 
-    df_ptr = new BallFrame(transform_c.position,
-                                      transform_c.rotation, transform_c.scale);
+    df_ptr = new BallFrame(transform_c.position, transform_c.rotation,
+                           transform_c.scale);
   }
 
-  //Then save
+  // Then save
   in_ce.data_ptr = df_ptr;
 
   // Channel entry is ending entry?
@@ -72,13 +72,32 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
         unfound = false;
         // If it does we check if a new interpolation point should be added
         // dependent on the object's type
+        DataFrame* temp_df = nullptr;
+        if (in_registry.has<PlayerComponent>(entity)) {
+          // PLAYER CASE
+          TransformComponent& transform_c =
+              in_registry.get<TransformComponent>(entity);
+          temp_df = new PlayerFrame(transform_c.position, transform_c.rotation,
+                                    transform_c.scale);
+        } else if (in_registry.has<PlayerComponent>(entity)) {
+          // BALL CASE
+          TransformComponent& transform_c =
+              in_registry.get<TransformComponent>(entity);
+          temp_df = new BallFrame(transform_c.position, transform_c.rotation,
+                                  transform_c.scale);
+        }
 
-        /*
-                WIP:
-                Add switch case for object types(?)
-                Add call to interpolation-point-threshold function
-                If object should be added save frame number as well
-        */
+        // Compare last entry to what would be the current frame's
+        if ((temp_df != nullptr) &&
+            this->channels_.at(i).entries.back().data_ptr->ThresholdCheck(
+                *temp_df)) {
+          // IF true, save DataFrame
+          ChannelEntry temp_ce;
+          temp_ce.frame_number = this->current_frame_number_;
+          temp_ce.data_ptr = temp_df;
+          temp_ce.ending_entry = false;
+          this->channels_.at(i).entries.push_back(temp_ce);
+        }
       }
     }
 
