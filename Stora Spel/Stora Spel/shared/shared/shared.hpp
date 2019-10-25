@@ -73,6 +73,7 @@ namespace PacketBlockType {
     FRAME_ID,
     SERVER_CAN_JOIN,
 	STATE,
+	MY_NAME,
     NUM_BLOCK_TYPES,
   };
 

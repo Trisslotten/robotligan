@@ -158,7 +158,6 @@ void GameServer::HandlePacketsToSend() {
       to_send << PacketBlockType::MESSAGE;
     }
 
-
     if (!to_send.IsEmpty()) {
       server_.Send(to_send);
     }
@@ -214,6 +213,7 @@ void GameServer::HandleStateChange() {
     }
     p << s << PacketBlockType::STATE;
     server_.Send(p);
+    client_names_.clear();
   }
 }
 
@@ -322,6 +322,16 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       play_state_.SetFrameID(client_id, id);
       break;
     }
+    case PacketBlockType::MY_NAME: {
+      std::string name;
+      packet >> name;
+      while (NameAlreadyExists(name)) {
+        name.append("xD");
+      }
+      client_names_[client_id] = name;
+      lobby_state_.SetTeamsUpdated(true);
+      break;
+    }
       /*
       TODO: fix
       case PacketBlockType::CHOOSE_TEAM: {
@@ -334,6 +344,15 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       }
       */
   }
+}
+
+bool GameServer::NameAlreadyExists(std::string name) {
+  for (auto n : client_names_) {
+    if (name == n.second) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void GameServer::ReceiveGameEvent(const GameEvent& event) {
