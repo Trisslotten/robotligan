@@ -816,8 +816,6 @@ void PlayState::CreatePlayerEntities() {
   std::cout << "DEBUG: playstate.cpp: Created " << player_ids_.size()
     << " players\n";
 
-
-
   for (auto entity_id : player_ids_) {
     auto entity = registry_gameplay_.create();
 

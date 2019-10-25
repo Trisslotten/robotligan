@@ -112,9 +112,11 @@ void ServerPlayState::Init() {
     for (auto team : team_view) {
       auto& team_c = team_view.get<TeamComponent>(team);
       auto& id_c = team_view.get<IDComponent>(team);
+      auto& player_c = team_view.get<PlayerComponent>(team);
 
       to_send << team_c.team;
       to_send << id_c.id;
+      to_send << player_c.client_id;
 
       if (id_c.id == clients_player_ids_[client_id]) {
         team_id = team_c.team;
