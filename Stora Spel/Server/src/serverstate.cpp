@@ -175,7 +175,15 @@ void ServerPlayState::Update(float dt) {
     if (!this->replay_) {
       auto inputs = players_inputs_[player_c.client_id];
 
-      player_c.actions = inputs.first;
+      if (countdown_timer_.Elapsed() <= count_down_time_) {
+        match_timer_.Pause();
+      } else {
+        player_c.actions = inputs.first;
+        if (!reset_) {
+          match_timer_.Resume();
+		}
+        countdown_timer_.Pause();
+      }
       player_c.pitch = inputs.second.x;
       player_c.yaw = inputs.second.y;
       // Check if the game should be be recorded
