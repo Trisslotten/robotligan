@@ -314,6 +314,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       EntityID my_id;
       EntityID ball_id;
       int ability_id;
+      int num_team_ids;
       packet >> ability_id;
       packet >> num_players;
       player_ids.resize(num_players);
@@ -324,7 +325,27 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetEntityIDs(player_ids, my_id, ball_id);
       play_state_.SetMyPrimaryAbility(ability_id);
       play_state_.SetTeam(team);
+      packet >> num_team_ids;
+      for (int i = 0; i < num_team_ids; i++) {
+        long client_id;
+        EntityID e_id;
+        unsigned int team;
+        packet >> client_id;
+        packet >> e_id;
+        packet >> team;
+        PlayerStatInfo psbi;
+        psbi.goals = 0;
+        psbi.points = 0;
+        psbi.team = team;
+        psbi.enttity_id = e_id;
+        psbi.assists = 0;
+        psbi.saves = 0;
+        player_scores_[client_id] = psbi;
+      }
+
       ChangeState(StateType::PLAY);
+	  
+      std::cout << "PACKET: GAME_START\n";
       break;
     }
     case PacketBlockType::MESSAGE: {
