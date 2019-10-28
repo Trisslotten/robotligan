@@ -344,7 +344,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       }
 
       ChangeState(StateType::PLAY);
-	  
+
       std::cout << "PACKET: GAME_START\n";
       break;
     }
@@ -513,11 +513,11 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       std::cout << server_connected_;
       break;
     }
-    case PacketBlockType::STATE: {
+    case PacketBlockType::SERVER_STATE: {
       // std::cout << "PACKET: STATE\n";
-      int state = -1;
+      ServerStateType state;
       packet >> state;
-      SetStateType(state);
+      SetServerState(state);
       break;
     }
     case PacketBlockType::RECEIVE_PICK_UP: {
@@ -610,11 +610,22 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> id;
       play_state_.CreateNewBallEntity(false, id);
       break;
-	}
+    }
     case PacketBlockType::CREATE_FAKE_BALL: {
       EntityID id;
       packet >> id;
       play_state_.CreateNewBallEntity(true, id);
+      break;
+    }
+    case PacketBlockType::TO_CLIENT_NAME: {
+      long client_id;
+      size_t name_size = 0;
+      std::string name;
+      packet >> client_id;
+      packet >> name_size;
+      name.resize(name_size);
+      packet.Remove(name.data(), name.size());
+      player_names_[client_id] = name;
       break;
     }
   }
