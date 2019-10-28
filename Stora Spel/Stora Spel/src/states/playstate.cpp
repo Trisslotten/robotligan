@@ -3,6 +3,7 @@
 #include <GLFW/glfw3.h>
 #include <glob/graphics.hpp>
 #include <glob/window.hpp>
+#include <boundingboxes.hpp>
 #include <slob/sound_engine.hpp>
 
 #include <glm/gtx/compatibility.hpp>
@@ -11,7 +12,7 @@
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 
-#include <boundingboxes.hpp>
+#include<collision.hpp>
 #include <physics.hpp>
 #include <shared/physics_component.hpp>
 #include <shared/pick_up_component.hpp>
@@ -176,10 +177,10 @@ void PlayState::Update(float dt) {
     // physics_.clear();  //?
   }
 
-  bool move_player = false;
   if (!transforms_.empty()) {
     auto view_entities =
-      registry_gameplay_.view<TransformComponent, IDComponent>();
+        registry_gameplay_.view<TransformComponent, IDComponent>();
+    glm::vec3 pos = new_transforms_[ball_id_].first;
     new_transforms_.clear();
     for (auto entity : view_entities) {
       auto& trans_c = view_entities.get<TransformComponent>(entity);
@@ -187,6 +188,7 @@ void PlayState::Update(float dt) {
       auto trans = transforms_[id_c.id];
 
       new_transforms_[id_c.id] = std::make_pair(trans.first, trans.second);
+      
       /*
       std::cout << trans_c.position.x << ", ";
       std::cout << trans_c.position.y << ", ";
@@ -195,28 +197,27 @@ void PlayState::Update(float dt) {
     }
     transforms_.clear();
     OnServerFrame();
-    move_player = true;
-  }
-
-  auto view_entities =
-    registry_gameplay_.view<TransformComponent, IDComponent>();
-  if (move_player == true) {
     MovePlayer(1 / 64.0f);
     actions_.clear();
   }
-  MoveBall(dt);
+  timer += dt;
+  if (timer > 1.0f / 64.0f) {
+	MoveBall(dt);
+    timer -= dt;
+  }
   // interpolate
+  auto view_entities =
+      registry_gameplay_.view<TransformComponent, IDComponent>();
+
   float f = 0.5;  // 0.25f * dt;  // pow(0.75f, dt);
   for (auto entity : view_entities) {
     auto& trans_c = view_entities.get<TransformComponent>(entity);
     auto& id_c = view_entities.get<IDComponent>(entity);
     if (id_c.id == my_id_) {
-      // auto trans = new_transforms_[id_c.id];
       auto& cam_c = registry_gameplay_.get<CameraComponent>(my_entity_);
       glm::vec3 temp =
         lerp(predicted_state_.position, server_predicted_.position, 0.5f);
       trans_c.position = glm::lerp(trans_c.position, temp, 0.2f);
-      trans_c.position = new_transforms_[id_c.id].first;
       glm::quat orientation =
         glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
@@ -227,15 +228,27 @@ void PlayState::Update(float dt) {
       auto trans = new_transforms_[id_c.id];
       if (glm::length(trans_c.position - trans.first) > 10) {
         trans_c.position = trans.first;
-      }
-      else {
-        trans_c.position = glm::lerp(trans_c.position, trans.first, 1.0f - f);
+      } else {
+        trans_c.position = glm::lerp(trans_c.position, trans.first, 0.5f);
         // trans_c.position = trans.first;
       }
-      trans_c.rotation = glm::slerp(trans_c.rotation, trans.second, 1.0f - f);
+      bool slerp = true;
+      if (id_c.id == ball_id_) {
+        auto ball_view =
+            registry_gameplay_.view<BallComponent, PhysicsComponent>();
+        for (auto ball : ball_view) {
+          auto& phys_c = ball_view.get<PhysicsComponent>(ball);
+          if (phys_c.is_airborne == false) {
+            slerp = false;
+		      }
+		    }
+	    }
+      if (slerp == true) {
+		    trans_c.rotation = glm::slerp(trans_c.rotation, trans.second, 0.2f);
+      }
     }
   }
-
+  Collision();
   if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
     ToggleInGameMenu();
   }
@@ -734,35 +747,139 @@ void PlayState::OnServerFrame() {
       }
     }
   }
-
-  predicted_state_.is_airborne = false;
-  predicted_state_.velocity.y = 0.f;
+  //predicted_state_.is_airborne = false;
+  //predicted_state_.velocity.y = 0.0f;
 }
 
 void PlayState::MoveBall(float dt) {
-  /* auto view_ball =
-       registry_gameplay_
-           .view<BallComponent, TransformComponent, PhysicsComponent,
-   IDComponent>();
+  auto view_ball =
+      registry_gameplay_
+          .view<BallComponent, TransformComponent, PhysicsComponent, IDComponent, physics::Sphere>();
 
    for (auto ball : view_ball) {
      auto& phys_c = view_ball.get<PhysicsComponent>(ball);
      auto& trans_c = view_ball.get<TransformComponent>(ball);
      auto& id_c = view_ball.get<IDComponent>(ball);
 
-     physics::PhysicsObject po;
-     po.acceleration =  glm::vec3(0.0f);
-     po.airborne = phys_c.is_airborne;
-     po.friction = phys_c.friction;
-     po.max_speed = phys_c.max_speed;
-     po.position = new_transforms_[id_c.id].first;
-     po.velocity = phys_c.velocity;
+    physics::PhysicsObject po;
+    po.acceleration =  glm::vec3(0.0f);
+    po.airborne = phys_c.is_airborne;
+    po.friction = 1.0f;
+    po.max_speed = phys_c.max_speed;
+    po.position = new_transforms_[id_c.id].first;
+    po.velocity = phys_c.velocity;
 
          physics::Update(&po, dt);
 
-         new_transforms_[id_c.id].first = po.position;
-     phys_c.velocity = po.velocity;
-   }*/
+	new_transforms_[id_c.id].first = po.position;
+    phys_c.velocity = po.velocity;
+
+	// Rotate the ball
+    // ===========================================================================
+
+
+    if (phys_c.is_airborne == false) {
+      if (phys_c.velocity.x == 0.f && phys_c.velocity.z == 0.f)
+        continue;
+
+      physics::Sphere& sphere_c = view_ball.get<physics::Sphere>(ball);
+      float distance = glm::length(phys_c.velocity);
+      float radians = distance / sphere_c.radius;
+
+      if (radians == 0.f) break;
+
+      glm::vec3 direction = glm::normalize(
+          glm::cross(glm::vec3(0.f, 1.f, 0.f), phys_c.velocity));
+
+      // glm::quat r = glm::angleAxis(radians, direction);
+      direction = radians * direction;
+      glm::quat r(0, direction);
+      glm::quat spin = 0.5f * r * trans_c.rotation;
+
+      trans_c.rotation += spin * dt;
+      trans_c.rotation = glm::normalize(trans_c.rotation);
+    } else {
+      auto& ball_c = view_ball.get<BallComponent>(ball);
+      glm::quat spin = 0.5f * ball_c.rotation * trans_c.rotation;
+      trans_c.rotation += spin * dt;
+      trans_c.rotation = glm::normalize(trans_c.rotation);
+    }
+  }
+}
+
+void PlayState::Collision() {
+  auto view_moveable = registry_gameplay_.view<TransformComponent, physics::OBB>();
+  for (auto object : view_moveable) {
+    auto& hitbox = view_moveable.get<physics::OBB>(object);
+    auto& transform = view_moveable.get<TransformComponent>(object);
+    hitbox.center = transform.position;
+
+    // Rotate OBB
+    auto mat_rot = glm::toMat4(transform.rotation);
+    hitbox.normals[0] = mat_rot * glm::vec4(1.0f, 0.f, 0.f, 0.f);
+    hitbox.normals[2] = mat_rot * glm::vec4(0.0f, 0.f, 1.f, 0.f);
+  }
+  auto view_moveable1 = registry_gameplay_.view<TransformComponent, physics::Sphere>();
+  for (auto object : view_moveable1) {
+    auto& hitbox = view_moveable1.get<physics::Sphere>(object);
+    auto& transform = view_moveable1.get<TransformComponent>(object);
+    hitbox.center = transform.position;
+  }
+
+  auto& my_obb = registry_gameplay_.get<physics::OBB>(my_entity_);
+  auto& my_phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
+  auto& arena_hitbox = registry_gameplay_.get<physics::Arena>(arena_entity_);
+ 
+  physics::IntersectData data = Intersect(arena_hitbox, my_obb);
+  if (data.collision == true) {
+    my_obb.center += data.move_vector;
+    if (data.move_vector.y > 0.0f) {
+      //my_phys_c.is_airborne = false;
+      predicted_state_.is_airborne = false;
+      predicted_state_.velocity.y = 0.f;
+    } else if (data.move_vector.y < 0.0f) {
+      my_phys_c.velocity.y = 0.f;
+    }
+  }
+  //collision with walls
+  auto view_walls = registry_gameplay_.view<physics::OBB>();
+  for (auto wall : view_walls) {
+    if (registry_gameplay_.has<PlayerComponent>(wall)) {
+      continue;
+	}  
+	auto& hitbox = view_walls.get(wall);
+    physics::IntersectData data = Intersect(arena_hitbox, my_obb);
+    if (data.collision == true) {
+      my_obb.center += data.move_vector;
+    }
+  }
+  //collision with ball
+  auto view_ball = registry_gameplay_.view<BallComponent, physics::Sphere>();
+  for (auto ball : view_ball) {
+    auto& hitbox = view_ball.get<physics::Sphere>(ball);
+    physics::IntersectData data = Intersect(hitbox, my_obb);
+    if (data.collision == true) {
+      hitbox.center += data.move_vector;
+    }
+  }
+  //update positions
+  auto view_sphere = registry_gameplay_.view<TransformComponent, physics::Sphere>();
+  for (auto sphere : view_sphere) {
+    auto& transform = view_sphere.get<TransformComponent>(sphere);
+    auto& hitbox = view_sphere.get<physics::Sphere>(sphere);
+
+    transform.position = hitbox.center;
+  }
+
+  auto view_obb = registry_gameplay_.view<TransformComponent, physics::OBB>();
+  for (auto obb : view_obb) {
+    auto& transform = view_obb.get<TransformComponent>(obb);
+    auto& hitbox = view_obb.get<physics::OBB>(obb);
+    //std::cout << transform.position.y << " before\n";
+
+    transform.position = hitbox.center;
+    //std::cout << transform.position.y << " after\n";
+  }
 }
 
 EntityID PlayState::ClientIDToEntityID(long client_id) {
@@ -890,7 +1007,21 @@ void PlayState::CreatePlayerEntities() {
     if (entity_id == my_id_) {
       glm::vec3 camera_offset = glm::vec3(0.5f, 0.7f, 0.f);
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
-        glm::quat(glm::vec3(0.f)));
+                                                 glm::quat(glm::vec3(0.f)));
+      character_scale = glm::vec3(0.1f);
+      float coeff_x_side = (11.223f - (-0.205f));
+      float coeff_y_side = (8.159f - (-10.316f));
+      float coeff_z_side = (10.206f - (-1.196f));
+      registry_gameplay_.assign<physics::OBB>(
+          entity,
+          alter_scale * character_scale,            // Center
+          glm::vec3(1.f, 0.f, 0.f),                 //
+          glm::vec3(0.f, 1.f, 0.f),                 // Normals
+          glm::vec3(0.f, 0.f, 1.f),                 //
+          coeff_x_side * character_scale.x * 0.5f,  //
+          coeff_y_side * character_scale.y * 0.5f,  // Length of each plane
+          coeff_z_side * character_scale.z * 0.5f   //
+      );
       my_entity_ = entity;
     }
   }
@@ -906,7 +1037,18 @@ void PlayState::CreateArenaEntity() {
   model_c.handles.push_back(model_arena);
 
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
-    arena_scale);
+                                                arena_scale);
+
+  // Prepare hard-coded values
+  // Scale on the hitbox for the map
+  float v1 = 6.8f * arena_scale.z;
+  float v2 = 10.67f * arena_scale.x;  // 13.596f;
+  float v3 = 2.723f * arena_scale.y;
+  float v4 = 5.723f * arena_scale.y;
+
+  // Add a hitbox
+  registry_gameplay_.assign<physics::Arena>(arena, -v2, v2, -v3, v4, -v1, v1);
+  arena_entity_ = arena;
 }
 
 void PlayState::CreateBallEntity() {
@@ -931,6 +1073,7 @@ void PlayState::CreateBallEntity() {
   registry_gameplay_.assign<BallComponent>(ball);
   registry_gameplay_.assign<IDComponent>(ball, ball_id_);
   registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
+  registry_gameplay_.assign<physics::Sphere>(ball, glm::vec3(0.0f), 1.0f);
 }
 
 void PlayState::CreateNewBallEntity(bool fake, EntityID id) {
@@ -1245,6 +1388,8 @@ void PlayState::Reset() {
     yaw_ = 0.0f;
   }
   pitch_ = 0.0f;
+  predicted_state_.is_airborne = true;
+  predicted_state_.velocity = glm::vec3(0.0f);
 }
 
 void PlayState::EndGame() {

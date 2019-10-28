@@ -282,6 +282,7 @@ class PlayState : public State {
                               float dt);
   void MovePlayer(float dt);
   void MoveBall(float dt);
+  void Collision();
 
   EntityID ClientIDToEntityID(long client_id);
   ////////////////////////////////////////
@@ -297,7 +298,7 @@ class PlayState : public State {
   std::unordered_map<EntityID, glm::vec3> player_look_dirs_;
   std::unordered_map<EntityID, glm::vec3> player_move_dirs_;
   FrameState server_predicted_;
-  entt::entity my_entity_;
+  entt::entity my_entity_, arena_entity_;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
 
@@ -339,7 +340,8 @@ class PlayState : public State {
   int frame_id = 0;
   float pitch_ = 0.0f;
   float yaw_ = 0.0f;
-
+  
+  float timer = 0.0f;
   float primary_cd_ = 0.0f;
 };
 
