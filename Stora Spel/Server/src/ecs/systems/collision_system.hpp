@@ -53,6 +53,7 @@ void PlayerBallCollision(entt::registry& registry,
                          entt::entity arena);
 void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
                         entt::entity ball);
+void BallBallCollision(entt::registry& registry);
 void PlayerPlayerCollision(entt::registry& registry);
 void PlayerProjectileCollision(entt::registry& registry);
 void PlayerArenaCollision(entt::registry& registry);
@@ -173,7 +174,7 @@ void UpdateCollisions(entt::registry& registry) {
   for (int i = 0; i < ball_collisions.size(); ++i) {
     HandleBallCollisions(registry, ball_collisions[i], arena_entity);
   }
-
+  BallBallCollision(registry);
   // NEEDS TO BE CALLED LAST
   UpdateTransform(registry);
 
@@ -477,6 +478,66 @@ void PlayerWallCollision(entt::registry& registry) {
         auto& health = registry.get<HealthComponent>(wall);
         health.health -= 1;
       }
+    }
+  }
+}
+
+void BallBallCollision(entt::registry& registry) {
+  auto view_ball =
+      registry.view<BallComponent, physics::Sphere, PhysicsComponent>();
+
+  for (auto it = view_ball.begin(); it != view_ball.end(); ++it) {
+    bool collide = false;
+    auto& hitbox1 = view_ball.get<physics::Sphere>(*it);
+    auto& physics1 = view_ball.get<PhysicsComponent>(*it);
+    auto& ball1 = view_ball.get<BallComponent>(*it);
+
+    for (auto it3 = view_ball.begin(); it3 != it; ++it3) {
+      auto& hitbox2 = view_ball.get<physics::Sphere>(*it3);
+
+      physics::IntersectData data = Intersect(hitbox1, hitbox2);
+      if (data.collision) {
+        collide = true;
+      }
+    }
+
+    for (auto it2 = std::next(it, 1); it2 != view_ball.end(); ++it2) {
+      auto& hitbox2 = view_ball.get<physics::Sphere>(*it2);
+      auto& physics2 = view_ball.get<PhysicsComponent>(*it2);
+      auto& ball2 = view_ball.get<BallComponent>(*it2);
+
+      physics::IntersectData data = Intersect(hitbox1, hitbox2);
+      if (data.collision) {
+        collide = true;
+
+        if (ball1.can_ball_collide && ball2.can_ball_collide) {
+          float dot_val1 = glm::dot(data.normal, physics1.velocity);
+          float dot_val2 = glm::dot(data.normal, physics2.velocity);
+
+          physics1.velocity +=
+              data.normal * dot_val2 * 0.8f - data.normal * dot_val1 * 0.8f;
+          physics2.velocity +=
+              data.normal * dot_val1 * 0.8f - data.normal * dot_val2 * 0.8f;
+
+          float vel1 = glm::length(physics1.velocity);
+          float vel2 = glm::length(physics2.velocity);
+          float total = vel1 + vel2 + 0.0001f;
+          hitbox1.center += data.move_vector * vel1 / total;
+          hitbox2.center -= data.move_vector * vel2 / total;
+
+          physics1.is_airborne = true;
+          physics2.is_airborne = true;
+        } else {
+          if (data.move_vector == glm::vec3(0.f))
+            data.normal = glm::vec3(1.f, 0.f, 0.f);
+          hitbox1.center += data.normal * 0.01f;
+          hitbox2.center -= data.normal * 0.01f;
+        }
+      }
+    }
+
+    if (collide == false) {
+      ball1.can_ball_collide = true;
     }
   }
 }
