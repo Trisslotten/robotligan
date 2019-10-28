@@ -113,7 +113,7 @@ EXPORT void LoadWireframeMesh(ModelHandle model_h,
                               const std::vector<glm::vec3>& vertices,
                               const std::vector<unsigned int>& indices);
 
-EXPORT double GetWidthOfText(Font2DHandle font_handle, std::string text, int size);
+EXPORT double GetWidthOfText(Font2DHandle font_handle, std::string text, float size);
 EXPORT void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
                    std::string text, glm::vec4 color = glm::vec4(1, 1, 1, 1),
                    bool visible = true, bool equal_spacing = false, float spacing = 13.0f);
