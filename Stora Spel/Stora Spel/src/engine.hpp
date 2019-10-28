@@ -21,16 +21,15 @@ struct PlayerStatInfo {
   int assists = 0;
   int saves = 0;
   unsigned int team = TEAM_RED;
-  EntityID enttity_id  = 0;
+  EntityID enttity_id = 0;
 };
-
 class Engine {
  public:
   Engine();
   ~Engine();
   Engine(const Engine&) = delete;
   Engine& operator=(const Engine&) = delete;
-
+  int IsConnected() { return server_connected_; }
   void Init();
   void Update(float dt);
   void UpdateNetwork();
@@ -59,18 +58,21 @@ class Engine {
 
   std::unordered_map<PlayerID, std::string> player_names_;
 
+  void SetSecondaryAbility(AbilityID id) { second_ability_ = id; }
   AbilityID GetSecondaryAbility() { return second_ability_; }
-
   std::vector<unsigned int> GetTeamScores() { return scores_; }
-
+  std::vector<int>* GetPlayingPlayers();
+  void SetPlayingPlayers(std::unordered_map<int, LobbyPlayer> plyrs) { playing_players_ = plyrs; }
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
+  int GetSwitchGoalCountdownTimer() const;
+  int GetSwitchGoalTime() const;
   unsigned int GetPlayerTeam(EntityID id) {
     for (auto p_score : player_scores_) {
       if (p_score.second.enttity_id == id) {
         return p_score.second.team;
-	  }
-	}
+      }
+    }
     return TEAM_RED;
   }
 
@@ -79,7 +81,13 @@ class Engine {
   Chat* GetChat() { return &chat_; }
 
   StateType GetPreviousStateType() { return previous_state_; }
+  int GetStateType() { return statetype_; }
+  void SetStateType(int state) { statetype_ = state; }
+  void ReInit() { play_state_.Cleanup(); play_state_.Init();}
 
+  std::unordered_map<PlayerID, PlayerStatInfo> GetPlayerScores() {
+    return player_scores_;
+  }
  private:
   void SetKeybinds();
 
@@ -89,6 +97,7 @@ class Engine {
 
   NetAPI::Socket::Client client_;
   NetAPI::Common::Packet packet_;
+  int server_connected_ = 0;
 
   std::vector<unsigned> client_pings_;
   StateType wanted_state_type_ = StateType::MAIN_MENU;
@@ -99,7 +108,7 @@ class Engine {
   ConnectMenuState connect_menu_state_;
   SettingsState settings_state_;
   entt::registry* registry_current_;
-
+  std::unordered_map<int, LobbyPlayer> playing_players_;
   bool should_send_input_ = false;
 
   std::unordered_map<int, int> keybinds_;
@@ -122,12 +131,14 @@ class Engine {
 
   int gameplay_timer_sec_ = 0;
   int countdown_timer_sec_ = 0;
+  int switch_goal_timer_sec_ = 0;
+  int switch_goal_time_ = 0;
 
   Chat chat_;
   std::string message_ = "";
 
   bool enable_chat_ = false;
-
+  int statetype_;
   SoundSystem sound_system_;
   AnimationSystem animation_system_;
 
@@ -139,7 +150,7 @@ class Engine {
   StateType previous_state_;
 
   float mouse_sensitivity_ = 1.0f;
- 
+
   std::list<NetAPI::Common::Packet> packet_test;
   std::list<float> time_test;
 };

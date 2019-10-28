@@ -32,15 +32,27 @@ void Update(entt::registry& registry) {
       if (transform_helper::InsideBounds2D(mouse_pos, button_pos,
                                            button_c.bounds) &&
           !a_button_is_selected) {
+        if (!button_c.has_hovered) {
+          // Trigger mouse hover event
+          MenuEvent hover_event;
+          hover_event.type = MenuEvent::HOVER;
+          menu_dispatcher.trigger(hover_event);
+          button_c.has_hovered = true; 
+        }
         button_c.text_current_color = button_c.text_hover_color;
         if (button_c.gui_handle_hover) {
           button_c.gui_handle_current = button_c.gui_handle_hover;
         }
         if (Input::IsButtonPressed(GLFW_MOUSE_BUTTON_1)) {
           button_c.button_func();
+          // Trigger mouse click event
+          MenuEvent click_event;
+          click_event.type = MenuEvent::CLICK;
+          menu_dispatcher.trigger(click_event);
         }
         a_button_is_selected = true;
       } else {
+        button_c.has_hovered = false;
         button_c.text_current_color = button_c.text_normal_color;
         if (button_c.gui_handle_current) {
           button_c.gui_handle_current = button_c.gui_handle_normal;

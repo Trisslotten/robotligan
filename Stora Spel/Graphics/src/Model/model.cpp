@@ -395,6 +395,21 @@ void Model::Draw(ShaderProgram& shader) {
   }
 }
 
+float Model::MaxDistance(glm::mat4 transform, glm::vec3 point) {
+  float result = 0.f;
+  for (int i = 0; i < mesh_.size(); i++) {
+    MeshData temp = mesh_[i].GetMeshData();
+    for(auto pos : temp.pos) {
+      glm::vec3 transformed = transform * glm::vec4(pos, 1);
+      int len = length(point - transformed);
+      if(len > result) {
+        result = len;
+      }
+    }
+  }
+  return result;
+}
+
 MeshData Model::GetMeshData() {
   MeshData mesh_data;
   for (unsigned int i = 0; i < mesh_.size(); i++) {

@@ -56,6 +56,8 @@ class Model {
 
   void Draw(ShaderProgram& shader);
 
+  float MaxDistance(glm::mat4 transform, glm::vec3 point);
+
   std::vector<Joint*> bones_;
   std::vector<Animation*> animations_;
   glm::mat4 globalInverseTransform_;

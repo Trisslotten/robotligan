@@ -16,6 +16,7 @@
 #include "ecs/systems/buff_controller_system.hpp"
 #include "ecs/systems/collision_system.hpp"
 #include "ecs/systems/goal_system.hpp"
+#include "ecs/systems/lifetime_system.hpp"
 #include "ecs/systems/missile_system.hpp"
 #include "ecs/systems/physics_system.hpp"
 #include "ecs/systems/player_controller_system.hpp"
@@ -28,8 +29,6 @@ GameServer::~GameServer() {}
 void GameServer::Init(double in_update_rate) {
   glob::SetModelUseGL(false);
 
- 
-
   server_.Setup(1337);
 
   lobby_state_.SetGameServer(this);
@@ -38,6 +37,31 @@ void GameServer::Init(double in_update_rate) {
   current_state_ = &lobby_state_;
   srand(time(NULL));
   pings_.resize(NetAPI::Common::kMaxPlayers);
+
+  // very annoying thing
+  ability_cooldowns_[AbilityID::BUILD_WALL] =
+      GlobalSettings::Access()->ValueOf("ABILITY_BUILD_WALL_COOLDOWN");
+  ability_cooldowns_[AbilityID::FAKE_BALL] =
+      GlobalSettings::Access()->ValueOf("ABILITY_FAKE_BALL_COOLDOWN");
+  ability_cooldowns_[AbilityID::FORCE_PUSH] =
+      GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_COOLDOWN");
+  ability_cooldowns_[AbilityID::GRAVITY_CHANGE] =
+      GlobalSettings::Access()->ValueOf("ABILITY_GRAVITY_COOLDOWN");
+  ability_cooldowns_[AbilityID::HOMING_BALL] =
+      GlobalSettings::Access()->ValueOf("ABILITY_HOMING_BALL_COOLDOWN");
+  ability_cooldowns_[AbilityID::INVISIBILITY] =
+      GlobalSettings::Access()->ValueOf("ABILITY_INVISIBILITY_COOLDOWN");
+  ability_cooldowns_[AbilityID::MISSILE] =
+      GlobalSettings::Access()->ValueOf("ABILITY_MISSILE_COOLDOWN");
+  ability_cooldowns_[AbilityID::SUPER_STRIKE] =
+      GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
+  ability_cooldowns_[AbilityID::SWITCH_GOALS] =
+      GlobalSettings::Access()->ValueOf("ABILITY_SWITCH_GOALS_COOLDOWN");
+  ability_cooldowns_[AbilityID::TELEPORT] =
+      GlobalSettings::Access()->ValueOf("ABILITY_TELEPORT_COOLDOWN");
+
+  ability_controller::ability_cooldowns = ability_cooldowns_;
+
   // CreateEntities();
 }
 
@@ -53,6 +77,24 @@ void GameServer::Update(float dt) {
     lobby_state_.SetClientIsReady(client_data->ID, false);
     play_state_.SetClientReceiveUpdates(client_data->ID, false);
     lobby_state_.HandleNewClientTeam(client_data->ID);
+    NetAPI::Common::Packet p;
+    int s;
+    if (this->current_state_type_ == ServerStateType::LOBBY) {
+      s = 0;
+    } else {
+      NetAPI::Common::Packet to_send;
+      for (auto client_team : lobby_state_.client_teams_) {
+        to_send << client_team.first;   // send id
+        to_send << client_team.second;  // send team
+        bool ready = true;
+        to_send << ready;
+        to_send << PacketBlockType::LOBBY_UPDATE_TEAM;
+      }
+      server_.Send(to_send);
+      s = 1;
+    }
+    p << s << PacketBlockType::STATE;
+    server_.Send(p);
   }
 
   // handle received data
@@ -68,6 +110,7 @@ void GameServer::Update(float dt) {
   }
   DoOncePerSecond();
   current_state_->Update(dt);
+  current_state_->HandleDataToSend();
 
   //---------------------------------------------
   //--------------UPDATE GAME LOGIC--------------
@@ -96,6 +139,12 @@ void GameServer::HandlePacketsToSend() {
     auto header = to_send.GetHeader();
     header->receiver = id;
 
+    // send events
+    for (auto event : game_events_) {
+      to_send << event;
+      to_send << PacketBlockType::GAME_EVENT;
+    }
+
     if (!packets_[id].IsEmpty()) {
       to_send << packets_[id];
     }
@@ -108,12 +157,6 @@ void GameServer::HandlePacketsToSend() {
       to_send << m.message.size();
       to_send << m.message_from;
       to_send << PacketBlockType::MESSAGE;
-    }
-
-    // send events
-    for (auto event : game_events_) {
-      to_send << event;
-      to_send << PacketBlockType::GAME_EVENT;
     }
 
     if (!to_send.IsEmpty()) {
@@ -162,6 +205,16 @@ void GameServer::HandleStateChange() {
         break;
     }
     current_state_->Init();
+    NetAPI::Common::Packet p;
+    int s;
+    if (this->current_state_type_ == ServerStateType::LOBBY) {
+      s = 0;
+    } else {
+      s = 1;
+    }
+    p << s << PacketBlockType::STATE;
+    server_.Send(p);
+    client_names_.clear();
   }
 }
 
@@ -258,7 +311,6 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       }
       break;
     }
-
     case PacketBlockType::LOBBY_SELECT_ABILITY: {
       AbilityID id;
       packet >> id;
@@ -269,6 +321,16 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       int id;
       packet >> id;
       play_state_.SetFrameID(client_id, id);
+      break;
+    }
+    case PacketBlockType::MY_NAME: {
+      std::string name;
+      packet >> name;
+      while (NameAlreadyExists(name)) {
+        name.append("xD");
+      }
+      client_names_[client_id] = name;
+      lobby_state_.SetTeamsUpdated(true);
       break;
     }
       /*
@@ -283,6 +345,15 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       }
       */
   }
+}
+
+bool GameServer::NameAlreadyExists(std::string name) {
+  for (auto n : client_names_) {
+    if (name == n.second) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void GameServer::ReceiveGameEvent(const GameEvent& event) {
@@ -301,8 +372,9 @@ void GameServer::UpdateSystems(float dt) {
 
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);
-  if (!play_state_.IsResetting())
-    goal_system::Update(registry_);
+  lifetime::Update(registry_, dt);
+
+  if (!play_state_.IsResetting()) goal_system::Update(registry_);
 
   dispatcher.update<EventInfo>();
   // glob::LoadWireframeMesh(model_arena, mh.pos, mh.indices);

@@ -4,12 +4,10 @@
 #include <entity/registry.hpp>
 #include <entt.hpp>
 #include "ecs/components.hpp"
+#include "replay machine/replay_machine.hpp"
 #include "shared/shared.hpp"
 #include "util/event.hpp"
 #include "util/timer.hpp"
-#include "replay machine/replay_machine.hpp"
-#include "util/event.hpp"
-
 
 class GameServer;
 
@@ -23,6 +21,7 @@ class ServerState {
   virtual void Init() = 0;
   virtual void Update(float dt) = 0;
   virtual void Cleanup() = 0;
+  virtual void HandleDataToSend() = 0;
   ServerState() = default;
   ~ServerState() {}
 
@@ -39,6 +38,7 @@ class ServerLobbyState : public ServerState {
   void Init() override;
   void Update(float dt) override;
   void Cleanup() override;
+  void HandleDataToSend() override;
   ServerLobbyState() = default;
   ~ServerLobbyState() {}
 
@@ -85,6 +85,7 @@ class ServerPlayState : public ServerState {
  public:
   void Init() override;
   void Update(float dt) override;
+  void HandleDataToSend() override;
   void Cleanup() override;
   ServerPlayState() = default;
   ~ServerPlayState() {}
@@ -109,6 +110,7 @@ class ServerPlayState : public ServerState {
   void ReceiveEvent(const EventInfo& e);
   // EntityID GetNextEntityGuid() { return entity_guid_++; }
   void SetFrameID(int client_id, int id) { player_frame_id_[client_id] = id; }
+
  private:
   entt::entity CreateIDEntity();
 
@@ -118,8 +120,9 @@ class ServerPlayState : public ServerState {
   void CreatePlayerEntity();
   void CreateGoals();
   void Record(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value,
-              const float& in_dt);
-  void Replay(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value);
+              const float& in_dt, unsigned int in_player_index);
+  void Replay(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value,
+              unsigned int in_player_index);
   void CreatePickUpComponents();
   EntityID GetNextEntityGuid() { return entity_guid_++; }
   void EndGame();
@@ -129,6 +132,7 @@ class ServerPlayState : public ServerState {
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
 
   std::vector<entt::entity> created_pick_ups_;
+  std::vector<entt::entity> created_walls_;
 
   EntityID entity_guid_ = 0;
 
@@ -142,6 +146,10 @@ class ServerPlayState : public ServerState {
   Timer countdown_timer_;
   Timer reset_timer_;
   bool reset_ = false;
+
+  int switch_goal_time_ =
+      (int)GlobalSettings::Access()->ValueOf("ABILITY_SWITCH_GOAL_COUNTDOWN");
+  Timer switch_goal_timer_;
 
   std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
   std::vector<Projectile> created_projectiles_;

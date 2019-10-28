@@ -51,5 +51,6 @@ int main(unsigned argc, char** argv) {
   }
   dispatcher.sink<EventInfo>().disconnect<&ServerPlayState::ReceiveEvent>(
       *server.GetPlayState());
+  WSACleanup();
   return EXIT_SUCCESS;
 }

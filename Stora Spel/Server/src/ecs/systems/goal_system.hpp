@@ -44,7 +44,6 @@ void Update(entt::registry& registry) {
         auto distance = glm::distance(ball_sphere_c.center, goal_OBB_c.center);
         if (data.collision) {
           // create event for goal
-
           GameEvent event;
           event.type = GameEvent::GOAL;
           dispatcher.trigger<GameEvent>(event);

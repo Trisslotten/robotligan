@@ -12,8 +12,8 @@ void glob::Elements2D::CreateTexture() {
 
   // Generate texture data
   glBindTexture(GL_TEXTURE_2D, texture_id);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                   GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -52,13 +52,14 @@ bool glob::Elements2D::LoadFromFile(const std::string& path) {
 }
 
 void glob::Elements2D::DrawOnScreen(ShaderProgram& shader, glm::vec2 pos,
-                                    float scale, float scale_x) {
+                                    float scale, float scale_x, float opacity) {
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tex_id_);
 
   shader.uniform("t_pos", pos);
   shader.uniform("t_scale", scale);
   shader.uniform("t_scale_x", scale_x);
+  shader.uniform("opacity", opacity);
   shader.uniform("screen_dims", window::GetWindowDimensions());
   shader.uniform("texture_dims", glm::vec2(texture_width_, texture_height_));
   shader.uniform("gui_element_texture", 0);

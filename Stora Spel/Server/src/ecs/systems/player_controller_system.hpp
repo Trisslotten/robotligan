@@ -30,6 +30,11 @@ void Update(entt::registry& registry, float dt) {
     AbilityComponent& ability_c = view_controller.get<AbilityComponent>(entity);
     IDComponent& id_c = view_controller.get<IDComponent>(entity);
 
+    unsigned int player_team = TEAM_RED;
+    if (registry.has<TeamComponent>(entity)) {
+      player_team = registry.get<TeamComponent>(entity).team;
+	}
+
     constexpr float pi = glm::pi<float>();
     player_c.pitch = glm::clamp(player_c.pitch, -0.49f * pi, 0.49f * pi);
     // player_c.pitch = glm::mod(player_c.pitch + delta_pitch, 2.f * pi);
@@ -232,6 +237,41 @@ void Update(entt::registry& registry, float dt) {
           ball_physics_c.velocity += kick_dir * player_c.kick_force;
           ball_physics_c.is_airborne = true;
           ball_c.last_touch = player_c.client_id;
+
+          // save game event
+          GameEvent hit_event;
+          hit_event.type = GameEvent::HIT;
+          hit_event.hit.player_id = id_c.id;
+          dispatcher.trigger(hit_event);
+          if (!ball_c.is_real && ball_c.faker_team != player_team) {
+            EventInfo info;
+            if (registry.has<IDComponent>(entity) == false) return;
+            auto id = registry.get<IDComponent>(entity);
+            info.event = Event::DESTROY_ENTITY;
+            info.e_id = id.id;
+            info.entity = entity;
+            dispatcher.enqueue<EventInfo>(info);
+          }
+        }
+      }
+
+      auto view_others =
+          registry
+              .view<PlayerComponent, TransformComponent, PhysicsComponent>();
+      for (auto other : view_others) {
+        auto& other_phys_c = view_others.get<PhysicsComponent>(other);
+        auto& other_trans_c = view_others.get<TransformComponent>(other);
+        auto& other_player_c = view_others.get<PlayerComponent>(other);
+
+        glm::vec3 player_other_vec = other_trans_c.position - trans_c.position;
+        glm::vec3 player_other_dir = glm::normalize(player_other_vec);
+        glm::vec3 player_look_dir = cam_c.GetLookDir();
+        float dist = length(player_other_vec);
+        float dot = glm::dot(player_look_dir, player_other_dir);
+        if (dist < player_c.kick_reach && dot > player_c.kick_fov) {
+          // perform kick
+          other_phys_c.velocity += kick_dir * player_c.kick_others_force;
+          other_phys_c.is_airborne = true;
 
           // save game event
           GameEvent hit_event;

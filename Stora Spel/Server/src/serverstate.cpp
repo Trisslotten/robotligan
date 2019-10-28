@@ -13,6 +13,8 @@
 #include "ecs/components/match_timer_component.hpp"
 #include "gameserver.hpp"
 
+#include <map>
+
 void ServerLobbyState::Init() {
   start_game_timer.Restart();
   starting_ = false;
@@ -58,6 +60,7 @@ void ServerLobbyState::Update(float dt) {
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     if (teams_updated_) {
       for (auto client_team : client_teams_) {
+        to_send << game_server_->GetClientNames()[client_team.first];
         to_send << client_team.first;   // send id
         to_send << client_team.second;  // send team
         bool ready = clients_ready_[client_team.first];
@@ -74,6 +77,8 @@ void ServerLobbyState::Update(float dt) {
 void ServerLobbyState::Cleanup() {
   //
 }
+
+void ServerLobbyState::HandleDataToSend() {}
 
 void ServerPlayState::Init() {
   reset_timer_.Restart();
@@ -94,12 +99,33 @@ void ServerPlayState::Init() {
 
   ResetEntities();
 
-  // Create replay machine
-  this->replay_machine_ = new ReplayMachine();
+  // Replay machine
+  this->replay_machine_ = nullptr;
 
   for (auto& [client_id, client_data] : server.GetClients()) {
     NetAPI::Common::Packet to_send;
     to_send.GetHeader()->receiver = client_id;
+
+    auto team_view =
+        registry.view<TeamComponent, IDComponent, PlayerComponent>();
+
+    unsigned int team_id = 0;        
+    for (auto team : team_view) {
+      auto& team_c = team_view.get<TeamComponent>(team);
+      auto& id_c = team_view.get<IDComponent>(team);
+      auto& player_c = team_view.get<PlayerComponent>(team);
+
+      to_send << team_c.team;
+      to_send << id_c.id;
+      to_send << player_c.client_id;
+
+      if (id_c.id == clients_player_ids_[client_id]) {
+        team_id = team_c.team;
+      }
+    }
+    to_send << (int)team_view.size();
+
+    to_send << team_id;
 
     auto ball_view = registry.view<BallComponent, IDComponent>();
     for (auto ball : ball_view) {
@@ -125,40 +151,77 @@ void ServerPlayState::Init() {
 
     server.Send(to_send);
   }
+  reset_ = false;
 }
 
 void ServerPlayState::Update(float dt) {
   auto& registry = game_server_->GetRegistry();
   auto& server = game_server_->GetServer();
 
-  dispatcher.update<EventInfo>();
+  std::map<EntityID, entt::entity> ordered_map;
 
-  registry.view<PlayerComponent>().each(
-      [&](auto entity, PlayerComponent& player_c) {
-        // Check if we are taking inputs from the
-        // client or if we are reading them from a replay
-        if (!this->replay_) {
-          auto inputs = players_inputs_[player_c.client_id];
-          if (countdown_timer_.Elapsed() <= count_down_time_) {
-            match_timer_.Pause();
-          } else {
-            player_c.actions = inputs.first;
-            if (reset_ == false)
-              match_timer_.Resume();
-            countdown_timer_.Pause();
-          }
-          player_c.pitch += inputs.second.x;
-          player_c.yaw += inputs.second.y;
-          // Check if the game should be be recorded
-          if (this->record_) {
-            this->Record(player_c.actions, player_c.pitch, player_c.yaw, dt);
-          }
-        } else {
-          this->Replay(player_c.actions, player_c.pitch, player_c.yaw);
-        }
+  // Add all entities with an IDComponent and a PlayerComponent to a map
+  registry.view<IDComponent, PlayerComponent>().each(
+      [&](auto entity, IDComponent& id_c, PlayerComponent& player_c) {
+        ordered_map[id_c.id] = entity;
       });
+
+  // Go through the ordered entities
+  unsigned int loop_index = 0;
+  for (auto pair : ordered_map) {
+    PlayerComponent& player_c = registry.get<PlayerComponent>(pair.second);
+
+    // Check if we are taking inputs from the
+    // client or if we are reading them from a replay
+    if (!this->replay_) {
+      auto inputs = players_inputs_[player_c.client_id];
+
+      if (countdown_timer_.Elapsed() <= count_down_time_) {
+        match_timer_.Pause();
+      } else {
+        player_c.actions = inputs.first;
+        if (!reset_) {
+          match_timer_.Resume();
+		}
+        countdown_timer_.Pause();
+      }
+      player_c.pitch = inputs.second.x;
+      player_c.yaw = inputs.second.y;
+      // Check if the game should be be recorded
+      if (this->record_) {
+        this->Record(player_c.actions, player_c.pitch, player_c.yaw, dt,
+                     loop_index);
+      }
+    } else {
+      this->Replay(player_c.actions, player_c.pitch, player_c.yaw, loop_index);
+    }
+
+    loop_index++;
+  }
+
   // players_inputs_.clear();
 
+  if (reset_timer_.Elapsed() > 3.0f) {
+    ResetEntities();
+    reset_timer_.Restart();
+    reset_timer_.Pause();
+    reset_ = false;
+
+    match_timer_.Resume();
+
+    GameEvent reset_event;
+    reset_event.type = GameEvent::RESET;
+    dispatcher.trigger<GameEvent>(reset_event);
+  }
+  if (match_timer_.Elapsed() > match_time_) {
+    EndGame();
+  }
+}
+
+void ServerPlayState::HandleDataToSend() {
+  bool pick_ups_sent = false;
+
+  auto& registry = game_server_->GetRegistry();
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     EntityID client_player_id = clients_player_ids_[client_id];
 
@@ -167,16 +230,16 @@ void ServerPlayState::Update(float dt) {
       continue;
     }
 
-    auto view_cam = registry.view<CameraComponent, IDComponent>();
-    for (auto cam : view_cam) {
-      auto& cam_c = view_cam.get<CameraComponent>(cam);
-      auto& id_c = view_cam.get<IDComponent>(cam);
-      if (client_player_id == id_c.id) {
-        to_send << cam_c.orientation;
-        break;
-      }
-    }
-    to_send << PacketBlockType::CAMERA_TRANSFORM;
+    // auto view_cam = registry.view<CameraComponent, IDComponent>();
+    // for (auto cam : view_cam) {
+    //  auto& cam_c = view_cam.get<CameraComponent>(cam);
+    //  auto& id_c = view_cam.get<IDComponent>(cam);
+    //  if (client_player_id == id_c.id) {
+    //    to_send << cam_c.orientation;
+    //    break;
+    //  }
+    //}
+    // to_send << PacketBlockType::CAMERA_TRANSFORM;
 
     for (auto cam : view_cam) {
       auto& cam_c = view_cam.get<CameraComponent>(cam);
@@ -254,13 +317,24 @@ void ServerPlayState::Update(float dt) {
       }
     }
 
+    for (auto entity : created_walls_) {
+      auto& t = registry.get<TransformComponent>(entity);
+      auto& id = registry.get<IDComponent>(entity);
+
+      to_send << t.rotation;
+      to_send << t.position;
+      to_send << id.id;
+      to_send << PacketBlockType::CREATE_WALL;
+    }
+
     for (auto entity : created_pick_ups_) {
       auto& t = registry.get<TransformComponent>(entity);
       auto& id = registry.get<IDComponent>(entity);
       to_send << t.position;
       to_send << id.id;
       to_send << PacketBlockType::CREATE_PICK_UP;
-      // std::cout << "PACKET: CREATED_PICK_UP\n";
+      pick_ups_sent = true;
+      // std::cout << "PACKET: CREATED_PICK_UP id: " << id.id << std::endl;
     }
 
     auto pick_up_events = registry.view<PickUpEvent>();
@@ -284,12 +358,38 @@ void ServerPlayState::Update(float dt) {
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
       if (goal_goal_c.switched_this_tick) {
-        if (!sent_switch) {
-          to_send << PacketBlockType::SWITCH_GOALS;
-          sent_switch = true;
+        switch_goal_timer_.Restart();
+      }
+      if (!sent_switch) {
+        to_send << switch_goal_time_;
+        to_send << (int)switch_goal_timer_.Elapsed();
+        to_send << PacketBlockType::SWITCH_GOALS;
+        sent_switch = true;
+
+        if (switch_goal_timer_.Elapsed() >= switch_goal_time_) {
+          switch_goal_timer_.Pause();
         }
       }
     }
+
+    // Tell client if secondary ability was used
+    // already added game event for this, sry :P not ideal to set use_secondary
+    // to false here since ability_controller::TriggerAbility can return false,
+    // i.e. too far away to use super strike or homing ball
+
+    /*auto view_abilities = registry.view<PlayerComponent, AbilityComponent>();
+    for (auto entity : view_abilities) {
+      auto& player = view_abilities.get<PlayerComponent>(entity);
+
+      if (player.client_id == client_id) {
+        auto& ability = view_abilities.get<AbilityComponent>(entity);
+
+        if (ability.use_secondary) {
+          ability.use_secondary = false;
+          to_send << PacketBlockType::SECONDARY_USED;
+        }
+      }
+    }*/
 
     // send created projectiles
     for (auto projectiles : created_projectiles_) {
@@ -325,25 +425,9 @@ void ServerPlayState::Update(float dt) {
       goal_goal_c.switched_this_tick = false;
     }
   }
-  destroy_entities_.clear();
-  created_projectiles_.clear();
-  created_pick_ups_.clear();
 
-  if (reset_timer_.Elapsed() > 3.0f) {
-    ResetEntities();
-    reset_timer_.Restart();
-    reset_timer_.Pause();
-    reset_ = false;
-
-    match_timer_.Resume();
-
-    GameEvent reset_event;
-    reset_event.type = GameEvent::RESET;
-    dispatcher.trigger<GameEvent>(reset_event);
-  }
-  if (match_timer_.Elapsed() > match_time_) {
-    EndGame();
-  }
+  created_walls_.clear();
+  if (pick_ups_sent) created_pick_ups_.clear();
 }
 
 void ServerPlayState::Cleanup() {
@@ -388,9 +472,8 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
                                    client_teams_[player_c.client_id]);
 
     AbilityID primary_id = client_abilities_[player_c.client_id];
-    AbilityID secondary_id = AbilityID::SWITCH_GOALS;
-    float primary_cooldown =
-        GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
+    AbilityID secondary_id = AbilityID::NULL_ABILITY;
+    float primary_cooldown = game_server_->GetAbilityCooldowns()[primary_id];
 
     // Add components for a player
     registry.assign<AbilityComponent>(
@@ -583,6 +666,11 @@ void ServerPlayState::CreatePlayerEntity() {
     red_players_++;
   }*/
 
+  // TEMP : Just so the replay knows the number of players all get added to the
+  // blue team
+  this->blue_players_++;
+  // TEMP
+
   registry.assign<PointsComponent>(entity);
 
   // TODO: call later
@@ -617,7 +705,7 @@ void ServerPlayState::ResetEntities() {
       auto& trans = view_goal.get<TransformComponent>(entity);
       if (trans.position.x > 0) {
         switched_goals = true;
-        
+
         break;
       }
     }
@@ -668,8 +756,13 @@ void ServerPlayState::ResetEntities() {
   }
 
   // reset pick-up
-  auto pick_up_view = registry.view<PickUpComponent>();
-  for (auto entity : pick_up_view) registry.destroy(entity);
+  auto pick_up_view = registry.view<PickUpComponent, IDComponent>();
+  for (auto pick_up : pick_up_view) {
+    auto entity = registry.create();
+    registry.assign<PickUpEvent>(entity, registry.get<IDComponent>(pick_up).id,
+                                 -1, AbilityID::NULL_ABILITY);
+    registry.destroy(pick_up);
+  }
 
   CreatePickUpComponents();
 
@@ -682,7 +775,12 @@ void ServerPlayState::ResetEntities() {
     BallComponent& ball_component = ball_view.get<BallComponent>(entity);
 
     if (ball_component.is_real == false) {
-      registry.destroy(entity);
+      EventInfo e;
+      e.event = Event::DESTROY_ENTITY;
+      e.entity = entity;
+      e.e_id = registry.get<IDComponent>(entity).id;
+      // registry.destroy(entity);
+      dispatcher.enqueue(e);
       continue;
     }
 
@@ -730,7 +828,11 @@ void ServerPlayState::EndGame() {
 void ServerPlayState::ReceiveEvent(const EventInfo& e) {
   switch (e.event) {
     case Event::DESTROY_ENTITY: {
-      destroy_entities_.push_back(e.e_id);
+      auto& registry = game_server_->GetRegistry();
+      if (registry.valid(e.entity)) {
+        destroy_entities_.push_back(e.e_id);
+        registry.destroy(e.entity);
+      }
       break;
     }
     case Event::CREATE_CANNONBALL: {
@@ -767,6 +869,13 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       registry.assign<IDComponent>(e.entity, projectile.entity_id);
       projectile.projectile_id = ProjectileID::MISSILE_OBJECT;
       created_projectiles_.push_back(projectile);
+
+      // Save game event
+      GameEvent missile_fire_event;
+      missile_fire_event.type = GameEvent::MISSILE_FIRE;
+      missile_fire_event.missile_fire.projectile_id = projectile.entity_id;
+      dispatcher.trigger(missile_fire_event);
+
       break;
     }
     case Event::CHANGED_TARGET: {
@@ -775,6 +884,44 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       auto p_c = game_server_->GetRegistry().get<PlayerComponent>(e.entity);
       packets[p_c.client_id] << e.e_id;
       packets[p_c.client_id] << PacketBlockType::YOUR_TARGET;
+      break;
+    }
+    case Event::CREATE_FAKE_BALL: {
+      auto& registry = game_server_->GetRegistry();
+      std::unordered_map<int, NetAPI::Common::Packet>& packets =
+          game_server_->GetPackets();
+      EntityID new_id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, new_id);
+
+      unsigned int faker_team =
+          registry.get<BallComponent>(e.entity).faker_team;
+
+      auto view_players =
+          registry.view<PlayerComponent, TeamComponent, IDComponent>();
+
+      for (auto player : view_players) {
+        auto& player_player_c = registry.get<PlayerComponent>(player);
+        auto& player_team_c = registry.get<TeamComponent>(player);
+        auto& player_id_c = registry.get<IDComponent>(player);
+
+        if (player_team_c.team == faker_team) {
+          packets[player_player_c.client_id] << new_id;
+          packets[player_player_c.client_id]
+              << PacketBlockType::CREATE_FAKE_BALL;
+        } else {
+          packets[player_player_c.client_id] << new_id;
+          packets[player_player_c.client_id] << PacketBlockType::CREATE_BALL;
+        }
+      }
+      break;
+    }
+    case Event::BUILD_WALL: {
+      auto& registry = game_server_->GetRegistry();
+      auto id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, id);
+
+      created_walls_.push_back(e.entity);
+
       break;
     }
     default:
@@ -855,10 +1002,12 @@ void ServerPlayState::StartResetTimer() {
 
 // Replay stuff---
 bool ServerPlayState::StartRecording(unsigned int in_replay_length_seconds) {
-  if (!this->record_) {
-    // Initiate the Replay Machine
+  if (!this->record_ && !this->replay_) {
+    // Create Replay Machine
     std::cout << "Recording...\n";
-    this->replay_machine_->Init(in_replay_length_seconds, kServerUpdateRate, 1);
+    this->replay_machine_ =
+        new ReplayMachine(in_replay_length_seconds, kServerUpdateRate, 1,
+                          (this->blue_players_ + this->red_players_), false);
     this->record_ = true;
     return true;  // NTS: Return false if recording cannot start?
   }
@@ -866,12 +1015,14 @@ bool ServerPlayState::StartRecording(unsigned int in_replay_length_seconds) {
 }
 
 void ServerPlayState::Record(std::bitset<10>& in_bitset, float& in_x_value,
-                             float& in_y_value, const float& in_dt) {
+                             float& in_y_value, const float& in_dt,
+                             unsigned int in_player_index) {
   auto& registry = this->game_server_->GetRegistry();
 
   // Save the frame with the ReplayMachine
   if (this->replay_machine_->SaveReplayFrame(in_bitset, in_x_value, in_y_value,
-                                             registry, in_dt)) {
+                                             registry, in_dt,
+                                             in_player_index)) {
     std::cout << "Replaying...\n";
     // If true is returned it means the internal
     // BitPack is fully written and there is no
@@ -884,19 +1035,23 @@ void ServerPlayState::Record(std::bitset<10>& in_bitset, float& in_x_value,
 }
 
 void ServerPlayState::Replay(std::bitset<10>& in_bitset, float& in_x_value,
-                             float& in_y_value) {
+                             float& in_y_value, unsigned int in_player_index) {
   auto& registry = this->game_server_->GetRegistry();
   // Ensure we are not recording the replay
   this->record_ = false;
   // Read a frame with the ReplayMachine
   if (this->replay_machine_->LoadReplayFrame(in_bitset, in_x_value, in_y_value,
-                                             registry)) {
+                                             registry, in_player_index)) {
     std::cout << "Finished.\n";
     // If true is returned it means the internal
     // BiPack has been fully read and there is no
     // more data to replay.
     // Turn off replaying.
     this->replay_ = false;
+
+    // Once replay has been played, remove the replay machine
+    delete this->replay_machine_;
+    this->replay_machine_ = nullptr;
   }
 }
 //---

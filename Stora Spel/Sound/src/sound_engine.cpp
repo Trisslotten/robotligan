@@ -28,6 +28,9 @@ namespace slob {
       channel->setVolume(volume);
       channel->setPaused(false);
     }
+    void Stop(FMOD::System* system, FMOD::ChannelGroup* group) {
+      group->stop();
+    }
     bool IsLoaded() { return sound_ != nullptr; }
 
   private:
@@ -137,6 +140,11 @@ namespace slob {
     return result;
   }
 
+  SoundPlayer* SoundEngine::GetPlayer()
+  {
+    return impl_->sound_players[0];
+  }
+
   struct SoundPlayer::Impl {
     SoundEngine::Impl* sound_engine;
     FMOD::ChannelGroup* channel_group;
@@ -154,6 +162,13 @@ namespace slob {
     auto iter = i_->sound_engine->sounds.find(handle);
     if (iter != i_->sound_engine->sounds.end()) {
       iter->second.Play(i_->sound_engine->system, i_->channel_group, loop_count, volume);
+    }
+  }
+
+  void SoundPlayer::Stop(SoundHandle handle) {
+    auto iter = i_->sound_engine->sounds.find(handle);
+    if (iter != i_->sound_engine->sounds.end()) {
+      iter->second.Stop(i_->sound_engine->system, i_->channel_group);
     }
   }
 

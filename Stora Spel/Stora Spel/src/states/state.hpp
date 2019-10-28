@@ -1,17 +1,17 @@
 #ifndef STATE_HPP_
 #define STATE_HPP_
 
-#include <list>
 #include <NetAPI\packet.hpp>
 #include <ecs/components/button_component.hpp>
 #include <entt.hpp>
 #include <glm/glm.hpp>
 #include <glob/graphics.hpp>
+#include <list>
+#include <playerdata.hpp>
 #include <util/timer.hpp>
 #include "Chat.hpp"
+#include "eventdispatcher.hpp"
 #include "shared/shared.hpp"
-#include <ecs/components/button_component.hpp>
-#include <playerdata.hpp>
 
 class Engine;
 
@@ -67,6 +67,7 @@ class MainMenuState : public State {
  private:
   void CreateMainMenu();
   void CreateInformationMenu();
+  void CreateBackgroundEnitites();
 
   entt::registry registry_mainmenu_;
   entt::registry registry_settings_;
@@ -109,7 +110,12 @@ class LobbyState : public State {
   glob::GUIHandle ability_back_normal_;
   glob::GUIHandle ability_back_hover_;
   glob::GUIHandle ability_back_selected_;
+  glob::GUIHandle ready_back_normal_;
+  glob::GUIHandle ready_back_hover_;
+  glob::GUIHandle ready_icon_;
+  glob::GUIHandle ready_empty_icon_;
 
+  int server_state_ = 0;
   std::vector<glob::GUIHandle> ability_icons_;
   glob::Font2DHandle font_team_names_;
   glob::Font2DHandle font_test_;
@@ -121,7 +127,6 @@ class LobbyState : public State {
 
   void SendJoinTeam(unsigned int team);
   int my_id_ = 0;
-
   int my_selected_ability_ = 1;
 
   entt::entity GetAbilityButton(std::string find_string);
@@ -129,6 +134,8 @@ class LobbyState : public State {
 
   bool IsAbilityBlackListed(int id);
   std::vector<int> ability_blacklist;
+
+  void SendMyName();
 };
 /////////////////////// ConnectMenuState
 class ConnectMenuState : public State {
@@ -141,6 +148,7 @@ class ConnectMenuState : public State {
   StateType Type() { return StateType::CONNECT_MENU; }
 
  private:
+  int isconnected_ = 0;
   struct InputField {
     InputField(){};
     InputField(glm::vec2 in_size, glm::vec2 in_pos,
@@ -154,10 +162,11 @@ class ConnectMenuState : public State {
     glm::vec2 pos = glm::vec2(0.0f, 0.0f);
     glob::GUIHandle hndl = 0;
   };
+  int frames_ = 0;
+  bool connection_success_ = true;
+  std::string last_msg_ = "Failed to connect: Timeout";
   std::string ip_ = "localhost";
   std::string port_ = "1337";
-  InputField ip_field_;
-  InputField port_field_;
   glob::Font2DHandle font_test_ = 0;
   entt::registry registry_connect_menu_;
 };
@@ -181,6 +190,8 @@ class SettingsState : public State {
   float setting_fov_ = 90.f;
   float setting_volume_ = 100.f;
   float setting_mouse_sens_ = 1.0f;
+
+  std::string setting_username_ = "fel";
 };
 
 /////////////////////// PLAY ///////////////////////
@@ -206,7 +217,9 @@ class PlayState : public State {
     ball_id_ = ball_id;
   }
   void SetCurrentStamina(float stamina) { current_stamina_ = stamina; }
+  auto* GetReg() { return &registry_gameplay_; }
 
+  void CreateWall(EntityID id, glm::vec3 position, glm::quat rotation);
   void CreatePickUp(EntityID id, glm::vec3 position);
   void CreateCannonBall(EntityID id);
   void CreateTeleportProjectile(EntityID id);
@@ -229,15 +242,24 @@ class PlayState : public State {
 
   void OnServerFrame();
   void AddAction(int action) { actions_.push_back(action); }
-  void ClearActions() {
-    actions_.clear();
-    actions_.push_back(100);
-  }
+  void ClearActions() { actions_.clear(); }
 
-  void UpdateHistory(int id) { while (history_.size() > 0 && history_.front().id <= id) history_.pop_front(); }
+  void UpdateHistory(int id) {
+    while (history_.size() > 0 && history_.front().id <= id)
+      history_.pop_front();
+  }
+  void AddPitchYaw(float pitch, float yaw);
   void SetPitchYaw(float pitch, float yaw);
+  auto* GetPlayerIDs() { return &player_ids_; }
+
+  float GetPitch() { return pitch_; }
+  float GetYaw() { return yaw_; }
+  void SetTeam(unsigned int team) {my_team_ = team;}
+  void CreateNewBallEntity(bool fake, EntityID id);
+  void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
 
  private:
+  int server_state_ = 1;
   void CreateInitialEntities();
   void CreatePlayerEntities();
   void CreateArenaEntity();
@@ -249,12 +271,19 @@ class PlayState : public State {
   void ToggleInGameMenu();
   void UpdateInGameMenu(bool show_menu);
   void UpdateGameplayTimer();
+  void UpdateSwitchGoalTimer();
+
+  void DrawNameOverPlayer();
 
   void DrawTopScores();
   void DrawTarget();
-  FrameState SimulateMovement(std::vector<int> &action, FrameState& state, float dt);
+  void DrawQuickslots();
+  FrameState SimulateMovement(std::vector<int>& action, FrameState& state,
+                              float dt);
   void MovePlayer(float dt);
-  
+  void MoveBall(float dt);
+
+  EntityID ClientIDToEntityID(long client_id);
   ////////////////////////////////////////
 
   entt::registry registry_gameplay_;
@@ -271,6 +300,8 @@ class PlayState : public State {
   entt::entity my_entity_;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
+
+  std::unordered_map<EntityID, unsigned int> teams_;
 
   entt::entity blue_goal_light_;
   entt::entity red_goal_light_;
@@ -289,8 +320,11 @@ class PlayState : public State {
   bool show_in_game_menu_buttons_ = false;
 
   int my_primary_ability_id = 0;
+  unsigned int my_team_;
   int match_time_ = 300;
   int countdown_time_ = 5;
+  // For switch goal
+  bool countdown_in_progress_ = false;
 
   Timer end_game_timer_;
   bool game_has_ended_ = false;
@@ -300,11 +334,13 @@ class PlayState : public State {
   glob::ModelHandle test_ball_;
   std::list<PlayerData> history_;
   FrameState predicted_state_;
-  float latency_; //do we need?
+
   std::vector<int> actions_;
   int frame_id = 0;
-  float accum_pitch_ = 0.0f;
-  float accum_yaw_ = 0.0f;
+  float pitch_ = 0.0f;
+  float yaw_ = 0.0f;
+
+  float primary_cd_ = 0.0f;
 };
 
 #endif  // STATE_HPP_

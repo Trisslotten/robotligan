@@ -1,4 +1,5 @@
 #define NOMINMAX
+#pragma comment(lib, "ws2_32.lib")
 #include <NetAPI/networkTest.hpp>
 #include <NetAPI/packet.hpp>
 #include <NetAPI/socket/server.hpp>
@@ -16,6 +17,7 @@
 #include <chrono>
 #include <thread>
 
+entt::dispatcher menu_dispatcher{};
 entt::dispatcher dispatcher{};
 
 int main(unsigned argc, char** argv) {
@@ -79,5 +81,6 @@ int main(unsigned argc, char** argv) {
   std::cout << "VRAM usage: " << util::MemoryInfo::GetInstance().GetUsedVRAM()
             << " MB\n";
   */
+  WSACleanup();
   return EXIT_SUCCESS;
 }

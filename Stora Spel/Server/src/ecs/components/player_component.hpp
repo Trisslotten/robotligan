@@ -6,7 +6,7 @@
 #include "util/global_settings.hpp"
 #include "util/timer.hpp"
 
-struct PlayerComponent {//Server side
+struct PlayerComponent {  // Server side
   long client_id = -1;
   float walkspeed = GlobalSettings::Access()->ValueOf("PLAYER_SPEED_WALK");
   float jump_speed = GlobalSettings::Access()->ValueOf("PLAYER_SPEED_JUMP");
@@ -14,17 +14,22 @@ struct PlayerComponent {//Server side
 
   // "Stamina"
   float energy_max = GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_MAX");
-  float energy_current =GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_MAX");
+  float energy_current = GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_MAX");
   float cost_jump = GlobalSettings::Access()->ValueOf("PLAYER_COST_JUMP");
   float cost_sprint = GlobalSettings::Access()->ValueOf("PLAYER_COST_SPRINT");
-  float energy_regen_tick = GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_REGEN_TICK");
+  float energy_regen_tick =
+      GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_REGEN_TICK");
 
   // Kicking values
-  float kick_cooldown = GlobalSettings::Access()->ValueOf("PLAYER_KICK_COOLDOWN");
+  float kick_cooldown =
+      GlobalSettings::Access()->ValueOf("PLAYER_KICK_COOLDOWN");
   float kick_pitch = GlobalSettings::Access()->ValueOf("PLAYER_KICK_PITCH");
   float kick_reach = GlobalSettings::Access()->ValueOf("PLAYER_KICK_REACH");
   float kick_fov = GlobalSettings::Access()->ValueOf("PLAYER_KICK_FOV");
   float kick_force = GlobalSettings::Access()->ValueOf("PLAYER_KICK_FORCE");
+  float kick_others_force =
+      GlobalSettings::Access()->ValueOf("PLAYER_KICK_OTHERS_FORCE");
+  float rocket_speed = GlobalSettings::Access()->ValueOf("PLAYER_ROCKET_SPEED");
   Timer kick_timer;
 
   // input from client
@@ -36,9 +41,31 @@ struct PlayerComponent {//Server side
 
   EntityID target = -1;
 
-  //States
+  // States
   bool sprinting = false;
   bool running = false;
+
+  // Comparasion Operators
+  bool operator==(const PlayerComponent& rhs) {
+    return (this->client_id == rhs.client_id) &&
+           (this->walkspeed == rhs.walkspeed) &&
+           (this->jump_speed == rhs.jump_speed) &&
+           (this->no_clip == rhs.no_clip) &&
+           (this->energy_max == rhs.energy_max) &&
+           (this->energy_current == rhs.energy_current) &&
+           (this->cost_jump == rhs.cost_jump) &&
+           (this->cost_sprint == rhs.cost_sprint) &&
+           (this->energy_regen_tick == rhs.energy_regen_tick) &&
+           (this->kick_pitch == rhs.kick_pitch) &&
+           (this->kick_reach == rhs.kick_reach) &&
+           (this->kick_fov == rhs.kick_fov) &&
+           (this->kick_force == rhs.kick_force) &&
+           (this->actions == rhs.actions) && (this->yaw == rhs.yaw) &&
+           (this->pitch == rhs.pitch) && (this->target == rhs.target) &&
+           (this->sprinting == rhs.sprinting) && (this->running == rhs.running);
+  }
+
+  bool operator!=(const PlayerComponent& rhs) { return !((*this) == rhs); }
 };
 
 #endif  // PLAYER_COMPONENT_H_
