@@ -78,6 +78,8 @@ namespace PacketBlockType {
 	CREATE_FAKE_BALL,
 	STATE,
 	MY_NAME,
+    PLAYER_LOOK_DIR,
+    PLAYER_MOVE_DIR,
     NUM_BLOCK_TYPES,
   };
 
@@ -126,7 +128,7 @@ struct GameEvent {
     FORCE_PUSH,
     FORCE_PUSH_IMPACT,
     SWITCH_GOALS,
-	  SWITCH_GOALS_DONE,
+	SWITCH_GOALS_DONE,
     SPRINT_START,
     SPRINT_END,
     RUN_START,
@@ -137,6 +139,7 @@ struct GameEvent {
     SECONDARY_USED,
 	FAKE_BALL_CREATED,
 	FAKE_BALL_POOF,
+	SHOOT,
     NUM_EVENTS
   } type;
   union {
@@ -242,6 +245,11 @@ struct GameEvent {
     struct {
       EntityID player_id;
     } run_end;
+
+	// Player shoots a bullet
+	struct {
+      EntityID player_id;
+    } shoot;
 
     // RESET
     struct {

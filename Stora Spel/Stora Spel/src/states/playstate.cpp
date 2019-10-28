@@ -128,6 +128,36 @@ void PlayState::Update(float dt) {
     cli.Disconnect();
     engine_->ChangeState(StateType::MAIN_MENU);
   }
+
+  if (!player_look_dirs_.empty()) {
+    auto view_entities =
+        registry_gameplay_.view<PlayerComponent, IDComponent>();
+    for (auto entity : view_entities) {
+      auto& player_c = view_entities.get<PlayerComponent>(entity);
+      auto& id_c = view_entities.get<IDComponent>(entity);
+      auto iter = player_look_dirs_.find(id_c.id);
+      if (iter != player_look_dirs_.end()) {
+        player_c.look_dir = iter->second;
+        // std::cout << "lookdir.x: " << iter->second.x << "\n";
+      }
+    }
+    player_look_dirs_.clear();
+  }
+
+  if (!player_move_dirs_.empty()) {
+    auto view_entities =
+        registry_gameplay_.view<PlayerComponent, IDComponent>();
+    for (auto entity : view_entities) {
+      auto& player_c = view_entities.get<PlayerComponent>(entity);
+      auto& id_c = view_entities.get<IDComponent>(entity);
+      auto iter = player_move_dirs_.find(id_c.id);
+      if (iter != player_move_dirs_.end()) {
+        player_c.move_dir = iter->second;
+      }
+    }
+    player_move_dirs_.clear();
+  }
+
   this->server_state_ = engine_->GetStateType();
   if (!physics_.empty()) {
     auto view_entities =
@@ -529,7 +559,7 @@ void PlayState::DrawTopScores() {
 }
 
 FrameState PlayState::SimulateMovement(std::vector<int>& action,
-  FrameState& state, float dt) {
+                                       FrameState& state, float dt) {
   auto view_controller =
     registry_gameplay_
     .view<CameraComponent, PlayerComponent, TransformComponent>();
@@ -1153,6 +1183,14 @@ void PlayState::SwitchGoals() {
   glm::vec3 blue_light_pos = blue_light_trans_c.position;
   blue_light_trans_c.position = red_light_trans_c.position;
   red_light_trans_c.position = blue_light_pos;
+}
+
+void PlayState::SetPlayerLookDir(EntityID id, glm::vec3 look_dir) {
+  player_look_dirs_[id] = look_dir;
+}
+
+void PlayState::SetPlayerMoveDir(EntityID id, glm::vec3 move_dir) {
+  player_move_dirs_[id] = move_dir;
 }
 
 void PlayState::ReceiveGameEvent(const GameEvent& e) {

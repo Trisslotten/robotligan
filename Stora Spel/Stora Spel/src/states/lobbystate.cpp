@@ -115,8 +115,8 @@ void LobbyState::Init() {
   SendMyName();
 
   engine_->GetChat()->SetPosition(glm::vec2(20, 140));
-  engine_->GetAnimationSystem().Reset();
 
+  engine_->GetAnimationSystem().Reset(registry_lobby_);
 }
 
 void LobbyState::Update(float dt) {
