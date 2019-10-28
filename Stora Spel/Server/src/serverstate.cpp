@@ -230,7 +230,7 @@ void ServerPlayState::HandleDataToSend() {
       continue;
     }
 
-    // auto view_cam = registry.view<CameraComponent, IDComponent>();
+    auto view_cam = registry.view<CameraComponent, IDComponent>();
     // for (auto cam : view_cam) {
     //  auto& cam_c = view_cam.get<CameraComponent>(cam);
     //  auto& id_c = view_cam.get<IDComponent>(cam);
