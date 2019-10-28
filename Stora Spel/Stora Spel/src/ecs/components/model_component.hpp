@@ -6,6 +6,7 @@
 struct ModelComponent {
   std::vector<glob::ModelHandle> handles;
   glm::vec3 offset = glm::vec3(0.f);
+  glm::quat rot_offset = glm::quat();
 };
 
 #endif  // MODEL_COMPONENT_HPP_

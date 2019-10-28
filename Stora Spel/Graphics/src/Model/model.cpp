@@ -221,7 +221,7 @@ void Model::LoadModel(std::string path) {
       anim->duration_ = scene->mAnimations[i]->mDuration;
       anim->tick_per_second_ = scene->mAnimations[i]->mTicksPerSecond;
 
-      //std::cout << "Animation " << i << " : " << anim->name_ << "\n";
+      std::cout << "Animation " << i << " : " << anim->name_ << "\n";
 
       // load channels
       for (int j = 0; j < scene->mAnimations[i]->mNumChannels; j++) {

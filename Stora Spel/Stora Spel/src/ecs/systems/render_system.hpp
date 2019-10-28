@@ -44,7 +44,7 @@ void RenderSystem(entt::registry& registry) {
     auto& a = animated_models.get<AnimationComponent>(model);
 
     glob::SubmitBAM(m.handles,
-                    glm::translate(t.position) * glm::toMat4(t.rotation) *
+                    glm::translate(t.position) * glm::toMat4(t.rotation + m.rot_offset) *
                         glm::translate(-m.offset) * glm::scale(t.scale),
                     a.bone_transforms);
   }

@@ -115,7 +115,7 @@ class LobbyState : public State {
   glob::GUIHandle ready_icon_;
   glob::GUIHandle ready_empty_icon_;
 
-  int server_state_ = 0;
+  ServerStateType server_state_;
   std::vector<glob::GUIHandle> ability_icons_;
   glob::Font2DHandle font_team_names_;
   glob::Font2DHandle font_test_;
@@ -232,7 +232,8 @@ class PlayState : public State {
     match_time_ = time;
     countdown_time_ = countdown_time;
   }
-
+  void SetPlayerLookDir(EntityID id, glm::vec3 look_dir);
+  void SetPlayerMoveDir(EntityID id, glm::vec3 move_dir);
   void SetMyTarget(EntityID id) { my_target_ = id; }
   void ReceiveGameEvent(const GameEvent& e);
   void Reset();
@@ -258,7 +259,7 @@ class PlayState : public State {
   void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
 
  private:
-  int server_state_ = 1;
+  ServerStateType server_state_;
   void CreateInitialEntities();
   void CreatePlayerEntities();
   void CreateArenaEntity();
@@ -281,6 +282,7 @@ class PlayState : public State {
                               float dt);
   void MovePlayer(float dt);
   void MoveBall(float dt);
+  void Collision();
 
   EntityID ClientIDToEntityID(long client_id);
   ////////////////////////////////////////
@@ -293,8 +295,10 @@ class PlayState : public State {
 
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> transforms_;
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> new_transforms_;
+  std::unordered_map<EntityID, glm::vec3> player_look_dirs_;
+  std::unordered_map<EntityID, glm::vec3> player_move_dirs_;
   FrameState server_predicted_;
-  entt::entity my_entity_;
+  entt::entity my_entity_, arena_entity_;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
 
@@ -336,7 +340,8 @@ class PlayState : public State {
   int frame_id = 0;
   float pitch_ = 0.0f;
   float yaw_ = 0.0f;
-
+  
+  float timer = 0.0f;
   float primary_cd_ = 0.0f;
 };
 

@@ -13,7 +13,10 @@ const double kClientUpdateRate = 64;
 const double kServerUpdateRate = 64;
 const unsigned kServerTimeout = 6;
 
-
+enum class ServerStateType {
+  LOBBY = 0,
+  PLAY,
+};
 
 typedef int EntityID;
 
@@ -21,65 +24,68 @@ typedef int EntityID;
 typedef int PlayerID;
 
 namespace PlayerAction {
-  enum : int16_t {
-    WALK_FORWARD = 0,
-    WALK_BACKWARD,
-    WALK_LEFT,
-    WALK_RIGHT,
-    ABILITY_PRIMARY,
-    ABILITY_SECONDARY,
-    SPRINT,
-    JUMP,
-    SHOOT,
-    KICK,
-    NUM_ACTIONS,
-  };
+enum : int16_t {
+  WALK_FORWARD = 0,
+  WALK_BACKWARD,
+  WALK_LEFT,
+  WALK_RIGHT,
+  ABILITY_PRIMARY,
+  ABILITY_SECONDARY,
+  SPRINT,
+  JUMP,
+  SHOOT,
+  KICK,
+  NUM_ACTIONS,
+};
 }  // namespace PlayerAction
 
 namespace PacketBlockType {
-  enum : int16_t {
-    INPUT = 0,
-    ENTITY_TRANSFORMS,
-    PLAYER_STAMINA,
-    CAMERA_TRANSFORM,
-    CLIENT_READY,      // client is ready in lobby
-    CLIENT_NOT_READY,  // client is not ready in lobby
-    GAME_START,        // game start after lobby
-    CLIENT_RECEIVE_UPDATES,
-    TEST_STRING,
-    TEST_REPLAY_KEYS,
-    TEAM_SCORE,
-    CHOOSE_TEAM,
-    SWITCH_GOALS,
-    SECONDARY_USED,
-    MESSAGE,
-    UPDATE_POINTS,
-    CREATE_WALL,
-    CREATE_PICK_UP,
-    DESTROY_PICK_UP,
-    RECEIVE_PICK_UP,
-    LOBBY_UPDATE_TEAM,
-    PLAYER_LOBBY_DISCONNECT,
-    LOBBY_SELECT_TEAM,
-    LOBBY_YOUR_ID,
-    PING,
-    PING_RECIEVE,
-    LOBBY_SELECT_ABILITY,
-    CREATE_PROJECTILE,
-    DESTROY_ENTITIES,
-    MATCH_TIMER,
-    GAME_EVENT,
-    PHYSICS_DATA,
-    GAME_END,
-    YOUR_TARGET,
-    FRAME_ID,
-    SERVER_CAN_JOIN,
-	CREATE_BALL,
-	CREATE_FAKE_BALL,
-	STATE,
-	MY_NAME,
-    NUM_BLOCK_TYPES,
-  };
+enum : int16_t {
+  INPUT = 0,
+  ENTITY_TRANSFORMS,
+  PLAYER_STAMINA,
+  CAMERA_TRANSFORM,
+  CLIENT_READY,      // client is ready in lobby
+  CLIENT_NOT_READY,  // client is not ready in lobby
+  GAME_START,        // game start after lobby
+  CLIENT_RECEIVE_UPDATES,
+  TEST_STRING,
+  TEST_REPLAY_KEYS,
+  TEAM_SCORE,
+  CHOOSE_TEAM,
+  SWITCH_GOALS,
+  SECONDARY_USED,
+  MESSAGE,
+  UPDATE_POINTS,
+  CREATE_WALL,
+  CREATE_PICK_UP,
+  DESTROY_PICK_UP,
+  RECEIVE_PICK_UP,
+  LOBBY_UPDATE_TEAM,
+  PLAYER_LOBBY_DISCONNECT,
+  LOBBY_SELECT_TEAM,
+  LOBBY_YOUR_ID,
+  PING,
+  PING_RECIEVE,
+  LOBBY_SELECT_ABILITY,
+  CREATE_PROJECTILE,
+  DESTROY_ENTITIES,
+  MATCH_TIMER,
+  GAME_EVENT,
+  PHYSICS_DATA,
+  GAME_END,
+  YOUR_TARGET,
+  FRAME_ID,
+  SERVER_CAN_JOIN,
+  CREATE_BALL,
+  CREATE_FAKE_BALL,
+  SERVER_STATE,
+  MY_NAME,
+  PLAYER_LOOK_DIR,
+  PLAYER_MOVE_DIR,
+  TO_CLIENT_NAME,
+  NUM_BLOCK_TYPES,
+};
 
 }  // namespace PacketBlockType
 
@@ -100,11 +106,7 @@ enum class AbilityID {
 };
 
 struct MenuEvent {
-  enum {
-    HOVER,
-    CLICK,
-    NUM_EVENTS
-  } type;
+  enum { HOVER, CLICK, NUM_EVENTS } type;
 };
 
 struct GameEvent {
@@ -116,6 +118,7 @@ struct GameEvent {
     BOUNCE,
     LAND,
     JUMP,
+    SHOOT,
     GRAVITY_DROP,
     SUPER_KICK,
     MISSILE_FIRE,
@@ -126,7 +129,7 @@ struct GameEvent {
     FORCE_PUSH,
     FORCE_PUSH_IMPACT,
     SWITCH_GOALS,
-	  SWITCH_GOALS_DONE,
+    SWITCH_GOALS_DONE,
     SPRINT_START,
     SPRINT_END,
     RUN_START,
@@ -135,8 +138,8 @@ struct GameEvent {
     BUILD_WALL,
     PRIMARY_USED,
     SECONDARY_USED,
-	FAKE_BALL_CREATED,
-	FAKE_BALL_POOF,
+    FAKE_BALL_CREATED,
+    FAKE_BALL_POOF,
     NUM_EVENTS
   } type;
   union {
@@ -220,7 +223,6 @@ struct GameEvent {
 
     // Ability Switch Goals
     struct {
-
     } switch_goals;
 
     // Player Sprint start
@@ -243,6 +245,11 @@ struct GameEvent {
       EntityID player_id;
     } run_end;
 
+    // Player shoots a bullet
+    struct {
+      EntityID player_id;
+    } shoot;
+
     // RESET
     struct {
     } reset;
@@ -263,7 +270,7 @@ struct GameEvent {
       EntityID player_id;
     } secondary_used;
 
-	// ability fake ball created
+    // ability fake ball created
     struct {
       EntityID ball_id;
     } fake_ball_created;

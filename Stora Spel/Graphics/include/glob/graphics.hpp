@@ -16,8 +16,8 @@
 #include "animation.hpp"
 #include "camera.hpp"
 #include "glob/mesh_data.hpp"
-#include "joint.hpp"
 #include "handletypes.hpp"
+#include "joint.hpp"
 
 namespace glob {
 
@@ -26,12 +26,24 @@ struct animData {
   std::vector<Animation> animations;
   glm::mat4 globalInverseTransform;
   bool humanoid = false;
+  // groups
   int hip = -1;
-  int upperBody = -1;
-  int leftLeg = -1;
-  int rightLeg = -1;
-  int leftArm = -1;
-  int rightArm = -1;
+  std::vector<int> upperBody;
+  std::vector<int> spine;
+  std::vector<int> leftLeg;
+  std::vector<int> rightLeg;
+  std::vector<int> leftArm;
+  std::vector<int> rightArm;
+  std::vector<int> arms;
+  std::vector<int> legs;
+
+  void makeGroup(int root, std::vector<int>* group) {
+    group->push_back(root);
+    for (int i = 0; i < bones.at(root).children.size(); i++) {
+      makeGroup(bones.at(root).children.at(i), group);
+    }
+  }
+
   int armatureRoot;
 };
 
@@ -101,7 +113,7 @@ EXPORT void LoadWireframeMesh(ModelHandle model_h,
                               const std::vector<glm::vec3>& vertices,
                               const std::vector<unsigned int>& indices);
 
-EXPORT double GetWidthOfText(Font2DHandle font_handle, std::string text, int size);
+EXPORT double GetWidthOfText(Font2DHandle font_handle, std::string text, float size);
 EXPORT void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
                    std::string text, glm::vec4 color = glm::vec4(1, 1, 1, 1),
                    bool visible = true, bool equal_spacing = false, float spacing = 13.0f);
