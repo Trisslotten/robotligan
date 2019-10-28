@@ -27,8 +27,8 @@ class Font2D {
 
   std::string directory_ = "";
 
-  unsigned int width_ = 32;
-  unsigned int height_ = 32;
+  unsigned int width_ = 64;
+  unsigned int height_ = 64;
   unsigned int side_dim_ = 16;
 
   unsigned int texture_width_ = 32;
@@ -61,6 +61,8 @@ class Font2D {
             std::string text, glm::vec4 color = glm::vec4(1,1,1,1), bool visible = true, bool equal_spacing = true, float spacing = 13.f);
 
   std::vector<double> GetAdvances() { return advances_; }
+
+  double GetAdvance(char c, float size, bool equal_spacing = false, double spacing = 1.);
 
   void Draw3D(ShaderProgram& shader, glm::vec3 pos, float size,
               std::string text, glm::vec4 color = glm::vec4(1, 1, 1, 1), glm::mat4 rotation = glm::mat4(1.0f));
