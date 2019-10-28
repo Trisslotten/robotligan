@@ -115,7 +115,7 @@ class LobbyState : public State {
   glob::GUIHandle ready_icon_;
   glob::GUIHandle ready_empty_icon_;
 
-  int server_state_ = 0;
+  ServerStateType server_state_;
   std::vector<glob::GUIHandle> ability_icons_;
   glob::Font2DHandle font_team_names_;
   glob::Font2DHandle font_test_;
@@ -259,7 +259,7 @@ class PlayState : public State {
   void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
 
  private:
-  int server_state_ = 1;
+  ServerStateType server_state_;
   void CreateInitialEntities();
   void CreatePlayerEntities();
   void CreateArenaEntity();

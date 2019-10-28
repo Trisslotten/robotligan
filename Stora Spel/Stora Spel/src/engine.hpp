@@ -81,8 +81,8 @@ class Engine {
   Chat* GetChat() { return &chat_; }
 
   StateType GetPreviousStateType() { return previous_state_; }
-  int GetStateType() { return statetype_; }
-  void SetStateType(int state) { statetype_ = state; }
+  ServerStateType GetServerState() { return server_state_; }
+  void SetServerState(ServerStateType state) { server_state_ = state; }
   void ReInit() { play_state_.Cleanup(); play_state_.Init();}
 
   std::unordered_map<PlayerID, PlayerStatInfo> GetPlayerScores() {
@@ -138,7 +138,7 @@ class Engine {
   std::string message_ = "";
 
   bool enable_chat_ = false;
-  int statetype_;
+  ServerStateType server_state_;
   SoundSystem sound_system_;
   AnimationSystem animation_system_;
 

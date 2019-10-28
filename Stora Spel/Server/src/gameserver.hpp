@@ -41,10 +41,9 @@ class GameServer {
     return ability_cooldowns_;
   }
 
-    std::unordered_map<long, std::string> GetClientNames() {
+  std::unordered_map<long, std::string> GetClientNames() {
     return client_names_;
   }
-
 
  private:
   void UpdateSystems(float dt);
@@ -71,6 +70,7 @@ class GameServer {
 
   std::vector<unsigned int> scores;
   std::unordered_map<long, std::string> client_names_;
+  bool client_sent_name_ = false;
 
   bool NameAlreadyExists(std::string name);
   std::unordered_map<AbilityID, float> ability_cooldowns_;
