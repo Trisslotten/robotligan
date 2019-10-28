@@ -103,6 +103,9 @@ void PlayState::Init() {
   engine_->SetCurrentRegistry(&registry_gameplay_);
   engine_->SetEnableChat(true);
 
+  //end_game_timer_.Restart();
+  game_has_ended_ = false;
+
   CreateInGameMenu();
   CreateInitialEntities();
   // TestParticles();
@@ -157,8 +160,8 @@ void PlayState::Update(float dt) {
     }
     player_move_dirs_.clear();
   }
-
-  this->server_state_ = engine_->GetStateType();
+  
+  this->server_state_ = engine_->GetServerState();
   if (!physics_.empty()) {
     auto view_entities =
       registry_gameplay_.view<PhysicsComponent, IDComponent>();

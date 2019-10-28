@@ -11,11 +11,6 @@
 
 class GameServer;
 
-enum class ServerStateType {
-  LOBBY = 0,
-  PLAY,
-};
-
 class ServerState {
  public:
   virtual void Init() = 0;
