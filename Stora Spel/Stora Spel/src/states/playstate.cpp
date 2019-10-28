@@ -240,11 +240,11 @@ void PlayState::Update(float dt) {
           auto& phys_c = ball_view.get<PhysicsComponent>(ball);
           if (phys_c.is_airborne == false) {
             slerp = false;
-		  }
-		}
-	  }
+		      }
+		    }
+	    }
       if (slerp == true) {
-		trans_c.rotation = glm::slerp(trans_c.rotation, trans.second, 0.2f);
+		    trans_c.rotation = glm::slerp(trans_c.rotation, trans.second, 0.2f);
       }
     }
   }
