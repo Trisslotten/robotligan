@@ -346,7 +346,7 @@ void ServerPlayState::HandleDataToSend() {
         to_send << pick_event.ability_id;
         to_send << PacketBlockType::RECEIVE_PICK_UP;
       }
-      registry.remove<PickUpEvent>(entity);
+      //registry.remove<PickUpEvent>(entity);
     }
     auto view_goals = registry.view<GoalComponenet, TeamComponent>();
     entt::entity blue_goal;
@@ -415,6 +415,11 @@ void ServerPlayState::HandleDataToSend() {
   }
   created_projectiles_.clear();
   destroy_entities_.clear();
+
+  auto pick_up_events = registry.view<PickUpEvent>();
+  for (auto entity : pick_up_events) {
+    registry.destroy(entity);
+  }
 
   // switch goal cleanup
   auto view_goals = registry.view<GoalComponenet, TeamComponent>();
