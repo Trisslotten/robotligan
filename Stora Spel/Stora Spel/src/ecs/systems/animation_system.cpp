@@ -214,8 +214,13 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
     glm::vec3 LRlookDir =
         glm::normalize(pl.look_dir * glm::vec3(1.f, 0.f, 1.f));
     glm::vec3 UDlookDir = glm::normalize(pl.look_dir);
-    glm::vec3 moveDir = ph.velocity;
-
+    glm::vec3 moveDir;
+    if (ph.velocity.x > 0.01 || ph.velocity.y > 0.01 || ph.velocity.z > 0.01) {
+      moveDir = ph.velocity;
+      pl.vel_dir = moveDir;
+    } else {
+      moveDir = pl.vel_dir;
+	}
     // SLIDE ANIMATIONS
     constexpr float pi = glm::pi<float>();
     if (!pl.sprinting) {
