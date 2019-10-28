@@ -19,20 +19,18 @@ class Engine;
 
 class AnimationSystem {
  private:
+  glm::vec3 front = glm::vec3(1.f, 0.f, 0.f);
+  glm::vec3 up = glm::vec3(0.f, 1.f, 0.f);
+  glm::vec3 left = glm::vec3(0.f, 0.f, 1.f);
+
   float time_ = 0;
 
-  enum ANIM_MODES { LOOP, MUTE_ALL };
+  enum ANIM_MODES { LOOP, MUTE_ALL, PARTIAL_MUTE };
 
   std::string slide_anims_[4] = {"SlideF", "SlideB", "SlideR", "SlideL"};
+  std::string look_anims_[4] = {"LookUp", "LookDown", "LookRight", "LookLeft"};
 
   Engine* engine_;
-
-  struct priorityGroup {
-    std::vector<glob::Animation*> animations;
-    char priority;
-  };
-
-  std::vector<priorityGroup> p_groups;
 
  public:
   void Init(Engine* engine);
@@ -45,13 +43,17 @@ class AnimationSystem {
 
   bool IsAChildOf(int parent, int lookFor, AnimationComponent* ac);
 
+  bool IsIncluded(int bone, std::vector<int>* included, std::vector<int>* excluded);
+  bool IsExcluded(int bone, std::vector<int>* excluded);
+
   int GetAnimationByName(std::string name, AnimationComponent* ac);
 
   int GetActiveAnimationByName(std::string name, AnimationComponent* ac);
 
   void PlayAnimation(std::string name, float speed, AnimationComponent* ac,
                      char priority, float strength, int mode,
-                     int bodyArgument = -1);
+                     std::vector<int>* bodyInclude = nullptr,
+                     std::vector<int>* bodyExclude = nullptr);
 
   void StopAnimation(std::string name, AnimationComponent* ac);
 
@@ -63,7 +65,7 @@ class AnimationSystem {
 
   void UpdateAnimations(entt::registry& registry, float dt);
 
-  void Reset();
+  void Reset(entt::registry& registry);
 };
 
 #endif  // ANIMATION_SYSTEM_HPP_

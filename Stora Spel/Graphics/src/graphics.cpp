@@ -811,23 +811,39 @@ animData GetAnimationData(ModelHandle handle) {
   }
 
   if (data.humanoid) {
-    for (auto bone : data.bones) {
-      if (bone.name == "Spine") {
-        data.upperBody = bone.id;
-        // std::cout << "Upper body found!\n";
-      } else if (bone.name == "Leg upper L") {
-        data.leftLeg = bone.id;
+    for (int i = 0; i < data.bones.size(); i++) {
+      Joint* bone = &data.bones.at(i);
+      if (bone->name == "Spine") {
+        data.makeGroup(i, &data.spine);
+        //std::cout << "Upper body found!\n";
+      } else if (bone->name == "Chest") {
+        data.makeGroup(i, &data.upperBody);
         // std::cout << "Left leg found!\n";
-      } else if (bone.name == "Leg upper R") {
-        data.rightLeg = bone.id;
-        // std::cout << "Right leg found!\n";
-      } else if (bone.name == "Shoulder L") {
-        data.leftArm = bone.id;
-        // std::cout << "Left arm found!\n";
-      } else if (bone.name == "Shoulder R") {
-        data.rightArm = bone.id;
-        // std::cout << "Right arm found!\n";
+      } else if (bone->name == "Leg upper L") {
+        data.makeGroup(i, &data.leftLeg);
+        //std::cout << "Left leg found!\n";
+      } else if (bone->name == "Leg upper R") {
+        data.makeGroup(i, &data.rightLeg);
+        //std::cout << "Right leg found!\n";
+      } else if (bone->name == "Shoulder L") {
+        data.makeGroup(i, &data.leftArm);
+        //std::cout << "Left arm found!\n";
+      } else if (bone->name == "Shoulder R") {
+        data.makeGroup(i, &data.rightArm);
+        //std::cout << "Right arm found!\n";
       }
+    }
+    for (int i = 0; i < data.rightArm.size(); i++) {
+      data.arms.push_back(data.rightArm.at(i));
+	}
+    for (int i = 0; i < data.leftArm.size(); i++) {
+      data.arms.push_back(data.leftArm.at(i));
+    }
+    for (int i = 0; i < data.rightLeg.size(); i++) {
+      data.legs.push_back(data.rightLeg.at(i));
+    }
+    for (int i = 0; i < data.leftLeg.size(); i++) {
+      data.legs.push_back(data.leftLeg.at(i));
     }
   }
 

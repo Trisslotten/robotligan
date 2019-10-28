@@ -11,11 +11,6 @@
 
 class GameServer;
 
-enum class ServerStateType {
-  LOBBY = 0,
-  PLAY,
-};
-
 class ServerState {
  public:
   virtual void Init() = 0;
@@ -132,6 +127,7 @@ class ServerPlayState : public ServerState {
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
 
   std::vector<entt::entity> created_pick_ups_;
+  std::vector<entt::entity> created_walls_;
 
   EntityID entity_guid_ = 0;
 

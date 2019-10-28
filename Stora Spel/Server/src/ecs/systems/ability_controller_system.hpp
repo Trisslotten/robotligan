@@ -30,6 +30,8 @@ entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id);
 void GravityChange(entt::registry& registry);
 void DoTeleport(entt::registry& registry, PlayerID id);
 bool DoHomingBall(entt::registry& registry, PlayerID id);
+void CreateFakeBalls(entt::registry& registry, EntityID id);
+bool BuildWall(entt::registry& registry, PlayerID id);
 
 std::unordered_map<AbilityID, float> ability_cooldowns;
 
@@ -86,9 +88,9 @@ void Update(entt::registry& registry, float dt) {
         // slotted secondary ability
         ability_component.secondary_ability = AbilityID::NULL_ABILITY;
 
-		GameEvent secondary_used_event;
+        GameEvent secondary_used_event;
         secondary_used_event.type = GameEvent::SECONDARY_USED;
-                secondary_used_event.secondary_used.player_id =
+        secondary_used_event.secondary_used.player_id =
             registry.get<IDComponent>(player).id;
         dispatcher.trigger(secondary_used_event);
         // TODO: send that ability is used
@@ -124,9 +126,10 @@ bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
       return false;
       break;
     case AbilityID::BUILD_WALL:
-      return true;
+      return BuildWall(registry, player_id);
       break;
     case AbilityID::FAKE_BALL:
+      CreateFakeBalls(registry, player_id);
       return true;
       break;
     case AbilityID::FORCE_PUSH: {
@@ -229,8 +232,7 @@ bool DoSuperStrike(entt::registry& registry) {
           ball_view.get<PhysicsComponent>(ball_entity);
       TransformComponent& trans_c_ball =
           ball_view.get<TransformComponent>(ball_entity);
-      BallComponent& ball_ball_c =
-          ball_view.get<BallComponent>(ball_entity);
+      BallComponent& ball_ball_c = ball_view.get<BallComponent>(ball_entity);
 
       // Calculate the vector from the player to the ball
       glm::vec3 player_ball_vec =
@@ -267,7 +269,8 @@ bool DoSuperStrike(entt::registry& registry) {
         if (registry.has<IDComponent>(player_entity)) {
           GameEvent super_kick_event;
           super_kick_event.type = GameEvent::SUPER_KICK;
-          super_kick_event.super_kick.player_id = registry.get<IDComponent>(player_entity).id;
+          super_kick_event.super_kick.player_id =
+              registry.get<IDComponent>(player_entity).id;
           dispatcher.trigger(super_kick_event);
         }
       }
@@ -343,8 +346,8 @@ void DoSwitchGoals(entt::registry& registry) {
 }
 
 entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id) {
-  auto view_controller =
-      registry.view<CameraComponent, PlayerComponent, TransformComponent, IDComponent>();
+  auto view_controller = registry.view<CameraComponent, PlayerComponent,
+                                       TransformComponent, IDComponent>();
   for (auto entity : view_controller) {
     CameraComponent& cc = view_controller.get<CameraComponent>(entity);
     PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
@@ -382,15 +385,15 @@ void GravityChange(entt::registry& registry) {
       GlobalSettings::Access()->ValueOf("ABILITY_GRAVITY_CHANGE"));
   gravity_timer.Restart();
   gravity_used = true;
-  
+
   GameEvent event;
   event.type = GameEvent::GRAVITY_DROP;
   dispatcher.trigger<GameEvent>(event);
 }
 
 void DoTeleport(entt::registry& registry, PlayerID id) {
-  auto view_controller =
-      registry.view<CameraComponent, PlayerComponent, TransformComponent, IDComponent>();
+  auto view_controller = registry.view<CameraComponent, PlayerComponent,
+                                       TransformComponent, IDComponent>();
   for (auto entity : view_controller) {
     CameraComponent& cc = view_controller.get<CameraComponent>(entity);
     PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
@@ -430,16 +433,16 @@ void DoTeleport(entt::registry& registry, PlayerID id) {
 }
 
 bool DoHomingBall(entt::registry& registry, PlayerID id) {
-  auto view_players =
-      registry.view<PlayerComponent, TransformComponent, CameraComponent, IDComponent>();
+  auto view_players = registry.view<PlayerComponent, TransformComponent,
+                                    CameraComponent, IDComponent>();
   for (auto player : view_players) {
     auto& p_p_c = registry.get<PlayerComponent>(player);
     auto& p_t_c = registry.get<TransformComponent>(player);
     auto& p_c_c = registry.get<CameraComponent>(player);
     auto& p_id_c = registry.get<IDComponent>(player);
 
-    auto view_balls =
-        registry.view<BallComponent, TransformComponent, PhysicsComponent, IDComponent>();
+    auto view_balls = registry.view<BallComponent, TransformComponent,
+                                    PhysicsComponent, IDComponent>();
     for (auto ball : view_balls) {
       auto& b_b_c = registry.get<BallComponent>(ball);
       auto& b_t_c = registry.get<TransformComponent>(ball);
@@ -460,7 +463,7 @@ bool DoHomingBall(entt::registry& registry, PlayerID id) {
 
       // IF the distance is less than the player's reach
       // AND the ball lies within the player's field of view
-      if (dist < p_p_c.kick_reach && dot > p_p_c.kick_fov) {
+      if (dist < p_p_c.kick_reach && dot > p_p_c.kick_fov && b_b_c.is_real) {
         // Save kick event
         GameEvent hit_event;
         hit_event.type = GameEvent::HIT;
@@ -489,6 +492,138 @@ bool DoHomingBall(entt::registry& registry, PlayerID id) {
 
   return false;
 }
+
+bool BuildWall(entt::registry& registry, PlayerID id) {
+  auto view_players = registry.view<PlayerComponent, TransformComponent,
+                                    CameraComponent, IDComponent>();
+  auto view_goals = registry.view<GoalComponenet, TransformComponent>();
+  for (auto entity : view_players) {
+    auto& player_c = view_players.get<PlayerComponent>(entity);
+
+    if (player_c.client_id == id) {
+      auto& trans_c = view_players.get<TransformComponent>(entity);
+      auto& camera = view_players.get<CameraComponent>(entity);
+
+      glm::vec3 position = camera.GetLookDir() * 4.5f + trans_c.position + camera.offset;
+      position.y = -12.f;
+
+      for (auto entity_goal : view_goals) {
+        auto& goal_transform = view_goals.get<TransformComponent>(entity_goal);
+
+        if (glm::distance(position, goal_transform.position) < 20.f) {
+          return false;
+        }
+      }
+
+      auto orientation = trans_c.rotation;
+      //orientation.y = camera.GetLookDir().y;
+
+      auto wall = registry.create();
+      registry.assign<WallComponent>(wall);
+      registry.assign<TimerComponent>(wall, 5.f);
+      registry.assign<HealthComponent>(wall, 100);
+      registry.assign<TransformComponent>(wall, position, orientation);
+      auto& obb = registry.assign<physics::OBB>(wall);
+      obb.extents[0] = 1.f;
+      obb.extents[1] = 8.3f;
+      obb.extents[2] = 5.f;
+
+      EventInfo e;
+      e.event = Event::BUILD_WALL;
+      e.entity = wall;
+      
+      dispatcher.enqueue<EventInfo>(e);
+
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void CreateFakeBalls(entt::registry& registry, EntityID id) {
+  int num_balls =
+      (int)GlobalSettings::Access()->ValueOf("ABILITY_FAKEBALL_NUM_BALLS");
+
+  unsigned int team = TEAM_RED;
+  auto view_players =
+      registry.view<PlayerComponent, TeamComponent, IDComponent>();
+
+  // get the team that created fake balls
+  for (auto player : view_players) {
+    auto& p_t = registry.get<TeamComponent>(player);
+    auto& p_p = registry.get<PlayerComponent>(player);
+
+    if (p_p.client_id == id) {
+      team = p_t.team;
+      break;
+    }
+  }
+
+  // get info about real ball
+  glm::vec3 ball_pos, ball_vel;
+  float friction = 1.0f;
+  bool airborne = true;
+  EntityID ball_id = 0;
+  auto view_balls = registry.view<BallComponent, PhysicsComponent,
+                                  TransformComponent, IDComponent>();
+  for (auto ball : view_balls) {
+    auto& ball_ball_c = registry.get<BallComponent>(ball);
+    auto& ball_phys_c = registry.get<PhysicsComponent>(ball);
+    auto& ball_trans_c = registry.get<TransformComponent>(ball);
+    auto& ball_id_c = registry.get<IDComponent>(ball);
+
+    if (ball_ball_c.is_real) {
+      ball_pos = ball_trans_c.position;
+      ball_vel = ball_phys_c.velocity;
+      friction = ball_phys_c.friction;
+      airborne = ball_phys_c.is_airborne;
+
+      ball_id = ball_id_c.id;
+      break;
+    }
+  }
+
+  // create fake balls
+  for (int i = 0; i < num_balls; i++) {
+    glm::vec3 dir = glm::vec3((float)(rand() % 5) / 10.f, (float)(rand() % 5) / 10.f,
+                         (float)(rand() % 5) / 10.f);
+    dir = glm::normalize(dir);
+    if (glm::length(ball_vel) > 0) {
+      dir += ball_vel;
+    }
+    dir = glm::normalize(dir);
+    glm::vec3 spawn_pos = ball_pos + dir;
+
+    if (spawn_pos.y > ball_pos.y) {
+      airborne = true;
+    }
+
+    auto fake_ball = registry.create();
+    auto& fake_trans_c = registry.assign<TransformComponent>(fake_ball);
+    fake_trans_c.position = spawn_pos;
+    auto& fake_ball_c = registry.assign<BallComponent>(fake_ball);
+    fake_ball_c.is_real = false;
+    fake_ball_c.faker_team = team;
+    fake_ball_c.is_airborne = airborne;
+    auto& fake_phys_c = registry.assign<PhysicsComponent>(fake_ball);
+    fake_phys_c.velocity = dir * glm::length(ball_vel);
+    fake_phys_c.is_airborne = airborne;
+    fake_phys_c.friction = friction;
+    auto& fake_sphere_c = registry.assign<physics::Sphere>(fake_ball);
+    fake_sphere_c.center = spawn_pos;
+    fake_sphere_c.radius = 0.95f;
+    EventInfo e;
+    e.event = Event::CREATE_FAKE_BALL;
+    e.entity = fake_ball;
+    dispatcher.enqueue<EventInfo>(e);
+  }
+  GameEvent ge;
+  ge.fake_ball_created.ball_id = ball_id;
+  ge.type = GameEvent::FAKE_BALL_CREATED;
+  dispatcher.trigger(ge);
+}
+
 };  // namespace ability_controller
 
 #endif  // !ABILITY_CONTROLLER_SYSTEM_HPP_

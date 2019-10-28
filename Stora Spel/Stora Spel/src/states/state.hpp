@@ -10,8 +10,8 @@
 #include <playerdata.hpp>
 #include <util/timer.hpp>
 #include "Chat.hpp"
-#include "shared/shared.hpp"
 #include "eventdispatcher.hpp"
+#include "shared/shared.hpp"
 
 class Engine;
 
@@ -115,7 +115,7 @@ class LobbyState : public State {
   glob::GUIHandle ready_icon_;
   glob::GUIHandle ready_empty_icon_;
 
-  int server_state_ = 0;
+  ServerStateType server_state_;
   std::vector<glob::GUIHandle> ability_icons_;
   glob::Font2DHandle font_team_names_;
   glob::Font2DHandle font_test_;
@@ -134,6 +134,8 @@ class LobbyState : public State {
 
   bool IsAbilityBlackListed(int id);
   std::vector<int> ability_blacklist;
+
+  void SendMyName();
 };
 /////////////////////// ConnectMenuState
 class ConnectMenuState : public State {
@@ -189,7 +191,7 @@ class SettingsState : public State {
   float setting_volume_ = 100.f;
   float setting_mouse_sens_ = 1.0f;
 
-  std::string setting_username_ = "BogdanBoss";
+  std::string setting_username_ = "fel";
 };
 
 /////////////////////// PLAY ///////////////////////
@@ -216,6 +218,8 @@ class PlayState : public State {
   }
   void SetCurrentStamina(float stamina) { current_stamina_ = stamina; }
   auto* GetReg() { return &registry_gameplay_; }
+
+  void CreateWall(EntityID id, glm::vec3 position, glm::quat rotation);
   void CreatePickUp(EntityID id, glm::vec3 position);
   void CreateCannonBall(EntityID id);
   void CreateTeleportProjectile(EntityID id);
@@ -228,7 +232,8 @@ class PlayState : public State {
     match_time_ = time;
     countdown_time_ = countdown_time;
   }
-
+  void SetPlayerLookDir(EntityID id, glm::vec3 look_dir);
+  void SetPlayerMoveDir(EntityID id, glm::vec3 move_dir);
   void SetMyTarget(EntityID id) { my_target_ = id; }
   void ReceiveGameEvent(const GameEvent& e);
   void Reset();
@@ -239,7 +244,10 @@ class PlayState : public State {
   void AddAction(int action) { actions_.push_back(action); }
   void ClearActions() { actions_.clear(); }
 
-  void UpdateHistory(int id) { while (history_.size() > 0 && history_.front().id <= id) history_.pop_front(); }
+  void UpdateHistory(int id) {
+    while (history_.size() > 0 && history_.front().id <= id)
+      history_.pop_front();
+  }
   void AddPitchYaw(float pitch, float yaw);
   void SetPitchYaw(float pitch, float yaw);
   auto* GetPlayerIDs() { return &player_ids_; }
@@ -247,9 +255,11 @@ class PlayState : public State {
   float GetPitch() { return pitch_; }
   float GetYaw() { return yaw_; }
   void SetTeam(unsigned int team) {my_team_ = team;}
-  void SetTeam(EntityID id, unsigned int team) {teams_[id] = team; }
+  void CreateNewBallEntity(bool fake, EntityID id);
+  void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
+
  private:
-  int server_state_ = 1;
+  ServerStateType server_state_;
   void CreateInitialEntities();
   void CreatePlayerEntities();
   void CreateArenaEntity();
@@ -268,9 +278,12 @@ class PlayState : public State {
   void DrawTopScores();
   void DrawTarget();
   void DrawQuickslots();
-  FrameState SimulateMovement(std::vector<int> &action, FrameState& state, float dt);
+  FrameState SimulateMovement(std::vector<int>& action, FrameState& state,
+                              float dt);
   void MovePlayer(float dt);
   void MoveBall(float dt);
+
+  EntityID ClientIDToEntityID(long client_id);
   ////////////////////////////////////////
 
   entt::registry registry_gameplay_;
@@ -281,6 +294,8 @@ class PlayState : public State {
 
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> transforms_;
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> new_transforms_;
+  std::unordered_map<EntityID, glm::vec3> player_look_dirs_;
+  std::unordered_map<EntityID, glm::vec3> player_move_dirs_;
   FrameState server_predicted_;
   entt::entity my_entity_;
 
@@ -324,7 +339,6 @@ class PlayState : public State {
   int frame_id = 0;
   float pitch_ = 0.0f;
   float yaw_ = 0.0f;
-  
 
   float primary_cd_ = 0.0f;
 };

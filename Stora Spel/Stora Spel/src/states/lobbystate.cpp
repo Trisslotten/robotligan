@@ -88,6 +88,13 @@ bool LobbyState::IsAbilityBlackListed(int id) {
   }
   return false;
 }
+void LobbyState::SendMyName() {
+  auto& packet = engine_->GetPacket();
+  packet << GlobalSettings::Access()->StringValueOf("USERNAME");
+  packet << PacketBlockType::MY_NAME;
+}
+
+
 void LobbyState::Startup() {
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
 }
@@ -105,13 +112,15 @@ void LobbyState::Init() {
   CreateBackgroundEntities();
   CreateGUIElements();
   SelectAbilityHandler(my_selected_ability_);
+  SendMyName();
 
   engine_->GetChat()->SetPosition(glm::vec2(20, 140));
-  engine_->GetAnimationSystem().Reset();
+
+  engine_->GetAnimationSystem().Reset(registry_lobby_);
 }
 
 void LobbyState::Update(float dt) {
-  server_state_ = engine_->GetStateType();
+  server_state_ = engine_->GetServerState();
   DrawTeamSelect();
   DrawAbilitySelect();
 
@@ -130,7 +139,7 @@ void LobbyState::Update(float dt) {
     glm::vec2 bottom_pos =
         glm::vec2((glob::window::GetWindowDimensions().x / 2) - 250, 30);
 
-    if (engine_->GetStateType() == 0) {
+    if (engine_->GetServerState() == ServerStateType::LOBBY) {
       glob::Submit(font_test_, bottom_pos, 28,
                    "All players are ready. Match will start soon.");
     } else {
@@ -153,11 +162,6 @@ void LobbyState::Update(float dt) {
 void LobbyState::UpdateNetwork() {}
 
 void LobbyState::Cleanup() {
-  server_state_ = engine_->GetStateType();
-  if (server_state_) {
-    // TODO: fix
-    //engine_->ReInit();
-  }
   me_ready_ = false;
   for (auto& l_p : lobby_players_) {
     l_p.second.ready = false;
@@ -169,15 +173,19 @@ void LobbyState::HandleUpdateLobbyTeamPacket(NetAPI::Common::Packet& packet) {
   int id = -1;
   unsigned int team = 0;
   bool ready = false;
+  std::string name = "";
   packet >> ready;
   packet >> team;
   packet >> id;
+  packet >> name;
+  std::cout << "Lobby: name: " << name << "\n";
   if (id != -1) {
     LobbyPlayer plyr;
     plyr.ready = ready;
     plyr.team = team;
     lobby_players_[id] = plyr;
   }
+  engine_->player_names_[id] = name;
 }
 
 void LobbyState::HandlePlayerDisconnect(NetAPI::Common::Packet& packet) {
@@ -243,7 +251,7 @@ void LobbyState::CreateBackgroundEntities() {
 }
 
 void LobbyState::CreateGUIElements() {
-  // ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
+  ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
   team_select_back_ =
       glob::GetGUIItem("Assets/GUI_elements/lobby_team_no_names.png");
   font_team_names_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
@@ -343,7 +351,7 @@ void LobbyState::CreateGUIElements() {
   button_comp.gui_handle_icon = ready_empty_icon_;
   button_comp.bounds = glm::vec2(50, 50);
   button_comp.button_func = [&] {
-    if (engine_->GetStateType() == 0) {
+    if (engine_->GetServerState() == ServerStateType::LOBBY) {
       ReadyButtonFunc();
     }
   };

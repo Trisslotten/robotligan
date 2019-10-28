@@ -29,6 +29,16 @@ bool NetAPI::Socket::Server::Update() {
   if (!setup_) {
     return false;
   }
+
+  for (auto ID : client_to_remove_) {
+    auto it = client_data_.find(ID);
+    if (it != client_data_.end()) {
+      this->client_data_.erase(ID);
+      connected_players_--;
+    }
+  }
+  client_to_remove_.clear();
+
   newly_connected_.clear();
   // Accept client
   if (!connection_client_) {
@@ -160,8 +170,7 @@ void NetAPI::Socket::Server::Send(NetAPI::Common::Packet& p) {
 bool NetAPI::Socket::Server::KickPlayer(long ID) {
   auto it = client_data_.find(ID);
   if (it != client_data_.end()) {
-    this->client_data_.erase(ID);
-    connected_players_--;
+    client_to_remove_.push_back(ID);
     return true;
   } else {
     return false;
