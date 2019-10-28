@@ -91,6 +91,12 @@ struct LightItem {
   glm::float32 ambient;
 };
 
+struct TrailItem {
+  std::vector<glm::vec3> position_history;
+  float width;
+  glm::vec3 color;
+};
+
 ShaderProgram fullscreen_shader;
 ShaderProgram model_emission_shader;
 ShaderProgram model_shader;
@@ -105,9 +111,13 @@ ShaderProgram e2D_shader;
 
 std::vector<ShaderProgram *> mesh_render_group;
 
+ShaderProgram trail_shader;
+int num_trail_quads = 0;
 GLuint triangle_vbo, triangle_vao;
 GLuint cube_vbo, cube_vao;
 GLuint quad_vbo, quad_vao;
+
+GLuint trail_vao, trail_vbo;
 
 PostProcess post_process;
 Blur blur;
@@ -168,6 +178,7 @@ std::vector<TextItem> text_to_render;
 std::vector<Text3DItem> text3D_to_render;
 std::vector<GUIItem> gui_items_to_render;
 std::vector<E2DItem> e2D_items_to_render;
+std::vector<TrailItem> trails_to_render;
 
 void DrawFullscreenQuad() {
   glBindVertexArray(triangle_vao);
@@ -343,7 +354,6 @@ void Init() {
   text3D_shader.add("text3Dshader.frag");
   text3D_shader.compile();
 
-
   gui_shader.add("guishader.vert");
   gui_shader.add("guishader.frag");
   gui_shader.compile();
@@ -403,6 +413,37 @@ void Init() {
   glBindBuffer(GL_ARRAY_BUFFER, quad_vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * quad_vertices.size(),
                quad_vertices.data(), GL_STATIC_DRAW);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
+                        (GLvoid *)0);
+  glBindVertexArray(0);
+
+  trail_shader.add("trail.vert");
+  trail_shader.add("trail.frag");
+  trail_shader.compile();
+  num_trail_quads = 100;
+  std::vector<glm::vec3> trail_verts;
+  for (int i = 0; i < num_trail_quads; i++) {
+    float left = float(i) / (num_trail_quads);
+    float right = float(i + 1) / (num_trail_quads);
+    glm::vec3 tl{left, 0, -0.5f};
+    glm::vec3 tr{right, 0, -0.5f};
+    glm::vec3 bl{left, 0, 0.5f};
+    glm::vec3 br{right, 0, 0.5f};
+    trail_verts.push_back(tl);
+    trail_verts.push_back(bl);
+    trail_verts.push_back(tr);
+
+    trail_verts.push_back(tr);
+    trail_verts.push_back(bl);
+    trail_verts.push_back(br);
+  }
+  glGenVertexArrays(1, &trail_vao);
+  glBindVertexArray(trail_vao);
+  glGenBuffers(1, &trail_vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, trail_vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * trail_verts.size(),
+               trail_verts.data(), GL_STATIC_DRAW);
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
                         (GLvoid *)0);
@@ -813,30 +854,30 @@ animData GetAnimationData(ModelHandle handle) {
 
   if (data.humanoid) {
     for (int i = 0; i < data.bones.size(); i++) {
-      Joint* bone = &data.bones.at(i);
+      Joint *bone = &data.bones.at(i);
       if (bone->name == "Spine") {
         data.makeGroup(i, &data.spine);
-        //std::cout << "Upper body found!\n";
+        // std::cout << "Upper body found!\n";
       } else if (bone->name == "Chest") {
         data.makeGroup(i, &data.upperBody);
         // std::cout << "Left leg found!\n";
       } else if (bone->name == "Leg upper L") {
         data.makeGroup(i, &data.leftLeg);
-        //std::cout << "Left leg found!\n";
+        // std::cout << "Left leg found!\n";
       } else if (bone->name == "Leg upper R") {
         data.makeGroup(i, &data.rightLeg);
-        //std::cout << "Right leg found!\n";
+        // std::cout << "Right leg found!\n";
       } else if (bone->name == "Shoulder L") {
         data.makeGroup(i, &data.leftArm);
-        //std::cout << "Left arm found!\n";
+        // std::cout << "Left arm found!\n";
       } else if (bone->name == "Shoulder R") {
         data.makeGroup(i, &data.rightArm);
-        //std::cout << "Right arm found!\n";
+        // std::cout << "Right arm found!\n";
       }
     }
     for (int i = 0; i < data.rightArm.size(); i++) {
       data.arms.push_back(data.rightArm.at(i));
-	}
+    }
     for (int i = 0; i < data.leftArm.size(); i++) {
       data.arms.push_back(data.leftArm.at(i));
     }
@@ -994,7 +1035,7 @@ double GetWidthOfText(Font2DHandle font_handle, std::string text, int size) {
     }
     // std::cout << offset_accum << "\n";
   }
-  return offset_accum - 0.7*len;
+  return offset_accum - 0.7 * len;
 }
 
 void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
@@ -1019,8 +1060,7 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
 }
 
 void Submit(Font2DHandle font_h, glm::vec3 pos, float size, std::string text,
-  glm::vec4 color,
-  glm::mat4 rot) {
+            glm::vec4 color, glm::mat4 rot) {
   auto find_res = fonts.find(font_h);
   if (find_res == fonts.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted font! \n";
@@ -1072,6 +1112,11 @@ void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale, float rotDegrees,
   to_render.scale = scale;
   to_render.rot = glm::rotate(glm::radians(rotDegrees), rotAxis);
   e2D_items_to_render.push_back(to_render);
+}
+
+void SubmitTrail(const std::vector<glm::vec3> &pos_history, float width,
+                 glm::vec3 color) {
+  trails_to_render.push_back({pos_history, width, color});
 }
 
 void SubmitCube(glm::mat4 t) { cubes.push_back(t); }
@@ -1242,12 +1287,12 @@ void Render() {
                                 e2D_item.rot);
     }
 
-  text3D_shader.use();
-  text3D_shader.uniform("cam_transform", cam_transform);
-  for (auto &text3D : text3D_to_render) {
-    text3D.font->Draw3D(text3D_shader, text3D.pos, text3D.size, text3D.text,
-                        text3D.color, text3D.rotation);
-  }
+    text3D_shader.use();
+    text3D_shader.uniform("cam_transform", cam_transform);
+    for (auto &text3D : text3D_to_render) {
+      text3D.font->Draw3D(text3D_shader, text3D.pos, text3D.size, text3D.text,
+                          text3D.color, text3D.rotation);
+    }
 
     // render particles
     particle_shader.use();
@@ -1256,6 +1301,22 @@ void Render() {
     particle_shader.uniform("cam_up", camera.GetUpVector());
     for (auto p : particles_to_render) {
       buffer_particle_systems[p].system.Draw(particle_shader);
+    }
+
+    trail_shader.use();
+    trail_shader.uniform("cam_transform", cam_transform);
+    trail_shader.uniform("cam_pos", camera.GetPosition());
+    for (auto &trail_item : trails_to_render) {
+      trail_shader.uniform("width", trail_item.width);
+      trail_shader.uniform("color", trail_item.color);
+      int max_positions = 100;
+      auto &ph = trail_item.position_history;
+      trail_shader.uniformv("position_history",
+                            glm::min((int)ph.size(), max_positions), ph.data());
+      glDisable(GL_CULL_FACE);
+      glBindVertexArray(trail_vao);
+      glDrawArrays(GL_TRIANGLES, 0, num_trail_quads * 6);
+      glEnable(GL_CULL_FACE);
     }
   }
   post_process.AfterDraw(blur);
@@ -1281,6 +1342,7 @@ void Render() {
                          text_item.equal_spacing, text_item.spacing);
   }
 
+  trails_to_render.clear();
   lights_to_render.clear();
   items_to_render.clear();
   bone_animated_items_to_render.clear();
