@@ -207,6 +207,10 @@ void glob::Font2D::CreateTexture() {
   // Set some parameters for the texture
 
   glBindTexture(GL_TEXTURE_2D, 0);  // Unbind the texture
+
+  font_texture_.clear();
+  font_texture_.reserve(1);
+
   tex_id = texture_id;
 }
 
