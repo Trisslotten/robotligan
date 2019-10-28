@@ -11,12 +11,14 @@
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 
+#include <boundingboxes.hpp>
 #include <physics.hpp>
 #include <shared/physics_component.hpp>
 #include <shared/pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
+#include "eventdispatcher.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
 
@@ -433,7 +435,8 @@ void PlayState::DrawNameOverPlayer() {
     auto& transform = player_view.get<TransformComponent>(entity);
 
     for (auto& [id, name] : engine_->player_names_) {
-      if (id == id_c.id) {
+      EntityID e_id = ClientIDToEntityID(id);
+      if (e_id == id_c.id) {
         glm::vec3 look = glm::vec3(transform.position - my_transform.position);
         float distance = glm::length(look);
         glm::vec3 up = glm::vec3(0.f, 1.f, 0.f);
@@ -460,7 +463,7 @@ void PlayState::DrawNameOverPlayer() {
           size = glm::lerp(0.3f, 1.5f, factor);
         }
 
-        auto team = engine_->GetPlayerTeam(id);
+        auto team = engine_->GetPlayerTeam(e_id);
         if (team == TEAM_BLUE) color = glm::vec4(0.f, 0.f, 1.f, 1.f);
         else if (team == TEAM_RED)
           color = color = glm::vec4(1.f, 0.f, 0.f, 1.f);
@@ -506,7 +509,7 @@ void PlayState::UpdateSwitchGoalTimer() {
       // Save game event
       GameEvent switch_goals_event_done;
       switch_goals_event_done.type = GameEvent::SWITCH_GOALS_DONE;
-      dispatcher.trigger(switch_goals_event_done);
+      //dispatcher.trigger(switch_goals_event_done);
 
       countdown_in_progress_ = false;
     }
@@ -707,28 +710,33 @@ void PlayState::OnServerFrame() {
 }
 
 void PlayState::MoveBall(float dt) {
- /* auto view_ball =
-      registry_gameplay_
-          .view<BallComponent, TransformComponent, PhysicsComponent, IDComponent>();
+  /* auto view_ball =
+       registry_gameplay_
+           .view<BallComponent, TransformComponent, PhysicsComponent,
+   IDComponent>();
 
-  for (auto ball : view_ball) {
-    auto& phys_c = view_ball.get<PhysicsComponent>(ball);
-    auto& trans_c = view_ball.get<TransformComponent>(ball);
-    auto& id_c = view_ball.get<IDComponent>(ball);
+   for (auto ball : view_ball) {
+     auto& phys_c = view_ball.get<PhysicsComponent>(ball);
+     auto& trans_c = view_ball.get<TransformComponent>(ball);
+     auto& id_c = view_ball.get<IDComponent>(ball);
 
-    physics::PhysicsObject po;
-    po.acceleration =  glm::vec3(0.0f);
-    po.airborne = phys_c.is_airborne;
-    po.friction = phys_c.friction;
-    po.max_speed = phys_c.max_speed;
-    po.position = new_transforms_[id_c.id].first;
-    po.velocity = phys_c.velocity;
+     physics::PhysicsObject po;
+     po.acceleration =  glm::vec3(0.0f);
+     po.airborne = phys_c.is_airborne;
+     po.friction = phys_c.friction;
+     po.max_speed = phys_c.max_speed;
+     po.position = new_transforms_[id_c.id].first;
+     po.velocity = phys_c.velocity;
 
-	physics::Update(&po, dt);
+         physics::Update(&po, dt);
 
-	new_transforms_[id_c.id].first = po.position;
-    phys_c.velocity = po.velocity;
-  }*/
+         new_transforms_[id_c.id].first = po.position;
+     phys_c.velocity = po.velocity;
+   }*/
+}
+
+EntityID PlayState::ClientIDToEntityID(long client_id) {
+  return engine_->GetPlayerScores()[client_id].enttity_id;
 }
 
 void PlayState::DrawTarget() {
@@ -782,9 +790,9 @@ void PlayState::DrawQuickslots() {
     glm::vec2(66, 50), 0.75f, 100);
   if (primary_cd_ > 0.0f) {
     std::string cd_string = std::to_string((int)primary_cd_);
-    float jump_left = (cd_string.length()-1) * 15;
-    glob::Submit(font_test_, glm::vec2(50 - jump_left, 89), 72,
-                cd_string , glm::vec4(0,0,0,0.7f));
+    float jump_left = (cd_string.length() - 1) * 15;
+    glob::Submit(font_test_, glm::vec2(50 - jump_left, 89), 72, cd_string,
+                 glm::vec4(0, 0, 0, 0.7f));
     glob::Submit(font_test_, glm::vec2(51 - jump_left, 90), 72, cd_string);
   }
 }
@@ -895,6 +903,34 @@ void PlayState::CreateBallEntity() {
   registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
 }
 
+void PlayState::CreateNewBallEntity(bool fake, EntityID id) {
+  auto& sound_engine = engine_->GetSoundEngine();
+
+  // Ball
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glm::vec3 arena_scale = glm::vec3(1.0f);
+  auto ball = registry_gameplay_.create();
+  glob::ModelHandle model_ball_projectors_p =
+      glob::GetModel("Assets/Ball_new/Ball_projectors.fbx");
+
+  std::string model_path = "Assets/Ball_new/Ball_Sphere.fbx";
+  if (fake) {
+    model_path = "Assets/Ball_new/fake/Ball_Sphere.fbx";
+  }
+  glob::ModelHandle model_ball_sphere_p = glob::GetTransparentModel(model_path);
+  // glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
+  auto& model_c = registry_gameplay_.assign<ModelComponent>(ball);
+  model_c.handles.push_back(model_ball_sphere_p);
+  model_c.handles.push_back(model_ball_projectors_p);
+
+  registry_gameplay_.assign<TransformComponent>(ball, zero_vec, zero_vec,
+                                                glm::vec3(0.95f));
+  registry_gameplay_.assign<PhysicsComponent>(ball);
+  registry_gameplay_.assign<BallComponent>(ball);
+  registry_gameplay_.assign<IDComponent>(ball, id);
+  registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
+}
+
 void PlayState::CreateInGameMenu() {
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
 
@@ -953,6 +989,31 @@ void PlayState::TestCreateLights() {
     90.f, 0.1f);
   registry_gameplay_.assign<TransformComponent>(
     light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
+}
+
+void PlayState::CreateWall(EntityID id, glm::vec3 position,
+                           glm::quat rotation) {
+  auto wall = registry_gameplay_.create();
+  auto& sound_engine = engine_->GetSoundEngine();
+  registry_gameplay_.assign<SoundComponent>(wall, sound_engine.CreatePlayer());
+  registry_gameplay_.assign<IDComponent>(wall, id);
+  registry_gameplay_.assign<TransformComponent>(
+      wall, position, rotation, glm::vec3(1.f, 4.f, 5.f));
+  auto& obb = registry_gameplay_.assign<physics::OBB>(wall);
+  obb.extents[0] = 1.f;
+  obb.extents[1] = 8.3f;
+  obb.extents[2] = 5.f;
+
+  glob::ModelHandle model = glob::GetModel("assets/Pickup/Pickup.fbx");
+  int a = 10;
+  std::vector<glob::ModelHandle> hs;
+  hs.push_back(model);
+  registry_gameplay_.assign<ModelComponent>(wall, hs);
+
+  GameEvent wall_event;
+  wall_event.type = GameEvent::BUILD_WALL;
+  wall_event.build_wall.wall_id = id;
+  dispatcher.trigger(wall_event);
 }
 
 void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {
@@ -1029,13 +1090,54 @@ void PlayState::CreateMissileObject(EntityID id) {
 
 void PlayState::DestroyEntity(EntityID id) {
   auto id_view = registry_gameplay_.view<IDComponent>();
+
+  glm::vec3 pos(0);
+  bool was_ball = false;
+
   for (auto entity : id_view) {
     auto& e_id = id_view.get(entity);
 
     if (e_id.id == id) {
+      if (registry_gameplay_.has<BallComponent>(entity)) {
+        was_ball = true;
+
+        if (registry_gameplay_.has<SoundComponent>(entity)) {
+          auto& sound_c = registry_gameplay_.get<SoundComponent>(entity);
+          auto ent = registry_gameplay_.create();
+
+          GameEvent ge;
+          ge.type = GameEvent::FAKE_BALL_POOF;
+          ge.fake_ball_poofed.ball_id = id;
+          dispatcher.trigger(ge);
+        }
+      }
+      if (registry_gameplay_.has<TransformComponent>(entity)) {
+        pos = registry_gameplay_.get<TransformComponent>(entity).position;
+      }
       registry_gameplay_.destroy(entity);
-      return;
+      break;
     }
+  }
+
+  if (was_ball) {
+    auto e = registry_gameplay_.create();
+    auto handle = glob::CreateParticleSystem();
+
+    std::vector<glob::ParticleSystemHandle> handles;
+    std::vector<glm::vec3> offsets;
+    //= {glm::vec3(0.f)};
+    std::vector<glm::vec3> directions;
+    //= {glm::vec3(0.f, 1.f, 0.f)};
+
+    glob::SetParticleSettings(handle, "ball_destroy.txt");
+    glob::SetEmitPosition(handle, pos);
+    handles.push_back(handle);
+
+    // auto ball_view = registry_gameplay_.view<
+
+    auto& p_c = registry_gameplay_.assign<ParticleComponent>(
+        e, handles, offsets, directions);
+    registry_gameplay_.assign<int>(e, 0);
   }
 }
 

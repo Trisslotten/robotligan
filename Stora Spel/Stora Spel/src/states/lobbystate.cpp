@@ -88,6 +88,13 @@ bool LobbyState::IsAbilityBlackListed(int id) {
   }
   return false;
 }
+void LobbyState::SendMyName() {
+  auto& packet = engine_->GetPacket();
+  packet << GlobalSettings::Access()->StringValueOf("USERNAME");
+  packet << PacketBlockType::MY_NAME;
+}
+
+
 void LobbyState::Startup() {
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
 }
@@ -105,9 +112,11 @@ void LobbyState::Init() {
   CreateBackgroundEntities();
   CreateGUIElements();
   SelectAbilityHandler(my_selected_ability_);
+  SendMyName();
 
   engine_->GetChat()->SetPosition(glm::vec2(20, 140));
   engine_->GetAnimationSystem().Reset();
+
 }
 
 void LobbyState::Update(float dt) {
@@ -169,15 +178,18 @@ void LobbyState::HandleUpdateLobbyTeamPacket(NetAPI::Common::Packet& packet) {
   int id = -1;
   unsigned int team = 0;
   bool ready = false;
+  std::string name = "";
   packet >> ready;
   packet >> team;
   packet >> id;
+  packet >> name;
   if (id != -1) {
     LobbyPlayer plyr;
     plyr.ready = ready;
     plyr.team = team;
     lobby_players_[id] = plyr;
   }
+  engine_->player_names_[id] = name;
 }
 
 void LobbyState::HandlePlayerDisconnect(NetAPI::Common::Packet& packet) {
@@ -243,7 +255,7 @@ void LobbyState::CreateBackgroundEntities() {
 }
 
 void LobbyState::CreateGUIElements() {
-  // ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
+  ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
   team_select_back_ =
       glob::GetGUIItem("Assets/GUI_elements/lobby_team_no_names.png");
   font_team_names_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");

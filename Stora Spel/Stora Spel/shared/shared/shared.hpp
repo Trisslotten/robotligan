@@ -3,6 +3,7 @@
 
 #define TEAM_RED (unsigned int)0
 #define TEAM_BLUE (unsigned int)1
+#define TEAM_NONE (unsigned int)3
 
 #define POINTS_GOAL 10
 #define POINTS_ASSIST 2
@@ -53,6 +54,7 @@ namespace PacketBlockType {
     SECONDARY_USED,
     MESSAGE,
     UPDATE_POINTS,
+    CREATE_WALL,
     CREATE_PICK_UP,
     DESTROY_PICK_UP,
     RECEIVE_PICK_UP,
@@ -72,7 +74,10 @@ namespace PacketBlockType {
     YOUR_TARGET,
     FRAME_ID,
     SERVER_CAN_JOIN,
+	CREATE_BALL,
+	CREATE_FAKE_BALL,
 	STATE,
+	MY_NAME,
     NUM_BLOCK_TYPES,
   };
 
@@ -127,8 +132,11 @@ struct GameEvent {
     RUN_START,
     RUN_END,
     RESET,
+    BUILD_WALL,
     PRIMARY_USED,
     SECONDARY_USED,
+	FAKE_BALL_CREATED,
+	FAKE_BALL_POOF,
     NUM_EVENTS
   } type;
   union {
@@ -239,6 +247,11 @@ struct GameEvent {
     struct {
     } reset;
 
+    // BUILD WALL
+    struct {
+      EntityID wall_id;
+    } build_wall;
+
     // Primary ability used
     struct {
       EntityID player_id;
@@ -249,6 +262,15 @@ struct GameEvent {
     struct {
       EntityID player_id;
     } secondary_used;
+
+	// ability fake ball created
+    struct {
+      EntityID ball_id;
+    } fake_ball_created;
+    // ability fake ball poofed
+    struct {
+      EntityID ball_id;
+    } fake_ball_poofed;
   };
 };
 

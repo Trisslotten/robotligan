@@ -12,9 +12,9 @@ struct Sphere {
 };
 
 struct OBB {
-  glm::vec3 center;
-  glm::vec3 normals[3];  // normalized plane normals
-  float extents[3];      // lenght to each plane
+  glm::vec3 center = glm::vec3(0.f);
+  glm::vec3 normals[3] = {glm::vec3(1.f, 0.f, 0.f), glm::vec3(0.f, 1.f, 0.f), glm::vec3(0.f, 0.f, 1.f)};  // normalized plane normals
+  float extents[3] = {1.f, 1.f, 1.f};  // lenght to each plane
 };
 
 struct Arena {
