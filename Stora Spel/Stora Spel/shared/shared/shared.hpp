@@ -79,9 +79,11 @@ enum : int16_t {
   SERVER_CAN_JOIN,
   CREATE_BALL,
   CREATE_FAKE_BALL,
-  SERVER_STATE,
-  TO_CLIENT_NAME,
+  STATE,
   MY_NAME,
+  PLAYER_LOOK_DIR,
+  PLAYER_MOVE_DIR,
+  TO_CLIENT_NAME,
   NUM_BLOCK_TYPES,
 };
 
@@ -241,6 +243,11 @@ struct GameEvent {
     struct {
       EntityID player_id;
     } run_end;
+
+    // Player shoots a bullet
+    struct {
+      EntityID player_id;
+    } shoot;
 
     // RESET
     struct {

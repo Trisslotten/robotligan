@@ -230,7 +230,7 @@ void ServerPlayState::HandleDataToSend() {
       continue;
     }
 
-    // auto view_cam = registry.view<CameraComponent, IDComponent>();
+    auto view_cam = registry.view<CameraComponent, IDComponent>();
     // for (auto cam : view_cam) {
     //  auto& cam_c = view_cam.get<CameraComponent>(cam);
     //  auto& id_c = view_cam.get<IDComponent>(cam);
@@ -240,6 +240,17 @@ void ServerPlayState::HandleDataToSend() {
     //  }
     //}
     // to_send << PacketBlockType::CAMERA_TRANSFORM;
+
+    for (auto cam : view_cam) {
+      auto& cam_c = view_cam.get<CameraComponent>(cam);
+      auto& id_c = view_cam.get<IDComponent>(cam);
+      to_send << cam_c.GetLookDir();
+      to_send << id_c.id;
+    }
+    int num_dirs = view_cam.size();
+    to_send << num_dirs;
+    to_send << PacketBlockType::PLAYER_LOOK_DIR;
+    
 
     auto view_entities = registry.view<TransformComponent, IDComponent>();
     int num_entities = view_entities.size();
@@ -276,9 +287,18 @@ void ServerPlayState::HandleDataToSend() {
     }
     to_send << PacketBlockType::PLAYER_STAMINA;
 
+    auto view_player_id = registry.view<PlayerComponent, IDComponent>();
+    for (auto player : view_player_id) {
+      auto& player_c = view_player_id.get<PlayerComponent>(player);
+      auto& id_c = view_player_id.get<IDComponent>(player);
+      to_send << player_c.wanted_move_dir;
+      to_send << id_c.id;
+    }
+    to_send << (int)view_player_id.size();
+    to_send << PacketBlockType::PLAYER_MOVE_DIR;
+
     auto view_players2 = registry.view<PlayerComponent, TeamComponent,
                                        PointsComponent, IDComponent>();
-
     for (auto player : view_players2) {
       auto& player_player_c = registry.get<PlayerComponent>(player);
       auto& player_points_c = registry.get<PointsComponent>(player);

@@ -306,6 +306,31 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetCameraOrientation(orientation);
       break;
     }
+    case PacketBlockType::PLAYER_LOOK_DIR: {
+      int num_dirs = -1;
+      packet >> num_dirs;
+      for(int i =0 ; i < num_dirs; i++) {
+        EntityID id = 0;
+        glm::vec3 look_dir;
+        packet >> id;
+        packet >> look_dir;
+        play_state_.SetPlayerLookDir(id, look_dir);
+      }
+      break;
+    }
+    case PacketBlockType::PLAYER_MOVE_DIR: {
+      int num_dirs = -1;
+      packet >> num_dirs;
+      for(int i =0 ; i < num_dirs; i++) {
+        EntityID id = 0;
+        glm::vec3 move_dir;
+        packet >> id;
+        packet >> move_dir;
+        play_state_.SetPlayerMoveDir(id, move_dir);
+      }
+      break;
+    }
+
     case PacketBlockType::GAME_START: {
       // std::cout << "PACKET: GAME_START\n";
       unsigned int team;
@@ -680,8 +705,8 @@ void Engine::UpdateSystems(float dt) {
   gui_system::Update(*registry_current_);
   input_system::Update(*registry_current_);
   ParticleSystem(*registry_current_, dt);
-  RenderSystem(*registry_current_);
   animation_system_.UpdateAnimations(*registry_current_, dt);
+  RenderSystem(*registry_current_);
 }
 
 void Engine::SetKeybinds() {
