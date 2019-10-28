@@ -1,0 +1,48 @@
+#version 440
+
+layout(local_size_x = 1024, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, binding=7) buffer Pos
+{
+	vec4 positions[];
+};
+
+layout(std430, binding=8) buffer Vel
+{
+	vec4 velocities[];
+};
+
+layout(std430, binding=9) buffer Col
+{
+	vec4 colors[];
+};
+
+layout(std430, binding=10) buffer Size
+{
+	float sizes[];
+};
+
+layout(std430, binding=11) buffer Time
+{
+	float times[];
+};
+
+uniform vec4 color_delta;
+uniform float velocity_delta;
+uniform float size_delta;
+uniform float dt;
+
+void main()
+{
+	uint gid = gl_GlobalInvocationID.x;
+	if (gid < 1000 && times[gid] > 0.f) {
+		float ratio = times[gid] / 10.0f;
+		float vel = length(velocities[gid]);
+		float factor = (vel - velocity_delta * dt) / vel;
+		velocities[gid] *= factor;
+		positions[gid] += velocities[gid] * dt;
+		colors[gid] -= color_delta * dt;
+		sizes[gid] -= size_delta * dt;
+		times[gid] -= dt;
+	}
+}

@@ -19,9 +19,9 @@
 #include "ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
+#include "eventdispatcher.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
-#include "eventdispatcher.hpp"
 
 void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
@@ -29,7 +29,7 @@ void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
   // Create in-game menu background
   in_game_menu_gui_ =
-      glob::GetGUIItem("Assets/GUI_elements/ingame_menu_V1.png");
+    glob::GetGUIItem("Assets/GUI_elements/ingame_menu_V1.png");
   // Create 2D element
   e2D_test_ = glob::GetE2DItem("assets/GUI_elements/point_table.png");
   e2D_test2_ = glob::GetE2DItem("assets/GUI_elements/Scoreboard_V1.png");
@@ -39,29 +39,29 @@ void PlayState::Startup() {
   gui_test_ = glob::GetGUIItem("assets/GUI_elements/Scoreboard_V1.png");
   gui_teamscore_ = glob::GetGUIItem("assets/GUI_elements/point_table.png");
   gui_stamina_base_ =
-      glob::GetGUIItem("assets/GUI_elements/stamina_bar_base.png");
+    glob::GetGUIItem("assets/GUI_elements/stamina_bar_base.png");
   gui_stamina_fill_ =
-      glob::GetGUIItem("assets/GUI_elements/stamina_bar_fill.png");
+    glob::GetGUIItem("assets/GUI_elements/stamina_bar_fill.png");
   gui_stamina_icon_ =
-      glob::GetGUIItem("assets/GUI_elements/stamina_bar_icon.png");
+    glob::GetGUIItem("assets/GUI_elements/stamina_bar_icon.png");
   gui_quickslots_ =
-      glob::GetGUIItem("assets/GUI_elements/quickslots_blank.png");
+    glob::GetGUIItem("assets/GUI_elements/quickslots_blank.png");
   gui_minimap_ = glob::GetGUIItem("assets/GUI_elements/Minimap_V2.png");
   gui_minimap_goal_red_ =
-      glob::GetGUIItem("assets/GUI_elements/goal_red_icon.png");
+    glob::GetGUIItem("assets/GUI_elements/goal_red_icon.png");
   gui_minimap_goal_blue_ =
-      glob::GetGUIItem("assets/GUI_elements/goal_blue_icon.png");
+    glob::GetGUIItem("assets/GUI_elements/goal_blue_icon.png");
   gui_minimap_player_red_ =
-      glob::GetGUIItem("assets/GUI_elements/player_iconv2_red.png");
+    glob::GetGUIItem("assets/GUI_elements/player_iconv2_red.png");
   gui_minimap_player_blue_ =
-      glob::GetGUIItem("assets/GUI_elements/player_iconv2_blue.png");
+    glob::GetGUIItem("assets/GUI_elements/player_iconv2_blue.png");
   gui_minimap_ball_ = glob::GetGUIItem("assets/GUI_elements/Ball_Icon.png");
 
   int num_abilities = (int)AbilityID::NUM_OF_ABILITY_IDS;
   ability_handles_.resize(num_abilities);
   for (int i = 0; i < num_abilities; i++) {
     ability_handles_[i] = glob::GetGUIItem(
-        "assets/GUI_Elements/ability_icons/" + std::to_string(i) + ".png");
+      "assets/GUI_Elements/ability_icons/" + std::to_string(i) + ".png");
   }
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
   font_scores_ = glob::GetFont("assets/fonts/fonts/OCRAEXT_2.TTF");
@@ -76,7 +76,7 @@ void PlayState::TestParticles() {
   auto e = registry_gameplay_.create();
   auto handle = glob::CreateParticleSystem();
 
-  std::vector handles = {handle};
+  std::vector handles = { handle };
   std::vector<glm::vec3> offsets;
   //= {glm::vec3(0.f)};
   std::vector<glm::vec3> directions;
@@ -104,12 +104,15 @@ void PlayState::Init() {
   engine_->SetCurrentRegistry(&registry_gameplay_);
   engine_->SetEnableChat(true);
 
+  //end_game_timer_.Restart();
+  game_has_ended_ = false;
+
   CreateInGameMenu();
   CreateInitialEntities();
   // TestParticles();
 
   engine_->GetChat()->SetPosition(
-      glm::vec2(30, glob::window::GetWindowDimensions().y - 30));
+    glm::vec2(30, glob::window::GetWindowDimensions().y - 30));
 
   auto& client = engine_->GetClient();
   NetAPI::Common::Packet to_send;
@@ -130,9 +133,39 @@ void PlayState::Update(float dt) {
     engine_->ChangeState(StateType::MAIN_MENU);
   }
 
+  if (!player_look_dirs_.empty()) {
+    auto view_entities =
+        registry_gameplay_.view<PlayerComponent, IDComponent>();
+    for (auto entity : view_entities) {
+      auto& player_c = view_entities.get<PlayerComponent>(entity);
+      auto& id_c = view_entities.get<IDComponent>(entity);
+      auto iter = player_look_dirs_.find(id_c.id);
+      if (iter != player_look_dirs_.end()) {
+        player_c.look_dir = iter->second;
+        // std::cout << "lookdir.x: " << iter->second.x << "\n";
+      }
+    }
+    player_look_dirs_.clear();
+  }
+
+  if (!player_move_dirs_.empty()) {
+    auto view_entities =
+        registry_gameplay_.view<PlayerComponent, IDComponent>();
+    for (auto entity : view_entities) {
+      auto& player_c = view_entities.get<PlayerComponent>(entity);
+      auto& id_c = view_entities.get<IDComponent>(entity);
+      auto iter = player_move_dirs_.find(id_c.id);
+      if (iter != player_move_dirs_.end()) {
+        player_c.move_dir = iter->second;
+      }
+    }
+    player_move_dirs_.clear();
+  }
+  
+  this->server_state_ = engine_->GetServerState();
   if (!physics_.empty()) {
     auto view_entities =
-        registry_gameplay_.view<PhysicsComponent, IDComponent>();
+      registry_gameplay_.view<PhysicsComponent, IDComponent>();
     for (auto entity : view_entities) {
       auto& physics_c = view_entities.get<PhysicsComponent>(entity);
       auto& id_c = view_entities.get<IDComponent>(entity);
@@ -183,14 +216,15 @@ void PlayState::Update(float dt) {
     if (id_c.id == my_id_) {
       auto& cam_c = registry_gameplay_.get<CameraComponent>(my_entity_);
       glm::vec3 temp =
-          lerp(predicted_state_.position, server_predicted_.position, 0.5f);
+        lerp(predicted_state_.position, server_predicted_.position, 0.5f);
       trans_c.position = glm::lerp(trans_c.position, temp, 0.2f);
       glm::quat orientation =
-          glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
+        glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
       cam_c.orientation = orientation;
       trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
-    } else {
+    }
+    else {
       auto trans = new_transforms_[id_c.id];
       if (glm::length(trans_c.position - trans.first) > 10) {
         trans_c.position = trans.first;
@@ -231,40 +265,42 @@ void PlayState::Update(float dt) {
   // glob::Submit(e2D_test_, glm::vec3(-10.5f, 1.0f, 0.0f), 2, 90.0f,
   // glm::vec3(0, 1, 0));
   glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -28.0f), 7, 0.0f,
-               glm::vec3(1));
+    glm::vec3(1));
 
   UpdateGameplayTimer();
   UpdateSwitchGoalTimer();
+  DrawNameOverPlayer();
 
-  // draw stamina bar
-  glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
+      // draw stamina bar
+      glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
   glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
   glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
 
   // draw Minimap
   glob::Submit(gui_minimap_,
-               glm::vec2(glob::window::GetWindowDimensions().x - 250, 10), 0.3);
+    glm::vec2(glob::window::GetWindowDimensions().x - 250, 10), 0.3);
   // draw Minimap goals
   if (!goals_swapped_) {
     glob::Submit(gui_minimap_goal_red_,
-                 glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
-                 0.2);
+      glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
+      0.2);
     glob::Submit(
-        gui_minimap_goal_blue_,
-        glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
-  } else {
+      gui_minimap_goal_blue_,
+      glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
+  }
+  else {
     glob::Submit(
-        gui_minimap_goal_red_,
-        glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
+      gui_minimap_goal_red_,
+      glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
     glob::Submit(gui_minimap_goal_blue_,
-                 glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
-                 0.2);
+      glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
+      0.2);
   }
 
   // Draw Player icons
   auto view_player =
-      registry_gameplay_
-          .view<TransformComponent, PlayerComponent, IDComponent>();
+    registry_gameplay_
+    .view<TransformComponent, PlayerComponent, IDComponent>();
   for (auto entity : view_player) {
     auto& trans_c = view_player.get<TransformComponent>(entity);
     auto& id_c = view_player.get<IDComponent>(entity);
@@ -275,18 +311,18 @@ void PlayState::Update(float dt) {
     float norm_pos_x = trans_c.position.z / 28.1f;
     float norm_pos_y = trans_c.position.x / 40.6f;
     float minimap_pos_x = (norm_pos_x * 120.f) +
-                          glob::window::GetWindowDimensions().x - 130.f - 11.f;
+      glob::window::GetWindowDimensions().x - 130.f - 11.f;
     float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 20.f;
 
     // Draw the right color icons
     if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
       glob::Submit(gui_minimap_player_red_,
-                   glm::vec2(minimap_pos_x, minimap_pos_y),
-                   0.1);  // TODO: CALC REAL POS
+        glm::vec2(minimap_pos_x, minimap_pos_y),
+        0.1);  // TODO: CALC REAL POS
     } else {
       glob::Submit(gui_minimap_player_blue_,
-                   glm::vec2(minimap_pos_x, minimap_pos_y),
-                   0.1);  // TODO: CALC REAL POS
+        glm::vec2(minimap_pos_x, minimap_pos_y),
+        0.1);  // TODO: CALC REAL POS
     }
   }
 
@@ -300,11 +336,11 @@ void PlayState::Update(float dt) {
     float norm_pos_x = trans_c.position.z / 28.1f;
     float norm_pos_y = trans_c.position.x / 40.6f;
     float minimap_pos_x = (norm_pos_x * 120.f) +
-                          glob::window::GetWindowDimensions().x - 130.f - 20.f;
+      glob::window::GetWindowDimensions().x - 130.f - 20.f;
     float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 20.f;
 
     glob::Submit(gui_minimap_ball_, glm::vec2(minimap_pos_x, minimap_pos_y),
-                 0.1);
+      0.1);
   }
 
   if (game_has_ended_) {
@@ -321,23 +357,24 @@ void PlayState::Update(float dt) {
     if (engine_->GetTeamScores()[0] > engine_->GetTeamScores()[1]) {
       best_team = "    RED";
       best_team_color = glm::vec4(1.f, 0.13f, 0.13f, 1.f);
-    } else if (engine_->GetTeamScores()[0] == engine_->GetTeamScores()[1]) {
+    }
+    else if (engine_->GetTeamScores()[0] == engine_->GetTeamScores()[1]) {
       best_team = "  NO TEAM";
       best_team_color = glm::vec4(.8f, .4f, .4f, 1.f);
     }
 
     glob::Submit(font_test_, pos + glm::vec2(41, -1), 48, best_team + " wins!",
-                 glm::vec4(0, 0, 0, 0.7f));
+      glm::vec4(0, 0, 0, 0.7f));
 
     glob::Submit(font_test_, pos + glm::vec2(40, 0), 48, best_team + " wins!",
-                 best_team_color);
+      best_team_color);
 
     int game_end_timeout = 5;
     std::string end_countdown_text =
-        std::to_string((int)(game_end_timeout - end_game_timer_.Elapsed()));
+      std::to_string((int)(game_end_timeout - end_game_timer_.Elapsed()));
 
     glob::Submit(font_test_, pos + glm::vec2(0, -50), 48,
-                 "Returning to lobby in: " + end_countdown_text);
+      "Returning to lobby in: " + end_countdown_text);
 
     if (end_game_timer_.Elapsed() >= 5.0f) {
       engine_->ChangeState(StateType::LOBBY);
@@ -412,9 +449,9 @@ void PlayState::UpdateGameplayTimer() {
   // --------------------------------------
   glob::Submit(font_test_, pos, 40, min_string, glm::vec4(1));
   glob::Submit(font_test_, pos + glm::vec2(-8, -12), 40, "----",
-               glm::vec4(1, 1, 1, 1));
+    glm::vec4(1, 1, 1, 1));
   glob::Submit(font_test_, pos + glm::vec2(-7, -26), 40, sec_string,
-               glm::vec4(1));
+    glm::vec4(1));
 
   glm::vec2 countdown_pos = glob::window::GetWindowDimensions();
   countdown_pos /= 2;
@@ -422,7 +459,63 @@ void PlayState::UpdateGameplayTimer() {
   countdown_pos.y += 100;
   if (count > 0) {
     glob::Submit(font_test_, countdown_pos, 500, std::to_string(count),
-                 glm::vec4(1));
+      glm::vec4(1));
+  }
+}
+
+void PlayState::DrawNameOverPlayer() {
+  auto player_view =
+      registry_gameplay_
+          .view<PlayerComponent, TransformComponent, IDComponent>();
+
+  auto& my_transform = registry_gameplay_.get<TransformComponent>(my_entity_);
+  for (auto entity : player_view) {
+    if (my_entity_ == entity) {
+      continue;
+    }
+
+    auto& id_c = player_view.get<IDComponent>(entity);
+    auto& transform = player_view.get<TransformComponent>(entity);
+
+    for (auto& [id, name] : engine_->player_names_) {
+      EntityID e_id = ClientIDToEntityID(id);
+      if (e_id == id_c.id) {
+        glm::vec3 look = glm::vec3(transform.position - my_transform.position);
+        float distance = glm::length(look);
+        glm::vec3 up = glm::vec3(0.f, 1.f, 0.f);
+        look.y = 0;
+        look = glm::normalize(look);
+
+        glm::vec3 right = glm::cross(look, up);
+        glm::mat4 matrix(1.0f);
+        matrix[0] = glm::vec4(right, 0.f);
+        matrix[1] = glm::vec4(up, 0.f);
+        matrix[2] = glm::vec4(look, 0.f);
+
+        float size = 1.f;
+        float offset = 0.f;
+        glm::vec4 color = glm::vec4(1.0f);
+        if (distance < 10.f) {
+          offset = 1.3f;
+          size = 0.3f;
+        } else if (distance > 40.f) {
+          break;
+        } else {
+          auto factor = (distance - 10.f) / 60.f;
+          offset = glm::lerp(1.3f, 3.0f, factor);
+          size = glm::lerp(0.3f, 1.5f, factor);
+        }
+
+        auto team = engine_->GetPlayerTeam(e_id);
+        if (team == TEAM_BLUE) color = glm::vec4(0.f, 0.f, 1.f, 1.f);
+        else if (team == TEAM_RED)
+          color = color = glm::vec4(1.f, 0.f, 0.f, 1.f);
+
+        glob::Submit(font_test_, transform.position + up * offset, size, name, color, matrix);
+
+        break;
+      }
+    }
   }
 }
 
@@ -448,9 +541,9 @@ void PlayState::UpdateSwitchGoalTimer() {
     countdown_text_pos.x -= 170;
     countdown_text_pos.y += 300;
     glob::Submit(font_test_, countdown_text_pos, 50,
-                 std::string("SWITCHING GOALS IN..."), glm::vec4(0.8));
+      std::string("SWITCHING GOALS IN..."), glm::vec4(0.8));
     glob::Submit(font_test_, countdown_pos, 100,
-                 std::to_string(temp_time - count), glm::vec4(0.8));
+      std::to_string(temp_time - count), glm::vec4(0.8));
 
     // After timer reaches zero swap goals
     if (temp_time - count <= 0) {
@@ -459,7 +552,7 @@ void PlayState::UpdateSwitchGoalTimer() {
       // Save game event
       GameEvent switch_goals_event_done;
       switch_goals_event_done.type = GameEvent::SWITCH_GOALS_DONE;
-      dispatcher.trigger(switch_goals_event_done);
+      //dispatcher.trigger(switch_goals_event_done);
 
       countdown_in_progress_ = false;
     }
@@ -474,18 +567,18 @@ void PlayState::DrawTopScores() {
   glob::Submit(gui_teamscore_, team_score_pos, 1, 100);
 
   glob::Submit(font_scores_, team_score_pos + glm::vec2(90, 55), 72,
-               std::to_string(engine_->GetTeamScores()[1]),
-               glm::vec4(0, 0.26, 1, 1));
+    std::to_string(engine_->GetTeamScores()[1]),
+    glm::vec4(0, 0.26, 1, 1));
   glob::Submit(font_scores_, team_score_pos + glm::vec2(217, 55), 72,
-               std::to_string(engine_->GetTeamScores()[0]),
-               glm::vec4(1, 0, 0, 1));
+    std::to_string(engine_->GetTeamScores()[0]),
+    glm::vec4(1, 0, 0, 1));
 }
 
 FrameState PlayState::SimulateMovement(std::vector<int>& action,
                                        FrameState& state, float dt) {
   auto view_controller =
-      registry_gameplay_
-          .view<CameraComponent, PlayerComponent, TransformComponent>();
+    registry_gameplay_
+    .view<CameraComponent, PlayerComponent, TransformComponent>();
 
   glm::vec3 final_velocity = glm::vec3(0.f, state.velocity.y, 0.f);
   FrameState new_state;
@@ -494,7 +587,7 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action,
     CameraComponent& cam_c = view_controller.get<CameraComponent>(entity);
     // PlayerComponent& player_c = view_controller.get<PlayerComponent>(entity);
     TransformComponent& trans_c =
-        view_controller.get<TransformComponent>(entity);
+      view_controller.get<TransformComponent>(entity);
     // PhysicsComponent& physics_c =
     // view_controller.get<PhysicsComponent>(entity);
 
@@ -508,7 +601,7 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action,
     //// base movement direction on camera orientation.
     ////glm::vec3 frwd = cam_c.GetLookDir();
     glm::quat orientation = glm::quat(glm::vec3(0, state.yaw, 0)) *
-                            glm::quat(glm::vec3(0, 0, state.pitch));
+      glm::quat(glm::vec3(0, 0, state.pitch));
     // orientation = glm::normalize(orientation);
     glm::vec3 frwd = orientation * glm::vec3(1, 0, 0);
     frwd.y = 0;
@@ -567,9 +660,9 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action,
     // movement "floatiness", lower value = less floaty
     float t = 0.0005f;
     new_state.velocity.x =
-        glm::mix(state.velocity.x, final_velocity.x, 1.f - glm::pow(t, dt));
+      glm::mix(state.velocity.x, final_velocity.x, 1.f - glm::pow(t, dt));
     new_state.velocity.z =
-        glm::mix(state.velocity.z, final_velocity.z, 1.f - glm::pow(t, dt));
+      glm::mix(state.velocity.z, final_velocity.z, 1.f - glm::pow(t, dt));
     new_state.velocity.y = final_velocity.y;
 
     physics::PhysicsObject po;
@@ -591,8 +684,8 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action,
 
 void PlayState::MovePlayer(float dt) {
   auto view_controller =
-      registry_gameplay_
-          .view<CameraComponent, PlayerComponent, TransformComponent>();
+    registry_gameplay_
+    .view<CameraComponent, PlayerComponent, TransformComponent>();
 
   PlayerData new_frame;
   new_frame.delta_time = dt;
@@ -608,7 +701,7 @@ void PlayState::MovePlayer(float dt) {
   auto& trans_c = view_controller.get<TransformComponent>(my_entity_);
   predicted_state_.position = trans_c.position;
   FrameState new_state =
-      SimulateMovement(new_frame.actions, predicted_state_, dt);
+    SimulateMovement(new_frame.actions, predicted_state_, dt);
   predicted_state_ = new_state;
   // std::cout << "y: " << predicted_state_.velocity.y << std::endl;
   // std::cout << new_state.velocity.y << std::endl;
@@ -625,9 +718,9 @@ void PlayState::OnServerFrame() {
 
   server_predicted_.position = new_transforms_[my_id_].first;
   server_predicted_.velocity =
-      registry_gameplay_.get<PhysicsComponent>(my_entity_).velocity;
+    registry_gameplay_.get<PhysicsComponent>(my_entity_).velocity;
   server_predicted_.is_airborne =
-      registry_gameplay_.get<PhysicsComponent>(my_entity_).is_airborne;
+    registry_gameplay_.get<PhysicsComponent>(my_entity_).is_airborne;
 
   auto& cam_o = registry_gameplay_.get<CameraComponent>(my_entity_).orientation;
   predicted_state_.pitch = pitch_;
@@ -637,12 +730,12 @@ void PlayState::OnServerFrame() {
     server_predicted_.pitch = frame.pitch;
     server_predicted_.yaw = frame.yaw;
     FrameState new_state =
-        SimulateMovement(frame.actions, server_predicted_, frame.delta_time);
+      SimulateMovement(frame.actions, server_predicted_, frame.delta_time);
     server_predicted_ = new_state;
   }
 
   if (glm::length(predicted_state_.position - server_predicted_.position) >
-      5.0f) {
+    5.0f) {
     trans_c.position = server_predicted_.position;
     return;
   }
@@ -663,10 +756,10 @@ void PlayState::MoveBall(float dt) {
       registry_gameplay_
           .view<BallComponent, TransformComponent, PhysicsComponent, IDComponent, physics::Sphere>();
 
-  for (auto ball : view_ball) {
-    auto& phys_c = view_ball.get<PhysicsComponent>(ball);
-    auto& trans_c = view_ball.get<TransformComponent>(ball);
-    auto& id_c = view_ball.get<IDComponent>(ball);
+   for (auto ball : view_ball) {
+     auto& phys_c = view_ball.get<PhysicsComponent>(ball);
+     auto& trans_c = view_ball.get<TransformComponent>(ball);
+     auto& id_c = view_ball.get<IDComponent>(ball);
 
     physics::PhysicsObject po;
     po.acceleration =  glm::vec3(0.0f);
@@ -676,7 +769,7 @@ void PlayState::MoveBall(float dt) {
     po.position = new_transforms_[id_c.id].first;
     po.velocity = phys_c.velocity;
 
-	physics::Update(&po, dt);
+         physics::Update(&po, dt);
 
 	new_transforms_[id_c.id].first = po.position;
     phys_c.velocity = po.velocity;
@@ -789,11 +882,15 @@ void PlayState::Collision() {
   }
 }
 
+EntityID PlayState::ClientIDToEntityID(long client_id) {
+  return engine_->GetPlayerScores()[client_id].enttity_id;
+}
+
 void PlayState::DrawTarget() {
   if (my_target_ != -1) {
     auto view_players =
-        registry_gameplay_
-            .view<PlayerComponent, TransformComponent, IDComponent>();
+      registry_gameplay_
+      .view<PlayerComponent, TransformComponent, IDComponent>();
     glm::vec3 target_pos;
     glm::vec3 my_pos;
     glm::vec3 my_forward;
@@ -823,7 +920,7 @@ void PlayState::DrawTarget() {
     glm::vec3 cross = glm::normalize(glm::cross(my_forward, dir));
 
     glob::Submit(e2D_target_, target_pos, 1.0f, glm::degrees(angles) + 180.f,
-                 glm::vec3(0, 1, 0));
+      glm::vec3(0, 1, 0));
   }
 }
 
@@ -835,32 +932,33 @@ void PlayState::DrawQuickslots() {
     opacity = 0.33f;
   }
   glob::Submit(ability_handles_[my_primary_ability_id], glm::vec2(9, 50), 0.75f,
-               100, opacity);
+    100, opacity);
   glob::Submit(ability_handles_[(int)engine_->GetSecondaryAbility()],
-               glm::vec2(66, 50), 0.75f, 100);
+    glm::vec2(66, 50), 0.75f, 100);
   if (primary_cd_ > 0.0f) {
-    glob::Submit(font_test_, glm::vec2(51, 89), 72,
-                 std::to_string((int)primary_cd_), glm::vec4(0, 0, 0, 0.7f));
-    glob::Submit(font_test_, glm::vec2(50, 90), 72,
-                 std::to_string((int)primary_cd_));
+    std::string cd_string = std::to_string((int)primary_cd_);
+    float jump_left = (cd_string.length() - 1) * 15;
+    glob::Submit(font_test_, glm::vec2(50 - jump_left, 89), 72, cd_string,
+                 glm::vec4(0, 0, 0, 0.7f));
+    glob::Submit(font_test_, glm::vec2(51 - jump_left, 90), 72, cd_string);
   }
 }
 
 void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,
-                                   glm::quat orientation) {
+  glm::quat orientation) {
   transforms_[player_id] = std::make_pair(pos, orientation);
 }
 
 void PlayState::SetEntityPhysics(EntityID player_id, glm::vec3 vel,
-                                 bool is_airborne) {
+  bool is_airborne) {
   physics_[player_id] = std::make_pair(vel, is_airborne);
 }
 
 void PlayState::SetCameraOrientation(glm::quat orientation) {
   registry_gameplay_.view<CameraComponent>().each(
-      [&](auto entity, CameraComponent& cam_c) {
-        cam_c.orientation = orientation;
-      });
+    [&](auto entity, CameraComponent& cam_c) {
+    cam_c.orientation = orientation;
+  });
 }
 
 void PlayState::CreateInitialEntities() {
@@ -874,30 +972,37 @@ void PlayState::CreatePlayerEntities() {
   auto& sound_engine = engine_->GetSoundEngine();
 
   std::cout << "DEBUG: playstate.cpp: Created " << player_ids_.size()
-            << " players\n";
+    << " players\n";
 
   for (auto entity_id : player_ids_) {
     auto entity = registry_gameplay_.create();
 
     glm::vec3 alter_scale =
-        glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
+      glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
     glm::vec3 character_scale = glm::vec3(0.0033f);
 
-    glob::ModelHandle player_model = glob::GetModel("Assets/Mech/Mech.fbx");
+    glob::ModelHandle player_model;
+    auto team = engine_->GetPlayerTeam(entity_id);
+    if(team == TEAM_BLUE) {
+      player_model = glob::GetModel("Assets/Mech/MechBlue.fbx");
+    } else {
+      player_model = glob::GetModel("Assets/Mech/MechRed.fbx");
+    }
 
     registry_gameplay_.assign<IDComponent>(entity, entity_id);
-    registry_gameplay_.assign<PlayerComponent>(entity);
+    auto& pc = registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(0.f),
                                                   glm::quat(), character_scale);
+
     auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
     model_c.handles.push_back(player_model);
     model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
 
     registry_gameplay_.assign<AnimationComponent>(
-        entity, glob::GetAnimationData(player_model));
+      entity, glob::GetAnimationData(player_model));
     registry_gameplay_.assign<PhysicsComponent>(entity);
     registry_gameplay_.assign<SoundComponent>(entity,
-                                              sound_engine.CreatePlayer());
+      sound_engine.CreatePlayer());
 
     if (entity_id == my_id_) {
       glm::vec3 camera_offset = glm::vec3(0.5f, 0.7f, 0.f);
@@ -954,9 +1059,38 @@ void PlayState::CreateBallEntity() {
   glm::vec3 arena_scale = glm::vec3(1.0f);
   auto ball = registry_gameplay_.create();
   glob::ModelHandle model_ball_projectors_p =
-      glob::GetModel("Assets/Ball_new/Ball_projectors.fbx");
+    glob::GetModel("Assets/Ball_new/Ball_projectors.fbx");
   glob::ModelHandle model_ball_sphere_p =
-      glob::GetTransparentModel("Assets/Ball_new/Ball_Sphere.fbx");
+    glob::GetTransparentModel("Assets/Ball_new/Ball_Sphere.fbx");
+  // glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
+  auto& model_c = registry_gameplay_.assign<ModelComponent>(ball);
+  model_c.handles.push_back(model_ball_sphere_p);
+  model_c.handles.push_back(model_ball_projectors_p);
+
+  registry_gameplay_.assign<TransformComponent>(ball, zero_vec, zero_vec,
+    glm::vec3(0.95f));
+  registry_gameplay_.assign<PhysicsComponent>(ball);
+  registry_gameplay_.assign<BallComponent>(ball);
+  registry_gameplay_.assign<IDComponent>(ball, ball_id_);
+  registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
+  registry_gameplay_.assign<physics::Sphere>(ball, glm::vec3(0.0f), 1.0f);
+}
+
+void PlayState::CreateNewBallEntity(bool fake, EntityID id) {
+  auto& sound_engine = engine_->GetSoundEngine();
+
+  // Ball
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glm::vec3 arena_scale = glm::vec3(1.0f);
+  auto ball = registry_gameplay_.create();
+  glob::ModelHandle model_ball_projectors_p =
+      glob::GetModel("Assets/Ball_new/Ball_projectors.fbx");
+
+  std::string model_path = "Assets/Ball_new/Ball_Sphere.fbx";
+  if (fake) {
+    model_path = "Assets/Ball_new/fake/Ball_Sphere.fbx";
+  }
+  glob::ModelHandle model_ball_sphere_p = glob::GetTransparentModel(model_path);
   // glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
   auto& model_c = registry_gameplay_.assign<ModelComponent>(ball);
   model_c.handles.push_back(model_ball_sphere_p);
@@ -966,9 +1100,8 @@ void PlayState::CreateBallEntity() {
                                                 glm::vec3(0.95f));
   registry_gameplay_.assign<PhysicsComponent>(ball);
   registry_gameplay_.assign<BallComponent>(ball);
-  registry_gameplay_.assign<IDComponent>(ball, ball_id_);
+  registry_gameplay_.assign<IDComponent>(ball, id);
   registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
-  registry_gameplay_.assign<physics::Sphere>(ball, glm::vec3(0.0f), 1.0f);
 }
 
 void PlayState::CreateInGameMenu() {
@@ -981,13 +1114,13 @@ void PlayState::CreateInGameMenu() {
 
   // CONTINUE BUTTON -- change registry to registry_gameplay_
   ButtonComponent* in_game_buttons_ = GenerateButtonEntity(
-      registry_gameplay_, "CONTINUE", in_game_menu_pos + glm::vec2(0, 0),
-      font_test_, false);
+    registry_gameplay_, "CONTINUE", in_game_menu_pos + glm::vec2(0, 0),
+    font_test_, false);
   in_game_buttons_->button_func = [&]() { ToggleInGameMenu(); };
   // SETTINGS BUTTON -- change registry to registry_settings_
   in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "SETTINGS",
-                                          in_game_menu_pos + glm::vec2(0, -70),
-                                          font_test_, false);
+    in_game_menu_pos + glm::vec2(0, -70),
+    font_test_, false);
 
   in_game_buttons_->button_func = [&] {
     engine_->ChangeState(StateType::SETTINGS);
@@ -996,15 +1129,15 @@ void PlayState::CreateInGameMenu() {
 
   // END GAME -- change registry to registry_mainmenu_
   in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "MAINMENU",
-                                          in_game_menu_pos + glm::vec2(0, -140),
-                                          font_test_, false);
+    in_game_menu_pos + glm::vec2(0, -140),
+    font_test_, false);
   in_game_buttons_->button_func = [&] {
     engine_->ChangeState(StateType::MAIN_MENU);
   };
 
   in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "EXIT",
-                                          in_game_menu_pos + glm::vec2(0, -210),
-                                          font_test_, false);
+    in_game_menu_pos + glm::vec2(0, -210),
+    font_test_, false);
   in_game_buttons_->button_func = [&] { exit(0); };
 }
 
@@ -1012,23 +1145,48 @@ void PlayState::TestCreateLights() {
   // Create lights
   blue_goal_light_ = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(
-      blue_goal_light_, glm::vec3(0.1f, 0.1f, 1.0f), 30.f, 0.0f);
+    blue_goal_light_, glm::vec3(0.1f, 0.1f, 1.0f), 30.f, 0.0f);
   registry_gameplay_.assign<TransformComponent>(
-      blue_goal_light_, glm::vec3(48.f, -6.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
-      glm::vec3(1.f));
+    blue_goal_light_, glm::vec3(48.f, -6.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+    glm::vec3(1.f));
 
   red_goal_light_ = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(
-      red_goal_light_, glm::vec3(1.f, 0.1f, 0.1f), 30.f, 0.f);
+    red_goal_light_, glm::vec3(1.f, 0.1f, 0.1f), 30.f, 0.f);
   registry_gameplay_.assign<TransformComponent>(
-      red_goal_light_, glm::vec3(-48.f, -6.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
-      glm::vec3(1.f));
+    red_goal_light_, glm::vec3(-48.f, -6.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+    glm::vec3(1.f));
 
   auto light = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(light, glm::vec3(0.4f, 0.4f, 0.4f),
-                                            90.f, 0.1f);
+    90.f, 0.1f);
   registry_gameplay_.assign<TransformComponent>(
-      light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
+    light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
+}
+
+void PlayState::CreateWall(EntityID id, glm::vec3 position,
+                           glm::quat rotation) {
+  auto wall = registry_gameplay_.create();
+  auto& sound_engine = engine_->GetSoundEngine();
+  registry_gameplay_.assign<SoundComponent>(wall, sound_engine.CreatePlayer());
+  registry_gameplay_.assign<IDComponent>(wall, id);
+  registry_gameplay_.assign<TransformComponent>(
+      wall, position, rotation, glm::vec3(1.f, 4.f, 5.f));
+  auto& obb = registry_gameplay_.assign<physics::OBB>(wall);
+  obb.extents[0] = 1.f;
+  obb.extents[1] = 8.3f;
+  obb.extents[2] = 5.f;
+
+  glob::ModelHandle model = glob::GetModel("assets/Pickup/Pickup.fbx");
+  int a = 10;
+  std::vector<glob::ModelHandle> hs;
+  hs.push_back(model);
+  registry_gameplay_.assign<ModelComponent>(wall, hs);
+
+  GameEvent wall_event;
+  wall_event.type = GameEvent::BUILD_WALL;
+  wall_event.build_wall.wall_id = id;
+  dispatcher.trigger(wall_event);
 }
 
 void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {
@@ -1041,7 +1199,7 @@ void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {
   model_c.handles.push_back(model_pick_up);
 
   registry_gameplay_.assign<TransformComponent>(
-      pick_up, position, glm::vec3(0.0f, 0.0f, 0.f), glm::vec3(0.4f));
+    pick_up, position, glm::vec3(0.0f, 0.0f, 0.f), glm::vec3(0.4f));
   registry_gameplay_.assign<PickUpComponent>(pick_up);
 }
 
@@ -1049,12 +1207,12 @@ void PlayState::CreateCannonBall(EntityID id) {
   auto cannonball = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
-  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  glob::ModelHandle model_ball = glob::GetModel("assets/Rocket/Rocket.fbx");
   auto& model_c = registry_gameplay_.assign<ModelComponent>(cannonball);
   model_c.handles.push_back(model_ball);
 
   registry_gameplay_.assign<TransformComponent>(cannonball, zero_vec, zero_vec,
-                                                glm::vec3(0.3f));
+    glm::vec3(0.3f));
   registry_gameplay_.assign<IDComponent>(cannonball, id);
 }
 
@@ -1064,11 +1222,11 @@ void PlayState::CreateTeleportProjectile(EntityID id) {
 
   glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
   auto& model_c =
-      registry_gameplay_.assign<ModelComponent>(teleport_projectile);
+    registry_gameplay_.assign<ModelComponent>(teleport_projectile);
   model_c.handles.push_back(model_ball);
 
   registry_gameplay_.assign<TransformComponent>(teleport_projectile, zero_vec,
-                                                zero_vec, glm::vec3(0.3f));
+    zero_vec, glm::vec3(0.3f));
   registry_gameplay_.assign<IDComponent>(teleport_projectile, id);
 }
 
@@ -1082,10 +1240,10 @@ void PlayState::CreateForcePushObject(EntityID id) {
   model_c.handles.push_back(model_ball);
 
   registry_gameplay_.assign<TransformComponent>(force_object, zero_vec,
-                                                zero_vec, glm::vec3(0.5f));
+    zero_vec, glm::vec3(0.5f));
   registry_gameplay_.assign<IDComponent>(force_object, id);
   registry_gameplay_.assign<SoundComponent>(force_object,
-                                            sound_engine.CreatePlayer());
+    sound_engine.CreatePlayer());
 }
 
 void PlayState::CreateMissileObject(EntityID id) {
@@ -1097,58 +1255,108 @@ void PlayState::CreateMissileObject(EntityID id) {
   auto& model_c = registry_gameplay_.assign<ModelComponent>(missile_object);
   model_c.handles.push_back(model_ball);
   registry_gameplay_.assign<TransformComponent>(missile_object, zero_vec,
-                                                zero_vec, glm::vec3(0.5f));
+    zero_vec, glm::vec3(0.5f));
   registry_gameplay_.assign<IDComponent>(missile_object, id);
   registry_gameplay_.assign<SoundComponent>(missile_object,
-                                            sound_engine.CreatePlayer());
+    sound_engine.CreatePlayer());
 }
 
 void PlayState::DestroyEntity(EntityID id) {
   auto id_view = registry_gameplay_.view<IDComponent>();
+
+  glm::vec3 pos(0);
+  bool was_ball = false;
+
   for (auto entity : id_view) {
     auto& e_id = id_view.get(entity);
 
     if (e_id.id == id) {
+      if (registry_gameplay_.has<BallComponent>(entity)) {
+        was_ball = true;
+
+        if (registry_gameplay_.has<SoundComponent>(entity)) {
+          auto& sound_c = registry_gameplay_.get<SoundComponent>(entity);
+          auto ent = registry_gameplay_.create();
+
+          GameEvent ge;
+          ge.type = GameEvent::FAKE_BALL_POOF;
+          ge.fake_ball_poofed.ball_id = id;
+          dispatcher.trigger(ge);
+        }
+      }
+      if (registry_gameplay_.has<TransformComponent>(entity)) {
+        pos = registry_gameplay_.get<TransformComponent>(entity).position;
+      }
       registry_gameplay_.destroy(entity);
-      return;
+      break;
     }
+  }
+
+  if (was_ball) {
+    auto e = registry_gameplay_.create();
+    auto handle = glob::CreateParticleSystem();
+
+    std::vector<glob::ParticleSystemHandle> handles;
+    std::vector<glm::vec3> offsets;
+    //= {glm::vec3(0.f)};
+    std::vector<glm::vec3> directions;
+    //= {glm::vec3(0.f, 1.f, 0.f)};
+
+    glob::SetParticleSettings(handle, "ball_destroy.txt");
+    glob::SetEmitPosition(handle, pos);
+    handles.push_back(handle);
+
+    // auto ball_view = registry_gameplay_.view<
+
+    auto& p_c = registry_gameplay_.assign<ParticleComponent>(
+        e, handles, offsets, directions);
+    registry_gameplay_.assign<int>(e, 0);
   }
 }
 
 void PlayState::SwitchGoals() {
   if (!goals_swapped_) {
     goals_swapped_ = true;
-  } else {
+  }
+  else {
     goals_swapped_ = false;
   }
   TransformComponent& blue_light_trans_c =
-      registry_gameplay_.get<TransformComponent>(blue_goal_light_);
+    registry_gameplay_.get<TransformComponent>(blue_goal_light_);
   TransformComponent& red_light_trans_c =
-      registry_gameplay_.get<TransformComponent>(red_goal_light_);
+    registry_gameplay_.get<TransformComponent>(red_goal_light_);
 
   glm::vec3 blue_light_pos = blue_light_trans_c.position;
   blue_light_trans_c.position = red_light_trans_c.position;
   red_light_trans_c.position = blue_light_pos;
 }
 
+void PlayState::SetPlayerLookDir(EntityID id, glm::vec3 look_dir) {
+  player_look_dirs_[id] = look_dir;
+}
+
+void PlayState::SetPlayerMoveDir(EntityID id, glm::vec3 move_dir) {
+  player_move_dirs_[id] = move_dir;
+}
+
 void PlayState::ReceiveGameEvent(const GameEvent& e) {
   switch (e.type) {
-    case GameEvent::RESET: {
-      Reset();
-      break;
+  case GameEvent::RESET: {
+    Reset();
+    break;
+  }
+  case GameEvent::PRIMARY_USED: {
+    if (e.primary_used.player_id == my_id_) {
+      primary_cd_ = e.primary_used.cd;
     }
-    case GameEvent::PRIMARY_USED: {
-      if (e.primary_used.player_id == my_id_) {
-        primary_cd_ = e.primary_used.cd;
-      }
-      break;
+    break;
+  }
+  case GameEvent::SECONDARY_USED: {
+    if (e.primary_used.player_id == my_id_) {
+      engine_->SetSecondaryAbility(AbilityID::NULL_ABILITY);
     }
-    case GameEvent::SECONDARY_USED: {
-      if (e.primary_used.player_id == my_id_) {
-        engine_->SetSecondaryAbility(AbilityID::NULL_ABILITY);
-      }
-      break;
-    }
+    break;
+  }
   }
 }
 
@@ -1173,9 +1381,10 @@ void PlayState::Reset() {
     registry_gameplay_.destroy(entity);
   }
   if ((my_team_ == TEAM_BLUE && goals_swapped_ == false) ||
-      (my_team_ == TEAM_RED && goals_swapped_ == true)) {
+    (my_team_ == TEAM_RED && goals_swapped_ == true)) {
     yaw_ = glm::pi<float>();
-  } else {
+  }
+  else {
     yaw_ = 0.0f;
   }
   pitch_ = 0.0f;

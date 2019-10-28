@@ -1,10 +1,10 @@
+#include <GLFW/glfw3.h>
 #include <ecs/components.hpp>
 #include <engine.hpp>
 #include <entitycreation.hpp>
 #include <glob/window.hpp>
-#include "state.hpp"
 #include <util/global_settings.hpp>
-#include <GLFW/glfw3.h>
+#include "state.hpp"
 
 void SettingsState::Startup() {
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
@@ -17,6 +17,7 @@ void SettingsState::Init() {
   setting_volume_ = GlobalSettings::Access()->ValueOf("SOUND_VOLUME");
   setting_fov_ = GlobalSettings::Access()->ValueOf("GRAPHICS_FOV");
   setting_mouse_sens_ = GlobalSettings::Access()->ValueOf("INPUT_MOUSE_SENS");
+  setting_username_ = GlobalSettings::Access()->StringValueOf("USERNAME");
   CreateSettingsMenu();
 }
 
@@ -60,7 +61,7 @@ void SettingsState::CreateSettingsMenu() {
 
   glm::vec2 graphics_start_pos =
       glm::vec2(35, glob::window::GetWindowDimensions().y - 175);
-  glm::vec2 down_jump = glm::vec2(0, 75);
+  glm::vec2 down_jump = glm::vec2(0, 90);
   // fov slider
   auto fov_slider = registry_settings_.create();
   auto& slider_c = registry_settings_.assign<SliderComponent>(fov_slider);
@@ -98,7 +99,7 @@ void SettingsState::CreateSettingsMenu() {
 
   glm::vec2 game_start_pos =
       glm::vec2(1000, glob::window::GetWindowDimensions().y - 175);
-  // volume slider
+  // mouse sensitivity
   auto sens_slider = registry_settings_.create();
   auto& sens_slider_c = registry_settings_.assign<SliderComponent>(sens_slider);
   sens_slider_c.back_tex =
@@ -114,6 +115,16 @@ void SettingsState::CreateSettingsMenu() {
   sens_slider_c.text = "MOUSE SENSITIVTY";
   sens_slider_c.value_to_write = &setting_mouse_sens_;
   sens_slider_c.font_handle = font_test_;
+
+  // user name
+  auto input_entity = registry_settings_.create();
+  auto& input = registry_settings_.assign<InputComponent>(input_entity);
+  input.font_size = 32;
+  input.max_length = 12;
+  input.pos = game_start_pos - down_jump * 1.0f;
+  input.input_name = "Username";
+  input.text = setting_username_;
+  input.linked_value = &setting_username_;
 }
 
 void SettingsState::SaveSettings() {
@@ -121,5 +132,8 @@ void SettingsState::SaveSettings() {
   GlobalSettings::Access()->WriteValue("SOUND_VOLUME", setting_volume_);
   GlobalSettings::Access()->WriteValue("GRAPHICS_FOV", setting_fov_);
   GlobalSettings::Access()->WriteValue("INPUT_MOUSE_SENS", setting_mouse_sens_);
+  GlobalSettings::Access()->StringWriteValue("USERNAME", setting_username_);
+
+  //printf("Username saved: %s \n", setting_username_.c_str());
   engine_->UpdateSettingsValues();
 }

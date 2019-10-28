@@ -29,12 +29,15 @@ struct PlayerComponent {  // Server side
   float kick_force = GlobalSettings::Access()->ValueOf("PLAYER_KICK_FORCE");
   float kick_others_force =
       GlobalSettings::Access()->ValueOf("PLAYER_KICK_OTHERS_FORCE");
+  float rocket_speed = GlobalSettings::Access()->ValueOf("PLAYER_ROCKET_SPEED");
   Timer kick_timer;
 
   // input from client
   std::bitset<PlayerAction::NUM_ACTIONS> actions;
   float yaw = 0;
   float pitch = 0;
+
+  glm::vec3 wanted_move_dir;
 
   EntityID target = -1;
 

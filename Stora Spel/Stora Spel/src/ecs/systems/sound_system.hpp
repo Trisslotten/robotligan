@@ -19,11 +19,19 @@ public:
   slob::SoundEngine& GetSoundEngine() { return sound_engine_; }
 
   void ReceiveGameEvent(const GameEvent& event);
+  std::unordered_map<AbilityID, slob::SoundHandle> GetAbilitySounds() {
+    return ability_sounds_;
+  }
+
+  void ReceiveMenuEvent(const MenuEvent& event);
 private:
   Timer nudge_timer_;
   std::unordered_map<AbilityID, slob::SoundHandle> ability_sounds_;
 
   slob::SoundEngine sound_engine_;
+
+  slob::SoundHandle button_hover_;
+  slob::SoundHandle button_click_;
 
   slob::SoundHandle sound_step_;
   slob::SoundHandle sound_crowd_;
@@ -37,6 +45,7 @@ private:
   slob::SoundHandle sound_ability_missile_impact_;
   slob::SoundHandle sound_ability_teleport_impact_;
   slob::SoundHandle sound_ability_force_push_impact_;
+  slob::SoundHandle sound_ability_fake_ball_poof_;
 
   Engine* engine_;
 };
