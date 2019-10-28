@@ -36,4 +36,4 @@ Example: '>MY_VALUE=13.37'
 
 //--Input Settings--//
 >INPUT_MOUSE_SENS=1.000000
-#USERNAME=bugge
+#USERNAME=fiskenspappa
