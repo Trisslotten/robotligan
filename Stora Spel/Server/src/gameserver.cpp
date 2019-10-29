@@ -257,9 +257,8 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       std::string str;
       str.resize(strsize);
       packet.Remove(str.data(), strsize);
-      int player_id = client_id + 1;
       Message message;
-      message.name = "player " + std::to_string(player_id) + ": ";
+      message.name = client_names_[client_id] + ": ";
       message.message = str;
       auto view_player = registry_.view<TeamComponent, PlayerComponent>();
       for (auto player : view_player) {

@@ -849,11 +849,11 @@ void PlayState::Collision() {
   for (auto wall : view_walls) {
     if (registry_gameplay_.has<PlayerComponent>(wall)) {
       continue;
-	}  
-	auto& hitbox = view_walls.get(wall);
-    physics::IntersectData data = Intersect(arena_hitbox, my_obb);
+	  }  
+	  auto& hitbox = view_walls.get(wall);
+    physics::IntersectData data = Intersect(hitbox, my_obb);
     if (data.collision == true) {
-      my_obb.center += data.move_vector;
+      my_obb.center -= data.move_vector;
     }
   }
   //collision with ball
