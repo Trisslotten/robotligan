@@ -98,6 +98,7 @@ void ServerPlayState::Init() {
   CreateInitialEntities(server.GetConnectedPlayers());
 
   ResetEntities();
+  created_pick_ups_.clear();
 
   // Replay machine
   this->replay_machine_ = nullptr;
@@ -148,6 +149,16 @@ void ServerPlayState::Init() {
     to_send << client_abilities_[client_id];
 
     to_send << PacketBlockType::GAME_START;
+
+    auto pick_up_view =
+        registry.view<PickUpComponent, TransformComponent, IDComponent>();
+    for (auto entity : pick_up_view) {
+      auto& t = pick_up_view.get<TransformComponent>(entity);
+      auto& id = pick_up_view.get<IDComponent>(entity);
+      to_send << t.position;
+      to_send << id.id;
+      to_send << PacketBlockType::CREATE_PICK_UP;
+    }
 
     server.Send(to_send);
   }
@@ -346,7 +357,7 @@ void ServerPlayState::HandleDataToSend() {
         to_send << pick_event.ability_id;
         to_send << PacketBlockType::RECEIVE_PICK_UP;
       }
-      registry.remove<PickUpEvent>(entity);
+      //registry.remove<PickUpEvent>(entity);
     }
     auto view_goals = registry.view<GoalComponenet, TeamComponent>();
     entt::entity blue_goal;
@@ -415,6 +426,11 @@ void ServerPlayState::HandleDataToSend() {
   }
   created_projectiles_.clear();
   destroy_entities_.clear();
+
+  auto pick_up_events = registry.view<PickUpEvent>();
+  for (auto entity : pick_up_events) {
+    registry.destroy(entity);
+  }
 
   // switch goal cleanup
   auto view_goals = registry.view<GoalComponenet, TeamComponent>();

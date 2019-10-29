@@ -657,7 +657,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
   }
 }
 
-void Engine::Render() { glob::Render(); }
+void Engine::Render() {
+  //
+  glob::Render();
+}
 
 void Engine::SetCurrentRegistry(entt::registry* registry) {
   this->registry_current_ = registry;
