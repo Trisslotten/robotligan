@@ -85,6 +85,8 @@
     <ClInclude Include="src\ecs\systems\particle_system.hpp" />
     <ClInclude Include="src\playerdata.hpp" />
     <ClInclude Include="shared\shared\lifetime_component.hpp" />
+    <ClInclude Include="src\ecs\components\trail_component.hpp" />
+    <ClInclude Include="src\ecs\systems\trail_system.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

@@ -8,12 +8,13 @@ uniform mat4 cam_transform;
 uniform vec3 cam_pos;
 
 uniform vec3 position_history[MAX_POSITIONS];
+uniform int history_size;
 uniform float width;
 
 
 void main() {
-	int index = int(floor(pos.x * (MAX_POSITIONS-1)));
-	float t = fract(pos.x * (MAX_POSITIONS-1));
+	int index = int(floor(pos.x * (history_size-1)));
+	float t = smoothstep(0., 1., fract(pos.x * (history_size-1)));
 
 	vec3 p1 = position_history[index];
 	vec3 p2 = position_history[index+1];

@@ -147,5 +147,11 @@ void RenderSystem(entt::registry& registry) {
     glob::Submit(slider_c.font_handle, slider_c.position + glm::vec2(40, -10),
                  22, std::to_string(slider_c.value));
   }
-}
+
+  auto view_trails = registry.view<TrailComponent>();
+  for(auto entity : view_trails) {
+    auto& trail_c = view_trails.get(entity);
+    glob::SubmitTrail(trail_c.position_history, trail_c.width, trail_c.color);
+  }
+} 
 #endif  // RENDER_SYSTEM_HPP_

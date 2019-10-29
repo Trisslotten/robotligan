@@ -94,7 +94,7 @@ struct LightItem {
 struct TrailItem {
   std::vector<glm::vec3> position_history;
   float width;
-  glm::vec3 color;
+  glm::vec4 color;
 };
 
 ShaderProgram fullscreen_shader;
@@ -421,7 +421,7 @@ void Init() {
   trail_shader.add("trail.vert");
   trail_shader.add("trail.frag");
   trail_shader.compile();
-  num_trail_quads = 100;
+  num_trail_quads = 200;
   std::vector<glm::vec3> trail_verts;
   for (int i = 0; i < num_trail_quads; i++) {
     float left = float(i) / (num_trail_quads);
@@ -1115,7 +1115,7 @@ void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale, float rotDegrees,
 }
 
 void SubmitTrail(const std::vector<glm::vec3> &pos_history, float width,
-                 glm::vec3 color) {
+                 glm::vec4 color) {
   trails_to_render.push_back({pos_history, width, color});
 }
 
@@ -1311,11 +1311,15 @@ void Render() {
       trail_shader.uniform("color", trail_item.color);
       int max_positions = 100;
       auto &ph = trail_item.position_history;
-      trail_shader.uniformv("position_history",
-                            glm::min((int)ph.size(), max_positions), ph.data());
+      int history_size = glm::min((int)ph.size(), max_positions);
+      trail_shader.uniformv("position_history", history_size, ph.data());
+      trail_shader.uniform("history_size", history_size);
       glDisable(GL_CULL_FACE);
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       glBindVertexArray(trail_vao);
       glDrawArrays(GL_TRIANGLES, 0, num_trail_quads * 6);
+      glDisable(GL_BLEND);
       glEnable(GL_CULL_FACE);
     }
   }
