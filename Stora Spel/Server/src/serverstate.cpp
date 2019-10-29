@@ -98,6 +98,7 @@ void ServerPlayState::Init() {
   CreateInitialEntities(server.GetConnectedPlayers());
 
   ResetEntities();
+  created_pick_ups_.clear();
 
   // Replay machine
   this->replay_machine_ = nullptr;
@@ -148,6 +149,16 @@ void ServerPlayState::Init() {
     to_send << client_abilities_[client_id];
 
     to_send << PacketBlockType::GAME_START;
+
+    auto pick_up_view =
+        registry.view<PickUpComponent, TransformComponent, IDComponent>();
+    for (auto entity : pick_up_view) {
+      auto& t = pick_up_view.get<TransformComponent>(entity);
+      auto& id = pick_up_view.get<IDComponent>(entity);
+      to_send << t.position;
+      to_send << id.id;
+      to_send << PacketBlockType::CREATE_PICK_UP;
+    }
 
     server.Send(to_send);
   }
