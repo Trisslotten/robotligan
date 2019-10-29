@@ -60,7 +60,10 @@ void ServerLobbyState::Update(float dt) {
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     if (teams_updated_) {
       for (auto client_team : client_teams_) {
-        to_send << game_server_->GetClientNames()[client_team.first];
+        std::string name = game_server_->GetClientNames()[client_team.first];
+
+        to_send.Add(name.c_str(), name.size());
+        to_send << name.size();
         to_send << client_team.first;   // send id
         to_send << client_team.second;  // send team
         bool ready = clients_ready_[client_team.first];
@@ -98,6 +101,7 @@ void ServerPlayState::Init() {
   CreateInitialEntities(server.GetConnectedPlayers());
 
   ResetEntities();
+  created_pick_ups_.clear();
 
   // Replay machine
   this->replay_machine_ = nullptr;
@@ -148,6 +152,16 @@ void ServerPlayState::Init() {
     to_send << client_abilities_[client_id];
 
     to_send << PacketBlockType::GAME_START;
+
+    auto pick_up_view =
+        registry.view<PickUpComponent, TransformComponent, IDComponent>();
+    for (auto entity : pick_up_view) {
+      auto& t = pick_up_view.get<TransformComponent>(entity);
+      auto& id = pick_up_view.get<IDComponent>(entity);
+      to_send << t.position;
+      to_send << id.id;
+      to_send << PacketBlockType::CREATE_PICK_UP;
+    }
 
     server.Send(to_send);
   }

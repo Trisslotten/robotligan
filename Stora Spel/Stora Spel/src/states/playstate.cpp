@@ -22,6 +22,7 @@
 #include "eventdispatcher.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
+#include <ecs\components\trail_component.hpp>
 
 void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
@@ -123,6 +124,9 @@ void PlayState::Init() {
 
   engine_->GetSoundSystem().PlayAmbientSound(registry_gameplay_);
   goals_swapped_ = false;
+  primary_cd_ = 0.f;
+  engine_->SetSecondaryAbility(AbilityID::NULL_ABILITY);
+  timer_ = 0.f;
   Reset();
 }
 
@@ -200,10 +204,10 @@ void PlayState::Update(float dt) {
     MovePlayer(1 / 64.0f);
     actions_.clear();
   }
-  timer += dt;
-  if (timer > 1.0f / 64.0f) {
+  timer_ += dt;
+  if (timer_ > 1.0f / 64.0f) {
 	MoveBall(dt);
-    timer -= dt;
+    timer_ -= dt;
   }
   // interpolate
   auto view_entities =
@@ -846,11 +850,11 @@ void PlayState::Collision() {
   for (auto wall : view_walls) {
     if (registry_gameplay_.has<PlayerComponent>(wall)) {
       continue;
-	}  
-	auto& hitbox = view_walls.get(wall);
-    physics::IntersectData data = Intersect(arena_hitbox, my_obb);
+	  }  
+	  auto& hitbox = view_walls.get(wall);
+    physics::IntersectData data = Intersect(hitbox, my_obb);
     if (data.collision == true) {
-      my_obb.center += data.move_vector;
+      my_obb.center -= data.move_vector;
     }
   }
   //collision with ball
@@ -1074,6 +1078,8 @@ void PlayState::CreateBallEntity() {
   registry_gameplay_.assign<IDComponent>(ball, ball_id_);
   registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
   registry_gameplay_.assign<physics::Sphere>(ball, glm::vec3(0.0f), 1.0f);
+
+  registry_gameplay_.assign<TrailComponent>(ball);
 }
 
 void PlayState::CreateNewBallEntity(bool fake, EntityID id) {
@@ -1102,6 +1108,8 @@ void PlayState::CreateNewBallEntity(bool fake, EntityID id) {
   registry_gameplay_.assign<BallComponent>(ball);
   registry_gameplay_.assign<IDComponent>(ball, id);
   registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
+
+  registry_gameplay_.assign<TrailComponent>(ball);
 }
 
 void PlayState::CreateInGameMenu() {

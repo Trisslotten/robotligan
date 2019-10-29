@@ -263,7 +263,6 @@ bool DoSuperStrike(entt::registry& registry) {
                                                   "ABILITY_SUPER_STRIKE_FORCE");
         physics_c_ball.is_airborne = true;
         ball_ball_c.is_super_striked = true;
-        return true;
 
         // Save game event
         if (registry.has<IDComponent>(player_entity)) {
@@ -273,6 +272,7 @@ bool DoSuperStrike(entt::registry& registry) {
               registry.get<IDComponent>(player_entity).id;
           dispatcher.trigger(super_kick_event);
         }
+        return true;
       }
     }
   }
