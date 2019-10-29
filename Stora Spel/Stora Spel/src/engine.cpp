@@ -616,6 +616,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::GAME_END: {
       // std::cout << "PACKET: GAME_END\n";
       play_state_.EndGame();
+      previous_state_ = StateType::LOBBY;
       // ChangeState(StateType::LOBBY);
       break;
     }
