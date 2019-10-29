@@ -114,9 +114,11 @@ class LobbyState : public State {
   glob::GUIHandle ready_back_hover_;
   glob::GUIHandle ready_icon_;
   glob::GUIHandle ready_empty_icon_;
+  glob::GUIHandle chatbox_back_;
 
   ServerStateType server_state_;
   std::vector<glob::GUIHandle> ability_icons_;
+  std::vector<std::string> ability_tooltips_;
   glob::Font2DHandle font_team_names_;
   glob::Font2DHandle font_test_;
   std::unordered_map<int, LobbyPlayer> lobby_players_;

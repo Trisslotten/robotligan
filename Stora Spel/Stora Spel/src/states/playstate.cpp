@@ -107,6 +107,8 @@ void PlayState::Init() {
 
   //end_game_timer_.Restart();
   game_has_ended_ = false;
+  my_target_ = -1;
+  primary_cd_ = 0;
 
   CreateInGameMenu();
   CreateInitialEntities();
@@ -891,7 +893,7 @@ EntityID PlayState::ClientIDToEntityID(long client_id) {
 }
 
 void PlayState::DrawTarget() {
-  if (my_target_ != -1) {
+  if (my_target_ != -1 && (engine_->GetSecondaryAbility() == AbilityID::MISSILE || my_primary_ability_id == (int)AbilityID::MISSILE)) {
     auto view_players =
       registry_gameplay_
       .view<PlayerComponent, TransformComponent, IDComponent>();
@@ -941,10 +943,10 @@ void PlayState::DrawQuickslots() {
     glm::vec2(66, 50), 0.75f, 100);
   if (primary_cd_ > 0.0f) {
     std::string cd_string = std::to_string((int)primary_cd_);
-    float jump_left = (cd_string.length() - 1) * 15;
-    glob::Submit(font_test_, glm::vec2(50 - jump_left, 89), 72, cd_string,
+    float jump_left = (cd_string.length() - 1) * 16;
+    glob::Submit(font_test_, glm::vec2(45 - jump_left, 89), 72, cd_string,
                  glm::vec4(0, 0, 0, 0.7f));
-    glob::Submit(font_test_, glm::vec2(51 - jump_left, 90), 72, cd_string);
+    glob::Submit(font_test_, glm::vec2(46 - jump_left, 90), 72, cd_string);
   }
 }
 

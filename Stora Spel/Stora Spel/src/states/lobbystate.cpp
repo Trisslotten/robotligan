@@ -139,7 +139,7 @@ void LobbyState::Update(float dt) {
   }
   if (everyone_ready) {
     glm::vec2 bottom_pos =
-        glm::vec2((glob::window::GetWindowDimensions().x / 2) - 250, 30);
+        glm::vec2((glob::window::GetWindowDimensions().x / 2) - 235, 30);
 
     if (engine_->GetServerState() == ServerStateType::LOBBY) {
       glob::Submit(font_test_, bottom_pos, 28,
@@ -147,6 +147,9 @@ void LobbyState::Update(float dt) {
     } else {
       glob::Submit(font_test_, bottom_pos, 28, "Match is currently in session");
     }
+
+	
+
     // auto game_clients = engine_->GetPlayingPlayers();
 
     /*
@@ -159,6 +162,7 @@ void LobbyState::Update(float dt) {
             }
     }*/
   }
+  glob::Submit(chatbox_back_, glm::vec2(10, 24), 1.0f);
 }
 
 void LobbyState::UpdateNetwork() {}
@@ -262,6 +266,7 @@ void LobbyState::CreateBackgroundEntities() {
 
 void LobbyState::CreateGUIElements() {
   ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
+  ability_blacklist.push_back((int)AbilityID::INVISIBILITY);
   team_select_back_ =
       glob::GetGUIItem("Assets/GUI_elements/lobby_team_no_names.png");
   font_team_names_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
@@ -280,6 +285,7 @@ void LobbyState::CreateGUIElements() {
       glob::GetGUIItem("Assets/GUI_elements/lobby/ready_hover.png");
 
   ready_icon_ = glob::GetGUIItem("Assets/GUI_elements/lobby/ready_icon.png");
+  chatbox_back_ = glob::GetGUIItem("Assets/GUI_elements/chat_back.png");
   ready_empty_icon_ =
       glob::GetGUIItem("Assets/GUI_elements/lobby/dummy_icon.png");
 
@@ -289,6 +295,18 @@ void LobbyState::CreateGUIElements() {
     ability_icons_[i] = glob::GetGUIItem("Assets/GUI_elements/ability_icons/" +
                                          std::to_string(i) + ".png");
   }
+  ability_tooltips_.resize(num_abilites);
+  ability_tooltips_[1] = "BUILD WALL: construct a wall on the field.";
+  ability_tooltips_[2] = "FAKE BALL: Spawn a number of fake balls around the ball.";
+  ability_tooltips_[3] = "FORCE PUSH: Throw an explosive projectile that pushes opponents back.";
+  ability_tooltips_[4] = "GRAVITY: Lower the gravity of the arena.";
+  ability_tooltips_[5] = "HOMING BALL: Kick the ball and guide it with your aim.";
+  ability_tooltips_[6] = "INVISIBILITY: Turn invisible for a short amount of time.";
+  ability_tooltips_[7] = "MISSILE: Shoot a guided missile at your target.";
+  ability_tooltips_[8] = "SUPER STRIKE: Kick the ball with an insane amount of force.";
+  ability_tooltips_[9] = "SWITCH GOALS: Flip both teams goals around.";
+  ability_tooltips_[10] = "TELEPORT: Fire a projectile that teleports you to the point of impact.";
+
 
   // auto button_join_red = registry_lobby_.create();
   ButtonComponent* button_c = GenerateButtonEntity(
@@ -337,6 +355,7 @@ void LobbyState::CreateGUIElements() {
       b_c->gui_handle_hover = ability_back_hover_;
       b_c->bounds = glm::vec2(82, 82);
       b_c->find_name = "ability_" + std::to_string(i);
+      b_c->hover_text = ability_tooltips_[i];
       c++;
     }
   }
