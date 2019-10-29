@@ -47,6 +47,8 @@ class Model {
   bool is_emissive_ = false;
   bool is_transparent_ = false;
 
+  int num_materials_ = 1;
+
  public:
   Model();
   Model(const std::string& path);

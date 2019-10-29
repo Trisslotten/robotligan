@@ -71,7 +71,10 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   config_path += ".mcfg";
   ModelConfig config{config_path};
   if(config.isLoaded()) {
-    
+    auto num_mats = config.GetInt("num_materials");
+    if(num_mats) {
+      num_materials_ = *num_mats;
+    }
   }
 
   // std::cout << "glob::kModelUseGL: " << glob::kModelUseGL << "\n";
