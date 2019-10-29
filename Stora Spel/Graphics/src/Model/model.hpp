@@ -61,6 +61,8 @@ class Model {
 
   float MaxDistance(glm::mat4 transform, glm::vec3 point);
 
+  int GetNumMaterials() { return num_materials_; }
+
   std::vector<Joint*> bones_;
   std::vector<Animation*> animations_;
   glm::mat4 globalInverseTransform_;
