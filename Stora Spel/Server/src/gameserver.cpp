@@ -215,7 +215,9 @@ void GameServer::HandleStateChange() {
     NetAPI::Common::Packet p;
     p << this->current_state_type_ << PacketBlockType::SERVER_STATE;
     server_.Send(p);
-    client_names_.clear();
+    
+    if (went_from_play_to_lobby)
+      client_names_.clear();
   }
 }
 
