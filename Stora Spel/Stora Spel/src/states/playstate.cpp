@@ -227,8 +227,10 @@ void PlayState::Update(float dt) {
       glm::quat orientation =
         glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
-      cam_c.orientation = orientation;
-      trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
+      if (!show_in_game_menu_buttons_) {
+        cam_c.orientation = orientation;
+        trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
+	  }
     }
     else {
       auto trans = new_transforms_[id_c.id];
@@ -417,6 +419,7 @@ void PlayState::ToggleInGameMenu() {
   show_in_game_menu_buttons_ = !show_in_game_menu_buttons_;
   glob::window::SetMouseLocked(!show_in_game_menu_buttons_);
   engine_->SetSendInput(!show_in_game_menu_buttons_);
+  engine_->SetTakeInput(!show_in_game_menu_buttons_);
   UpdateInGameMenu(show_in_game_menu_buttons_);
 }
 
