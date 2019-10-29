@@ -200,13 +200,13 @@ void LobbyState::CreateBackgroundEntities() {
   registry_lobby_.assign<LightComponent>(
       light_test, glm::vec3(0.1f, 0.1f, 1.0f), 30.f, 0.2f);
   registry_lobby_.assign<TransformComponent>(
-      light_test, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      light_test, glm::vec3(12.f, -16.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
   glm::vec3 zero_vec = glm::vec3(0.0f);
   {
     // ladda in och skapa entity för bana
     auto arena = registry_lobby_.create();
-    glm::vec3 arena_scale = glm::vec3(1.0f);
+    glm::vec3 arena_scale = glm::vec3(4.0f);
     glob::ModelHandle model_arena =
         glob::GetModel("assets/Map/Map_unified_TMP.fbx");
     auto& model_c = registry_lobby_.assign<ModelComponent>(arena);
@@ -218,9 +218,14 @@ void LobbyState::CreateBackgroundEntities() {
   {
     // ladda in och skapa entity för boll
     auto ball = registry_lobby_.create();
-    glob::ModelHandle model_ball = glob::GetModel("assets/Ball/TestBall.fbx");
+    glob::ModelHandle model_ball_projectors_p =
+        glob::GetModel("Assets/Ball_new/Ball_projectors.fbx");
+    glob::ModelHandle model_ball_sphere_p =
+        glob::GetTransparentModel("Assets/Ball_new/Ball_Sphere.fbx");
+    // glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
     auto& model_c = registry_lobby_.assign<ModelComponent>(ball);
-    model_c.handles.push_back(model_ball);
+    model_c.handles.push_back(model_ball_sphere_p);
+    model_c.handles.push_back(model_ball_projectors_p);
     registry_lobby_.assign<TransformComponent>(ball, glm::vec3(0, -4, 0),
                                                zero_vec, glm::vec3(1.0f));
     registry_lobby_.assign<BallComponent>(ball);
