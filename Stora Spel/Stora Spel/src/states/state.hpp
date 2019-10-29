@@ -341,7 +341,7 @@ class PlayState : public State {
   float pitch_ = 0.0f;
   float yaw_ = 0.0f;
   
-  float timer = 0.0f;
+  float timer_ = 0.0f;
   float primary_cd_ = 0.0f;
 };
 
