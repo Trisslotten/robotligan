@@ -121,8 +121,7 @@ void MainMenuState::CreateBackgroundEnitites() {
     auto& animation_c = registry_mainmenu_.assign<AnimationComponent>(
         robot, glob::GetAnimationData(model_robot));
 
-    engine_->GetAnimationSystem().PlayAnimation("Resting", 0.5f, &animation_c,
-                                                10, 1.f, 0 /*LOOP*/);
+    //engine_->GetAnimationSystem().PlayAnimation("Resting", 0.5f, &animation_c, 10, 1.f, 0 /*LOOP*/);
 
     robot = registry_mainmenu_.create();
     auto& trans_c2 = registry_mainmenu_.assign<TransformComponent>(
@@ -135,8 +134,7 @@ void MainMenuState::CreateBackgroundEnitites() {
     auto& animation_c2 = registry_mainmenu_.assign<AnimationComponent>(
         robot, glob::GetAnimationData(model_robot));
 
-    engine_->GetAnimationSystem().PlayAnimation("Run", 1.f, &animation_c2, 10,
-                                                1.f, 0 /*LOOP*/);
+    engine_->GetAnimationSystem().PlayAnimation("Run", 1.f, &animation_c2, 10, 1.f, 0 /*LOOP*/);
 
     // ladda in och skapa entity för robotar
     robot = registry_mainmenu_.create();
@@ -150,8 +148,7 @@ void MainMenuState::CreateBackgroundEnitites() {
     auto& animation_c3 = registry_mainmenu_.assign<AnimationComponent>(
         robot, glob::GetAnimationData(model_robot));
 
-    engine_->GetAnimationSystem().PlayAnimation("Resting", 0.5f, &animation_c3,
-                                                10, 1.f, 0 /*LOOP*/);
+    //engine_->GetAnimationSystem().PlayAnimation("Resting", 0.5f, &animation_c3, 10, 1.f, 0 /*LOOP*/);
   }
   {
     // lägga ut en kamera i scenen

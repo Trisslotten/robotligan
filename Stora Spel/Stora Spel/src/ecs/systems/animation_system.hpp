@@ -36,6 +36,7 @@ class AnimationSystem {
   void Init(Engine* engine);
 
   glm::mat3 ConvertToGLM3x3(aiMatrix3x3 aiMat);
+  glm::vec3 ConvertToGLMVec3(aiVector3D aiVec);
 
   void GetDefaultPose(glm::mat4 parent, glob::Joint* bone,
                       std::vector<glob::Joint>* armature,
@@ -64,6 +65,9 @@ class AnimationSystem {
   void ReceiveGameEvent(GameEvent event);
 
   void UpdateAnimations(entt::registry& registry, float dt);
+
+  glm::vec3 InterpolateVector(float time, std::vector<aiVectorKey>* keys);
+  glm::mat4 InterpolateQuat(float time, std::vector<aiQuatKey>* keys);
 
   void Reset(entt::registry& registry);
 };

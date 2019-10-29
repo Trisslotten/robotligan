@@ -248,7 +248,6 @@ void Model::LoadModel(std::string path) {
         for (auto j : bones_) {
           if (j->name == jointName) {
             id = j->id;
-            anim->armature_transform_.push_back(glm::mat4(1.f));
           }
         }
         channel.boneID = id;

@@ -9,6 +9,10 @@ glm::mat3 AnimationSystem::ConvertToGLM3x3(aiMatrix3x3 aiMat) {
           aiMat.c2, aiMat.a3, aiMat.b3, aiMat.c3};
 }
 
+glm::vec3 AnimationSystem::ConvertToGLMVec3(aiVector3D aiVec) {
+  return glm::vec3(aiVec.x, aiVec.y, aiVec.z);
+}
+
 void AnimationSystem::GetDefaultPose(glm::mat4 parent, glob::Joint* bone,
                                      std::vector<glob::Joint>* armature,
                                      glm::mat4 globalInverseTransform) {
@@ -70,9 +74,9 @@ bool AnimationSystem::IsExcluded(int bone,
 
 int AnimationSystem::GetAnimationByName(std::string name,
                                         AnimationComponent* ac) {
-  std::vector<glob::Animation>* anims = &ac->model_data.animations;
+  std::vector<glob::Animation*>* anims = &ac->model_data.animations;
   for (int i = 0; i < anims->size(); i++) {
-    if (anims->at(i).name_ == name) {
+    if (anims->at(i)->name_ == name) {
       return i;
     }
   }
@@ -81,9 +85,9 @@ int AnimationSystem::GetAnimationByName(std::string name,
 
 int AnimationSystem::GetActiveAnimationByName(std::string name,
                                               AnimationComponent* ac) {
-  std::vector<glob::Animation*>* anims = &ac->active_animations;
-  for (int i = 0; i < anims->size(); i++) {
-    if (anims->at(i)->name_ == name) {
+  //std::vector<glob::Animation*>* anims = &ac->active_animations;
+  for (int i = 0; i < ac->active_animations.size(); i++) {
+    if (ac->active_animations.at(i)->animation_->name_ == name) {
       return i;
     }
   }
@@ -97,30 +101,33 @@ void AnimationSystem::PlayAnimation(std::string name, float speed,
                                     std::vector<int>* bodyExclude) {
   int anim = GetAnimationByName(name, ac);
   if (anim == -1) {
-    // std::cout << "WARNING: Could not find animation " << name << "!\n";
+    std::cout << "WARNING: Attempting to play animation: Could not find animation " << name << "!\n";
     return;
   }
 
   for (int i = 0; i < ac->active_animations.size(); i++) {
-    if (ac->active_animations.at(i) == &ac->model_data.animations.at(anim)) {
-      // std::cout << "WARNING: The animation \"" <<
-      // ac->model_data.animations.at(anim).name_ << "\" is already playing,
-      // cannot stack the same animation!\n";
+    if (ac->active_animations.at(i)->animation_ == ac->model_data.animations.at(anim)) {
+      std::cout << "WARNING: The animation \"" <<
+      ac->model_data.animations.at(anim)->name_ << 
+	  "\" is already playing, cannot stack the same animation!\n";
       return;
     }
   }
-  glob::Animation* anim_ptr = &ac->model_data.animations.at(anim);
-  ac->active_animations.push_back(anim_ptr);
-  anim_ptr->speed_ = speed;
-  anim_ptr->priority_ = priority;
-  anim_ptr->mode_ = mode;
-  anim_ptr->playing_ = true;
+  glob::PlayableAnimation* p_anim = new glob::PlayableAnimation;
+  p_anim->animation_ = ac->model_data.animations.at(anim);
+
+  p_anim->speed_ = speed;
+  p_anim->priority_ = priority;
+  p_anim->mode_ = mode;
+  p_anim->playing_ = true;
+  p_anim->time_ = 0;
+  p_anim->strength_ = strength;
 
   if (bodyInclude != nullptr) {
     for (int i = 0; i < bodyInclude->size(); i++) {
       bool found = false;
-      for (int j = 0; j < anim_ptr->body_include_->size(); j++) {
-        if (bodyInclude->at(i) == anim_ptr->body_include_->at(j)) {
+      for (int j = 0; j < p_anim->body_include_->size(); j++) {
+        if (bodyInclude->at(i) == p_anim->body_include_->at(j)) {
           found = true;
           break;
         }
@@ -135,10 +142,10 @@ void AnimationSystem::PlayAnimation(std::string name, float speed,
             }
           }
           if (!excluded) {
-            anim_ptr->body_include_->push_back(bodyInclude->at(i));
+            p_anim->body_include_->push_back(bodyInclude->at(i));
           }
         } else {
-          anim_ptr->body_include_->push_back(bodyInclude->at(i));
+          p_anim->body_include_->push_back(bodyInclude->at(i));
         }
       }
     }
@@ -147,7 +154,7 @@ void AnimationSystem::PlayAnimation(std::string name, float speed,
   bool found = false;
   for (auto& group : ac->p_groups) {
     if (group.priority == priority) {
-      group.animations.push_back(anim_ptr);
+      group.animations.push_back(p_anim);
       found = true;
       break;
     }
@@ -155,17 +162,18 @@ void AnimationSystem::PlayAnimation(std::string name, float speed,
   if (!found) {
     priorityGroup pg;
     pg.priority = priority;
-    pg.animations.push_back(anim_ptr);
+    pg.animations.push_back(p_anim);
     ac->p_groups.push_back(pg);
   }
 
-  // std::cout << "Playing " << anim_ptr->name_ << "\n";
+    ac->active_animations.push_back(p_anim);
+    //std::cout << "Playing " << p_anim.animation_->name_ << "\n";
 }
 
 void AnimationSystem::StopAnimation(std::string name, AnimationComponent* ac) {
   int anim = GetActiveAnimationByName(name, ac);
   if (anim == -1) {
-    // std::cout << "WARNING: Could not find animation " << name << "!\n";
+    std::cout << "WARNING: Attempting to stop animation: Could not find animation " << name << "!\n";
     return;
   }
   ac->active_animations.at(anim)->playing_ = false;
@@ -215,7 +223,7 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
         glm::normalize(pl.look_dir * glm::vec3(1.f, 0.f, 1.f));
     glm::vec3 UDlookDir = glm::normalize(pl.look_dir);
     glm::vec3 moveDir;
-    if (ph.velocity.x > 0.01 || ph.velocity.y > 0.01 || ph.velocity.z > 0.01) {
+    if (abs(ph.velocity.x) > 0.01 || abs(ph.velocity.y > 0.01) || abs(ph.velocity.z > 0.01)) {
       moveDir = ph.velocity;
       pl.vel_dir = moveDir;
     } else {
@@ -512,7 +520,6 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
   auto animation_entities = registry.view<AnimationComponent>();
   for (auto& entity : animation_entities) {
     auto& a = animation_entities.get(entity);
-
     StrengthModulator(&a);
 
     int rootBone = a.model_data.armatureRoot;
@@ -524,38 +531,24 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
       bonePriorities.push_back(1);
     }
 
-    time_ += dt;
-
     for (int i = 0; i < a.active_animations.size(); i++) {
-      glob::Animation* anim = a.active_animations.at(i);
+      glob::PlayableAnimation* anim = a.active_animations.at(i);
       bool removedAnimation = false;
-      if (anim->current_frame_time_ >= anim->duration_) {
+      if (anim->time_ >= anim->animation_->duration_) {
         // Loop for the time being
         if (anim->mode_ == LOOP) {
-          anim->current_frame_time_ = 0;
-          for (int j = 0; j < anim->channels_.size(); j++) {
-            anim->channels_.at(j).current_position_pos = 0;
-            anim->channels_.at(j).current_rotation_pos = 0;
-            anim->channels_.at(j).current_scaling_pos = 0;
-          }
+          anim->time_ = 0;
         } else if (anim->mode_ == MUTE_ALL || anim->mode_ == PARTIAL_MUTE) {
           anim->playing_ = false;
         }
       }
       if (!anim->playing_) {
         // reset important data
-        anim->body_include_->clear();
-        anim->current_frame_time_ = 0.f;
-        anim->playing_ = false;
-        for (int j = 0; j < anim->channels_.size(); j++) {
-          glob::Channel* channel = &anim->channels_.at(j);
-          channel->current_scaling_pos = 0;
-          channel->current_position_pos = 0;
-          channel->current_rotation_pos = 0;
-        }
+        //std::cout << "REMOVING ANIMATION!\n";
         // remove from list
         a.active_animations.erase(a.active_animations.begin() + i);
         i--;
+        //std::cout << "ANIMATION ERASED!\n";
         removedAnimation = true;
         // remove from priority group
         for (auto& group : a.p_groups) {
@@ -566,51 +559,28 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
             }
           }
         }
+        //std::cout << "PRIORITY GROUP ERASED!\n";
       }
 
       if (!removedAnimation) {
         // hell (aka bone rotation update)
-        for (int j = 0; j < anim->channels_.size();
+        for (int j = 0; j < anim->animation_->channels_.size();
              j++) {  // all channels (bones)
-          glob::Channel* channel = &anim->channels_.at(j);
+          glob::Channel* channel = &anim->animation_->channels_.at(j);
           int jointId = (int)channel->boneID;
 
-          if (jointId != rootBone) {
-            int scalingPos = channel->current_scaling_pos;
-            aiVectorKey scalingKey = channel->scaling_keys.at(scalingPos);
-            glm::mat4 scaling = glm::scale(glm::vec3(
-                scalingKey.mValue.x, scalingKey.mValue.y, scalingKey.mValue.z));
+		  if (jointId != rootBone) {
+            glm::vec3 pos =
+                InterpolateVector(anim->time_, &channel->position_keys);
+            glm::mat4 position = glm::translate(pos);
 
-            while (anim->current_frame_time_ >=
-                   channel->scaling_keys.at(scalingPos).mTime) {
-              channel->current_scaling_pos++;
-              scalingPos = channel->current_scaling_pos;
-            }
+			glm::mat4 rotation =
+                InterpolateQuat(anim->time_, &channel->rotation_keys);
 
-            int rotationPos = channel->current_rotation_pos;
-            aiQuatKey rotationKey = channel->rotation_keys.at(rotationPos);
-            glm::mat4 rotation =
-                ConvertToGLM3x3(rotationKey.mValue.GetMatrix());
+            glm::vec3 scale = InterpolateVector(anim->time_, &channel->scaling_keys);
+            glm::mat4 scaling = glm::scale(scale);
 
-            while (anim->current_frame_time_ >=
-                   channel->rotation_keys.at(rotationPos).mTime) {
-              channel->current_rotation_pos++;
-              rotationPos = channel->current_rotation_pos;
-            }
-
-            int positionPos = channel->current_position_pos;
-            aiVectorKey positionKey = channel->position_keys.at(positionPos);
-            glm::mat4 position = glm::translate(
-                glm::vec3(positionKey.mValue.x, positionKey.mValue.y,
-                          positionKey.mValue.z));
-
-            while (anim->current_frame_time_ >=
-                   channel->position_keys.at(positionPos).mTime) {
-              channel->current_position_pos++;
-              positionPos = channel->current_position_pos;
-            }
-
-            glm::mat4 combPRS = position * rotation * scaling;
+			glm::mat4 combPRS = position * rotation * scaling;
 
             glm::mat4 finalMat = combPRS * anim->strength_;
 
@@ -664,7 +634,7 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
         }
       }
 
-      anim->current_frame_time_ += anim->speed_ * anim->tick_per_second_ * dt;
+      anim->time_ += anim->speed_ * anim->animation_->tick_per_second_ * dt;
     }
 
     GetDefaultPose(glm::mat4(1.f), &a.model_data.bones.at(rootBone),
@@ -675,6 +645,66 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
     }
     a.bone_transforms = boneTransforms;
   }
+}
+
+glm::vec3 AnimationSystem::InterpolateVector(float time,
+                                              std::vector<aiVectorKey>* keys) {
+
+  if (keys->size() == 1) {
+    aiVector3D ret = keys->at(0).mValue;
+    return glm::vec3(ret.x, ret.y, ret.x);
+  }
+
+  int pos = 0;
+  for (int i = 0; i < keys->size() - 1; i++) {
+    if (time < (float)keys->at(i + 1).mTime) {
+      pos = i;
+      break;
+    }
+  }
+
+  int nextPos = pos + 1;
+
+  float dt = (float)(keys->at(nextPos).mTime -
+             keys->at(pos).mTime);
+
+  float f = (time - (float)keys->at(pos).mTime)/dt;
+
+  glm::vec3 start = ConvertToGLMVec3(keys->at(pos).mValue);
+  glm::vec3 end = ConvertToGLMVec3(keys->at(nextPos).mValue);
+
+  glm::vec3 dtv3 = end - start;
+
+  return start + f * dtv3;
+}
+
+glm::mat4 AnimationSystem::InterpolateQuat(float time,
+                                             std::vector<aiQuatKey>* keys) {
+  aiQuaternion ret; 
+  if (keys->size() == 1) {
+    ret = keys->at(0).mValue;
+    return glm::mat4(ConvertToGLM3x3(ret.GetMatrix()));
+  }
+
+  int pos = 0;
+  for (int i = 0; i < keys->size() - 1; i++) {
+    if (time < (float)keys->at(i + 1).mTime) {
+      pos = i;
+      break;
+    }
+  }
+
+  int nextPos = pos + 1;
+
+  float dt = (float)(keys->at(nextPos).mTime - keys->at(pos).mTime);
+
+  float f = (time - (float)keys->at(pos).mTime) / dt;
+
+  aiQuaternion start = keys->at(pos).mValue;
+  aiQuaternion end = keys->at(nextPos).mValue;
+  aiQuaternion::Interpolate(ret, start, end, f);
+
+  return glm::mat4(ConvertToGLM3x3(ret.Normalize().GetMatrix()));
 }
 
 void AnimationSystem::Reset(entt::registry& registry) {

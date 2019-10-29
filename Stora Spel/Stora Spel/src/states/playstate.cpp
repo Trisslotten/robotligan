@@ -888,7 +888,7 @@ void PlayState::CreatePlayerEntities() {
       sound_engine.CreatePlayer());
 
     if (entity_id == my_id_) {
-      glm::vec3 camera_offset = glm::vec3(0.5f, 0.7f, 0.f);
+      glm::vec3 camera_offset = glm::vec3(-1.5f, 0.7f, 0.f);
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
         glm::quat(glm::vec3(0.f)));
       my_entity_ = entity;
