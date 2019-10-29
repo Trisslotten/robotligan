@@ -10,6 +10,28 @@
 #include "util/input.hpp"
 
 namespace input_system {
+
+std::string GetClipboardText() {
+  if (!OpenClipboard(nullptr)) printf("[INPUT] Could not open clipboard.\n");
+
+  // Get handle of clipboard object for ANSI text
+  HANDLE hData = GetClipboardData(CF_TEXT);
+  if (hData == nullptr) printf("[INPUT] Could not get clipboard handle.\n");
+
+  // Lock the handle to get the actual text pointer
+  char* pszText = static_cast<char*>(GlobalLock(hData));
+  std::string clipboard_str = "";
+  if (pszText != nullptr) {
+    clipboard_str = std::string(pszText);
+  }
+  // Release the lock
+  GlobalUnlock(hData);
+
+  // Release the clipboard
+  CloseClipboard();
+  return clipboard_str;
+}
+
 bool active = false;
 std::string last_active = "";
 Timer back_space_timer;
@@ -62,12 +84,36 @@ void Update(entt::registry& registry) {
 
         found_a_box = true;
       } else {
-        if (!found_a_box)
-			active = false;
+        if (!found_a_box) active = false;
       }
     }
 
     if (input_c.input_name == last_active) {
+      bool pasted = false;
+      if (Input::IsKeyDown(GLFW_KEY_LEFT_CONTROL) &&
+          Input::IsKeyPressed(GLFW_KEY_V)) {
+        std::string pre = input_c.text.substr(0, input_c.input_pos);
+        std::string post =
+            input_c.text.substr(input_c.input_pos, input_c.text.length());
+        std::string clipboard_str = GetClipboardText();
+        std::string temp = pre + clipboard_str + post;
+        int prelen = pre.length();
+        int cliplen = clipboard_str.length();
+
+        if (temp.length() > input_c.max_length) {
+          temp = temp.substr(0, input_c.max_length);
+        }
+        input_c.text = temp;
+        // where to place blinker
+        if (prelen + cliplen > input_c.max_length) {
+          input_c.input_pos = input_c.text.length();
+        } else {
+          input_c.input_pos = prelen + cliplen;
+        }
+        pasted = true;
+        
+      }
+
       if (Input::IsKeyDown(GLFW_KEY_LEFT) && input_c.input_pos > 0 &&
           back_space_timer.Elapsed() >= time_between_bs) {
         input_c.input_pos -= 1;
@@ -83,7 +129,7 @@ void Update(entt::registry& registry) {
         blinker_timer.Restart();
         back_space_timer.Restart();
       }
-      if (input_c.text.length() < input_c.max_length) {
+      if (input_c.text.length() < input_c.max_length && !pasted) {
         std::string new_chars = Input::GetCharacters();
         input_c.text.insert(input_c.input_pos, new_chars.c_str());
         input_c.input_pos += new_chars.length();
@@ -94,7 +140,7 @@ void Update(entt::registry& registry) {
       }
       if (Input::IsKeyDown(GLFW_KEY_BACKSPACE) && input_c.text.size() > 0 &&
           back_space_timer.Elapsed() > time_between_bs &&
-          input_c.input_pos > 0) {
+          input_c.input_pos > 0 && !pasted) {
         input_c.text.replace(input_c.input_pos - 1, 1, "");
         input_c.input_pos -= 1;
         back_space_timer.Restart();
@@ -149,7 +195,6 @@ void Update(entt::registry& registry) {
   if (!active) {
     last_active = "";
   }
-  
 }
 }  // namespace input_system
 
