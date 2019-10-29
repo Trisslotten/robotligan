@@ -90,7 +90,9 @@ bool LobbyState::IsAbilityBlackListed(int id) {
 }
 void LobbyState::SendMyName() {
   auto& packet = engine_->GetPacket();
-  packet << GlobalSettings::Access()->StringValueOf("USERNAME");
+  std::string name = GlobalSettings::Access()->StringValueOf("USERNAME");
+  packet.Add(name.c_str(), name.size());
+  packet << name.size();
   packet << PacketBlockType::MY_NAME;
 }
 
@@ -173,11 +175,14 @@ void LobbyState::HandleUpdateLobbyTeamPacket(NetAPI::Common::Packet& packet) {
   int id = -1;
   unsigned int team = 0;
   bool ready = false;
+  size_t len;
   std::string name = "";
   packet >> ready;
   packet >> team;
   packet >> id;
-  packet >> name;
+  packet >> len;
+  name.resize(len);
+  packet.Remove(name.data(), len);
   std::cout << "Lobby: name: " << name << "\n";
   if (id != -1) {
     LobbyPlayer plyr;

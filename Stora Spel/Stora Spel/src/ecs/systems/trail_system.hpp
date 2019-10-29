@@ -39,7 +39,7 @@ void Update(entt::registry& registry, float dt) {
     float f = 0.0001f;
     trail_c.color.a = glm::mix(trail_c.color.a, opacity, 1.f-glm::pow(f, dt));
 
-    std::cout << "vel: " << vel << "\n";
+    //std::cout << "vel: " << vel << "\n";
   }
 }
 
