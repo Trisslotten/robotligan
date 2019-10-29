@@ -83,21 +83,21 @@ void MainMenuState::CreateBackgroundEnitites() {
   registry_mainmenu_.assign<LightComponent>(light_test, glm::vec3(0.05f), 30.f,
                                             0.2f);
   registry_mainmenu_.assign<TransformComponent>(
-      light_test, glm::vec3(0.f, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      light_test, glm::vec3(0.f, 16.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
   auto light_test2 = registry_mainmenu_.create();  // Get from engine
   registry_mainmenu_.assign<LightComponent>(
-      light_test2, glm::vec3(0.f, 0.f, 1.0f), 5.f, 0.2f);
+      light_test2, glm::vec3(0.f, 0.f, 1.0f), 50.f, 0.2f);
   registry_mainmenu_.assign<TransformComponent>(
-      light_test2, glm::vec3(12.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      light_test2, glm::vec3(48.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
 
   {
     // ladda in och skapa entity för bana
     auto arena = registry_mainmenu_.create();
-    glm::vec3 arena_scale = glm::vec3(1.0f);
+    glm::vec3 arena_scale = glm::vec3(4.0f);
     glob::ModelHandle model_arena =
         glob::GetModel("assets/Map/Map_unified_TMP.fbx");
     auto& model_c = registry_mainmenu_.assign<ModelComponent>(arena);
@@ -111,8 +111,8 @@ void MainMenuState::CreateBackgroundEnitites() {
     // ladda in och skapa entity för robotar
     auto robot = registry_mainmenu_.create();
     auto& trans_c = registry_mainmenu_.assign<TransformComponent>(
-        robot, glm::vec3(9.f, -2.8f, -2.f),
-        glm::vec3(0.f, glm::radians(-135.0f), 0.f), glm::vec3(0.0013f));
+        robot, glm::vec3(36.f, -11.2f, -8.f),
+        glm::vec3(0.f, glm::radians(-135.0f), 0.f), glm::vec3(0.0033f));
     glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
     auto& model_c = registry_mainmenu_.assign<ModelComponent>(robot);
     model_c.handles.push_back(model_robot);
@@ -121,13 +121,14 @@ void MainMenuState::CreateBackgroundEnitites() {
     auto& animation_c = registry_mainmenu_.assign<AnimationComponent>(
         robot, glob::GetAnimationData(model_robot));
 
-    engine_->GetAnimationSystem().PlayAnimation("Resting", 0.5f, &animation_c,
-                                                10, 1.f, 0 /*LOOP*/);
+    engine_->GetAnimationSystem().PlayAnimation(
+        "Emote1", 2.f, &animation_c, 10, 1.f,
+        engine_->GetAnimationSystem().LOOP);
 
     robot = registry_mainmenu_.create();
     auto& trans_c2 = registry_mainmenu_.assign<TransformComponent>(
-        robot, glm::vec3(9.f, -2.8f, 0.f),
-        glm::vec3(0.f, glm::radians(180.0f), 0.f), glm::vec3(0.0013f));
+        robot, glm::vec3(36.f, -11.2f, 0.f),
+        glm::vec3(0.f, glm::radians(180.0f), 0.f), glm::vec3(0.0033f));
     auto& model_c2 = registry_mainmenu_.assign<ModelComponent>(robot);
     model_c2.handles.push_back(model_robot);
 
@@ -135,14 +136,14 @@ void MainMenuState::CreateBackgroundEnitites() {
     auto& animation_c2 = registry_mainmenu_.assign<AnimationComponent>(
         robot, glob::GetAnimationData(model_robot));
 
-    engine_->GetAnimationSystem().PlayAnimation("Run", 1.f, &animation_c2, 10,
-                                                1.f, 0 /*LOOP*/);
+    engine_->GetAnimationSystem().PlayAnimation(
+        "Run", 1.f, &animation_c2, 10, 1.f, engine_->GetAnimationSystem().LOOP);
 
     // ladda in och skapa entity för robotar
     robot = registry_mainmenu_.create();
     auto& trans_c3 = registry_mainmenu_.assign<TransformComponent>(
-        robot, glm::vec3(9.f, -2.8f, 2.f),
-        glm::vec3(0.f, glm::radians(135.0f), 0.f), glm::vec3(0.0013f));
+        robot, glm::vec3(36.f, -11.2f, 8.f),
+        glm::vec3(0.f, glm::radians(135.0f), 0.f), glm::vec3(0.0033f));
     auto& model_c3 = registry_mainmenu_.assign<ModelComponent>(robot);
     model_c3.handles.push_back(model_robot);
 
@@ -150,15 +151,16 @@ void MainMenuState::CreateBackgroundEnitites() {
     auto& animation_c3 = registry_mainmenu_.assign<AnimationComponent>(
         robot, glob::GetAnimationData(model_robot));
 
-    engine_->GetAnimationSystem().PlayAnimation("Resting", 0.5f, &animation_c3,
-                                                10, 1.f, 0 /*LOOP*/);
+    engine_->GetAnimationSystem().PlayAnimation(
+        "Emote1", 2.f, &animation_c3, 10, 1.f,
+        engine_->GetAnimationSystem().LOOP);
   }
   {
     // lägga ut en kamera i scenen
     auto camera = registry_mainmenu_.create();
     auto& cam_c = registry_mainmenu_.assign<CameraComponent>(camera);
     auto& cam_trans = registry_mainmenu_.assign<TransformComponent>(camera);
-    cam_trans.position = glm::vec3(7.f, -2.f, 0.f);
+    cam_trans.position = glm::vec3(28.f, -8.f, 0.f);
     glm::vec3 dir = glm::vec3(0) - cam_trans.position;
     cam_c.orientation = glm::quat(glm::vec3(0.f, 0.f, 0.f));
   }

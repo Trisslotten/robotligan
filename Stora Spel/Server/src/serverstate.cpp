@@ -60,7 +60,10 @@ void ServerLobbyState::Update(float dt) {
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     if (teams_updated_) {
       for (auto client_team : client_teams_) {
-        to_send << game_server_->GetClientNames()[client_team.first];
+        std::string name = game_server_->GetClientNames()[client_team.first];
+
+        to_send.Add(name.c_str(), name.size());
+        to_send << name.size();
         to_send << client_team.first;   // send id
         to_send << client_team.second;  // send team
         bool ready = clients_ready_[client_team.first];

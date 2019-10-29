@@ -82,7 +82,10 @@ void GameServer::Update(float dt) {
     if (this->current_state_type_ == ServerStateType::PLAY) {
       NetAPI::Common::Packet to_send;
       for (auto client_team : lobby_state_.client_teams_) {
-        to_send << GetClientNames()[client_team.first];
+        std::string name = GetClientNames()[client_team.first];
+
+        to_send.Add(name.c_str(), name.size());
+        to_send << name.size();
         to_send << client_team.first;   // send id
         to_send << client_team.second;  // send team
         bool ready = true;
@@ -332,7 +335,10 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
     }
     case PacketBlockType::MY_NAME: {
       std::string name;
-      packet >> name;
+      size_t len;
+      packet >> len;
+      name.resize(len);
+      packet.Remove(name.data(), len);
       if (client_names_[client_id] != name) {
         while (NameAlreadyExists(name)) {
           name.append("xD");
@@ -340,7 +346,7 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
         client_names_[client_id] = name;
         lobby_state_.SetTeamsUpdated(true);
         this->client_sent_name_ = true;
-	  }
+      }
       break;
     }
   }
