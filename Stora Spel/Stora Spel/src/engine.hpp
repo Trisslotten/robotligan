@@ -49,6 +49,7 @@ class Engine {
   }
   NetAPI::Socket::Client& GetClient() { return client_; }
   NetAPI::Common::Packet& GetPacket() { return packet_; }
+  void SetTakeInput(bool should_take) { take_game_input_ = should_take; }
   void SetSendInput(bool should_send) { should_send_input_ = should_send; }
   void SetEnableChat(bool should_enable) { this->enable_chat_ = should_enable; }
   SoundSystem& GetSoundSystem() { return sound_system_; }
@@ -56,7 +57,7 @@ class Engine {
   AnimationSystem& GetAnimationSystem() { return animation_system_; }
   entt::registry* GetCurrentRegistry() { return registry_current_; }
 
-  std::unordered_map<PlayerID, std::string> player_names_;
+  std::unordered_map<long, std::string> player_names_;
 
   void SetSecondaryAbility(AbilityID id) { second_ability_ = id; }
   AbilityID GetSecondaryAbility() { return second_ability_; }

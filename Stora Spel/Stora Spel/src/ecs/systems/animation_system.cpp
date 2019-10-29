@@ -340,13 +340,21 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       startStrength = velCoeff;
 
       int js = GetActiveAnimationByName("JumpStart", &ac);
-      ac.active_animations.at(js)->strength_ = startStrength;
+      if (js < 0) {
+        std::cout << "Error: could not find animation JumpStart" << std::endl;
+      } else {
+        ac.active_animations.at(js)->strength_ = startStrength;
+      }
       // std::cout << startStrength << "\n";
 
       endStrength = 1.f - velCoeff;
 	  
       int es = GetActiveAnimationByName("JumpEnd", &ac);
-      ac.active_animations.at(es)->strength_ = endStrength;
+      if (es < 0) {
+        std::cout << "Error: could not find animation JumpEnd" << std::endl;
+      } else {
+        ac.active_animations.at(es)->strength_ = endStrength;
+      }
     }
 
     // lookDirs

@@ -82,7 +82,10 @@ void GameServer::Update(float dt) {
     if (this->current_state_type_ == ServerStateType::PLAY) {
       NetAPI::Common::Packet to_send;
       for (auto client_team : lobby_state_.client_teams_) {
-        to_send << GetClientNames()[client_team.first];
+        std::string name = GetClientNames()[client_team.first];
+
+        to_send.Add(name.c_str(), name.size());
+        to_send << name.size();
         to_send << client_team.first;   // send id
         to_send << client_team.second;  // send team
         bool ready = true;
@@ -176,7 +179,7 @@ void GameServer::HandlePacketsToSend() {
 void GameServer::HandleStateChange() {
   // handle state change
   if (wanted_state_type_ != current_state_type_) {
-    bool went_from_lobby_to_play = 
+    bool went_from_lobby_to_play =
         current_state_type_ == ServerStateType::LOBBY &&
         wanted_state_type_ == ServerStateType::PLAY;
 
@@ -215,7 +218,9 @@ void GameServer::HandleStateChange() {
     NetAPI::Common::Packet p;
     p << this->current_state_type_ << PacketBlockType::SERVER_STATE;
     server_.Send(p);
-    client_names_.clear();
+    
+    if (went_from_play_to_lobby)
+      client_names_.clear();
   }
 }
 
@@ -261,14 +266,19 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       message.name = client_names_[client_id] + ": ";
       message.message = str;
       auto view_player = registry_.view<TeamComponent, PlayerComponent>();
+      bool found_name = false;
       for (auto player : view_player) {
         auto& team_c = view_player.get<TeamComponent>(player);
         auto& player_c = view_player.get<PlayerComponent>(player);
         if (client_id == player_c.client_id) {
           message.message_from = team_c.team;
+          found_name = true;
           break;
         }
       }
+      if (!found_name) {
+        message.message_from = lobby_state_.client_teams_[client_id];
+	  }
 
       messages.push_back(message);
       break;
@@ -325,13 +335,18 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
     }
     case PacketBlockType::MY_NAME: {
       std::string name;
-      packet >> name;
-      while (NameAlreadyExists(name)) {
-        name.append("xD");
+      size_t len;
+      packet >> len;
+      name.resize(len);
+      packet.Remove(name.data(), len);
+      if (client_names_[client_id] != name) {
+        while (NameAlreadyExists(name)) {
+          name.append("xD");
+        }
+        client_names_[client_id] = name;
+        lobby_state_.SetTeamsUpdated(true);
+        this->client_sent_name_ = true;
       }
-      client_names_[client_id] = name;
-      lobby_state_.SetTeamsUpdated(true);
-      this->client_sent_name_ = true;
       break;
     }
   }
