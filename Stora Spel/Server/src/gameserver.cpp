@@ -333,7 +333,7 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
     case PacketBlockType::MY_NAME: {
       std::string name;
       packet >> name;
-      if (client_names_[client_id] == "") {
+      if (client_names_[client_id] != name) {
         while (NameAlreadyExists(name)) {
           name.append("xD");
         }
