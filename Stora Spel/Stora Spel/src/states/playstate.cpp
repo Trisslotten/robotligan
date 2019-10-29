@@ -107,6 +107,8 @@ void PlayState::Init() {
 
   //end_game_timer_.Restart();
   game_has_ended_ = false;
+  my_target_ = -1;
+  primary_cd_ = 0;
 
   CreateInGameMenu();
   CreateInitialEntities();
@@ -891,7 +893,7 @@ EntityID PlayState::ClientIDToEntityID(long client_id) {
 }
 
 void PlayState::DrawTarget() {
-  if (my_target_ != -1) {
+  if (my_target_ != -1 && (engine_->GetSecondaryAbility() == AbilityID::MISSILE || my_primary_ability_id == (int)AbilityID::MISSILE)) {
     auto view_players =
       registry_gameplay_
       .view<PlayerComponent, TransformComponent, IDComponent>();

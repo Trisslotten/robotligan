@@ -24,6 +24,7 @@ struct ButtonComponent {
   bool has_hovered = false;
 
   std::string find_name = "";
+  std::string hover_text = "";
 };
 
 #endif  // !BUTTON_COMPONENT_HPP_

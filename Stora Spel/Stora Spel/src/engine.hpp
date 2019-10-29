@@ -56,7 +56,7 @@ class Engine {
   AnimationSystem& GetAnimationSystem() { return animation_system_; }
   entt::registry* GetCurrentRegistry() { return registry_current_; }
 
-  std::unordered_map<PlayerID, std::string> player_names_;
+  std::unordered_map<long, std::string> player_names_;
 
   void SetSecondaryAbility(AbilityID id) { second_ability_ = id; }
   AbilityID GetSecondaryAbility() { return second_ability_; }

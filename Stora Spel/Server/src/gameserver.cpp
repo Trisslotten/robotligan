@@ -176,7 +176,7 @@ void GameServer::HandlePacketsToSend() {
 void GameServer::HandleStateChange() {
   // handle state change
   if (wanted_state_type_ != current_state_type_) {
-    bool went_from_lobby_to_play = 
+    bool went_from_lobby_to_play =
         current_state_type_ == ServerStateType::LOBBY &&
         wanted_state_type_ == ServerStateType::PLAY;
 
@@ -263,14 +263,19 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       message.name = client_names_[client_id] + ": ";
       message.message = str;
       auto view_player = registry_.view<TeamComponent, PlayerComponent>();
+      bool found_name = false;
       for (auto player : view_player) {
         auto& team_c = view_player.get<TeamComponent>(player);
         auto& player_c = view_player.get<PlayerComponent>(player);
         if (client_id == player_c.client_id) {
           message.message_from = team_c.team;
+          found_name = true;
           break;
         }
       }
+      if (!found_name) {
+        message.message_from = lobby_state_.client_teams_[client_id];
+	  }
 
       messages.push_back(message);
       break;
@@ -328,12 +333,14 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
     case PacketBlockType::MY_NAME: {
       std::string name;
       packet >> name;
-      while (NameAlreadyExists(name)) {
-        name.append("xD");
-      }
-      client_names_[client_id] = name;
-      lobby_state_.SetTeamsUpdated(true);
-      this->client_sent_name_ = true;
+      if (client_names_[client_id] == "") {
+        while (NameAlreadyExists(name)) {
+          name.append("xD");
+        }
+        client_names_[client_id] = name;
+        lobby_state_.SetTeamsUpdated(true);
+        this->client_sent_name_ = true;
+	  }
       break;
     }
   }
