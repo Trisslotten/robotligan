@@ -123,6 +123,9 @@ void PlayState::Init() {
 
   engine_->GetSoundSystem().PlayAmbientSound(registry_gameplay_);
   goals_swapped_ = false;
+  primary_cd_ = 0.f;
+  engine_->SetSecondaryAbility(AbilityID::NULL_ABILITY);
+  timer_ = 0.f;
   Reset();
 }
 
@@ -200,10 +203,10 @@ void PlayState::Update(float dt) {
     MovePlayer(1 / 64.0f);
     actions_.clear();
   }
-  timer += dt;
-  if (timer > 1.0f / 64.0f) {
+  timer_ += dt;
+  if (timer_ > 1.0f / 64.0f) {
 	MoveBall(dt);
-    timer -= dt;
+    timer_ -= dt;
   }
   // interpolate
   auto view_entities =
