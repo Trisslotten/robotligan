@@ -77,13 +77,6 @@ void GeometricReplay::InterpolateEntityData(unsigned int in_channel_index,
     }
   }
 
-  /*
-        WIP:
-        If 'a' == the index of the last entry
-        no interpolation needs to be done,
-        we just get the data from the last frame
-  */
-
   // Get the DataFrame at 'a' and interpolate it forwards
   // towards 'b' to find the DataFrame representing the current frame
   unsigned int dist_to_target =
