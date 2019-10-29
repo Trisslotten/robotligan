@@ -113,7 +113,7 @@ void GeometricReplay::InterpolateEntityData(unsigned int in_channel_index,
   delete df_c_ptr;
 }
 
-void DepolymorphFromDataframe(DataFrame* in_df_ptr, entt::entity& in_entity,
+void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr, entt::entity& in_entity,
                               entt::registry& in_registry) {
   switch (in_df_ptr->GetFrameType()) {
     case FRAME_PLAYER:

@@ -16,11 +16,13 @@ class DataFrame {
   DataFrame(FrameType in_ft);
   ~DataFrame();
 
+  virtual DataFrame* Clone() = 0;
+
   FrameType GetFrameType() const;
   virtual bool ThresholdCheck(DataFrame& in_future_df) = 0;
   virtual DataFrame* InterpolateForward(unsigned int in_dist_to_target,
                                         unsigned int in_dist_to_point_b,
-                                        DataFrame& in_point_b)=0;
+                                        DataFrame& in_point_b) = 0;
 };
 
 //---
@@ -31,10 +33,12 @@ class PlayerFrame : public DataFrame {
   glm::quat rotation_;
   glm::vec3 scale_;
 
- //public:
+  // public:
   PlayerFrame();
   PlayerFrame(glm::vec3 in_pos, glm::quat in_rot, glm::vec3 in_scale);
   ~PlayerFrame();
+
+  DataFrame* Clone();
 
   bool ThresholdCheck(DataFrame& in_future_df);
   DataFrame* InterpolateForward(unsigned int in_dist_to_target,
@@ -50,10 +54,12 @@ class BallFrame : public DataFrame {
   glm::quat rotation_;
   glm::vec3 scale_;
 
- //public:
+  // public:
   BallFrame();
   BallFrame(glm::vec3 in_pos, glm::quat in_rot, glm::vec3 in_scale);
   ~BallFrame();
+
+  DataFrame* Clone();
 
   bool ThresholdCheck(DataFrame& in_future_df);
   DataFrame* InterpolateForward(unsigned int in_dist_to_target,

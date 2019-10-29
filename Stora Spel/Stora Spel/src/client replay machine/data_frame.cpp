@@ -38,6 +38,10 @@ PlayerFrame::PlayerFrame(glm::vec3 in_pos, glm::quat in_rot, glm::vec3 in_scale)
 
 PlayerFrame::~PlayerFrame() {}
 
+DataFrame* PlayerFrame::Clone() {
+  return new PlayerFrame(this->position_, this->rotation_, this->scale_);
+}
+
 bool PlayerFrame::ThresholdCheck(DataFrame& in_future_df) {
   // Cast to PlayerFrame
   PlayerFrame& future_pf = dynamic_cast<PlayerFrame&>(in_future_df);
@@ -71,9 +75,9 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
   // Cast the DataFrame to PlayerFrame
   try {
     PlayerFrame& point_b = dynamic_cast<PlayerFrame&>(in_point_b);
-	//Skips forward if std::bad_cast
+    // Skips forward if std::bad_cast
 
-	// INTERPOLATED FRAME
+    // INTERPOLATED FRAME
     PlayerFrame* ret_frame = new PlayerFrame();
 
     // RATIO
@@ -84,9 +88,7 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
     float percentage_a = in_dist_to_target / in_dist_to_point_b;
 
     // INTERPOLATION
-    // Take a percentage of the first (this) frame's values
-    // and add them to the remaining percentage of the
-    // second (given) frame's.
+    //
 
     // POSITION
     ret_frame->position_ =
@@ -103,7 +105,8 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
     return ret_frame;
 
   } catch (std::bad_cast exp) {
-    GlobalSettings::Access()->WriteError("data_frame.cpp", "PlayerFrame::InterpolateForward", "Bad cast");
+    GlobalSettings::Access()->WriteError(
+        "data_frame.cpp", "PlayerFrame::InterpolateForward", "Bad cast");
     return nullptr;
   }
 }
@@ -127,6 +130,10 @@ BallFrame::BallFrame(glm::vec3 in_pos, glm::quat in_rot, glm::vec3 in_scale)
 }
 
 BallFrame::~BallFrame() {}
+
+DataFrame* BallFrame::Clone() {
+  return new BallFrame(this->position_, this->rotation_, this->scale_);
+}
 
 bool BallFrame::ThresholdCheck(DataFrame& in_future_df) {
   // Cast to BallFrame
@@ -156,8 +163,8 @@ bool BallFrame::ThresholdCheck(DataFrame& in_future_df) {
 }
 
 DataFrame* BallFrame::InterpolateForward(unsigned int in_dist_to_target,
-                              unsigned int in_dist_to_point_b,
-                              DataFrame& in_point_b) {
+                                         unsigned int in_dist_to_point_b,
+                                         DataFrame& in_point_b) {
   // Cast the DataFrame to PlayerFrame
   try {
     BallFrame& point_b = dynamic_cast<BallFrame&>(in_point_b);
@@ -174,9 +181,7 @@ DataFrame* BallFrame::InterpolateForward(unsigned int in_dist_to_target,
     float percentage_a = in_dist_to_target / in_dist_to_point_b;
 
     // INTERPOLATION
-    // Take a percentage of the first (this) frame's values
-    // and add them to the remaining percentage of the
-    // second (given) frame's.
+    //
 
     // POSITION
     ret_frame->position_ =

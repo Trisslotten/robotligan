@@ -15,11 +15,23 @@ class GeometricReplay {
     DataFrame* data_ptr = nullptr;
     bool ending_entry = false;
 
+	ChannelEntry() {}
+
+    ChannelEntry(const ChannelEntry& in_ce) {
+      this->frame_number = in_ce.frame_number;
+      this->data_ptr = nullptr;
+      if (in_ce.data_ptr != nullptr) {
+        this->data_ptr = this->data_ptr->Clone();
+	  }
+      this->ending_entry = in_ce.ending_entry;
+    }
+
     ~ChannelEntry() {
       if (data_ptr != nullptr) {
         delete data_ptr;
       }
     }
+
   };
 
   struct FrameChannel {
@@ -37,13 +49,13 @@ class GeometricReplay {
   void FillChannelEntry(ChannelEntry& in_ce, entt::entity& in_entity,
                         entt::registry& in_registry);
   DataFrame* PolymorphIntoDataFrame(entt::entity& in_entity,
-                                entt::registry& in_registry);
+                                    entt::registry& in_registry);
 
   void InterpolateEntityData(unsigned int in_channel_index,
                              entt::entity& in_entity,
                              entt::registry& in_registry);
   void DepolymorphFromDataframe(DataFrame* in_df_ptr, entt::entity& in_entity,
-                            entt::registry& in_registry);
+                                entt::registry& in_registry);
 
   void CreateEntityFromChannel(unsigned int in_channel_index,
                                entt::registry& in_registry);
