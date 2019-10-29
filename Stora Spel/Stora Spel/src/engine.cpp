@@ -22,6 +22,7 @@
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
+#include <ecs\systems\trail_system.hpp>
 
 Engine::Engine() {}
 
@@ -709,6 +710,7 @@ void Engine::UpdateSystems(float dt) {
   input_system::Update(*registry_current_);
   ParticleSystem(*registry_current_, dt);
   animation_system_.UpdateAnimations(*registry_current_, dt);
+  trailsystem::Update(*registry_current_, dt);
   RenderSystem(*registry_current_);
 }
 
