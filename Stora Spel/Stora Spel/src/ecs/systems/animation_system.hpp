@@ -25,8 +25,6 @@ class AnimationSystem {
 
   float time_ = 0;
 
-  enum ANIM_MODES { LOOP, MUTE_ALL, PARTIAL_MUTE };
-
   std::string slide_anims_[4] = {"SlideF", "SlideB", "SlideR", "SlideL"};
   std::string look_anims_[4] = {"LookUp", "LookDown", "LookRight", "LookLeft"};
 
@@ -36,6 +34,8 @@ class AnimationSystem {
   void Init(Engine* engine);
 
   glm::mat3 ConvertToGLM3x3(aiMatrix3x3 aiMat);
+
+  enum ANIM_MODES { LOOP, MUTE_ALL, PARTIAL_MUTE };
 
   void GetDefaultPose(glm::mat4 parent, glob::Joint* bone,
                       std::vector<glob::Joint>* armature,
