@@ -31,6 +31,7 @@ class Model {
                                             aiTextureType type,
                                             std::string type_name);
 
+  std::string filepath_;
   std::string directory_;
 
   glm::mat4 ConvertToGLM(aiMatrix4x4 aiMat) {

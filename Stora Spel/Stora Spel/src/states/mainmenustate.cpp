@@ -97,7 +97,7 @@ void MainMenuState::CreateBackgroundEnitites() {
   {
     // ladda in och skapa entity för bana
     auto arena = registry_mainmenu_.create();
-    glm::vec3 arena_scale = glm::vec3(1.0f);
+  glm::vec3 arena_scale = glm::vec3(4.0f, 4.0f, 4.0f);
     glob::ModelHandle model_arena =
         glob::GetModel("assets/Map/Map_unified_TMP.fbx");
     auto& model_c = registry_mainmenu_.assign<ModelComponent>(arena);
