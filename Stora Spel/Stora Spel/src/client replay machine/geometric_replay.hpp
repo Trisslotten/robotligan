@@ -21,7 +21,7 @@ class GeometricReplay {
       this->frame_number = in_ce.frame_number;
       this->data_ptr = nullptr;
       if (in_ce.data_ptr != nullptr) {
-        this->data_ptr = this->data_ptr->Clone();
+        this->data_ptr = in_ce.data_ptr->Clone();
 	  }
       this->ending_entry = in_ce.ending_entry;
     }
