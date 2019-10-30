@@ -15,14 +15,14 @@ class GeometricReplay {
     DataFrame* data_ptr = nullptr;
     bool ending_entry = false;
 
-	ChannelEntry() {}
+    ChannelEntry() {}
 
     ChannelEntry(const ChannelEntry& in_ce) {
       this->frame_number = in_ce.frame_number;
       this->data_ptr = nullptr;
       if (in_ce.data_ptr != nullptr) {
         this->data_ptr = in_ce.data_ptr->Clone();
-	  }
+      }
       this->ending_entry = in_ce.ending_entry;
     }
 
@@ -31,7 +31,6 @@ class GeometricReplay {
         delete data_ptr;
       }
     }
-
   };
 
   struct FrameChannel {
@@ -40,11 +39,6 @@ class GeometricReplay {
     unsigned int index_a = 0;
     unsigned int index_b = 0;
   };
-
-  std::vector<FrameChannel> channels_;
-  unsigned int threshhold_age_;
-  unsigned int current_frame_number_write_ = 0;
-  unsigned int current_frame_number_read_ = 0;
 
   void FillChannelEntry(ChannelEntry& in_ce, entt::entity& in_entity,
                         entt::registry& in_registry);
@@ -60,8 +54,17 @@ class GeometricReplay {
   void CreateEntityFromChannel(unsigned int in_channel_index,
                                entt::registry& in_registry);
 
+ protected:
+  std::vector<FrameChannel> channels_;
+  unsigned int threshhold_age_;
+  unsigned int current_frame_number_write_ = 0;
+  unsigned int current_frame_number_read_ = 0;
+
+  GeometricReplay();
+
  public:
-  GeometricReplay(unsigned int in_length_sec, unsigned int in_frames_per_sec);
+  GeometricReplay(unsigned int in_replay_length_sec,
+                  unsigned int in_frames_per_sec);
   ~GeometricReplay();
 
   // NTS:	Delete copy constructor
@@ -69,8 +72,13 @@ class GeometricReplay {
   GeometricReplay(GeometricReplay&) = delete;
   void operator=(GeometricReplay const&) = delete;
 
+  GeometricReplay* Clone();
+
   bool SaveFrame(entt::registry& in_registry);
   bool LoadFrame(entt::registry& in_registry);
+
+  void SetWriteFrame(unsigned int in_frame_number);
+  void SetReadFrame(unsigned int in_frame_number);
 };
 
 #endif  // !GEOMETRIC_REPLAY_HPP_

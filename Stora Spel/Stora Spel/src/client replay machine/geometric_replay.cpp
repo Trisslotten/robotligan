@@ -89,9 +89,9 @@ void GeometricReplay::InterpolateEntityData(unsigned int in_channel_index,
   // If the distance to the target is greater than or equal to the
   // distance to 'b' we have passed the last entry in the channel
   if (dist_to_target >= dist_to_b) {
-	  //We set the distance to the target to be the distance
-	  // to 'b', saying that all frames past the last entry
-	  // has the value of the last entry
+    // We set the distance to the target to be the distance
+    // to 'b', saying that all frames past the last entry
+    // has the value of the last entry
     dist_to_target = dist_to_b;
   }
 
@@ -113,8 +113,9 @@ void GeometricReplay::InterpolateEntityData(unsigned int in_channel_index,
   delete df_c_ptr;
 }
 
-void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr, entt::entity& in_entity,
-                              entt::registry& in_registry) {
+void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
+                                               entt::entity& in_entity,
+                                               entt::registry& in_registry) {
   switch (in_df_ptr->GetFrameType()) {
     case FRAME_PLAYER:
       // Cast
@@ -197,14 +198,32 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
   }
 }
 
+// Protected-------------------------------------------------------------------
+
+GeometricReplay::GeometricReplay() {
+  // Empty constructor
+}
+
 // Public----------------------------------------------------------------------
 
-GeometricReplay::GeometricReplay(unsigned int in_length_sec,
+GeometricReplay::GeometricReplay(unsigned int in_replay_length_sec,
                                  unsigned int in_frames_per_sec) {
-  this->threshhold_age_ = in_length_sec * in_frames_per_sec;
+  this->threshhold_age_ = in_replay_length_sec * in_frames_per_sec;
 }
 
 GeometricReplay::~GeometricReplay() {}
+
+GeometricReplay* GeometricReplay::Clone() {
+  GeometricReplay* clone = new GeometricReplay();
+
+  clone->channels_ = std::vector<FrameChannel>(this->channels_);
+  // NTS: According to the internet the above should produce a deep copy
+  clone->threshhold_age_ = this->threshhold_age_;
+  clone->current_frame_number_write_ = this->current_frame_number_write_;
+  clone->current_frame_number_read_ = this->current_frame_number_read_;
+
+  return clone;
+}
 
 bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
   // Loop over all entries with an id component
@@ -330,5 +349,13 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
     }
   }
 
-  return false;
+  return true;
+}
+
+void GeometricReplay::SetWriteFrame(unsigned int in_frame_number) {
+  this->current_frame_number_write_ = in_frame_number;
+}
+
+void GeometricReplay::SetReadFrame(unsigned int in_frame_number) {
+  this->current_frame_number_read_ = in_frame_number;
 }
