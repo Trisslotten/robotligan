@@ -355,7 +355,6 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
         if (es < 0 || es >= ac.active_animations.size()) {
           std::cout << "Error: could not find animation JumpEnd" << std::endl;
         } else {
-          std::cout << es << "\n";
           ac.active_animations.at(es)->strength_ = endStrength;
         }
 
