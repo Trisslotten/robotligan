@@ -34,7 +34,7 @@ void RenderSystem(entt::registry& registry) {
       auto& m = view_model.get<ModelComponent>(model);
       glob::Submit(m.handles,
                    glm::translate(t.position) * glm::toMat4(t.rotation) *
-                       glm::translate(-m.offset) * glm::scale(t.scale));
+                       glm::translate(-m.offset) * glm::scale(t.scale), m.material_index);
     }
   }
 
@@ -49,7 +49,7 @@ void RenderSystem(entt::registry& registry) {
                     glm::translate(t.position) *
                         glm::toMat4(t.rotation + m.rot_offset) *
                         glm::translate(-m.offset) * glm::scale(t.scale),
-                    a.bone_transforms);
+                    a.bone_transforms, m.material_index);
   }
 
   // submit particles

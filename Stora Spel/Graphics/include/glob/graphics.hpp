@@ -98,14 +98,14 @@ EXPORT void SubmitLightSource(glm::vec3 pos, glm::vec3 color,
                               glm::float32 radius, glm::float32 ambient);
 // Submit Bone Animated Mesh
 EXPORT void SubmitBAM(ModelHandle model_h, glm::mat4 transform,
-                      std::vector<glm::mat4> bone_transforms);
+                      std::vector<glm::mat4> bone_transforms, int material_index = 0);
 EXPORT void SubmitBAM(const std::vector<ModelHandle>& handles,
                       glm::mat4 transform,
-                      std::vector<glm::mat4> bone_transforms);
-EXPORT void Submit(ModelHandle model_h, glm::vec3 pos);
-EXPORT void Submit(ModelHandle model_h, glm::mat4 transform);
+                      std::vector<glm::mat4> bone_transforms, int material_index = 0);
+EXPORT void Submit(ModelHandle model_h, glm::vec3 pos, int material_index = 0);
+EXPORT void Submit(ModelHandle model_h, glm::mat4 transform, int material_index = 0);
 EXPORT void Submit(const std::vector<ModelHandle>& handles,
-                   glm::mat4 transform);
+                   glm::mat4 transform, int material_index = 0);
 EXPORT void SubmitParticles(ParticleSystemHandle handle);
 EXPORT void SubmitCube(glm::mat4 t);
 EXPORT void SubmitWireframeMesh(ModelHandle model_h);

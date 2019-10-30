@@ -3,8 +3,13 @@
 
 #include "glob/graphics.hpp"
 
+
 struct ModelComponent {
   std::vector<glob::ModelHandle> handles;
+
+  // TODO: have a material index for each handle in handles-vector
+  int material_index = 0;
+  
   glm::vec3 offset = glm::vec3(0.f);
   glm::quat rot_offset = glm::quat();
 };

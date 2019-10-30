@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 
+#include <Model\modelconfig.hpp>
 #include <glm/ext.hpp>
 #include <lodepng.hpp>
 #include "../usegl.hpp"
@@ -66,9 +67,20 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
     }
   }
 
+  std::string config_path = filepath_.substr(0, filepath_.find_last_of('.'));
+  config_path += ".mcfg";
+  ModelConfig config{config_path};
+  if(config.isLoaded()) {
+    auto num_mats = config.GetInt("num_materials");
+    if(num_mats) {
+      num_materials_ = *num_mats;
+    }
+  }
+
   // std::cout << "glob::kModelUseGL: " << glob::kModelUseGL << "\n";
   if (glob::kModelUseGL) {
     // Process materials
+
     if (mesh->mMaterialIndex >= 0) {
       aiMaterial* temp_material = scene->mMaterials[mesh->mMaterialIndex];
       std::vector<Texture> diffuse_maps =
@@ -180,6 +192,8 @@ void Model::LoadModel(std::string path) {
   flags |= aiProcess_Triangulate;
   flags |= aiProcess_FlipUVs;
 
+  filepath_ = path;
+
   const aiScene* scene = import.ReadFile(path, flags);
 
   if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
@@ -198,7 +212,7 @@ void Model::LoadModel(std::string path) {
 
   MakeArmature(scene->mRootNode);
 
-  //std::cout << "Bone size: " << bones_.size() << "\n";
+  // std::cout << "Bone size: " << bones_.size() << "\n";
 
   if (bones_.size() > 0) {
     int rootBone = 0;
@@ -208,13 +222,13 @@ void Model::LoadModel(std::string path) {
         break;
       }
     }
-    //std::cout << PrintArmature(*bones_.at(rootBone), 0) << "\n";
+    // std::cout << PrintArmature(*bones_.at(rootBone), 0) << "\n";
   }
 
   if (scene->HasAnimations()) {
     // load animations
     int numAnimations = scene->mNumAnimations;
-    //std::cout << numAnimations << " animations detected.\n";
+    // std::cout << numAnimations << " animations detected.\n";
     for (int i = 0; i < numAnimations; i++) {
       Animation* anim = new Animation();
       anim->name_ = scene->mAnimations[i]->mName.data;
@@ -255,7 +269,7 @@ void Model::LoadModel(std::string path) {
         if (channel.position_keys.size() == 0 &&
             channel.rotation_keys.size() == 0 &&
             channel.scaling_keys.size() == 0) {
-          //std::cout << "Empty channel!\n";
+          // std::cout << "Empty channel!\n";
         }
         anim->channels_.push_back(channel);
       }
@@ -316,7 +330,7 @@ Joint* Model::MakeArmature(aiNode* node) {
       }
     }
     if (knownChildren) {
-      //std::cout << "Armature created from " << node->mName.data << "\n";
+      // std::cout << "Armature created from " << node->mName.data << "\n";
       j->id = bones_.size();
       bones_.push_back(j);
     } else {
@@ -390,6 +404,7 @@ Model::~Model() {
 void Model::LoadFromFile(const std::string& path) { LoadModel(path); }
 
 void Model::Draw(ShaderProgram& shader) {
+  shader.uniform("num_materials", num_materials_);
   for (unsigned int i = 0; i < mesh_.size(); i++) {
     mesh_[i].Draw(shader);
   }
@@ -399,10 +414,10 @@ float Model::MaxDistance(glm::mat4 transform, glm::vec3 point) {
   float result = 0.f;
   for (int i = 0; i < mesh_.size(); i++) {
     MeshData temp = mesh_[i].GetMeshData();
-    for(auto pos : temp.pos) {
+    for (auto pos : temp.pos) {
       glm::vec3 transformed = transform * glm::vec4(pos, 1);
       int len = length(point - transformed);
-      if(len > result) {
+      if (len > result) {
         result = len;
       }
     }
