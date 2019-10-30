@@ -5,7 +5,7 @@
 
 struct ProjectileComponent {
   ProjectileID projectile_id;
-  PlayerID creator;
+  long creator = TEAM_NONE;
 };
 
 #endif  // !PROJECTLIE_COMPONENT_HPP_

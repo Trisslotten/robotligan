@@ -30,6 +30,11 @@ void Update(entt::registry& registry, float dt) {
     AbilityComponent& ability_c = view_controller.get<AbilityComponent>(entity);
     IDComponent& id_c = view_controller.get<IDComponent>(entity);
 
+    unsigned int player_team = TEAM_RED;
+    if (registry.has<TeamComponent>(entity)) {
+      player_team = registry.get<TeamComponent>(entity).team;
+	}
+
     constexpr float pi = glm::pi<float>();
     player_c.pitch = glm::clamp(player_c.pitch, -0.49f * pi, 0.49f * pi);
     // player_c.pitch = glm::mod(player_c.pitch + delta_pitch, 2.f * pi);
@@ -40,6 +45,10 @@ void Update(entt::registry& registry, float dt) {
     trans_c.SetRotation(glm::vec3(0, player_c.yaw, 0));
 
     if (player_c.actions[PlayerAction::SHOOT]) {
+      GameEvent shoot_event;
+      shoot_event.type = GameEvent::SHOOT;
+      shoot_event.shoot.player_id = registry.get<IDComponent>(entity).id;
+      dispatcher.trigger(shoot_event);
       ability_c.shoot = true;
     }
     // Caputre keyboard input and apply velocity
@@ -131,6 +140,8 @@ void Update(entt::registry& registry, float dt) {
         dispatcher.trigger(sprint_event);
       }
     }
+
+    player_c.wanted_move_dir = accum_velocity;
 
     // physics stuff
 
@@ -232,6 +243,15 @@ void Update(entt::registry& registry, float dt) {
           hit_event.type = GameEvent::HIT;
           hit_event.hit.player_id = id_c.id;
           dispatcher.trigger(hit_event);
+          if (!ball_c.is_real && ball_c.faker_team != player_team) {
+            EventInfo info;
+            if (registry.has<IDComponent>(entity) == false) return;
+            auto id = registry.get<IDComponent>(entity);
+            info.event = Event::DESTROY_ENTITY;
+            info.e_id = id.id;
+            info.entity = entity;
+            dispatcher.enqueue<EventInfo>(info);
+          }
         }
       }
 

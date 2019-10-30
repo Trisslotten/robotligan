@@ -1,9 +1,13 @@
 Usage:
-A line with a value that should be used is started with a '>'
+{FLOATS} A line with a value that should be used is started with a '>'
 After that write the variable name in ALL CAPS with _ between each word
 Follow it up with a '=' and the value you want to save as a float value
 Note that after the '>' there should be no spaces. 
 Example: '>MY_VALUE=13.37'
+{STRINGS}
+Same method but use '#' as indicator.
+Example: '#MY_STRING=BOGDANBOIS2007'
+
 
 //--Physics Values--//
 >PHYSICS_FRICTION=0.0
@@ -29,10 +33,13 @@ Example: '>MY_VALUE=13.37'
 >RENDER_WIREFRAME=0.0
 
 //--Sound Settings--//
->SOUND_VOLUME=21.500000
+>SOUND_VOLUME=53.500000
 
 //--Graphics Settings--//
 >GRAPHICS_FOV=90.000000
 
 //--Input Settings--//
 >INPUT_MOUSE_SENS=1.000000
+
+//--STRINGS--//
+#USERNAME=Bogge1337

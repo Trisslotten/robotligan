@@ -49,6 +49,7 @@ class Engine {
   }
   NetAPI::Socket::Client& GetClient() { return client_; }
   NetAPI::Common::Packet& GetPacket() { return packet_; }
+  void SetTakeInput(bool should_take) { take_game_input_ = should_take; }
   void SetSendInput(bool should_send) { should_send_input_ = should_send; }
   void SetEnableChat(bool should_enable) { this->enable_chat_ = should_enable; }
   SoundSystem& GetSoundSystem() { return sound_system_; }
@@ -56,7 +57,7 @@ class Engine {
   AnimationSystem& GetAnimationSystem() { return animation_system_; }
   entt::registry* GetCurrentRegistry() { return registry_current_; }
 
-  std::unordered_map<PlayerID, std::string> player_names_;
+  std::unordered_map<long, std::string> player_names_;
 
   void SetSecondaryAbility(AbilityID id) { second_ability_ = id; }
   AbilityID GetSecondaryAbility() { return second_ability_; }
@@ -81,9 +82,13 @@ class Engine {
   Chat* GetChat() { return &chat_; }
 
   StateType GetPreviousStateType() { return previous_state_; }
-  int GetStateType() { return statetype_; }
-  void SetStateType(int state) { statetype_ = state; }
+  ServerStateType GetServerState() { return server_state_; }
+  void SetServerState(ServerStateType state) { server_state_ = state; }
   void ReInit() { play_state_.Cleanup(); play_state_.Init();}
+
+  std::unordered_map<PlayerID, PlayerStatInfo> GetPlayerScores() {
+    return player_scores_;
+  }
  private:
   void SetKeybinds();
 
@@ -134,7 +139,7 @@ class Engine {
   std::string message_ = "";
 
   bool enable_chat_ = false;
-  int statetype_;
+  ServerStateType server_state_;
   SoundSystem sound_system_;
   AnimationSystem animation_system_;
 

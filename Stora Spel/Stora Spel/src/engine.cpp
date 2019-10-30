@@ -22,6 +22,7 @@
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
+#include <ecs\systems\trail_system.hpp>
 
 Engine::Engine() {}
 
@@ -306,6 +307,31 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetCameraOrientation(orientation);
       break;
     }
+    case PacketBlockType::PLAYER_LOOK_DIR: {
+      int num_dirs = -1;
+      packet >> num_dirs;
+      for(int i =0 ; i < num_dirs; i++) {
+        EntityID id = 0;
+        glm::vec3 look_dir;
+        packet >> id;
+        packet >> look_dir;
+        play_state_.SetPlayerLookDir(id, look_dir);
+      }
+      break;
+    }
+    case PacketBlockType::PLAYER_MOVE_DIR: {
+      int num_dirs = -1;
+      packet >> num_dirs;
+      for(int i =0 ; i < num_dirs; i++) {
+        EntityID id = 0;
+        glm::vec3 move_dir;
+        packet >> id;
+        packet >> move_dir;
+        play_state_.SetPlayerMoveDir(id, move_dir);
+      }
+      break;
+    }
+
     case PacketBlockType::GAME_START: {
       // std::cout << "PACKET: GAME_START\n";
       unsigned int team;
@@ -314,6 +340,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       EntityID my_id;
       EntityID ball_id;
       int ability_id;
+      int num_team_ids;
       packet >> ability_id;
       packet >> num_players;
       player_ids.resize(num_players);
@@ -324,7 +351,27 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetEntityIDs(player_ids, my_id, ball_id);
       play_state_.SetMyPrimaryAbility(ability_id);
       play_state_.SetTeam(team);
+      packet >> num_team_ids;
+      for (int i = 0; i < num_team_ids; i++) {
+        long client_id;
+        EntityID e_id;
+        unsigned int team;
+        packet >> client_id;
+        packet >> e_id;
+        packet >> team;
+        PlayerStatInfo psbi;
+        psbi.goals = 0;
+        psbi.points = 0;
+        psbi.team = team;
+        psbi.enttity_id = e_id;
+        psbi.assists = 0;
+        psbi.saves = 0;
+        player_scores_[client_id] = psbi;
+      }
+
       ChangeState(StateType::PLAY);
+
+      std::cout << "PACKET: GAME_START\n";
       break;
     }
     case PacketBlockType::MESSAGE: {
@@ -452,6 +499,17 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       player_scores_[id] = psbi;
       break;
     }
+    case PacketBlockType::CREATE_WALL: {
+      glm::quat rot;
+      glm::vec3 pos;
+      EntityID id;
+
+      packet >> id;
+      packet >> pos;
+      packet >> rot;
+      play_state_.CreateWall(id, pos, rot);
+      break;
+    }
     case PacketBlockType::CREATE_PICK_UP: {
       glm::vec3 pos;
       EntityID id;
@@ -481,11 +539,11 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       std::cout << server_connected_;
       break;
     }
-    case PacketBlockType::STATE: {
+    case PacketBlockType::SERVER_STATE: {
       // std::cout << "PACKET: STATE\n";
-      int state = -1;
+      ServerStateType state;
       packet >> state;
-      SetStateType(state);
+      SetServerState(state);
       break;
     }
     case PacketBlockType::RECEIVE_PICK_UP: {
@@ -558,6 +616,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::GAME_END: {
       // std::cout << "PACKET: GAME_END\n";
       play_state_.EndGame();
+      previous_state_ = StateType::LOBBY;
       // ChangeState(StateType::LOBBY);
       break;
     }
@@ -573,10 +632,36 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.UpdateHistory(id);
       break;
     }
+    case PacketBlockType::CREATE_BALL: {
+      EntityID id;
+      packet >> id;
+      play_state_.CreateNewBallEntity(false, id);
+      break;
+    }
+    case PacketBlockType::CREATE_FAKE_BALL: {
+      EntityID id;
+      packet >> id;
+      play_state_.CreateNewBallEntity(true, id);
+      break;
+    }
+    case PacketBlockType::TO_CLIENT_NAME: {
+      long client_id;
+      size_t name_size = 0;
+      std::string name;
+      packet >> client_id;
+      packet >> name_size;
+      name.resize(name_size);
+      packet.Remove(name.data(), name.size());
+      player_names_[client_id] = name;
+      break;
+    }
   }
 }
 
-void Engine::Render() { glob::Render(); }
+void Engine::Render() {
+  //
+  glob::Render();
+}
 
 void Engine::SetCurrentRegistry(entt::registry* registry) {
   this->registry_current_ = registry;
@@ -600,7 +685,7 @@ void Engine::UpdateChat(float dt) {
       if (chat_.IsTakingChatInput() == true &&
           chat_.GetCurrentMessage().size() == 0)
         glob::Submit(font_test2_, chat_.GetPosition() + glm::vec2(0, -20.f * 5),
-                     20, "Enter message", glm::vec4(1, 1, 1, 1));
+                     28, "Enter message", glm::vec4(1, 1, 1, 1));
     }
     if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat_.IsVisable()) {
       // glob::window::SetMouseLocked(false);
@@ -625,8 +710,9 @@ void Engine::UpdateSystems(float dt) {
   gui_system::Update(*registry_current_);
   input_system::Update(*registry_current_);
   ParticleSystem(*registry_current_, dt);
-  RenderSystem(*registry_current_);
   animation_system_.UpdateAnimations(*registry_current_, dt);
+  trailsystem::Update(*registry_current_, dt);
+  RenderSystem(*registry_current_);
 }
 
 void Engine::SetKeybinds() {
