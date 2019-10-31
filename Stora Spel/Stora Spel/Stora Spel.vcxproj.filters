@@ -116,6 +116,7 @@
     <None Include="Assets\shaders\text3Dshader.frag" />
     <None Include="Assets\shaders\trail.vert" />
     <None Include="Assets\shaders\trail.frag" />
+    <None Include="Assets\Mech\Mech.mcfg" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />

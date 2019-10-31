@@ -2,10 +2,9 @@
 #define TRAIL_SYSTEM_HPP_
 
 #include <entt.hpp>
-#include <shared/transform_component.hpp>
 #include <shared/physics_component.hpp>
+#include <shared/transform_component.hpp>
 #include "ecs/components/trail_component.hpp"
-
 
 namespace trailsystem {
 
@@ -35,11 +34,11 @@ void Update(entt::registry& registry, float dt) {
     auto& physics_c = view_phys.get<PhysicsComponent>(entity);
 
     float vel = length(physics_c.velocity);
-    float opacity = glm::pow(0.048f*vel, 5.f);
+    float opacity = glm::pow(0.048f * vel, 5.f);
     float f = 0.0001f;
-    trail_c.color.a = glm::mix(trail_c.color.a, opacity, 1.f-glm::pow(f, dt));
+    trail_c.color.a = glm::mix(trail_c.color.a, opacity, 1.f - glm::pow(f, dt));
 
-    //std::cout << "vel: " << vel << "\n";
+    // std::cout << "vel: " << vel << "\n";
   }
 }
 

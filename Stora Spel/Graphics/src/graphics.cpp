@@ -39,6 +39,8 @@ namespace {
 struct RenderItem {
   Model *model;
   glm::mat4 transform;
+
+  int material_index;
 };
 
 struct GUIItem {
@@ -62,6 +64,8 @@ struct BoneAnimatedRenderItem {
   std::vector<glm::mat4>
       bone_transforms;  // may be a performance bottleneck, pointer instead?
   int numBones;
+
+  int material_index = 0;
 };
 
 struct TextItem {
@@ -952,17 +956,17 @@ void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
   lights_to_render.push_back(item);
 }
 
-void SubmitBAM(
-    const std::vector<ModelHandle> &handles, glm::mat4 transform,
-    std::vector<glm::mat4> bone_transforms) {  // Submit Bone Animated Mesh
+void SubmitBAM(const std::vector<ModelHandle> &handles, glm::mat4 transform,
+               std::vector<glm::mat4> bone_transforms,
+               int material_index) {  // Submit Bone Animated Mesh
   for (auto handle : handles) {
-    SubmitBAM(handle, transform, bone_transforms);
+    SubmitBAM(handle, transform, bone_transforms, material_index);
   }
 }
 
-void SubmitBAM(
-    ModelHandle model_h, glm::mat4 transform,
-    std::vector<glm::mat4> bone_transforms) {  // Submit Bone Animated Mesh
+void SubmitBAM(ModelHandle model_h, glm::mat4 transform,
+               std::vector<glm::mat4> bone_transforms,
+               int material_index) {  // Submit Bone Animated Mesh
   BoneAnimatedRenderItem BARI;
 
   auto find_res = models.find(model_h);
@@ -979,20 +983,24 @@ void SubmitBAM(
 
   BARI.transform = transform * pre_rotation;
   BARI.numBones = BARI.bone_transforms.size();
+
+  BARI.material_index = material_index;
+
   bone_animated_items_to_render.push_back(BARI);
 }
 
-void Submit(ModelHandle model_h, glm::vec3 pos) {
+void Submit(ModelHandle model_h, glm::vec3 pos, int material_index) {
   glm::mat4 transform = glm::translate(pos);
-  Submit(model_h, transform);
+  Submit(model_h, transform, material_index);
 }
 
-void Submit(const std::vector<ModelHandle> &handles, glm::mat4 transform) {
+void Submit(const std::vector<ModelHandle> &handles, glm::mat4 transform,
+            int material_index) {
   for (auto handle : handles) {
-    Submit(handle, transform);
+    Submit(handle, transform, material_index);
   }
 }
-void Submit(ModelHandle model_h, glm::mat4 transform) {
+void Submit(ModelHandle model_h, glm::mat4 transform, int material_index) {
   auto find_res = models.find(model_h);
   if (find_res == models.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted model\n";
@@ -1006,6 +1014,8 @@ void Submit(ModelHandle model_h, glm::mat4 transform) {
   RenderItem to_render;
   to_render.model = &find_res->second;
   to_render.transform = transform * pre_rotation;
+  to_render.material_index = material_index;
+
   items_to_render.push_back(to_render);
 }
 
@@ -1036,7 +1046,7 @@ double GetWidthOfText(Font2DHandle font_handle, std::string text, float size) {
 
     // std::cout << offset_accum << "\n";
   }
-  return (offset_accum - 0.7*len + 4.)*93./97.;
+  return (offset_accum - 0.7 * len + 4.) * 93. / 97.;
 }
 
 void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
@@ -1240,6 +1250,7 @@ void Render() {
 
     model_emission_shader.use();
     for (auto &render_item : emissive_items) {
+      model_emission_shader.uniform("material_index", render_item.material_index);
       model_emission_shader.uniform("model_transform", render_item.transform);
       render_item.model->Draw(model_emission_shader);
     }
@@ -1247,6 +1258,7 @@ void Render() {
     animated_model_shader.use();
     // render bone animated items
     for (auto &BARI : bone_animated_items_to_render) {
+      animated_model_shader.uniform("material_index", BARI.material_index);
       animated_model_shader.uniform("model_transform", BARI.transform);
       int numBones = 0;
       for (auto &bone : BARI.bone_transforms) {

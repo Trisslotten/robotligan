@@ -58,8 +58,7 @@ bool AnimationSystem::IsIncluded(int bone, std::vector<int>* included,
   return false;
 }
 
-bool AnimationSystem::IsExcluded(int bone,
-                                 std::vector<int>* excluded) {
+bool AnimationSystem::IsExcluded(int bone, std::vector<int>* excluded) {
   for (int i = 0; i < excluded->size(); i++) {
     if (bone == excluded->at(i)) {
       return true;
@@ -220,7 +219,7 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       pl.vel_dir = moveDir;
     } else {
       moveDir = pl.vel_dir;
-	}
+    }
     // SLIDE ANIMATIONS
     constexpr float pi = glm::pi<float>();
     if (!pl.sprinting) {
@@ -339,21 +338,29 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
 
       startStrength = velCoeff;
 
-      int js = GetActiveAnimationByName("JumpStart", &ac);
-      if (js < 0) {
-        std::cout << "Error: could not find animation JumpStart" << std::endl;
-      } else {
-        ac.active_animations.at(js)->strength_ = startStrength;
-      }
-      // std::cout << startStrength << "\n";
+      try {
+        int js = GetActiveAnimationByName("JumpStart", &ac);
+        // std::cout << js << " : js\n";
+        if (js < 0 || js >= ac.active_animations.size()) {
+          std::cout << "Error: could not find animation JumpStart" << std::endl;
+        } else {
+          ac.active_animations.at(js)->strength_ = startStrength;
+        }
+        // std::cout << startStrength << "\n";
 
-      endStrength = 1.f - velCoeff;
-	  
-      int es = GetActiveAnimationByName("JumpEnd", &ac);
-      if (es < 0) {
-        std::cout << "Error: could not find animation JumpEnd" << std::endl;
-      } else {
-        ac.active_animations.at(es)->strength_ = endStrength;
+        endStrength = 1.f - velCoeff;
+
+        int es = GetActiveAnimationByName("JumpEnd", &ac);
+        // std::cout << es << " : es\n";
+        if (es < 0 || es >= ac.active_animations.size()) {
+          std::cout << "Error: could not find animation JumpEnd" << std::endl;
+        } else {
+          ac.active_animations.at(es)->strength_ = endStrength;
+        }
+
+      } catch (std::exception& e) {
+        // ???
+        //std::cout << e.what() << '\n';
       }
     }
 
