@@ -12,6 +12,8 @@ void MainMenuState::Startup() {
   CreateBackgroundEnitites();
 
   information_image_ = glob::GetGUIItem("assets/GUI_elements/info_menu.png");
+
+  loggo_image_ = glob::GetGUIItem("assets/GUI_elements/logga.png");
 }
 
 void MainMenuState::Init() {
@@ -31,6 +33,13 @@ void MainMenuState::Update(float dt) {
   //
   if (engine_->GetCurrentRegistry() == &registry_information_) {
     glob::Submit(information_image_, glm::vec2(560, 300), 1.0f);
+  } else {
+    auto ws = glob::window::GetWindowDimensions();
+    float scale = 0.8f;
+    glm::vec2 pos;
+    pos.x = ws.x/2.f - scale*1280.f/2.f;
+    pos.y = 500; //ws.y - scale*313 - 100;
+    glob::Submit(loggo_image_, pos, scale);
   }
 }
 
