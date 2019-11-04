@@ -75,7 +75,7 @@ class MainMenuState : public State {
 
   glob::Font2DHandle font_test_ = 0;
   glob::GUIHandle information_image_ = 0;
-  // Inherited via State
+  glob::GUIHandle loggo_image_ = 0;
 };
 
 /////////////////////// LOBBY ///////////////////////
