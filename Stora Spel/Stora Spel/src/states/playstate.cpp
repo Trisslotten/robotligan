@@ -128,6 +128,7 @@ void PlayState::Init() {
   goals_swapped_ = false;
   primary_cd_ = 0.f;
   engine_->SetSecondaryAbility(AbilityID::NULL_ABILITY);
+  engine_->GetChat()->CloseChat();
   timer_ = 0.f;
   Reset();
 }

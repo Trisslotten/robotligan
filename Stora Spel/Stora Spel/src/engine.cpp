@@ -673,7 +673,8 @@ void Engine::UpdateChat(float dt) {
         } else {
           chat_.SetSendMessage(true);
           message_ = chat_.GetCurrentMessage();
-          chat_.CloseChat();
+          if (current_state_ == &play_state_)
+			chat_.CloseChat();
         }
       }
       chat_.Update(dt);
