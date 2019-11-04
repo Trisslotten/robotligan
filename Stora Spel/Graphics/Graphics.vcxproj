@@ -220,6 +220,7 @@
     <ClCompile Include="src\camera\camera.cpp" />
     <ClCompile Include="src\Font\Font2D.cpp" />
     <ClCompile Include="src\graphics.cpp" />
+    <ClCompile Include="src\material\material.cpp" />
     <ClCompile Include="src\Model\modelconfig.cpp" />
     <ClCompile Include="src\postprocess\blur.cpp" />
     <ClCompile Include="src\Particles\particle_system.cpp" />

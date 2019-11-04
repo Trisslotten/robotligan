@@ -57,13 +57,11 @@ GLuint quad_vbo, quad_vao;
 
 GLuint trail_vao, trail_vbo;
 
-std::unordered_map<int, Material> materials;
+std::vector<Material> materials;
 
 PostProcess post_process;
 Blur blur;
 Shadows shadows;
-
-float num_frames = 0;
 
 Camera camera;
 
@@ -388,6 +386,9 @@ void Init() {
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
                         (GLvoid *)0);
   glBindVertexArray(0);
+
+  materials.emplace_back();
+  materials.back().SetNormalMap("Assets/Texture/dirty_metal_weavy_normal.png");
 
   blur.Init();
 
@@ -1155,7 +1156,7 @@ void Render() {
     }
   };
   shadows.RenderToMaps(draw_function, anim_draw_function, blur);
-  shadows.BindMaps(3);
+  shadows.BindMaps(5);
 
   for (auto &shader : mesh_render_group) {
     shader->use();
@@ -1193,6 +1194,10 @@ void Render() {
     }
 
     animated_model_shader.use();
+
+    materials.back().BindNormalMap(4);
+    animated_model_shader.uniform("texture_normal", 4);
+
     // render bone animated items
     for (auto &BARI : bone_animated_items_to_render) {
       animated_model_shader.uniform("material_index", BARI.material_index);
@@ -1307,8 +1312,6 @@ void Render() {
   cubes.clear();
   wireframe_meshes.clear();
   particles_to_render.clear();
-
-  num_frames++;
 }
 
 Camera &GetCamera() { return camera; }

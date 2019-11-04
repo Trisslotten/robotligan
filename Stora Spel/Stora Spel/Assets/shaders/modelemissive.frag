@@ -10,6 +10,7 @@ in vec3 v_normal;
 uniform sampler2D texture_diffuse;
 uniform sampler2D texture_specular;
 uniform sampler2D texture_emissive;
+uniform sampler2D texture_normal;
 
 uniform int num_materials;
 uniform int material_index;
@@ -40,6 +41,14 @@ void main()
 	color += dither();
 	out_color = vec4(color, alpha);
 
+	vec3 normal_tex;
+	normal_tex.xy = texture(texture_normal, v_tex).rg * 2.0 - 1.0;
+	normal_tex.z = sqrt(1.-normal_tex.x*normal_tex.x-normal_tex.y*normal_tex.y);
+	normal_tex = normalize(normal_tex);
+
+	out_color = vec4(0,0,0,1);
+	out_color.rg = texture(texture_normal, v_tex).rg;
+
 	// TODO: maybe use alpha channel instead
-	out_emission = vec4(emission_strength * surface_color.rgb, 1);
+	//out_emission = vec4(emission_strength * surface_color.rgb, 1);
 }
