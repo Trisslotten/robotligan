@@ -1369,6 +1369,40 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       }
       break;
     }
+    case GameEvent::INVISIBILITY_CAST: {
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent>();
+      for (auto entity : view_controller) {
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+        PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
+        ModelComponent& m_c = view_controller.get< ModelComponent>(entity);
+
+        if (id_c.id == e.invisibility_cast.player_id) {
+          m_c.invisible = true;
+        }
+      }
+      if (e.invisibility_cast.player_id == my_id_) {
+        // TODO: Add effect to let player know it's invisible
+      }
+      break;
+    }
+    case GameEvent::INVISIBILITY_END: {
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent>();
+      for (auto entity : view_controller) {
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+        PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
+        ModelComponent& m_c = view_controller.get< ModelComponent>(entity);
+
+        if (id_c.id == e.invisibility_end.player_id) {
+          m_c.invisible = false;
+        }
+      }
+      if (e.invisibility_end.player_id == my_id_) {
+        // TODO: Remove effect to let player know it's visible again
+      }
+      break;
+    }
   }
 }
 

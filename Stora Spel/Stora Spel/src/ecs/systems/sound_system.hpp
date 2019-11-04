@@ -46,6 +46,7 @@ private:
   slob::SoundHandle sound_ability_teleport_impact_;
   slob::SoundHandle sound_ability_force_push_impact_;
   slob::SoundHandle sound_ability_fake_ball_poof_;
+  slob::SoundHandle sound_ability_invisibility_end_;
 
   Engine* engine_;
 };

@@ -73,9 +73,9 @@ void SoundSystem::Init(Engine* engine) {
     sound_engine_.GetSound("assets/sound/teleport_2.mp3");
   sound_ability_force_push_impact_ =
     sound_engine_.GetSound("assets/sound/forcepush.mp3");
-
   sound_ability_fake_ball_poof_ =
-      sound_engine_.GetSound("assets/sound/poof.mp3");
+    sound_engine_.GetSound("assets/sound/poof.mp3");
+  sound_ability_invisibility_end_ = sound_engine_.GetSound("assets/sound/invis_end.mp3");
 
   ability_sounds_[AbilityID::GRAVITY_CHANGE] =
     sound_engine_.GetSound("assets/sound/gravitydrop.wav");
@@ -88,13 +88,15 @@ void SoundSystem::Init(Engine* engine) {
   ability_sounds_[AbilityID::HOMING_BALL] =
     sound_engine_.GetSound("assets/sound/homingball.wav");
   ability_sounds_[AbilityID::SWITCH_GOALS] =
-      sound_engine_.GetSound("assets/sound/switch_goals.mp3");
-  ability_sounds_[AbilityID::BUILD_WALL] =
-      sound_engine_.GetSound("assets/sound/build_wall.mp3");
-  ability_sounds_[AbilityID::FAKE_BALL] =
-      sound_engine_.GetSound("assets/sound/fake_ball.wav");
-
     sound_engine_.GetSound("assets/sound/switch_goals.mp3");
+  ability_sounds_[AbilityID::BUILD_WALL] =
+    sound_engine_.GetSound("assets/sound/build_wall.mp3");
+  ability_sounds_[AbilityID::FAKE_BALL] =
+    sound_engine_.GetSound("assets/sound/fake_ball.wav");
+  ability_sounds_[AbilityID::INVISIBILITY] =
+    sound_engine_.GetSound("assets/sounds/invis_pop.mp3");
+
+  sound_engine_.GetSound("assets/sound/switch_goals.mp3");
 }
 
 void SoundSystem::PlayAmbientSound(entt::registry& registry) {
@@ -351,7 +353,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.build_wall.wall_id) {
         sound_c.sound_player->Play(ability_sounds_[AbilityID::BUILD_WALL], 0,
-                                   10.0f);
+          10.0f);
         break;
       }
     }
@@ -376,6 +378,30 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.fake_ball_poofed.ball_id) {
         sound_c.sound_player->Play(sound_ability_fake_ball_poof_);
+        break;
+      }
+    }
+    break;
+  }
+  case GameEvent::INVISIBILITY_CAST: {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.invisibility_cast.player_id) {
+        sound_c.sound_player->Play(ability_sounds_[AbilityID::INVISIBILITY]);
+        break;
+      }
+    }
+    break;
+  }
+  case GameEvent::INVISIBILITY_END: {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.invisibility_end.player_id) {
+        sound_c.sound_player->Play(sound_ability_invisibility_end_);
         break;
       }
     }
