@@ -1343,6 +1343,9 @@ void Render() {
   fullscreen_shader.uniform("texture_color", 0);
   post_process.BindEmissionTex(1);
   fullscreen_shader.uniform("texture_emission", 1);
+
+  //här ska ssao-tex in
+
   DrawFullscreenQuad();
 
   glBindVertexArray(quad_vao);
