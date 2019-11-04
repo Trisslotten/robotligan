@@ -1060,6 +1060,11 @@ void PlayState::CreateArenaEntity() {
   arena_entity_ = arena;
 }
 
+void AddLightToBall(entt::registry& registry, entt::entity& ball) {
+  registry.assign<LightComponent>(ball, glm::vec3(0.f, 1.f, 0.f),
+                                            20.f, 0.f);
+}
+
 void PlayState::CreateBallEntity() {
   auto& sound_engine = engine_->GetSoundEngine();
 
@@ -1083,7 +1088,8 @@ void PlayState::CreateBallEntity() {
   registry_gameplay_.assign<IDComponent>(ball, ball_id_);
   registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
   registry_gameplay_.assign<physics::Sphere>(ball, glm::vec3(0.0f), 1.0f);
-  registry_gameplay_.assign<LightComponent>(ball, glm::vec3(0.f, 1.f, 0.f), 10.f, 0.f);
+  AddLightToBall(registry_gameplay_, ball);
+  
 
   registry_gameplay_.assign<TrailComponent>(ball);
 }
@@ -1102,8 +1108,7 @@ void PlayState::CreateNewBallEntity(bool fake, EntityID id) {
   if (fake) {
     model_path = "Assets/Ball_new/fake/Ball_Sphere.fbx";
   } else {
-    registry_gameplay_.assign<LightComponent>(ball, glm::vec3(0.f, 1.f, 0.f),
-                                              30.f, 0.f);
+    AddLightToBall(registry_gameplay_, ball);
   }
   glob::ModelHandle model_ball_sphere_p = glob::GetTransparentModel(model_path);
   // glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
