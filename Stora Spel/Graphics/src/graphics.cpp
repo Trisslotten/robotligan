@@ -5,101 +5,35 @@
 // no move plz
 
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <lodepng.hpp>
-
+#include <msdfgen/msdfgen-ext.h>
+#include <msdfgen/msdfgen.h>
 #include <fstream>
+#include <glm/glm.hpp>
 #include <iostream>
+#include <lodepng.hpp>
+#include <map>
 #include <sstream>
 #include <unordered_map>
 
+#include "2D/elements2D.hpp"
+#include "Font/Font2D.hpp"
 #include "Model/model.hpp"
 #include "Particles/particle_settings.hpp"
 #include "glob/camera.hpp"
 #include "glob/window.hpp"
+#include "material\material.hpp"
 #include "particles/particle_system.hpp"
-#include "shader.hpp"
-
-#include "2D/elements2D.hpp"
-#include "Font/Font2D.hpp"
-
-#include <msdfgen/msdfgen-ext.h>
-#include <msdfgen/msdfgen.h>
-#include <map>
 #include "postprocess/blur.hpp"
 #include "postprocess/postprocess.hpp"
+#include "shader.hpp"
 #include "shadows/shadows.hpp"
+#include "renderitems.hpp"
 
 namespace glob {
 
 bool kModelUseGL = true;
 
 namespace {
-
-struct RenderItem {
-  Model *model;
-  glm::mat4 transform;
-
-  int material_index;
-};
-
-struct GUIItem {
-  Elements2D *gui;
-  glm::vec2 pos;
-  float scale;
-  float scale_x;
-  float opacity;
-};
-
-struct E2DItem {
-  Elements2D *e2D;
-  glm::vec3 pos;
-  float scale;
-  glm::mat4 rot;
-};
-
-struct BoneAnimatedRenderItem {
-  Model *model;
-  glm::mat4 transform;
-  std::vector<glm::mat4>
-      bone_transforms;  // may be a performance bottleneck, pointer instead?
-  int numBones;
-
-  int material_index = 0;
-};
-
-struct TextItem {
-  Font2D *font = nullptr;
-  glm::vec2 pos{0};
-  unsigned int size = 0;
-  std::string text;
-  glm::vec4 color;
-  bool visible;
-  bool equal_spacing;
-  float spacing;
-};
-
-struct Text3DItem {
-  Font2D *font = nullptr;
-  glm::vec3 pos{0};
-  float size = 0.f;
-  std::string text;
-  glm::vec4 color;
-  glm::mat4 rotation;
-};
-
-struct LightItem {
-  glm::vec3 pos;
-  glm::vec3 color;
-  glm::float32 radius;
-  glm::float32 ambient;
-};
-
-struct TrailItem {
-  std::vector<glm::vec3> position_history;
-  float width;
-  glm::vec4 color;
-};
 
 ShaderProgram fullscreen_shader;
 ShaderProgram model_emission_shader;
@@ -122,6 +56,8 @@ GLuint cube_vbo, cube_vao;
 GLuint quad_vbo, quad_vao;
 
 GLuint trail_vao, trail_vbo;
+
+std::unordered_map<int, Material> materials;
 
 PostProcess post_process;
 Blur blur;
@@ -1250,7 +1186,8 @@ void Render() {
 
     model_emission_shader.use();
     for (auto &render_item : emissive_items) {
-      model_emission_shader.uniform("material_index", render_item.material_index);
+      model_emission_shader.uniform("material_index",
+                                    render_item.material_index);
       model_emission_shader.uniform("model_transform", render_item.transform);
       render_item.model->Draw(model_emission_shader);
     }
