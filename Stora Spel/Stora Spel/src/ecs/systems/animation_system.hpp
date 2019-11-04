@@ -35,9 +35,6 @@ class AnimationSystem {
  public:
   void Init(Engine* engine);
 
-  glm::mat3 ConvertToGLM3x3(aiMatrix3x3 aiMat);
-  glm::vec3 ConvertToGLMVec3(aiVector3D aiVec);
-
   void GetDefaultPose(glm::mat4 parent, glob::Joint* bone,
                       std::vector<glob::Joint>* armature,
                       glm::mat4 globalInverseTransform);

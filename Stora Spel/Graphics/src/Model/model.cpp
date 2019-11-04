@@ -7,6 +7,8 @@
 #include <lodepng.hpp>
 #include "../usegl.hpp"
 
+#include <glob/AssimpToGLMConverter.hpp>
+
 namespace glob {
 
 Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
@@ -100,7 +102,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
       Joint* j = new Joint();
       j->id = i;
       j->name = mesh->mBones[i]->mName.data;
-      j->offset = ConvertToGLM(mesh->mBones[i]->mOffsetMatrix);
+      j->offset = AssToGLM::ConvertToGLM4x4(mesh->mBones[i]->mOffsetMatrix);
       bones_.push_back(j);
 
       // set vec4 arrays for weight and bone index (influencing bone)
@@ -189,7 +191,8 @@ void Model::LoadModel(std::string path) {
     return;
   }
 
-  globalInverseTransform_ = ConvertToGLM(scene->mRootNode->mTransformation);
+  globalInverseTransform_ =
+      AssToGLM::ConvertToGLM4x4(scene->mRootNode->mTransformation);
   globalInverseTransform_ = glm::inverse(globalInverseTransform_);
 
   directory_ = path.substr(0, path.find_last_of('/'));
@@ -284,7 +287,7 @@ Joint* Model::MakeArmature(aiNode* node) {
   bool knownBone = false;
   for (auto& b : bones_) {
     if (node->mName.data == b->name) {  // node is known bone
-      b->transform = ConvertToGLM(node->mTransformation);
+      b->transform = AssToGLM::ConvertToGLM4x4(node->mTransformation);
       knownBone = true;
       for (int n = 0; n < node->mNumChildren; n++) {
         for (auto PCB : bones_) {
@@ -303,7 +306,7 @@ Joint* Model::MakeArmature(aiNode* node) {
     Joint* j = new Joint;
     j->name = "Armature";
     j->offset = glm::mat4(0.f);
-    j->transform = glm::rotate(ConvertToGLM(node->mTransformation),
+    j->transform = glm::rotate(AssToGLM::ConvertToGLM4x4(node->mTransformation),
                                3.1416f / 2.f, glm::vec3(1.f, 0.f, 0.f));
     bool knownChildren = false;
     for (int n = 0; n < node->mNumChildren; n++) {

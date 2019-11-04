@@ -1,17 +1,9 @@
 #include "animation_system.hpp"
 
 #include "engine.hpp"
+#include "glob/AssimpToGLMConverter.hpp"
 
 void AnimationSystem::Init(Engine* engine) { engine_ = engine; }
-
-glm::mat3 AnimationSystem::ConvertToGLM3x3(aiMatrix3x3 aiMat) {
-  return {aiMat.a1, aiMat.b1, aiMat.c1, aiMat.a2, aiMat.b2,
-          aiMat.c2, aiMat.a3, aiMat.b3, aiMat.c3};
-}
-
-glm::vec3 AnimationSystem::ConvertToGLMVec3(aiVector3D aiVec) {
-  return glm::vec3(aiVec.x, aiVec.y, aiVec.z);
-}
 
 void AnimationSystem::GetDefaultPose(glm::mat4 parent, glob::Joint* bone,
                                      std::vector<glob::Joint>* armature,
@@ -62,8 +54,7 @@ bool AnimationSystem::IsIncluded(int bone, std::vector<int>* included,
   return false;
 }
 
-bool AnimationSystem::IsExcluded(int bone,
-                                 std::vector<int>* excluded) {
+bool AnimationSystem::IsExcluded(int bone, std::vector<int>* excluded) {
   for (int i = 0; i < excluded->size(); i++) {
     if (bone == excluded->at(i)) {
       return true;
@@ -85,7 +76,6 @@ int AnimationSystem::GetAnimationByName(std::string name,
 
 int AnimationSystem::GetActiveAnimationByName(std::string name,
                                               AnimationComponent* ac) {
-  //std::vector<glob::Animation*>* anims = &ac->active_animations;
   for (int i = 0; i < ac->active_animations.size(); i++) {
     if (ac->active_animations.at(i)->animation_->name_ == name) {
       return i;
@@ -101,20 +91,30 @@ void AnimationSystem::PlayAnimation(std::string name, float speed,
                                     std::vector<int>* bodyExclude) {
   int anim = GetAnimationByName(name, ac);
   if (anim == -1) {
-    std::cout << "WARNING: Attempting to play animation: Could not find animation " << name << "!\n";
+    std::cout
+        << "WARNING: Attempting to play animation: Could not find animation \""
+        << name << "\"!\n";
     return;
   }
 
   for (int i = 0; i < ac->active_animations.size(); i++) {
-    if (ac->active_animations.at(i)->animation_ == ac->model_data.animations.at(anim)) {
-      std::cout << "WARNING: The animation \"" <<
-      ac->model_data.animations.at(anim)->name_ << 
-	  "\" is already playing, cannot stack the same animation!\n";
+    if (ac->active_animations.at(i)->animation_ ==
+        ac->model_data.animations.at(anim)) {
+      std::cout << "WARNING: Attempting to play animation: \""
+                << ac->model_data.animations.at(anim)->name_
+                << "\" is already playing, cannot stack the same animation!\n";
       return;
     }
   }
   glob::PlayableAnimation* p_anim = new glob::PlayableAnimation;
   p_anim->animation_ = ac->model_data.animations.at(anim);
+
+  p_anim->bone_position_ =
+      new std::vector<glm::vec3>(ac->model_data.bones.size());
+  p_anim->bone_rotation_ =
+      new std::vector<glm::quat>(ac->model_data.bones.size());
+  p_anim->bone_scale_ =
+      new std::vector<glm::vec3>(ac->model_data.bones.size());
 
   p_anim->speed_ = speed;
   p_anim->priority_ = priority;
@@ -166,14 +166,16 @@ void AnimationSystem::PlayAnimation(std::string name, float speed,
     ac->p_groups.push_back(pg);
   }
 
-    ac->active_animations.push_back(p_anim);
-    //std::cout << "Playing " << p_anim.animation_->name_ << "\n";
+  ac->active_animations.push_back(p_anim);
+  // std::cout << "Playing " << p_anim.animation_->name_ << "\n";
 }
 
 void AnimationSystem::StopAnimation(std::string name, AnimationComponent* ac) {
   int anim = GetActiveAnimationByName(name, ac);
   if (anim == -1) {
-    std::cout << "WARNING: Attempting to stop animation: Could not find animation " << name << "!\n";
+    std::cout
+        << "WARNING: Attempting to stop animation: Could not find animation \""
+        << name << "\"!\n";
     return;
   }
   ac->active_animations.at(anim)->playing_ = false;
@@ -223,12 +225,13 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
         glm::normalize(pl.look_dir * glm::vec3(1.f, 0.f, 1.f));
     glm::vec3 UDlookDir = glm::normalize(pl.look_dir);
     glm::vec3 moveDir;
-    if (abs(ph.velocity.x) > 0.01 || abs(ph.velocity.y > 0.01) || abs(ph.velocity.z > 0.01)) {
+    if (abs(ph.velocity.x) > 0.01 || abs(ph.velocity.y > 0.01) ||
+        abs(ph.velocity.z > 0.01)) {
       moveDir = ph.velocity;
       pl.vel_dir = moveDir;
     } else {
       moveDir = pl.vel_dir;
-	}
+    }
     // SLIDE ANIMATIONS
     constexpr float pi = glm::pi<float>();
     if (!pl.sprinting) {
@@ -288,8 +291,6 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       glm::vec3 h_lookDir;
       for (int i = 0; i < 4; i++) {
         int anim = GetActiveAnimationByName(slide_anims_[i], &ac);
-        // int look_anim = GetActiveAnimationByName(look_anims_[i], &ac);
-        // ac.active_animations.at(look_anim)->strength_ = 0.f;
         switch (i) {
           case 0: {  // F
             h_lookDir = glm::normalize(LRlookDir);
@@ -339,9 +340,6 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       float startStrength = 0.f;
       float endStrength = 0.f;
 
-      /*std::cout << t.position.x << " : " << t.position.y << " : "
-                << t.position.z << "\n";*/
-
       float velCoeff =
           std::clamp(glm::dot(ph.velocity / pl.jump_force, up), 0.f, 1.f);
 
@@ -349,10 +347,9 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
 
       int js = GetActiveAnimationByName("JumpStart", &ac);
       ac.active_animations.at(js)->strength_ = startStrength;
-      // std::cout << startStrength << "\n";
 
       endStrength = 1.f - velCoeff;
-	  
+
       int es = GetActiveAnimationByName("JumpEnd", &ac);
       ac.active_animations.at(es)->strength_ = endStrength;
     }
@@ -524,12 +521,8 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
 
     int rootBone = a.model_data.armatureRoot;
 
-    std::vector<glm::mat4> boneTransforms;
-    std::vector<int> bonePriorities;
-    for (int i = 0; i < a.model_data.bones.size(); i++) {
-      boneTransforms.push_back(glm::mat4(1.f));
-      bonePriorities.push_back(1);
-    }
+    std::vector<glm::mat4> boneTransforms(a.model_data.bones.size());
+    std::vector<int> bonePriorities(a.model_data.bones.size());
 
     for (int i = 0; i < a.active_animations.size(); i++) {
       glob::PlayableAnimation* anim = a.active_animations.at(i);
@@ -543,12 +536,10 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
         }
       }
       if (!anim->playing_) {
-        // reset important data
-        //std::cout << "REMOVING ANIMATION!\n";
         // remove from list
+        a.active_animations.at(i)->clear();
         a.active_animations.erase(a.active_animations.begin() + i);
         i--;
-        //std::cout << "ANIMATION ERASED!\n";
         removedAnimation = true;
         // remove from priority group
         for (auto& group : a.p_groups) {
@@ -559,7 +550,6 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
             }
           }
         }
-        //std::cout << "PRIORITY GROUP ERASED!\n";
       }
 
       if (!removedAnimation) {
@@ -569,18 +559,23 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
           glob::Channel* channel = &anim->animation_->channels_.at(j);
           int jointId = (int)channel->boneID;
 
-		  if (jointId != rootBone) {
+          if (jointId != rootBone) {
             glm::vec3 pos =
                 InterpolateVector(anim->time_, &channel->position_keys);
             glm::mat4 position = glm::translate(pos);
 
-			glm::mat4 rotation =
+            glm::mat4 rotation =
                 InterpolateQuat(anim->time_, &channel->rotation_keys);
 
-            glm::vec3 scale = InterpolateVector(anim->time_, &channel->scaling_keys);
+            glm::vec3 scale =
+                InterpolateVector(anim->time_, &channel->scaling_keys);
             glm::mat4 scaling = glm::scale(scale);
 
-			glm::mat4 combPRS = position * rotation * scaling;
+			anim->bone_position_->at(jointId) = pos;
+            anim->bone_rotation_->at(jointId) = rotation;
+            anim->bone_scale_->at(jointId) = scale;
+
+            glm::mat4 combPRS = position * rotation * scaling;
 
             glm::mat4 finalMat = combPRS * anim->strength_;
 
@@ -648,8 +643,7 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
 }
 
 glm::vec3 AnimationSystem::InterpolateVector(float time,
-                                              std::vector<aiVectorKey>* keys) {
-
+                                             std::vector<aiVectorKey>* keys) {
   if (keys->size() == 1) {
     aiVector3D ret = keys->at(0).mValue;
     return glm::vec3(ret.x, ret.y, ret.x);
@@ -665,13 +659,12 @@ glm::vec3 AnimationSystem::InterpolateVector(float time,
 
   int nextPos = pos + 1;
 
-  float dt = (float)(keys->at(nextPos).mTime -
-             keys->at(pos).mTime);
+  float dt = (float)(keys->at(nextPos).mTime - keys->at(pos).mTime);
 
-  float f = (time - (float)keys->at(pos).mTime)/dt;
+  float f = (time - (float)keys->at(pos).mTime) / dt;
 
-  glm::vec3 start = ConvertToGLMVec3(keys->at(pos).mValue);
-  glm::vec3 end = ConvertToGLMVec3(keys->at(nextPos).mValue);
+  glm::vec3 start = glob::AssToGLM::ConvertToGLMVec3(keys->at(pos).mValue);
+  glm::vec3 end = glob::AssToGLM::ConvertToGLMVec3(keys->at(nextPos).mValue);
 
   glm::vec3 dtv3 = end - start;
 
@@ -679,11 +672,11 @@ glm::vec3 AnimationSystem::InterpolateVector(float time,
 }
 
 glm::mat4 AnimationSystem::InterpolateQuat(float time,
-                                             std::vector<aiQuatKey>* keys) {
-  aiQuaternion ret; 
+                                           std::vector<aiQuatKey>* keys) {
+  aiQuaternion ret;
   if (keys->size() == 1) {
     ret = keys->at(0).mValue;
-    return glm::mat4(ConvertToGLM3x3(ret.GetMatrix()));
+    return glm::mat4(glob::AssToGLM::ConvertToGLM3x3(ret.GetMatrix()));
   }
 
   int pos = 0;
@@ -704,7 +697,8 @@ glm::mat4 AnimationSystem::InterpolateQuat(float time,
   aiQuaternion end = keys->at(nextPos).mValue;
   aiQuaternion::Interpolate(ret, start, end, f);
 
-  return glm::mat4(ConvertToGLM3x3(ret.Normalize().GetMatrix()));
+  return glm::mat4(
+      glob::AssToGLM::ConvertToGLM3x3(ret.Normalize().GetMatrix()));
 }
 
 void AnimationSystem::Reset(entt::registry& registry) {
