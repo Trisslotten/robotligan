@@ -120,11 +120,16 @@ class ServerPlayState : public ServerState {
               unsigned int in_player_index);
   void CreatePickUpComponents();
   EntityID GetNextEntityGuid() { return entity_guid_++; }
+  void OverTime();
   void EndGame();
 
   std::unordered_map<long, bool> clients_receive_updates_;
   std::unordered_map<int, EntityID> clients_player_ids_;
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
+
+
+  std::vector<unsigned int> score_;
+  bool overtime_ = false;
 
   std::vector<entt::entity> created_pick_ups_;
   std::vector<entt::entity> created_walls_;
