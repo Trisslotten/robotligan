@@ -21,8 +21,10 @@ struct ButtonComponent {
   glob::GUIHandle gui_handle_normal = 0;
   glob::GUIHandle gui_handle_hover = 0;
   glob::GUIHandle gui_handle_current = 0;
+  bool has_hovered = false;
 
   std::string find_name = "";
+  std::string hover_text = "";
 };
 
 #endif  // !BUTTON_COMPONENT_HPP_

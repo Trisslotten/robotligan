@@ -25,15 +25,17 @@ void RenderSystem(entt::registry& registry) {
     glob::SetCamera(result);
   }
 
-  auto view_model = registry.group<ModelComponent, TransformComponent>(
-      entt::exclude<AnimationComponent>);
-
+  // auto view_model = registry.group<ModelComponent, TransformComponent>(
+  //    entt::exclude<AnimationComponent>);
+  auto view_model = registry.view<ModelComponent, TransformComponent>();
   for (auto& model : view_model) {
-    auto& t = view_model.get<TransformComponent>(model);
-    auto& m = view_model.get<ModelComponent>(model);
-    glob::Submit(m.handles, glm::translate(t.position) *
-                               glm::toMat4(t.rotation) *
-                               glm::translate(-m.offset) * glm::scale(t.scale));
+    if (registry.has<AnimationComponent>(model) == false) {
+      auto& t = view_model.get<TransformComponent>(model);
+      auto& m = view_model.get<ModelComponent>(model);
+      glob::Submit(m.handles,
+                   glm::translate(t.position) * glm::toMat4(t.rotation) *
+                       glm::translate(-m.offset) * glm::scale(t.scale), m.material_index);
+    }
   }
 
   auto animated_models =
@@ -44,9 +46,10 @@ void RenderSystem(entt::registry& registry) {
     auto& a = animated_models.get<AnimationComponent>(model);
 
     glob::SubmitBAM(m.handles,
-                    glm::translate(t.position) * glm::toMat4(t.rotation) *
+                    glm::translate(t.position) *
+                        glm::toMat4(t.rotation + m.rot_offset) *
                         glm::translate(-m.offset) * glm::scale(t.scale),
-                    a.bone_transforms);
+                    a.bone_transforms, m.material_index);
   }
 
   // submit particles
@@ -120,6 +123,14 @@ void RenderSystem(entt::registry& registry) {
           glob::Submit(button_c.gui_handle_icon, button_pos, 1.f);
         }
       }
+      if (button_c.has_hovered) {
+        glm::vec2 tooltip_pos = Input::MousePos();
+        tooltip_pos.y =
+            glob::window::GetWindowDimensions().y - tooltip_pos.y - 15;
+        tooltip_pos.x += 20;
+		glob::Submit(button_c.f_handle, tooltip_pos - glm::vec2(1,1), 32, button_c.hover_text, glm::vec4(0,0,0,0.7));
+        glob::Submit(button_c.f_handle, tooltip_pos, 32, button_c.hover_text);
+	  }
     }
   }
 
@@ -137,15 +148,21 @@ void RenderSystem(entt::registry& registry) {
       glob::Submit(slider_c.back_tex, slider_c.position, 1.f);
     }
     if (slider_c.front_tex) {
-      glm::vec2 pin_pos = slider_c.position - glm::vec2(10,0);
+      glm::vec2 pin_pos = slider_c.position - glm::vec2(10, 0);
       float range = slider_c.max_val - slider_c.min_val;
       float norm = slider_c.value - slider_c.min_val;
       float perc = norm / range;
       pin_pos.x += perc * slider_c.dimensions.x;
       glob::Submit(slider_c.front_tex, pin_pos, 1.f);
-	}
+    }
     glob::Submit(slider_c.font_handle, slider_c.position + glm::vec2(40, -10),
                  22, std::to_string(slider_c.value));
+  }
+
+  auto view_trails = registry.view<TrailComponent>();
+  for (auto entity : view_trails) {
+    auto& trail_c = view_trails.get(entity);
+    glob::SubmitTrail(trail_c.position_history, trail_c.width, trail_c.color);
   }
 }
 #endif  // RENDER_SYSTEM_HPP_

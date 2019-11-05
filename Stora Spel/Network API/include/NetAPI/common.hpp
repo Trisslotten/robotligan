@@ -13,7 +13,7 @@ struct EXPORT netcommands {};
 static const char* kSocketNotConnected = "!socket_not_connected!";
 static const char* kFailedToRecieve = "!FAILED_TO_RECIEVE!";
 static const char* kNoDataAvailable = "!NO_DATA_AVAILABLE!";
-static const long kNumPacketBytes = 1024;
+static const long kNumPacketBytes = 2*1024;
 constexpr short kMaxPlayers = 6;
 }  // namespace Common
 namespace Socket {

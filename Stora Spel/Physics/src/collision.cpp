@@ -57,11 +57,15 @@ bool Overlaps(float min1, float max1, float min2, float max2) {
   return IsBetween(min2, min1, max1) || IsBetween(min1, min2, max2);
 }
 
-physics::IntersectData physics::Intersect(const physics::Sphere& s1, const physics::Sphere& s2) {
+physics::IntersectData physics::Intersect(const physics::Sphere& s1,
+                                          const physics::Sphere& s2) {
   IntersectData data;
-  data.move_vector = s1.center - s2.center;
-  data.normal = data.move_vector;
-  data.collision = glm::length(data.move_vector) <= s1.radius + s2.radius;
+  data.move_vector =
+      glm::normalize(s1.center - s2.center) *
+      (s1.radius + s2.radius - glm::length(s1.center - s2.center));
+
+  data.normal = glm::normalize(data.move_vector);
+  data.collision = glm::length(s1.center - s2.center) <= s1.radius + s2.radius;
 
   return data;
 }
@@ -80,7 +84,7 @@ physics::IntersectData physics::Intersect(const physics::Sphere& s,
   }
   glm::vec3 v = retPt - s.center;
 
-  data.collision = glm::dot(v, v) <= s.radius * s.radius;
+  data.collision = glm::dot(v, v) < s.radius * s.radius;
 
   if (data.collision) {
     glm::vec3 impact_vector = retPt - o.center;

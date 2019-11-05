@@ -25,6 +25,7 @@
 
 #include <msdfgen/msdfgen-ext.h>
 #include <msdfgen/msdfgen.h>
+#include <map>
 #include "postprocess/blur.hpp"
 #include "postprocess/postprocess.hpp"
 #include "shadows/shadows.hpp"
@@ -38,6 +39,8 @@ namespace {
 struct RenderItem {
   Model *model;
   glm::mat4 transform;
+
+  int material_index;
 };
 
 struct GUIItem {
@@ -45,6 +48,7 @@ struct GUIItem {
   glm::vec2 pos;
   float scale;
   float scale_x;
+  float opacity;
 };
 
 struct E2DItem {
@@ -60,6 +64,8 @@ struct BoneAnimatedRenderItem {
   std::vector<glm::mat4>
       bone_transforms;  // may be a performance bottleneck, pointer instead?
   int numBones;
+
+  int material_index = 0;
 };
 
 struct TextItem {
@@ -69,6 +75,17 @@ struct TextItem {
   std::string text;
   glm::vec4 color;
   bool visible;
+  bool equal_spacing;
+  float spacing;
+};
+
+struct Text3DItem {
+  Font2D *font = nullptr;
+  glm::vec3 pos{0};
+  float size = 0.f;
+  std::string text;
+  glm::vec4 color;
+  glm::mat4 rotation;
 };
 
 struct LightItem {
@@ -78,6 +95,12 @@ struct LightItem {
   glm::float32 ambient;
 };
 
+struct TrailItem {
+  std::vector<glm::vec3> position_history;
+  float width;
+  glm::vec4 color;
+};
+
 ShaderProgram fullscreen_shader;
 ShaderProgram model_emission_shader;
 ShaderProgram model_shader;
@@ -85,15 +108,20 @@ ShaderProgram particle_shader;
 // ShaderProgram compute_shader;
 ShaderProgram animated_model_shader;
 ShaderProgram text_shader;
+ShaderProgram text3D_shader;
 ShaderProgram wireframe_shader;
 ShaderProgram gui_shader;
 ShaderProgram e2D_shader;
 
 std::vector<ShaderProgram *> mesh_render_group;
 
+ShaderProgram trail_shader;
+int num_trail_quads = 0;
 GLuint triangle_vbo, triangle_vao;
 GLuint cube_vbo, cube_vao;
 GLuint quad_vbo, quad_vao;
+
+GLuint trail_vao, trail_vbo;
 
 PostProcess post_process;
 Blur blur;
@@ -151,8 +179,10 @@ std::vector<BoneAnimatedRenderItem> bone_animated_items_to_render;
 std::vector<glm::mat4> cubes;
 std::vector<ModelHandle> wireframe_meshes;
 std::vector<TextItem> text_to_render;
+std::vector<Text3DItem> text3D_to_render;
 std::vector<GUIItem> gui_items_to_render;
 std::vector<E2DItem> e2D_items_to_render;
+std::vector<TrailItem> trails_to_render;
 
 void DrawFullscreenQuad() {
   glBindVertexArray(triangle_vao);
@@ -324,6 +354,10 @@ void Init() {
   text_shader.add("text2Dshader.frag");
   text_shader.compile();
 
+  text3D_shader.add("text3Dshader.vert");
+  text3D_shader.add("text3Dshader.frag");
+  text3D_shader.compile();
+
   gui_shader.add("guishader.vert");
   gui_shader.add("guishader.frag");
   gui_shader.compile();
@@ -388,6 +422,37 @@ void Init() {
                         (GLvoid *)0);
   glBindVertexArray(0);
 
+  trail_shader.add("trail.vert");
+  trail_shader.add("trail.frag");
+  trail_shader.compile();
+  num_trail_quads = 200;
+  std::vector<glm::vec3> trail_verts;
+  for (int i = 0; i < num_trail_quads; i++) {
+    float left = float(i) / (num_trail_quads);
+    float right = float(i + 1) / (num_trail_quads);
+    glm::vec3 tl{left, 0, -0.5f};
+    glm::vec3 tr{right, 0, -0.5f};
+    glm::vec3 bl{left, 0, 0.5f};
+    glm::vec3 br{right, 0, 0.5f};
+    trail_verts.push_back(tl);
+    trail_verts.push_back(bl);
+    trail_verts.push_back(tr);
+
+    trail_verts.push_back(tr);
+    trail_verts.push_back(bl);
+    trail_verts.push_back(br);
+  }
+  glGenVertexArrays(1, &trail_vao);
+  glBindVertexArray(trail_vao);
+  glGenBuffers(1, &trail_vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, trail_vbo);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * trail_verts.size(),
+               trail_verts.data(), GL_STATIC_DRAW);
+  glEnableVertexAttribArray(0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
+                        (GLvoid *)0);
+  glBindVertexArray(0);
+
   blur.Init();
 
   post_process.Init(blur);
@@ -405,7 +470,7 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
 
   auto item = handles.find(filepath);
   if (item == handles.end()) {
-    //std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";
+    // std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";
     A &asset = assets[guid];
     asset.LoadFromFile(filepath);
     if (asset.IsLoaded()) {
@@ -786,28 +851,45 @@ animData GetAnimationData(ModelHandle handle) {
     if (bone.name == "Hip") {
       data.humanoid = true;
       data.hip = bone.id;
-      //std::cout << "Hip detected and set...\nHumanoid animation-set loading...\n";
+      // std::cout << "Hip detected and set...\nHumanoid animation-set
+      // loading...\n";
     }
   }
 
   if (data.humanoid) {
-    for (auto bone : data.bones) {
-      if (bone.name == "Spine") {
-        data.upperBody = bone.id;
-        //std::cout << "Upper body found!\n";
-      } else if (bone.name == "Leg upper L") {
-        data.leftLeg = bone.id;
-        //std::cout << "Left leg found!\n";
-      } else if (bone.name == "Leg upper R") {
-        data.rightLeg = bone.id;
-        //std::cout << "Right leg found!\n";
-      } else if (bone.name == "Shoulder L") {
-        data.leftArm = bone.id;
-        //std::cout << "Left arm found!\n";
-      } else if (bone.name == "Shoulder R") {
-        data.rightArm = bone.id;
-        //std::cout << "Right arm found!\n";
+    for (int i = 0; i < data.bones.size(); i++) {
+      Joint *bone = &data.bones.at(i);
+      if (bone->name == "Spine") {
+        data.makeGroup(i, &data.spine);
+        // std::cout << "Upper body found!\n";
+      } else if (bone->name == "Chest") {
+        data.makeGroup(i, &data.upperBody);
+        // std::cout << "Left leg found!\n";
+      } else if (bone->name == "Leg upper L") {
+        data.makeGroup(i, &data.leftLeg);
+        // std::cout << "Left leg found!\n";
+      } else if (bone->name == "Leg upper R") {
+        data.makeGroup(i, &data.rightLeg);
+        // std::cout << "Right leg found!\n";
+      } else if (bone->name == "Shoulder L") {
+        data.makeGroup(i, &data.leftArm);
+        // std::cout << "Left arm found!\n";
+      } else if (bone->name == "Shoulder R") {
+        data.makeGroup(i, &data.rightArm);
+        // std::cout << "Right arm found!\n";
       }
+    }
+    for (int i = 0; i < data.rightArm.size(); i++) {
+      data.arms.push_back(data.rightArm.at(i));
+    }
+    for (int i = 0; i < data.leftArm.size(); i++) {
+      data.arms.push_back(data.leftArm.at(i));
+    }
+    for (int i = 0; i < data.rightLeg.size(); i++) {
+      data.legs.push_back(data.rightLeg.at(i));
+    }
+    for (int i = 0; i < data.leftLeg.size(); i++) {
+      data.legs.push_back(data.leftLeg.at(i));
     }
   }
 
@@ -874,17 +956,17 @@ void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
   lights_to_render.push_back(item);
 }
 
-void SubmitBAM(
-    const std::vector<ModelHandle> &handles, glm::mat4 transform,
-    std::vector<glm::mat4> bone_transforms) {  // Submit Bone Animated Mesh
+void SubmitBAM(const std::vector<ModelHandle> &handles, glm::mat4 transform,
+               std::vector<glm::mat4> bone_transforms,
+               int material_index) {  // Submit Bone Animated Mesh
   for (auto handle : handles) {
-    SubmitBAM(handle, transform, bone_transforms);
+    SubmitBAM(handle, transform, bone_transforms, material_index);
   }
 }
 
-void SubmitBAM(
-    ModelHandle model_h, glm::mat4 transform,
-    std::vector<glm::mat4> bone_transforms) {  // Submit Bone Animated Mesh
+void SubmitBAM(ModelHandle model_h, glm::mat4 transform,
+               std::vector<glm::mat4> bone_transforms,
+               int material_index) {  // Submit Bone Animated Mesh
   BoneAnimatedRenderItem BARI;
 
   auto find_res = models.find(model_h);
@@ -901,20 +983,24 @@ void SubmitBAM(
 
   BARI.transform = transform * pre_rotation;
   BARI.numBones = BARI.bone_transforms.size();
+
+  BARI.material_index = material_index;
+
   bone_animated_items_to_render.push_back(BARI);
 }
 
-void Submit(ModelHandle model_h, glm::vec3 pos) {
+void Submit(ModelHandle model_h, glm::vec3 pos, int material_index) {
   glm::mat4 transform = glm::translate(pos);
-  Submit(model_h, transform);
+  Submit(model_h, transform, material_index);
 }
 
-void Submit(const std::vector<ModelHandle> &handles, glm::mat4 transform) {
+void Submit(const std::vector<ModelHandle> &handles, glm::mat4 transform,
+            int material_index) {
   for (auto handle : handles) {
-    Submit(handle, transform);
+    Submit(handle, transform, material_index);
   }
 }
-void Submit(ModelHandle model_h, glm::mat4 transform) {
+void Submit(ModelHandle model_h, glm::mat4 transform, int material_index) {
   auto find_res = models.find(model_h);
   if (find_res == models.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted model\n";
@@ -928,6 +1014,8 @@ void Submit(ModelHandle model_h, glm::mat4 transform) {
   RenderItem to_render;
   to_render.model = &find_res->second;
   to_render.transform = transform * pre_rotation;
+  to_render.material_index = material_index;
+
   items_to_render.push_back(to_render);
 }
 
@@ -941,8 +1029,29 @@ void SubmitParticles(ParticleSystemHandle handle) {
   particles_to_render.push_back(find_res->second);
 }
 
+double GetWidthOfText(Font2DHandle font_handle, std::string text, float size) {
+  const char *chars = text.c_str();
+  int len = text.length();
+
+  //////////////////////////////////
+  // for backwards compatibility
+  size *= 16. / 28.;
+  //////////////////////////////////
+
+  double offset_accum = 0;
+  for (int i = 0; i < len; i++) {
+    unsigned char cur = *(unsigned char *)(chars + i);
+
+    offset_accum += fonts[font_handle].GetAdvance(cur, size);
+
+    // std::cout << offset_accum << "\n";
+  }
+  return (offset_accum - 0.7 * len + 4.) * 93. / 97.;
+}
+
 void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
-            std::string text, glm::vec4 color, bool visible) {
+            std::string text, glm::vec4 color, bool visible, bool equal_spacing,
+            float spacing) {
   auto find_res = fonts.find(font_h);
   if (find_res == fonts.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted font! \n";
@@ -956,16 +1065,35 @@ void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
   to_render.text = text;
   to_render.color = color;
   to_render.visible = visible;
+  to_render.equal_spacing = equal_spacing;
+  to_render.spacing = spacing;
   text_to_render.push_back(to_render);
+}
+
+void Submit(Font2DHandle font_h, glm::vec3 pos, float size, std::string text,
+            glm::vec4 color, glm::mat4 rot) {
+  auto find_res = fonts.find(font_h);
+  if (find_res == fonts.end()) {
+    std::cout << "ERROR graphics.cpp: could not find submitted font! \n";
+    return;
+  }
+
+  Text3DItem to_render;
+  to_render.font = &find_res->second;
+  to_render.pos = pos;
+  to_render.size = size;
+  to_render.text = text;
+  to_render.color = color;
+  to_render.rotation = rot;
+  text3D_to_render.push_back(to_render);
 }
 
 void SetCamera(Camera cam) { camera = cam; }
 
-void SetModelUseGL(bool use_gl) {
-  kModelUseGL = use_gl;
-}
+void SetModelUseGL(bool use_gl) { kModelUseGL = use_gl; }
 
-void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x) {
+void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x,
+            float opacity) {
   auto find_res = gui_elements.find(gui_h);
   if (find_res == gui_elements.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted gui element\n";
@@ -977,6 +1105,7 @@ void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x) {
   to_render.pos = pos;
   to_render.scale = scale;
   to_render.scale_x = scale_x;
+  to_render.opacity = opacity;
   gui_items_to_render.push_back(to_render);
 }
 
@@ -994,6 +1123,11 @@ void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale, float rotDegrees,
   to_render.scale = scale;
   to_render.rot = glm::rotate(glm::radians(rotDegrees), rotAxis);
   e2D_items_to_render.push_back(to_render);
+}
+
+void SubmitTrail(const std::vector<glm::vec3> &pos_history, float width,
+                 glm::vec4 color) {
+  trails_to_render.push_back({pos_history, width, color});
 }
 
 void SubmitCube(glm::mat4 t) { cubes.push_back(t); }
@@ -1050,11 +1184,13 @@ void Render() {
   }
 
   std::vector<RenderItem> normal_items;
-  std::vector<RenderItem> transparent_items;
+  std::map<float, std::vector<RenderItem>> transparent_items;
   std::vector<RenderItem> emissive_items;
   for (auto &render_item : items_to_render) {
     if (render_item.model->IsTransparent()) {
-      transparent_items.push_back(render_item);
+      float max_dist = render_item.model->MaxDistance(render_item.transform,
+                                                      camera.GetPosition());
+      transparent_items[-max_dist].push_back(render_item);
     } else if (render_item.model->IsEmissive()) {
       emissive_items.push_back(render_item);
     } else {
@@ -1114,6 +1250,7 @@ void Render() {
 
     model_emission_shader.use();
     for (auto &render_item : emissive_items) {
+      model_emission_shader.uniform("material_index", render_item.material_index);
       model_emission_shader.uniform("model_transform", render_item.transform);
       render_item.model->Draw(model_emission_shader);
     }
@@ -1121,6 +1258,7 @@ void Render() {
     animated_model_shader.use();
     // render bone animated items
     for (auto &BARI : bone_animated_items_to_render) {
+      animated_model_shader.uniform("material_index", BARI.material_index);
       animated_model_shader.uniform("model_transform", BARI.transform);
       int numBones = 0;
       for (auto &bone : BARI.bone_transforms) {
@@ -1138,51 +1276,66 @@ void Render() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     model_emission_shader.use();
-    for (auto &render_item : transparent_items) {
-      model_emission_shader.uniform("model_transform", render_item.transform);
-      render_item.model->Draw(model_emission_shader);
+    for (auto &[dist, render_items] : transparent_items) {
+      for (auto &render_item : render_items) {
+        model_emission_shader.uniform("model_transform", render_item.transform);
+        render_item.model->Draw(model_emission_shader);
+      }
     }
     glDisable(GL_BLEND);
+
+    // render wireframe cubes
+    for (auto &m : cubes) DrawCube(m);
+    // render wireframe meshes
+    for (auto &m : wireframe_meshes) DrawWireFrameMeshes(m);
+
+    // render text and gui elements
+    glBindVertexArray(quad_vao);
+
+    // render 2D elements
+    e2D_shader.use();
+    e2D_shader.uniform("cam_transform", cam_transform);
+    for (auto &e2D_item : e2D_items_to_render) {
+      e2D_item.e2D->DrawInWorld(e2D_shader, e2D_item.pos, e2D_item.scale,
+                                e2D_item.rot);
+    }
+
+    text3D_shader.use();
+    text3D_shader.uniform("cam_transform", cam_transform);
+    for (auto &text3D : text3D_to_render) {
+      text3D.font->Draw3D(text3D_shader, text3D.pos, text3D.size, text3D.text,
+                          text3D.color, text3D.rotation);
+    }
+
+    // render particles
+    particle_shader.use();
+    particle_shader.uniform("cam_transform", cam_transform);
+    particle_shader.uniform("cam_pos", camera.GetPosition());
+    particle_shader.uniform("cam_up", camera.GetUpVector());
+    for (auto p : particles_to_render) {
+      buffer_particle_systems[p].system.Draw(particle_shader);
+    }
+
+    trail_shader.use();
+    trail_shader.uniform("cam_transform", cam_transform);
+    trail_shader.uniform("cam_pos", camera.GetPosition());
+    for (auto &trail_item : trails_to_render) {
+      trail_shader.uniform("width", trail_item.width);
+      trail_shader.uniform("color", trail_item.color);
+      int max_positions = 100;
+      auto &ph = trail_item.position_history;
+      int history_size = glm::min((int)ph.size(), max_positions);
+      trail_shader.uniformv("position_history", history_size, ph.data());
+      trail_shader.uniform("history_size", history_size);
+      glDisable(GL_CULL_FACE);
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glBindVertexArray(trail_vao);
+      glDrawArrays(GL_TRIANGLES, 0, num_trail_quads * 6);
+      glDisable(GL_BLEND);
+      glEnable(GL_CULL_FACE);
+    }
   }
-
-  // render wireframe cubes
-  for (auto &m : cubes) DrawCube(m);
-  // render wireframe meshes
-  for (auto &m : wireframe_meshes) DrawWireFrameMeshes(m);
-
-  // render text and gui elements
-  glBindVertexArray(quad_vao);
-
-  // render 2D elements
-  e2D_shader.use();
-  e2D_shader.uniform("cam_transform", cam_transform);
-  for (auto &e2D_item : e2D_items_to_render) {
-    e2D_item.e2D->DrawInWorld(e2D_shader, e2D_item.pos, e2D_item.scale,
-                              e2D_item.rot);
-  }
-
-  // render particles
-  particle_shader.use();
-  particle_shader.uniform("cam_transform", cam_transform);
-  particle_shader.uniform("cam_pos", camera.GetPosition());
-  particle_shader.uniform("cam_up", camera.GetUpVector());
-  for (auto p : particles_to_render) {
-    buffer_particle_systems[p].system.Draw(particle_shader);
-  }
-
-  glBindVertexArray(quad_vao);
-  gui_shader.use();
-  for (auto &gui_item : gui_items_to_render) {
-    gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale,
-                               gui_item.scale_x);
-  }
-
-  text_shader.use();
-  for (auto &text_item : text_to_render) {
-    text_item.font->Draw(text_shader, text_item.pos, text_item.size,
-                         text_item.text, text_item.color, text_item.visible);
-  }
-
   post_process.AfterDraw(blur);
 
   fullscreen_shader.use();
@@ -1192,12 +1345,26 @@ void Render() {
   fullscreen_shader.uniform("texture_emission", 1);
   DrawFullscreenQuad();
 
-  
+  glBindVertexArray(quad_vao);
+  gui_shader.use();
+  for (auto &gui_item : gui_items_to_render) {
+    gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale,
+                               gui_item.scale_x, gui_item.opacity);
+  }
 
+  text_shader.use();
+  for (auto &text_item : text_to_render) {
+    text_item.font->Draw(text_shader, text_item.pos, text_item.size,
+                         text_item.text, text_item.color, text_item.visible,
+                         text_item.equal_spacing, text_item.spacing);
+  }
+
+  trails_to_render.clear();
   lights_to_render.clear();
   items_to_render.clear();
   bone_animated_items_to_render.clear();
   e2D_items_to_render.clear();
+  text3D_to_render.clear();
   gui_items_to_render.clear();
   text_to_render.clear();
   cubes.clear();
