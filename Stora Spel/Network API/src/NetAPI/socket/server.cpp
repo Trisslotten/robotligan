@@ -19,6 +19,10 @@ void NetAPI::Socket::Server::HandleClientPacket()
 }
 void NetAPI::Socket::Server::HandleSingleClientPacket(unsigned short ID)
 {
+	std::chrono::high_resolution_clock timer;
+	std::chrono::duration<float> durr;
+	std::chrono::time_point<std::chrono::high_resolution_clock> init;
+	std::chrono::time_point<std::chrono::high_resolution_clock> test;
 	auto c = this->client_data_[ID];
 	while (threads[ID].second)
 	{
@@ -40,10 +44,23 @@ void NetAPI::Socket::Server::HandleSingleClientPacket(unsigned short ID)
 
 				*/
 				int num_packets = 0;
+				init = timer.now();
 				for (auto packet : c->client.Receive()) {
 					num_packets++;
 					if (!packet.IsEmpty()) {
 						c->packets.push_back(packet);
+					}
+					test = timer.now();
+					durr = test - init;
+					auto cast = std::chrono::duration_cast<std::chrono::milliseconds>(durr);
+					if (cast.count() > 250)
+					{
+						c->last_failed_ = true;
+						break;
+					}
+					else
+					{
+						c->last_failed_ = false;
 					}
 				}
 			}
@@ -141,13 +158,20 @@ void NetAPI::Socket::Server::SendStoredData()
 		d >> header;
 		if (header.receiver == EVERYONE) {
 			for (auto& cli : client_data_) {
-				cli.second->client.Send(d);
+				if (!cli.second->last_failed_)
+				{
+					cli.second->client.Send(d);
+				}
 			}
 		}
 		else {
 			auto result = client_data_.find(header.receiver);
 			if (result != client_data_.end()) {
-				client_data_[header.receiver]->client.Send(d);
+				auto c = client_data_[header.receiver];
+				if (!c->last_failed_)
+				{
+					c->client.Send(d);
+				}
 			}
 		}
 	}
