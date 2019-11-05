@@ -29,8 +29,8 @@ void main() {
 	mat3 TBN       = mat3(tangent, bitangent, normal);
 
 	float occlusion = 0.0;
-	float radius = 0.02;
-	float bias = 0.0;
+	float radius = 0.009;
+	float bias = 0.0015;
 	for(int i = 0; i < 64; i++)
 	{
 		// get sample position
@@ -45,9 +45,9 @@ void main() {
 		// ????
 
 		float samp_depth = texture(texture_depth, samp.xy).r;
-		//float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - samp_depth));
+		float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - samp_depth));
 		//occlusion += (samp_depth >= samp.z + bias ? 1.0 : 0.0) * rangeCheck;  
-		occlusion += (samp_depth >= samp.z + bias ? 1.0 : 0.0);// * rangeCheck;  
+		occlusion += (samp_depth >= samp.z + bias ? 1.0 : 0.0) * rangeCheck;  
 	}
 	occlusion = 1- (occlusion /64.0);
 	out_occlusion = occlusion;

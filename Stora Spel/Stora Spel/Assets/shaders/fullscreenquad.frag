@@ -20,5 +20,5 @@ void main() {
 	
 
 	out_color = vec4(color, 1);
-	if(use_ao) out_color = vec4(vec3(ao),1);
+	//if(use_ao) out_color = vec4(vec3(ao),1);
 }

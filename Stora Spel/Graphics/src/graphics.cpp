@@ -464,7 +464,7 @@ void Init() {
 
   blur.Init();
 
-  ssao.Init();
+  ssao.Init(blur);
   post_process.Init(blur);
   shadows.Init(blur);
 
@@ -1364,7 +1364,7 @@ void Render() {
   ssao_shader.uniform("screen_dims", window::GetWindowDimensions());
 
   DrawFullscreenQuad();  // do ssao pass same way we do final color pass
-  ssao.Finish();
+  ssao.Finish(blur);
 
   fullscreen_shader.use();
   post_process.BindColorTex(0);

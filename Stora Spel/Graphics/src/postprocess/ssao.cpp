@@ -5,32 +5,32 @@
 
 float lerp(float a, float b, float f) { return a + f * (b - a); }
 
+namespace glob {
 Ssao::Ssao() {}
 
 Ssao::~Ssao() {}
 
-void Ssao::Init() {
+void Ssao::Init(Blur& blur) {
   CreateKernelAndNoise();
   GenerateTextures();
   CreateFrameBuffers();
-}
 
-void Ssao::Pass() {}
+  auto ws = glob::window::GetWindowDimensions();
+  blur_id_ = blur.CreatePass(ws.x, ws.y, GL_R32F);
+}
 
 void Ssao::BindFrameBuffer() {
   glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO_);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void Ssao::Finish() {
+void Ssao::Finish(Blur& blur) {
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  /*glBindTexture(GL_TEXTURE_2D, draw_emission_texture_);
+  glBindTexture(GL_TEXTURE_2D, ssao_texture_);
   glGenerateMipmap(GL_TEXTURE_2D);
 
-  blurred_emission_texture =
-      blur.BlurTexture(blur_id_, 4, draw_emission_texture_, 2);*/
-
+  blurred_ssao_texture_ = blur.BlurTexture(blur_id_, 2, ssao_texture_, 0);
 }
 
 void Ssao::CreateKernelAndNoise() {
@@ -64,7 +64,7 @@ void Ssao::CreateFrameBuffers() {
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
                          ssao_texture_, 0);
 
-   GLuint att[1] = {GL_COLOR_ATTACHMENT0};
+  GLuint att[1] = {GL_COLOR_ATTACHMENT0};
   glDrawBuffers(1, att);
 }
 
@@ -80,7 +80,7 @@ void Ssao::GenerateTextures() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-  //output ssao texture
+  // output ssao texture
   glGenTextures(1, &ssao_texture_);
   glBindTexture(GL_TEXTURE_2D, ssao_texture_);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, ws.x, ws.y, 0, GL_RGB, GL_FLOAT, NULL);
@@ -95,5 +95,6 @@ void Ssao::BindNoiseTexture(int slot) {
 
 void Ssao::BindSsaoTexture(int slot) {
   glActiveTexture(GL_TEXTURE0 + slot);
-  glBindTexture(GL_TEXTURE_2D, ssao_texture_);
+  glBindTexture(GL_TEXTURE_2D, blurred_ssao_texture_);
 }
+}  // namespace glob
