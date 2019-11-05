@@ -240,6 +240,7 @@ class PlayState : public State {
   void ReceiveGameEvent(const GameEvent& e);
   void Reset();
   void EndGame();
+  void OverTime();
   void TestParticles();
 
   void OnServerFrame();
@@ -331,6 +332,7 @@ class PlayState : public State {
 
   Timer end_game_timer_;
   bool game_has_ended_ = false;
+  bool overtime_has_started_ = false;
   bool goals_swapped_ = false;
   EntityID my_target_ = -1;
 
