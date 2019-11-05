@@ -26,6 +26,7 @@
 #include <msdfgen/msdfgen-ext.h>
 #include <msdfgen/msdfgen.h>
 #include <map>
+#include <postprocess\ssao.hpp>
 #include "postprocess/blur.hpp"
 #include "postprocess/postprocess.hpp"
 #include "shadows/shadows.hpp"
@@ -112,6 +113,7 @@ ShaderProgram text3D_shader;
 ShaderProgram wireframe_shader;
 ShaderProgram gui_shader;
 ShaderProgram e2D_shader;
+ShaderProgram ssao_shader;
 
 std::vector<ShaderProgram *> mesh_render_group;
 
@@ -123,11 +125,14 @@ GLuint quad_vbo, quad_vao;
 
 GLuint trail_vao, trail_vbo;
 
+Ssao ssao;
 PostProcess post_process;
 Blur blur;
 Shadows shadows;
 
 float num_frames = 0;
+
+bool use_ao = true;
 
 Camera camera;
 
@@ -311,6 +316,10 @@ void Init() {
   fullscreen_shader.add("fullscreenquad.frag");
   fullscreen_shader.compile();
 
+  ssao_shader.add("ssao.vert");
+  ssao_shader.add("ssao.frag");
+  ssao_shader.compile();
+
   particle_shader.add("particle.vert");
   particle_shader.add("particle.geom");
   particle_shader.add("particle.frag");
@@ -455,6 +464,7 @@ void Init() {
 
   blur.Init();
 
+  ssao.Init();
   post_process.Init(blur);
   shadows.Init(blur);
 
@@ -1168,6 +1178,8 @@ void LoadWireframeMesh(ModelHandle model_h,
   }
 }
 
+void SetSSAO(bool val) { use_ao = val; }
+
 void Render() {
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
 
@@ -1250,7 +1262,8 @@ void Render() {
 
     model_emission_shader.use();
     for (auto &render_item : emissive_items) {
-      model_emission_shader.uniform("material_index", render_item.material_index);
+      model_emission_shader.uniform("material_index",
+                                    render_item.material_index);
       model_emission_shader.uniform("model_transform", render_item.transform);
       render_item.model->Draw(model_emission_shader);
     }
@@ -1338,13 +1351,31 @@ void Render() {
   }
   post_process.AfterDraw(blur);
 
+  ssao.BindFrameBuffer();
+  ssao_shader.use();
+  post_process.BindDepthTex(0);
+  ssao_shader.uniform("texture_depth", 0);
+  post_process.BindNormalTex(1);
+  ssao_shader.uniform("texture_normals", 1);
+  ssao.BindNoiseTexture(2);
+  ssao_shader.uniform("texture_noise", 2);
+  ssao_shader.uniformv("samples", (int)ssao.GetKernel().size() ,ssao.GetKernel().data());
+  ssao_shader.uniform("projection", cam_transform);
+  ssao_shader.uniform("screen_dims", window::GetWindowDimensions());
+
+  DrawFullscreenQuad();  // do ssao pass same way we do final color pass
+  ssao.Finish();
+
   fullscreen_shader.use();
   post_process.BindColorTex(0);
   fullscreen_shader.uniform("texture_color", 0);
   post_process.BindEmissionTex(1);
   fullscreen_shader.uniform("texture_emission", 1);
+  ssao.BindSsaoTexture(2);
+  fullscreen_shader.uniform("texture_ssao", 2);
+  fullscreen_shader.uniform("use_ao", use_ao);
 
-  //här ska ssao-tex in
+  // här ska ssao-tex in
 
   DrawFullscreenQuad();
 

@@ -134,6 +134,8 @@ EXPORT void SetCamera(Camera camera);
 
 EXPORT void SetModelUseGL(bool use_gl);
 
+EXPORT void SetSSAO(bool val);
+
 /*
  * Render all items submitted this frame
  */
