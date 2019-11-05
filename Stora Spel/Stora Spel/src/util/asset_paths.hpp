@@ -2,7 +2,7 @@
 #define ASSET_PATHS_HPP_
 
 const char* kModelPathMapUnified = "assets/Map/Map_unified_TMP.fbx";
-const char* kModelPathMapSingular = "assets / Map / Map_singular_TMP.fbx";
+const char* kModelPathMapSingular = "assets/Map/Map_singular_TMP.fbx";
 
 const char* kModelPathBallTest = "assets/Ball/TestBall.fbx";
 const char* kModelPathBallProjectors = "Assets/Ball_new/Ball_projectors.fbx";
