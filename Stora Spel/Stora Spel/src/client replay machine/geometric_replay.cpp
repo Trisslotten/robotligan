@@ -8,6 +8,18 @@
 #include <util/global_settings.hpp>
 // Private---------------------------------------------------------------------
 
+ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
+                                                 entt::registry& in_registry) {
+  if (in_registry.has<PlayerComponent>(in_entity)) {
+    return ReplayObjectType::REPLAY_PLAYER;
+  } else if (in_registry.has<BallComponent>(in_entity)) {
+    return ReplayObjectType::REPLAY_BALL;
+  }
+
+  // If entity couldn't be identified, return number of types
+  return ReplayObjectType::NUM_OF_REPLAY_OBJECT_TYPES;
+}
+
 void GeometricReplay::FillChannelEntry(ChannelEntry& in_ce,
                                        entt::entity& in_entity,
                                        entt::registry& in_registry) {
@@ -30,28 +42,34 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
   DataFrame* ret_ptr = nullptr;
   // Start by identifying what kind of entity we
   // are trying to save
-  if (in_registry.has<PlayerComponent>(in_entity)) {
-    // If there is a player component we know it is
-    // a player avatar
 
-    // WIP: Might be needed for animations
-    // PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
+  ReplayObjectType object_type = this->IdentifyEntity(in_entity, in_registry);
 
-    TransformComponent& transform_c =
-        in_registry.get<TransformComponent>(in_entity);
+  switch (object_type) {
+    case REPLAY_PLAYER:
+      // WIP: Might be needed for animations
+      // PlayerComponent& player_c =
+      // in_registry.get<PlayerComponent>(in_entity);
 
-    ret_ptr = new PlayerFrame(transform_c.position, transform_c.rotation,
+      TransformComponent& transform_c =
+          in_registry.get<TransformComponent>(in_entity);
+
+      ret_ptr = new PlayerFrame(transform_c.position, transform_c.rotation,
+                                transform_c.scale);
+      break;
+    case REPLAY_BALL:
+      TransformComponent& transform_c =
+          in_registry.get<TransformComponent>(in_entity);
+
+      ret_ptr = new BallFrame(transform_c.position, transform_c.rotation,
                               transform_c.scale);
-
-  } else if (in_registry.has<BallComponent>(in_entity)) {
-    // Otherwise, if there is a ball component we
-    // know it to be a ball
-    TransformComponent& transform_c =
-        in_registry.get<TransformComponent>(in_entity);
-
-    ret_ptr = new BallFrame(transform_c.position, transform_c.rotation,
-                            transform_c.scale);
+      break;
+    default:
+      GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
+                                           "Unidentified entity");
+      break;
   }
+
   return ret_ptr;
 }
 
@@ -107,17 +125,20 @@ void GeometricReplay::InterpolateEntityData(unsigned int in_channel_index,
 
   // Load the data from the created frame into the
   // components of the entity
-  this->DepolymorphFromDataframe(df_c_ptr, in_entity, in_registry);
+  ReplayObjectType object_type =
+      this->channels_.at(in_channel_index).object_type;
+  this->DepolymorphFromDataframe(df_c_ptr, object_type, in_entity, in_registry);
 
   // De-allocate and clean up after InterpolateForward()
   delete df_c_ptr;
 }
 
 void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
+                                               ReplayObjectType in_type,
                                                entt::entity& in_entity,
                                                entt::registry& in_registry) {
-  switch (in_df_ptr->GetFrameType()) {
-    case FRAME_PLAYER:
+  switch (in_type) {
+    case REPLAY_PLAYER:
       // Cast
       PlayerFrame* pf_c_ptr = dynamic_cast<PlayerFrame*>(in_df_ptr);
       // Get
@@ -131,7 +152,7 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
       // WIP: Handle model and animation components
       //
       break;
-    case FRAME_BALL:
+    case REPLAY_BALL:
       // Cast
       BallFrame* pf_c_ptr = dynamic_cast<BallFrame*>(in_df_ptr);
       // Get
@@ -147,7 +168,7 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
       break;
     default:
       GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
-                                           "Unknown FrameType");
+                                           "Unknown type identifier");
       break;
   }
 }
@@ -159,16 +180,17 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
       this->channels_.at(in_channel_index).entries.at(0).data_ptr;
 
   // Fetch FrameType
-  FrameType ft = df_ptr->GetFrameType();
+  ReplayObjectType object_type =
+      this->channels_.at(in_channel_index).object_type;
 
   // Create base entity
   entt::entity entity = in_registry.create();
 
-  // Switch-case over FrameType:s
+  // Switch-case over object types
   // In each:
   //	- Read data and assign components for that entity type
-  switch (ft) {
-    case FRAME_PLAYER:
+  switch (object_type) {
+    case REPLAY_PLAYER:
       PlayerFrame* pf_ptr = dynamic_cast<PlayerFrame*>(df_ptr);
       in_registry.assign<IDComponent>(
           entity, this->channels_.at(in_channel_index).object_id);
@@ -179,7 +201,7 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
       //
 
       break;
-    case FRAME_BALL:
+    case REPLAY_BALL:
       BallFrame* bf_ptr = dynamic_cast<BallFrame*>(df_ptr);
       in_registry.assign<IDComponent>(
           entity, this->channels_.at(in_channel_index).object_id);
@@ -193,7 +215,7 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
       break;
     default:
       GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
-                                           "Unknown FrameType");
+                                           "Unknown type identifier");
       break;
   }
 }
@@ -239,18 +261,26 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
         // If it does we check if a new interpolation point should be added
         // dependent on the object's type
         DataFrame* temp_df = nullptr;
-        if (in_registry.has<PlayerComponent>(entity)) {
-          // PLAYER CASE
-          TransformComponent& transform_c =
-              in_registry.get<TransformComponent>(entity);
-          temp_df = new PlayerFrame(transform_c.position, transform_c.rotation,
+        ReplayObjectType temp_object_type =
+            this->IdentifyEntity(entity, in_registry);
+
+        switch (temp_object_type) {
+          case REPLAY_PLAYER:
+            TransformComponent& transform_c =
+                in_registry.get<TransformComponent>(entity);
+            temp_df = new PlayerFrame(transform_c.position,
+                                      transform_c.rotation, transform_c.scale);
+            break;
+          case REPLAY_BALL:
+            TransformComponent& transform_c =
+                in_registry.get<TransformComponent>(entity);
+            temp_df = new BallFrame(transform_c.position, transform_c.rotation,
                                     transform_c.scale);
-        } else if (in_registry.has<PlayerComponent>(entity)) {
-          // BALL CASE
-          TransformComponent& transform_c =
-              in_registry.get<TransformComponent>(entity);
-          temp_df = new BallFrame(transform_c.position, transform_c.rotation,
-                                  transform_c.scale);
+            break;
+          default:
+            GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
+                                                 "Unknown FrameType");
+            break;
         }
 
         // Compare last entry to what would be the current frame's
@@ -276,6 +306,7 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
 
       // Channel
       FrameChannel temp_fc;
+      temp_fc.object_type = this->IdentifyEntity(entity, in_registry);
       temp_fc.object_id = id_c.id;
       temp_fc.entries.push_back(temp_ce);
 

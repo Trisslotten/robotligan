@@ -6,19 +6,19 @@
 
 //---
 
-enum FrameType { FRAME_PLAYER = 0, FRAME_BALL, NUM_OF_FRAMETYPES };
+//enum FrameType { FRAME_PLAYER = 0, FRAME_BALL, NUM_OF_FRAMETYPES };
 
 class DataFrame {
  private:
-  FrameType frame_type_;
+  //FrameType frame_type_;
 
  public:
-  DataFrame(FrameType in_ft);
+  DataFrame(/*FrameType in_ft*/);
   ~DataFrame();
 
   virtual DataFrame* Clone() = 0;
 
-  FrameType GetFrameType() const;
+  //FrameType GetFrameType() const;
   virtual bool ThresholdCheck(DataFrame& in_future_df) = 0;
   virtual DataFrame* InterpolateForward(unsigned int in_dist_to_target,
                                         unsigned int in_dist_to_point_b,

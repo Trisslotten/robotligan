@@ -8,6 +8,12 @@
 
 #include "data_frame.hpp"
 
+enum ReplayObjectType {
+  REPLAY_PLAYER = 0,
+  REPLAY_BALL,
+  NUM_OF_REPLAY_OBJECT_TYPES
+};
+
 class GeometricReplay {
  private:
   struct ChannelEntry {
@@ -34,11 +40,15 @@ class GeometricReplay {
   };
 
   struct FrameChannel {
+    ReplayObjectType object_type;
     EntityID object_id;
     std::vector<ChannelEntry> entries;
     unsigned int index_a = 0;
     unsigned int index_b = 0;
   };
+
+  ReplayObjectType IdentifyEntity(entt::entity& in_entity,
+                                  entt::registry& in_registry);
 
   void FillChannelEntry(ChannelEntry& in_ce, entt::entity& in_entity,
                         entt::registry& in_registry);
@@ -48,7 +58,7 @@ class GeometricReplay {
   void InterpolateEntityData(unsigned int in_channel_index,
                              entt::entity& in_entity,
                              entt::registry& in_registry);
-  void DepolymorphFromDataframe(DataFrame* in_df_ptr, entt::entity& in_entity,
+  void DepolymorphFromDataframe(DataFrame* in_df_ptr, ReplayObjectType in_type, entt::entity& in_entity,
                                 entt::registry& in_registry);
 
   void CreateEntityFromChannel(unsigned int in_channel_index,

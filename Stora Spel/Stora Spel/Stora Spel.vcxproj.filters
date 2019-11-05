@@ -92,6 +92,7 @@
     <ClInclude Include="src\client replay machine\client_replay_machine.hpp" />
     <ClInclude Include="src\client replay machine\geometric_replay.hpp" />
     <ClInclude Include="src\client replay machine\data_frame.hpp" />
+    <ClInclude Include="src\util\asset_paths.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

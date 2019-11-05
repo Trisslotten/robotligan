@@ -12,11 +12,11 @@
 
 // Public----------------------------------------------------------------------
 
-DataFrame::DataFrame(FrameType in_ft) { this->frame_type_ = in_ft; }
+DataFrame::DataFrame() {}
 
 DataFrame::~DataFrame() {}
 
-FrameType DataFrame::GetFrameType() const { return this->frame_type_; }
+// FrameType DataFrame::GetFrameType() const { return this->frame_type_; }
 
 //##############################
 //			PlayerFrame
@@ -26,10 +26,10 @@ FrameType DataFrame::GetFrameType() const { return this->frame_type_; }
 
 // Public----------------------------------------------------------------------
 
-PlayerFrame::PlayerFrame() : DataFrame(FRAME_PLAYER) {}
+PlayerFrame::PlayerFrame() {}
 
-PlayerFrame::PlayerFrame(glm::vec3 in_pos, glm::quat in_rot, glm::vec3 in_scale)
-    : DataFrame(FRAME_PLAYER) {
+PlayerFrame::PlayerFrame(glm::vec3 in_pos, glm::quat in_rot,
+                         glm::vec3 in_scale) {
   //
   this->position_ = in_pos;
   this->rotation_ = in_rot;
@@ -119,10 +119,9 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
 
 // Public----------------------------------------------------------------------
 
-BallFrame::BallFrame() : DataFrame(FRAME_BALL) {}
+BallFrame::BallFrame() {}
 
-BallFrame::BallFrame(glm::vec3 in_pos, glm::quat in_rot, glm::vec3 in_scale)
-    : DataFrame(FRAME_BALL) {
+BallFrame::BallFrame(glm::vec3 in_pos, glm::quat in_rot, glm::vec3 in_scale) {
   //
   this->position_ = in_pos;
   this->rotation_ = in_rot;
