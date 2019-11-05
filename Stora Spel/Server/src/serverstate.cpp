@@ -84,6 +84,10 @@ void ServerLobbyState::Cleanup() {
 void ServerLobbyState::HandleDataToSend() {}
 
 void ServerPlayState::Init() {
+  score_.reserve(2);
+  score_.push_back(0);
+  score_.push_back(0);
+
   reset_timer_.Restart();
   reset_timer_.Pause();
   auto& server = game_server_->GetServer();
@@ -113,7 +117,7 @@ void ServerPlayState::Init() {
     auto team_view =
         registry.view<TeamComponent, IDComponent, PlayerComponent>();
 
-    unsigned int team_id = 0;        
+    unsigned int team_id = 0;
     for (auto team : team_view) {
       auto& team_c = team_view.get<TeamComponent>(team);
       auto& id_c = team_view.get<IDComponent>(team);
@@ -196,7 +200,7 @@ void ServerPlayState::Update(float dt) {
         player_c.actions = inputs.first;
         if (!reset_) {
           match_timer_.Resume();
-		}
+        }
         countdown_timer_.Pause();
       }
       player_c.pitch = inputs.second.x;
@@ -227,8 +231,26 @@ void ServerPlayState::Update(float dt) {
     reset_event.type = GameEvent::RESET;
     dispatcher.trigger<GameEvent>(reset_event);
   }
+
+  // Get scores
+  auto en = registry.view<TeamComponent, GoalComponenet>();
+  for (auto te : en) {
+    GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(te);
+    TeamComponent& goal_team_c = registry.get<TeamComponent>(te);
+    /*to_send << goal_team_c;
+    to_send << goal_goal_c.goals;*/
+
+    if (score_[goal_team_c.team] != goal_goal_c.goals) {
+    }
+    score_[goal_team_c.team] = goal_goal_c.goals;
+  }
+
   if (match_timer_.Elapsed() > match_time_) {
-    EndGame();
+    if (score_[0] == score_[1]) {
+      OverTime();
+    } else {
+      EndGame();
+    }
   }
 }
 
@@ -264,7 +286,6 @@ void ServerPlayState::HandleDataToSend() {
     int num_dirs = view_cam.size();
     to_send << num_dirs;
     to_send << PacketBlockType::PLAYER_LOOK_DIR;
-    
 
     auto view_entities = registry.view<TransformComponent, IDComponent>();
     int num_entities = view_entities.size();
@@ -360,7 +381,7 @@ void ServerPlayState::HandleDataToSend() {
         to_send << pick_event.ability_id;
         to_send << PacketBlockType::RECEIVE_PICK_UP;
       }
-      //registry.remove<PickUpEvent>(entity);
+      // registry.remove<PickUpEvent>(entity);
     }
     auto view_goals = registry.view<GoalComponenet, TeamComponent>();
     entt::entity blue_goal;
@@ -387,13 +408,14 @@ void ServerPlayState::HandleDataToSend() {
     }
 
     // Tell client if secondary ability was used
-    // already added game event for this, sry :P not ideal to set use_secondary
-    // to false here since ability_controller::TriggerAbility can return false,
-    // i.e. too far away to use super strike or homing ball
+    // already added game event for this, sry :P not ideal to set
+    // use_secondary to false here since ability_controller::TriggerAbility
+    // can return false, i.e. too far away to use super strike or homing
+    // ball
 
-    /*auto view_abilities = registry.view<PlayerComponent, AbilityComponent>();
-    for (auto entity : view_abilities) {
-      auto& player = view_abilities.get<PlayerComponent>(entity);
+    /*auto view_abilities = registry.view<PlayerComponent,
+    AbilityComponent>(); for (auto entity : view_abilities) { auto& player =
+    view_abilities.get<PlayerComponent>(entity);
 
       if (player.client_id == client_id) {
         auto& ability = view_abilities.get<AbilityComponent>(entity);
@@ -685,8 +707,8 @@ void ServerPlayState::CreatePlayerEntity() {
     red_players_++;
   }*/
 
-  // TEMP : Just so the replay knows the number of players all get added to the
-  // blue team
+  // TEMP : Just so the replay knows the number of players all get added to
+  // the blue team
   this->blue_players_++;
   // TEMP
 
@@ -835,6 +857,16 @@ void ServerPlayState::CreatePickUpComponents() {
                                 glm::vec3(0.f, 1.f, 0.f),
                                 glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
   created_pick_ups_.push_back(entity);
+}
+
+void ServerPlayState::OverTime() {
+  for (auto& [client_id, to_send] : game_server_->GetPackets()) {
+    to_send << PacketBlockType::GAME_OVERTIME;
+  }
+
+  if (score_[0] > score_[1] || score_[1] > score_[0]) {
+    EndGame();
+  }
 }
 
 void ServerPlayState::EndGame() {

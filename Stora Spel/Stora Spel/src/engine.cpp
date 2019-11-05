@@ -6,6 +6,7 @@
 #include <glob/graphics.hpp>
 #include <iostream>
 
+#include <ecs\systems\trail_system.hpp>
 #include <glob\window.hpp>
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
@@ -22,7 +23,6 @@
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
-#include <ecs\systems\trail_system.hpp>
 
 Engine::Engine() {}
 
@@ -306,7 +306,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::PLAYER_LOOK_DIR: {
       int num_dirs = -1;
       packet >> num_dirs;
-      for(int i =0 ; i < num_dirs; i++) {
+      for (int i = 0; i < num_dirs; i++) {
         EntityID id = 0;
         glm::vec3 look_dir;
         packet >> id;
@@ -318,7 +318,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::PLAYER_MOVE_DIR: {
       int num_dirs = -1;
       packet >> num_dirs;
-      for(int i =0 ; i < num_dirs; i++) {
+      for (int i = 0; i < num_dirs; i++) {
         EntityID id = 0;
         glm::vec3 move_dir;
         packet >> id;
@@ -614,6 +614,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.EndGame();
       previous_state_ = StateType::LOBBY;
       // ChangeState(StateType::LOBBY);
+      break;
+    }
+    case PacketBlockType::GAME_OVERTIME: {
+      play_state_.OverTime();
       break;
     }
     case PacketBlockType::YOUR_TARGET: {
