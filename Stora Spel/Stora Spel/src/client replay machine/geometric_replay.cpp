@@ -47,15 +47,11 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
 
   switch (object_type) {
     case REPLAY_PLAYER:
-      // WIP: Might be needed for animations
-      // PlayerComponent& player_c =
-      // in_registry.get<PlayerComponent>(in_entity);
-
       TransformComponent& transform_c =
           in_registry.get<TransformComponent>(in_entity);
+      PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
 
-      ret_ptr = new PlayerFrame(transform_c.position, transform_c.rotation,
-                                transform_c.scale);
+      ret_ptr = new PlayerFrame(transform_c, player_c);
       break;
     case REPLAY_BALL:
       TransformComponent& transform_c =
@@ -268,8 +264,9 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
           case REPLAY_PLAYER:
             TransformComponent& transform_c =
                 in_registry.get<TransformComponent>(entity);
-            temp_df = new PlayerFrame(transform_c.position,
-                                      transform_c.rotation, transform_c.scale);
+            PlayerComponent& player_c =
+                in_registry.get<PlayerComponent>(entity);
+            temp_df = new PlayerFrame(transform_c, player_c);
             break;
           case REPLAY_BALL:
             TransformComponent& transform_c =

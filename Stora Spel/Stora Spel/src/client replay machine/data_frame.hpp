@@ -4,13 +4,16 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include <ecs/components/player_component.hpp>
+#include <shared/transform_component.hpp>
+
 //---
 
-//enum FrameType { FRAME_PLAYER = 0, FRAME_BALL, NUM_OF_FRAMETYPES };
+// enum FrameType { FRAME_PLAYER = 0, FRAME_BALL, NUM_OF_FRAMETYPES };
 
 class DataFrame {
  private:
-  //FrameType frame_type_;
+  // FrameType frame_type_;
 
  public:
   DataFrame(/*FrameType in_ft*/);
@@ -18,7 +21,7 @@ class DataFrame {
 
   virtual DataFrame* Clone() = 0;
 
-  //FrameType GetFrameType() const;
+  // FrameType GetFrameType() const;
   virtual bool ThresholdCheck(DataFrame& in_future_df) = 0;
   virtual DataFrame* InterpolateForward(unsigned int in_dist_to_target,
                                         unsigned int in_dist_to_point_b,
@@ -29,13 +32,20 @@ class DataFrame {
 
 class PlayerFrame : public DataFrame {
  public:
+  // Transform values
   glm::vec3 position_;
   glm::quat rotation_;
   glm::vec3 scale_;
 
+  // Player values (for animations)
+  float sprint_coeff_;
+  bool sprinting_;
+  bool running_;
+  bool jumping_;
+
   // public:
   PlayerFrame();
-  PlayerFrame(glm::vec3 in_pos, glm::quat in_rot, glm::vec3 in_scale);
+  PlayerFrame(TransformComponent& in_transform_c, PlayerComponent& in_player_c);
   ~PlayerFrame();
 
   DataFrame* Clone();
@@ -56,7 +66,7 @@ class BallFrame : public DataFrame {
 
   // public:
   BallFrame();
-  BallFrame(glm::vec3 in_pos, glm::quat in_rot, glm::vec3 in_scale);
+  BallFrame(TransformComponent& in_transform_c);
   ~BallFrame();
 
   DataFrame* Clone();

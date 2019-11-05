@@ -28,18 +28,35 @@ DataFrame::~DataFrame() {}
 
 PlayerFrame::PlayerFrame() {}
 
-PlayerFrame::PlayerFrame(glm::vec3 in_pos, glm::quat in_rot,
-                         glm::vec3 in_scale) {
+PlayerFrame::PlayerFrame(TransformComponent& in_transform_c,
+                         PlayerComponent& in_player_c) {
   //
-  this->position_ = in_pos;
-  this->rotation_ = in_rot;
-  this->scale_ = in_scale;
+  this->position_ = in_transform_c.position;
+  this->rotation_ = in_transform_c.rotation;
+  this->scale_ = in_transform_c.scale;
+
+  //
+  this->sprint_coeff_ = in_player_c.sprint_coeff;
+  this->sprinting_ = in_player_c.sprinting;
+  this->running_ = in_player_c.running;
+  this->jumping_ = in_player_c.jumping;
 }
 
 PlayerFrame::~PlayerFrame() {}
 
 DataFrame* PlayerFrame::Clone() {
-  return new PlayerFrame(this->position_, this->rotation_, this->scale_);
+  PlayerFrame* ret_ptr = new PlayerFrame();
+
+  ret_ptr->position_ = this->position_;
+  ret_ptr->rotation_ = this->rotation_;
+  ret_ptr->scale_ = this->scale_;
+
+  ret_ptr->sprint_coeff_ = this->sprint_coeff_;
+  ret_ptr->sprinting_ = this->sprinting_;
+  ret_ptr->running_ = this->running_;
+  ret_ptr->jumping_ = this->jumping_;
+
+  return ret_ptr;
 }
 
 bool PlayerFrame::ThresholdCheck(DataFrame& in_future_df) {
@@ -63,6 +80,18 @@ bool PlayerFrame::ThresholdCheck(DataFrame& in_future_df) {
       GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_PLAYER_ROTATION");
   if (abs(rot_diff - 1.0f) > threshold) {
     // If we have rotated more than the theshhold value allows
+    return true;
+  }
+
+  
+  // ANIMATIONS
+  if (this->sprinting_ != future_pf.sprinting_) {
+    return true;
+  }
+  if (this->running_ != future_pf.running_) {
+    return true;
+  }
+  if (this->jumping_ != future_pf.jumping_) {
     return true;
   }
 
@@ -98,15 +127,31 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
     ret_frame->rotation_ =
         glm::slerp(this->rotation_, point_b.rotation_, percentage_a);
 
-    // SCALE : (NTS: Is this even needed?)
-    ret_frame->scale_ =
-        this->scale_ + (point_b.scale_ - this->scale_) * percentage_a;
+    // SCALE : Can just be straight set as it never changes
+    ret_frame->scale_ = this->scale_;
+
+    // SPRINT COEFFICIENT : (NTS: Should this even be interpolated? If no we do
+    // not even need to save it)
+    ret_frame->sprint_coeff_ =
+        this->sprint_coeff_ +
+        (point_b.sprint_coeff_ - this->sprint_coeff_) * percentage_a;
+
+    // PLAYER BOOLEANS : Set it dependnat on how far we are towards the next
+    // point
+    if (percentage_a < 0.5) {
+      ret_frame->sprinting_ = this->sprinting_;
+      ret_frame->running_ = this->running_;
+      ret_frame->jumping_ = this->jumping_;
+    } else {
+      ret_frame->sprinting_ = point_b.sprinting_;
+      ret_frame->running_ = point_b.running_;
+      ret_frame->jumping_ = point_b.jumping_;
+	}
 
     return ret_frame;
 
   } catch (std::bad_cast exp) {
-    GlobalSettings::Access()->WriteError(
-        "data_frame.cpp", "PlayerFrame::InterpolateForward", "Bad cast");
+    GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__, "Bad cast");
     return nullptr;
   }
 }
@@ -121,17 +166,23 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
 
 BallFrame::BallFrame() {}
 
-BallFrame::BallFrame(glm::vec3 in_pos, glm::quat in_rot, glm::vec3 in_scale) {
+BallFrame::BallFrame(TransformComponent& in_transform_c) {
   //
-  this->position_ = in_pos;
-  this->rotation_ = in_rot;
-  this->scale_ = in_scale;
+  this->position_ = in_transform_c.position;
+  this->rotation_ = in_transform_c.rotation;
+  this->scale_ = in_transform_c.scale;
 }
 
 BallFrame::~BallFrame() {}
 
 DataFrame* BallFrame::Clone() {
-  return new BallFrame(this->position_, this->rotation_, this->scale_);
+  BallFrame* ret_ptr = new BallFrame();
+
+  ret_ptr->position_ = this->position_;
+  ret_ptr->rotation_ = this->rotation_;
+  ret_ptr->scale_ = this->scale_;
+
+  return ret_ptr;
 }
 
 bool BallFrame::ThresholdCheck(DataFrame& in_future_df) {
@@ -197,8 +248,7 @@ DataFrame* BallFrame::InterpolateForward(unsigned int in_dist_to_target,
     return ret_frame;
 
   } catch (std::bad_cast exp) {
-    GlobalSettings::Access()->WriteError(
-        "data_frame.cpp", "BallFrame::InterpolateForward", "Bad cast");
+    GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__, "Bad cast");
     return nullptr;
   }
 }
