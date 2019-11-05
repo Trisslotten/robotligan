@@ -4,9 +4,12 @@
 
 #include <ecs/components/ball_component.hpp>
 #include <ecs/components/player_component.hpp>
+#include <ecs/components/model_component.hpp>
 #include <shared/transform_component.hpp>
 #include <util/global_settings.hpp>
-// Private---------------------------------------------------------------------
+#include <glob/graphics.hpp>
+#include <util/asset_paths.hpp>
+    // Private---------------------------------------------------------------------
 
 ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
                                                  entt::registry& in_registry) {
@@ -142,9 +145,9 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
       PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
       // Transfer
       pf_c_ptr->WriteBack(transform_c, player_c);
-	  //
-	  // WIP: Handle model component
-	  //
+      //
+      // WIP: Handle model component
+      //
       break;
     case REPLAY_BALL:
       // Cast
@@ -186,30 +189,36 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
       PlayerFrame* pf_ptr = dynamic_cast<PlayerFrame*>(df_ptr);
       in_registry.assign<IDComponent>(
           entity, this->channels_.at(in_channel_index).object_id);
-      
-	  TransformComponent transform_c;
-      PlayerComponent player_c;
-      pf_ptr->WriteBack(transform_c, player_c);
-      in_registry.assign<TransformComponent>(entity, transform_c);
-      in_registry.assign<PlayerComponent>(entity, player_c);
 
-      //
-      // WIP: Handle model component
-      //
+	  //
+      TransformComponent& transform_c =
+          in_registry.assign<TransformComponent>(entity);
+      PlayerComponent& player_c=
+          in_registry.assign<PlayerComponent>(entity);
+      pf_ptr->WriteBack(transform_c, player_c);
+
+      // Create and add ModelHandle
+      glob::ModelHandle mh_mech = glob::GetModel(kModelPathMech);
+      ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+      model_c.handles.push_back(mh_mech);
 
       break;
     case REPLAY_BALL:
       BallFrame* bf_ptr = dynamic_cast<BallFrame*>(df_ptr);
       in_registry.assign<IDComponent>(
           entity, this->channels_.at(in_channel_index).object_id);
-      
-      TransformComponent transform_c;
-      bf_ptr->WriteBack(transform_c);
-      in_registry.assign<TransformComponent>(entity, transform_c);
 
       //
-      // WIP: Handle model component
-      //
+      TransformComponent& transform_c =
+          in_registry.assign<TransformComponent>(entity);
+      bf_ptr->WriteBack(transform_c);
+
+      // Create and add ModelHandle
+      glob::ModelHandle mh_ball_proj = glob::GetModel(kModelPathBallProjectors);
+      glob::ModelHandle mh_ball_sphe = glob::GetModel(kModelPathBallSphere);
+      ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+      model_c.handles.push_back(mh_ball_proj);
+      model_c.handles.push_back(mh_ball_sphe);
 
       break;
     default:

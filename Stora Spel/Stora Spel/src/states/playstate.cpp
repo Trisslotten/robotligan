@@ -347,6 +347,7 @@ void PlayState::Update(float dt) {
 
   glob::Submit(test_ball_, glm::mat4());
 }
+
 void PlayState::UpdateNetwork() {
   auto& packet = engine_->GetPacket();
 
