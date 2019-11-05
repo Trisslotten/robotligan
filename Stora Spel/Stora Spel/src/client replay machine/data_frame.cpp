@@ -156,6 +156,19 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
   }
 }
 
+void PlayerFrame::WriteBack(TransformComponent& in_transform_c,
+                            PlayerComponent& in_player_c) {
+  in_transform_c.position = this->position_;
+  in_transform_c.rotation = this->rotation_;
+  in_transform_c.scale = this->scale_;
+
+  in_player_c.sprint_coeff = this->sprint_coeff_;
+  in_player_c.sprinting = this->sprinting_;
+  in_player_c.running = this->running_;
+  in_player_c.jumping = this->jumping_;
+
+}
+
 //##############################
 //			BallFrame
 //##############################
@@ -251,4 +264,10 @@ DataFrame* BallFrame::InterpolateForward(unsigned int in_dist_to_target,
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__, "Bad cast");
     return nullptr;
   }
+}
+
+void BallFrame::WriteBack(TransformComponent& in_transform_c) {
+  in_transform_c.position = this->position_;
+  in_transform_c.rotation = this->rotation_;
+  in_transform_c.scale = this->scale_;
 }

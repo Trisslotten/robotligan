@@ -139,24 +139,21 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
       // Get
       TransformComponent& transform_c =
           in_registry.get<TransformComponent>(in_entity);
+      PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
       // Transfer
-      transform_c.position = pf_c_ptr->position_;
-      transform_c.rotation = pf_c_ptr->rotation_;
-      transform_c.scale = pf_c_ptr->scale_;
-      //
-      // WIP: Handle model and animation components
-      //
+      pf_c_ptr->WriteBack(transform_c, player_c);
+	  //
+	  // WIP: Handle model component
+	  //
       break;
     case REPLAY_BALL:
       // Cast
-      BallFrame* pf_c_ptr = dynamic_cast<BallFrame*>(in_df_ptr);
+      BallFrame* bf_c_ptr = dynamic_cast<BallFrame*>(in_df_ptr);
       // Get
       TransformComponent& transform_c =
           in_registry.get<TransformComponent>(in_entity);
       // Transfer
-      transform_c.position = pf_c_ptr->position_;
-      transform_c.rotation = pf_c_ptr->rotation_;
-      transform_c.scale = pf_c_ptr->scale_;
+      bf_c_ptr->WriteBack(transform_c);
       //
       // WIP: Handle model component
       //

@@ -31,7 +31,7 @@ class DataFrame {
 //---
 
 class PlayerFrame : public DataFrame {
- public:
+ protected:
   // Transform values
   glm::vec3 position_;
   glm::quat rotation_;
@@ -43,7 +43,7 @@ class PlayerFrame : public DataFrame {
   bool running_;
   bool jumping_;
 
-  // public:
+ public:
   PlayerFrame();
   PlayerFrame(TransformComponent& in_transform_c, PlayerComponent& in_player_c);
   ~PlayerFrame();
@@ -54,17 +54,18 @@ class PlayerFrame : public DataFrame {
   DataFrame* InterpolateForward(unsigned int in_dist_to_target,
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
+  void WriteBack(TransformComponent& in_transform_c, PlayerComponent& in_player_c);
 };
 
 //---
 
 class BallFrame : public DataFrame {
- public:
+ protected:
   glm::vec3 position_;
   glm::quat rotation_;
   glm::vec3 scale_;
 
-  // public:
+ public:
   BallFrame();
   BallFrame(TransformComponent& in_transform_c);
   ~BallFrame();
@@ -75,6 +76,7 @@ class BallFrame : public DataFrame {
   DataFrame* InterpolateForward(unsigned int in_dist_to_target,
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
+  void WriteBack(TransformComponent& in_transform_c);
 };
 
 #endif  // DATA_FRAME_HPP_
