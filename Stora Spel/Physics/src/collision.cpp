@@ -84,7 +84,7 @@ physics::IntersectData physics::Intersect(const physics::Sphere& s,
   }
   glm::vec3 v = retPt - s.center;
 
-  data.collision = glm::dot(v, v) <= s.radius * s.radius;
+  data.collision = glm::dot(v, v) < s.radius * s.radius;
 
   if (data.collision) {
     glm::vec3 impact_vector = retPt - o.center;
