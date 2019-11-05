@@ -541,15 +541,15 @@ namespace ability_controller {
         auto orientation = trans_c.rotation;
         //orientation.y = camera.GetLookDir().y;
 
-        auto wall = registry.create();
-        registry.assign<WallComponent>(wall);
-        registry.assign<TimerComponent>(wall, 5.f);
-        registry.assign<HealthComponent>(wall, 100);
-        registry.assign<TransformComponent>(wall, position, orientation);
-        auto& obb = registry.assign<physics::OBB>(wall);
-        obb.extents[0] = 1.f;
-        obb.extents[1] = 8.3f;
-        obb.extents[2] = 5.f;
+      auto wall = registry.create();
+      registry.assign<WallComponent>(wall);
+      registry.assign<TimerComponent>(wall, 10.f);
+      registry.assign<HealthComponent>(wall, 100);
+      registry.assign<TransformComponent>(wall, position, orientation);
+      auto& obb = registry.assign<physics::OBB>(wall);
+      obb.extents[0] = 1.f;
+      obb.extents[1] = 8.3f;
+      obb.extents[2] = 5.f;
 
         EventInfo e;
         e.event = Event::BUILD_WALL;

@@ -125,8 +125,6 @@ void Engine::Update(float dt) {
     // accumulate mouse movement
     float mouse_sensitivity = 0.003f * mouse_sensitivity_;
     glm::vec2 mouse_movement = mouse_sensitivity * Input::MouseMov();
-    accum_yaw_ -= mouse_movement.x;
-    accum_pitch_ -= mouse_movement.y;
 
     play_state_.AddPitchYaw(-mouse_movement.y, -mouse_movement.x);
 
@@ -235,8 +233,6 @@ void Engine::UpdateNetwork() {
   if (client_.IsConnected() && !to_send.IsEmpty()) {
     client_.Send(to_send);
   }
-  accum_yaw_ = 0.f;
-  accum_pitch_ = 0.f;
   packet_ = NetAPI::Common::Packet();
 
   // handle received data
@@ -677,7 +673,8 @@ void Engine::UpdateChat(float dt) {
         } else {
           chat_.SetSendMessage(true);
           message_ = chat_.GetCurrentMessage();
-          chat_.CloseChat();
+          if (current_state_ == &play_state_)
+			chat_.CloseChat();
         }
       }
       chat_.Update(dt);

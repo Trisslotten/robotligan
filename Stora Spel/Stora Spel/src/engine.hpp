@@ -116,8 +116,6 @@ class Engine {
   std::unordered_map<int, int> mousebinds_;
   std::unordered_map<int, int> key_presses_;
   std::unordered_map<int, int> mouse_presses_;
-  float accum_yaw_ = 0.f;
-  float accum_pitch_ = 0.f;
 
   glob::Font2DHandle font_test_ = 0;
   glob::Font2DHandle font_test2_ = 0;
