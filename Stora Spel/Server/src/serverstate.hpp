@@ -123,6 +123,7 @@ class ServerPlayState : public ServerState {
   void OverTime();
   void EndGame();
 
+
   std::unordered_map<long, bool> clients_receive_updates_;
   std::unordered_map<int, EntityID> clients_player_ids_;
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;

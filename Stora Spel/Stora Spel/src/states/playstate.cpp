@@ -349,6 +349,19 @@ void PlayState::Update(float dt) {
                  0.1);
   }
 
+  if (overtime_has_started) {
+    glm::vec2 pos = glob::window::GetWindowDimensions();
+    pos /= 2;
+    pos.x -= 225;
+    pos.y += 400;
+
+    glob::Submit(font_test_, pos, 175, "OVERTIME");
+
+	if (game_has_ended_) {
+      overtime_has_started = false;
+	}
+  }
+
   if (game_has_ended_) {
     engine_->DrawScoreboard();
 
@@ -430,8 +443,13 @@ void PlayState::UpdateInGameMenu(bool show_menu) {
 }
 
 void PlayState::UpdateGameplayTimer() {
+  int temp = 0;
+  if (!overtime_has_started) {
+    temp = match_time_ - engine_->GetGameplayTimer();
+  } else {
+    temp = engine_->GetGameplayTimer() - match_time_;
+  }
   // Gameplay timer
-  int temp = match_time_ - engine_->GetGameplayTimer();
   int sec = 0;
   int min = 5;
 
@@ -1407,6 +1425,8 @@ void PlayState::EndGame() {
   end_game_timer_.Restart();
   game_has_ended_ = true;
 }
+
+void PlayState::OverTime() { overtime_has_started = true; }
 
 void PlayState::AddPitchYaw(float pitch, float yaw) {
   pitch_ += pitch;

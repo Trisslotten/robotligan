@@ -232,6 +232,7 @@ void ServerPlayState::Update(float dt) {
     dispatcher.trigger<GameEvent>(reset_event);
   }
 
+  // Get scores
   auto en = registry.view<TeamComponent, GoalComponenet>();
   for (auto te : en) {
     GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(te);
@@ -245,11 +246,9 @@ void ServerPlayState::Update(float dt) {
   }
 
   if (match_timer_.Elapsed() > match_time_) {
-    if (score_[0] == score_[1] && !overtime_) {
-      overtime_ = true;
+    if (score_[0] == score_[1]) {
       OverTime();
-    }
-    if (!overtime_) {
+    } else {
       EndGame();
     }
   }
@@ -861,25 +860,13 @@ void ServerPlayState::CreatePickUpComponents() {
 }
 
 void ServerPlayState::OverTime() {
-  // Countdown start
-  // När de blir mål ska de laget vinna
-  // Endgame
-  // countdown_timer_.Restart();
-
-  ResetEntities();
-  reset_timer_.Restart();
-  reset_timer_.Pause();
-  reset_ = false;
-
-  match_timer_.Resume();
-
-  GameEvent reset_event;
-  reset_event.type = GameEvent::RESET;
-  dispatcher.trigger<GameEvent>(reset_event);
-
-  /*for (auto& [client_id, to_send] : game_server_->GetPackets()) {
+  for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     to_send << PacketBlockType::GAME_OVERTIME;
-  }*/
+  }
+
+  if (score_[0] > score_[1] || score_[1] > score_[0]) {
+    EndGame();
+  }
 }
 
 void ServerPlayState::EndGame() {
