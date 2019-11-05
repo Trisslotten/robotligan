@@ -4,17 +4,7 @@
 using namespace std::chrono_literals;
 void NetAPI::Socket::Server::ClearPackets(NetAPI::Socket::ClientData* data)
 {
-	Lock();
 	data->packets.clear();
-	Unlock();
-}
-void NetAPI::Socket::Server::Lock()
-{
-	locked = true;
-}
-void NetAPI::Socket::Server::Unlock()
-{
-	locked = false;
 }
 void NetAPI::Socket::Server::SendPing() {
   NetAPI::Common::Packet to_send;
@@ -32,27 +22,34 @@ void NetAPI::Socket::Server::HandleSingleClientPacket(unsigned short ID)
 	auto c = this->client_data_[ID];
 	while (threads[ID].second)
 	{
-		auto is_locked = locked;
-		if (!is_locked && !c->client.IsConnected() && c->is_active) {
-			std::cout << "DEBUG: removing client, lstrecvlen="
-				<< c->client.GetRaw()->GetLastRecvLen()
-				<< ", isConnected=" << c->client.IsConnected() << "\n";
-			c->client.Disconnect();
-			c->is_active = false;
-			connected_players_--;
-		}
-		else if (!is_locked && (c->client.IsConnected()))
+		auto islocked = IsLocked();
+		if (!islocked)
 		{
-			/*
-				Clear packet när man pushar paket? hmmm
-			
-			*/
-			int num_packets = 0;
-			for (auto packet : c->client.Receive()) {
-				num_packets++;
-				if (!packet.IsEmpty()) {
-					c->packets.push_back(packet);
+			if (!c->client.IsConnected() && c->is_active) {
+				std::cout << "DEBUG: removing client, lstrecvlen="
+					<< c->client.GetRaw()->GetLastRecvLen()
+					<< ", isConnected=" << c->client.IsConnected() << "\n";
+				c->client.Disconnect();
+				c->is_active = false;
+				connected_players_--;
+			}
+			else if ((c->client.IsConnected()))
+			{
+				/*
+					Clear packet när man pushar paket? hmmm
+
+				*/
+				int num_packets = 0;
+				for (auto packet : c->client.Receive()) {
+					num_packets++;
+					if (!packet.IsEmpty()) {
+						c->packets.push_back(packet);
+					}
 				}
+			}
+			else
+			{
+				std::this_thread::sleep_for(100ns);
 			}
 		}
 		else

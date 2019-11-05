@@ -67,7 +67,7 @@ void GameServer::Init(double in_update_rate) {
 
 void GameServer::Update(float dt) {
   server_.Update();
-
+  server_.Lock();
   packets_.clear();
   for (auto& [client_id, client_data] : server_.GetClients()) {
     packets_[client_id] = NetAPI::Common::Packet();
@@ -115,7 +115,6 @@ void GameServer::Update(float dt) {
   */
 
   // handle received data
-  server_.Lock();
   for (auto& [id, client_data] : server_.GetClients()) {
     for (auto& packet : client_data->packets) {
       while (!packet.IsEmpty()) {
@@ -129,7 +128,6 @@ void GameServer::Update(float dt) {
   DoOncePerSecond();
   current_state_->Update(dt);
   current_state_->HandleDataToSend();
-  server_.Unlock();
   //---------------------------------------------
   //--------------UPDATE GAME LOGIC--------------
   //---------------------------------------------
@@ -140,6 +138,7 @@ void GameServer::Update(float dt) {
   HandlePacketsToSend();
 
   messages.clear();
+  server_.Unlock();
 }
 
 void GameServer::HandlePacketsToSend() {

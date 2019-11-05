@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <chrono>
+#include <mutex>
 #include <NetAPI/common.hpp>
 #include <NetAPI/packet.hpp>
 #include <NetAPI/socket/client.hpp>

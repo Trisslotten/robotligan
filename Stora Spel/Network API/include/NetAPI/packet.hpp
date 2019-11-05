@@ -24,7 +24,7 @@ class EXPORT Packet {
   long GetPacketSize() { return GetHeader()->packet_size; }
 
   bool IsEmpty() {
-    return (GetHeader()->packet_size <= sizeof(PacketHeader) ||
+    return (!data_ || GetHeader()->packet_size <= sizeof(PacketHeader) ||
             (strcmp(data_ + sizeof(PacketHeader), kNoDataAvailable) == 0));
   }
 

@@ -12,7 +12,7 @@
 #include <shared/shared.hpp>
 #include <chrono>
 #include <thread>
-#include <mutex>
+#include <atomic>
 namespace NetAPI {
 namespace Socket {
 class EXPORT Server {
@@ -30,8 +30,9 @@ class EXPORT Server {
   std::vector<ClientData*> GetNewlyConnected() { return newly_connected_; }
   std::pair<std::thread, bool> threads[Common::kMaxPlayers];
   void ClearPackets(NetAPI::Socket::ClientData* data);
-  void Lock();
-  void Unlock();
+  void Lock() { locked_.store(true); }
+  void Unlock() { locked_.store(false); }
+  bool IsLocked() { return locked_.load(); }
  private:
   void SendPing();
   void HandleClientPacket();
@@ -50,6 +51,7 @@ class EXPORT Server {
   bool new_frame = true;
   short connected_players_ = 0;
   long current_client_guid_ = 0;
+  std::atomic_bool locked_ = false;
 };
 
 }  // namespace Socket
