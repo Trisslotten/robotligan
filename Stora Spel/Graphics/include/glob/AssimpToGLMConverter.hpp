@@ -1,4 +1,5 @@
 #include <assimp/postprocess.h>
+#include <sstream> 
 namespace glob {
 namespace AssToGLM {
 glm::mat3 ConvertToGLM3x3(aiMatrix3x3 aiMat) {
@@ -18,6 +19,17 @@ glm::vec3 ConvertToGLMVec3(aiVector3D aiVec) {
 
 glm::quat ConvertToGLMQuat(aiQuaternion aiQuat) {
   return glm::quat(aiQuat.w, aiQuat.x, aiQuat.y, aiQuat.z);
+}
+
+std::string PrintVec3(glm::vec3 vec) {
+  std::stringstream ret;
+  ret << "(" << vec.x << ", " << vec.y << ", " << vec.z << ")";
+  return ret.str();
+}
+std::string PrintQuat(glm::quat quat) {
+  std::stringstream ret;
+  ret << "(" << quat.x << ", " << quat.y << ", " << quat.z << ", " << quat.w << ")";
+  return ret.str();
 }
 }  // namespace AssToGLM
 }  // namespace glob
