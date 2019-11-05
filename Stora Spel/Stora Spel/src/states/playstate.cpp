@@ -19,6 +19,7 @@
 #include "entitycreation.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
+#include <util/asset_paths.hpp>
 
 void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
@@ -691,7 +692,7 @@ void PlayState::CreatePlayerEntities() {
         glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
     glm::vec3 character_scale = glm::vec3(0.0033f);
 
-    glob::ModelHandle player_model = glob::GetModel("Assets/Mech/Mech.fbx");
+    glob::ModelHandle player_model = glob::GetModel(kModelPathMech);
 
     registry_gameplay_.assign<IDComponent>(entity, entity_id);
     registry_gameplay_.assign<PlayerComponent>(entity);
@@ -720,7 +721,7 @@ void PlayState::CreateArenaEntity() {
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(4.0f, 4.0f, 4.0f);
   glob::ModelHandle model_arena =
-    glob::GetModel("assets/Map/Map_singular_TMP.fbx");
+    glob::GetModel(kModelPathMapSingular);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
   model_c.handles.push_back(model_arena);
 
@@ -735,8 +736,8 @@ void PlayState::CreateBallEntity() {
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f);
   auto ball = registry_gameplay_.create();
-  glob::ModelHandle model_ball_projectors_p = glob::GetModel("Assets/Ball_new/Ball_projectors.fbx");
-  glob::ModelHandle model_ball_sphere_p = glob::GetTransparentModel("Assets/Ball_new/Ball_Sphere.fbx");
+  glob::ModelHandle model_ball_projectors_p = glob::GetModel(kModelPathBallProjectors);
+  glob::ModelHandle model_ball_sphere_p = glob::GetTransparentModel(kModelPathBallSphere);
   //glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
   auto& model_c = registry_gameplay_.assign<ModelComponent>(ball);
   model_c.handles.push_back(model_ball_sphere_p);
@@ -816,7 +817,7 @@ void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {
   registry_gameplay_.assign<IDComponent>(pick_up, id);
 
   glob::ModelHandle model_pick_up =
-    glob::GetModel("assets/Pickup/Pickup.fbx");
+    glob::GetModel(kModelPathPickup);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(pick_up);
   model_c.handles.push_back(model_pick_up);
 
@@ -829,7 +830,7 @@ void PlayState::CreateCannonBall(EntityID id) {
   auto cannonball = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
-  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  glob::ModelHandle model_ball = glob::GetModel(kModelPathBall);
     auto& model_c = registry_gameplay_.assign<ModelComponent>(cannonball);
   model_c.handles.push_back(model_ball);
 
@@ -842,7 +843,7 @@ void PlayState::CreateTeleportProjectile(EntityID id) {
   auto teleport_projectile = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
-  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  glob::ModelHandle model_ball = glob::GetModel(kModelPathBall);
       auto& model_c = registry_gameplay_.assign<ModelComponent>(teleport_projectile);
   model_c.handles.push_back(model_ball);
 
@@ -854,7 +855,7 @@ void PlayState::CreateTeleportProjectile(EntityID id) {
 void PlayState::CreateForcePushObject(EntityID id) {
   auto force_object = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  glob::ModelHandle model_ball = glob::GetModel(kModelPathBall);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(force_object);
   model_c.handles.push_back(model_ball);
 
@@ -866,7 +867,7 @@ void PlayState::CreateForcePushObject(EntityID id) {
 void PlayState::CreateMissileObject(EntityID id) {
   auto missile_object = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glob::ModelHandle model_ball = glob::GetModel("assets/Rocket/Rocket.fbx");
+  glob::ModelHandle model_ball = glob::GetModel(kModelPathRocket);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(missile_object);
   model_c.handles.push_back(model_ball);
   registry_gameplay_.assign<TransformComponent>(missile_object, zero_vec,

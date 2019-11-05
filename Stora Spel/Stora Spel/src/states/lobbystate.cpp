@@ -160,7 +160,7 @@ void LobbyState::CreateBackgroundEntities() {
     auto arena = registry_lobby_.create();
     glm::vec3 arena_scale = glm::vec3(1.0f);
     glob::ModelHandle model_arena =
-        glob::GetModel(kModelPathMap);
+        glob::GetModel(kModelPathMapUnified);
     auto& model_c = registry_lobby_.assign<ModelComponent>(arena);
     model_c.handles.push_back(model_arena);
     registry_lobby_.assign<TransformComponent>(arena, zero_vec, zero_vec,
@@ -170,7 +170,7 @@ void LobbyState::CreateBackgroundEntities() {
   {
     // ladda in och skapa entity för boll
     auto ball = registry_lobby_.create();
-    glob::ModelHandle model_ball = glob::GetModel(kModelPathBall);
+    glob::ModelHandle model_ball = glob::GetModel(kModelPathBallTest);
     auto& model_c = registry_lobby_.assign<ModelComponent>(ball);
     model_c.handles.push_back(model_ball);
     registry_lobby_.assign<TransformComponent>(ball, glm::vec3(0, -4, 0),
@@ -183,7 +183,7 @@ void LobbyState::CreateBackgroundEntities() {
     auto robot = registry_lobby_.create();
     auto& trans = registry_lobby_.assign<TransformComponent>(
         robot, zero_vec, glm::vec3(0.f, 180.f, 0.f), glm::vec3(0.01f));
-    glob::ModelHandle model_robot = glob::GetModel(kModelPathPlayer);
+    glob::ModelHandle model_robot = glob::GetModel(kModelPathMech);
     auto& model_c = registry_lobby_.assign<ModelComponent>(robot);
     model_c.handles.push_back(model_robot);
     // registry_lobby_.assign<AnimationComponent>(robot,

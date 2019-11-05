@@ -57,8 +57,7 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
       TransformComponent& transform_c =
           in_registry.get<TransformComponent>(in_entity);
 
-      ret_ptr = new BallFrame(transform_c.position, transform_c.rotation,
-                              transform_c.scale);
+      ret_ptr = new BallFrame(transform_c);
       break;
     default:
       GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
@@ -271,8 +270,7 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
           case REPLAY_BALL:
             TransformComponent& transform_c =
                 in_registry.get<TransformComponent>(entity);
-            temp_df = new BallFrame(transform_c.position, transform_c.rotation,
-                                    transform_c.scale);
+            temp_df = new BallFrame(transform_c);
             break;
           default:
             GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
