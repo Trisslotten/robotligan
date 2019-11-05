@@ -9,9 +9,9 @@
 #include "data_frame.hpp"
 
 enum ReplayObjectType {
-  REPLAY_PLAYER = 0,
+  REPLAY_PLAYER = 0,  // Start
   REPLAY_BALL,
-  NUM_OF_REPLAY_OBJECT_TYPES
+  NUM_OF_REPLAY_OBJECT_TYPES  // End
 };
 
 class GeometricReplay {
@@ -58,7 +58,8 @@ class GeometricReplay {
   void InterpolateEntityData(unsigned int in_channel_index,
                              entt::entity& in_entity,
                              entt::registry& in_registry);
-  void DepolymorphFromDataframe(DataFrame* in_df_ptr, ReplayObjectType in_type, entt::entity& in_entity,
+  void DepolymorphFromDataframe(DataFrame* in_df_ptr, ReplayObjectType in_type,
+                                entt::entity& in_entity,
                                 entt::registry& in_registry);
 
   void CreateEntityFromChannel(unsigned int in_channel_index,
