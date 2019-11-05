@@ -110,7 +110,7 @@ struct MenuEvent {
 };
 
 struct GameEvent {
-  enum {
+  enum Type : uint32_t {
     GOAL = 0,
     KICK,
     HIT,

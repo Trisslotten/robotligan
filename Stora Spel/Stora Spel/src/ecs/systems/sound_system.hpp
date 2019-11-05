@@ -17,13 +17,13 @@ public:
   void Init(Engine* engine);
   void PlayAmbientSound(entt::registry& registry);
   slob::SoundEngine& GetSoundEngine() { return sound_engine_; }
-
+  
   void ReceiveGameEvent(const GameEvent& event);
+  void ReceiveMenuEvent(const MenuEvent& event);
+
   std::unordered_map<AbilityID, slob::SoundHandle> GetAbilitySounds() {
     return ability_sounds_;
   }
-
-  void ReceiveMenuEvent(const MenuEvent& event);
 private:
   Timer nudge_timer_;
   std::unordered_map<AbilityID, slob::SoundHandle> ability_sounds_;
