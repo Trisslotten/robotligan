@@ -1356,7 +1356,6 @@ void PlayState::DestroyEntity(EntityID id) {
 
     auto& p_c = registry_gameplay_.assign<ParticleComponent>(
         e, handles, offsets, directions);
-    registry_gameplay_.assign<int>(e, 0);
   }
 }
 
@@ -1404,14 +1403,30 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
     }
     case GameEvent::INVISIBILITY_CAST: {
       auto registry = engine_->GetCurrentRegistry();
-      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent>();
+      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent, TransformComponent>();
       for (auto entity : view_controller) {
         IDComponent& id_c = view_controller.get<IDComponent>(entity);
         PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
-        ModelComponent& m_c = view_controller.get< ModelComponent>(entity);
+        ModelComponent& m_c = view_controller.get<ModelComponent>(entity);
+        TransformComponent& t_c =
+            view_controller.get<TransformComponent>(entity);
 
         if (id_c.id == e.invisibility_cast.player_id) {
           m_c.invisible = true;
+
+          //Particles
+          entt::entity particle_entity = registry_gameplay_.create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+
+          glob::SetParticleSettings(handle, "ball_destroy.txt");
+          glob::SetEmitPosition(handle, t_c.position);
+          in_handles.push_back(handle);
+
+          ParticleComponent& par_c = registry_gameplay_.assign<ParticleComponent>(
+              particle_entity, in_handles, in_offsets, in_directions);
         }
       }
       if (e.invisibility_cast.player_id == my_id_) {
@@ -1421,14 +1436,31 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
     }
     case GameEvent::INVISIBILITY_END: {
       auto registry = engine_->GetCurrentRegistry();
-      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent>();
+      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent, TransformComponent>();
       for (auto entity : view_controller) {
         IDComponent& id_c = view_controller.get<IDComponent>(entity);
         PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
-        ModelComponent& m_c = view_controller.get< ModelComponent>(entity);
+        ModelComponent& m_c = view_controller.get<ModelComponent>(entity);
+        TransformComponent& t_c =
+            view_controller.get<TransformComponent>(entity);
 
         if (id_c.id == e.invisibility_end.player_id) {
           m_c.invisible = false;
+
+          // Particles
+          entt::entity particle_entity = registry_gameplay_.create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+
+          glob::SetParticleSettings(handle, "ball_destroy.txt");
+          glob::SetEmitPosition(handle, t_c.position);
+          in_handles.push_back(handle);
+
+          ParticleComponent& par_c =
+              registry_gameplay_.assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
         }
       }
       if (e.invisibility_end.player_id == my_id_) {
