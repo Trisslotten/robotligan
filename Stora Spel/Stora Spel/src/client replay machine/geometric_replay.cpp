@@ -186,10 +186,15 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
       PlayerFrame* pf_ptr = dynamic_cast<PlayerFrame*>(df_ptr);
       in_registry.assign<IDComponent>(
           entity, this->channels_.at(in_channel_index).object_id);
-      in_registry.assign<TransformComponent>(entity, pf_ptr->position_,
-                                             pf_ptr->rotation_, pf_ptr->scale_);
+      
+	  TransformComponent transform_c;
+      PlayerComponent player_c;
+      pf_ptr->WriteBack(transform_c, player_c);
+      in_registry.assign<TransformComponent>(entity, transform_c);
+      in_registry.assign<PlayerComponent>(entity, player_c);
+
       //
-      // WIP: Handle model and animation components
+      // WIP: Handle model component
       //
 
       break;
@@ -197,8 +202,10 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
       BallFrame* bf_ptr = dynamic_cast<BallFrame*>(df_ptr);
       in_registry.assign<IDComponent>(
           entity, this->channels_.at(in_channel_index).object_id);
-      in_registry.assign<TransformComponent>(entity, pf_ptr->position_,
-                                             pf_ptr->rotation_, pf_ptr->scale_);
+      
+      TransformComponent transform_c;
+      bf_ptr->WriteBack(transform_c);
+      in_registry.assign<TransformComponent>(entity, transform_c);
 
       //
       // WIP: Handle model component
