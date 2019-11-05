@@ -94,9 +94,7 @@ void SoundSystem::Init(Engine* engine) {
   ability_sounds_[AbilityID::FAKE_BALL] =
     sound_engine_.GetSound("assets/sound/fake_ball.wav");
   ability_sounds_[AbilityID::INVISIBILITY] =
-    sound_engine_.GetSound("assets/sounds/annoying.mp3");
-
-  sound_engine_.GetSound("assets/sound/switch_goals.mp3");
+    sound_engine_.GetSound("assets/sound/invis_pop.mp3");
 }
 
 void SoundSystem::PlayAmbientSound(entt::registry& registry) {
