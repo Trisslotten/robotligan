@@ -109,12 +109,9 @@ void SoundSystem::PlayAmbientSound(entt::registry& registry) {
   }
 }
 
-int counter_xd = 0;
 void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
   auto registry = engine_->GetCurrentRegistry();
   // Listen for GameEvents and play associated sounds
-  counter_xd++;
-  std::cout << "Event nr: " << counter_xd << " | Event type: " << event.type << std::endl;
 
   if (event.type == GameEvent::GOAL) {
     auto view = registry->view<CameraComponent, SoundComponent>();
