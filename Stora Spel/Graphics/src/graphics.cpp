@@ -388,7 +388,7 @@ void Init() {
   glBindVertexArray(0);
 
   materials.emplace_back();
-  materials.back().SetNormalMap("Assets/Texture/dirty_metal_weavy_normal.png");
+  materials.back().SetNormalMap("Assets/Texture/normal_test.png");
 
   blur.Init();
 
@@ -1029,6 +1029,19 @@ void SetCamera(Camera cam) { camera = cam; }
 
 void SetModelUseGL(bool use_gl) { kModelUseGL = use_gl; }
 
+void ReloadShaders() {
+  fullscreen_shader.reload();
+  model_emission_shader.reload();
+  model_shader.reload();
+  particle_shader.reload();
+  animated_model_shader.reload();
+  text_shader.reload();
+  text3D_shader.reload();
+  wireframe_shader.reload();
+  gui_shader.reload();
+  e2D_shader.reload();
+}
+
 void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x,
             float opacity) {
   auto find_res = gui_elements.find(gui_h);
@@ -1180,6 +1193,8 @@ void Render() {
   post_process.BeforeDraw();
   {
     model_shader.use();
+    materials.back().BindNormalMap(4);
+    model_shader.uniform("texture_normal", 4);
     for (auto &render_item : normal_items) {
       model_shader.uniform("model_transform", render_item.transform);
       render_item.model->Draw(model_shader);

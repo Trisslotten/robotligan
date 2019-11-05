@@ -20,16 +20,17 @@ void Material::SetNormalMap(const std::string& path) {
   }
 
   std::vector<unsigned char> to_upload;
-
   for (int y = 0; y < height; y++) {
     for (int x = 0; x < width; x++) {
       int index = 4 * (x + y * width);
-      int r = image[index];
-      int g = image[index];
-      int b = image[index];
-      glm::vec3 normal = normalize((glm::vec3(r, g, b) / 255.f) - glm::vec3(0.5f));
-      to_upload.push_back((unsigned char)(normal.x + 128.f));
-      to_upload.push_back((unsigned char)(normal.y + 128.f));
+      int r = image[index+0];
+      int g = image[index+1];
+      int b = image[index+2];
+      glm::vec3 normal = glm::vec3(r, g, b) / 255.f;
+      normal = normalize(2.f*normal - 1.f);
+      normal = 0.5f*normal + 0.5f;
+      to_upload.push_back((unsigned char)(255.f*normal.x));
+      to_upload.push_back((unsigned char)(255.f*normal.y));
     }
   }
 
@@ -37,11 +38,13 @@ void Material::SetNormalMap(const std::string& path) {
   glBindTexture(GL_TEXTURE_2D, normal_map_);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RG8, width, height, 0, GL_RG,
                GL_UNSIGNED_BYTE, to_upload.data());
+
+  glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 void Material::BindNormalMap(int slot) {
