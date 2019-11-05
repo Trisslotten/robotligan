@@ -39,10 +39,6 @@ void NetAPI::Socket::Server::HandleSingleClientPacket(unsigned short ID)
 			}
 			else if ((c->client.IsConnected()))
 			{
-				/*
-					Clear packet när man pushar paket? hmmm
-
-				*/
 				int num_packets = 0;
 				init = timer.now();
 				for (auto packet : c->client.Receive()) {
@@ -53,10 +49,10 @@ void NetAPI::Socket::Server::HandleSingleClientPacket(unsigned short ID)
 					test = timer.now();
 					durr = test - init;
 					auto cast = std::chrono::duration_cast<std::chrono::milliseconds>(durr);
-					if (cast.count() > 250)
+					if (cast.count() > 500)
 					{
 						c->last_failed_ = true;
-						break;
+						c->client.Disconnect();
 					}
 					else
 					{
