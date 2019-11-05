@@ -130,7 +130,6 @@ class ServerPlayState : public ServerState {
 
 
   std::vector<unsigned int> score_;
-  bool overtime_ = false;
 
   std::vector<entt::entity> created_pick_ups_;
   std::vector<entt::entity> created_walls_;
