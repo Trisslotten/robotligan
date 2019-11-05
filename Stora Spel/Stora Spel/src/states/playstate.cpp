@@ -57,6 +57,7 @@ void PlayState::Startup() {
   gui_minimap_player_blue_ =
       glob::GetGUIItem("assets/GUI_elements/player_iconv2_blue.png");
   gui_minimap_ball_ = glob::GetGUIItem("assets/GUI_elements/Ball_Icon.png");
+  gui_crosshair_ = glob::GetGUIItem("assets/GUI_elements/Crosshair_V1.png");
 
   int num_abilities = (int)AbilityID::NUM_OF_ABILITY_IDS;
   ability_handles_.resize(num_abilities);
@@ -116,6 +117,7 @@ void PlayState::Init() {
 
   engine_->GetChat()->SetPosition(
       glm::vec2(30, glob::window::GetWindowDimensions().y - 30));
+
 
   auto& client = engine_->GetClient();
   NetAPI::Common::Packet to_send;
@@ -283,6 +285,11 @@ void PlayState::Update(float dt) {
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
   glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
   glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
+
+  // draw crosshair
+  glm::vec2 crosshair_pos = glob::window::GetWindowDimensions();
+  crosshair_pos /= 2;
+  glob::Submit(gui_crosshair_, crosshair_pos, 1.f);
 
   // draw Minimap
   glob::Submit(gui_minimap_,
@@ -1062,8 +1069,7 @@ void PlayState::CreateArenaEntity() {
 }
 
 void AddLightToBall(entt::registry& registry, entt::entity& ball) {
-  registry.assign<LightComponent>(ball, glm::vec3(0.f, 1.f, 0.f),
-                                            20.f, 0.f);
+  registry.assign<LightComponent>(ball, glm::vec3(0.f, 1.f, 0.f), 20.f, 0.f);
 }
 
 void PlayState::CreateBallEntity() {
@@ -1090,7 +1096,6 @@ void PlayState::CreateBallEntity() {
   registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
   registry_gameplay_.assign<physics::Sphere>(ball, glm::vec3(0.0f), 1.0f);
   AddLightToBall(registry_gameplay_, ball);
-  
 
   registry_gameplay_.assign<TrailComponent>(ball);
 }

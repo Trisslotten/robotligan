@@ -5,7 +5,6 @@ uniform float pxRange;
 uniform vec4 bgColor;
 uniform vec4 fgColor;
 
-
 in vec2 v_tex;
 
 out vec4 color;
@@ -21,6 +20,9 @@ void main() {
 	vec3 samplep = texture(msdf, vv_tex).rgb;
     float sigDist = median(samplep.r, samplep.g, samplep.b) - 0.5;
 	sigDist *= dot(msdfUnit, 0.5/fwidth(v_tex));
-    float opacity = clamp(sigDist + 0.5, 0.0, 1.0);
+    float opacity = clamp(sigDist + 0.45, 0.0, 1.0);
     color = mix(bgColor, fgColor, opacity);
+	if(color.a <= max(0.1*fgColor.a, 1./255.)) {
+		discard;
+	}
 }
