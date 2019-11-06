@@ -6,24 +6,35 @@
 #include <unordered_map>
 #include <vector>
 
+#include "shader.hpp"
+
 namespace glob {
-
-class Material {
- public:
-  bool HasNormalMap() { return normal_map_ != 0; }
-  void BindNormalMap(int slot);
-  void SetNormalMap(GLuint texture_id) { normal_map_ = texture_id; }
-
- private:
-  GLuint normal_map_ = 0;
-};
 
 namespace materials {
 enum Type {
   NORMAL,
 };
+}
 
+class Material {
+ public:
+  void AddTexture(materials::Type type, GLuint id, int slot, const std::string& uniform_name);
+  void Bind(ShaderProgram& shader);
+
+ private:
+  struct Texture {
+    GLuint id;
+    int slot;
+    std::string uniform_name;
+  };
+  std::unordered_map<materials::Type, Texture> textures_;
+};
+
+namespace materials {
+
+void Init();
 Material Get(std::unordered_map<Type, std::string> wanted_textures);
+
 };  // namespace materials
 
 }  // namespace glob

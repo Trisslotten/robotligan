@@ -1,4 +1,5 @@
 
-i num_materials 2
+i num_diffuse_textures 2
 
-w normal_map METAL_WEAVY
+w normal_map PAINTED_METAL
+f normal_map_scale 20.0

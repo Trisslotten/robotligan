@@ -7,6 +7,7 @@
 #include "lodepng.hpp"
 
 #include <unordered_map>
+#include <textureslots.hpp>
 
 namespace glob {
 
@@ -28,7 +29,6 @@ class Materials {
 
  private:
   Materials() {}
-  Materials(Materials const&);
 
   void LoadNormalMap(const std::string& word, const std::string& path);
 
@@ -39,6 +39,10 @@ class Materials {
 
 void Materials::Init() {
   LoadNormalMap("METAL_WEAVY", "Assets/Texture/normal_metal_weavy.png");
+  LoadNormalMap("POCKED_CONCRETE", "Assets/Texture/normal_pockedconcrete.png");
+  LoadNormalMap("BRUSHED_IRON", "Assets/Texture/normal_brushed_iron.png");
+  LoadNormalMap("SCRATCHED_METAL", "Assets/Texture/normal_scratched_metal.png");
+  LoadNormalMap("PAINTED_METAL", "Assets/Texture/normal_painted_metal.png");
 }
 
 Material Materials::GetMaterial(
@@ -48,7 +52,9 @@ Material Materials::GetMaterial(
     switch (type) {
       case materials::NORMAL:
         auto iter = normal_maps_.find(word);
-        if (iter != normal_maps_.end()) result.SetNormalMap(iter->second);
+        if (iter != normal_maps_.end()) { 
+          result.AddTexture(type, iter->second, TEXTURE_SLOT_NORMAL, "texture_normal");
+        }
         break;
     }
   }
@@ -92,14 +98,24 @@ void Materials::LoadNormalMap(const std::string& word,
   glGenerateMipmap(GL_TEXTURE_2D);
 }
 
-void Material::BindNormalMap(int slot) {
-  glActiveTexture(GL_TEXTURE0 + slot);
-  glBindTexture(GL_TEXTURE_2D, normal_map_);
-}
+void materials::Init() { Materials::getInstance().Init(); }
 
 Material glob::materials::Get(
     std::unordered_map<Type, std::string> wanted_textures) {
   return Materials::getInstance().GetMaterial(wanted_textures);
+}
+
+void Material::AddTexture(materials::Type type, GLuint id, int slot, const std::string& uniform_name) {
+  textures_[type] = {id, slot, uniform_name};
+}
+
+void Material::Bind(ShaderProgram& shader) {
+  for (auto& [type, texture] : textures_) {
+    glActiveTexture(GL_TEXTURE0 + texture.slot);
+    glBindTexture(GL_TEXTURE_2D, texture.id);
+    shader.uniform(texture.uniform_name, texture.slot);
+
+  }
 }
 
 }  // namespace glob

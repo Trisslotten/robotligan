@@ -15,6 +15,7 @@
 #include <sstream>
 #include <unordered_map>
 
+#include <textureslots.hpp>
 #include "2D/elements2D.hpp"
 #include "Font/Font2D.hpp"
 #include "Model/model.hpp"
@@ -56,8 +57,8 @@ GLuint quad_vbo, quad_vao;
 GLuint trail_vao, trail_vbo;
 
 GLuint black_texture;
+GLuint default_normal_texture;
 
-std::vector<Material> materials;
 PostProcess post_process;
 Blur blur;
 Shadows shadows;
@@ -116,6 +117,16 @@ std::vector<Text3DItem> text3D_to_render;
 std::vector<GUIItem> gui_items_to_render;
 std::vector<E2DItem> e2D_items_to_render;
 std::vector<TrailItem> trails_to_render;
+
+void SetDefaultMaterials(ShaderProgram &shader) {
+  glActiveTexture(GL_TEXTURE0 + TEXTURE_SLOT_EMISSIVE);
+  glBindTexture(GL_TEXTURE_2D, black_texture);
+  shader.uniform("texture_emissive", TEXTURE_SLOT_EMISSIVE);
+
+  glActiveTexture(GL_TEXTURE0 + TEXTURE_SLOT_NORMAL);
+  glBindTexture(GL_TEXTURE_2D, default_normal_texture);
+  shader.uniform("texture_normal", TEXTURE_SLOT_NORMAL);
+}
 
 void DrawFullscreenQuad() {
   glBindVertexArray(triangle_vao);
@@ -389,11 +400,18 @@ void Init() {
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE,
                &black_data);
 
-  materials.emplace_back();
-  materials.back().SetNormalMap("Assets/Texture/dirty_metal_weavy_normal.png");
+  glGenTextures(1, &default_normal_texture);
+  glBindTexture(GL_TEXTURE_2D, default_normal_texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  unsigned char default_normal_data[4] = {127, 127, 255, 0};
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+               &default_normal_data);
 
+  materials::Init();
   blur.Init();
-
   post_process.Init(blur);
   shadows.Init(blur);
 
@@ -1167,7 +1185,7 @@ void Render() {
     }
   };
   shadows.RenderToMaps(draw_function, anim_draw_function, blur);
-  shadows.BindMaps(5);
+  shadows.BindMaps(TEXTURE_SLOT_SHADOWS);
 
   for (auto &shader : mesh_render_group) {
     shader->use();
@@ -1191,25 +1209,16 @@ void Render() {
   post_process.BeforeDraw();
   {
     model_shader.use();
-    materials.back().BindNormalMap(4);
-    model_shader.uniform("texture_normal", 4);
-
     for (auto &render_item : normal_items) {
-      glActiveTexture(GL_TEXTURE0 + 1);
-      glBindTexture(GL_TEXTURE_2D, black_texture);
-      model_shader.uniform("texture_emissive", 1);
+      SetDefaultMaterials(model_shader);
       model_shader.uniform("model_transform", render_item.transform);
       render_item.model->Draw(model_shader);
     }
 
-    animated_model_shader.use();
-
-    materials.back().BindNormalMap(4);
-    animated_model_shader.uniform("texture_normal", 4);
-
     // render bone animated items
+    animated_model_shader.use();
     for (auto &BARI : bone_animated_items_to_render) {
-      animated_model_shader.uniform("material_index", BARI.material_index);
+      animated_model_shader.uniform("diffuse_index", BARI.material_index);
       animated_model_shader.uniform("model_transform", BARI.transform);
       int numBones = 0;
       for (auto &bone : BARI.bone_transforms) {
@@ -1217,11 +1226,7 @@ void Render() {
             "bone_transform[" + std::to_string(numBones) + "]", bone);
         numBones++;
       }
-      // animated_model_shader.uniform("NR_OF_BONES",
-      // (int)BARI.bone_transforms.size());
-      glActiveTexture(GL_TEXTURE0 + 1);
-      glBindTexture(GL_TEXTURE_2D, black_texture);
-      animated_model_shader.uniform("texture_emissive", 1);
+      SetDefaultMaterials(animated_model_shader);
       BARI.model->Draw(animated_model_shader);
     }
 
@@ -1232,9 +1237,7 @@ void Render() {
     model_shader.use();
     for (auto &[dist, render_items] : transparent_items) {
       for (auto &render_item : render_items) {
-        glActiveTexture(GL_TEXTURE0 + 1);
-        glBindTexture(GL_TEXTURE_2D, black_texture);
-        model_shader.uniform("texture_emissive", 1);
+        SetDefaultMaterials(model_shader);
         model_shader.uniform("model_transform", render_item.transform);
         render_item.model->Draw(model_shader);
       }

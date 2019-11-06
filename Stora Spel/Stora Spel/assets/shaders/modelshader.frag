@@ -14,7 +14,7 @@ uniform sampler2D texture_specular;
 uniform sampler2D texture_emissive;
 uniform sampler2D texture_normal;
 
-uniform float material_scale;
+uniform float normal_map_scale;
 uniform int num_diffuse_textures;
 uniform int diffuse_index;
 
@@ -39,7 +39,7 @@ vec3 calculateTangent(vec3 n) {
 }
 // https://medium.com/@bgolus/normal-mapping-for-a-triplanar-shader-10bf39dca05a
 vec3 triplanarNormal() {
-	float texture_scale = 5.0;
+	float texture_scale = normal_map_scale;
 	float sharpness = 2.0;
 
 	vec2 uv_x = local_pos.zy/texture_scale;

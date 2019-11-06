@@ -52,7 +52,6 @@ int main(unsigned argc, char** argv) {
       net_update_accum -= net_update_time;
     }
 
-    
     if (debug_timer.Elapsed() > 5.0) {
       double elapsed = debug_timer.Restart();
       std::cout << "DEBUG:    net update rate = " << num_net_updates / elapsed
@@ -61,7 +60,13 @@ int main(unsigned argc, char** argv) {
       num_net_updates = 0;
       num_render_updates = 0;
     }
-    
+
+    if (Input::IsKeyDown(GLFW_KEY_F6)) {
+      std::cout << "RAM usage: " << util::MemoryInfo::GetInstance().GetUsedRAM()
+                << " MB\n";
+      std::cout << "VRAM usage: "
+                << util::MemoryInfo::GetInstance().GetUsedVRAM() << " MB\n";
+    }
 
     engine.Render();
     glob::window::Update();

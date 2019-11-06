@@ -6,10 +6,12 @@
 #include <assimp/postprocess.h>
 #include <assimp/Importer.hpp>
 #include <glm/gtx/transform.hpp>
-#include "../shader.hpp"
+
 #include "glob/Animation.hpp"
 #include "glob/joint.hpp"
 #include "glob/mesh_data.hpp"
+#include "material/material.hpp"
+#include "shader.hpp"
 
 namespace glob {
 
@@ -29,7 +31,8 @@ class Model {
   std::vector<Mesh> mesh_;
   std::vector<Texture> LoadMaterielTextures(aiMaterial* material,
                                             aiTextureType type,
-                                            std::string type_name);
+                                            std::string type_name,
+                                            int tex_slot);
 
   std::string filepath_;
   std::string directory_;
@@ -50,6 +53,7 @@ class Model {
   int num_diffuse_textures_ = 1;
 
   Material material_;
+  float normal_map_scale_;
 
  public:
   Model();
@@ -72,8 +76,8 @@ class Model {
   glob::MeshData GetMeshData();
 
   bool IsEmissive() { return is_emissive_; }
-  bool IsTransparent() { return is_transparent_; }
   void SetTransparent(bool is_transparent) { is_transparent_ = is_transparent; }
+  bool IsTransparent() { return is_transparent_; }
 };
 
 }  // namespace glob

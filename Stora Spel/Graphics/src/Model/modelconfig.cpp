@@ -7,7 +7,7 @@ namespace {
 
 template <class T>
 std::optional<T> GetItem(const std::unordered_map<std::string, T>& items,
-                         const std::string key) {
+                         const std::string name) {
   auto iter = items.find(name);
   if (iter != items.end()) {
     return iter->second;
@@ -19,7 +19,16 @@ std::optional<T> GetItem(const std::unordered_map<std::string, T>& items,
 
 class Tokens {
  public:
-  Tokens(const std::vector<std::string>& tokens) { tokens_ = tokens; }
+  Tokens(const std::vector<std::string>& tokens) {
+    tokens_ = tokens;
+    /*
+    std::cout << "tokens: ";
+    for (int i = 0; i < tokens.size(); i++) {
+      std::cout << "'" << tokens[i] << "', ";
+    }
+    std::cout << "\n";
+    */
+  }
   std::string Consume() {
     std::string result;
     if (index < tokens_.size()) {
@@ -59,15 +68,21 @@ ModelConfig::ModelConfig(const std::string& config_path) {
     // Read up to the end of the line. Save as the current line
     std::getline(settings_file, line, '\n');
     for (int i = 0; i < line.size(); i++) {
-      char current = line[i];
+      unsigned char current = static_cast<unsigned char>(line[i]);
       if (std::isspace(current)) {
         if (curr_token.size() > 0) {
           tokens_vec.push_back(curr_token);
           curr_token.clear();
         }
+      } else if (current == '#') {
+        break;
       } else {
         curr_token += current;
       }
+    }
+    if (curr_token.size() > 0) {
+      tokens_vec.push_back(curr_token);
+      curr_token.clear();
     }
   }
   if (curr_token.size() > 0) {
@@ -89,9 +104,11 @@ ModelConfig::ModelConfig(const std::string& config_path) {
       ints_[key] = std::stoi(value);
     } else if (type == "w") {
       words_[key] = value;
+    } else if (type == "f") {
+      floats_[key] = std::stof(value);
     } else {
-      std::cout << "WARNING: Unknown type in model config: '" << config_path
-                << "'\n";
+      std::cout << "WARNING: Unknown type '" << type << "' in model config: '"
+                << config_path << "'\n";
     }
   }
 }
@@ -102,4 +119,8 @@ std::optional<int> ModelConfig::GetInt(const std::string& name) {
 
 std::optional<std::string> ModelConfig::GetWord(const std::string& name) {
   return GetItem(words_, name);
+}
+
+std::optional<float> ModelConfig::GetFloat(const std::string& name) {
+  return GetItem(floats_, name);
 }
