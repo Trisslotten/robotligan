@@ -4,7 +4,6 @@
 #include <vector>
 #include <string>
 #include <chrono>
-#include <mutex>
 #include <NetAPI/common.hpp>
 #include <NetAPI/packet.hpp>
 #include <NetAPI/socket/client.hpp>
@@ -23,7 +22,6 @@ struct EXPORT ClientData {
   std::vector<unsigned> ping;
   uint64_t ping_sum = 0;
   unsigned ping_id = 0;
-  bool last_failed_ = false;
 };
 }  // namespace Socket
 }  // namespace NetAPI

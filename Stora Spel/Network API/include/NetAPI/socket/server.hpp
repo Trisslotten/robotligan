@@ -11,8 +11,6 @@
 #include <NetAPI/socket/tcplistener.hpp>
 #include <shared/shared.hpp>
 #include <chrono>
-#include <thread>
-#include <atomic>
 namespace NetAPI {
 namespace Socket {
 class EXPORT Server {
@@ -28,15 +26,11 @@ class EXPORT Server {
   /// ClientData* operator[](short ID) { return client_data_.at(ID); }
   std::unordered_map<long, ClientData*>& GetClients() { return client_data_; }
   std::vector<ClientData*> GetNewlyConnected() { return newly_connected_; }
-  std::pair<std::thread, bool> threads[Common::kMaxPlayers];
   void ClearPackets(NetAPI::Socket::ClientData* data);
-  void Lock() { locked_.store(true); }
-  void Unlock() { locked_.store(false); }
-  bool IsLocked() { return locked_.load(); }
  private:
   void SendPing();
   void HandleClientPacket();
-  void HandleSingleClientPacket(unsigned short ID);
+  void Receive();
   void ListenForClients();
   void SendStoredData();
   std::unordered_map<std::string, long> ids_;
@@ -51,7 +45,6 @@ class EXPORT Server {
   bool new_frame = true;
   short connected_players_ = 0;
   long current_client_guid_ = 0;
-  std::atomic_bool locked_ = false;
 };
 
 }  // namespace Socket
