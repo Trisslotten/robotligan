@@ -150,18 +150,38 @@ void Engine::Update(float dt) {
     if (Input::IsKeyPressed(GLFW_KEY_L)) {
       new_team_ = TEAM_RED;
     }
+
+    // Replay stuff
+    if (Input::IsKeyPressed(GLFW_KEY_I)) {
+      if (!this->recording_) {
+        this->BeginRecording();
+      } else {
+        this->StopRecording();
+      }
+    }
+    if (Input::IsKeyPressed(GLFW_KEY_O)) {
+      this->SaveRecording();
+    }
+    if (Input::IsKeyPressed(GLFW_KEY_P)) {
+      this->BeginReplay();
+    }
+    // Replay stuff
+  }
+
+  // Check if we are in play state
+
+  if (this->current_state_->Type() == StateType::PLAY) {
+    // Once we are check if we are recording
+    // or if we are replaying
+    if (this->recording_) {
+      this->replay_machine_->RecordFrame(*(this->registry_current_));
+    } else if (this->replaying_) {
+      this->PlayReplay();
   }
 
   current_state_->Update(dt);
 
   UpdateSystems(dt);
-
-  // Once everything has been updated
-  // check if we are in PlayState and if
-  // we are recording
-  if (this->current_state_->Type() == StateType::PLAY && this->recording_) {
-    this->replay_machine_->RecordFrame(*(this->registry_current_));
-  }
 
   // check if state changed
   if (wanted_state_type_ != current_state_->Type()) {
@@ -716,12 +736,12 @@ void Engine::SaveRecording() {
 
   // NTS: Currently always selects the latest replay
   // as per the following code
-  this->replay_machine_->SelectReplay(this->replay_machine_->NumberOfStoredReplays() - 1);
-
+  this->replay_machine_->SelectReplay(
+      this->replay_machine_->NumberOfStoredReplays() - 1);
 }
 
-void Engine::PlaybackRecording() {
-  // Automatically stops recording when replay is played
+void Engine::BeginReplay() {
+  // Stop recording
   this->recording_ = false;
 
   // Swap to the registry of the replay machine
@@ -732,6 +752,13 @@ void Engine::PlaybackRecording() {
     this->registry_current_ = this->registry_replay_;
 
     this->replaying_ = true;
+  }
+}
+
+void Engine::PlayReplay() {
+  // If we aren't replaying, return
+  if (!this->replaying_) {
+    return;
   }
 
   // Send in registry to get the next frame from the replay machine

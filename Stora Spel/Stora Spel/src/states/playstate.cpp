@@ -356,9 +356,9 @@ void PlayState::UpdateNetwork() {
   packet << PacketBlockType::FRAME_ID;
 
   // TEMP: Start recording replay
-  bool temp = Input::IsKeyPressed(GLFW_KEY_P);
-  packet << temp;
-  packet << PacketBlockType::TEST_REPLAY_KEYS;
+  //bool temp = Input::IsKeyPressed(GLFW_KEY_P);
+  //packet << temp;
+  //packet << PacketBlockType::TEST_REPLAY_KEYS;
 }
 
 void PlayState::Cleanup() {

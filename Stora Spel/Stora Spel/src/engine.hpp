@@ -93,7 +93,8 @@ class Engine {
   //void DoRecording();
   void StopRecording();
   void SaveRecording();
-  void PlaybackRecording();
+  void BeginReplay();
+  void PlayReplay();
   // Replay Functions---
 
   NetAPI::Socket::Client client_;
