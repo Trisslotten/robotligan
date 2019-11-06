@@ -118,7 +118,6 @@ void PlayState::Init() {
   engine_->GetChat()->SetPosition(
       glm::vec2(30, glob::window::GetWindowDimensions().y - 30));
 
-
   auto& client = engine_->GetClient();
   NetAPI::Common::Packet to_send;
   bool rec = true;
@@ -365,9 +364,9 @@ void PlayState::Update(float dt) {
 
     glob::Submit(font_test_, pos, 175, "OVERTIME");
 
-	if (game_has_ended_) {
+    if (game_has_ended_) {
       overtime_has_started_ = false;
-	}
+    }
   }
 
   if (game_has_ended_) {
@@ -1404,11 +1403,12 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
     }
     case GameEvent::INVISIBILITY_CAST: {
       auto registry = engine_->GetCurrentRegistry();
-      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent>();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, ModelComponent>();
       for (auto entity : view_controller) {
         IDComponent& id_c = view_controller.get<IDComponent>(entity);
         PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
-        ModelComponent& m_c = view_controller.get< ModelComponent>(entity);
+        ModelComponent& m_c = view_controller.get<ModelComponent>(entity);
 
         if (id_c.id == e.invisibility_cast.player_id) {
           m_c.invisible = true;
@@ -1421,11 +1421,12 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
     }
     case GameEvent::INVISIBILITY_END: {
       auto registry = engine_->GetCurrentRegistry();
-      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent>();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, ModelComponent>();
       for (auto entity : view_controller) {
         IDComponent& id_c = view_controller.get<IDComponent>(entity);
         PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
-        ModelComponent& m_c = view_controller.get< ModelComponent>(entity);
+        ModelComponent& m_c = view_controller.get<ModelComponent>(entity);
 
         if (id_c.id == e.invisibility_end.player_id) {
           m_c.invisible = false;
@@ -1433,6 +1434,62 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       }
       if (e.invisibility_end.player_id == my_id_) {
         // TODO: Remove effect to let player know it's visible again
+      }
+      break;
+    }
+    case GameEvent::TELEPORT_CAST: {
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, TransformComponent>();
+      for (auto entity : view_controller) {
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+        PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
+        TransformComponent& t_c =
+            view_controller.get<TransformComponent>(entity);
+
+        if (id_c.id == e.teleport_cast.player_id) {
+          // Particles
+          entt::entity particle_entity = registry_gameplay_.create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+          glob::SetParticleSettings(handle, "teleport.txt");
+          glob::SetEmitPosition(handle, t_c.position);
+          in_handles.push_back(handle);
+          ParticleComponent& par_c =
+              registry_gameplay_.assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
+          break;
+        }
+      }
+      break;
+    }
+    case GameEvent::TELEPORT_IMPACT: {
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, TransformComponent>();
+      for (auto entity : view_controller) {
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+        PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
+        TransformComponent& t_c =
+            view_controller.get<TransformComponent>(entity);
+
+        if (id_c.id == e.teleport_cast.player_id) {
+          // Particles
+          entt::entity particle_entity = registry_gameplay_.create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+          glob::SetParticleSettings(handle, "teleport.txt");
+          glob::SetEmitPosition(handle, t_c.position);
+          in_handles.push_back(handle);
+          ParticleComponent& par_c =
+              registry_gameplay_.assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
+          break;
+        }
       }
       break;
     }
