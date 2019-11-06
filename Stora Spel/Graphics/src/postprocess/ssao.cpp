@@ -2,6 +2,7 @@
 #include <random>
 #include "glm/vector_relational.hpp"
 #include "glob/window.hpp"
+#include <iostream>
 
 float lerp(float a, float b, float f) { return a + f * (b - a); }
 
@@ -30,7 +31,7 @@ void Ssao::Finish(Blur& blur) {
   glBindTexture(GL_TEXTURE_2D, ssao_texture_);
   glGenerateMipmap(GL_TEXTURE_2D);
 
-  blurred_ssao_texture_ = blur.BlurTexture(blur_id_, 2, ssao_texture_, 0);
+  blurred_ssao_texture_ = blur.BlurTexture(blur_id_, 3, ssao_texture_, 0);
 }
 
 void Ssao::CreateKernelAndNoise() {
@@ -52,8 +53,8 @@ void Ssao::CreateKernelAndNoise() {
 
   // noise
   for (unsigned int i = 0; i < 16; i++) {
-    glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0,
-                    randomFloats(generator) * 2.0 - 1.0, 0.0f);
+    glm::vec4 noise(randomFloats(generator) * 2.0 - 1.0,
+                    randomFloats(generator) * 2.0 - 1.0, 0.0f, 0.0f);
     noise_.push_back(noise);
   }
 }
@@ -66,6 +67,9 @@ void Ssao::CreateFrameBuffers() {
 
   GLuint att[1] = {GL_COLOR_ATTACHMENT0};
   glDrawBuffers(1, att);
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    std::cout << "ERROR: ssao.cpp: framebuffer_ is not complete!"
+              << std::endl;
 }
 
 void Ssao::GenerateTextures() {
@@ -73,7 +77,7 @@ void Ssao::GenerateTextures() {
   // noise
   glGenTextures(1, &noise_texutre_);
   glBindTexture(GL_TEXTURE_2D, noise_texutre_);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, 4, 4, 0, GL_RGB, GL_FLOAT,
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 4, 4, 0, GL_RGBA, GL_UNSIGNED_BYTE,
                &noise_[0]);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -83,9 +87,13 @@ void Ssao::GenerateTextures() {
   // output ssao texture
   glGenTextures(1, &ssao_texture_);
   glBindTexture(GL_TEXTURE_2D, ssao_texture_);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, ws.x, ws.y, 0, GL_RGB, GL_FLOAT, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, ws.x, ws.y, 0, GL_RGBA,
+               GL_UNSIGNED_BYTE,
+               NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 }
 
 void Ssao::BindNoiseTexture(int slot) {

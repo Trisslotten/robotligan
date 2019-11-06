@@ -1350,7 +1350,7 @@ void Render() {
     }
   }
   post_process.AfterDraw(blur);
-
+  
   ssao.BindFrameBuffer();
   ssao_shader.use();
   post_process.BindDepthTex(0);
@@ -1359,8 +1359,11 @@ void Render() {
   ssao_shader.uniform("texture_normals", 1);
   ssao.BindNoiseTexture(2);
   ssao_shader.uniform("texture_noise", 2);
-  ssao_shader.uniformv("samples", (int)ssao.GetKernel().size() ,ssao.GetKernel().data());
+  post_process.BindPositionTex(3);
+  ssao_shader.uniform("texture_position", 3);
+  ssao_shader.uniformv("samples", (GLuint)ssao.GetKernel().size() ,ssao.GetKernel().data());
   ssao_shader.uniform("projection", cam_transform);
+  ssao_shader.uniform("inv_projection", inverse(cam_transform));
   ssao_shader.uniform("screen_dims", window::GetWindowDimensions());
 
   DrawFullscreenQuad();  // do ssao pass same way we do final color pass
