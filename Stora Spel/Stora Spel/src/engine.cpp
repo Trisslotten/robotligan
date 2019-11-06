@@ -169,7 +169,6 @@ void Engine::Update(float dt) {
   }
 
   // Check if we are in play state
-
   if (this->current_state_->Type() == StateType::PLAY) {
     // Once we are check if we are recording
     // or if we are replaying
@@ -177,8 +176,8 @@ void Engine::Update(float dt) {
       this->replay_machine_->RecordFrame(*(this->registry_current_));
     } else if (this->replaying_) {
       this->PlayReplay();
+    }
   }
-
   current_state_->Update(dt);
 
   UpdateSystems(dt);

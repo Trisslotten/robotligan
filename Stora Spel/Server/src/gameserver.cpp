@@ -28,8 +28,6 @@ GameServer::~GameServer() {}
 void GameServer::Init(double in_update_rate) {
   glob::SetModelUseGL(false);
 
- 
-
   server_.Setup(1337);
 
   lobby_state_.SetGameServer(this);
@@ -190,13 +188,15 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       break;
     }
 
-    //case PacketBlockType::TEST_REPLAY_KEYS: {
-    //  // If P is pressed, record 10 seconds
-    //  bool start_replay;
-    //  packet >> start_replay;
-    //  if (start_replay) play_state_.StartRecording(10);
-    //  break;
-    //}
+      // TEMP
+      // case PacketBlockType::TEST_REPLAY_KEYS: {
+      //  // If P is pressed, record 10 seconds
+      //  bool start_replay;
+      //  packet >> start_replay;
+      //  if (start_replay) play_state_.StartRecording(10);
+      //  break;
+      //}
+      // TEMP
 
     case PacketBlockType::MESSAGE: {
       size_t strsize = 0;
@@ -302,8 +302,7 @@ void GameServer::UpdateSystems(float dt) {
 
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);
-  if (!play_state_.IsResetting())
-    goal_system::Update(registry_);
+  if (!play_state_.IsResetting()) goal_system::Update(registry_);
 
   dispatcher.update<EventInfo>();
   // glob::LoadWireframeMesh(model_arena, mh.pos, mh.indices);
