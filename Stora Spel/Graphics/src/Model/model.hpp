@@ -47,7 +47,9 @@ class Model {
   bool is_emissive_ = false;
   bool is_transparent_ = false;
 
-  int num_materials_ = 1;
+  int num_diffuse_textures_ = 1;
+
+  Material material_;
 
  public:
   Model();
@@ -61,7 +63,7 @@ class Model {
 
   float MaxDistance(glm::mat4 transform, glm::vec3 point);
 
-  int GetNumMaterials() { return num_materials_; }
+  int GetNumDiffuseTextures() { return num_diffuse_textures_; }
 
   std::vector<Joint*> bones_;
   std::vector<Animation*> animations_;

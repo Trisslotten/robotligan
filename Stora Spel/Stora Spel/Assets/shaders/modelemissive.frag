@@ -41,6 +41,5 @@ void main()
 	color += dither();
 	out_color = vec4(color, alpha);
 
-	// TODO: maybe use alpha channel instead
-	//out_emission = vec4(emission_strength * surface_color.rgb, 1);
+	out_emission = vec4(emission_strength * surface_color.rgb, 1);
 }

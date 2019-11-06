@@ -204,6 +204,7 @@
     <ClInclude Include="src\postprocess\postprocess.hpp" />
     <ClInclude Include="src\renderitems.hpp" />
     <ClInclude Include="src\shadows\shadows.hpp" />
+    <ClInclude Include="src\textureslots.hpp" />
     <ClInclude Include="src\tinyxml2.hpp" />
     <ClInclude Include="src\shader.hpp" />
     <ClInclude Include="src\camera\camera.hpp" />

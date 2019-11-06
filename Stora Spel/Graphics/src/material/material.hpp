@@ -1,22 +1,30 @@
 #ifndef GLOB_MATERIAL_HPP_
 #define GLOB_MATERIAL_HPP_
 
-#include <string>
 #include <glad\glad.h>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 namespace glob {
 
 class Material {
  public:
-  void SetNormalMap(const std::string& path);
   bool HasNormalMap() { return normal_map_ != 0; }
   void BindNormalMap(int slot);
+  void SetNormalMap(GLuint texture_id) { normal_map_ = texture_id; }
 
  private:
-
- GLuint normal_map_ = 0;
-
+  GLuint normal_map_ = 0;
 };
+
+namespace materials {
+enum Type {
+  NORMAL,
+};
+
+Material Get(std::unordered_map<Type, std::string> wanted_textures);
+};  // namespace materials
 
 }  // namespace glob
 

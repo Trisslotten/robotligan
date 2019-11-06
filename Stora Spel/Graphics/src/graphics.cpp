@@ -25,9 +25,9 @@
 #include "particles/particle_system.hpp"
 #include "postprocess/blur.hpp"
 #include "postprocess/postprocess.hpp"
+#include "renderitems.hpp"
 #include "shader.hpp"
 #include "shadows/shadows.hpp"
-#include "renderitems.hpp"
 
 namespace glob {
 
@@ -36,7 +36,6 @@ bool kModelUseGL = true;
 namespace {
 
 ShaderProgram fullscreen_shader;
-ShaderProgram model_emission_shader;
 ShaderProgram model_shader;
 ShaderProgram particle_shader;
 // ShaderProgram compute_shader;
@@ -54,11 +53,11 @@ int num_trail_quads = 0;
 GLuint triangle_vbo, triangle_vao;
 GLuint cube_vbo, cube_vao;
 GLuint quad_vbo, quad_vao;
-
 GLuint trail_vao, trail_vbo;
 
-std::vector<Material> materials;
+GLuint black_texture;
 
+std::vector<Material> materials;
 PostProcess post_process;
 Blur blur;
 Shadows shadows;
@@ -264,20 +263,13 @@ void Init() {
   model_shader.compile();
 
   animated_model_shader.add("animatedmodelshader.vert");
-  animated_model_shader.add("modelemissive.frag");
+  animated_model_shader.add("modelshader.frag");
   animated_model_shader.add("shading.vert");
   animated_model_shader.add("shading.frag");
   animated_model_shader.compile();
 
-  model_emission_shader.add("modelshader.vert");
-  model_emission_shader.add("modelemissive.frag");
-  model_emission_shader.add("shading.vert");
-  model_emission_shader.add("shading.frag");
-  model_emission_shader.compile();
-
   mesh_render_group.push_back(&animated_model_shader);
   mesh_render_group.push_back(&model_shader);
-  mesh_render_group.push_back(&model_emission_shader);
 
   wireframe_shader.add("modelshader.vert");
   wireframe_shader.add("shading.vert");
@@ -387,8 +379,18 @@ void Init() {
                         (GLvoid *)0);
   glBindVertexArray(0);
 
+  glGenTextures(1, &black_texture);
+  glBindTexture(GL_TEXTURE_2D, black_texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  unsigned char black_data[4] = {0, 0, 0, 0};
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+               &black_data);
+
   materials.emplace_back();
-  materials.back().SetNormalMap("Assets/Texture/normal_test.png");
+  materials.back().SetNormalMap("Assets/Texture/dirty_metal_weavy_normal.png");
 
   blur.Init();
 
@@ -1031,7 +1033,6 @@ void SetModelUseGL(bool use_gl) { kModelUseGL = use_gl; }
 
 void ReloadShaders() {
   fullscreen_shader.reload();
-  model_emission_shader.reload();
   model_shader.reload();
   particle_shader.reload();
   animated_model_shader.reload();
@@ -1135,14 +1136,11 @@ void Render() {
 
   std::vector<RenderItem> normal_items;
   std::map<float, std::vector<RenderItem>> transparent_items;
-  std::vector<RenderItem> emissive_items;
   for (auto &render_item : items_to_render) {
     if (render_item.model->IsTransparent()) {
       float max_dist = render_item.model->MaxDistance(render_item.transform,
                                                       camera.GetPosition());
       transparent_items[-max_dist].push_back(render_item);
-    } else if (render_item.model->IsEmissive()) {
-      emissive_items.push_back(render_item);
     } else {
       normal_items.push_back(render_item);
     }
@@ -1195,17 +1193,13 @@ void Render() {
     model_shader.use();
     materials.back().BindNormalMap(4);
     model_shader.uniform("texture_normal", 4);
+
     for (auto &render_item : normal_items) {
+      glActiveTexture(GL_TEXTURE0 + 1);
+      glBindTexture(GL_TEXTURE_2D, black_texture);
+      model_shader.uniform("texture_emissive", 1);
       model_shader.uniform("model_transform", render_item.transform);
       render_item.model->Draw(model_shader);
-    }
-
-    model_emission_shader.use();
-    for (auto &render_item : emissive_items) {
-      model_emission_shader.uniform("material_index",
-                                    render_item.material_index);
-      model_emission_shader.uniform("model_transform", render_item.transform);
-      render_item.model->Draw(model_emission_shader);
     }
 
     animated_model_shader.use();
@@ -1225,6 +1219,9 @@ void Render() {
       }
       // animated_model_shader.uniform("NR_OF_BONES",
       // (int)BARI.bone_transforms.size());
+      glActiveTexture(GL_TEXTURE0 + 1);
+      glBindTexture(GL_TEXTURE_2D, black_texture);
+      animated_model_shader.uniform("texture_emissive", 1);
       BARI.model->Draw(animated_model_shader);
     }
 
@@ -1232,11 +1229,14 @@ void Render() {
     // maybe sort internally in modell and then and externally
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    model_emission_shader.use();
+    model_shader.use();
     for (auto &[dist, render_items] : transparent_items) {
       for (auto &render_item : render_items) {
-        model_emission_shader.uniform("model_transform", render_item.transform);
-        render_item.model->Draw(model_emission_shader);
+        glActiveTexture(GL_TEXTURE0 + 1);
+        glBindTexture(GL_TEXTURE_2D, black_texture);
+        model_shader.uniform("texture_emissive", 1);
+        model_shader.uniform("model_transform", render_item.transform);
+        render_item.model->Draw(model_shader);
       }
     }
     glDisable(GL_BLEND);

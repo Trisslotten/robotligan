@@ -7,6 +7,7 @@
 #include <glm/ext.hpp>
 #include <lodepng.hpp>
 #include "../usegl.hpp"
+#include "material/material.hpp"
 
 namespace glob {
 
@@ -70,17 +71,25 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   std::string config_path = filepath_.substr(0, filepath_.find_last_of('.'));
   config_path += ".mcfg";
   ModelConfig config{config_path};
-  if(config.isLoaded()) {
-    auto num_mats = config.GetInt("num_materials");
-    if(num_mats) {
-      num_materials_ = *num_mats;
+  if (config.isLoaded()) {
+    auto num_diff = config.GetInt("num_diffuse_textures");
+    if (num_diff) {
+      num_diffuse_textures_ = *num_diff;
     }
+
+    std::unordered_map<materials::Type, std::string> wanted_textures;
+    auto normal_map = config.GetWord("normal_map");
+    if (normal_map) {
+      wanted_textures[materials::NORMAL] = *normal_map;
+    }
+    // get more texture-words here
+
+    material_ = materials::Get(wanted_textures);
   }
 
   // std::cout << "glob::kModelUseGL: " << glob::kModelUseGL << "\n";
   if (glob::kModelUseGL) {
     // Process materials
-
     if (mesh->mMaterialIndex >= 0) {
       aiMaterial* temp_material = scene->mMaterials[mesh->mMaterialIndex];
       std::vector<Texture> diffuse_maps =
@@ -404,7 +413,11 @@ Model::~Model() {
 void Model::LoadFromFile(const std::string& path) { LoadModel(path); }
 
 void Model::Draw(ShaderProgram& shader) {
-  shader.uniform("num_materials", num_materials_);
+  if(material_.HasNormalMap()) {
+    material_.BindNormalMap(TEXTURE_SLOT_NORMAL);
+  }
+  
+  shader.uniform("num_diffuse_textures", num_diffuse_textures_);
   for (unsigned int i = 0; i < mesh_.size(); i++) {
     mesh_[i].Draw(shader);
   }

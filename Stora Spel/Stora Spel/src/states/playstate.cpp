@@ -1002,9 +1002,9 @@ void PlayState::CreatePlayerEntities() {
     model_c.handles.push_back(player_model);
     model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
     if (engine_->GetPlayerTeam(entity_id) == TEAM_BLUE) {
-      model_c.material_index = 1;
+      model_c.diffuse_index = 1;
     } else {
-      model_c.material_index = 0;
+      model_c.diffuse_index = 0;
     }
 
     registry_gameplay_.assign<AnimationComponent>(
@@ -1155,7 +1155,6 @@ void PlayState::CreateInGameMenu() {
 }
 
 void PlayState::TestCreateLights() {
-  /*
   // Create lights
   blue_goal_light_ = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(
@@ -1176,12 +1175,6 @@ void PlayState::TestCreateLights() {
                                             90.f, 0.1f);
   registry_gameplay_.assign<TransformComponent>(
       light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
-  */
-
-  auto light = registry_gameplay_.create();
-  registry_gameplay_.assign<LightComponent>(light, glm::vec3(0.9f), 100.f, 0.1f);
-  registry_gameplay_.assign<TransformComponent>(
-      light, glm::vec3(0, -3.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
 }
 
 void PlayState::CreateWall(EntityID id, glm::vec3 position,

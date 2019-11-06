@@ -3,6 +3,20 @@
 #include <fstream>
 #include <iostream>
 
+namespace {
+
+template <class T>
+std::optional<T> GetItem(const std::unordered_map<std::string, T>& items,
+                         const std::string key) {
+  auto iter = items.find(name);
+  if (iter != items.end()) {
+    return iter->second;
+  }
+  return {};
+}
+
+}  // namespace
+
 class Tokens {
  public:
   Tokens(const std::vector<std::string>& tokens) { tokens_ = tokens; }
@@ -14,7 +28,6 @@ class Tokens {
     index++;
     return result;
   }
-
   bool Empty() { return index >= tokens_.size(); }
 
  private:
@@ -74,6 +87,8 @@ ModelConfig::ModelConfig(const std::string& config_path) {
 
     if (type == "i") {
       ints_[key] = std::stoi(value);
+    } else if (type == "w") {
+      words_[key] = value;
     } else {
       std::cout << "WARNING: Unknown type in model config: '" << config_path
                 << "'\n";
@@ -82,9 +97,9 @@ ModelConfig::ModelConfig(const std::string& config_path) {
 }
 
 std::optional<int> ModelConfig::GetInt(const std::string& name) {
-  auto iter = ints_.find(name);
-  if (iter != ints_.end()) {
-    return iter->second;
-  }
-  return {};
+  return GetItem(ints_, name);
+}
+
+std::optional<std::string> ModelConfig::GetWord(const std::string& name) {
+  return GetItem(words_, name);
 }
