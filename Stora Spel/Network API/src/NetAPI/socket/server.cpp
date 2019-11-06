@@ -4,7 +4,9 @@
 using namespace std::chrono_literals;
 void NetAPI::Socket::Server::ClearPackets(NetAPI::Socket::ClientData* data)
 {
+	Lock();
 	data->packets.clear();
+	Unlock();
 }
 void NetAPI::Socket::Server::SendPing() {
   NetAPI::Common::Packet to_send;
@@ -19,10 +21,6 @@ void NetAPI::Socket::Server::HandleClientPacket()
 }
 void NetAPI::Socket::Server::HandleSingleClientPacket(unsigned short ID)
 {
-	std::chrono::high_resolution_clock timer;
-	std::chrono::duration<float> durr;
-	std::chrono::time_point<std::chrono::high_resolution_clock> init;
-	std::chrono::time_point<std::chrono::high_resolution_clock> test;
 	auto c = this->client_data_[ID];
 	while (threads[ID].second)
 	{
@@ -40,23 +38,10 @@ void NetAPI::Socket::Server::HandleSingleClientPacket(unsigned short ID)
 			else if ((c->client.IsConnected()))
 			{
 				int num_packets = 0;
-				init = timer.now();
 				for (auto packet : c->client.Receive()) {
 					num_packets++;
 					if (!packet.IsEmpty()) {
 						c->packets.push_back(packet);
-					}
-					test = timer.now();
-					durr = test - init;
-					auto cast = std::chrono::duration_cast<std::chrono::milliseconds>(durr);
-					if (cast.count() > 500)
-					{
-						c->last_failed_ = true;
-						c->client.Disconnect();
-					}
-					else
-					{
-						c->last_failed_ = false;
 					}
 				}
 			}
@@ -177,6 +162,7 @@ void NetAPI::Socket::Server::SendStoredData()
 unsigned short getHashedID(char* addr, unsigned short port) {
   unsigned short retval = 0;
   std::string s(addr);
+
   for (auto c : s) {
     retval += (unsigned int)c;
   }

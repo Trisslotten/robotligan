@@ -44,6 +44,7 @@ class EXPORT TcpClient {
   int last_buff_len_ = -1;
   timeval timeout_ = {};
   fd_set read_set_ = {};
+  fd_set write_fd = {};
   bool blocking_ = false;
   int error_ = 0;
   bool connected_ = false;
