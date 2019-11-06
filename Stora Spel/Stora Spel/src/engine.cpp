@@ -24,7 +24,14 @@
 
 Engine::Engine() {}
 
-Engine::~Engine() {}
+Engine::~Engine() {
+  if (this->replay_machine_ != nullptr) {
+    delete this->replay_machine_;
+  }
+  if (this->registry_replay_ != nullptr) {
+    delete this->registry_replay_;
+  }
+}
 
 void Engine::Init() {
   glob::Init();
@@ -86,6 +93,13 @@ void Engine::Init() {
   wanted_state_type_ = StateType::MAIN_MENU;
 
   UpdateSettingsValues();
+
+  // Initiate the Replay Machine
+  float length_sec = GlobalSettings::Access()->ValueOf("REPLAY_LENGTH_SECONDS");
+  float approximate_tickrate = 0.033;  // TODO: Replace with better
+                                       // approximation
+  this->replay_machine_ =
+      new ClientReplayMachine(length_sec, approximate_tickrate);
 }
 
 void Engine::Update(float dt) {
@@ -141,6 +155,13 @@ void Engine::Update(float dt) {
   current_state_->Update(dt);
 
   UpdateSystems(dt);
+
+  // Once everything has been updated
+  // check if we are in PlayState and if
+  // we are recording
+  if (this->current_state_->Type() == StateType::PLAY && this->recording_) {
+    this->replay_machine_->RecordFrame(*(this->registry_current_));
+  }
 
   // check if state changed
   if (wanted_state_type_ != current_state_->Type()) {
@@ -674,3 +695,58 @@ void Engine::DrawScoreboard() {
 int Engine::GetGameplayTimer() const { return gameplay_timer_sec_; }
 
 int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }
+
+// Replay Functions ---
+void Engine::BeginRecording() {
+  // If we are currently not replaying,
+  // start recording
+  if (!this->replaying_) {
+    this->recording_ = true;
+  }
+}
+
+void Engine::StopRecording() {
+  // Stop recordng
+  this->recording_ = false;
+}
+
+void Engine::SaveRecording() {
+  // Tell the ReplayMachine to save what currently lies in its buffer
+  this->replay_machine_->StoreReplay();
+
+  // NTS: Currently always selects the latest replay
+  // as per the following code
+  this->replay_machine_->SelectReplay(this->replay_machine_->NumberOfStoredReplays() - 1);
+
+}
+
+void Engine::PlaybackRecording() {
+  // Automatically stops recording when replay is played
+  this->recording_ = false;
+
+  // Swap to the registry of the replay machine
+  // if we are not already replaying
+  if (!this->replaying_) {
+    this->registry_on_hold_ = this->registry_current_;
+    this->registry_replay_ = new entt::registry;
+    this->registry_current_ = this->registry_replay_;
+
+    this->replaying_ = true;
+  }
+
+  // Send in registry to get the next frame from the replay machine
+  if (this->replay_machine_->LoadFrame(*(this->registry_current_))) {
+    // If the recording is not playing
+    //	- Either it has ended
+    //	- Or it doesn't exist
+    // Swap back registries
+    this->registry_current_ = this->registry_on_hold_;
+    delete this->registry_replay_;
+    this->registry_replay_ = nullptr;
+    this->registry_on_hold_ = nullptr;
+
+    this->replaying_ = false;
+  }
+}
+
+// Replay Functions ---

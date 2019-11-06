@@ -17,6 +17,10 @@ ClientReplayMachine::ClientReplayMachine(unsigned int in_replay_length_sec,
 
   // ---
   this->selected_replay_index_ = 0;
+
+  // Reset and pause the timer
+  this->replay_timer_.Restart();
+  this->replay_timer_.Pause();
 }
 
 ClientReplayMachine::~ClientReplayMachine() {
@@ -68,20 +72,37 @@ bool ClientReplayMachine::SelectReplay(unsigned int in_index) {
 
   // Set its read to the start
   this->stored_replays_.at(this->selected_replay_index_)->SetReadFrame(0);
+  
+  // Reset and pause the timer
+  this->replay_timer_.Restart();
+  this->replay_timer_.Pause();
+
+  return true;
 }
 
 bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
-  // Returns true if frame read into registry
+  // Returns true when replay is done
 
-  // Return false if there is nothing in the stored_replays_ vector
+  // Return true if there is nothing in the stored_replays_ vector
   if (this->stored_replays_.empty()) {
-    return false;
+    return true;
+  }
+
+  //If the timer has yet to be started, start it
+  if (this->replay_timer_.Elapsed() == 0) {
+    this->replay_timer_.Resume();
+  }
+
+  //If the timer shows we have run out of time, return
+  if (this->replay_timer_.Elapsed() >= (double)this->replay_length_sec_) {
+    this->replay_timer_.Pause();
+    return true;
   }
 
   // Otherwise read a frame into the registry
+  // NTS: GeometricReplay::LoadFrame() currently always returns true
   bool load_result = this->stored_replays_.at(this->selected_replay_index_)
                          ->LoadFrame(in_registry);
 
-  // NTS: GeometricReplay::LoadFrame() currently always returns true
-  return load_result;
+  return false;
 }

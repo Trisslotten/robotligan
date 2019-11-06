@@ -10,6 +10,7 @@
 #include <util/global_settings.hpp>
 #include <vector>
 #include "Chat.hpp"
+#include "client replay machine/client_replay_machine.hpp"
 #include "ecs/systems/animation_system.hpp"
 #include "ecs/systems/sound_system.hpp"
 #include "shared/shared.hpp"
@@ -21,7 +22,7 @@ struct PlayerStatInfo {
   int assists = 0;
   int saves = 0;
   unsigned int team = TEAM_RED;
-  EntityID enttity_id  = 0;
+  EntityID enttity_id = 0;
 };
 
 class Engine {
@@ -69,8 +70,8 @@ class Engine {
     for (auto p_score : player_scores_) {
       if (p_score.second.enttity_id == id) {
         return p_score.second.team;
-	  }
-	}
+      }
+    }
     return TEAM_RED;
   }
 
@@ -87,6 +88,14 @@ class Engine {
   void UpdateSystems(float dt);
   void HandlePacketBlock(NetAPI::Common::Packet& packet);
 
+  // Replay Functions---
+  void BeginRecording();
+  //void DoRecording();
+  void StopRecording();
+  void SaveRecording();
+  void PlaybackRecording();
+  // Replay Functions---
+
   NetAPI::Socket::Client client_;
   NetAPI::Common::Packet packet_;
 
@@ -98,6 +107,8 @@ class Engine {
   PlayState play_state_;
   ConnectMenuState connect_menu_state_;
   SettingsState settings_state_;
+
+  // Registry
   entt::registry* registry_current_;
 
   bool should_send_input_ = false;
@@ -139,9 +150,17 @@ class Engine {
   StateType previous_state_;
 
   float mouse_sensitivity_ = 1.0f;
- 
+
   std::list<NetAPI::Common::Packet> packet_test;
   std::list<float> time_test;
+
+  // Replay Variables ---
+  bool recording_ = false;
+  bool replaying_ = false;
+  entt::registry* registry_on_hold_ = nullptr;
+  entt::registry* registry_replay_ = nullptr;
+  ClientReplayMachine* replay_machine_ = nullptr;
+  // Replay Variables ---
 };
 
 #endif  // ENGINE_HPP_
