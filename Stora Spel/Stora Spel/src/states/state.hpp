@@ -147,6 +147,7 @@ class ConnectMenuState : public State {
   void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
+  void CreateBackground();
   StateType Type() { return StateType::CONNECT_MENU; }
 
  private:
@@ -166,7 +167,9 @@ class ConnectMenuState : public State {
   };
   int frames_ = 0;
   bool connection_success_ = true;
-  std::string last_msg_ = "Failed to connect: Timeout";
+  std::string last_msg_ = "Status: Failed to connect, Timeout";
+  glob::GUIHandle bg_ = 0;
+  glm::vec4 color_ = glm::vec4(1.0, 1.0, 1.0, 1.0);
   std::string ip_ = "localhost";
   std::string port_ = "1337";
   glob::Font2DHandle font_test_ = 0;
