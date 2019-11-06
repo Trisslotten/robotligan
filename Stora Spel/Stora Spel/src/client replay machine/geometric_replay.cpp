@@ -3,13 +3,13 @@
 #include <map>
 
 #include <ecs/components/ball_component.hpp>
-#include <ecs/components/player_component.hpp>
 #include <ecs/components/model_component.hpp>
-#include <shared/transform_component.hpp>
-#include <util/global_settings.hpp>
+#include <ecs/components/player_component.hpp>
 #include <glob/graphics.hpp>
+#include <shared/transform_component.hpp>
 #include <util/asset_paths.hpp>
-    // Private---------------------------------------------------------------------
+#include <util/global_settings.hpp>
+// Private---------------------------------------------------------------------
 
 ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
                                                  entt::registry& in_registry) {
@@ -48,24 +48,20 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
 
   ReplayObjectType object_type = this->IdentifyEntity(in_entity, in_registry);
 
-  switch (object_type) {
-    case REPLAY_PLAYER:
-      TransformComponent& transform_c =
-          in_registry.get<TransformComponent>(in_entity);
-      PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
+  if (object_type == REPLAY_PLAYER) {
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
+    PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
 
-      ret_ptr = new PlayerFrame(transform_c, player_c);
-      break;
-    case REPLAY_BALL:
-      TransformComponent& transform_c =
-          in_registry.get<TransformComponent>(in_entity);
+    ret_ptr = new PlayerFrame(transform_c, player_c);
+  } else if (object_type == REPLAY_BALL) {
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
 
-      ret_ptr = new BallFrame(transform_c);
-      break;
-    default:
-      GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
-                                           "Unidentified entity");
-      break;
+    ret_ptr = new BallFrame(transform_c);
+  } else {
+    GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
+                                         "Unidentified entity");
   }
 
   return ret_ptr;
@@ -135,36 +131,26 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
                                                ReplayObjectType in_type,
                                                entt::entity& in_entity,
                                                entt::registry& in_registry) {
-  switch (in_type) {
-    case REPLAY_PLAYER:
-      // Cast
-      PlayerFrame* pf_c_ptr = dynamic_cast<PlayerFrame*>(in_df_ptr);
-      // Get
-      TransformComponent& transform_c =
-          in_registry.get<TransformComponent>(in_entity);
-      PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
-      // Transfer
-      pf_c_ptr->WriteBack(transform_c, player_c);
-      //
-      // WIP: Handle model component
-      //
-      break;
-    case REPLAY_BALL:
-      // Cast
-      BallFrame* bf_c_ptr = dynamic_cast<BallFrame*>(in_df_ptr);
-      // Get
-      TransformComponent& transform_c =
-          in_registry.get<TransformComponent>(in_entity);
-      // Transfer
-      bf_c_ptr->WriteBack(transform_c);
-      //
-      // WIP: Handle model component
-      //
-      break;
-    default:
-      GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
-                                           "Unknown type identifier");
-      break;
+  if (in_type == REPLAY_PLAYER) {
+    // Cast
+    PlayerFrame* pf_c_ptr = dynamic_cast<PlayerFrame*>(in_df_ptr);
+    // Get
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
+    PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
+    // Transfer
+    pf_c_ptr->WriteBack(transform_c, player_c);
+  } else if (in_type == REPLAY_BALL) {
+    // Cast
+    BallFrame* bf_c_ptr = dynamic_cast<BallFrame*>(in_df_ptr);
+    // Get
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
+    // Transfer
+    bf_c_ptr->WriteBack(transform_c);
+  } else {
+    GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
+                                         "Unknown type identifier");
   }
 }
 
@@ -184,47 +170,40 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
   // Switch-case over object types
   // In each:
   //	- Read data and assign components for that entity type
-  switch (object_type) {
-    case REPLAY_PLAYER:
-      PlayerFrame* pf_ptr = dynamic_cast<PlayerFrame*>(df_ptr);
-      in_registry.assign<IDComponent>(
-          entity, this->channels_.at(in_channel_index).object_id);
+  if (object_type == REPLAY_PLAYER) {
+    PlayerFrame* pf_ptr = dynamic_cast<PlayerFrame*>(df_ptr);
+    in_registry.assign<IDComponent>(
+        entity, this->channels_.at(in_channel_index).object_id);
 
-	  //
-      TransformComponent& transform_c =
-          in_registry.assign<TransformComponent>(entity);
-      PlayerComponent& player_c=
-          in_registry.assign<PlayerComponent>(entity);
-      pf_ptr->WriteBack(transform_c, player_c);
+    //
+    TransformComponent& transform_c =
+        in_registry.assign<TransformComponent>(entity);
+    PlayerComponent& player_c = in_registry.assign<PlayerComponent>(entity);
+    pf_ptr->WriteBack(transform_c, player_c);
 
-      // Create and add ModelHandle
-      glob::ModelHandle mh_mech = glob::GetModel(kModelPathMech);
-      ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
-      model_c.handles.push_back(mh_mech);
+    // Create and add ModelHandle
+    glob::ModelHandle mh_mech = glob::GetModel(kModelPathMech);
+    ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    model_c.handles.push_back(mh_mech);
+  } else if (object_type = REPLAY_BALL) {
+    BallFrame* bf_ptr = dynamic_cast<BallFrame*>(df_ptr);
+    in_registry.assign<IDComponent>(
+        entity, this->channels_.at(in_channel_index).object_id);
 
-      break;
-    case REPLAY_BALL:
-      BallFrame* bf_ptr = dynamic_cast<BallFrame*>(df_ptr);
-      in_registry.assign<IDComponent>(
-          entity, this->channels_.at(in_channel_index).object_id);
+    //
+    TransformComponent& transform_c =
+        in_registry.assign<TransformComponent>(entity);
+    bf_ptr->WriteBack(transform_c);
 
-      //
-      TransformComponent& transform_c =
-          in_registry.assign<TransformComponent>(entity);
-      bf_ptr->WriteBack(transform_c);
-
-      // Create and add ModelHandle
-      glob::ModelHandle mh_ball_proj = glob::GetModel(kModelPathBallProjectors);
-      glob::ModelHandle mh_ball_sphe = glob::GetModel(kModelPathBallSphere);
-      ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
-      model_c.handles.push_back(mh_ball_proj);
-      model_c.handles.push_back(mh_ball_sphe);
-
-      break;
-    default:
-      GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
-                                           "Unknown type identifier");
-      break;
+    // Create and add ModelHandle
+    glob::ModelHandle mh_ball_proj = glob::GetModel(kModelPathBallProjectors);
+    glob::ModelHandle mh_ball_sphe = glob::GetModel(kModelPathBallSphere);
+    ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    model_c.handles.push_back(mh_ball_proj);
+    model_c.handles.push_back(mh_ball_sphe);
+  } else {
+    GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
+                                         "Unknown type identifier");
   }
 }
 
@@ -263,7 +242,7 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
 
     // Check if entity with that id has a channel
     bool id_unfound = true;
-    for (unsigned int i = 0; i < this->channels_.size && id_unfound; i++) {
+    for (unsigned int i = 0; i < this->channels_.size() && id_unfound; i++) {
       if (id_c.id == this->channels_.at(i).object_id) {
         id_unfound = false;
         // If it does we check if a new interpolation point should be added
@@ -272,23 +251,18 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
         ReplayObjectType temp_object_type =
             this->IdentifyEntity(entity, in_registry);
 
-        switch (temp_object_type) {
-          case REPLAY_PLAYER:
-            TransformComponent& transform_c =
-                in_registry.get<TransformComponent>(entity);
-            PlayerComponent& player_c =
-                in_registry.get<PlayerComponent>(entity);
-            temp_df = new PlayerFrame(transform_c, player_c);
-            break;
-          case REPLAY_BALL:
-            TransformComponent& transform_c =
-                in_registry.get<TransformComponent>(entity);
-            temp_df = new BallFrame(transform_c);
-            break;
-          default:
-            GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
-                                                 "Unknown FrameType");
-            break;
+        if (temp_object_type == REPLAY_PLAYER) {
+          TransformComponent& transform_c =
+              in_registry.get<TransformComponent>(entity);
+          PlayerComponent& player_c = in_registry.get<PlayerComponent>(entity);
+          temp_df = new PlayerFrame(transform_c, player_c);
+        } else if (temp_object_type == REPLAY_BALL) {
+          TransformComponent& transform_c =
+              in_registry.get<TransformComponent>(entity);
+          temp_df = new BallFrame(transform_c);
+        } else {
+          GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
+                                               "Unknown FrameType");
         }
 
         // Compare last entry to what would be the current frame's
@@ -341,7 +315,7 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
       if (age > this->threshhold_age_) {                         //(2.)
         if (this->channels_.at(i).entries.at(1).ending_entry) {  //(3.)
           this->channels_.erase(this->channels_.begin() + i,
-                                this->channels_.begin + i);
+                                this->channels_.begin() + i);
           i--;
         } else {
           this->channels_.at(i).entries.erase(
