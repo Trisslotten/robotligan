@@ -498,7 +498,7 @@ void PlayState::UpdateGameplayTimer() {
 void PlayState::DrawNameOverPlayer() {
   auto player_view =
       registry_gameplay_
-          .view<PlayerComponent, TransformComponent, IDComponent>();
+          .view<PlayerComponent, TransformComponent, ModelComponent, IDComponent>();
 
   auto& my_transform = registry_gameplay_.get<TransformComponent>(my_entity_);
   for (auto entity : player_view) {
@@ -508,48 +508,53 @@ void PlayState::DrawNameOverPlayer() {
 
     auto& id_c = player_view.get<IDComponent>(entity);
     auto& transform = player_view.get<TransformComponent>(entity);
+    auto& model = player_view.get<ModelComponent>(entity);
 
-    for (auto& [id, name] : engine_->player_names_) {
-      EntityID e_id = ClientIDToEntityID(id);
-      if (e_id == id_c.id) {
-        glm::vec3 look = glm::vec3(transform.position - my_transform.position);
-        float distance = glm::length(look);
-        glm::vec3 up = glm::vec3(0.f, 1.f, 0.f);
-        look.y = 0;
-        look = glm::normalize(look);
+    if (!model.invisible) {
+      for (auto& [id, name] : engine_->player_names_) {
+        EntityID e_id = ClientIDToEntityID(id);
+        if (e_id == id_c.id) {
+          glm::vec3 look =
+              glm::vec3(transform.position - my_transform.position);
+          float distance = glm::length(look);
+          glm::vec3 up = glm::vec3(0.f, 1.f, 0.f);
+          look.y = 0;
+          look = glm::normalize(look);
 
-        glm::vec3 right = glm::cross(look, up);
-        glm::mat4 matrix(1.0f);
-        matrix[0] = glm::vec4(right, 0.f);
-        matrix[1] = glm::vec4(up, 0.f);
-        matrix[2] = glm::vec4(look, 0.f);
+          glm::vec3 right = glm::cross(look, up);
+          glm::mat4 matrix(1.0f);
+          matrix[0] = glm::vec4(right, 0.f);
+          matrix[1] = glm::vec4(up, 0.f);
+          matrix[2] = glm::vec4(look, 0.f);
 
-        float size = 1.f;
-        float offset = 0.f;
-        glm::vec4 color = glm::vec4(1.0f);
-        if (distance < 10.f) {
-          offset = 1.3f;
-          size = 0.3f;
-        } else if (distance > 40.f) {
+          float size = 1.f;
+          float offset = 0.f;
+          glm::vec4 color = glm::vec4(1.0f);
+          if (distance < 10.f) {
+            offset = 1.3f;
+            size = 0.3f;
+          } else if (distance > 40.f) {
+            break;
+          } else {
+            auto factor = (distance - 10.f) / 60.f;
+            offset = glm::lerp(1.3f, 3.0f, factor);
+            size = glm::lerp(0.3f, 1.5f, factor);
+          }
+
+          auto team = engine_->GetPlayerTeam(e_id);
+          if (team == TEAM_BLUE)
+            color = glm::vec4(0.f, 0.f, 1.f, 1.f);
+          else if (team == TEAM_RED)
+            color = color = glm::vec4(1.f, 0.f, 0.f, 1.f);
+
+          glob::Submit(font_test_, transform.position + up * offset, size, name,
+                       color, matrix);
+
           break;
-        } else {
-          auto factor = (distance - 10.f) / 60.f;
-          offset = glm::lerp(1.3f, 3.0f, factor);
-          size = glm::lerp(0.3f, 1.5f, factor);
         }
-
-        auto team = engine_->GetPlayerTeam(e_id);
-        if (team == TEAM_BLUE)
-          color = glm::vec4(0.f, 0.f, 1.f, 1.f);
-        else if (team == TEAM_RED)
-          color = color = glm::vec4(1.f, 0.f, 0.f, 1.f);
-
-        glob::Submit(font_test_, transform.position + up * offset, size, name,
-                     color, matrix);
-
-        break;
       }
     }
+    break;
   }
 }
 
@@ -1356,7 +1361,6 @@ void PlayState::DestroyEntity(EntityID id) {
 
     auto& p_c = registry_gameplay_.assign<ParticleComponent>(
         e, handles, offsets, directions);
-    registry_gameplay_.assign<int>(e, 0);
   }
 }
 
@@ -1404,35 +1408,72 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
     }
     case GameEvent::INVISIBILITY_CAST: {
       auto registry = engine_->GetCurrentRegistry();
-      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent>();
+      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent, TransformComponent>();
       for (auto entity : view_controller) {
         IDComponent& id_c = view_controller.get<IDComponent>(entity);
         PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
-        ModelComponent& m_c = view_controller.get< ModelComponent>(entity);
+        ModelComponent& m_c = view_controller.get<ModelComponent>(entity);
+        TransformComponent& t_c =
+            view_controller.get<TransformComponent>(entity);
 
         if (id_c.id == e.invisibility_cast.player_id) {
           m_c.invisible = true;
+
+          //Particles
+          entt::entity particle_entity = registry_gameplay_.create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+
+          glob::SetParticleSettings(handle, "ball_destroy.txt");
+          glob::SetEmitPosition(handle, t_c.position);
+          in_handles.push_back(handle);
+
+          ParticleComponent& par_c = registry_gameplay_.assign<ParticleComponent>(
+              particle_entity, in_handles, in_offsets, in_directions);
+
+          if (e.invisibility_cast.player_id == my_id_) {
+            // TODO: Add effect to let player know it's invisible
+            glob::SetInvisibleEffect(m_c.invisible);
+          }
         }
-      }
-      if (e.invisibility_cast.player_id == my_id_) {
-        // TODO: Add effect to let player know it's invisible
       }
       break;
     }
     case GameEvent::INVISIBILITY_END: {
       auto registry = engine_->GetCurrentRegistry();
-      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent>();
+      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent, TransformComponent>();
       for (auto entity : view_controller) {
         IDComponent& id_c = view_controller.get<IDComponent>(entity);
         PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
-        ModelComponent& m_c = view_controller.get< ModelComponent>(entity);
+        ModelComponent& m_c = view_controller.get<ModelComponent>(entity);
+        TransformComponent& t_c =
+            view_controller.get<TransformComponent>(entity);
 
         if (id_c.id == e.invisibility_end.player_id) {
           m_c.invisible = false;
+
+          // Particles
+          entt::entity particle_entity = registry_gameplay_.create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+
+          glob::SetParticleSettings(handle, "ball_destroy.txt");
+          glob::SetEmitPosition(handle, t_c.position);
+          in_handles.push_back(handle);
+
+          ParticleComponent& par_c =
+              registry_gameplay_.assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
+
+          if (e.invisibility_end.player_id == my_id_) {
+            // TODO: Remove effect to let player know it's visible again
+            glob::SetInvisibleEffect(m_c.invisible);
+          }
         }
-      }
-      if (e.invisibility_end.player_id == my_id_) {
-        // TODO: Remove effect to let player know it's visible again
       }
       break;
     }
