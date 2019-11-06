@@ -73,7 +73,7 @@ void PlayState::Startup() {
   test_ball_ = glob::GetTransparentModel("Assets/Ball_new/Ball_Sphere.fbx");
 }
 
-void PlayState::TestParticles() {
+void PlayState::CreateGoalParticles(float x) {
   auto e = registry_gameplay_.create();
   auto handle = glob::CreateParticleSystem();
 
@@ -83,14 +83,24 @@ void PlayState::TestParticles() {
   std::vector<glm::vec3> directions;
   //= {glm::vec3(0.f, 1.f, 0.f)};
 
-  glob::SetParticleSettings(handle, "green_donut.txt");
-  glob::SetEmitPosition(handle, glm::vec3(30.f, 0.f, 0.f));
+  glob::SetParticleSettings(handle, "confetti.txt");
+  glob::SetEmitPosition(handle, glm::vec3(x * 0.9f, -10.f, 0.f));
+  float x_dir = (x > 0) ? -1 : 1;
+  glob::SetParticleDirection(handle, glm::vec3(x_dir, 5.f, 0.f));
 
   e = registry_gameplay_.create();
   handle = glob::CreateParticleSystem();
   handles.push_back(handle);
-  glob::SetParticleSettings(handle, "green_donut.txt");
-  glob::SetEmitPosition(handle, glm::vec3(-30.f, 0.f, 0.f));
+  glob::SetParticleSettings(handle, "goal_fire.txt");
+  glob::SetEmitPosition(handle, glm::vec3(x * 0.85f, -10.f, 25.f));
+  e = registry_gameplay_.create();
+  handle = glob::CreateParticleSystem();
+  handles.push_back(handle);
+  glob::SetParticleSettings(handle, "goal_fire.txt");
+  glob::SetEmitPosition(handle, glm::vec3(x * 0.85f, -10.f, -25.f));
+  //std::unordered_map<std::string, std::string> map;
+  //map["color"] = "1.0 0.0 0.0 0.4";
+  //glob::SetParticleSettings(handle, map);
   // auto ball_view = registry_gameplay_.view<
 
   registry_gameplay_.assign<ParticleComponent>(e, handles, offsets, directions);
@@ -1062,8 +1072,7 @@ void PlayState::CreateArenaEntity() {
 }
 
 void AddLightToBall(entt::registry& registry, entt::entity& ball) {
-  registry.assign<LightComponent>(ball, glm::vec3(0.f, 1.f, 0.f),
-                                            20.f, 0.f);
+  registry.assign<LightComponent>(ball, glm::vec3(0.f, 1.f, 0.f), 20.f, 0.f);
 }
 
 void PlayState::CreateBallEntity() {
@@ -1090,7 +1099,6 @@ void PlayState::CreateBallEntity() {
   registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
   registry_gameplay_.assign<physics::Sphere>(ball, glm::vec3(0.0f), 1.0f);
   AddLightToBall(registry_gameplay_, ball);
-  
 
   registry_gameplay_.assign<TrailComponent>(ball);
 }
@@ -1363,6 +1371,10 @@ void PlayState::SetPlayerMoveDir(EntityID id, glm::vec3 move_dir) {
 
 void PlayState::ReceiveGameEvent(const GameEvent& e) {
   switch (e.type) {
+    case GameEvent::GOAL: {
+      CreateGoalParticles(e.goal.x);
+      break;
+    }
     case GameEvent::RESET: {
       Reset();
       break;

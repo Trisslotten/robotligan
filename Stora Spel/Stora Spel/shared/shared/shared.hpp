@@ -145,6 +145,7 @@ struct GameEvent {
   union {
     // Goal
     struct {
+      float x;
     } goal;
 
     // Kick

@@ -425,9 +425,6 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       unsigned int score, team;
       packet >> score;
       packet >> team;
-      if (scores_[team] != score) {
-        play_state_.TestParticles();
-      }
       scores_[team] = score;
       break;
     }

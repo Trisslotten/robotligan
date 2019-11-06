@@ -240,7 +240,7 @@ class PlayState : public State {
   void ReceiveGameEvent(const GameEvent& e);
   void Reset();
   void EndGame();
-  void TestParticles();
+  void CreateGoalParticles(float x);
 
   void OnServerFrame();
   void AddAction(int action) { actions_.push_back(action); }

@@ -262,6 +262,21 @@ void CreateDefaultParticleTexture() {
                data.data());
 
   textures["default"] = texture;
+
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  data.clear();
+  data.resize(2 * 2 * 4, 1.0f);
+  
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0, GL_RGBA, GL_FLOAT,
+               data.data());
+
+  textures["quad"] = texture;
 }
 
 GLint TextureFromFile(std::string filename) {
@@ -317,11 +332,17 @@ void Init() {
   particle_shader.compile();
 
   compute_shaders["default"] = std::make_unique<ShaderProgram>();
-  compute_shaders["default"]->add("compute_shader.comp");
+  compute_shaders["default"]->add("Particle compute shaders/compute_shader.comp");
   compute_shaders["default"]->compile();
+
+  compute_shaders["confetti"] = std::make_unique<ShaderProgram>();
+  compute_shaders["confetti"]->add(
+      "Particle compute shaders/confetti.comp");
+  compute_shaders["confetti"]->compile();
 
   CreateDefaultParticleTexture();
   textures["smoke"] = TextureFromFile("smoke.png");
+  textures["confetti"] = TextureFromFile("confetti.png");
 
   model_shader.add("modelshader.vert");
   model_shader.add("modelshader.frag");
@@ -505,13 +526,15 @@ ModelHandle GetTransparentModel(const std::string &filepath) {
 
 ParticleSettings ProccessMap(
     ParticleSettings ps,
-    const std::unordered_map<std::string, std::string> &map) {
+    const std::unordered_map<std::string, std::string> &map, const std::vector<std::string>& colors) {
   bool color_delta = false;
   glm::vec4 end_color = glm::vec4(1.f);
   bool vel_delta = false;
   float end_vel = 0.0f;
   bool size_delta = false;
   float end_size;
+
+  
   for (auto it : map) {
     if (it.first == "color") {
       std::stringstream ss(it.second);
@@ -521,7 +544,7 @@ ParticleSettings ProccessMap(
       ss >> col.z;
       ss >> col.w;
 
-      ps.color = col;
+      ps.colors[0] = col;
     } else if (it.first == "end_color") {
       color_delta = true;
       std::stringstream ss(it.second);
@@ -570,7 +593,15 @@ ParticleSettings ProccessMap(
       float vel;
       ss >> vel;
 
+      if (ps.velocity == ps.min_velocity) ps.min_velocity = vel;
+
       ps.velocity = vel;
+    } else if (it.first == "min_velocity") {
+      std::stringstream ss(it.second);
+      float vel;
+      ss >> vel;
+
+      ps.min_velocity = vel;
     } else if (it.first == "end_velocity") {
       vel_delta = true;
       std::stringstream ss(it.second);
@@ -637,7 +668,20 @@ ParticleSettings ProccessMap(
     }
   }
 
-  if (color_delta) ps.color_delta = (ps.color - end_color) / ps.time;
+  if (colors.size() > 0) ps.colors.clear();
+
+  for (auto color : colors) {
+    std::stringstream ss(color);
+    glm::vec4 col;
+    ss >> col.x;
+    ss >> col.y;
+    ss >> col.z;
+    ss >> col.w;
+
+    ps.colors.push_back(col);
+  }
+
+  if (color_delta) ps.color_delta = (ps.colors[0] - end_color) / ps.time;
   if (vel_delta) ps.velocity_delta = (ps.velocity - end_vel) / ps.time;
   if (size_delta) ps.size_delta = (ps.size - end_size) / ps.time;
 
@@ -665,6 +709,7 @@ ParticleSettings ReadParticleFile(std::string filename) {
     return {};
   }
 
+  std::vector<std::string> colors;
   // Read through the settings file
   while (settings_file) {
     // Read up to the end of the line. Save as the current line
@@ -687,6 +732,8 @@ ParticleSettings ReadParticleFile(std::string filename) {
 
       // Save what has been read into the map
       settings_map[key_str] = val_str;
+
+      if (key_str == "color") colors.push_back(val_str);
     }
   }
 
@@ -696,7 +743,7 @@ ParticleSettings ReadParticleFile(std::string filename) {
   ps.texture = textures["default"];
   ps.compute_shader = compute_shaders["default"].get();
 
-  ps = ProccessMap(ps, settings_map);
+  ps = ProccessMap(ps, settings_map, colors);
 
   return ps;
 }
@@ -780,7 +827,7 @@ void SetParticleSettings(ParticleSystemHandle handle,
 
   int index = find_res->second;
   ParticleSettings ps = buffer_particle_systems[index].system.GetSettings();
-  auto settings = ProccessMap(ps, map);
+  auto settings = ProccessMap(ps, map, {});
 
   buffer_particle_systems[index].system.Settings(settings);
 }
