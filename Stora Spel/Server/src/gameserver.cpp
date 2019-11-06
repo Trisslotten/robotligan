@@ -122,7 +122,7 @@ void GameServer::Update(float dt) {
         HandlePacketBlock(packet, block_type, id);
       }
     }
-	server_.ClearPackets(client_data);
+    server_.ClearPackets(client_data);
   }
   DoOncePerSecond();
   current_state_->Update(dt);
@@ -214,9 +214,8 @@ void GameServer::HandleStateChange() {
     NetAPI::Common::Packet p;
     p << this->current_state_type_ << PacketBlockType::SERVER_STATE;
     server_.Send(p);
-    
-    if (went_from_play_to_lobby)
-      client_names_.clear();
+
+    if (went_from_play_to_lobby) client_names_.clear();
   }
 }
 
@@ -274,7 +273,7 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       }
       if (!found_name) {
         message.message_from = lobby_state_.client_teams_[client_id];
-	  }
+      }
 
       messages.push_back(message);
       break;

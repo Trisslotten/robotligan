@@ -2,15 +2,16 @@
 #pragma warning(disable : 4251)
 #ifndef SERVER_HPP_
 #define SERVER_HPP_
+#define SERVER_HPP_
 #include <unordered_map>
 #include <vector>
+#include <chrono>
 #include <NetAPI/Packet.hpp>
 #include <NetAPI/common.hpp>
 #include <NetAPI/socket/client.hpp>
 #include <NetAPI/socket/clientdata.hpp>
 #include <NetAPI/socket/tcplistener.hpp>
 #include <shared/shared.hpp>
-#include <chrono>
 namespace NetAPI {
 namespace Socket {
 class EXPORT Server {
@@ -27,6 +28,7 @@ class EXPORT Server {
   std::unordered_map<long, ClientData*>& GetClients() { return client_data_; }
   std::vector<ClientData*> GetNewlyConnected() { return newly_connected_; }
   void ClearPackets(NetAPI::Socket::ClientData* data);
+
  private:
   void SendPing();
   void HandleClientPacket();
@@ -42,7 +44,6 @@ class EXPORT Server {
   TcpListener listener_;
   bool setup_ = false;
   bool locked = false;
-  bool new_frame = true;
   short connected_players_ = 0;
   long current_client_guid_ = 0;
 };
