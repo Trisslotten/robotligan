@@ -7,6 +7,8 @@
 #include <glm/ext.hpp>
 #include <lodepng.hpp>
 #include "../usegl.hpp"
+#include "material/material.hpp"
+#include <textureslots.hpp>
 
 namespace glob {
 
@@ -70,35 +72,48 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   std::string config_path = filepath_.substr(0, filepath_.find_last_of('.'));
   config_path += ".mcfg";
   ModelConfig config{config_path};
-  if(config.isLoaded()) {
-    auto num_mats = config.GetInt("num_materials");
-    if(num_mats) {
-      num_materials_ = *num_mats;
+  if (config.isLoaded()) {
+    auto num_diff = config.GetInt("num_diffuse_textures");
+    if (num_diff) {
+      num_diffuse_textures_ = *num_diff;
     }
+
+    std::unordered_map<materials::Type, std::string> wanted_textures;
+    auto normal_map = config.GetWord("normal_map");
+    if (normal_map) {
+      wanted_textures[materials::NORMAL] = *normal_map;
+    }
+    auto normal_map_scale = config.GetFloat("normal_map_scale");
+    if(normal_map_scale) {
+      normal_map_scale_ = *normal_map_scale;
+    }
+    // get more texture-words here
+
+    material_ = materials::Get(wanted_textures);
   }
 
   // std::cout << "glob::kModelUseGL: " << glob::kModelUseGL << "\n";
   if (glob::kModelUseGL) {
     // Process materials
-
     if (mesh->mMaterialIndex >= 0) {
       aiMaterial* temp_material = scene->mMaterials[mesh->mMaterialIndex];
       std::vector<Texture> diffuse_maps =
           LoadMaterielTextures(temp_material, aiTextureType_DIFFUSE,
-                               "texture_diffuse"  // Make sure this in glsl
+                               "texture_diffuse", TEXTURE_SLOT_DIFFUSE
+                               
           );
       textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
 
       std::vector<Texture> specular_maps =
           LoadMaterielTextures(temp_material, aiTextureType_SPECULAR,
-                               "texture_specular"  // Make sure this in glsl
+                               "texture_specular", TEXTURE_SLOT_SPECULAR
           );
       textures.insert(textures.end(), specular_maps.begin(),
                       specular_maps.end());
 
       std::vector<Texture> emissive_maps =
           LoadMaterielTextures(temp_material, aiTextureType_EMISSIVE,
-                               "texture_emissive"  // Make sure this in glsl
+                               "texture_emissive", TEXTURE_SLOT_EMISSIVE
           );
       textures.insert(textures.end(), emissive_maps.begin(),
                       emissive_maps.end());
@@ -359,7 +374,7 @@ void Model::ProcessNode(aiNode* node, const aiScene* scene) {
 
 std::vector<Texture> Model::LoadMaterielTextures(aiMaterial* material,
                                                  aiTextureType type,
-                                                 std::string type_name) {
+                                                 std::string type_name, int tex_slot) {
   std::vector<Texture> texture;
 
   for (unsigned int i = 0; i < material->GetTextureCount(type); i++) {
@@ -381,6 +396,7 @@ std::vector<Texture> Model::LoadMaterielTextures(aiMaterial* material,
           TextureFromFile(ai_string.C_Str(), directory_, type);
       temp_texture.type = type_name;
       temp_texture.path = ai_string;
+      temp_texture.slot = tex_slot;
       texture.push_back(temp_texture);
       texture_loaded_.push_back(temp_texture);
     }
@@ -404,7 +420,9 @@ Model::~Model() {
 void Model::LoadFromFile(const std::string& path) { LoadModel(path); }
 
 void Model::Draw(ShaderProgram& shader) {
-  shader.uniform("num_materials", num_materials_);
+  material_.Bind(shader);
+  shader.uniform("normal_map_scale", normal_map_scale_);
+  shader.uniform("num_diffuse_textures", num_diffuse_textures_);
   for (unsigned int i = 0; i < mesh_.size(); i++) {
     mesh_[i].Draw(shader);
   }

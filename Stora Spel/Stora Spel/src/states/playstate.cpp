@@ -1042,9 +1042,9 @@ void PlayState::CreatePlayerEntities() {
     model_c.handles.push_back(player_model);
     model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
     if (engine_->GetPlayerTeam(entity_id) == TEAM_BLUE) {
-      model_c.material_index = 1;
+      model_c.diffuse_index = 1;
     } else {
-      model_c.material_index = 0;
+      model_c.diffuse_index = 0;
     }
 
     registry_gameplay_.assign<AnimationComponent>(
