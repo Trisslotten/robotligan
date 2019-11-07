@@ -1458,7 +1458,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         auto& trans_c = view_controller.get<TransformComponent>(proj_ent);
 
         if (id_c.id == e.force_push_impact.projectile_id) {
-          glob::SetEmitPosition(handle, trans_c.position);        
+          glob::SetEmitPosition(handle, trans_c.position);  
+		  break;
 		}
       }
 
