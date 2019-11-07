@@ -623,6 +623,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       // ChangeState(StateType::LOBBY);
       break;
     }
+    case PacketBlockType::GAME_OVERTIME: {
+      play_state_.OverTime();
+      break;
+    }
     case PacketBlockType::YOUR_TARGET: {
       EntityID target;
       packet >> target;
@@ -680,7 +684,8 @@ void Engine::UpdateChat(float dt) {
         } else {
           chat_.SetSendMessage(true);
           message_ = chat_.GetCurrentMessage();
-          chat_.CloseChat();
+          if (current_state_ == &play_state_)
+			chat_.CloseChat();
         }
       }
       chat_.Update(dt);
