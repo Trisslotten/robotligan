@@ -99,9 +99,9 @@ void PlayState::CreateGoalParticles(float x) {
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
   glob::SetEmitPosition(handle, glm::vec3(x * 0.85f, -10.f, -25.f));
-  //std::unordered_map<std::string, std::string> map;
-  //map["color"] = "1.0 0.0 0.0 0.4";
-  //glob::SetParticleSettings(handle, map);
+  // std::unordered_map<std::string, std::string> map;
+  // map["color"] = "1.0 0.0 0.0 0.4";
+  // glob::SetParticleSettings(handle, map);
   // auto ball_view = registry_gameplay_.view<
 
   registry_gameplay_.assign<ParticleComponent>(e, handles, offsets, directions);
@@ -506,8 +506,8 @@ void PlayState::UpdateGameplayTimer() {
 
 void PlayState::DrawNameOverPlayer() {
   auto player_view =
-      registry_gameplay_
-          .view<PlayerComponent, TransformComponent, ModelComponent, IDComponent>();
+      registry_gameplay_.view<PlayerComponent, TransformComponent,
+                              ModelComponent, IDComponent>();
 
   auto& my_transform = registry_gameplay_.get<TransformComponent>(my_entity_);
   for (auto entity : player_view) {
@@ -1014,6 +1014,7 @@ void PlayState::SetCameraOrientation(glm::quat orientation) {
 
 void PlayState::CreateInitialEntities() {
   CreatePlayerEntities();
+  CreateMapEntity();
   CreateArenaEntity();
   CreateBallEntity();
   TestCreateLights();
@@ -1079,25 +1080,43 @@ void PlayState::CreatePlayerEntities() {
 void PlayState::CreateArenaEntity() {
   auto arena = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 arena_scale = glm::vec3(4.0f, 4.0f, 4.0f);
+  glm::vec3 arena_scale = glm::vec3(1.0f);
   glob::ModelHandle model_arena =
-      glob::GetModel("assets/Map/Map_singular_TMP.fbx");
+      glob::GetModel("assets/Arena/Map_V3_ARENA.fbx");
+  glob::ModelHandle model_arena_banner =
+      glob::GetModel("assets/Arena/Map_V3_ARENA_SIGNS.fbx");
+
   auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
   model_c.handles.push_back(model_arena);
+  model_c.handles.push_back(model_arena_banner);
 
-  registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
+
+  registry_gameplay_.assign<TransformComponent>(arena, glm::vec3(0.0f, -11.f, 0.0f), zero_vec,
                                                 arena_scale);
+}
+
+void PlayState::CreateMapEntity() {
+  auto map = registry_gameplay_.create();
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glm::vec3 map_scale = glm::vec3(4.0f, 4.0f, 4.0f);
+  glob::ModelHandle model_map =
+      glob::GetModel("assets/Map/Map_singular_TMP.fbx");
+  /*auto& model_c = registry_gameplay_.assign<ModelComponent>(map);
+  model_c.handles.push_back(model_map);*/
+
+  registry_gameplay_.assign<TransformComponent>(map, zero_vec, zero_vec,
+                                                map_scale);
 
   // Prepare hard-coded values
   // Scale on the hitbox for the map
-  float v1 = 6.8f * arena_scale.z;
-  float v2 = 10.67f * arena_scale.x;  // 13.596f;
-  float v3 = 2.723f * arena_scale.y;
-  float v4 = 5.723f * arena_scale.y;
+  float v1 = 6.8f * map_scale.z;
+  float v2 = 10.67f * map_scale.x;  // 13.596f;
+  float v3 = 2.723f * map_scale.y;
+  float v4 = 5.723f * map_scale.y;
 
   // Add a hitbox
-  registry_gameplay_.assign<physics::Arena>(arena, -v2, v2, -v3, v4, -v1, v1);
-  arena_entity_ = arena;
+  registry_gameplay_.assign<physics::Arena>(map, -v2, v2, -v3, v4, -v1, v1);
+  arena_entity_ = map;
 }
 
 void AddLightToBall(entt::registry& registry, entt::entity& ball) {
@@ -1423,7 +1442,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
     }
     case GameEvent::INVISIBILITY_CAST: {
       auto registry = engine_->GetCurrentRegistry();
-      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent, TransformComponent>();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, ModelComponent,
+                         TransformComponent>();
       for (auto entity : view_controller) {
         IDComponent& id_c = view_controller.get<IDComponent>(entity);
         PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
@@ -1434,7 +1455,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         if (id_c.id == e.invisibility_cast.player_id) {
           m_c.invisible = true;
 
-          //Particles
+          // Particles
           entt::entity particle_entity = registry_gameplay_.create();
           glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
           std::vector<glob::ParticleSystemHandle> in_handles;
@@ -1445,8 +1466,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           glob::SetEmitPosition(handle, t_c.position);
           in_handles.push_back(handle);
 
-          ParticleComponent& par_c = registry_gameplay_.assign<ParticleComponent>(
-              particle_entity, in_handles, in_offsets, in_directions);
+          ParticleComponent& par_c =
+              registry_gameplay_.assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
 
           if (e.invisibility_cast.player_id == my_id_) {
             // TODO: Add effect to let player know it's invisible
@@ -1458,7 +1480,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
     }
     case GameEvent::INVISIBILITY_END: {
       auto registry = engine_->GetCurrentRegistry();
-      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent, TransformComponent>();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, ModelComponent,
+                         TransformComponent>();
       for (auto entity : view_controller) {
         IDComponent& id_c = view_controller.get<IDComponent>(entity);
         PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
@@ -1500,19 +1524,19 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       std::vector<glm::vec3> offsets;
       std::vector<glm::vec3> directions;
 
-	  glob::SetParticleSettings(handle, "force_push.txt");
+      glob::SetParticleSettings(handle, "force_push.txt");
 
       auto registry = engine_->GetCurrentRegistry();
       auto view_controller = registry->view<IDComponent, TransformComponent>();
-      
+
       for (auto proj_ent : view_controller) {
         auto& id_c = view_controller.get<IDComponent>(proj_ent);
         auto& trans_c = view_controller.get<TransformComponent>(proj_ent);
 
         if (id_c.id == e.force_push_impact.projectile_id) {
-          glob::SetEmitPosition(handle, trans_c.position);  
-		  break;
-		}
+          glob::SetEmitPosition(handle, trans_c.position);
+          break;
+        }
       }
 
       registry_gameplay_.assign<ParticleComponent>(ent, handles, offsets,
