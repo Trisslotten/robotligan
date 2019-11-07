@@ -46,6 +46,7 @@ void Update(entt::registry& registry) {
           // create event for goal
           GameEvent event;
           event.type = GameEvent::GOAL;
+          event.goal.x = goal_trans_c.position.x;
           dispatcher.trigger<GameEvent>(event);
 
           // each team "owns" the goal where to score.
