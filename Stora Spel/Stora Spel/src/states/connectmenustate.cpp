@@ -20,7 +20,8 @@ void ConnectMenuState::Startup() {
   b_c->button_func = [&]() {
     if ((ip_.length() > 0) && (port_.length() > 0)) {
       client.Disconnect();
-      connection_success_ = client.Connect(ip_.c_str(), (short)std::stoi(port_));
+      connection_success_ =
+          client.Connect(ip_.c_str(), (short)std::stoi(port_));
       isconnected_ = 1;
     }
   };

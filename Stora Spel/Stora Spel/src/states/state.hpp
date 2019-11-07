@@ -262,7 +262,7 @@ class PlayState : public State {
 
   float GetPitch() { return pitch_; }
   float GetYaw() { return yaw_; }
-  void SetTeam(unsigned int team) {my_team_ = team;}
+  void SetTeam(unsigned int team) { my_team_ = team; }
   void CreateNewBallEntity(bool fake, EntityID id);
   void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
 
@@ -349,7 +349,7 @@ class PlayState : public State {
   int frame_id = 0;
   float pitch_ = 0.0f;
   float yaw_ = 0.0f;
-  
+
   float timer_ = 0.0f;
   float primary_cd_ = 0.0f;
 };

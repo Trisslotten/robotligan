@@ -39,14 +39,14 @@ void SettingsState::Update(float dt) {
                "INPUT");
 
   if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
-	  MenuEvent click_event;
-	  click_event.type = MenuEvent::CLICK;
-	  menu_dispatcher.trigger(click_event);
+    MenuEvent click_event;
+    click_event.type = MenuEvent::CLICK;
+    menu_dispatcher.trigger(click_event);
     engine_->ChangeState(engine_->GetPreviousStateType());
   } else if (Input::IsKeyPressed(GLFW_KEY_ENTER)) {
-	  MenuEvent click_event;
-	  click_event.type = MenuEvent::CLICK;
-	  menu_dispatcher.trigger(click_event);
+    MenuEvent click_event;
+    click_event.type = MenuEvent::CLICK;
+    menu_dispatcher.trigger(click_event);
     SaveSettings();
   }
   if (applied_) {

@@ -37,8 +37,8 @@ void MainMenuState::Update(float dt) {
     auto ws = glob::window::GetWindowDimensions();
     float scale = 0.8f;
     glm::vec2 pos;
-    pos.x = ws.x/2.f - scale*1280.f/2.f;
-    pos.y = ws.y - scale*313 - 100;
+    pos.x = ws.x / 2.f - scale * 1280.f / 2.f;
+    pos.y = ws.y - scale * 313 - 100;
     glob::Submit(loggo_image_, pos, scale);
   }
 }
