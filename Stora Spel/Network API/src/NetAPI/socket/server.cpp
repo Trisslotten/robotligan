@@ -1,7 +1,10 @@
 #include <NetAPI/socket/server.hpp>
 #include <iostream>
 #include <string>
-
+using namespace std::chrono_literals;
+void NetAPI::Socket::Server::ClearPackets(NetAPI::Socket::ClientData* data) {
+  data->packets.clear();
+}
 void NetAPI::Socket::Server::SendPing() {
   NetAPI::Common::Packet to_send;
   to_send.GetHeader()->packet_id = NetAPI::Socket::EVERYONE;
@@ -9,36 +12,32 @@ void NetAPI::Socket::Server::SendPing() {
   to_send << random_number << PacketBlockType::PING;
   this->SendToAll(to_send);
 }
-unsigned short getHashedID(char* addr, unsigned short port) {
-  unsigned short retval = 0;
-  std::string s(addr);
-  for (auto c : s) {
-    retval += (unsigned int)c;
-  }
-  return retval;
+void NetAPI::Socket::Server::HandleClientPacket() {
+  // std::pair<const long, NetAPI::Socket::ClientData *> s
 }
-bool NetAPI::Socket::Server::Setup(unsigned short port) {
-  if (listener_.Bind(port)) {
-    setup_ = true;
-  }
-  client_data_.reserve(Common::kMaxPlayers);
-  return setup_;
-}
-
-bool NetAPI::Socket::Server::Update() {
-  if (!setup_) {
-    return false;
-  }
-
-  for (auto ID : client_to_remove_) {
-    auto it = client_data_.find(ID);
-    if (it != client_data_.end()) {
-      this->client_data_.erase(ID);
+void NetAPI::Socket::Server::Receive() {
+  for (auto& c : client_data_) {
+    if (c.second && !c.second->client.IsConnected() && c.second->is_active) {
+      std::cout << "DEBUG: removing client, lstrecvlen="
+                << c.second->client.GetRaw()->GetLastRecvLen()
+                << ", isConnected=" << c.second->client.IsConnected() << "\n";
+      c.second->client.Disconnect();
+      c.second->is_active = false;
       connected_players_--;
+      continue;
+    }
+    if (c.second && c.second->client.IsConnected()) {
+      int num_packets = 0;
+      for (auto packet : c.second->client.Receive()) {
+        num_packets++;
+        if (!packet.IsEmpty()) {
+          c.second->packets.push_back(packet);
+        }
+      }
     }
   }
-  client_to_remove_.clear();
-
+}
+void NetAPI::Socket::Server::ListenForClients() {
   newly_connected_.clear();
   // Accept client
   if (!connection_client_) {
@@ -71,7 +70,6 @@ bool NetAPI::Socket::Server::Update() {
       delete client_data;
       connection_client_->ID = find_res->second;
       client_data_[find_res->second] = connection_client_;
-
       std::cout << "DEBUG: Found existing client, overwriting\n";
     } else if (connected_players_ < NetAPI::Common::kMaxPlayers) {
       std::cout << "DEBUG: adding new client\n";
@@ -105,29 +103,8 @@ bool NetAPI::Socket::Server::Update() {
     }
     connection_client_ = nullptr;
   }
-  // Receive Data
-  for (auto& c : client_data_) {
-    if (c.second && !c.second->client.IsConnected() && c.second->is_active) {
-      std::cout << "DEBUG: removing client, lstrecvlen="
-                << c.second->client.GetRaw()->GetLastRecvLen()
-                << ", isConnected=" << c.second->client.IsConnected() << "\n";
-      c.second->client.Disconnect();
-      c.second->is_active = false;
-      connected_players_--;
-      continue;
-    }
-    if (c.second && c.second->client.IsConnected()) {
-      int num_packets = 0;
-      for (auto packet : c.second->client.Receive()) {
-        num_packets++;
-        if (!packet.IsEmpty()) {
-          c.second->packets.push_back(packet);
-        }
-      }
-    }
-  }
-
-  // Send Data
+}
+void NetAPI::Socket::Server::SendStoredData() {
   SendPing();
   NetAPI::Common::PacketHeader header;
   for (auto& d : data_to_send_) {
@@ -139,11 +116,40 @@ bool NetAPI::Socket::Server::Update() {
     } else {
       auto result = client_data_.find(header.receiver);
       if (result != client_data_.end()) {
-        client_data_[header.receiver]->client.Send(d);
+        auto c = client_data_[header.receiver];
+        c->client.Send(d);
       }
     }
   }
+
   data_to_send_.clear();
+}
+unsigned short getHashedID(char* addr, unsigned short port) {
+  unsigned short retval = 0;
+  std::string s(addr);
+
+  for (auto c : s) {
+    retval += (unsigned int)c;
+  }
+  return retval;
+}
+bool NetAPI::Socket::Server::Setup(unsigned short port) {
+  if (listener_.Bind(port)) {
+    setup_ = true;
+  }
+  client_data_.reserve(Common::kMaxPlayers);
+  return setup_;
+}
+
+bool NetAPI::Socket::Server::Update() {
+  if (!setup_) {
+    return false;
+  }
+  ListenForClients();
+  // Receive Data
+  Receive();
+  // Send Data
+  SendStoredData();
   return true;
 }
 
