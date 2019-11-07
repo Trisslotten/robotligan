@@ -8,6 +8,7 @@
 
 void SettingsState::Startup() {
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+  ws_ = glob::window::GetWindowDimensions();
 }
 
 void SettingsState::Init() {
@@ -39,6 +40,22 @@ void SettingsState::Update(float dt) {
 
   if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
     engine_->ChangeState(engine_->GetPreviousStateType());
+  } else if (Input::IsKeyPressed(GLFW_KEY_ENTER)) {
+	SaveSettings();
+  }
+  if (applied_) {
+	  auto now = std::chrono::high_resolution_clock::now();
+	  std::chrono::duration<float> time_passed = now - time_;
+	  auto pos = glm::vec2(ws_.x / 2.f - ws_.x * 0.005, ws_.y / 2.8);
+	  auto passed = (unsigned)(std::floorf(time_passed.count()));
+	  std::string dots;
+	  for (auto i = 0; i < passed; i++)
+	  {
+		  dots += ".";
+	  }
+	  std::string text = "Saved";
+	  glob::Submit(font_test_, pos, 45, std::string("Saved") + dots, glm::vec4(0, 1, 1, 1));
+	  if (passed >= 3) applied_ = false;
   }
 }
 
@@ -136,4 +153,6 @@ void SettingsState::SaveSettings() {
 
   //printf("Username saved: %s \n", setting_username_.c_str());
   engine_->UpdateSettingsValues();
+  applied_ = true;
+  time_ = std::chrono::high_resolution_clock::now();
 }

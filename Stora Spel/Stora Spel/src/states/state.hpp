@@ -193,7 +193,10 @@ class SettingsState : public State {
   float setting_volume_ = 100.f;
   float setting_mouse_sens_ = 1.0f;
 
+  glm::vec2 ws_;
   std::string setting_username_ = "fel";
+  bool applied_ = false;
+  std::chrono::time_point<std::chrono::high_resolution_clock> time_;
 };
 
 /////////////////////// PLAY ///////////////////////
