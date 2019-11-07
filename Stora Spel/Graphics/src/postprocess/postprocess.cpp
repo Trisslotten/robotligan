@@ -21,7 +21,7 @@ void glob::PostProcess::Init(Blur& blur) {
 
   glGenTextures(1, &draw_emission_texture_);
   glBindTexture(GL_TEXTURE_2D, draw_emission_texture_);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 2);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 1);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
@@ -69,7 +69,7 @@ void glob::PostProcess::AfterDraw(Blur& blur) {
   glGenerateMipmap(GL_TEXTURE_2D);
 
   blurred_emission_texture =
-      blur.BlurTexture(blur_id_, 4, draw_emission_texture_, 2);
+      blur.BlurTexture(blur_id_, 4, draw_emission_texture_, 1);
 }
 
 void glob::PostProcess::BindColorTex(GLuint slot) {

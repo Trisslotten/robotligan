@@ -89,10 +89,10 @@ Mesh::Mesh(const std::vector<Vertex>& vertices,
 Mesh::~Mesh() {}
 
 void Mesh::Draw(ShaderProgram& shader) {
-  for (int i = 0; i < textures_.size(); i++) {
-    glActiveTexture(GL_TEXTURE0 + i);
-    glBindTexture(GL_TEXTURE_2D, textures_[i].id_texture);
-    shader.uniform(textures_[i].type, i);
+  for (auto& texture : textures_) {
+    glActiveTexture(GL_TEXTURE0 + texture.slot);
+    glBindTexture(GL_TEXTURE_2D, texture.id_texture);
+    shader.uniform(texture.type, texture.slot);
   }
 
   // Draw mesh

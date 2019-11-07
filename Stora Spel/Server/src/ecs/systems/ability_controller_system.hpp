@@ -419,7 +419,7 @@ void DoTeleport(entt::registry& registry, PlayerID id) {
     IDComponent& idc = view_controller.get<IDComponent>(entity);
 
     if (pc.client_id == id) {
-      float speed = 50.0f;
+      float speed = 100.0f;
       auto teleport_projectile = registry.create();
 
       registry.assign<PhysicsComponent>(teleport_projectile,

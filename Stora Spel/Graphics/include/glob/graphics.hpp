@@ -134,6 +134,8 @@ EXPORT void SetCamera(Camera camera);
 
 EXPORT void SetModelUseGL(bool use_gl);
 
+EXPORT void ReloadShaders();
+
 EXPORT void SetInvisibleEffect(bool in_bool);
 
 /*
