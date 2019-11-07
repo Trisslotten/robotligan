@@ -10,6 +10,7 @@ in vec3 v_normal;
 uniform sampler2D texture_diffuse;
 uniform sampler2D texture_specular;
 uniform sampler2D texture_emissive;
+uniform sampler2D texture_normal;
 
 uniform int num_materials;
 uniform int material_index;
@@ -40,6 +41,5 @@ void main()
 	color += dither();
 	out_color = vec4(color, alpha);
 
-	// TODO: maybe use alpha channel instead
 	out_emission = vec4(emission_strength * surface_color.rgb, 1);
 }

@@ -19,6 +19,9 @@
 namespace ability_controller {
 Timer gravity_timer;
 bool gravity_used = false;
+// TODO: Make unique for each player
+Timer invisibility_timer;
+bool invisibility_used = false;
 
 bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
                     PlayerID player_id, entt::entity caster);
@@ -32,16 +35,18 @@ void DoTeleport(entt::registry& registry, PlayerID id);
 bool DoHomingBall(entt::registry& registry, PlayerID id);
 void CreateFakeBalls(entt::registry& registry, EntityID id);
 bool BuildWall(entt::registry& registry, PlayerID id);
+bool DoInvisibility(entt::registry& registry, PlayerID id);
 
 std::unordered_map<AbilityID, float> ability_cooldowns;
 
 void Update(entt::registry& registry, float dt) {
-  auto view_players =
-      registry.view<PlayerComponent, TransformComponent, AbilityComponent>();
+  auto view_players = registry.view<PlayerComponent, TransformComponent,
+                                    AbilityComponent, IDComponent>();
   for (auto player : view_players) {
     auto& ability_component = registry.get<AbilityComponent>(player);
     auto& transform_component = registry.get<TransformComponent>(player);
     auto& player_component = registry.get<PlayerComponent>(player);
+    auto& id_component = registry.get<IDComponent>(player);
 
     // Loop over each entity with a PlayerComponent
     // and Ability Component
@@ -54,6 +59,10 @@ void Update(entt::registry& registry, float dt) {
     }
     if (ability_component.shoot_cooldown < 0.0f) {
       ability_component.shoot_cooldown = 0.0f;
+    }
+    // Update invisibility duration
+    if (player_component.invisible) {
+      player_component.invisibility_remaining -= dt;
     }
 
     // First check if primary ability is being used
@@ -69,8 +78,7 @@ void Update(entt::registry& registry, float dt) {
             ability_cooldowns[ability_component.primary_ability];
         GameEvent primary_used_event;
         primary_used_event.type = GameEvent::PRIMARY_USED;
-        primary_used_event.primary_used.player_id =
-            registry.get<IDComponent>(player).id;
+        primary_used_event.primary_used.player_id = id_component.id;
         primary_used_event.primary_used.cd =
             ability_component.cooldown_remaining;
         dispatcher.trigger(primary_used_event);
@@ -90,14 +98,24 @@ void Update(entt::registry& registry, float dt) {
 
         GameEvent secondary_used_event;
         secondary_used_event.type = GameEvent::SECONDARY_USED;
-        secondary_used_event.secondary_used.player_id =
-            registry.get<IDComponent>(player).id;
+        secondary_used_event.secondary_used.player_id = id_component.id;
         dispatcher.trigger(secondary_used_event);
         // TODO: send that ability is used
       }
     }
     // When finished set secondary ability to not activated
     ability_component.use_secondary = false;
+
+    // Check if player is invisible
+    if (player_component.invisible &&
+        player_component.invisibility_remaining <= 0.0f) {
+      player_component.invisible = false;
+      // Save game event
+      GameEvent invisibility_end_event;
+      invisibility_end_event.type = GameEvent::INVISIBILITY_END;
+      invisibility_end_event.invisibility_end.player_id = id_component.id;
+      dispatcher.trigger(invisibility_end_event);
+    }
 
     // Check if the player should shoot
     if (ability_component.shoot && ability_component.shoot_cooldown <= 0.0f) {
@@ -149,7 +167,7 @@ bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
       return DoHomingBall(registry, player_id);
       break;
     case AbilityID::INVISIBILITY:
-      return true;
+      return DoInvisibility(registry, player_id);
       break;
     case AbilityID::MISSILE:
       CreateMissileEntity(registry, player_id);
@@ -401,7 +419,7 @@ void DoTeleport(entt::registry& registry, PlayerID id) {
     IDComponent& idc = view_controller.get<IDComponent>(entity);
 
     if (pc.client_id == id) {
-      float speed = 50.0f;
+      float speed = 100.0f;
       auto teleport_projectile = registry.create();
 
       registry.assign<PhysicsComponent>(teleport_projectile,
@@ -504,7 +522,8 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
       auto& trans_c = view_players.get<TransformComponent>(entity);
       auto& camera = view_players.get<CameraComponent>(entity);
 
-      glm::vec3 position = camera.GetLookDir() * 4.5f + trans_c.position + camera.offset;
+      glm::vec3 position =
+          camera.GetLookDir() * 4.5f + trans_c.position + camera.offset;
       position.y = -12.f;
 
       for (auto entity_goal : view_goals) {
@@ -516,11 +535,11 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
       }
 
       auto orientation = trans_c.rotation;
-      //orientation.y = camera.GetLookDir().y;
+      // orientation.y = camera.GetLookDir().y;
 
       auto wall = registry.create();
       registry.assign<WallComponent>(wall);
-      registry.assign<TimerComponent>(wall, 5.f);
+      registry.assign<TimerComponent>(wall, 10.f);
       registry.assign<HealthComponent>(wall, 100);
       registry.assign<TransformComponent>(wall, position, orientation);
       auto& obb = registry.assign<physics::OBB>(wall);
@@ -531,13 +550,42 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
       EventInfo e;
       e.event = Event::BUILD_WALL;
       e.entity = wall;
-      
+
       dispatcher.enqueue<EventInfo>(e);
 
       return true;
     }
   }
 
+  return false;
+}
+
+bool DoInvisibility(entt::registry& registry, PlayerID id) {
+  auto view_controller = registry.view<CameraComponent, PlayerComponent,
+                                       TransformComponent, IDComponent>();
+  for (auto entity : view_controller) {
+    CameraComponent& cc = view_controller.get<CameraComponent>(entity);
+    PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
+    TransformComponent& tc = view_controller.get<TransformComponent>(entity);
+    IDComponent& idc = view_controller.get<IDComponent>(entity);
+
+    if (pc.client_id == id) {
+      invisibility_timer.Restart();
+      invisibility_used = true;
+
+      pc.invisible = true;
+      pc.invisibility_remaining =
+          GlobalSettings::Access()->ValueOf("ABILITY_INVISIBILITY_DURATION");
+
+      // Save game event
+      GameEvent invisibility_event;
+      invisibility_event.type = GameEvent::INVISIBILITY_CAST;
+      invisibility_event.invisibility_cast.player_id = idc.id;
+      dispatcher.trigger(invisibility_event);
+
+      return true;
+    }
+  }
   return false;
 }
 
@@ -586,8 +634,9 @@ void CreateFakeBalls(entt::registry& registry, EntityID id) {
 
   // create fake balls
   for (int i = 0; i < num_balls; i++) {
-    glm::vec3 dir = glm::vec3((float)(rand() % 5) / 10.f, (float)(rand() % 5) / 10.f,
-                         (float)(rand() % 5) / 10.f);
+    glm::vec3 dir =
+        glm::vec3((float)(rand() % 5) / 10.f, (float)(rand() % 5) / 10.f,
+                  (float)(rand() % 5) / 10.f);
     dir = glm::normalize(dir);
     if (glm::length(ball_vel) > 0) {
       dir += ball_vel;
