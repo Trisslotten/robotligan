@@ -1,3 +1,6 @@
 
-w normal_map assets/texture/normal_pockedconcrete.png
-f normal_map_scale 4.0
+w normal_map assets/texture/Painted_metal_02_2K_Normal.png
+f normal_map_scale 2.0
+
+w metallic_map assets/texture/Painted_metal_02_2K_Metallic.png
+f metallic_map_scale 2.0

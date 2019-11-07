@@ -61,7 +61,6 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   }
 
   // Process faces / indices
-
   for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
     aiFace temp_faces = mesh->mFaces[i];
     for (GLuint y = 0; y < temp_faces.mNumIndices; y++) {
@@ -87,7 +86,15 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
     if(normal_map_scale) {
       normal_map_scale_ = *normal_map_scale;
     }
-    // get more texture-words here
+    
+    auto metallic_map = config.GetWord("metallic_map");
+    if(metallic_map) {
+      wanted_textures[materials::METALLIC] = *metallic_map;
+    }
+    auto metallic_map_scale = config.GetFloat("metallic_map_scale");
+    if(metallic_map_scale) {
+      metallic_map_scale_ = *metallic_map_scale;
+    }
 
     material_ = materials::Get(wanted_textures);
   }
@@ -422,6 +429,7 @@ void Model::LoadFromFile(const std::string& path) { LoadModel(path); }
 void Model::Draw(ShaderProgram& shader) {
   material_.Bind(shader);
   shader.uniform("normal_map_scale", normal_map_scale_);
+  shader.uniform("metallic_map_scale", metallic_map_scale_);
   shader.uniform("num_diffuse_textures", num_diffuse_textures_);
   for (unsigned int i = 0; i < mesh_.size(); i++) {
     mesh_[i].Draw(shader);

@@ -17,6 +17,15 @@ uniform float light_radius[MAX_LIGHTS];
 uniform float light_amb[MAX_LIGHTS];
 uniform int NR_OF_LIGHTS;
 
+in vec3 local_pos;
+in vec3 local_normal;
+in vec3 v_normal;
+
+uniform sampler2D texture_normal;
+uniform sampler2D texture_metallic;
+uniform float metallic_map_scale;
+uniform float normal_map_scale;
+
 uniform vec3 cam_position;
 
 // https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
@@ -62,29 +71,98 @@ float shadow(vec3 position, int index) {
 	return result;
 }
 
-//float calcLighting(vec3 surf_pos, vec3 normal
 
-vec3 shading(vec3 position, vec3 normal) {
+vec3 normalMap(vec2 uv) {
+	vec3 normal_tex;
+	normal_tex.xy = texture(texture_normal, uv).rg * 2.0 - 1.0;
+	normal_tex.z = sqrt(1.-normal_tex.x*normal_tex.x-normal_tex.y*normal_tex.y);
+	return normalize(normal_tex);
+}
+
+vec3 calculateTangent(vec3 n) {
+	vec3 tangent = cross(n, vec3(1,0,0));
+	if(length(tangent) < 0.1) {
+		tangent = cross(n, -vec3(0,1,0));
+	}
+	return normalize(tangent);
+	//return n.yxz;
+}
+// https://medium.com/@bgolus/normal-mapping-for-a-triplanar-shader-10bf39dca05a
+vec3 triplanarNormal() {
+	float texture_scale = normal_map_scale;
+	float sharpness = 10.0;
+
+	vec2 uv_x = local_pos.zy/texture_scale;
+	vec2 uv_y = local_pos.xz/texture_scale;
+	vec2 uv_z = local_pos.xy/texture_scale;
+
+	vec3 normal_x = normalMap(uv_x);
+	vec3 normal_y = normalMap(uv_y);
+	vec3 normal_z = normalMap(uv_z);
+
+	vec3 vert_normal = normalize(v_normal);
+	vec3 axis_sign = sign(vert_normal);
+
+	vec3 tangent = calculateTangent(vert_normal);
+
+	mat3 tbn = mat3(
+		tangent,
+		normalize(cross(tangent, vert_normal)), 
+		vert_normal
+	);
+
+	vec3 weights = pow(abs(local_normal), sharpness.xxx);
+	weights /= dot(weights, vec3(1));
+
+	vec3 result = vec3(0);
+	result += normal_x * weights.x * vec3(axis_sign.z,1,1);
+	result += normal_y * weights.y * vec3(axis_sign.x,1,1);
+	result += normal_z * weights.z * vec3(axis_sign.y,1,1);
+	
+	result = normalize(tbn * result);
+
+	return result;
+}
+
+
+float calcDiffuse(vec3 surf_pos, vec3 normal, vec3 light_dir) {
+	float diffuse = max(dot(light_dir, normal), 0);
+	return diffuse;
+}
+float calcSpecular(vec3 surf_pos, vec3 normal, vec3 light_dir, vec3 view_dir) {
+	vec3 half_vec = normalize(light_dir + view_dir);
+	float specular = pow(clamp(dot(normal, half_vec), 0, 1), 100.0);
+	return specular;
+}
+
+struct Lighting {
+	vec3 specular;
+	vec3 diffuse;
+	vec3 ambient;
+};
+
+Lighting shading(vec3 position, float metallic) {
+	vec3 normal = triplanarNormal();
+
 	vec3 view_dir = normalize(cam_position - position);
 
-	vec3 lighting = vec3(0);
+	Lighting lighting;
+	lighting.ambient = vec3(0);
+	lighting.diffuse = vec3(0);
+	lighting.specular = vec3(0);
+
 	for(int l = 0; l < NR_OF_LIGHTS; l++){
 		vec3 pointToLight = light_pos[l] - position;
 		vec3 light_dir = normalize(pointToLight);
 		vec3 light_color = light_col[l];
 
 		float intensity = 1.f - clamp(length(pointToLight), 0, light_radius[l]) / light_radius[l];
-		float diffuse = max(dot(light_dir, normal), 0)  * intensity;
+		float diffuse = calcDiffuse(position, normal, light_dir);
+		float specular = metallic * calcSpecular(position, normal, light_dir, view_dir);
 
-		vec3 half_vec = normalize(light_dir + view_dir);
-		float specular = pow(clamp(dot(normal, half_vec), 0, 1), 1000.0);
-
-		float total_light = 0;
-		total_light += diffuse;
-		total_light += specular;
-
-		lighting += total_light * light_color;
-		lighting += light_amb[l];
+		lighting.diffuse += diffuse * intensity * light_color;
+		lighting.specular += specular * intensity * light_color;
+		lighting.ambient += light_amb[l];
 	}
 
 	for(int i = 0; i < num_shadows; i++) {
@@ -93,20 +171,21 @@ vec3 shading(vec3 position, vec3 normal) {
 
 		vec3 ld = normalize(shadow_light_positions[i] - position);
 		if(shadow_space.w > 0) {
-			vec3 spot_light = vec3(0.2);
-			// diffuse
-			spot_light *= max(dot(ld, normal), 0);
+			vec3 light_color = vec3(0.23);
 
-			//vec3 light_dir = normalize(shadow_light_positions[i],
-			//vec3 half_vec = normalize(light_dir + view_dir);
-			//float specular = pow(clamp(dot(normal, half_vec), 0, 1), 10.0);
+			vec2 q = abs(shadow_space.xy) - vec2(0.5);
+  			float len = length(max(q,0.0)) + min(max(q.x, q.y), 0.0);
+			float mask = smoothstep(0.5, 0.0, len);
 
-			// in spot light circle
-			spot_light *= smoothstep(1.0, 0.5, max(abs(shadow_space.x),abs(shadow_space.y)));
-			// occlusion
-			spot_light *= shadow(position, i);
+			mask *= shadow(position, i);
 
-			lighting += spot_light;
+			float diffuse = calcDiffuse(position, normal, ld);
+			float specular = metallic * calcSpecular(position, normal, ld, view_dir);
+
+			light_color *= mask;
+
+			lighting.diffuse += light_color * diffuse;
+			lighting.specular += light_color * specular;
 		}
 	}
 

@@ -13,6 +13,7 @@ namespace glob {
 namespace materials {
 enum Type {
   NORMAL,
+  METALLIC,
 };
 }
 
