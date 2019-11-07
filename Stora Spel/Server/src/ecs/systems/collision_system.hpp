@@ -431,16 +431,18 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
 void PlayerArenaCollision(entt::registry& registry) {
   auto view_player = registry.view<physics::OBB, PhysicsComponent>();
   auto view_arena = registry.view<physics::Arena>();
-
+  auto view_mesh_arena = registry.view<physics::MeshHitbox>();
   for (auto player : view_player) {
-    auto& player_hitbox = registry.get<physics::OBB>(player);
-    auto& physics_c = registry.get<PhysicsComponent>(player);
+    auto& player_hitbox = view_player.get<physics::OBB>(player);
+    auto& physics_c = view_player.get<PhysicsComponent>(player);
 
-    for (auto arena : view_arena) {
-      auto& arena_hitbox = view_arena.get(arena);
+    for (auto arena : view_mesh_arena) {
+      auto& arena_hitbox = view_mesh_arena.get(arena);
 
       physics::IntersectData data = Intersect(arena_hitbox, player_hitbox);
       if (data.collision) {
+        //std::cout << "collision " << data.move_vector << " " << data.normal
+        //          << std::endl;
         player_hitbox.center += data.move_vector;
         if (data.move_vector.y > 0.0f) {
           physics_c.is_airborne = false;

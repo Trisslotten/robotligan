@@ -49,6 +49,24 @@ void SatTest(const glm::vec3& axis, const Corners& c, float* min, float* max) {
   }
 }
 
+void SatTest(const glm::vec3& axis, const Triangle& tri, float* min, float* max) {
+  *min = 10000000.f;   // infinity
+  *max = -10000000.f;  // -infinity
+
+    float dot_val = glm::dot(axis, tri.p0);
+    if (dot_val < *min) *min = dot_val;
+    if (dot_val > *max) *max = dot_val;
+
+	dot_val = glm::dot(axis, tri.p1);
+    if (dot_val < *min) *min = dot_val;
+    if (dot_val > *max) *max = dot_val;
+
+	dot_val = glm::dot(axis, tri.p2);
+    if (dot_val < *min) *min = dot_val;
+    if (dot_val > *max) *max = dot_val;
+ 
+}
+
 bool IsBetween(float val, float lower, float upper) {
   return lower <= val && val <= upper;
 }
@@ -406,5 +424,89 @@ physics::IntersectData physics::Intersect(const MeshHitbox& m,
 
   //data.normal = glm::normalize(data.normal);
 
+  return data;
+}
+
+physics::IntersectData physics::Intersect(const physics::MeshHitbox& m, const physics::OBB& o){
+  IntersectData data;
+  data.normal = glm::vec3(0.f);
+  data.collision = false;
+  std::vector<float> mini1;
+  std::vector<float> mini2;
+  std::vector<float> maxi1;
+  std::vector<float> maxi2;
+  std::vector<glm::vec3> L;
+  mini1.reserve(13);
+  mini2.reserve(13);
+  maxi1.reserve(13);
+  maxi2.reserve(13);
+  L.reserve(13);
+  //std::cout << "begin" << std::endl;
+  Corners c1 = GetCorners(o);
+  float minimum = 1000.0f;
+  glm::vec3 Normal;
+  for (size_t i = 0; i < m.indices.size(); i += 3) {
+    Triangle tri{m.pos[m.indices[i]], m.pos[m.indices[i + 1]],
+                 m.pos[m.indices[i + 2]]};
+
+	
+    glm::vec3 E[3];
+    E[0] = tri.p1 - tri.p0;
+    E[1] = tri.p2 - tri.p0;
+    E[2] = E[1] - E[0];
+    glm::vec3 D = tri.p0 - o.center;
+    glm::vec3 N = glm::cross(E[0], E[1]);
+    L.push_back(N);
+
+	for (int k = 0; k < 3; ++k) {
+      L.push_back(o.normals[k]);
+      for (int j = 0; j < 3; ++j) {
+        L.push_back(glm::cross(o.normals[k], E[j]));
+      }
+	}
+    //L.clear();
+    //    L.push_back(glm::vec3(1.f, 0.f, 0.f));
+   
+    bool collision = true;
+    for (int k = 0; k < L.size(); ++k) {
+      float min1, max1, min2, max2;
+      SatTest(L[k], c1, &min1, &max1);
+      SatTest(L[k], tri, &min2, &max2);
+
+      if (!Overlaps(min1, max1, min2, max2)) {
+        collision = false;
+        break;
+      }
+      mini1.push_back(min1);
+      mini2.push_back(min2);
+      maxi1.push_back(max1);
+      maxi2.push_back(max2);
+    }
+    if (collision == true) {//do stuff
+      float min_dist = 1000.0f;
+      data.collision = true;
+      for (int k = 0; k < L.size(); ++k) {
+		if (glm::length(L[k]) > 0.f) {
+		  if ((maxi2[k] - mini1[k]) / glm::length(L[k]) < min_dist) {
+		    min_dist = (maxi2[k] - mini1[k]) / glm::length(L[k]);
+		    data.normal = L[k];
+		  }
+		  if ((maxi1[k] - mini2[k]) / glm::length(L[k]) < min_dist) {
+		    min_dist = (maxi1[k] - mini2[k]) / glm::length(L[k]);
+		    data.normal = -L[k];
+		  }
+		}
+      }
+      data.normal = glm::normalize(data.normal);
+      data.move_vector = min_dist * data.normal;
+      return data;
+	}
+    L.clear();
+    mini1.clear();
+    mini2.clear();
+    maxi1.clear();
+    maxi2.clear();
+  }
+ 
   return data;
 }

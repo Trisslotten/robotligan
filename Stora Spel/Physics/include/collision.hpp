@@ -23,6 +23,7 @@ EXPORT IntersectData Intersect(const Sphere& s, const OBB& o);
 EXPORT IntersectData Intersect(const Arena& a, const Sphere& s);
 EXPORT IntersectData Intersect(const Arena& a, const OBB& o);
 EXPORT IntersectData Intersect(const MeshHitbox& m, const Sphere& s);
+EXPORT IntersectData Intersect(const MeshHitbox& m, const OBB& o);
 }  // namespace physics
 
 #endif  // PHYSICS_INCLUDE_COLLISION_HPP_
