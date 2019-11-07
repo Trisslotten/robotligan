@@ -240,6 +240,7 @@ class PlayState : public State {
   void ReceiveGameEvent(const GameEvent& e);
   void Reset();
   void EndGame();
+  void OverTime();
   void CreateGoalParticles(float x);
 
   void OnServerFrame();
@@ -316,7 +317,7 @@ class PlayState : public State {
   glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
       gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_, gui_minimap_,
       gui_minimap_goal_red_, gui_minimap_goal_blue_, gui_minimap_player_red_,
-      gui_minimap_player_blue_, gui_minimap_ball_;
+      gui_minimap_player_blue_, gui_minimap_ball_, gui_crosshair_;
 
   std::vector<glob::GUIHandle> ability_handles_;
 
@@ -331,6 +332,7 @@ class PlayState : public State {
 
   Timer end_game_timer_;
   bool game_has_ended_ = false;
+  bool overtime_has_started_ = false;
   bool goals_swapped_ = false;
   EntityID my_target_ = -1;
 

@@ -127,6 +127,7 @@ PostProcess post_process;
 Blur blur;
 Shadows shadows;
 
+GLint is_invisible = 0;
 float num_frames = 0;
 
 Camera camera;
@@ -1139,6 +1140,8 @@ void SetCamera(Camera cam) { camera = cam; }
 
 void SetModelUseGL(bool use_gl) { kModelUseGL = use_gl; }
 
+void SetInvisibleEffect(bool in_bool) { is_invisible = (GLint)in_bool; }
+
 void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x,
             float opacity) {
   auto find_res = gui_elements.find(gui_h);
@@ -1386,6 +1389,7 @@ void Render() {
   post_process.AfterDraw(blur);
 
   fullscreen_shader.use();
+  fullscreen_shader.uniform("is_invisible", is_invisible);
   post_process.BindColorTex(0);
   fullscreen_shader.uniform("texture_color", 0);
   post_process.BindEmissionTex(1);
