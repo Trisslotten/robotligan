@@ -16,7 +16,7 @@ uniform mat4 inv_projection;
 
 uniform vec2 screen_dims;
 
-const float radius = 0.8;
+const float radius = 0.4;
 const float bias = 0.00004;
 
 void main() {
@@ -46,13 +46,14 @@ void main() {
 		offset.xyz  = offset.xyz * 0.5 + 0.5;
 
 		float samp_depth = texture(texture_depth, offset.xy).r;
-		float rangeCheck = smoothstep(0.0, 1.0, radius*0.005 / abs(depth - samp_depth));
+		float rangeCheck = smoothstep(0.0, 1.0, radius*0.01 / abs(depth - samp_depth));
 		
 		occlusion += (samp_depth + bias <= offset.z  ? 1.0 : 0.0) * rangeCheck;  
 	}
-	//occlusion*=4.0;
+	//occlusion*=2.0;
 	occlusion = 1- (occlusion /32.0);
 	//occlusion += 0.08;
+	occlusion = pow(occlusion, 2);
 	out_occlusion.r = min(1.0,occlusion);
 }
 

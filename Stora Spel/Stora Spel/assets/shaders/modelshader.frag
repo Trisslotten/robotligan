@@ -100,6 +100,6 @@ void main()
 
 	float depth = gl_FragCoord.z;
 	out_depth = vec4(depth,0,0,0);
-	out_normal = vec4(normal, 1);
+	out_normal = vec4(normalize(v_normal), 1);
 	out_pos = vec4(frag_pos.xyz, 1);
 }

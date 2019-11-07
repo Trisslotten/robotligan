@@ -104,7 +104,6 @@ void MainMenuState::CreateBackgroundEnitites() {
   registry_mainmenu_.assign<TransformComponent>(
       light_test2, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
-  glm::vec3 zero_vec = glm::vec3(0.0f);
   {
     // ladda in och skapa entity för bana
     auto arena = registry_mainmenu_.create();

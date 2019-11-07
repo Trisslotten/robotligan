@@ -26,6 +26,7 @@
 #include "particles/particle_system.hpp"
 #include "postprocess/blur.hpp"
 #include "postprocess/postprocess.hpp"
+#include "postprocess/ssao.hpp"
 #include "renderitems.hpp"
 #include "shader.hpp"
 #include "shadows/shadows.hpp"
@@ -46,6 +47,7 @@ ShaderProgram text3D_shader;
 ShaderProgram wireframe_shader;
 ShaderProgram gui_shader;
 ShaderProgram e2D_shader;
+ShaderProgram ssao_shader;
 
 std::vector<ShaderProgram *> mesh_render_group;
 
@@ -67,6 +69,9 @@ GLint is_invisible = 0;
 float num_frames = 0;
 
 Camera camera;
+Ssao ssao;
+
+bool use_ao = true;
 
 /*
 TextureHandle current_texture_guid = 1;
@@ -219,7 +224,7 @@ void CreateDefaultParticleTexture() {
 
   data.clear();
   data.resize(2 * 2 * 4, 1.0f);
-  
+
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0, GL_RGBA, GL_FLOAT,
                data.data());
 
@@ -273,18 +278,22 @@ void Init() {
   fullscreen_shader.add("fullscreenquad.frag");
   fullscreen_shader.compile();
 
+  ssao_shader.add("fullscreenquad.vert");
+  ssao_shader.add("ssao.frag");
+  ssao_shader.compile();
+
   particle_shader.add("particle.vert");
   particle_shader.add("particle.geom");
   particle_shader.add("particle.frag");
   particle_shader.compile();
 
   compute_shaders["default"] = std::make_unique<ShaderProgram>();
-  compute_shaders["default"]->add("Particle compute shaders/compute_shader.comp");
+  compute_shaders["default"]->add(
+      "Particle compute shaders/compute_shader.comp");
   compute_shaders["default"]->compile();
 
   compute_shaders["confetti"] = std::make_unique<ShaderProgram>();
-  compute_shaders["confetti"]->add(
-      "Particle compute shaders/confetti.comp");
+  compute_shaders["confetti"]->add("Particle compute shaders/confetti.comp");
   compute_shaders["confetti"]->compile();
 
   CreateDefaultParticleTexture();
@@ -438,6 +447,7 @@ void Init() {
   blur.Init();
   post_process.Init(blur);
   shadows.Init(blur);
+  ssao.Init(blur);
 
   buffer_particle_systems.reserve(10);
 }
@@ -486,7 +496,8 @@ ModelHandle GetTransparentModel(const std::string &filepath) {
 
 ParticleSettings ProccessMap(
     ParticleSettings ps,
-    const std::unordered_map<std::string, std::string> &map, const std::vector<std::string>& colors) {
+    const std::unordered_map<std::string, std::string> &map,
+    const std::vector<std::string> &colors) {
   bool color_delta = false;
   glm::vec4 end_color = glm::vec4(1.f);
   bool vel_delta = false;
@@ -494,7 +505,6 @@ ParticleSettings ProccessMap(
   bool size_delta = false;
   float end_size;
 
-  
   for (auto it : map) {
     if (it.first == "color") {
       std::stringstream ss(it.second);
@@ -1099,6 +1109,8 @@ void SetCamera(Camera cam) { camera = cam; }
 
 void SetModelUseGL(bool use_gl) { kModelUseGL = use_gl; }
 
+void SetSSAO(bool val) { use_ao = val; }
+
 void SetInvisibleEffect(bool in_bool) { is_invisible = (GLint)in_bool; }
 
 void ReloadShaders() {
@@ -1350,12 +1362,36 @@ void Render() {
   }
   post_process.AfterDraw(blur);
 
+  if (use_ao) {
+    ssao.BindFrameBuffer();
+    ssao_shader.use();
+    post_process.BindDepthTex(0);
+    ssao_shader.uniform("texture_depth", 0);
+    post_process.BindNormalTex(1);
+    ssao_shader.uniform("texture_normals", 1);
+    ssao.BindNoiseTexture(2);
+    ssao_shader.uniform("texture_noise", 2);
+    post_process.BindPositionTex(3);
+    ssao_shader.uniform("texture_position", 3);
+    ssao_shader.uniformv("samples", (GLuint)ssao.GetKernel().size(),
+                         ssao.GetKernel().data());
+    ssao_shader.uniform("projection", cam_transform);
+    ssao_shader.uniform("inv_projection", inverse(cam_transform));
+    ssao_shader.uniform("screen_dims", window::GetWindowDimensions());
+
+    DrawFullscreenQuad();  // do ssao pass same way we do final color pass
+    ssao.Finish(blur);
+  }
+
   fullscreen_shader.use();
   fullscreen_shader.uniform("is_invisible", is_invisible);
   post_process.BindColorTex(0);
   fullscreen_shader.uniform("texture_color", 0);
   post_process.BindEmissionTex(1);
   fullscreen_shader.uniform("texture_emission", 1);
+  ssao.BindSsaoTexture(2);
+  fullscreen_shader.uniform("texture_ssao", 2);
+  fullscreen_shader.uniform("use_ao", use_ao);
   DrawFullscreenQuad();
 
   glBindVertexArray(quad_vao);
