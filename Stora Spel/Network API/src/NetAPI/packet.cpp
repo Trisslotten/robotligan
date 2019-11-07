@@ -40,4 +40,10 @@ NetAPI::Common::Packet::Packet(const char* in_buffer, long in_size) {
   }
 }
 
-NetAPI::Common::Packet::~Packet() { delete[] data_; }
+NetAPI::Common::Packet::~Packet() {
+	if (data_)
+	{
+		delete[] data_;
+		data_ = nullptr;
+	}
+}

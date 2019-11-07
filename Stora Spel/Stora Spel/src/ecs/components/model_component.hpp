@@ -7,6 +7,9 @@
 struct ModelComponent {
   std::vector<glob::ModelHandle> handles;
 
+
+  bool invisible = false;
+  
   // TODO: have a material index for each handle in handles-vector
   int diffuse_index = 0;
   

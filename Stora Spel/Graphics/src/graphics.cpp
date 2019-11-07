@@ -36,6 +36,71 @@ bool kModelUseGL = true;
 
 namespace {
 
+struct RenderItem {
+  Model *model;
+  glm::mat4 transform;
+
+  int material_index;
+};
+
+struct GUIItem {
+  Elements2D *gui;
+  glm::vec2 pos;
+  float scale;
+  float scale_x;
+  float opacity;
+};
+
+struct E2DItem {
+  Elements2D *e2D;
+  glm::vec3 pos;
+  float scale;
+  glm::mat4 rot;
+};
+
+struct BoneAnimatedRenderItem {
+  Model *model;
+  glm::mat4 transform;
+  std::vector<glm::mat4>
+      bone_transforms;  // may be a performance bottleneck, pointer instead?
+  int numBones;
+
+  int material_index = 0;
+};
+
+struct TextItem {
+  Font2D *font = nullptr;
+  glm::vec2 pos{0};
+  unsigned int size = 0;
+  std::string text;
+  glm::vec4 color;
+  bool visible;
+  bool equal_spacing;
+  float spacing;
+};
+
+struct Text3DItem {
+  Font2D *font = nullptr;
+  glm::vec3 pos{0};
+  float size = 0.f;
+  std::string text;
+  glm::vec4 color = glm::vec4(1.f);
+  glm::mat4 rotation = glm::mat4(1.f);
+};
+
+struct LightItem {
+  glm::vec3 pos;
+  glm::vec3 color;
+  glm::float32 radius;
+  glm::float32 ambient;
+};
+
+struct TrailItem {
+  std::vector<glm::vec3> position_history;
+  float width;
+  glm::vec4 color;
+};
+
 ShaderProgram fullscreen_shader;
 ShaderProgram model_shader;
 ShaderProgram particle_shader;
@@ -62,6 +127,9 @@ GLuint default_normal_texture;
 PostProcess post_process;
 Blur blur;
 Shadows shadows;
+
+GLint is_invisible = 0;
+float num_frames = 0;
 
 Camera camera;
 
@@ -206,6 +274,21 @@ void CreateDefaultParticleTexture() {
                data.data());
 
   textures["default"] = texture;
+
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  data.clear();
+  data.resize(2 * 2 * 4, 1.0f);
+  
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2, 2, 0, GL_RGBA, GL_FLOAT,
+               data.data());
+
+  textures["quad"] = texture;
 }
 
 GLint TextureFromFile(std::string filename) {
@@ -261,11 +344,17 @@ void Init() {
   particle_shader.compile();
 
   compute_shaders["default"] = std::make_unique<ShaderProgram>();
-  compute_shaders["default"]->add("compute_shader.comp");
+  compute_shaders["default"]->add("Particle compute shaders/compute_shader.comp");
   compute_shaders["default"]->compile();
+
+  compute_shaders["confetti"] = std::make_unique<ShaderProgram>();
+  compute_shaders["confetti"]->add(
+      "Particle compute shaders/confetti.comp");
+  compute_shaders["confetti"]->compile();
 
   CreateDefaultParticleTexture();
   textures["smoke"] = TextureFromFile("smoke.png");
+  textures["confetti"] = TextureFromFile("confetti.png");
 
   model_shader.add("modelshader.vert");
   model_shader.add("modelshader.frag");
@@ -462,13 +551,15 @@ ModelHandle GetTransparentModel(const std::string &filepath) {
 
 ParticleSettings ProccessMap(
     ParticleSettings ps,
-    const std::unordered_map<std::string, std::string> &map) {
+    const std::unordered_map<std::string, std::string> &map, const std::vector<std::string>& colors) {
   bool color_delta = false;
   glm::vec4 end_color = glm::vec4(1.f);
   bool vel_delta = false;
   float end_vel = 0.0f;
   bool size_delta = false;
   float end_size;
+
+  
   for (auto it : map) {
     if (it.first == "color") {
       std::stringstream ss(it.second);
@@ -478,7 +569,7 @@ ParticleSettings ProccessMap(
       ss >> col.z;
       ss >> col.w;
 
-      ps.color = col;
+      ps.colors[0] = col;
     } else if (it.first == "end_color") {
       color_delta = true;
       std::stringstream ss(it.second);
@@ -527,7 +618,15 @@ ParticleSettings ProccessMap(
       float vel;
       ss >> vel;
 
+      if (ps.velocity == ps.min_velocity) ps.min_velocity = vel;
+
       ps.velocity = vel;
+    } else if (it.first == "min_velocity") {
+      std::stringstream ss(it.second);
+      float vel;
+      ss >> vel;
+
+      ps.min_velocity = vel;
     } else if (it.first == "end_velocity") {
       vel_delta = true;
       std::stringstream ss(it.second);
@@ -594,7 +693,20 @@ ParticleSettings ProccessMap(
     }
   }
 
-  if (color_delta) ps.color_delta = (ps.color - end_color) / ps.time;
+  if (colors.size() > 0) ps.colors.clear();
+
+  for (auto color : colors) {
+    std::stringstream ss(color);
+    glm::vec4 col;
+    ss >> col.x;
+    ss >> col.y;
+    ss >> col.z;
+    ss >> col.w;
+
+    ps.colors.push_back(col);
+  }
+
+  if (color_delta) ps.color_delta = (ps.colors[0] - end_color) / ps.time;
   if (vel_delta) ps.velocity_delta = (ps.velocity - end_vel) / ps.time;
   if (size_delta) ps.size_delta = (ps.size - end_size) / ps.time;
 
@@ -622,6 +734,7 @@ ParticleSettings ReadParticleFile(std::string filename) {
     return {};
   }
 
+  std::vector<std::string> colors;
   // Read through the settings file
   while (settings_file) {
     // Read up to the end of the line. Save as the current line
@@ -644,6 +757,8 @@ ParticleSettings ReadParticleFile(std::string filename) {
 
       // Save what has been read into the map
       settings_map[key_str] = val_str;
+
+      if (key_str == "color") colors.push_back(val_str);
     }
   }
 
@@ -653,7 +768,7 @@ ParticleSettings ReadParticleFile(std::string filename) {
   ps.texture = textures["default"];
   ps.compute_shader = compute_shaders["default"].get();
 
-  ps = ProccessMap(ps, settings_map);
+  ps = ProccessMap(ps, settings_map, colors);
 
   return ps;
 }
@@ -737,7 +852,7 @@ void SetParticleSettings(ParticleSystemHandle handle,
 
   int index = find_res->second;
   ParticleSettings ps = buffer_particle_systems[index].system.GetSettings();
-  auto settings = ProccessMap(ps, map);
+  auto settings = ProccessMap(ps, map, {});
 
   buffer_particle_systems[index].system.Settings(settings);
 }
@@ -1049,6 +1164,8 @@ void SetCamera(Camera cam) { camera = cam; }
 
 void SetModelUseGL(bool use_gl) { kModelUseGL = use_gl; }
 
+void SetInvisibleEffect(bool in_bool) { is_invisible = (GLint)in_bool; }
+
 void ReloadShaders() {
   fullscreen_shader.reload();
   model_shader.reload();
@@ -1299,6 +1416,7 @@ void Render() {
   post_process.AfterDraw(blur);
 
   fullscreen_shader.use();
+  fullscreen_shader.uniform("is_invisible", is_invisible);
   post_process.BindColorTex(0);
   fullscreen_shader.uniform("texture_color", 0);
   post_process.BindEmissionTex(1);

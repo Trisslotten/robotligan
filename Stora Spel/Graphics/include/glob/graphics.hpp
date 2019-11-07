@@ -25,8 +25,8 @@ struct animData {
   std::vector<Joint> bones;
   std::vector<Animation> animations;
   glm::mat4 globalInverseTransform;
-  bool humanoid = false;
   // groups
+  bool humanoid = false;
   int hip = -1;
   std::vector<int> upperBody;
   std::vector<int> spine;
@@ -135,6 +135,8 @@ EXPORT void SetCamera(Camera camera);
 EXPORT void SetModelUseGL(bool use_gl);
 
 EXPORT void ReloadShaders();
+
+EXPORT void SetInvisibleEffect(bool in_bool);
 
 /*
  * Render all items submitted this frame

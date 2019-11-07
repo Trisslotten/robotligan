@@ -44,6 +44,8 @@ struct PlayerComponent {  // Server side
   // States
   bool sprinting = false;
   bool running = false;
+  bool invisible = false;
+  float invisibility_remaining = 0.0f;
 
   // Comparasion Operators
   bool operator==(const PlayerComponent& rhs) {

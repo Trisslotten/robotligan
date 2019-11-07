@@ -73,9 +73,9 @@ void SoundSystem::Init(Engine* engine) {
     sound_engine_.GetSound("assets/sound/teleport_2.mp3");
   sound_ability_force_push_impact_ =
     sound_engine_.GetSound("assets/sound/forcepush.mp3");
-
   sound_ability_fake_ball_poof_ =
-      sound_engine_.GetSound("assets/sound/poof.mp3");
+    sound_engine_.GetSound("assets/sound/poof.mp3");
+  sound_ability_invisibility_end_ = sound_engine_.GetSound("assets/sound/invis_end.mp3");
 
   ability_sounds_[AbilityID::GRAVITY_CHANGE] =
     sound_engine_.GetSound("assets/sound/gravitydrop.wav");
@@ -88,13 +88,13 @@ void SoundSystem::Init(Engine* engine) {
   ability_sounds_[AbilityID::HOMING_BALL] =
     sound_engine_.GetSound("assets/sound/homingball.wav");
   ability_sounds_[AbilityID::SWITCH_GOALS] =
-      sound_engine_.GetSound("assets/sound/switch_goals.mp3");
-  ability_sounds_[AbilityID::BUILD_WALL] =
-      sound_engine_.GetSound("assets/sound/build_wall.mp3");
-  ability_sounds_[AbilityID::FAKE_BALL] =
-      sound_engine_.GetSound("assets/sound/fake_ball.wav");
-
     sound_engine_.GetSound("assets/sound/switch_goals.mp3");
+  ability_sounds_[AbilityID::BUILD_WALL] =
+    sound_engine_.GetSound("assets/sound/build_wall.mp3");
+  ability_sounds_[AbilityID::FAKE_BALL] =
+    sound_engine_.GetSound("assets/sound/fake_ball.wav");
+  ability_sounds_[AbilityID::INVISIBILITY] =
+    sound_engine_.GetSound("assets/sound/invis_pop.mp3");
 }
 
 void SoundSystem::PlayAmbientSound(entt::registry& registry) {
@@ -111,19 +111,17 @@ void SoundSystem::PlayAmbientSound(entt::registry& registry) {
 
 void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
   auto registry = engine_->GetCurrentRegistry();
-
   // Listen for GameEvents and play associated sounds
-  switch (event.type) {
-  case GameEvent::GOAL: {
+
+  if (event.type == GameEvent::GOAL) {
     auto view = registry->view<CameraComponent, SoundComponent>();
     for (auto entity : view) {
       auto& sound_c = view.get<SoundComponent>(entity);
       sound_c.sound_player->Play(sound_goal_, 0, 0.1f);
       break;
     }
-    break;
   }
-  case GameEvent::KICK: {
+  if (event.type == GameEvent::KICK) {
     auto view = registry->view<IDComponent, SoundComponent>();
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
@@ -133,9 +131,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         break;
       }
     }
-    break;
   }
-  case GameEvent::HIT: {
+  if (event.type == GameEvent::HIT) {
     auto view = registry->view<IDComponent, SoundComponent>();
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
@@ -145,9 +142,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         break;
       }
     }
-    break;
   }
-  case GameEvent::NUDGE: {
+  if (event.type == GameEvent::NUDGE) {
     auto view = registry->view<IDComponent, BallComponent, SoundComponent>();
     for (auto entity : view) {
       auto ball_c = view.get<BallComponent>(entity);
@@ -159,9 +155,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         break;
       }
     }
-    break;
   }
-  case GameEvent::BOUNCE: {
+  if (event.type == GameEvent::BOUNCE) {
     auto view = registry->view<IDComponent, BallComponent, SoundComponent>();
     for (auto entity : view) {
       auto ball_c = view.get<BallComponent>(entity);
@@ -172,9 +167,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         break;
       }
     }
-    break;
   }
-  case GameEvent::LAND: {
+  if (event.type == GameEvent::LAND) {
     auto view = registry->view<IDComponent, SoundComponent>();
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
@@ -184,9 +178,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         break;
       }
     }
-    break;
   }
-  case GameEvent::JUMP: {
+  if (event.type == GameEvent::JUMP) {
     auto view = registry->view<IDComponent, SoundComponent>();
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
@@ -196,13 +189,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         break;
       }
     }
-    break;
   }
-  case GameEvent::PRIMARY_USED:
-  case GameEvent::SECONDARY_USED: {
-    break;
-  }
-  case GameEvent::GRAVITY_DROP: {
+  if (event.type == GameEvent::GRAVITY_DROP) {
     auto view = registry->view<CameraComponent, SoundComponent>();
     for (auto entity : view) {
       auto& sound_c = view.get<SoundComponent>(entity);
@@ -210,9 +198,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         0, 0.6f);
       break;
     }
-    break;
   }
-  case GameEvent::SUPER_KICK: {
+  if (event.type == GameEvent::SUPER_KICK) {
     auto view = registry->view<IDComponent, SoundComponent>();
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
@@ -223,9 +210,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         break;
       }
     }
-    break;
   }
-  case GameEvent::MISSILE_FIRE: {
+  if (event.type == GameEvent::MISSILE_FIRE) {
     auto view = registry->view<IDComponent, SoundComponent>();
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
@@ -240,9 +226,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         break;
       }
     }
-    break;
   }
-  case GameEvent::MISSILE_IMPACT: {
+  if (event.type == GameEvent::MISSILE_IMPACT) {
     auto view = registry->view<IDComponent, SoundComponent>();
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
@@ -257,9 +242,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         break;
       }
     }
-    break;
   }
-  case GameEvent::TELEPORT_CAST: {
+  if (event.type == GameEvent::TELEPORT_CAST) {
     auto view = registry->view<IDComponent, SoundComponent>();
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
@@ -270,9 +254,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         break;
       }
     }
-    break;
   }
-  case GameEvent::TELEPORT_IMPACT: {
+  if (event.type == GameEvent::TELEPORT_IMPACT) {
     auto view = registry->view<IDComponent, SoundComponent>();
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
@@ -282,9 +265,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         break;
       }
     }
-    break;
   }
-  case GameEvent::HOMING_BALL: {
+  if (event.type == GameEvent::HOMING_BALL) {
     auto view = registry->view<IDComponent, SoundComponent>();
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
@@ -295,9 +277,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         break;
       }
     }
-    break;
   }
-  case GameEvent::FORCE_PUSH: {
+  if (event.type == GameEvent::FORCE_PUSH) {
     auto view = registry->view<IDComponent, SoundComponent>();
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
@@ -307,9 +288,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         break;
       }
     }
-    break;
   }
-  case GameEvent::FORCE_PUSH_IMPACT: {
+  if (event.type == GameEvent::FORCE_PUSH_IMPACT) {
     auto view = registry->view<IDComponent, SoundComponent>();
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
@@ -322,9 +302,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         break;
       }
     }
-    break;
   }
-  case GameEvent::SWITCH_GOALS: {
+  if (event.type == GameEvent::SWITCH_GOALS) {
     auto view = registry->view<CameraComponent, SoundComponent>();
     for (auto entity : view) {
       auto& sound_c = view.get<SoundComponent>(entity);
@@ -332,9 +311,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         0.3f);
       break;
     }
-    break;
   }
-  case GameEvent::SWITCH_GOALS_DONE: {
+  if (event.type == GameEvent::SWITCH_GOALS_DONE) {
     auto view = registry->view<CameraComponent, SoundComponent>();
     for (auto entity : view) {
       auto& sound_c = view.get<SoundComponent>(entity);
@@ -342,22 +320,20 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         0.3f);
       break;
     }
-    break;
   }
-  case GameEvent::BUILD_WALL: {
+  if (event.type == GameEvent::BUILD_WALL) {
     auto view = registry->view<IDComponent, SoundComponent>();
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.build_wall.wall_id) {
         sound_c.sound_player->Play(ability_sounds_[AbilityID::BUILD_WALL], 0,
-                                   10.0f);
+          10.0f);
         break;
       }
     }
-    break;
   }
-  case GameEvent::FAKE_BALL_CREATED: {
+  if (event.type == GameEvent::FAKE_BALL_CREATED) {
     auto view = registry->view<IDComponent, SoundComponent>();
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
@@ -367,9 +343,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         break;
       }
     }
-    break;
   }
-  case GameEvent::FAKE_BALL_POOF: {
+  if (event.type == GameEvent::FAKE_BALL_POOF) {
     auto view = registry->view<IDComponent, SoundComponent>();
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
@@ -379,8 +354,28 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         break;
       }
     }
-    break;
   }
+  if (event.type == GameEvent::INVISIBILITY_CAST) {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.invisibility_cast.player_id) {
+        sound_c.sound_player->Play(ability_sounds_[AbilityID::INVISIBILITY]);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::INVISIBILITY_END) {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.invisibility_end.player_id) {
+        sound_c.sound_player->Play(sound_ability_invisibility_end_);
+        break;
+      }
+    }
   }
 }
 

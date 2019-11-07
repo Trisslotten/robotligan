@@ -32,9 +32,12 @@ void RenderSystem(entt::registry& registry) {
     if (registry.has<AnimationComponent>(model) == false) {
       auto& t = view_model.get<TransformComponent>(model);
       auto& m = view_model.get<ModelComponent>(model);
-      glob::Submit(m.handles,
-                   glm::translate(t.position) * glm::toMat4(t.rotation) *
-                       glm::translate(-m.offset) * glm::scale(t.scale), m.diffuse_index);
+
+      if (!m.invisible) {
+        glob::Submit(m.handles,
+          glm::translate(t.position) * glm::toMat4(t.rotation) *
+          glm::translate(-m.offset) * glm::scale(t.scale), m.diffuse_index);
+      }
     }
   }
 
@@ -45,11 +48,13 @@ void RenderSystem(entt::registry& registry) {
     auto& m = animated_models.get<ModelComponent>(model);
     auto& a = animated_models.get<AnimationComponent>(model);
 
-    glob::SubmitBAM(m.handles,
-                    glm::translate(t.position) *
-                        glm::toMat4(t.rotation + m.rot_offset) *
-                        glm::translate(-m.offset) * glm::scale(t.scale),
-                    a.bone_transforms, m.diffuse_index);
+    if (!m.invisible) {
+      glob::SubmitBAM(m.handles,
+        glm::translate(t.position) *
+        glm::toMat4(t.rotation + m.rot_offset) *
+        glm::translate(-m.offset) * glm::scale(t.scale),
+        a.bone_transforms, m.diffuse_index);
+    }
   }
 
   // submit particles
