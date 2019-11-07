@@ -99,9 +99,9 @@ void PlayState::CreateGoalParticles(float x) {
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
   glob::SetEmitPosition(handle, glm::vec3(x * 0.85f, -10.f, -25.f));
-  //std::unordered_map<std::string, std::string> map;
-  //map["color"] = "1.0 0.0 0.0 0.4";
-  //glob::SetParticleSettings(handle, map);
+  // std::unordered_map<std::string, std::string> map;
+  // map["color"] = "1.0 0.0 0.0 0.4";
+  // glob::SetParticleSettings(handle, map);
   // auto ball_view = registry_gameplay_.view<
 
   registry_gameplay_.assign<ParticleComponent>(e, handles, offsets, directions);
@@ -506,8 +506,8 @@ void PlayState::UpdateGameplayTimer() {
 
 void PlayState::DrawNameOverPlayer() {
   auto player_view =
-      registry_gameplay_
-          .view<PlayerComponent, TransformComponent, ModelComponent, IDComponent>();
+      registry_gameplay_.view<PlayerComponent, TransformComponent,
+                              ModelComponent, IDComponent>();
 
   auto& my_transform = registry_gameplay_.get<TransformComponent>(my_entity_);
   for (auto entity : player_view) {
@@ -1423,7 +1423,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
     }
     case GameEvent::INVISIBILITY_CAST: {
       auto registry = engine_->GetCurrentRegistry();
-      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent, TransformComponent>();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, ModelComponent,
+                         TransformComponent>();
       for (auto entity : view_controller) {
         IDComponent& id_c = view_controller.get<IDComponent>(entity);
         PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
@@ -1434,7 +1436,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         if (id_c.id == e.invisibility_cast.player_id) {
           m_c.invisible = true;
 
-          //Particles
+          // Particles
           entt::entity particle_entity = registry_gameplay_.create();
           glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
           std::vector<glob::ParticleSystemHandle> in_handles;
@@ -1445,8 +1447,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           glob::SetEmitPosition(handle, t_c.position);
           in_handles.push_back(handle);
 
-          ParticleComponent& par_c = registry_gameplay_.assign<ParticleComponent>(
-              particle_entity, in_handles, in_offsets, in_directions);
+          ParticleComponent& par_c =
+              registry_gameplay_.assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
 
           if (e.invisibility_cast.player_id == my_id_) {
             // TODO: Add effect to let player know it's invisible
@@ -1458,7 +1461,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
     }
     case GameEvent::INVISIBILITY_END: {
       auto registry = engine_->GetCurrentRegistry();
-      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent, TransformComponent>();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, ModelComponent,
+                         TransformComponent>();
       for (auto entity : view_controller) {
         IDComponent& id_c = view_controller.get<IDComponent>(entity);
         PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
@@ -1500,19 +1505,19 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       std::vector<glm::vec3> offsets;
       std::vector<glm::vec3> directions;
 
-	  glob::SetParticleSettings(handle, "force_push.txt");
+      glob::SetParticleSettings(handle, "force_push.txt");
 
       auto registry = engine_->GetCurrentRegistry();
       auto view_controller = registry->view<IDComponent, TransformComponent>();
-      
+
       for (auto proj_ent : view_controller) {
         auto& id_c = view_controller.get<IDComponent>(proj_ent);
         auto& trans_c = view_controller.get<TransformComponent>(proj_ent);
 
         if (id_c.id == e.force_push_impact.projectile_id) {
-          glob::SetEmitPosition(handle, trans_c.position);  
-		  break;
-		}
+          glob::SetEmitPosition(handle, trans_c.position);
+          break;
+        }
       }
 
       registry_gameplay_.assign<ParticleComponent>(ent, handles, offsets,
@@ -1599,6 +1604,39 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           ParticleComponent& par_c =
               registry_gameplay_.assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
+          break;
+        }
+      }
+      break;
+    }
+    case GameEvent::HOMING_BALL: {
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller =
+          registry->view<BallComponent, TrailComponent, IDComponent>();
+      for (auto entity : view_controller) {
+        BallComponent& ball_c = view_controller.get<BallComponent>(entity);
+        TrailComponent& trail_c =
+            view_controller.get<TrailComponent>(entity);
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+
+        if (id_c.id == e.homing_ball.ball_id) {
+          trail_c.color = glm::vec4(0.74f, 0.19f, 1.0f, 1.0f);
+          break;
+        }
+      }
+      break;
+    }
+    case GameEvent::HOMING_BALL_END: {
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller =
+          registry->view<BallComponent, TrailComponent, IDComponent>();
+      for (auto entity : view_controller) {
+        BallComponent& ball_c = view_controller.get<BallComponent>(entity);
+        TrailComponent& trail_c = view_controller.get<TrailComponent>(entity);
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+
+        if (id_c.id == e.homing_ball_end.ball_id) {
+          trail_c.color = glm::vec4(0, 1, 0, 1);
           break;
         }
       }

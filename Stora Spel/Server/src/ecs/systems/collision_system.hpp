@@ -26,6 +26,7 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
                             PhysicsComponent& physics_c);
 void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
                          long player_id);
+void EndHomingBall(entt::registry& registry, entt::entity& in_ball);
 
 std::ostream& operator<<(std::ostream& o, glm::vec3 v) {
   return o << v.x << " " << v.y << " " << v.z;
@@ -99,7 +100,7 @@ void UpdateCollisions(entt::registry& registry) {
       if (data.collision) {
         ball_collisions[ball_counter].collision_list.push_back(
             {arena, data.normal, data.move_vector, ARENA});
-        ball_ball.is_homing = false;
+        EndHomingBall(registry, ball_entity);
         ball_ball.homer_cid = -1;
         // std::cout << "x: " << data.normal.x << " y: " << data.normal.y
         //          << " z: " << data.normal.z << std::endl;
@@ -107,7 +108,7 @@ void UpdateCollisions(entt::registry& registry) {
         auto& arena_hitbox = view_arena.get<FailSafeArenaComponent>(arena);
         data = Intersect(arena_hitbox.arena, ball_hitbox);
         if (data.collision) {
-          ball_ball.is_homing = false;
+          EndHomingBall(registry, ball_entity);
           ball_ball.homer_cid = -1;
           ball_collisions[ball_counter].collision_list.push_back(
               {arena, data.normal, data.move_vector, ARENA});
@@ -126,6 +127,7 @@ void UpdateCollisions(entt::registry& registry) {
         physics::IntersectData data = Intersect(ball_hitbox, wall_hitbox);
 
         if (data.collision) {
+          EndHomingBall(registry, ball_entity);
           ball_collisions[ball_counter].collision_list.push_back(
               {wall, data.normal, data.move_vector, WALL});
           break;
@@ -144,7 +146,9 @@ void UpdateCollisions(entt::registry& registry) {
             {player, data.normal, data.move_vector, PLAYER});
         ball_ball.prev_touch = ball_ball.last_touch;
         ball_ball.last_touch = player_player.client_id;
-        ball_ball.is_homing = false;
+
+       EndHomingBall(registry, ball_entity);
+
         ball_ball.homer_cid = -1;
         // missile_system::SetBallsAreHoming(false);
       }
@@ -911,6 +915,17 @@ void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
       break;
     }
   }
+}
+
+void EndHomingBall(entt::registry& registry, entt::entity& in_ball) {
+  BallComponent& ball_c = registry.get<BallComponent>(in_ball);
+  ball_c.is_homing = false;
+  // Save game event
+  IDComponent& ball_id_c = registry.get<IDComponent>(in_ball);
+  GameEvent homing_ball_end_event;
+  homing_ball_end_event.type = GameEvent::HOMING_BALL_END;
+  homing_ball_end_event.homing_ball_end.ball_id = ball_id_c.id;
+  dispatcher.enqueue(homing_ball_end_event);
 }
 
 void DestroyEntity(entt::registry& registry, entt::entity entity) {

@@ -97,11 +97,12 @@ void Update(entt::registry& registry, float dt) {
 
 void UpdateHomingBalls(entt::registry& registry, float dt) {
   auto view_balls =
-      registry.view<BallComponent, PhysicsComponent, TransformComponent>();
+      registry.view<BallComponent, PhysicsComponent, TransformComponent, IDComponent>();
   for (auto ball : view_balls) {
     auto& ball_ball_c = registry.get<BallComponent>(ball);
     auto& ball_trans_c = registry.get<TransformComponent>(ball);
     auto& ball_phys_c = registry.get<PhysicsComponent>(ball);
+    auto& ball_id_c = registry.get<IDComponent>(ball);
 
     if (ball_ball_c.is_homing) {
       entt::entity play;
@@ -130,6 +131,12 @@ void UpdateHomingBalls(entt::registry& registry, float dt) {
         balls_are_homing = false;
         ball_ball_c.is_homing = false;
         ball_ball_c.homer_cid = -1;
+
+        // Save game event
+        GameEvent homing_ball_end_event;
+        homing_ball_end_event.type = GameEvent::HOMING_BALL_END;
+        homing_ball_end_event.homing_ball_end.ball_id = ball_id_c.id;
+        dispatcher.enqueue(homing_ball_end_event);
       }
     }
   }

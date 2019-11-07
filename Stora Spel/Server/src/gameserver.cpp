@@ -67,6 +67,7 @@ void GameServer::Init(double in_update_rate) {
 
 void GameServer::Update(float dt) {
   server_.Update();
+  dispatcher.update();
   packets_.clear();
   for (auto& [client_id, client_data] : server_.GetClients()) {
     packets_[client_id] = NetAPI::Common::Packet();
