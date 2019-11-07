@@ -40,6 +40,10 @@ void SettingsState::Update(float dt) {
   if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
     engine_->ChangeState(engine_->GetPreviousStateType());
   }
+  if (Input::IsKeyPressed(GLFW_KEY_ENTER)) {
+    SaveSettings();
+    engine_->ChangeState(engine_->GetPreviousStateType());
+  }
 }
 
 void SettingsState::UpdateNetwork() {
@@ -58,6 +62,13 @@ void SettingsState::CreateSettingsMenu() {
   b_c = GenerateButtonEntity(registry_settings_, "APPLY", glm::vec2(60, 100),
                              font_test_);
   b_c->button_func = [=]() { SaveSettings(); };
+  // OK (APPLY + BACK) BUTTON
+  b_c = GenerateButtonEntity(registry_settings_, "SAVE", glm::vec2(60, 150),
+                             font_test_);
+  b_c->button_func = [=]() {
+    SaveSettings();
+    engine_->ChangeState(engine_->GetPreviousStateType());
+  };
 
   glm::vec2 graphics_start_pos =
       glm::vec2(35, glob::window::GetWindowDimensions().y - 175);
@@ -134,6 +145,6 @@ void SettingsState::SaveSettings() {
   GlobalSettings::Access()->WriteValue("INPUT_MOUSE_SENS", setting_mouse_sens_);
   GlobalSettings::Access()->StringWriteValue("USERNAME", setting_username_);
 
-  //printf("Username saved: %s \n", setting_username_.c_str());
+  // printf("Username saved: %s \n", setting_username_.c_str());
   engine_->UpdateSettingsValues();
 }

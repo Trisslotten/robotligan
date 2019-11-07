@@ -379,7 +379,8 @@ void LobbyState::CreateGUIElements() {
   button_comp.gui_handle_current = ready_back_normal_;
   button_comp.gui_handle_hover = ready_back_hover_;
   button_comp.gui_handle_icon = ready_empty_icon_;
-  button_comp.bounds = glm::vec2(50, 50);
+  button_comp.click_offset = glm::vec2(-150, 0);
+  button_comp.bounds = glm::vec2(200, 50);
   button_comp.button_func = [&] {
     if (engine_->GetServerState() == ServerStateType::LOBBY) {
       ReadyButtonFunc();

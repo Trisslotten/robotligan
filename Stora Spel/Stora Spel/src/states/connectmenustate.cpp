@@ -1,4 +1,3 @@
-#include <glob/window.hpp>
 #include <GLFW/glfw3.h>
 #include <glob/window.hpp>
 #include "engine.hpp"
@@ -12,7 +11,7 @@ void ConnectMenuState::Startup() {
   auto dim = glob::window::GetWindowDimensions();
   // PLAY BUTTON - change registry to registry_gameplay_
   ButtonComponent* b_c = GenerateButtonEntity(
-      registry_connect_menu_, "Connect",
+      registry_connect_menu_, "CONNECT",
       glm::vec2((glob::window::GetWindowDimensions().x / 2.0f -
                  glob::window::GetWindowDimensions().x * 0.025),
                 (glob::window::GetWindowDimensions()).y / 2.8f),
@@ -25,9 +24,8 @@ void ConnectMenuState::Startup() {
       isconnected_ = 1;
     }
   };
-  ButtonComponent* b_back = GenerateButtonEntity(
-      registry_connect_menu_, "Back",
-      glm::vec2(0.0f + dim.x * 0.03, dim.y * 0.05), font_test_);
+  ButtonComponent* b_back = GenerateButtonEntity(registry_connect_menu_, "BACK",
+                                                 glm::vec2(60, 50), font_test_);
   b_back->button_func = [&]() { engine_->ChangeState(StateType::MAIN_MENU); };
   glm::vec2 ip_pos =
       glm::vec2((glob::window::GetWindowDimensions().x / 2.0f -
@@ -92,7 +90,7 @@ void ConnectMenuState::Update(float dt) {
     client.Disconnect();
     engine_->ChangeState(StateType::MAIN_MENU);
   }
-  std::string status = "Status: ";
+  std::string status = "STATUS: ";
   auto pos =
       glm::vec2((windowsize.x - windowsize.x * 0.25), windowsize.y * 0.03);
   if (connection_success_) {
