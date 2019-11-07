@@ -905,6 +905,7 @@ void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
       GameEvent teleport_impact_event;
       teleport_impact_event.type = GameEvent::TELEPORT_IMPACT;
       teleport_impact_event.teleport_impact.player_id = id_c.id;
+      teleport_impact_event.teleport_impact.hit_pos = hit_pos;
       dispatcher.trigger(teleport_impact_event);
 
       break;
