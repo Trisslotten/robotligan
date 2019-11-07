@@ -117,6 +117,8 @@
     <None Include="Assets\shaders\trail.vert" />
     <None Include="Assets\shaders\trail.frag" />
     <None Include="Assets\Mech\Mech.mcfg" />
+    <None Include="Assets\Map\Map_singular_TMP.mcfg" />
+    <None Include="Assets\Pickup\Pickup.mcfg" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />
