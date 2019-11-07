@@ -1319,6 +1319,8 @@ void PlayState::CreateMissileObject(EntityID id) {
   registry_gameplay_.assign<IDComponent>(missile_object, id);
   registry_gameplay_.assign<SoundComponent>(missile_object,
                                             sound_engine.CreatePlayer());
+  registry_gameplay_.assign<TrailComponent>(missile_object, 0.2f,
+                                            glm::vec4(1.0f, 0.6f, 0.2f, 1.0f));
 }
 
 void PlayState::DestroyEntity(EntityID id) {
@@ -1511,6 +1513,34 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           glob::SetEmitPosition(handle, trans_c.position);  
 		  break;
 		}
+      }
+
+      registry_gameplay_.assign<ParticleComponent>(ent, handles, offsets,
+                                                   directions);
+      registry_gameplay_.assign<int>(ent, 0);
+      break;
+    }
+    case GameEvent::MISSILE_IMPACT: {
+      auto ent = registry_gameplay_.create();
+      auto handle = glob::CreateParticleSystem();
+
+      std::vector handles = {handle};
+      std::vector<glm::vec3> offsets;
+      std::vector<glm::vec3> directions;
+
+      glob::SetParticleSettings(handle, "missile_impact.txt");
+
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller = registry->view<IDComponent, TransformComponent>();
+
+      for (auto proj_ent : view_controller) {
+        auto& id_c = view_controller.get<IDComponent>(proj_ent);
+        auto& trans_c = view_controller.get<TransformComponent>(proj_ent);
+
+        if (id_c.id == e.force_push_impact.projectile_id) {
+          glob::SetEmitPosition(handle, trans_c.position);
+          break;
+        }
       }
 
       registry_gameplay_.assign<ParticleComponent>(ent, handles, offsets,
