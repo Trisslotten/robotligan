@@ -40,7 +40,7 @@ vec3 calculateTangent(vec3 n) {
 // https://medium.com/@bgolus/normal-mapping-for-a-triplanar-shader-10bf39dca05a
 vec3 triplanarNormal() {
 	float texture_scale = normal_map_scale;
-	float sharpness = 2.0;
+	float sharpness = 10.0;
 
 	vec2 uv_x = local_pos.zy/texture_scale;
 	vec2 uv_y = local_pos.xz/texture_scale;
@@ -92,6 +92,6 @@ void main()
 
 	color += dither();
 
-	out_color = vec4(color, 1);
+	out_color = vec4(color, alpha);
 	out_emission = vec4(emission_strength * surface_color.rgb, 1);
 }
