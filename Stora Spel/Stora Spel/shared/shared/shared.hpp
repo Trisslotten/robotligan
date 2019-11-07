@@ -9,8 +9,8 @@
 #define POINTS_ASSIST 2
 #define POINTS_SAVE 4
 
-const double kClientUpdateRate = 64;
-const double kServerUpdateRate = 64;
+const double kClientUpdateRate = 128;
+const double kServerUpdateRate = 128;
 const unsigned kServerTimeout = 6;
 
 enum class ServerStateType {
