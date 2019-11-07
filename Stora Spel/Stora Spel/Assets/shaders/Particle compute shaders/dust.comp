@@ -33,7 +33,6 @@ uniform float size_delta;
 uniform float dt;
 
 uniform vec4 color[10];
-uniform int num_col;
 uniform vec3 emit_pos;
 uniform vec3 dir;
 uniform int max_i;
@@ -55,16 +54,13 @@ void main()
 		//velocities[gid].y -= 19.82 * dt;
 		//float vel = length(velocities[gid]);
 		//float factor = (vel - velocity_delta * dt) / vel;
-		velocities[gid] *= 0.99 * (1-0);
-		vec4 vel = velocities[gid] - vec4(0.0, 1.0, 0.0, 0.0) * 2009.82 * 0.5 * dt;
+		//velocities[gid] *= 0.99 * (1-0);
+		//vec4 vel = velocities[gid] - vec4(0.0, 1.0, 0.0, 0.0) * 2009.82 * 0.5 * dt;
 		//velocities[gid] = vel;
-		positions[gid] += vel * dt;
+		positions[gid] += velocities[gid] * dt;
 
-		if (positions[gid].y < -11.0) {
-			velocities[gid] = vec4(0);
-		}
-		positions[gid].y = clamp(positions[gid].y, -11.0, 24.0);
-		positions[gid].z = clamp(positions[gid].z, -28.0, 28.0);
+		//positions[gid].y = clamp(positions[gid].y, -11.0, 24.0);
+		//positions[gid].z = clamp(positions[gid].z, -28.0, 28.0);
 		colors[gid] -= color_delta * dt;
 		sizes[gid] -= size_delta * dt;
 		times[gid] -= dt;
@@ -81,9 +77,9 @@ void main()
 		random_dir = normalize(random_dir);
 		
 		times[gid] = time;
-		colors[gid] = color[gid%num_col];
+		colors[gid] = color[0];
 		sizes[gid] = size;
-		positions[gid] = vec4(emit_pos, 0);
-		velocities[gid] = vec4(random_dir * (rand(gid) * (max_speed-min_speed) + min_speed), 0);
+		positions[gid] = vec4(60 * random1 - 30, -10.5, 56 * random2 - 28, 0.0);
+		velocities[gid] = vec4(0, 0.1 * rand(random) + 0.05, 0, 0);
 	}
 }

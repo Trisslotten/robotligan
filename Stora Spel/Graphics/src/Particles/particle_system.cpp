@@ -262,6 +262,7 @@ namespace glob {
     settings_.compute_shader->uniform("max_i", new_index);
     settings_.compute_shader->uniform("emit_pos", settings_.emit_pos);
     settings_.compute_shader->uniformv("color", settings_.colors.size(), settings_.colors.data());
+    settings_.compute_shader->uniform("num_col", (int)settings_.colors.size());
     settings_.compute_shader->uniform("dir", settings_.direction);
     settings_.compute_shader->uniform("dir_strength", settings_.direction_strength);
     settings_.compute_shader->uniform("max_speed", settings_.velocity);

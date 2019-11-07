@@ -1,0 +1,10 @@
+>direction= 0 1 0
+>dir_val= 1.0
+>velocity= 1
+>color= 0.5 0.5 0.5 1
+>radius= 0
+>size= 0.05
+>burst= 1
+>number_of_bursts= 1
+>burst_particles= 1000
+>shader= dust
