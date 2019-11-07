@@ -497,7 +497,7 @@ physics::IntersectData physics::Intersect(const physics::MeshHitbox& m, const ph
 		  }
 		}
       }
-      data.normal = glm::normalize(data.normal);
+      data.normal = glm::normalize(N);
       data.move_vector = min_dist * data.normal;
       return data;
 	}
