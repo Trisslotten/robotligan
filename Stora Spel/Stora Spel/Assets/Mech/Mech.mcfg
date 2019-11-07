@@ -1,2 +1,6 @@
 
-i num_materials 2
+i num_diffuse_textures 2
+
+w normal_map assets/texture/normal_brushed_iron.png
+f normal_map_scale 10.0
+

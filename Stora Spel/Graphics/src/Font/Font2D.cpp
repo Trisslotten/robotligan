@@ -322,11 +322,11 @@ void glob::Font2D::Draw3D(ShaderProgram& shader, glm::vec3 center, float size,
                           std::string text, glm::vec4 color,
                           glm::mat4 rotation) {
   const char* chars = text.c_str();
-  unsigned int len = text.length();
+  unsigned int len = (unsigned int)text.length();
 
   //////////////////////////////////
   // for backwards compatibility
-  size *= 16. / 28.;
+  size *= 16.f / 28.f;
   //////////////////////////////////
 
   glActiveTexture(GL_TEXTURE0);
@@ -345,7 +345,7 @@ void glob::Font2D::Draw3D(ShaderProgram& shader, glm::vec3 center, float size,
   glDepthFunc(GL_LEQUAL);
 
   double total_accum = 0.0;
-  for (int i = 0; i < len; i++) {
+  for (unsigned int i = 0; i < len; i++) {
     unsigned char cur = *(unsigned char*)(chars + i);
 
     total_accum += 2.f*GetAdvance(cur, size);
@@ -353,7 +353,7 @@ void glob::Font2D::Draw3D(ShaderProgram& shader, glm::vec3 center, float size,
   }
   total_accum = total_accum - (total_accum / len);
   double offset_accum = -total_accum / 2.0;
-  for (int i = 0; i < len; i++) {
+  for (unsigned int i = 0; i < len; i++) {
     unsigned char cur = *(unsigned char*)(chars + i);
 
     // FT_Load_Char(face, (FT_ULong)cur, FT_LOAD_RENDER);

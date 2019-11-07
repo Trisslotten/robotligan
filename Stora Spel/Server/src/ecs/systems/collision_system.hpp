@@ -47,7 +47,7 @@ struct CollisionList {
 void HandleBallCollisions(entt::registry& registry, const CollisionList& list,
                           entt::entity arena);
 void HandleMultiBallCollision(entt::registry& registry,
-                              const CollisionList& list);
+                              const CollisionList& list, entt::entity arena);
 void PlayerBallCollision(entt::registry& registry,
                          const CollisionObject& object, entt::entity ball,
                          entt::entity arena);
@@ -217,7 +217,7 @@ void HandleBallCollisions(entt::registry& registry, const CollisionList& list,
       }
     }
   } else {
-    HandleMultiBallCollision(registry, list);
+    HandleMultiBallCollision(registry, list, arena);
   }
   auto& ball_ball_c = registry.get<BallComponent>(list.entity);
   if (ball_ball_c.should_be_destroyed) {
@@ -227,9 +227,15 @@ void HandleBallCollisions(entt::registry& registry, const CollisionList& list,
 }
 
 void HandleMultiBallCollision(entt::registry& registry,
-                              const CollisionList& list) {
+                              const CollisionList& list, entt::entity arena) {
   auto& ball_physics = registry.get<PhysicsComponent>(list.entity);
   auto& ball_hitbox = registry.get<physics::Sphere>(list.entity);
+
+  for (auto obj : list.collision_list) {
+    if (obj.tag == PLAYER) {
+      PlayerBallCollision(registry, obj, list.entity, arena);
+    }
+  }
 
   for (auto obj : list.collision_list) {
     if (obj.tag == ARENA) {
@@ -899,6 +905,7 @@ void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
       GameEvent teleport_impact_event;
       teleport_impact_event.type = GameEvent::TELEPORT_IMPACT;
       teleport_impact_event.teleport_impact.player_id = id_c.id;
+      teleport_impact_event.teleport_impact.hit_pos = hit_pos;
       dispatcher.trigger(teleport_impact_event);
 
       break;

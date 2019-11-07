@@ -20,8 +20,8 @@ class ShaderProgram {
   const std::string SHADERS_PATH = "assets/shaders/";
 
   std::unordered_multimap<GLenum, std::string> paths;
-  std::unordered_multimap<GLenum, GLuint> ids;
 
+  std::unordered_multimap<GLenum, GLuint> ids;
   GLuint id;
 
   GLuint findUniformLocation(const std::string& name);
