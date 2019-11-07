@@ -234,7 +234,7 @@ namespace glob {
   void ParticleSystem::Update(float dt) {
 #if CPUSPAWN == 0
     spawns_ += settings_.spawn_rate * dt;
-    
+
     int new_particles = 0;
     if (!settings_.burst) {
       new_particles = spawns_;
@@ -326,7 +326,11 @@ namespace glob {
 
   void ParticleSystem::Settings(const ParticleSettings& ps) {
     settings_ = ps;
-    if (settings_.burst) spawns_ = settings_.burst_particles;
+    if (settings_.burst) {
+      spawns_ = settings_.burst_particles;
+    } else {
+      spawns_ = 0;
+    }
   }
 
   ParticleSettings ParticleSystem::GetSettings() {
@@ -350,8 +354,15 @@ namespace glob {
   }
 
   void ParticleSystem::Reset() {
-    spawns_ = settings_.burst_particles;
+    if (settings_.burst) {
+      spawns_ = settings_.burst_particles;
+    } else {
+      spawns_ = 0;
+    }
+
     created_bursts_ = 0;
+    current_index_ = 0;
+
     
     std::vector<float> time_data(SIZE, 0.f);
 
