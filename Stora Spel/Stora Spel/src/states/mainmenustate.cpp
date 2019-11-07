@@ -88,19 +88,19 @@ void MainMenuState::CreateInformationMenu() {
 
 void MainMenuState::CreateBackgroundEnitites() {
   // add the lights to scene
-  /*
+  
   auto light_test = registry_mainmenu_.create();  // Get from engine
   registry_mainmenu_.assign<LightComponent>(light_test, glm::vec3(0.05f), 30.f,
                                             0.2f);
   registry_mainmenu_.assign<TransformComponent>(
       light_test, glm::vec3(0.f, 16.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
-          */
+          
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
   auto light_test2 = registry_mainmenu_.create();  // Get from engine
   registry_mainmenu_.assign<LightComponent>(
-      light_test2, glm::vec3(0.f, 0.f, 0.0f), 50.f, 0.8f);
+      light_test2, glm::vec3(1.f, 1.f, 1.0f), 50.f, 0.2f);
   registry_mainmenu_.assign<TransformComponent>(
       light_test2, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
@@ -171,7 +171,7 @@ void MainMenuState::CreateBackgroundEnitites() {
     auto camera = registry_mainmenu_.create();
     auto& cam_c = registry_mainmenu_.assign<CameraComponent>(camera);
     auto& cam_trans = registry_mainmenu_.assign<TransformComponent>(camera);
-    cam_trans.position = glm::vec3(32.f, -8.f, 0.f);
+    cam_trans.position = glm::vec3(26.f, -8.f, 0.f);
     glm::vec3 dir = glm::vec3(0) - cam_trans.position;
     cam_c.orientation = glm::quat(glm::vec3(0.f, 0.f, 0.f));
   }

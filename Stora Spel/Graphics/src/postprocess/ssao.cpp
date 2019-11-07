@@ -17,16 +17,20 @@ void Ssao::Init(Blur& blur) {
   CreateFrameBuffers();
 
   auto ws = glob::window::GetWindowDimensions();
-  blur_id_ = blur.CreatePass(ws.x, ws.y, GL_R32F);
+  blur_id_ = blur.CreatePass(ws.x/4, ws.y/4, GL_R32F);
 }
 
 void Ssao::BindFrameBuffer() {
+  auto ws = glob::window::GetWindowDimensions();
+  glViewport(0, 0, ws.x / 4, ws.y / 4); // ssao runs like crap, render at fourth of res 
   glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO_);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void Ssao::Finish(Blur& blur) {
+  auto ws = glob::window::GetWindowDimensions();
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glViewport(0, 0, ws.x, ws.y);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glBindTexture(GL_TEXTURE_2D, ssao_texture_);
   glGenerateMipmap(GL_TEXTURE_2D);
@@ -87,13 +91,15 @@ void Ssao::GenerateTextures() {
   // output ssao texture
   glGenTextures(1, &ssao_texture_);
   glBindTexture(GL_TEXTURE_2D, ssao_texture_);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, ws.x, ws.y, 0, GL_RGBA,
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, ws.x/4, ws.y/4, 0, GL_RGBA,
                GL_UNSIGNED_BYTE,
                NULL);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                  GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 void Ssao::BindNoiseTexture(int slot) {
