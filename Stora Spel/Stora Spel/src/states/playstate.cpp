@@ -1475,7 +1475,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         TransformComponent& t_c =
             view_controller.get<TransformComponent>(entity);
 
-        if (id_c.id == e.teleport_cast.player_id) {
+        if (id_c.id == e.teleport_impact.player_id) {
           // Particles
           entt::entity particle_entity = registry_gameplay_.create();
           glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
@@ -1483,7 +1483,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           std::vector<glm::vec3> in_offsets;
           std::vector<glm::vec3> in_directions;
           glob::SetParticleSettings(handle, "teleport.txt");
-          glob::SetEmitPosition(handle, t_c.position);
+          glob::SetEmitPosition(handle, e.teleport_impact.hit_pos);
           in_handles.push_back(handle);
           ParticleComponent& par_c =
               registry_gameplay_.assign<ParticleComponent>(

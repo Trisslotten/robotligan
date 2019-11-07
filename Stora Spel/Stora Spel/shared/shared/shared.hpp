@@ -9,6 +9,8 @@
 #define POINTS_ASSIST 2
 #define POINTS_SAVE 4
 
+#include <glm/glm.hpp>
+
 const double kClientUpdateRate = 64;
 const double kServerUpdateRate = 64;
 const unsigned kServerTimeout = 6;
@@ -202,6 +204,7 @@ struct GameEvent {
     // Ability Teleport Impact
     struct {
       EntityID player_id;
+      glm::vec3 hit_pos;
     } teleport_impact;
 
     // Ability Super Kick
