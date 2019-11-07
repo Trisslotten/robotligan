@@ -241,7 +241,7 @@ class PlayState : public State {
   void Reset();
   void EndGame();
   void OverTime();
-  void TestParticles();
+  void CreateGoalParticles(float x);
 
   void OnServerFrame();
   void AddAction(int action) { actions_.push_back(action); }

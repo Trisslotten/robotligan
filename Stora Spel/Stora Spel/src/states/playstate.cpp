@@ -74,7 +74,7 @@ void PlayState::Startup() {
   test_ball_ = glob::GetTransparentModel("Assets/Ball_new/Ball_Sphere.fbx");
 }
 
-void PlayState::TestParticles() {
+void PlayState::CreateGoalParticles(float x) {
   auto e = registry_gameplay_.create();
   auto handle = glob::CreateParticleSystem();
 
@@ -84,14 +84,24 @@ void PlayState::TestParticles() {
   std::vector<glm::vec3> directions;
   //= {glm::vec3(0.f, 1.f, 0.f)};
 
-  glob::SetParticleSettings(handle, "green_donut.txt");
-  glob::SetEmitPosition(handle, glm::vec3(30.f, 0.f, 0.f));
+  glob::SetParticleSettings(handle, "confetti.txt");
+  glob::SetEmitPosition(handle, glm::vec3(x * 0.9f, -10.f, 0.f));
+  float x_dir = (x > 0) ? -1 : 1;
+  glob::SetParticleDirection(handle, glm::vec3(x_dir, 5.f, 0.f));
 
   e = registry_gameplay_.create();
   handle = glob::CreateParticleSystem();
   handles.push_back(handle);
-  glob::SetParticleSettings(handle, "green_donut.txt");
-  glob::SetEmitPosition(handle, glm::vec3(-30.f, 0.f, 0.f));
+  glob::SetParticleSettings(handle, "goal_fire.txt");
+  glob::SetEmitPosition(handle, glm::vec3(x * 0.85f, -10.f, 25.f));
+  e = registry_gameplay_.create();
+  handle = glob::CreateParticleSystem();
+  handles.push_back(handle);
+  glob::SetParticleSettings(handle, "goal_fire.txt");
+  glob::SetEmitPosition(handle, glm::vec3(x * 0.85f, -10.f, -25.f));
+  //std::unordered_map<std::string, std::string> map;
+  //map["color"] = "1.0 0.0 0.0 0.4";
+  //glob::SetParticleSettings(handle, map);
   // auto ball_view = registry_gameplay_.view<
 
   registry_gameplay_.assign<ParticleComponent>(e, handles, offsets, directions);
@@ -1285,7 +1295,8 @@ void PlayState::CreateForcePushObject(EntityID id) {
 
   auto force_object = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  glob::ModelHandle model_ball =
+      glob::GetModel("assets/Ball/force_push_ball.fbx");
   auto& model_c = registry_gameplay_.assign<ModelComponent>(force_object);
   model_c.handles.push_back(model_ball);
 
@@ -1294,6 +1305,8 @@ void PlayState::CreateForcePushObject(EntityID id) {
   registry_gameplay_.assign<IDComponent>(force_object, id);
   registry_gameplay_.assign<SoundComponent>(force_object,
                                             sound_engine.CreatePlayer());
+  registry_gameplay_.assign<TrailComponent>(force_object, 1.f,
+                                            glm::vec4(1, 1, 0, 1));
 }
 
 void PlayState::CreateMissileObject(EntityID id) {
@@ -1391,6 +1404,10 @@ void PlayState::SetPlayerMoveDir(EntityID id, glm::vec3 move_dir) {
 
 void PlayState::ReceiveGameEvent(const GameEvent& e) {
   switch (e.type) {
+    case GameEvent::GOAL: {
+      CreateGoalParticles(e.goal.x);
+      break;
+    }
     case GameEvent::RESET: {
       Reset();
       break;
@@ -1479,6 +1496,31 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
             // TODO: Remove effect to let player know it's visible again
             glob::SetInvisibleEffect(m_c.invisible);
           }
+        }
+      }
+      break;
+    }
+    case GameEvent::FORCE_PUSH_IMPACT: {
+      auto ent = registry_gameplay_.create();
+      auto handle = glob::CreateParticleSystem();
+
+      std::vector handles = {handle};
+      std::vector<glm::vec3> offsets;
+      std::vector<glm::vec3> directions;
+
+	  glob::SetParticleSettings(handle, "force_push.txt");
+
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller = registry->view<IDComponent, TransformComponent>();
+      
+      for (auto proj_ent : view_controller) {
+        auto& id_c = view_controller.get<IDComponent>(proj_ent);
+        auto& trans_c = view_controller.get<TransformComponent>(proj_ent);
+
+        if (id_c.id == e.force_push_impact.projectile_id) {
+          glob::SetEmitPosition(handle, trans_c.position);  
+		  break;
+		}
         }
       }
       break;

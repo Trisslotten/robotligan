@@ -1,5 +1,9 @@
 #include "particle_system.hpp"
 
+#include <iostream>
+
+#define CPUSPAWN 0
+
 namespace glob {
   GLsync fence;
 
@@ -65,7 +69,7 @@ namespace glob {
     Reset();
   }
 
-  ParticleSystem::ParticleSystem(ParticleSystem&& other) {
+  ParticleSystem::ParticleSystem(ParticleSystem&& other) noexcept {
     settings_ = other.settings_;
     color_vbo_ = other.color_vbo_;
     created_bursts_ = other.created_bursts_;
@@ -109,26 +113,38 @@ namespace glob {
       num = new_index - current_index_;
     }
 
+    if (settings_.direction_strength > 1.f) settings_.direction_strength = 1.f;
+    if (settings_.direction != glm::vec3(0.f))
+      settings_.direction = glm::normalize(settings_.direction);
+
+    std::uniform_real_distribution<float> nor_dist(settings_.direction_strength, 1.0);
+    std::uniform_real_distribution<float> vel_dist(settings_.min_velocity, settings_.velocity);
     for (int i = 0; i < num; ++i) {
+      float normal_factor = nor_dist(gen_);
       glm::vec3 dir = glm::vec3(dist(gen_), dist(gen_), dist(gen_));
+
+      if (dir != glm::vec3(0.f))
+        dir = glm::normalize(dir);
+
+      dir -= dir * glm::dot(dir, settings_.direction);
+      if (dir != glm::vec3(0.f))
+        dir = glm::normalize(dir);
+      float dir_factor = sqrtf(1.0f - normal_factor * normal_factor);
+
+      dir = settings_.direction * normal_factor + dir * dir_factor;
+
       dir = glm::normalize(dir);
 
       glm::vec3 vel = dir;
 
-      if (settings_.direction_strength > 1.f) {
-        vel = glm::normalize(settings_.direction);
-      } else {
-        while (glm::dot(vel, settings_.direction) <
-               settings_.direction_strength) {
-          vel += settings_.direction;
-          vel = glm::normalize(vel);
-        }
-      }
+     
 
-      vel *= settings_.velocity;
+      vel *= vel_dist(gen_);
+
+      glm::vec4 color = settings_.colors[i % settings_.colors.size()];
 
       particles.push_back({glm::vec4(dir * settings_.radius + settings_.emit_pos, 0.f),
-                           glm::vec4(vel, 0.f), settings_.color,
+                           glm::vec4(vel, 0.f), color,
                            settings_.size, settings_.time});
     }
 
@@ -216,11 +232,44 @@ namespace glob {
   }
 
   void ParticleSystem::Update(float dt) {
+#if CPUSPAWN == 0
+    spawns_ += settings_.spawn_rate * dt;
+    
+    int new_particles = 0;
+    if (!settings_.burst) {
+      new_particles = spawns_;
+    } else if (created_bursts_ < settings_.number_of_bursts && spawns_ >= settings_.burst_particles) {
+      new_particles = settings_.burst_particles;
+      created_bursts_++;
+    }
+    spawns_ -= new_particles;
+    
+    int new_index = current_index_ + new_particles;
+    if (new_index > SIZE) {
+      new_index = SIZE;
+      new_particles = new_index - current_index_;
+    }
+#endif
+
     settings_.compute_shader->use();
     settings_.compute_shader->uniform("dt", dt);
     settings_.compute_shader->uniform("color_delta", settings_.color_delta);
     settings_.compute_shader->uniform("velocity_delta", settings_.velocity_delta);
     settings_.compute_shader->uniform("size_delta", settings_.size_delta);
+
+#if CPUSPAWN == 0
+    settings_.compute_shader->uniform("min_i", current_index_);
+    settings_.compute_shader->uniform("max_i", new_index);
+    settings_.compute_shader->uniform("emit_pos", settings_.emit_pos);
+    settings_.compute_shader->uniformv("color", settings_.colors.size(), settings_.colors.data());
+    settings_.compute_shader->uniform("dir", settings_.direction);
+    settings_.compute_shader->uniform("dir_strength", settings_.direction_strength);
+    settings_.compute_shader->uniform("max_speed", settings_.velocity);
+    settings_.compute_shader->uniform("min_speed", settings_.min_velocity);
+    settings_.compute_shader->uniform("size", settings_.size);
+    settings_.compute_shader->uniform("time", settings_.time);
+#endif
+
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, position_vbo_);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, velocity_buffer_);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 9, color_vbo_);
@@ -232,9 +281,14 @@ namespace glob {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
     glUseProgram(0);
 
+#if CPUSPAWN == 0
+    current_index_ = new_index;
+    current_index_ = current_index_ % SIZE;
+#endif
 
+#if CPUSPAWN == 1
     spawns_ += settings_.spawn_rate * dt;
-
+    
     int new_particles = 0;
     if (!settings_.burst) {
       new_particles = spawns_;
@@ -243,9 +297,12 @@ namespace glob {
       created_bursts_++;
     }
     spawns_ -= new_particles;
-
-    if (new_particles > 0)
+    
+    
+    if (new_particles > 0) {
       Spawn(new_particles);
+    }
+#endif
   }
 
   void ParticleSystem::Draw(ShaderProgram& shader) {
