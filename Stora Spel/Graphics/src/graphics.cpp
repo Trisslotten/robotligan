@@ -1253,6 +1253,7 @@ void Render() {
     }
     shader->uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
     shader->uniform("cam_transform", cam_transform);
+    shader->uniform("cam_position", camera.GetPosition());
     shadows.SetUniforms(*shader);
   }
 

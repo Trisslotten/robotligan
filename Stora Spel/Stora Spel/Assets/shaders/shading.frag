@@ -17,6 +17,8 @@ uniform float light_radius[MAX_LIGHTS];
 uniform float light_amb[MAX_LIGHTS];
 uniform int NR_OF_LIGHTS;
 
+uniform vec3 cam_position;
+
 // https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
 float rand(vec2 n) { 
 	n = mod(n, vec2(20000));
@@ -60,17 +62,28 @@ float shadow(vec3 position, int index) {
 	return result;
 }
 
+//float calcLighting(vec3 surf_pos, vec3 normal
+
 vec3 shading(vec3 position, vec3 normal) {
+	vec3 view_dir = normalize(cam_position - position);
 
 	vec3 lighting = vec3(0);
 	for(int l = 0; l < NR_OF_LIGHTS; l++){
 		vec3 pointToLight = light_pos[l] - position;
 		vec3 light_dir = normalize(pointToLight);
+		vec3 light_color = light_col[l];
 
 		float intensity = 1.f - clamp(length(pointToLight), 0, light_radius[l]) / light_radius[l];
-		vec3 diffuse = max(dot(light_dir, normal), 0) * light_col[l] * intensity;
+		float diffuse = max(dot(light_dir, normal), 0)  * intensity;
 
-		lighting += diffuse;
+		vec3 half_vec = normalize(light_dir + view_dir);
+		float specular = pow(clamp(dot(normal, half_vec), 0, 1), 1000.0);
+
+		float total_light = 0;
+		total_light += diffuse;
+		total_light += specular;
+
+		lighting += total_light * light_color;
 		lighting += light_amb[l];
 	}
 
@@ -83,6 +96,11 @@ vec3 shading(vec3 position, vec3 normal) {
 			vec3 spot_light = vec3(0.2);
 			// diffuse
 			spot_light *= max(dot(ld, normal), 0);
+
+			//vec3 light_dir = normalize(shadow_light_positions[i],
+			//vec3 half_vec = normalize(light_dir + view_dir);
+			//float specular = pow(clamp(dot(normal, half_vec), 0, 1), 10.0);
+
 			// in spot light circle
 			spot_light *= smoothstep(1.0, 0.5, max(abs(shadow_space.x),abs(shadow_space.y)));
 			// occlusion
