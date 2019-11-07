@@ -56,6 +56,9 @@ void ConnectMenuState::Init() {
   engine_->SetSendInput(false);
   engine_->SetCurrentRegistry(&registry_connect_menu_);
   engine_->SetEnableChat(false);
+  last_msg_ = "Not Connected";
+  client.Disconnect();
+  isconnected_ = 0;
 }
 
 void ConnectMenuState::Update(float dt) {

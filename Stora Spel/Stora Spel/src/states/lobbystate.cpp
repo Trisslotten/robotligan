@@ -99,6 +99,7 @@ void LobbyState::SendMyName() {
 
 void LobbyState::Startup() {
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+  ws_ = glob::window::GetWindowDimensions();
 }
 
 void LobbyState::Init() {
@@ -384,6 +385,12 @@ void LobbyState::CreateGUIElements() {
     if (engine_->GetServerState() == ServerStateType::LOBBY) {
       ReadyButtonFunc();
     }
+  };
+  ButtonComponent* b_c = GenerateButtonEntity(registry_lobby_, "DISCONNECT",
+	  glm::vec2(glob::window::GetWindowDimensions().x - 330, 65), font_test_);
+  b_c->button_func = [&]() {
+	  engine_->GetClient().Disconnect();
+	  engine_->ChangeState(StateType::MAIN_MENU);
   };
 }
 void LobbyState::DrawTeamSelect() {

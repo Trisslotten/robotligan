@@ -100,6 +100,7 @@ class LobbyState : public State {
   void SetMyId(int client_id) { my_id_ = client_id; }
 
  private:
+  glm::vec2 ws_;
   entt::registry registry_lobby_;
   void CreateBackgroundEntities();
   void CreateGUIElements();
@@ -171,6 +172,7 @@ class ConnectMenuState : public State {
   std::string port_ = "1337";
   glob::Font2DHandle font_test_ = 0;
   entt::registry registry_connect_menu_;
+  int prv_ = -1;
 };
 
 /////////////////////// SETTINGS ///////////////////

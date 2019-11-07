@@ -39,8 +39,14 @@ void SettingsState::Update(float dt) {
                "INPUT");
 
   if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
+	  MenuEvent click_event;
+	  click_event.type = MenuEvent::CLICK;
+	  menu_dispatcher.trigger(click_event);
     engine_->ChangeState(engine_->GetPreviousStateType());
   } else if (Input::IsKeyPressed(GLFW_KEY_ENTER)) {
+	  MenuEvent click_event;
+	  click_event.type = MenuEvent::CLICK;
+	  menu_dispatcher.trigger(click_event);
     SaveSettings();
   }
   if (applied_) {
@@ -55,7 +61,7 @@ void SettingsState::Update(float dt) {
     std::string text = "Saved";
     glob::Submit(font_test_, pos, 45, std::string("Saved") + dots,
                  glm::vec4(0, 1, 1, 1));
-    if (passed >= 3) applied_ = false;
+    if (passed > 3) applied_ = false;
   }
 }
 
