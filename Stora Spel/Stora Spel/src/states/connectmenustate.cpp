@@ -181,7 +181,7 @@ void ConnectMenuState::CreateBackground() {
     glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
 
     auto& model_c = registry_connect_menu_.assign<ModelComponent>(robot);
-    model_c.material_index = 1;
+    model_c.diffuse_index = 1;
     model_c.handles.push_back(model_robot);
 
     // Animation
