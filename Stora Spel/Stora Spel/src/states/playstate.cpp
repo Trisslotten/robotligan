@@ -118,7 +118,6 @@ void PlayState::Init() {
   engine_->GetChat()->SetPosition(
       glm::vec2(30, glob::window::GetWindowDimensions().y - 30));
 
-
   auto& client = engine_->GetClient();
   NetAPI::Common::Packet to_send;
   bool rec = true;
@@ -365,9 +364,9 @@ void PlayState::Update(float dt) {
 
     glob::Submit(font_test_, pos, 175, "OVERTIME");
 
-	if (game_has_ended_) {
+    if (game_has_ended_) {
       overtime_has_started_ = false;
-	}
+    }
   }
 
   if (game_has_ended_) {
@@ -497,8 +496,8 @@ void PlayState::UpdateGameplayTimer() {
 
 void PlayState::DrawNameOverPlayer() {
   auto player_view =
-      registry_gameplay_
-          .view<PlayerComponent, TransformComponent, ModelComponent, IDComponent>();
+      registry_gameplay_.view<PlayerComponent, TransformComponent,
+                              ModelComponent, IDComponent>();
 
   auto& my_transform = registry_gameplay_.get<TransformComponent>(my_entity_);
   for (auto entity : player_view) {
@@ -1310,6 +1309,8 @@ void PlayState::CreateMissileObject(EntityID id) {
   registry_gameplay_.assign<IDComponent>(missile_object, id);
   registry_gameplay_.assign<SoundComponent>(missile_object,
                                             sound_engine.CreatePlayer());
+  registry_gameplay_.assign<TrailComponent>(missile_object, 0.2f,
+                                            glm::vec4(1.0f, 0.6f, 0.2f, 1.0f));
 }
 
 void PlayState::DestroyEntity(EntityID id) {
@@ -1408,7 +1409,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
     }
     case GameEvent::INVISIBILITY_CAST: {
       auto registry = engine_->GetCurrentRegistry();
-      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent, TransformComponent>();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, ModelComponent,
+                         TransformComponent>();
       for (auto entity : view_controller) {
         IDComponent& id_c = view_controller.get<IDComponent>(entity);
         PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
@@ -1419,7 +1422,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         if (id_c.id == e.invisibility_cast.player_id) {
           m_c.invisible = true;
 
-          //Particles
+          // Particles
           entt::entity particle_entity = registry_gameplay_.create();
           glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
           std::vector<glob::ParticleSystemHandle> in_handles;
@@ -1430,8 +1433,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           glob::SetEmitPosition(handle, t_c.position);
           in_handles.push_back(handle);
 
-          ParticleComponent& par_c = registry_gameplay_.assign<ParticleComponent>(
-              particle_entity, in_handles, in_offsets, in_directions);
+          ParticleComponent& par_c =
+              registry_gameplay_.assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
 
           if (e.invisibility_cast.player_id == my_id_) {
             // TODO: Add effect to let player know it's invisible
@@ -1443,7 +1447,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
     }
     case GameEvent::INVISIBILITY_END: {
       auto registry = engine_->GetCurrentRegistry();
-      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent, TransformComponent>();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, ModelComponent,
+                         TransformComponent>();
       for (auto entity : view_controller) {
         IDComponent& id_c = view_controller.get<IDComponent>(entity);
         PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
@@ -1475,6 +1481,34 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           }
         }
       }
+      break;
+    }
+    case GameEvent::MISSILE_IMPACT: {
+      auto ent = registry_gameplay_.create();
+      auto handle = glob::CreateParticleSystem();
+
+      std::vector handles = {handle};
+      std::vector<glm::vec3> offsets;
+      std::vector<glm::vec3> directions;
+
+      glob::SetParticleSettings(handle, "missile_impact.txt");
+
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller = registry->view<IDComponent, TransformComponent>();
+
+      for (auto proj_ent : view_controller) {
+        auto& id_c = view_controller.get<IDComponent>(proj_ent);
+        auto& trans_c = view_controller.get<TransformComponent>(proj_ent);
+
+        if (id_c.id == e.force_push_impact.projectile_id) {
+          glob::SetEmitPosition(handle, trans_c.position);
+          break;
+        }
+      }
+
+      registry_gameplay_.assign<ParticleComponent>(ent, handles, offsets,
+                                                   directions);
+      registry_gameplay_.assign<int>(ent, 0);
       break;
     }
   }
