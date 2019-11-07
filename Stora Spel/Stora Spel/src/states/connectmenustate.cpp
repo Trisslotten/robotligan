@@ -53,6 +53,7 @@ void ConnectMenuState::Startup() {
   port_field.text = port_;
   port_field.linked_value = &port_;
   bg_ = glob::GetGUIItem("Assets/GUI_elements/connect-23.png");
+  CreateBackground();
 }
 
 void ConnectMenuState::Init() {
@@ -61,7 +62,6 @@ void ConnectMenuState::Init() {
   engine_->SetSendInput(false);
   engine_->SetCurrentRegistry(&registry_connect_menu_);
   engine_->SetEnableChat(false);
-  CreateBackground();
 }
 
 void ConnectMenuState::Update(float dt) {
@@ -73,7 +73,7 @@ void ConnectMenuState::Update(float dt) {
   isconnected_ = engine_->IsConnected();
   auto gamepos = glm::vec2((windowsize.x / 2.0f - windowsize.x * 0.023),
 	  (windowsize).y * 0.6f);
-  auto bgpos = glm::vec2((windowsize.x / 2.0f - windowsize.x * 0.083),
+  auto bgpos = glm::vec2((windowsize.x / 2.0f - windowsize.x * 0.087),
 	  (windowsize).y * 0.25f);
   glob::Submit(font_test_, gamepos, 45, "Server Info", glm::vec4(0.5f, 1, 1, 1));
   glob::Submit(bg_, bgpos, 1.0, 90);

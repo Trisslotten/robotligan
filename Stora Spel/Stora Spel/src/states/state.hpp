@@ -169,7 +169,7 @@ class ConnectMenuState : public State {
   bool connection_success_ = true;
   std::string last_msg_ = "Status: Failed to connect, Timeout";
   glob::GUIHandle bg_ = 0;
-  glm::vec4 color_ = glm::vec4(1.0, 1.0, 1.0, 1.0);
+  glm::vec4 color_ = glm::vec4(1, 1, 1, 1);
   std::string ip_ = "localhost";
   std::string port_ = "1337";
   glob::Font2DHandle font_test_ = 0;
