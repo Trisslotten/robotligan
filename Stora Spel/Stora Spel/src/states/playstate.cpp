@@ -128,7 +128,6 @@ void PlayState::Init() {
   engine_->GetChat()->SetPosition(
       glm::vec2(30, glob::window::GetWindowDimensions().y - 30));
 
-
   auto& client = engine_->GetClient();
   NetAPI::Common::Packet to_send;
   bool rec = true;
@@ -375,9 +374,9 @@ void PlayState::Update(float dt) {
 
     glob::Submit(font_test_, pos, 175, "OVERTIME");
 
-	if (game_has_ended_) {
+    if (game_has_ended_) {
       overtime_has_started_ = false;
-	}
+    }
   }
 
   if (game_has_ended_) {
@@ -1296,7 +1295,8 @@ void PlayState::CreateForcePushObject(EntityID id) {
 
   auto force_object = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
+  glob::ModelHandle model_ball =
+      glob::GetModel("assets/Ball/force_push_ball.fbx");
   auto& model_c = registry_gameplay_.assign<ModelComponent>(force_object);
   model_c.handles.push_back(model_ball);
 
@@ -1305,6 +1305,8 @@ void PlayState::CreateForcePushObject(EntityID id) {
   registry_gameplay_.assign<IDComponent>(force_object, id);
   registry_gameplay_.assign<SoundComponent>(force_object,
                                             sound_engine.CreatePlayer());
+  registry_gameplay_.assign<TrailComponent>(force_object, 1.f,
+                                            glm::vec4(1, 1, 0, 1));
 }
 
 void PlayState::CreateMissileObject(EntityID id) {
@@ -1489,6 +1491,34 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           }
         }
       }
+      break;
+    }
+    case GameEvent::FORCE_PUSH_IMPACT: {
+      auto ent = registry_gameplay_.create();
+      auto handle = glob::CreateParticleSystem();
+
+      std::vector handles = {handle};
+      std::vector<glm::vec3> offsets;
+      std::vector<glm::vec3> directions;
+
+	  glob::SetParticleSettings(handle, "force_push.txt");
+
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller = registry->view<IDComponent, TransformComponent>();
+      
+      for (auto proj_ent : view_controller) {
+        auto& id_c = view_controller.get<IDComponent>(proj_ent);
+        auto& trans_c = view_controller.get<TransformComponent>(proj_ent);
+
+        if (id_c.id == e.force_push_impact.projectile_id) {
+          glob::SetEmitPosition(handle, trans_c.position);  
+		  break;
+		}
+      }
+
+      registry_gameplay_.assign<ParticleComponent>(ent, handles, offsets,
+                                                   directions);
+      registry_gameplay_.assign<int>(ent, 0);
       break;
     }
   }
