@@ -13,29 +13,32 @@ void ConnectMenuState::Startup() {
   // PLAY BUTTON - change registry to registry_gameplay_
   ButtonComponent* b_c = GenerateButtonEntity(
       registry_connect_menu_, "Connect",
-      glm::vec2((glob::window::GetWindowDimensions().x / 2.0f - glob::window::GetWindowDimensions().x * 0.025),
+      glm::vec2((glob::window::GetWindowDimensions().x / 2.0f -
+                 glob::window::GetWindowDimensions().x * 0.025),
                 (glob::window::GetWindowDimensions()).y / 2.8f),
       font_test_);
   b_c->button_func = [&]() {
     if ((ip_.length() > 0) && (port_.length() > 0)) {
       client.Disconnect();
-      connection_success_ = client.Connect(ip_.c_str(), (short)std::stoi(port_));
+      connection_success_ =
+          client.Connect(ip_.c_str(), (short)std::stoi(port_));
       isconnected_ = 1;
     }
   };
   ButtonComponent* b_back = GenerateButtonEntity(
-	  registry_connect_menu_, "Back",
-	  glm::vec2(0.0f + dim.x * 0.03,dim.y * 0.05),
-	  font_test_);
-  b_back->button_func = [&]() {
-	  engine_->ChangeState(StateType::MAIN_MENU);
-  };
+      registry_connect_menu_, "Back",
+      glm::vec2(0.0f + dim.x * 0.03, dim.y * 0.05), font_test_);
+  b_back->button_func = [&]() { engine_->ChangeState(StateType::MAIN_MENU); };
   glm::vec2 ip_pos =
-      glm::vec2((glob::window::GetWindowDimensions().x / 2.0f - glob::window::GetWindowDimensions().x * 0.035),
-                (glob::window::GetWindowDimensions().y / 2.0f) - glob::window::GetWindowDimensions().y * 0.025);
+      glm::vec2((glob::window::GetWindowDimensions().x / 2.0f -
+                 glob::window::GetWindowDimensions().x * 0.035),
+                (glob::window::GetWindowDimensions().y / 2.0f) -
+                    glob::window::GetWindowDimensions().y * 0.025);
   glm::vec2 port_pos =
-      glm::vec2((glob::window::GetWindowDimensions().x / 2.0f) - glob::window::GetWindowDimensions().x * 0.035,
-                (glob::window::GetWindowDimensions().y / 2.3f) - glob::window::GetWindowDimensions().y * 0.035);
+      glm::vec2((glob::window::GetWindowDimensions().x / 2.0f) -
+                    glob::window::GetWindowDimensions().x * 0.035,
+                (glob::window::GetWindowDimensions().y / 2.3f) -
+                    glob::window::GetWindowDimensions().y * 0.035);
 
   auto ip = registry_connect_menu_.create();
   auto& ip_field = registry_connect_menu_.assign<InputComponent>(ip);
@@ -72,27 +75,26 @@ void ConnectMenuState::Update(float dt) {
   auto is_escape = glob::window::KeyDown(GLFW_KEY_ESCAPE);
   isconnected_ = engine_->IsConnected();
   auto gamepos = glm::vec2((windowsize.x / 2.0f - windowsize.x * 0.023),
-	  (windowsize).y * 0.6f);
+                           (windowsize).y * 0.6f);
   auto bgpos = glm::vec2((windowsize.x / 2.0f - windowsize.x * 0.087),
-	  (windowsize).y * 0.25f);
-  glob::Submit(font_test_, gamepos, 45, "Server Info", glm::vec4(0.5f, 1, 1, 1));
+                         (windowsize).y * 0.25f);
+  glob::Submit(font_test_, gamepos, 45, "Server Info",
+               glm::vec4(0.5f, 1, 1, 1));
   glob::Submit(bg_, bgpos, 1.0, 90);
-  if (is_enter)
-  {
-	  if ((ip_.length() > 0) && (port_.length() > 0)) {
-		  client.Disconnect();
-		  connection_success_ = client.Connect(ip_.c_str(), (short)std::stoi(port_));
-		  isconnected_ = 1;
-	  }
-  }
-  else if (is_escape)
-  {
-	  client.Disconnect();
-	  engine_->ChangeState(StateType::MAIN_MENU);
+  if (is_enter) {
+    if ((ip_.length() > 0) && (port_.length() > 0)) {
+      client.Disconnect();
+      connection_success_ =
+          client.Connect(ip_.c_str(), (short)std::stoi(port_));
+      isconnected_ = 1;
+    }
+  } else if (is_escape) {
+    client.Disconnect();
+    engine_->ChangeState(StateType::MAIN_MENU);
   }
   std::string status = "Status: ";
-  auto pos = glm::vec2((windowsize.x - windowsize.x * 0.25),
-	  windowsize.y * 0.03);
+  auto pos =
+      glm::vec2((windowsize.x - windowsize.x * 0.25), windowsize.y * 0.03);
   if (connection_success_) {
     if (isconnected_ == 0) {
       glob::Submit(font_test_, pos, 45, status + std::string("Not Connected"),
@@ -106,7 +108,7 @@ void ConnectMenuState::Update(float dt) {
     } else if (isconnected_ == 1 &&
                frames_ > kClientUpdateRate * kServerTimeout) {
       glob::Submit(font_test_, pos, 45,
-		  status + std::string("Failed to connect, Timeout"),
+                   status + std::string("Failed to connect, Timeout"),
                    glm::vec4(1, 1, 1, 1));
       last_msg_ = status + "Failed to connect, Timeout";
       connection_success_ = false;
@@ -127,79 +129,76 @@ void ConnectMenuState::Update(float dt) {
     glob::Submit(font_test_, pos, 45, last_msg_, glm::vec4(1, 1, 1, 1));
   }
 }
-void ConnectMenuState::CreateBackground()
-{
-	
-	auto light_test = registry_connect_menu_.create();  // Get from engine
-	registry_connect_menu_.assign<LightComponent>(light_test, glm::vec3(0.05f), 30.f,
-		0.2f);
-	registry_connect_menu_.assign<TransformComponent>(
-		light_test, glm::vec3(0.f, 16.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
-		glm::vec3(1.f));
-	glm::vec3 zero_vec = glm::vec3(0.0f);
+void ConnectMenuState::CreateBackground() {
+  auto light_test = registry_connect_menu_.create();  // Get from engine
+  registry_connect_menu_.assign<LightComponent>(light_test, glm::vec3(0.05f),
+                                                30.f, 0.2f);
+  registry_connect_menu_.assign<TransformComponent>(
+      light_test, glm::vec3(0.f, 16.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      glm::vec3(1.f));
+  glm::vec3 zero_vec = glm::vec3(0.0f);
 
-	auto light_test2 = registry_connect_menu_.create();  // Get from engine
-	registry_connect_menu_.assign<LightComponent>(
-		light_test2, glm::vec3(0.f, 0.f, 1.0f), 50.f, 0.2f);
-	registry_connect_menu_.assign<TransformComponent>(
-		light_test2, glm::vec3(48.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
-		glm::vec3(1.f));
-	{
-		// ladda in och skapa entity för bana
-		auto arena = registry_connect_menu_.create();
-		glm::vec3 arena_scale = glm::vec3(4.80f);
-		glm::vec3 arena_rot = glm::vec3(1.0, 1.0, 1.0);
-		glob::ModelHandle model_arena =
-			glob::GetModel("assets/Map/Map_unified_TMP.fbx");
-		auto& model_c = registry_connect_menu_.assign<ModelComponent>(arena);
-		model_c.handles.push_back(model_arena);
-		registry_connect_menu_.assign<TransformComponent>(arena, zero_vec, zero_vec,
-			arena_scale);
-	}
-	{
-		auto robot = registry_connect_menu_.create();
-		auto& trans_c = registry_connect_menu_.assign<TransformComponent>(
-			robot, glm::vec3(36.f, -13.2f, -8.f),
-			glm::vec3(0.f, glm::radians(-135.0f), 0.f), glm::vec3(0.015f));
-		glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
-		auto& model_c = registry_connect_menu_.assign<ModelComponent>(robot);
-		model_c.handles.push_back(model_robot);
+  auto light_test2 = registry_connect_menu_.create();  // Get from engine
+  registry_connect_menu_.assign<LightComponent>(
+      light_test2, glm::vec3(0.f, 0.f, 1.0f), 50.f, 0.2f);
+  registry_connect_menu_.assign<TransformComponent>(
+      light_test2, glm::vec3(48.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      glm::vec3(1.f));
+  {
+    // ladda in och skapa entity för bana
+    auto arena = registry_connect_menu_.create();
+    glm::vec3 arena_scale = glm::vec3(4.80f);
+    glm::vec3 arena_rot = glm::vec3(1.0, 1.0, 1.0);
+    glob::ModelHandle model_arena =
+        glob::GetModel("assets/Map/Map_unified_TMP.fbx");
+    auto& model_c = registry_connect_menu_.assign<ModelComponent>(arena);
+    model_c.handles.push_back(model_arena);
+    registry_connect_menu_.assign<TransformComponent>(arena, zero_vec, zero_vec,
+                                                      arena_scale);
+  }
+  {
+    auto robot = registry_connect_menu_.create();
+    auto& trans_c = registry_connect_menu_.assign<TransformComponent>(
+        robot, glm::vec3(36.f, -13.2f, -8.f),
+        glm::vec3(0.f, glm::radians(-135.0f), 0.f), glm::vec3(0.015f));
+    glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
+    auto& model_c = registry_connect_menu_.assign<ModelComponent>(robot);
+    model_c.handles.push_back(model_robot);
 
-		// Animation
-		auto& animation_c = registry_connect_menu_.assign<AnimationComponent>(
-			robot, glob::GetAnimationData(model_robot));
+    // Animation
+    auto& animation_c = registry_connect_menu_.assign<AnimationComponent>(
+        robot, glob::GetAnimationData(model_robot));
 
-		engine_->GetAnimationSystem().PlayAnimation(
-			"Resting", 0.7f, &animation_c, 10, 1.f,
-			engine_->GetAnimationSystem().LOOP);
-	}
-	{
-		auto robot = registry_connect_menu_.create();
-		auto& trans_c = registry_connect_menu_.assign<TransformComponent>(
-			robot, glm::vec3(36.f, -13.2f, 10.f),
-			glm::vec3(0.f, glm::radians(120.0f), 0.f), glm::vec3(0.015f));
-		glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
-	
-		auto& model_c = registry_connect_menu_.assign<ModelComponent>(robot);
-		model_c.material_index = 1;
-		model_c.handles.push_back(model_robot);
+    engine_->GetAnimationSystem().PlayAnimation(
+        "Resting", 0.7f, &animation_c, 10, 1.f,
+        engine_->GetAnimationSystem().LOOP);
+  }
+  {
+    auto robot = registry_connect_menu_.create();
+    auto& trans_c = registry_connect_menu_.assign<TransformComponent>(
+        robot, glm::vec3(36.f, -13.2f, 10.f),
+        glm::vec3(0.f, glm::radians(120.0f), 0.f), glm::vec3(0.015f));
+    glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
 
-		// Animation
-		auto& animation_c = registry_connect_menu_.assign<AnimationComponent>(
-			robot, glob::GetAnimationData(model_robot));
+    auto& model_c = registry_connect_menu_.assign<ModelComponent>(robot);
+    model_c.material_index = 1;
+    model_c.handles.push_back(model_robot);
 
-		engine_->GetAnimationSystem().PlayAnimation(
-			"Resting", 0.7f, &animation_c, 10, 1.f,
-			engine_->GetAnimationSystem().LOOP);
-	}
+    // Animation
+    auto& animation_c = registry_connect_menu_.assign<AnimationComponent>(
+        robot, glob::GetAnimationData(model_robot));
 
-	auto camera = registry_connect_menu_.create();
-	auto& cam_c = registry_connect_menu_.assign<CameraComponent>(camera);
-	auto& cam_trans = registry_connect_menu_.assign<TransformComponent>(camera);
-	cam_trans.position = glm::vec3(28.f, -8.f, 0.f);
-	glm::vec3 dir = glm::vec3(0) - cam_trans.position;
-	cam_c.orientation = glm::quat(glm::vec3(0.f, 0.f, 0.f));
+    engine_->GetAnimationSystem().PlayAnimation(
+        "Resting", 0.7f, &animation_c, 10, 1.f,
+        engine_->GetAnimationSystem().LOOP);
+  }
 
+  auto camera = registry_connect_menu_.create();
+  auto& cam_c = registry_connect_menu_.assign<CameraComponent>(camera);
+  auto& cam_trans = registry_connect_menu_.assign<TransformComponent>(camera);
+  cam_trans.position = glm::vec3(28.f, -8.f, 0.f);
+  glm::vec3 dir = glm::vec3(0) - cam_trans.position;
+  cam_c.orientation = glm::quat(glm::vec3(0.f, 0.f, 0.f));
 }
 void ConnectMenuState::UpdateNetwork() {}
 
