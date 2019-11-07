@@ -84,8 +84,8 @@ struct Text3DItem {
   glm::vec3 pos{0};
   float size = 0.f;
   std::string text;
-  glm::vec4 color;
-  glm::mat4 rotation;
+  glm::vec4 color = glm::vec4(1.f);
+  glm::mat4 rotation = glm::mat4(1.f);
 };
 
 struct LightItem {

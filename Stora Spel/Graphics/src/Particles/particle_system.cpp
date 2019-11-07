@@ -69,7 +69,7 @@ namespace glob {
     Reset();
   }
 
-  ParticleSystem::ParticleSystem(ParticleSystem&& other) {
+  ParticleSystem::ParticleSystem(ParticleSystem&& other) noexcept {
     settings_ = other.settings_;
     color_vbo_ = other.color_vbo_;
     created_bursts_ = other.created_bursts_;
