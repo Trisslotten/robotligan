@@ -259,7 +259,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\Map\Map_singular_TMP.mcfg" />
     <None Include="Assets\Mech\Mech.mcfg" />
+    <None Include="Assets\Pickup\Pickup.mcfg" />
     <None Include="Assets\shaders\compute_shader.comp" />
     <None Include="assets\shaders\e2Dshader.frag" />
     <None Include="assets\shaders\e2Dshader.vert" />

@@ -2,8 +2,10 @@
 #pragma warning(disable : 4251)
 #ifndef SERVER_HPP_
 #define SERVER_HPP_
+#define SERVER_HPP_
 #include <unordered_map>
 #include <vector>
+#include <chrono>
 #include <NetAPI/Packet.hpp>
 #include <NetAPI/common.hpp>
 #include <NetAPI/socket/client.hpp>
@@ -25,9 +27,14 @@ class EXPORT Server {
   /// ClientData* operator[](short ID) { return client_data_.at(ID); }
   std::unordered_map<long, ClientData*>& GetClients() { return client_data_; }
   std::vector<ClientData*> GetNewlyConnected() { return newly_connected_; }
+  void ClearPackets(NetAPI::Socket::ClientData* data);
 
  private:
   void SendPing();
+  void HandleClientPacket();
+  void Receive();
+  void ListenForClients();
+  void SendStoredData();
   std::unordered_map<std::string, long> ids_;
   std::unordered_map<long, ClientData*> client_data_;
   std::vector<long> client_to_remove_;
@@ -36,6 +43,7 @@ class EXPORT Server {
   ClientData* connection_client_ = nullptr;
   TcpListener listener_;
   bool setup_ = false;
+  bool locked = false;
   short connected_players_ = 0;
   long current_client_guid_ = 0;
 };

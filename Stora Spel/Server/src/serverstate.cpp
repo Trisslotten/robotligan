@@ -682,20 +682,6 @@ void ServerPlayState::CreatePlayerEntity() {
       0.0f               // Remaining shoot cooldown
   );*/
 
-  // START ---------- Buff component [MOVE TO PICK-UP EVENT] ----------
-  // Available buffs: SPEED_BOOST, JUMP_BOOST, INFINITE_STAMINA
-  BuffID buff_id = SPEED_BOOST;
-  float buff_duration =
-      GlobalSettings::Access()->ValueOf("BUFF_SPEED_BOOST_DURATION");
-
-  // Add component for a player
-  registry.assign<BuffComponent>(entity,         // Entity
-                                 buff_id,        // Active buff
-                                 true,           // Toggle buff
-                                 buff_duration,  // Buff duration
-                                 0.0f            // Remaining duration
-  );
-  // END ---------- Buff component [MOVE TO PICK-UP EVENT] ----------
 
   /*if (last_spawned_team_ == 1) {
     registry.assign<TeamComponent>(entity, TEAM_BLUE);

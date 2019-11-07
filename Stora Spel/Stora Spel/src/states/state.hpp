@@ -147,6 +147,7 @@ class ConnectMenuState : public State {
   void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
+  void CreateBackground();
   StateType Type() { return StateType::CONNECT_MENU; }
 
  private:
@@ -166,7 +167,9 @@ class ConnectMenuState : public State {
   };
   int frames_ = 0;
   bool connection_success_ = true;
-  std::string last_msg_ = "Failed to connect: Timeout";
+  std::string last_msg_ = "Status: Failed to connect, Timeout";
+  glob::GUIHandle bg_ = 0;
+  glm::vec4 color_ = glm::vec4(1, 1, 1, 1);
   std::string ip_ = "localhost";
   std::string port_ = "1337";
   glob::Font2DHandle font_test_ = 0;
@@ -241,7 +244,7 @@ class PlayState : public State {
   void Reset();
   void EndGame();
   void OverTime();
-  void TestParticles();
+  void CreateGoalParticles(float x);
 
   void OnServerFrame();
   void AddAction(int action) { actions_.push_back(action); }
@@ -257,7 +260,7 @@ class PlayState : public State {
 
   float GetPitch() { return pitch_; }
   float GetYaw() { return yaw_; }
-  void SetTeam(unsigned int team) {my_team_ = team;}
+  void SetTeam(unsigned int team) { my_team_ = team; }
   void CreateNewBallEntity(bool fake, EntityID id);
   void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
 
@@ -344,7 +347,7 @@ class PlayState : public State {
   int frame_id = 0;
   float pitch_ = 0.0f;
   float yaw_ = 0.0f;
-  
+
   float timer_ = 0.0f;
   float primary_cd_ = 0.0f;
 };

@@ -37,8 +37,8 @@ void MainMenuState::Update(float dt) {
     auto ws = glob::window::GetWindowDimensions();
     float scale = 0.8f;
     glm::vec2 pos;
-    pos.x = ws.x/2.f - scale*1280.f/2.f;
-    pos.y = ws.y - scale*313 - 100;
+    pos.x = ws.x / 2.f - scale * 1280.f / 2.f;
+    pos.y = ws.y - scale * 313 - 100;
     glob::Submit(loggo_image_, pos, scale);
   }
 }
@@ -104,7 +104,7 @@ void MainMenuState::CreateBackgroundEnitites() {
   registry_mainmenu_.assign<TransformComponent>(
       light_test2, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
-
+  glm::vec3 zero_vec = glm::vec3(0.0f);
   {
     // ladda in och skapa entity för bana
     auto arena = registry_mainmenu_.create();
