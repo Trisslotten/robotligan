@@ -102,7 +102,7 @@ void NetAPI::Socket::Server::ListenForClients() {
       client_data_[find_res->second] = connection_client_;
       std::cout << "DEBUG: Found existing client, overwriting\n";
       connected_players_++;
-    } else if (connected_players_ < NetAPI::Common::kMaxPlayers) {
+    } else if (game_players_ < NetAPI::Common::kMaxPlayers) {
       std::cout << "DEBUG: adding new client\n";
 
       connection_client_->ID = current_client_guid_;
@@ -110,6 +110,7 @@ void NetAPI::Socket::Server::ListenForClients() {
       client_data_[current_client_guid_] = connection_client_;
 
       connected_players_++;
+	  game_players_++;
       current_client_guid_++;
       accepted = true;
     } else {
