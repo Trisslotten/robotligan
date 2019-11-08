@@ -78,7 +78,9 @@ void RenderSystem(entt::registry& registry) {
     // glm::mat4_cast(glm::quat(transform.rotation));
     glm::vec3 pos = transform.position;
     glm::vec3 dir = glm::quat(transform.rotation) * glm::vec3(1.f, 0.f, 0.f);
-    glob::SubmitLightSource(pos, light.color, light.radius, light.ambient);
+    if (!light.blackout) {
+      glob::SubmitLightSource(pos, light.color, light.radius, light.ambient);
+    }
   }
 
   // Render wireframes

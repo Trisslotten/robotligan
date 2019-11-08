@@ -1118,6 +1118,14 @@ void SetSSAO(bool val) { use_ao = val; }
 
 void SetInvisibleEffect(bool in_bool) { is_invisible = (GLint)in_bool; }
 
+void SetBlackout(bool blackout) {
+  if (blackout) {
+    shadows.SetNumUsed(0);
+  } else {
+    shadows.SetNumUsed(4);
+  }
+}
+
 void ReloadShaders() {
   fullscreen_shader.reload();
   model_shader.reload();
