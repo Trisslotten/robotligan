@@ -24,7 +24,6 @@ uniform float normal_map_scale;
 uniform sampler2D texture_metallic;
 uniform float metallic_map_scale;
 
-
 struct Lighting {
 	vec3 specular;
 	vec3 diffuse;
@@ -57,8 +56,6 @@ float triplanarMetallic() {
 
 	return result;
 }
-
-
 
 vec3 normalMap(vec2 uv) {
 	vec3 normal_tex;
@@ -112,6 +109,7 @@ vec3 triplanarNormal() {
 	return result;
 }
 
+// https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
 float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
 vec4 mod289(vec4 x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
 vec4 perm(vec4 x){return mod289(((x * 34.0) + 1.0) * x);}
