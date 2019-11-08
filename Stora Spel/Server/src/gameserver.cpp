@@ -77,7 +77,13 @@ void GameServer::Update(float dt) {
     lobby_state_.HandleNewClientTeam(client_data->ID);
     NetAPI::Common::Packet p;
     ServerStateType state;
+    std::cout << "Client Connected \n";
     if (this->current_state_type_ == ServerStateType::PLAY) {
+      if (client_data->reconnected == true) {
+        play_state_.SetReconnect(client_data->ID);
+        client_data->reconnected = false;
+        std::cout << "Added RECONNECTED player" << std::endl;
+      }
       NetAPI::Common::Packet to_send;
       for (auto client_team : lobby_state_.client_teams_) {
         std::string name = GetClientNames()[client_team.first];

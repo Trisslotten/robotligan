@@ -1319,6 +1319,60 @@ void PlayState::TestCreateLights() {
       light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
 }
 
+void PlayState::AddPlayer() {
+  player_ids_.clear();
+  auto& sound_engine = engine_->GetSoundEngine();
+  for (auto entity_id : player_ids_) {
+    auto entity = registry_gameplay_.create();
+
+    glm::vec3 alter_scale =
+        glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
+    glm::vec3 character_scale = glm::vec3(0.0033f);
+
+    registry_gameplay_.assign<IDComponent>(entity, entity_id);
+    auto& pc = registry_gameplay_.assign<PlayerComponent>(entity);
+    registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(0.f),
+                                                  glm::quat(), character_scale);
+
+    glob::ModelHandle player_model = glob::GetModel("Assets/Mech/Mech.fbx");
+    auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
+    model_c.handles.push_back(player_model);
+    model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
+    if (engine_->GetPlayerTeam(entity_id) == TEAM_BLUE) {
+      model_c.diffuse_index = 1;
+    } else {
+      model_c.diffuse_index = 0;
+    }
+
+    registry_gameplay_.assign<AnimationComponent>(
+        entity, glob::GetAnimationData(player_model));
+    registry_gameplay_.assign<PhysicsComponent>(entity);
+    registry_gameplay_.assign<SoundComponent>(entity,
+                                              sound_engine.CreatePlayer());
+
+    if (entity_id == my_id_) {
+      glm::vec3 camera_offset = glm::vec3(0.5f, 0.7f, 0.f);
+      registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
+                                                 glm::quat(glm::vec3(0.f)));
+      character_scale = glm::vec3(0.1f);
+      float coeff_x_side = (11.223f - (-0.205f));
+      float coeff_y_side = (8.159f - (-10.316f));
+      float coeff_z_side = (10.206f - (-1.196f));
+      registry_gameplay_.assign<physics::OBB>(
+          entity,
+          alter_scale * character_scale,            // Center
+          glm::vec3(1.f, 0.f, 0.f),                 //
+          glm::vec3(0.f, 1.f, 0.f),                 // Normals
+          glm::vec3(0.f, 0.f, 1.f),                 //
+          coeff_x_side * character_scale.x * 0.5f,  //
+          coeff_y_side * character_scale.y * 0.5f,  // Length of each plane
+          coeff_z_side * character_scale.z * 0.5f   //
+      );
+      my_entity_ = entity;
+    }
+  }
+}
+
 void PlayState::CreateWall(EntityID id, glm::vec3 position,
                            glm::quat rotation) {
   auto wall = registry_gameplay_.create();

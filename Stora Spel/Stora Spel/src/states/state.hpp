@@ -276,7 +276,7 @@ class PlayState : public State {
   void CreateArenaEntity();
   void CreateBallEntity();
   void CreateInGameMenu();
-
+  void AddPlayer();
   void TestCreateLights();
 
   void ToggleInGameMenu();
