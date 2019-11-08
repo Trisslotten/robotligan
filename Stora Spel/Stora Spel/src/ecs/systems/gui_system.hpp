@@ -23,13 +23,23 @@ void Update(entt::registry& registry) {
     TransformComponent& trans_c = registry.get<TransformComponent>(entity);
 
     glm::vec2 button_pos = glm::vec2(trans_c.position.x, trans_c.position.y);
+    glm::vec2 click_pos = button_pos + button_c.click_offset;
 
     mouse_pos.y = glob::window::GetWindowDimensions().y - mouse_pos.y +
                   button_c.font_size / 2;
     mouse_pos.x += button_c.font_size / 2;
+    
+	if (button_c.text.size() > 0) {
+      if (button_c.font_size > 0) button_c.bounds.y = button_c.font_size/2;
+
+      double width_of_text = glob::GetWidthOfText(
+          button_c.f_handle, button_c.text, button_c.font_size);
+
+      if (width_of_text > 0.0) button_c.bounds.x = width_of_text;
+	}
 
     if (button_c.visible) {
-      if (transform_helper::InsideBounds2D(mouse_pos, button_pos,
+          if (transform_helper::InsideBounds2D(mouse_pos, click_pos,
                                            button_c.bounds) &&
           !a_button_is_selected) {
         if (!button_c.has_hovered) {

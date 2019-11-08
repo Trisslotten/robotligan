@@ -24,6 +24,7 @@ ButtonComponent* GenerateButtonEntity(entt::registry& reg, std::string text,
   b_c.bounds = glm::vec2(b_c.font_size * b_c.text.size() / 2, b_c.font_size);
   b_c.f_handle = f_handle;
   b_c.visible = visible;
+  b_c.click_offset = glm::vec2(20, 10);
   return &b_c;
 }
 
