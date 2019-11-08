@@ -1,6 +1,10 @@
 
-w normal_map assets/texture/Painted_metal_02_2K_Normal.png
-f normal_map_scale 2.0
+#w normal_map assets/materials/Painted_metal_02_2K_Normal.png
+#f normal_map_scale 2.0
 
-w metallic_map assets/texture/Painted_metal_02_2K_Metallic.png
-f metallic_map_scale 2.0
+#w metallic_map assets/materials/Painted_metal_02_2K_Metallic.png
+#f metallic_map_scale 2.0
+
+
+w normal_map assets/materials/Lined-Cement-Normal-dx.png
+f normal_map_scale 2.0

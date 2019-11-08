@@ -27,7 +27,7 @@ class Materials {
  private:
   Materials() {}
   GLuint GetNormalMap(const std::string& path);
-  GLuint GetMetallicMap(const std::string& path);
+  GLuint GetSingleChannelMap(const std::string& path);
 
   std::unordered_map<std::string, GLuint> textures_;
 };
@@ -39,14 +39,19 @@ Material Materials::GetMaterial(
     std::unordered_map<materials::Type, std::string> wanted_textures) {
   Material result;
   for (auto& [type, path] : wanted_textures) {
+    std::cout << "Loading material texture: " << path << "\n";
     switch (type) {
       case materials::NORMAL:
         result.AddTexture(type, GetNormalMap(path), TEXTURE_SLOT_NORMAL,
                           "texture_normal");
         break;
       case materials::METALLIC:
-        result.AddTexture(type, GetMetallicMap(path), TEXTURE_SLOT_METALLIC,
-                          "texture_metallic");
+        result.AddTexture(type, GetSingleChannelMap(path),
+                          TEXTURE_SLOT_METALLIC, "texture_metallic");
+        break;
+      case materials::ROUGHNESS:
+        result.AddTexture(type, GetSingleChannelMap(path),
+                          TEXTURE_SLOT_ROUGHNESS, "texture_roughness");
         break;
     }
   }
@@ -97,7 +102,7 @@ GLuint Materials::GetNormalMap(const std::string& path) {
   }
   return result;
 }
-GLuint Materials::GetMetallicMap(const std::string& path) {
+GLuint Materials::GetSingleChannelMap(const std::string& path) {
   GLuint result = 0;
   auto iter = textures_.find(path);
   if (iter != textures_.end()) {
@@ -107,8 +112,8 @@ GLuint Materials::GetMetallicMap(const std::string& path) {
     unsigned width, height;
     unsigned error = lodepng::decode(image, width, height, path, LCT_GREY);
     if (error != 0) {
-      std::cout << "ERROR: material.cpp: Could not load metallic map: " << path
-                << "\n";
+      std::cout << "ERROR: material.cpp: Could not load material texture: "
+                << path << "\n";
       return result;
     }
     glGenTextures(1, &result);

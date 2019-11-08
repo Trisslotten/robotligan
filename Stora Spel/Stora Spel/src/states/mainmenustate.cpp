@@ -107,7 +107,7 @@ void MainMenuState::CreateBackgroundEnitites() {
     auto arena = registry_mainmenu_.create();
     glm::vec3 arena_scale = glm::vec3(4.0f);
     glob::ModelHandle model_arena =
-        glob::GetModel("assets/Map/Map_unified_TMP.fbx");
+        glob::GetModel("assets/Map/Map_singular_TMP.fbx");
     auto& model_c = registry_mainmenu_.assign<ModelComponent>(arena);
     model_c.handles.push_back(model_arena);
     registry_mainmenu_.assign<TransformComponent>(arena, zero_vec, zero_vec,

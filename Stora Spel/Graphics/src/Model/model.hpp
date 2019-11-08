@@ -55,6 +55,7 @@ class Model {
   Material material_;
   float normal_map_scale_ = 1.f;
   float metallic_map_scale_= 1.f;
+  float roughness_map_scale_ = 1.f;
 
  public:
   Model();

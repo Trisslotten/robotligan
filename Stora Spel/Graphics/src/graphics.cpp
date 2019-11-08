@@ -133,6 +133,10 @@ void SetDefaultMaterials(ShaderProgram &shader) {
   glActiveTexture(GL_TEXTURE0 + TEXTURE_SLOT_METALLIC);
   glBindTexture(GL_TEXTURE_2D, black_texture);
   shader.uniform("texture_metallic", TEXTURE_SLOT_METALLIC);
+
+  glActiveTexture(GL_TEXTURE0 + TEXTURE_SLOT_ROUGHNESS);
+  glBindTexture(GL_TEXTURE_2D, black_texture);
+  shader.uniform("texture_roughness", TEXTURE_SLOT_ROUGHNESS);
 }
 
 void DrawFullscreenQuad() {

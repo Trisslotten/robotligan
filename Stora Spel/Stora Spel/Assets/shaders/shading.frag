@@ -2,7 +2,7 @@
 
 #define MAX_SHADOWS 4
 
-#define MAX_LIGHTS 16
+#define MAX_LIGHTS 32
 
 in vec4 v_shadow_spaces[MAX_SHADOWS];
 
@@ -22,9 +22,13 @@ in vec3 local_normal;
 in vec3 v_normal;
 
 uniform sampler2D texture_normal;
+uniform float normal_map_scale;
+
 uniform sampler2D texture_metallic;
 uniform float metallic_map_scale;
-uniform float normal_map_scale;
+
+uniform sampler2D texture_roughness;
+uniform float roughness_map_scale;
 
 uniform vec3 cam_position;
 
@@ -72,66 +76,37 @@ float shadow(vec3 position, int index) {
 }
 
 
-vec3 normalMap(vec2 uv) {
-	vec3 normal_tex;
-	normal_tex.xy = texture(texture_normal, uv).rg * 2.0 - 1.0;
-	normal_tex.z = sqrt(1.-normal_tex.x*normal_tex.x-normal_tex.y*normal_tex.y);
-	return normalize(normal_tex);
-}
-
-vec3 calculateTangent(vec3 n) {
-	vec3 tangent = cross(n, vec3(1,0,0));
-	if(length(tangent) < 0.1) {
-		tangent = cross(n, -vec3(0,1,0));
-	}
-	return normalize(tangent);
-	//return n.yxz;
-}
-// https://medium.com/@bgolus/normal-mapping-for-a-triplanar-shader-10bf39dca05a
-vec3 triplanarNormal() {
-	float texture_scale = normal_map_scale;
+float triplanarRoughness() {
+	float texture_scale = roughness_map_scale;
 	float sharpness = 10.0;
 
 	vec2 uv_x = local_pos.zy/texture_scale;
 	vec2 uv_y = local_pos.xz/texture_scale;
 	vec2 uv_z = local_pos.xy/texture_scale;
 
-	vec3 normal_x = normalMap(uv_x);
-	vec3 normal_y = normalMap(uv_y);
-	vec3 normal_z = normalMap(uv_z);
-
-	vec3 vert_normal = normalize(v_normal);
-	vec3 axis_sign = sign(vert_normal);
-
-	vec3 tangent = calculateTangent(vert_normal);
-
-	mat3 tbn = mat3(
-		tangent,
-		normalize(cross(tangent, vert_normal)), 
-		vert_normal
-	);
+	float x = texture(texture_roughness, uv_x).r;
+	float y = texture(texture_roughness, uv_y).r;
+	float z = texture(texture_roughness, uv_z).r;
 
 	vec3 weights = pow(abs(local_normal), sharpness.xxx);
 	weights /= dot(weights, vec3(1));
 
-	vec3 result = vec3(0);
-	result += normal_x * weights.x * vec3(axis_sign.z,1,1);
-	result += normal_y * weights.y * vec3(axis_sign.x,1,1);
-	result += normal_z * weights.z * vec3(axis_sign.y,1,1);
-	
-	result = normalize(tbn * result);
+	float result = 0;
+	result += x * weights.x;
+	result += y * weights.y;
+	result += z * weights.z;
 
 	return result;
 }
-
 
 float calcDiffuse(vec3 surf_pos, vec3 normal, vec3 light_dir) {
 	float diffuse = max(dot(light_dir, normal), 0);
 	return diffuse;
 }
-float calcSpecular(vec3 surf_pos, vec3 normal, vec3 light_dir, vec3 view_dir) {
+float calcSpecular(vec3 surf_pos, vec3 normal, vec3 light_dir, vec3 view_dir, float roughness) {
+	float glossy = 1-roughness;
 	vec3 half_vec = normalize(light_dir + view_dir);
-	float specular = pow(clamp(dot(normal, half_vec), 0, 1), 100.0);
+	float specular = pow(clamp(dot(normal, half_vec), 0, 1), 1 + 1000.0 * glossy);
 	return specular;
 }
 
@@ -141,9 +116,8 @@ struct Lighting {
 	vec3 ambient;
 };
 
-Lighting shading(vec3 position, float metallic) {
-	vec3 normal = triplanarNormal();
-
+Lighting shading(vec3 position, float metallic, vec3 normal) {
+	float roughness = triplanarRoughness();
 	vec3 view_dir = normalize(cam_position - position);
 
 	Lighting lighting;
@@ -157,12 +131,12 @@ Lighting shading(vec3 position, float metallic) {
 		vec3 light_color = light_col[l];
 
 		float intensity = 1.f - clamp(length(pointToLight), 0, light_radius[l]) / light_radius[l];
-		float diffuse = calcDiffuse(position, normal, light_dir);
-		float specular = metallic * calcSpecular(position, normal, light_dir, view_dir);
+		float diffuse = (1-metallic)*calcDiffuse(position, normal, light_dir);
+		float specular = metallic * calcSpecular(position, normal, light_dir, view_dir, roughness);
 
 		lighting.diffuse += diffuse * intensity * light_color;
 		lighting.specular += specular * intensity * light_color;
-		lighting.ambient += light_amb[l];
+		lighting.ambient += (1-metallic) * light_amb[l];
 	}
 
 	for(int i = 0; i < num_shadows; i++) {
@@ -179,8 +153,8 @@ Lighting shading(vec3 position, float metallic) {
 
 			mask *= shadow(position, i);
 
-			float diffuse = calcDiffuse(position, normal, ld);
-			float specular = metallic * calcSpecular(position, normal, ld, view_dir);
+			float diffuse = (1-metallic)*calcDiffuse(position, normal, ld);
+			float specular = metallic * calcSpecular(position, normal, ld, view_dir, roughness);
 
 			light_color *= mask;
 
