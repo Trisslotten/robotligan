@@ -22,11 +22,12 @@ class Chat {
   bool send_message_ = false;
   bool close_chat_ = false;
   glm::vec2 draw_pos_;
+  glob::Font2DHandle font_;
   public : 
   void AddMessage(std::string name, std::string text, unsigned int message_from);
   //void AddToCurrentMessage(std::string text);
   void Update(float dt);
-  void SubmitText(glob::Font2DHandle font);
+  void SubmitText();
   void SetShowChat();
   void SetSendMessage(bool send);
   void CloseChat();
@@ -35,6 +36,7 @@ class Chat {
   bool IsClosing();
   bool IsTakingChatInput();
   void SetPosition(glm::vec2 pos) { draw_pos_ = pos; }
+  void SetFont(glob::Font2DHandle font) { font_ = font; }
   glm::vec2 GetPosition() { return draw_pos_; }
 };
 

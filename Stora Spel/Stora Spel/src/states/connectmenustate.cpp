@@ -131,6 +131,13 @@ void ConnectMenuState::Update(float dt) {
       last_msg_ = status + "Could not connect, Server full";
       connection_success_ = false;
       client.Disconnect();
+    } else if (isconnected_ == -3) {
+      glob::Submit(font_test_, pos, 45,
+                   status + std::string("Could not connect, No Ident"),
+                   glm::vec4(1, 1, 1, 1));
+      last_msg_ = status + "Could not connect, No Ident";
+      connection_success_ = false;
+      client.Disconnect();
     }
   } else {
     glob::Submit(font_test_, pos, 45, last_msg_, glm::vec4(1, 1, 1, 1));

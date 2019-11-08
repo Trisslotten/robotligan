@@ -1,5 +1,6 @@
 #ifndef SERVER_STATE_HPP_
 #define SERVER_STATE_HPP_
+
 #include <NetAPI/socket/server.hpp>
 #include <entity/registry.hpp>
 #include <entt.hpp>
@@ -105,10 +106,12 @@ class ServerPlayState : public ServerState {
   void ReceiveEvent(const EventInfo& e);
   // EntityID GetNextEntityGuid() { return entity_guid_++; }
   void SetFrameID(int client_id, int id) { player_frame_id_[client_id] = id; }
+  void Reconnect(int id);
+  void SetReconnect(unsigned int ID) { reconnect_id_ = ID; }
 
  private:
   entt::entity CreateIDEntity();
-
+  unsigned short reconnect_id_ = 100;
   void CreateInitialEntities(int num_players);
   void CreateArenaEntity();
   void CreateBallEntity();
@@ -123,11 +126,9 @@ class ServerPlayState : public ServerState {
   void OverTime();
   void EndGame();
 
-
   std::unordered_map<long, bool> clients_receive_updates_;
   std::unordered_map<int, EntityID> clients_player_ids_;
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
-
 
   std::vector<unsigned int> score_;
 

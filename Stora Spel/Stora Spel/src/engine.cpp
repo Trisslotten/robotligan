@@ -91,6 +91,7 @@ void Engine::Init() {
   wanted_state_type_ = StateType::MAIN_MENU;
 
   UpdateSettingsValues();
+  chat_.SetFont(font_test2_);
 }
 
 void Engine::Update(float dt) {
@@ -172,6 +173,13 @@ void Engine::Update(float dt) {
     }
     // init new state
     current_state_->Init();
+  }
+
+  if (Input::IsKeyPressed(GLFW_KEY_F7)) {
+    glob::SetSSAO(true);
+  }
+  if (Input::IsKeyPressed(GLFW_KEY_F8)) {
+    glob::SetSSAO(false);
   }
 
   if(Input::IsKeyPressed(GLFW_KEY_F5)) {
@@ -465,7 +473,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     */
     case PacketBlockType::SWITCH_GOALS: {
       // std::cout << "PACKET: SWITCH_GOALS\n";
-      packet >> switch_goal_timer_sec_;
+      packet >> switch_goal_timer_;
       packet >> switch_goal_time_;
       break;
     }
@@ -573,24 +581,28 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::CREATE_PROJECTILE: {
       ProjectileID p_id;
       EntityID e_id;
+      glm::vec3 pos;
+      glm::quat ori;
+      packet >> ori;
+      packet >> pos;
       packet >> p_id;
       packet >> e_id;
 
       switch (p_id) {
         case ProjectileID::CANNON_BALL: {
-          play_state_.CreateCannonBall(e_id);
+          play_state_.CreateCannonBall(e_id, pos, ori);
           break;
         }
         case ProjectileID::TELEPORT_PROJECTILE: {
-          play_state_.CreateTeleportProjectile(e_id);
+          play_state_.CreateTeleportProjectile(e_id, pos, ori);
           break;
         }
         case ProjectileID::FORCE_PUSH_OBJECT: {
-          play_state_.CreateForcePushObject(e_id);
+          play_state_.CreateForcePushObject(e_id, pos, ori);
           break;
         }
         case ProjectileID::MISSILE_OBJECT: {
-          play_state_.CreateMissileObject(e_id);
+          play_state_.CreateMissileObject(e_id, pos, ori);
           // TODO: Dont trigger this event on the client like this. Fix so that
           // event is sent/received AFTER the create_projectile packet on server
           // instead Note: Sometimes this plays on player entity rather than the
@@ -659,10 +671,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
   }
 }
 
-void Engine::Render() {
-  //
-  glob::Render();
-}
+void Engine::Render() { glob::Render(); }
 
 void Engine::SetCurrentRegistry(entt::registry* registry) {
   this->registry_current_ = registry;
@@ -678,12 +687,11 @@ void Engine::UpdateChat(float dt) {
         } else {
           chat_.SetSendMessage(true);
           message_ = chat_.GetCurrentMessage();
-          if (current_state_ == &play_state_)
-			chat_.CloseChat();
+          if (current_state_ == &play_state_) chat_.CloseChat();
         }
       }
       chat_.Update(dt);
-      chat_.SubmitText(font_test2_);
+      chat_.SubmitText();
       if (chat_.IsTakingChatInput() == true &&
           chat_.GetCurrentMessage().size() == 0)
         glob::Submit(font_test2_, chat_.GetPosition() + glm::vec2(0, -20.f * 5),
@@ -816,8 +824,8 @@ int Engine::GetGameplayTimer() const { return gameplay_timer_sec_; }
 
 int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }
 
-int Engine::GetSwitchGoalCountdownTimer() const {
-  return switch_goal_timer_sec_;
+float Engine::GetSwitchGoalCountdownTimer() const {
+  return switch_goal_timer_;
 }
 
 int Engine::GetSwitchGoalTime() const { return switch_goal_time_; }

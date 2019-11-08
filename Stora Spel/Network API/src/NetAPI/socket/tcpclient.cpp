@@ -105,7 +105,7 @@ std::vector<NetAPI::Common::Packet> NetAPI::Socket::TcpClient::Receive(
   int bytes = 1;
   FD_ZERO(&read_set_);
   FD_SET(send_socket_, &read_set_);
-  timeout_.tv_usec = 50;
+  timeout_.tv_usec = timeout;
 
   std::vector<NetAPI::Common::Packet> result;
   if (select(send_socket_, &read_set_, NULL, NULL, &timeout_) == 1) {

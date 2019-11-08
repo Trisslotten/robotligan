@@ -10,6 +10,7 @@
 #define POINTS_SAVE 4
 
 #include <glm/glm.hpp>
+#include<glm/gtx/quaternion.hpp>
 
 const double kClientUpdateRate = 128;
 const double kServerUpdateRate = 128;
@@ -84,6 +85,7 @@ enum : int16_t {
   CREATE_FAKE_BALL,
   SERVER_STATE,
   MY_NAME,
+  HWID,
   PLAYER_LOOK_DIR,
   PLAYER_MOVE_DIR,
   TO_CLIENT_NAME,
@@ -317,5 +319,7 @@ enum class ProjectileID {
 struct Projectile {
   EntityID entity_id;
   ProjectileID projectile_id;
+  glm::vec3 pos;
+  glm::quat ori;
 };
 #endif  // SHARED_HPP_
