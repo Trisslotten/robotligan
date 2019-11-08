@@ -1545,6 +1545,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           ParticleComponent& par_c =
               registry_gameplay_.assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
+          registry_gameplay_.assign<int>(particle_entity, 0);
 
           if (e.invisibility_cast.player_id == my_id_) {
             // TODO: Add effect to let player know it's invisible
@@ -1583,6 +1584,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           ParticleComponent& par_c =
               registry_gameplay_.assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
+          registry_gameplay_.assign<int>(particle_entity, 0);
 
           if (e.invisibility_end.player_id == my_id_) {
             // TODO: Remove effect to let player know it's visible again
@@ -1671,6 +1673,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           ParticleComponent& par_c =
               registry_gameplay_.assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
+          registry_gameplay_.assign<int>(particle_entity, 0);
+
           break;
         }
       }
@@ -1699,6 +1703,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           ParticleComponent& par_c =
               registry_gameplay_.assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
+          registry_gameplay_.assign<int>(particle_entity, 0);
           break;
         }
       }
