@@ -99,9 +99,9 @@ void PlayState::CreateGoalParticles(float x) {
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
   glob::SetEmitPosition(handle, glm::vec3(x * 0.85f, -10.f, -25.f));
-  //std::unordered_map<std::string, std::string> map;
-  //map["color"] = "1.0 0.0 0.0 0.4";
-  //glob::SetParticleSettings(handle, map);
+  // std::unordered_map<std::string, std::string> map;
+  // map["color"] = "1.0 0.0 0.0 0.4";
+  // glob::SetParticleSettings(handle, map);
   // auto ball_view = registry_gameplay_.view<
 
   registry_gameplay_.assign<ParticleComponent>(e, handles, offsets, directions);
@@ -385,31 +385,37 @@ void PlayState::Update(float dt) {
     glm::vec2 pos = glob::window::GetWindowDimensions();
     pos /= 2;
     pos.y -= 160;
-    pos.x -= 175;
 
-    std::string best_team = "    BLUE";
+    std::string best_team = "BLUE";
     glm::vec4 best_team_color = glm::vec4(0.13f, 0.13f, 1.f, 1.f);
 
     if (engine_->GetTeamScores()[0] > engine_->GetTeamScores()[1]) {
-      best_team = "    RED";
+      best_team = "RED";
       best_team_color = glm::vec4(1.f, 0.13f, 0.13f, 1.f);
     } else if (engine_->GetTeamScores()[0] == engine_->GetTeamScores()[1]) {
-      best_team = "  NO TEAM";
+      best_team = "NO TEAM";
       best_team_color = glm::vec4(.8f, .4f, .4f, 1.f);
     }
 
-    glob::Submit(font_test_, pos + glm::vec2(41, -1), 48, best_team + " wins!",
+    std::string winnin_team_text = best_team + " wins!";
+    double width = glob::GetWidthOfText(font_test_, winnin_team_text, 48);
+
+    pos.x -= width / 2;
+
+    glob::Submit(font_test_, pos + glm::vec2(1, -1), 48, winnin_team_text,
                  glm::vec4(0, 0, 0, 0.7f));
 
-    glob::Submit(font_test_, pos + glm::vec2(40, 0), 48, best_team + " wins!",
-                 best_team_color);
+    glob::Submit(font_test_, pos, 48, winnin_team_text, best_team_color);
 
     int game_end_timeout = 5;
     std::string end_countdown_text =
         std::to_string((int)(game_end_timeout - end_game_timer_.Elapsed()));
 
-    glob::Submit(font_test_, pos + glm::vec2(0, -50), 48,
-                 "Returning to lobby in: " + end_countdown_text);
+    std::string return_to_lobby_test =
+        "Returning to lobby in: " + end_countdown_text;
+    width = glob::GetWidthOfText(font_test_, return_to_lobby_test, 48);
+    pos.x = (glob::window::GetWindowDimensions().x / 2) - (width / 2);
+    glob::Submit(font_test_, pos + glm::vec2(0, -40), 48, return_to_lobby_test);
 
     if (end_game_timer_.Elapsed() >= 5.0f) {
       engine_->ChangeState(StateType::LOBBY);
@@ -506,8 +512,8 @@ void PlayState::UpdateGameplayTimer() {
 
 void PlayState::DrawNameOverPlayer() {
   auto player_view =
-      registry_gameplay_
-          .view<PlayerComponent, TransformComponent, ModelComponent, IDComponent>();
+      registry_gameplay_.view<PlayerComponent, TransformComponent,
+                              ModelComponent, IDComponent>();
 
   auto& my_transform = registry_gameplay_.get<TransformComponent>(my_entity_);
   for (auto entity : player_view) {
@@ -1423,7 +1429,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
     }
     case GameEvent::INVISIBILITY_CAST: {
       auto registry = engine_->GetCurrentRegistry();
-      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent, TransformComponent>();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, ModelComponent,
+                         TransformComponent>();
       for (auto entity : view_controller) {
         IDComponent& id_c = view_controller.get<IDComponent>(entity);
         PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
@@ -1434,7 +1442,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         if (id_c.id == e.invisibility_cast.player_id) {
           m_c.invisible = true;
 
-          //Particles
+          // Particles
           entt::entity particle_entity = registry_gameplay_.create();
           glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
           std::vector<glob::ParticleSystemHandle> in_handles;
@@ -1445,8 +1453,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           glob::SetEmitPosition(handle, t_c.position);
           in_handles.push_back(handle);
 
-          ParticleComponent& par_c = registry_gameplay_.assign<ParticleComponent>(
-              particle_entity, in_handles, in_offsets, in_directions);
+          ParticleComponent& par_c =
+              registry_gameplay_.assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
 
           if (e.invisibility_cast.player_id == my_id_) {
             // TODO: Add effect to let player know it's invisible
@@ -1458,7 +1467,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
     }
     case GameEvent::INVISIBILITY_END: {
       auto registry = engine_->GetCurrentRegistry();
-      auto view_controller = registry->view<IDComponent, PlayerComponent, ModelComponent, TransformComponent>();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, ModelComponent,
+                         TransformComponent>();
       for (auto entity : view_controller) {
         IDComponent& id_c = view_controller.get<IDComponent>(entity);
         PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
@@ -1500,19 +1511,19 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       std::vector<glm::vec3> offsets;
       std::vector<glm::vec3> directions;
 
-	  glob::SetParticleSettings(handle, "force_push.txt");
+      glob::SetParticleSettings(handle, "force_push.txt");
 
       auto registry = engine_->GetCurrentRegistry();
       auto view_controller = registry->view<IDComponent, TransformComponent>();
-      
+
       for (auto proj_ent : view_controller) {
         auto& id_c = view_controller.get<IDComponent>(proj_ent);
         auto& trans_c = view_controller.get<TransformComponent>(proj_ent);
 
         if (id_c.id == e.force_push_impact.projectile_id) {
-          glob::SetEmitPosition(handle, trans_c.position);  
-		  break;
-		}
+          glob::SetEmitPosition(handle, trans_c.position);
+          break;
+        }
       }
 
       registry_gameplay_.assign<ParticleComponent>(ent, handles, offsets,

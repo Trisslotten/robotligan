@@ -77,7 +77,7 @@ void ConnectMenuState::Update(float dt) {
   auto bgpos = glm::vec2((windowsize.x / 2.0f - windowsize.x * 0.087),
                          (windowsize).y * 0.25f);
   glob::Submit(font_test_, gamepos, 45, "Server Info",
-               glm::vec4(0.5f, 1, 1, 1));
+               glm::vec4(1, 1, 1, 1));
   glob::Submit(bg_, bgpos, 1.0, 90);
   if (is_enter) {
     if ((ip_.length() > 0) && (port_.length() > 0)) {
