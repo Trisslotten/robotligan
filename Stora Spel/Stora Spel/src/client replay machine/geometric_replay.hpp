@@ -1,8 +1,8 @@
 #ifndef GEOMETRIC_REPLAY_HPP_
 #define GEOMETRIC_REPLAY_HPP_
 
-#include <vector>
 #include <string>
+#include <vector>
 
 #include <entity/registry.hpp>
 #include <shared/id_component.hpp>
@@ -40,14 +40,14 @@ class GeometricReplay {
       }
     }
 
-	void operator=(ChannelEntry const& rhs) {
+    void operator=(ChannelEntry const& rhs) {
       this->frame_number = rhs.frame_number;
       this->data_ptr = nullptr;
       if (rhs.data_ptr != nullptr) {
         this->data_ptr = rhs.data_ptr->Clone();
       }
       this->ending_entry = rhs.ending_entry;
-	}
+    }
   };
 
   struct FrameChannel {
@@ -65,6 +65,11 @@ class GeometricReplay {
                         entt::registry& in_registry);
   DataFrame* PolymorphIntoDataFrame(entt::entity& in_entity,
                                     entt::registry& in_registry);
+
+  DataFrame* InterpolateDataFrame(unsigned int in_channel_index,
+                                  unsigned int in_entry_index_a,
+                                  unsigned int in_entry_index_b,
+                                  unsigned int in_target_frame_num);
 
   void InterpolateEntityData(unsigned int in_channel_index,
                              entt::entity& in_entity,
@@ -99,8 +104,15 @@ class GeometricReplay {
   bool SaveFrame(entt::registry& in_registry);
   bool LoadFrame(entt::registry& in_registry);
 
-  void SetWriteFrame(unsigned int in_frame_number);
+  // void SetWriteFrame(unsigned int in_frame_number);
+  // NTS: Do not use this (^^^) function. The only place where
+  // the write-frame number is set is in the SaveFrame() function
+  // which means that the write-frame number can tell us the age
+  // of the replay
+
   void SetReadFrame(unsigned int in_frame_number);
+
+  void ChannelCatchUp();
 
   std::string GetGeometricReplayTree();
 };

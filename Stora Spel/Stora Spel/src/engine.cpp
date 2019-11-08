@@ -769,6 +769,8 @@ void Engine::PlayReplay() {
     return;
   }
 
+  std::cout << "<Replaying>" << std::endl;
+
   // Send in registry to get the next frame from the replay machine
   if (this->replay_machine_->LoadFrame(*(this->registry_current_))) {
     // If the recording is not playing

@@ -72,6 +72,46 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
   return ret_ptr;
 }
 
+DataFrame* GeometricReplay::InterpolateDataFrame(
+    unsigned int in_channel_index, unsigned int in_entry_index_a,
+    unsigned int in_entry_index_b, unsigned int in_target_frame_num) {
+  // Get the DataFrame at 'a' and interpolate it forwards
+  // towards 'b' to find the DataFrame representing the current frame
+  unsigned int dist_to_target =
+      in_target_frame_num - this->channels_.at(in_channel_index)
+                                .entries.at(in_entry_index_a)
+                                .frame_number;
+  unsigned int dist_to_b = this->channels_.at(in_channel_index)
+                               .entries.at(in_entry_index_b)
+                               .frame_number -
+                           this->channels_.at(in_channel_index)
+                               .entries.at(in_entry_index_a)
+                               .frame_number;
+
+  // If the distance to the target is greater than or equal to the
+  // distance to 'b' we have passed the last entry in the channel
+  if (dist_to_target >= dist_to_b) {
+    // We set the distance to the target to be the distance
+    // to 'b', saying that all frames past the last entry
+    // has the value of the last entry
+    dist_to_target = dist_to_b;
+  }
+
+  DataFrame* df_a_ptr = this->channels_.at(in_channel_index)
+                            .entries.at(in_entry_index_a)
+                            .data_ptr;
+  DataFrame* df_b_ptr = this->channels_.at(in_channel_index)
+                            .entries.at(in_entry_index_b)
+                            .data_ptr;
+
+  DataFrame* df_c_ptr =
+      df_a_ptr->InterpolateForward(dist_to_target, dist_to_b, (*df_b_ptr));
+  // NTS:	InterpolateForward allocates new memory space
+  //		Remember to clean up!
+
+  return df_c_ptr;
+}
+
 void GeometricReplay::InterpolateEntityData(unsigned int in_channel_index,
                                             entt::entity& in_entity,
                                             entt::registry& in_registry) {
@@ -94,42 +134,19 @@ void GeometricReplay::InterpolateEntityData(unsigned int in_channel_index,
     }
   }
 
-  // Get the DataFrame at 'a' and interpolate it forwards
-  // towards 'b' to find the DataFrame representing the current frame
-  unsigned int dist_to_target =
-      this->current_frame_number_read_ -
-      this->channels_.at(in_channel_index).entries.at(a).frame_number;
-  unsigned int dist_to_b =
-      this->channels_.at(in_channel_index).entries.at(b).frame_number -
-      this->channels_.at(in_channel_index).entries.at(a).frame_number;
-
-  // If the distance to the target is greater than or equal to the
-  // distance to 'b' we have passed the last entry in the channel
-  if (dist_to_target >= dist_to_b) {
-    // We set the distance to the target to be the distance
-    // to 'b', saying that all frames past the last entry
-    // has the value of the last entry
-    dist_to_target = dist_to_b;
-  }
-
-  DataFrame* df_a_ptr =
-      this->channels_.at(in_channel_index).entries.at(a).data_ptr;
-  DataFrame* df_b_ptr =
-      this->channels_.at(in_channel_index).entries.at(b).data_ptr;
-
-  DataFrame* df_c_ptr =
-      df_a_ptr->InterpolateForward(dist_to_target, dist_to_b, (*df_b_ptr));
-  // NTS:	InterpolateForward allocates new memory space
-  //		Remember to clean up!
+  // Interpolate a new frame (allocates memory)
+  DataFrame* interpolated_frame_ptr = this->InterpolateDataFrame(
+      in_channel_index, a, b, this->current_frame_number_read_);
 
   // Load the data from the created frame into the
   // components of the entity
   ReplayObjectType object_type =
       this->channels_.at(in_channel_index).object_type;
-  this->DepolymorphFromDataframe(df_c_ptr, object_type, in_entity, in_registry);
+  this->DepolymorphFromDataframe(interpolated_frame_ptr, object_type, in_entity,
+                                 in_registry);
 
-  // De-allocate and clean up after InterpolateForward()
-  delete df_c_ptr;
+  // De-allocate to clean up after InterpolateForward()
+  delete interpolated_frame_ptr;
 }
 
 void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
@@ -322,7 +339,7 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
     if (this->channels_.at(i).entries.size() > 1) {  //(1.)
       unsigned int age = this->current_frame_number_write_ -
                          this->channels_.at(i).entries.at(1).frame_number;
-      if (age > this->threshhold_age_) {  //(2.)
+      if (age > this->threshhold_age_) {                         //(2.)
         if (this->channels_.at(i).entries.at(1).ending_entry) {  //(3.1)
           this->channels_.erase(this->channels_.begin() + i);
           i--;
@@ -373,12 +390,34 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
   return true;
 }
 
-void GeometricReplay::SetWriteFrame(unsigned int in_frame_number) {
-  this->current_frame_number_write_ = in_frame_number;
-}
-
 void GeometricReplay::SetReadFrame(unsigned int in_frame_number) {
   this->current_frame_number_read_ = in_frame_number;
+}
+
+void GeometricReplay::ChannelCatchUp() {
+  // Goes through all channels and moves all
+  // channels to have their first entry not lie
+  // beyond the threshold age
+
+  for (unsigned int i = 0; i < this->channels_.size(); i++) {
+    // Check the age of the first entry
+    unsigned int age = this->current_frame_number_write_ -
+                       this->channels_.at(i).entries.at(0).frame_number;
+
+    // If the age is greater than the threshold
+    if (age > this->threshhold_age_) {
+      // Create an interpolation that lies right
+      // at the the threshold
+      unsigned int threshold_frame = age - this->threshhold_age_;
+
+      DataFrame* threshold_frame_ptr = this->InterpolateDataFrame(i, 0, 1, threshold_frame);
+
+	  //Replace the data in first entry with the just calculated stuff
+      this->channels_.at(i).entries.at(0).frame_number = threshold_frame;
+      delete this->channels_.at(i).entries.at(0).data_ptr;
+      this->channels_.at(i).entries.at(0).data_ptr = threshold_frame_ptr;
+    }
+  }
 }
 
 std::string GeometricReplay::GetGeometricReplayTree() {
@@ -407,7 +446,7 @@ std::string GeometricReplay::GetGeometricReplayTree() {
     // std::string obj_id = std::to_string(this->channels_.at(i).object_id);
     // for (unsigned int j = 0; j < this->channels_.at(i).entries.size(); j++) {
     //  ret_str += "[" + obj_id;
-    //  if (this->channels_.at(i).entries.at(j).ending_entry) { // WORKING HERE:
+    //  if (this->channels_.at(i).entries.at(j).ending_entry) {
     //  Goes out of scope?
     //    ret_str += ":end";
     //  }
