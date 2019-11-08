@@ -287,9 +287,14 @@ void Init() {
       "Particle compute shaders/confetti.comp");
   compute_shaders["confetti"]->compile();
 
+  compute_shaders["dust"] = std::make_unique<ShaderProgram>();
+  compute_shaders["dust"]->add("Particle compute shaders/dust.comp");
+  compute_shaders["dust"]->compile();
+
   CreateDefaultParticleTexture();
   textures["smoke"] = TextureFromFile("smoke.png");
   textures["confetti"] = TextureFromFile("confetti.png");
+  textures["dust"] = TextureFromFile("dust.png");
 
   model_shader.add("modelshader.vert");
   model_shader.add("modelshader.frag");

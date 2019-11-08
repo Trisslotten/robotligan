@@ -234,7 +234,7 @@ namespace glob {
   void ParticleSystem::Update(float dt) {
 #if CPUSPAWN == 0
     spawns_ += settings_.spawn_rate * dt;
-    
+
     int new_particles = 0;
     if (!settings_.burst) {
       new_particles = spawns_;
@@ -262,6 +262,7 @@ namespace glob {
     settings_.compute_shader->uniform("max_i", new_index);
     settings_.compute_shader->uniform("emit_pos", settings_.emit_pos);
     settings_.compute_shader->uniformv("color", settings_.colors.size(), settings_.colors.data());
+    settings_.compute_shader->uniform("num_col", (int)settings_.colors.size());
     settings_.compute_shader->uniform("dir", settings_.direction);
     settings_.compute_shader->uniform("dir_strength", settings_.direction_strength);
     settings_.compute_shader->uniform("max_speed", settings_.velocity);
@@ -325,7 +326,11 @@ namespace glob {
 
   void ParticleSystem::Settings(const ParticleSettings& ps) {
     settings_ = ps;
-    if (settings_.burst) spawns_ = settings_.burst_particles;
+    if (settings_.burst) {
+      spawns_ = settings_.burst_particles;
+    } else {
+      spawns_ = 0;
+    }
   }
 
   ParticleSettings ParticleSystem::GetSettings() {
@@ -349,8 +354,15 @@ namespace glob {
   }
 
   void ParticleSystem::Reset() {
-    spawns_ = settings_.burst_particles;
+    if (settings_.burst) {
+      spawns_ = settings_.burst_particles;
+    } else {
+      spawns_ = 0;
+    }
+
     created_bursts_ = 0;
+    current_index_ = 0;
+
     
     std::vector<float> time_data(SIZE, 0.f);
 
