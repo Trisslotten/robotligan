@@ -1612,6 +1612,53 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       }
       break;
     }
+    case GameEvent::HOMING_BALL: {
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller =
+          registry->view<BallComponent, TrailComponent, IDComponent>();
+      for (auto entity : view_controller) {
+        BallComponent& ball_c = view_controller.get<BallComponent>(entity);
+        TrailComponent& trail_c =
+            view_controller.get<TrailComponent>(entity);
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+
+        if (id_c.id == e.homing_ball.ball_id) {
+          trail_c.color = glm::vec4(0.74f, 0.19f, 1.0f, 1.0f);
+          break;
+        }
+      }
+      break;
+    }
+    case GameEvent::HOMING_BALL_END: {
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller =
+          registry->view<BallComponent, TrailComponent, IDComponent>();
+      for (auto entity : view_controller) {
+        BallComponent& ball_c = view_controller.get<BallComponent>(entity);
+        TrailComponent& trail_c = view_controller.get<TrailComponent>(entity);
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+
+        if (id_c.id == e.homing_ball_end.ball_id) {
+          trail_c.color = glm::vec4(0, 1, 0, 1);
+          break;
+        }
+      }
+      break;
+    }
+    case GameEvent::GRAVITY_DROP: {
+      auto entity = registry_gameplay_.create();
+      auto handle = glob::CreateParticleSystem();
+
+      std::vector handles = {handle};
+      std::vector<glm::vec3> offsets;
+      std::vector<glm::vec3> directions;
+
+      glob::SetParticleSettings(handle, "dust.txt");
+
+      registry_gameplay_.assign<ParticleComponent>(entity, handles, offsets, directions);
+      registry_gameplay_.assign<int>(entity, 0);
+      break;
+    }
   }
 }
 

@@ -118,6 +118,7 @@
     <None Include="Assets\Mech\Mech.mcfg" />
     <None Include="Assets\Map\Map_singular_TMP.mcfg" />
     <None Include="Assets\Pickup\Pickup.mcfg" />
+    <None Include="Assets\shaders\Particle compute shaders\dust.comp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />
