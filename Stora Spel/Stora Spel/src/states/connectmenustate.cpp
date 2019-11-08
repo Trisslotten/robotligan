@@ -65,6 +65,9 @@ void ConnectMenuState::Init() {
   engine_->SetSendInput(false);
   engine_->SetCurrentRegistry(&registry_connect_menu_);
   engine_->SetEnableChat(false);
+  last_msg_ = "Not Connected";
+  client.Disconnect();
+  isconnected_ = 0;
 }
 
 void ConnectMenuState::Update(float dt) {
@@ -82,6 +85,9 @@ void ConnectMenuState::Update(float dt) {
                glm::vec4(0.5f, 1, 1, 1));
   glob::Submit(bg_, bgpos, 1.0, 90);
   if (is_enter) {
+    MenuEvent click_event;
+    click_event.type = MenuEvent::CLICK;
+    menu_dispatcher.trigger(click_event);
     if ((ip_.length() > 0) && (port_.length() > 0)) {
       client.Disconnect();
       connection_success_ =
@@ -89,6 +95,9 @@ void ConnectMenuState::Update(float dt) {
       isconnected_ = 1;
     }
   } else if (is_escape) {
+    MenuEvent click_event;
+    click_event.type = MenuEvent::CLICK;
+    menu_dispatcher.trigger(click_event);
     client.Disconnect();
     engine_->ChangeState(StateType::MAIN_MENU);
   }
