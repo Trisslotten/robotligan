@@ -1090,33 +1090,51 @@ void PlayState::CreateArenaEntity() {
   model_c.handles.push_back(model_arena);
   model_c.handles.push_back(model_arena_banner);
 
-
-  registry_gameplay_.assign<TransformComponent>(arena, glm::vec3(0.0f, -11.f, 0.0f), zero_vec,
-                                                arena_scale);
+  registry_gameplay_.assign<TransformComponent>(
+      arena, glm::vec3(0.0f, -11.f, 0.0f), zero_vec, arena_scale);
 }
 
 void PlayState::CreateMapEntity() {
-  auto map = registry_gameplay_.create();
+  auto arena = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 map_scale = glm::vec3(4.0f, 4.0f, 4.0f);
-  glob::ModelHandle model_map =
-      glob::GetModel("assets/Map/Map_singular_TMP.fbx");
-  /*auto& model_c = registry_gameplay_.assign<ModelComponent>(map);
-  model_c.handles.push_back(model_map);*/
+  glm::vec3 arena_scale = glm::vec3(1.0f);
+  glob::ModelHandle model_arena = glob::GetModel("assets/MapV3/Map_Walls.fbx");
+  glob::ModelHandle model_map_floor =
+      glob::GetModel("assets/MapV3/Map_Floor.fbx");
+  glob::ModelHandle model_map_projectors =
+      glob::GetModel("assets/MapV3/Map_Projectors.fbx");
+  glob::ModelHandle model_map_walls =
+      glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
 
-  registry_gameplay_.assign<TransformComponent>(map, zero_vec, zero_vec,
-                                                map_scale);
+  auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
+  model_c.handles.push_back(model_arena);
+  model_c.handles.push_back(model_map_floor);
+  model_c.handles.push_back(model_map_projectors);
+  model_c.handles.push_back(model_map_walls);
+
+  registry_gameplay_.assign<TransformComponent>(
+      arena, glm::vec3(0.0f, -11.0f, 0.0f), zero_vec, arena_scale);
 
   // Prepare hard-coded values
   // Scale on the hitbox for the map
-  float v1 = 6.8f * map_scale.z;
-  float v2 = 10.67f * map_scale.x;  // 13.596f;
-  float v3 = 2.723f * map_scale.y;
-  float v4 = 5.723f * map_scale.y;
+  float v1 = 6.8f * arena_scale.z;
+  float v2 = 10.67f * arena_scale.x;  // 13.596f;
+  float v3 = 2.723f * arena_scale.y;
+  float v4 = 5.723f * arena_scale.y;
 
   // Add a hitbox
-  registry_gameplay_.assign<physics::Arena>(map, -v2, v2, -v3, v4, -v1, v1);
-  arena_entity_ = map;
+  registry_gameplay_.assign<physics::Arena>(arena, -v2, v2, -v3, v4, -v1, v1);
+
+  auto md = glob::GetMeshData(model_arena);
+  glm::mat4 matrix =
+      glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f)) *
+      glm::rotate(90.f * glm::pi<float>() / 180.f, glm::vec3(0.f, 0.f, 1.f));
+
+  for (auto& v : md.pos) v = matrix * glm::vec4(v, 1.f);
+  for (auto& v : md.pos) v *= arena_scale;
+  auto& mh = registry_gameplay_.assign<physics::MeshHitbox>(
+      arena, std::move(md.pos), std::move(md.indices));
+  arena_entity_ = arena;
 }
 
 void AddLightToBall(entt::registry& registry, entt::entity& ball) {
