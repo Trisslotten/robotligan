@@ -2,6 +2,9 @@
 
 layout(location = 0) out vec4 out_color;
 layout(location = 1) out vec4 out_emission;
+layout(location = 2) out vec4 out_normal;
+layout(location = 3) out vec4 out_depth;
+layout(location = 4) out vec4 out_pos;
 
 in vec3 local_pos;
 in vec3 local_normal;
@@ -177,4 +180,9 @@ void main() {
 
 	out_color = vec4(color, alpha);
 	out_emission = vec4(emission, 1);
+
+	float depth = gl_FragCoord.z;
+	out_depth = vec4(depth,0,0,0);
+	out_normal = vec4(normalize(v_normal), 1);
+	out_pos = vec4(frag_pos.xyz, 1);
 }

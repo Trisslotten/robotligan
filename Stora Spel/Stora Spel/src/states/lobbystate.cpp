@@ -96,9 +96,9 @@ void LobbyState::SendMyName() {
   packet << PacketBlockType::MY_NAME;
 }
 
-
 void LobbyState::Startup() {
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+  ws_ = glob::window::GetWindowDimensions();
 }
 
 void LobbyState::Init() {
@@ -149,8 +149,6 @@ void LobbyState::Update(float dt) {
     } else {
       glob::Submit(font_test_, bottom_pos, 28, "Match is currently in session");
     }
-
-	
 
     // auto game_clients = engine_->GetPlayingPlayers();
 
@@ -298,16 +296,21 @@ void LobbyState::CreateGUIElements() {
   }
   ability_tooltips_.resize(num_abilites);
   ability_tooltips_[1] = "BUILD WALL: construct a wall on the field.";
-  ability_tooltips_[2] = "FAKE BALL: Spawn a number of fake balls around the ball.";
-  ability_tooltips_[3] = "FORCE PUSH: Throw an explosive projectile that pushes opponents back.";
+  ability_tooltips_[2] =
+      "FAKE BALL: Spawn a number of fake balls around the ball.";
+  ability_tooltips_[3] =
+      "FORCE PUSH: Throw an explosive projectile that pushes opponents back.";
   ability_tooltips_[4] = "GRAVITY: Lower the gravity of the arena.";
-  ability_tooltips_[5] = "HOMING BALL: Kick the ball and guide it with your aim.";
-  ability_tooltips_[6] = "INVISIBILITY: Turn invisible for a short amount of time.";
+  ability_tooltips_[5] =
+      "HOMING BALL: Kick the ball and guide it with your aim.";
+  ability_tooltips_[6] =
+      "INVISIBILITY: Turn invisible for a short amount of time.";
   ability_tooltips_[7] = "MISSILE: Shoot a guided missile at your target.";
-  ability_tooltips_[8] = "SUPER STRIKE: Kick the ball with an insane amount of force.";
+  ability_tooltips_[8] =
+      "SUPER STRIKE: Kick the ball with an insane amount of force.";
   ability_tooltips_[9] = "SWITCH GOALS: Flip both teams goals around.";
-  ability_tooltips_[10] = "TELEPORT: Fire a projectile that teleports you to the point of impact.";
-
+  ability_tooltips_[10] =
+      "TELEPORT: Fire a projectile that teleports you to the point of impact.";
 
   // auto button_join_red = registry_lobby_.create();
   ButtonComponent* button_c = GenerateButtonEntity(
@@ -384,6 +387,13 @@ void LobbyState::CreateGUIElements() {
     if (engine_->GetServerState() == ServerStateType::LOBBY) {
       ReadyButtonFunc();
     }
+  };
+  ButtonComponent* b_c = GenerateButtonEntity(
+      registry_lobby_, "DISCONNECT",
+      glm::vec2(glob::window::GetWindowDimensions().x - 330, 65), font_test_);
+  b_c->button_func = [&]() {
+    engine_->GetClient().Disconnect();
+    engine_->ChangeState(StateType::MAIN_MENU);
   };
 }
 void LobbyState::DrawTeamSelect() {

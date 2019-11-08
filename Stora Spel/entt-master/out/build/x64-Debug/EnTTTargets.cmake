@@ -52,7 +52,7 @@ set_target_properties(EnTT PROPERTIES
   INTERFACE_COMPILE_DEFINITIONS "\$<\$<AND:\$<CONFIG:Debug>,\$<NOT:\$<CXX_COMPILER_ID:MSVC>>>:DEBUG>;\$<\$<AND:\$<CONFIG:Release>,\$<NOT:\$<CXX_COMPILER_ID:MSVC>>>:RELEASE>"
   INTERFACE_COMPILE_FEATURES "cxx_std_17"
   INTERFACE_COMPILE_OPTIONS "\$<\$<AND:\$<CONFIG:Debug>,\$<NOT:\$<CXX_COMPILER_ID:MSVC>>>:-O0;-g>;\$<\$<AND:\$<CONFIG:Release>,\$<CXX_COMPILER_ID:Clang>>:-O2>;\$<\$<AND:\$<CONFIG:Release>,\$<CXX_COMPILER_ID:GNU>>:-O3>"
-  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/Sebastian/source/repos/Stora Spelprojektet/Stora Spel/entt-master/src"
+  INTERFACE_INCLUDE_DIRECTORIES "C:/Users/KNASGODX/source/repos/Stora Spelprojektet/Stora Spel/entt-master/src"
 )
 
 # This file does not depend on other imported targets which have

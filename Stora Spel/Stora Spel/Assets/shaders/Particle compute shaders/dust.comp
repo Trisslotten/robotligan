@@ -33,7 +33,6 @@ uniform float size_delta;
 uniform float dt;
 
 uniform vec4 color[10];
-uniform int num_col;
 uniform vec3 emit_pos;
 uniform vec3 dir;
 uniform int max_i;
@@ -51,23 +50,36 @@ void main()
 {
 	uint gid = gl_GlobalInvocationID.x;
 	if (gid < 1000 && times[gid] > 0.f) {
-		float ratio = times[gid] / 5.0f;
+		//float ratio = times[gid] / 5.0f;
 		//velocities[gid].y -= 19.82 * dt;
 		//float vel = length(velocities[gid]);
 		//float factor = (vel - velocity_delta * dt) / vel;
-		velocities[gid] *= 0.99 * (1-0);
-		vec4 vel = velocities[gid] - vec4(0.0, 1.0, 0.0, 0.0) * 2009.82 * 0.5 * dt;
+		//velocities[gid] *= 0.99 * (1-0);
+		//vec4 vel = velocities[gid] - vec4(0.0, 1.0, 0.0, 0.0) * 2009.82 * 0.5 * dt;
 		//velocities[gid] = vel;
-		positions[gid] += vel * dt;
 
-		if (positions[gid].y < -11.0) {
-			velocities[gid] = vec4(0);
-		}
-		positions[gid].y = clamp(positions[gid].y, -11.0, 24.0);
-		positions[gid].z = clamp(positions[gid].z, -28.0, 28.0);
+		//positions[gid].y = clamp(positions[gid].y, -11.0, 24.0);
+		//positions[gid].z = clamp(positions[gid].z, -28.0, 28.0);
+		float random = randnorm(gid);
+		float random1 = rand(gid*2);
+		float random2 = rand(gid*3);
+		//float normal_factor = random * (1-dir_strength) + dir_strength;
+		vec3 random_dir = normalize(vec3(random * 2 - 1, random1 * 2 - 1, random2 * 2 - 1));
+		//random_dir -= random_dir * dot(dir, random_dir);
+		random_dir = normalize(random_dir);
+		velocities[gid] += random_dir * rand(times[gid]) * 0.01;
+
 		colors[gid] -= color_delta * dt;
 		sizes[gid] -= size_delta * dt;
 		times[gid] -= dt;
+		if (times[gid] < 2.0) {
+			velocities[gid] = vec4(0, -15.9, 0, 0);
+			colors[gid].w -= dt * 0.5;
+		}
+		positions[gid] += velocities[gid] * dt;
+		positions[gid].y = clamp(positions[gid].y, -10.8, 24.0);
+		if (positions[gid].y < -10.7)
+			times[gid] = 0.0;
 	} else if (gid >= min_i && gid < max_i) {
 		float random = randnorm(gid);
 		float random1 = rand(gid*2);
@@ -81,9 +93,9 @@ void main()
 		random_dir = normalize(random_dir);
 		
 		times[gid] = time;
-		colors[gid] = color[gid%num_col];
+		colors[gid] = color[0];
 		sizes[gid] = size;
-		positions[gid] = vec4(emit_pos, 0);
-		velocities[gid] = vec4(random_dir * (rand(gid) * (max_speed-min_speed) + min_speed), 0);
+		positions[gid] = vec4(80 * random1 - 40, -10.5, 56 * random2 - 28, 0.0);
+		velocities[gid] = vec4(0, 5.0 * rand(random) + 0.05, 0, 0);
 	}
 }
