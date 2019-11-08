@@ -392,9 +392,6 @@ void PlayState::Update(float dt) {
     if (engine_->GetTeamScores()[0] > engine_->GetTeamScores()[1]) {
       best_team = "RED";
       best_team_color = glm::vec4(1.f, 0.13f, 0.13f, 1.f);
-    } else if (engine_->GetTeamScores()[0] == engine_->GetTeamScores()[1]) {
-      best_team = "NO TEAM";
-      best_team_color = glm::vec4(.8f, .4f, .4f, 1.f);
     }
 
     std::string winnin_team_text = best_team + " wins!";
