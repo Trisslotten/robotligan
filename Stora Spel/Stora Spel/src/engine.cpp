@@ -91,6 +91,7 @@ void Engine::Init() {
   wanted_state_type_ = StateType::MAIN_MENU;
 
   UpdateSettingsValues();
+  chat_.SetFont(font_test2_);
 }
 
 void Engine::Update(float dt) {
@@ -694,7 +695,7 @@ void Engine::UpdateChat(float dt) {
         }
       }
       chat_.Update(dt);
-      chat_.SubmitText(font_test2_);
+      chat_.SubmitText();
       if (chat_.IsTakingChatInput() == true &&
           chat_.GetCurrentMessage().size() == 0)
         glob::Submit(font_test2_, chat_.GetPosition() + glm::vec2(0, -20.f * 5),

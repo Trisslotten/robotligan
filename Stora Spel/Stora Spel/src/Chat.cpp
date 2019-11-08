@@ -15,7 +15,7 @@ void Chat::AddMessage(std::string name, std::string text, unsigned int message_f
   //std::string row;
   row.name = name;
   row.message_from = message_from;
-  row.offset = name.size() * 6;
+  row.offset = glob::GetWidthOfText(font_, name, 28) - 10;
   for (int i = 0; i < result.size(); ++i) {
     int space_left = row_length_ - (row.message.size() + row.name.size());
   
@@ -70,7 +70,7 @@ void Chat::Update(float dt) {
   }
  }
 
-void Chat::SubmitText(glob::Font2DHandle font) {
+void Chat::SubmitText() {
    int index = messages_.size() - 5;
   if (index < 0) index = 0;
   int counter = 0;
@@ -87,9 +87,9 @@ void Chat::SubmitText(glob::Font2DHandle font) {
 	  } else {
 		  name_color = glm::vec4(1,1,0,1);
 	  }
-      glob::Submit(font, draw_pos_ + glm::vec2(0, -20.f * counter), 28, messages_[index].name, name_color);
+      glob::Submit(font_, draw_pos_ + glm::vec2(0, -20.f * counter), 28, messages_[index].name, name_color);
 	}
-    glob::Submit(font, draw_pos_ + glm::vec2(messages_[index].offset + 25,- 20.f * counter), 28, messages_[index].message, color);
+    glob::Submit(font_, draw_pos_ + glm::vec2(messages_[index].offset + 25,- 20.f * counter), 28, messages_[index].message, color);
     counter++;
   
   }
@@ -101,7 +101,7 @@ void Chat::SubmitText(glob::Font2DHandle font) {
 
   
 
-  glob::Submit(font, draw_pos_ + glm::vec2(0, -20.f * 5), 28, temp, glm::vec4(1, 1, 1, 1));
+  glob::Submit(font_, draw_pos_ + glm::vec2(0, -20.f * 5), 28, temp, glm::vec4(1, 1, 1, 1));
  }
 
  void Chat::SetShowChat() {
