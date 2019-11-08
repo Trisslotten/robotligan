@@ -1,5 +1,6 @@
 #ifndef SERVER_STATE_HPP_
 #define SERVER_STATE_HPP_
+
 #include <NetAPI/socket/server.hpp>
 #include <entity/registry.hpp>
 #include <entt.hpp>
