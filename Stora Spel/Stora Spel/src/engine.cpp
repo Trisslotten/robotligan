@@ -174,6 +174,13 @@ void Engine::Update(float dt) {
     current_state_->Init();
   }
 
+  if (Input::IsKeyPressed(GLFW_KEY_F7)) {
+    glob::SetSSAO(true);
+  }
+  if (Input::IsKeyPressed(GLFW_KEY_F8)) {
+    glob::SetSSAO(false);
+  }
+
   if(Input::IsKeyPressed(GLFW_KEY_F5)) {
     glob::ReloadShaders();
   }

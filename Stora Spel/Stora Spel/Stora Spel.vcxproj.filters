@@ -116,6 +116,8 @@
     <None Include="Assets\shaders\trail.vert" />
     <None Include="Assets\shaders\trail.frag" />
     <None Include="Assets\Mech\Mech.mcfg" />
+    <None Include="Assets\shaders\ssao.frag" />
+    <None Include="Assets\shaders\ssao.vert" />
     <None Include="Assets\Map\Map_singular_TMP.mcfg" />
     <None Include="Assets\Pickup\Pickup.mcfg" />
     <None Include="Assets\shaders\Particle compute shaders\dust.comp" />
