@@ -572,12 +572,78 @@ void PlayState::DrawNameOverPlayer() {
 void PlayState::UpdateSwitchGoalTimer() {
   // Countdown timer
   int temp_time = engine_->GetSwitchGoalTime();
-  int count = engine_->GetSwitchGoalCountdownTimer();
+  float time = engine_->GetSwitchGoalCountdownTimer();
+  int count = (int)time;
 
   // Start countdown
-  if (count == 1) {
+  if (count == 0) {
     countdown_in_progress_ = true;
   }
+
+#define LIGHT_EFFECT 2
+#if LIGHT_EFFECT == 0
+  if (countdown_in_progress_) {
+    float temp = time;
+    int temp1 = (int)temp;
+    float dim = temp - temp1;
+
+    if (dim < 0.5f) {
+      auto& blue_light =
+          registry_gameplay_.get<LightComponent>(blue_goal_light_);
+      blue_light.color = glm::vec3(0.f);
+
+      auto& red_light = registry_gameplay_.get<LightComponent>(red_goal_light_);
+      red_light.color = glm::vec3(0.f);
+    } else {
+      auto& blue_light =
+          registry_gameplay_.get<LightComponent>(blue_goal_light_);
+      blue_light.color = glm::vec3(0.1f, 0.1f, 1.f);
+
+      auto& red_light = registry_gameplay_.get<LightComponent>(red_goal_light_);
+      red_light.color = glm::vec3(1.f, 0.1f, 0.1f);
+    }
+  }
+#elif LIGHT_EFFECT == 1
+  if (countdown_in_progress_) {
+    float temp = time / 2.f;
+    int temp1 = (int)temp;
+    float dim = temp - temp1;
+
+    if (dim < 0.5f) {
+      dim *= 2.f;
+    } else {
+      dim -= 0.5f;
+      dim *= 2.f;
+      dim = 1 - dim;
+    }
+
+    auto& blue_light = registry_gameplay_.get<LightComponent>(blue_goal_light_);
+    blue_light.color = glm::vec3(0.1f, 0.1f, 1.f) * (0.0f + 1.0f * dim);
+
+    auto& red_light = registry_gameplay_.get<LightComponent>(red_goal_light_);
+    red_light.color = glm::vec3(1.f, 0.1f, 0.1f) * (0.0f + 1.f * dim);
+  }
+#elif LIGHT_EFFECT == 2
+  if (countdown_in_progress_) {
+    float temp = time / 2.f;
+    int temp1 = (int)temp;
+    float dim = temp - temp1;
+
+    if (dim < 0.5f) {
+      dim *= 2.f;
+    } else {
+      dim -= 0.5f;
+      dim *= 2.f;
+      dim = 1 - dim;
+    }
+
+    auto& blue_light = registry_gameplay_.get<LightComponent>(blue_goal_light_);
+    blue_light.radius = 30 * dim;
+
+    auto& red_light = registry_gameplay_.get<LightComponent>(red_goal_light_);
+    red_light.radius = 30 * dim;
+  }
+#endif
 
   // Write out timer
   if (countdown_in_progress_) {
@@ -597,6 +663,14 @@ void PlayState::UpdateSwitchGoalTimer() {
 
     // After timer reaches zero swap goals
     if (temp_time - count <= 0) {
+      auto& blue_light =
+          registry_gameplay_.get<LightComponent>(blue_goal_light_);
+      blue_light.color = glm::vec3(0.1f, 0.1f, 1.f);
+      blue_light.radius = 30;
+
+      auto& red_light = registry_gameplay_.get<LightComponent>(red_goal_light_);
+      red_light.color = glm::vec3(1.f, 0.1f, 0.1f);
+      red_light.radius = 30;
       SwitchGoals();
 
       // Save game event
@@ -1228,14 +1302,14 @@ void PlayState::TestCreateLights() {
   registry_gameplay_.assign<LightComponent>(
       blue_goal_light_, glm::vec3(0.1f, 0.1f, 1.0f), 30.f, 0.0f);
   registry_gameplay_.assign<TransformComponent>(
-      blue_goal_light_, glm::vec3(48.f, -6.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      blue_goal_light_, glm::vec3(45.f, -8.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
 
   red_goal_light_ = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(
       red_goal_light_, glm::vec3(1.f, 0.1f, 0.1f), 30.f, 0.f);
   registry_gameplay_.assign<TransformComponent>(
-      red_goal_light_, glm::vec3(-48.f, -6.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      red_goal_light_, glm::vec3(-45.f, -8.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
 
   auto light = registry_gameplay_.create();

@@ -472,7 +472,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     */
     case PacketBlockType::SWITCH_GOALS: {
       // std::cout << "PACKET: SWITCH_GOALS\n";
-      packet >> switch_goal_timer_sec_;
+      packet >> switch_goal_timer_;
       packet >> switch_goal_time_;
       break;
     }
@@ -823,8 +823,8 @@ int Engine::GetGameplayTimer() const { return gameplay_timer_sec_; }
 
 int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }
 
-int Engine::GetSwitchGoalCountdownTimer() const {
-  return switch_goal_timer_sec_;
+float Engine::GetSwitchGoalCountdownTimer() const {
+  return switch_goal_timer_;
 }
 
 int Engine::GetSwitchGoalTime() const { return switch_goal_time_; }
