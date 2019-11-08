@@ -855,7 +855,7 @@ EntityID ServerPlayState::CreatePickUpComponents(glm::vec3 pos) {
   auto entity = CreateIDEntity();
   registry.assign<TransformComponent>(entity, pos, glm::vec3(0.f),
                                       glm::vec3(1.f));
-  registry.assign<PickUpComponent>(entity);
+  registry.assign<PickUpComponent>(entity, pos);
   registry.assign<physics::OBB>(entity, pos, glm::vec3(1.f, 0.f, 0.f),
                                 glm::vec3(0.f, 1.f, 0.f),
                                 glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
