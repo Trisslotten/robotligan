@@ -6,6 +6,7 @@
 #include <ecs/components/model_component.hpp>
 #include <ecs/components/player_component.hpp>
 #include <glob/graphics.hpp>
+#include <shared/pick_up_component.hpp>
 #include <shared/transform_component.hpp>
 #include <util/asset_paths.hpp>
 #include <util/global_settings.hpp>
@@ -17,6 +18,8 @@ ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
     return ReplayObjectType::REPLAY_PLAYER;
   } else if (in_registry.has<BallComponent>(in_entity)) {
     return ReplayObjectType::REPLAY_BALL;
+  } else if (in_registry.has<PickUpComponent>(in_entity)) {
+    return ReplayObjectType::REPLAY_PICKUP;
   }
 
   // If entity couldn't be identified, return number of types
@@ -59,6 +62,8 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
         in_registry.get<TransformComponent>(in_entity);
 
     ret_ptr = new BallFrame(transform_c);
+  } else if (object_type == REPLAY_PICKUP) {
+    // TBA
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unidentified entity");
@@ -84,7 +89,7 @@ void GeometricReplay::InterpolateEntityData(unsigned int in_channel_index,
     a = b;
     // Move 'b' forward to the next index if it won't go
     // over the channel's last entry
-    if (b + 1 != this->channels_.at(in_channel_index).entries.size()) {
+    if ((b) != (this->channels_.at(in_channel_index).entries.size() - 1)) {
       b++;
     }
   }
@@ -148,6 +153,8 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
         in_registry.get<TransformComponent>(in_entity);
     // Transfer
     bf_c_ptr->WriteBack(transform_c);
+  } else if (in_type == REPLAY_PICKUP) {
+    // TBA
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -185,7 +192,7 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     glob::ModelHandle mh_mech = glob::GetModel(kModelPathMech);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     model_c.handles.push_back(mh_mech);
-  } else if (object_type = REPLAY_BALL) {
+  } else if (object_type == REPLAY_BALL) {
     BallFrame* bf_ptr = dynamic_cast<BallFrame*>(df_ptr);
     in_registry.assign<IDComponent>(
         entity, this->channels_.at(in_channel_index).object_id);
@@ -201,6 +208,8 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     model_c.handles.push_back(mh_ball_proj);
     model_c.handles.push_back(mh_ball_sphe);
+  } else if (object_type == REPLAY_PICKUP) {
+    // TBA
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -260,6 +269,8 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
           TransformComponent& transform_c =
               in_registry.get<TransformComponent>(entity);
           temp_df = new BallFrame(transform_c);
+        } else if (temp_object_type == REPLAY_PICKUP) {
+          // TBA
         } else {
           GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                                "Unknown FrameType");
@@ -269,7 +280,6 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
         if ((temp_df != nullptr) &&
             this->channels_.at(i).entries.back().data_ptr->ThresholdCheck(
                 *temp_df)) {
-          // IF true, save DataFrame
           ChannelEntry temp_ce;
           temp_ce.frame_number = this->current_frame_number_write_;
           temp_ce.data_ptr = temp_df;
@@ -303,8 +313,8 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
   // so therefore:
   //	1. Check if there are more than one entry in channel
   //	2. If so, check if second entry is over age threshold
-  //	3. If so, remove first entry in channel OR remove entire
-  //	channel if the second entry marks an ending entry*
+  //	3. If so, remove first entry in channel (3.2) OR remove entire
+  //	channel if the second entry marks an ending entry* (3.1)
   //
   // *When an object disappears from the game world (and thus the replay)
   // register that as an "ending entry".
@@ -312,14 +322,12 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
     if (this->channels_.at(i).entries.size() > 1) {  //(1.)
       unsigned int age = this->current_frame_number_write_ -
                          this->channels_.at(i).entries.at(1).frame_number;
-      if (age > this->threshhold_age_) {                         //(2.)
-        if (this->channels_.at(i).entries.at(1).ending_entry) {  //(3.)
-          this->channels_.erase(this->channels_.begin() + i,
-                                this->channels_.begin() + i);
+      if (age > this->threshhold_age_) {  //(2.)
+        if (this->channels_.at(i).entries.at(1).ending_entry) {  //(3.1)
+          this->channels_.erase(this->channels_.begin() + i);
           i--;
-        } else {
+        } else {  //(3.2)
           this->channels_.at(i).entries.erase(
-              this->channels_.at(i).entries.begin(),
               this->channels_.at(i).entries.begin());
         }
       }
@@ -371,4 +379,42 @@ void GeometricReplay::SetWriteFrame(unsigned int in_frame_number) {
 
 void GeometricReplay::SetReadFrame(unsigned int in_frame_number) {
   this->current_frame_number_read_ = in_frame_number;
+}
+
+std::string GeometricReplay::GetGeometricReplayTree() {
+  std::string ret_str = "Geometric Replay Tree\n";
+  ret_str += "\tThreshold age: " + std::to_string(this->threshhold_age_) + "\n";
+  ret_str += "\tChannels:\n\t\t---\n";
+
+  for (unsigned int i = 0; i < this->channels_.size(); i++) {
+    ret_str += "\t\tChannel Number: " + std::to_string(i) + "\n";
+    ret_str += "\t\tChannel Type: " +
+               std::to_string(this->channels_.at(i).object_type) + "\n";
+    ret_str += "\t\tChannel Entries: " +
+               std::to_string(this->channels_.at(i).entries.size()) + "\n";
+
+    unsigned int oea = this->current_frame_number_write_ -
+                       this->channels_.at(i).entries.at(0).frame_number;
+    unsigned int nea = this->current_frame_number_write_ -
+                       this->channels_.at(i)
+                           .entries.at(this->channels_.at(i).entries.size() - 1)
+                           .frame_number;
+
+    ret_str += "\t\t\tOldest Entry Age: " + std::to_string(oea) + "\n";
+    ret_str += "\t\t\tNewest Entry Age: " + std::to_string(nea) + "\n";
+
+    // ret_str += "\t\t\t";
+    // std::string obj_id = std::to_string(this->channels_.at(i).object_id);
+    // for (unsigned int j = 0; j < this->channels_.at(i).entries.size(); j++) {
+    //  ret_str += "[" + obj_id;
+    //  if (this->channels_.at(i).entries.at(j).ending_entry) { // WORKING HERE:
+    //  Goes out of scope?
+    //    ret_str += ":end";
+    //  }
+    //  ret_str += "] ";
+    //}
+    ret_str += "\t\t---\n";
+  }
+
+  return ret_str;
 }

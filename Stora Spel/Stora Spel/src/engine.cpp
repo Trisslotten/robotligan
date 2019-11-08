@@ -95,9 +95,10 @@ void Engine::Init() {
   UpdateSettingsValues();
 
   // Initiate the Replay Machine
-  float length_sec = GlobalSettings::Access()->ValueOf("REPLAY_LENGTH_SECONDS");
-  float approximate_tickrate = 0.033;  // TODO: Replace with better
-                                       // approximation
+  unsigned int length_sec =
+      (unsigned int)GlobalSettings::Access()->ValueOf("REPLAY_LENGTH_SECONDS");
+  unsigned int approximate_tickrate = 128;  // TODO: Replace with better
+                                            // approximation
   this->replay_machine_ =
       new ClientReplayMachine(length_sec, approximate_tickrate);
 }
@@ -161,6 +162,7 @@ void Engine::Update(float dt) {
     }
     if (Input::IsKeyPressed(GLFW_KEY_O)) {
       this->SaveRecording();
+      std::cout << this->replay_machine_->GetSelectedReplayString() << "\n";
     }
     if (Input::IsKeyPressed(GLFW_KEY_P)) {
       this->BeginReplay();
@@ -717,6 +719,8 @@ int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }
 
 // Replay Functions ---
 void Engine::BeginRecording() {
+  std::cout << "<Begining to record>" << std::endl;
+
   // If we are currently not replaying,
   // start recording
   if (!this->replaying_) {
@@ -725,11 +729,14 @@ void Engine::BeginRecording() {
 }
 
 void Engine::StopRecording() {
+  std::cout << "<Stopped recording>" << std::endl;
   // Stop recordng
   this->recording_ = false;
 }
 
 void Engine::SaveRecording() {
+  std::cout << "<Saved replay>" << std::endl;
+
   // Tell the ReplayMachine to save what currently lies in its buffer
   this->replay_machine_->StoreReplay();
 
@@ -740,6 +747,8 @@ void Engine::SaveRecording() {
 }
 
 void Engine::BeginReplay() {
+  std::cout << "<Starting replay>" << std::endl;
+
   // Stop recording
   this->recording_ = false;
 

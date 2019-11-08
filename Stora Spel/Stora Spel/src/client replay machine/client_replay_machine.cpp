@@ -72,7 +72,7 @@ bool ClientReplayMachine::SelectReplay(unsigned int in_index) {
 
   // Set its read to the start
   this->stored_replays_.at(this->selected_replay_index_)->SetReadFrame(0);
-  
+
   // Reset and pause the timer
   this->replay_timer_.Restart();
   this->replay_timer_.Pause();
@@ -88,12 +88,12 @@ bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
     return true;
   }
 
-  //If the timer has yet to be started, start it
+  // If the timer has yet to be started, start it
   if (this->replay_timer_.Elapsed() == 0) {
     this->replay_timer_.Resume();
   }
 
-  //If the timer shows we have run out of time, return
+  // If the timer shows we have run out of time, return
   if (this->replay_timer_.Elapsed() >= (double)this->replay_length_sec_) {
     this->replay_timer_.Pause();
     return true;
@@ -105,4 +105,13 @@ bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
                          ->LoadFrame(in_registry);
 
   return false;
+}
+
+std::string ClientReplayMachine::GetSelectedReplayString() {
+  if (this->stored_replays_.empty()) {
+    return "ERROR: There are no stored replays";
+  }
+
+  return this->stored_replays_.at(this->selected_replay_index_)
+      ->GetGeometricReplayTree();
 }

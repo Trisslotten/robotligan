@@ -2,6 +2,7 @@
 #define GEOMETRIC_REPLAY_HPP_
 
 #include <vector>
+#include <string>
 
 #include <entity/registry.hpp>
 #include <shared/id_component.hpp>
@@ -11,6 +12,7 @@
 enum ReplayObjectType {
   REPLAY_PLAYER = 0,  // Start
   REPLAY_BALL,
+  REPLAY_PICKUP,
   NUM_OF_REPLAY_OBJECT_TYPES  // End
 };
 
@@ -37,6 +39,15 @@ class GeometricReplay {
         delete data_ptr;
       }
     }
+
+	void operator=(ChannelEntry const& rhs) {
+      this->frame_number = rhs.frame_number;
+      this->data_ptr = nullptr;
+      if (rhs.data_ptr != nullptr) {
+        this->data_ptr = rhs.data_ptr->Clone();
+      }
+      this->ending_entry = rhs.ending_entry;
+	}
   };
 
   struct FrameChannel {
@@ -90,6 +101,8 @@ class GeometricReplay {
 
   void SetWriteFrame(unsigned int in_frame_number);
   void SetReadFrame(unsigned int in_frame_number);
+
+  std::string GetGeometricReplayTree();
 };
 
 #endif  // !GEOMETRIC_REPLAY_HPP_

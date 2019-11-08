@@ -31,6 +31,8 @@ class ClientReplayMachine {
   int CurrentlySelectedReplay() const;
   bool SelectReplay(unsigned int in_index);
   bool LoadFrame(entt::registry& in_registry);
+
+  std::string GetSelectedReplayString();
 };
 
 #endif  // !CLIENT_REPLAY_MACHINE_HPP_
