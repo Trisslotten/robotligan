@@ -204,12 +204,13 @@ void PlayState::Update(float dt) {
     }
     transforms_.clear();
     OnServerFrame();
-    MovePlayer(1 / 64.0f);
+    //MovePlayer(1 / 64.0f);
     actions_.clear();
   }
   timer_ += dt;
   if (timer_ > 1.0f / kClientUpdateRate) {
     MoveBall(dt);
+    MovePlayer(dt);
     timer_ -= dt;
   }
   // interpolate
