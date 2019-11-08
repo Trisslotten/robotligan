@@ -1,0 +1,9 @@
+>color= 0.62 0.51 0.45 0.7
+>radius= 0
+>size= 0.08
+>time= 12
+>burst= 1
+>number_of_bursts= 1
+>burst_particles= 1000
+>shader= dust
+>texture= dust
