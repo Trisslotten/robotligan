@@ -63,6 +63,10 @@ void SettingsState::Update(float dt) {
                  glm::vec4(0, 1, 1, 1));
     if (passed > 3) applied_ = false;
   }
+  if (Input::IsKeyPressed(GLFW_KEY_ENTER)) {
+    SaveSettings();
+    engine_->ChangeState(engine_->GetPreviousStateType());
+  }
 }
 
 void SettingsState::UpdateNetwork() {
@@ -81,6 +85,13 @@ void SettingsState::CreateSettingsMenu() {
   b_c = GenerateButtonEntity(registry_settings_, "APPLY", glm::vec2(60, 100),
                              font_test_);
   b_c->button_func = [=]() { SaveSettings(); };
+  // OK (APPLY + BACK) BUTTON
+  b_c = GenerateButtonEntity(registry_settings_, "SAVE", glm::vec2(60, 150),
+                             font_test_);
+  b_c->button_func = [=]() {
+    SaveSettings();
+    engine_->ChangeState(engine_->GetPreviousStateType());
+  };
 
   glm::vec2 graphics_start_pos =
       glm::vec2(35, glob::window::GetWindowDimensions().y - 175);
