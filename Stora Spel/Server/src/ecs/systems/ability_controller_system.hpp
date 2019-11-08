@@ -501,7 +501,7 @@ bool DoHomingBall(entt::registry& registry, PlayerID id) {
         GameEvent homing_event;
         homing_event.type = GameEvent::HOMING_BALL;
         homing_event.homing_ball.ball_id = b_id_c.id;
-        dispatcher.enqueue(homing_event);
+        dispatcher.trigger(homing_event);
 
         return true;
       }

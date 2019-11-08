@@ -136,7 +136,7 @@ void UpdateHomingBalls(entt::registry& registry, float dt) {
         GameEvent homing_ball_end_event;
         homing_ball_end_event.type = GameEvent::HOMING_BALL_END;
         homing_ball_end_event.homing_ball_end.ball_id = ball_id_c.id;
-        dispatcher.enqueue(homing_ball_end_event);
+        dispatcher.trigger(homing_ball_end_event);
       }
     }
   }

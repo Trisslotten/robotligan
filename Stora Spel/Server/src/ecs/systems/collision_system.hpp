@@ -925,7 +925,7 @@ void EndHomingBall(entt::registry& registry, entt::entity& in_ball) {
   GameEvent homing_ball_end_event;
   homing_ball_end_event.type = GameEvent::HOMING_BALL_END;
   homing_ball_end_event.homing_ball_end.ball_id = ball_id_c.id;
-  dispatcher.enqueue(homing_ball_end_event);
+  dispatcher.trigger(homing_ball_end_event);
 }
 
 void DestroyEntity(entt::registry& registry, entt::entity entity) {
