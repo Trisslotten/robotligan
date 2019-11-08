@@ -387,7 +387,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.super_kick.player_id) {
         sound_c.sound_player->Play(sound_pickup_spawned_, 0,
-                                   0.2f);
+                                   1.0f);
         break;
       }
     }
