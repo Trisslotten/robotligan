@@ -826,7 +826,15 @@ void ServerPlayState::ResetEntities() {
     transform_component.position = pos;
 
     ball_component.rotation = glm::vec3(0.f);
-    ball_component.is_homing = false;
+    if (ball_component.is_homing) {
+      ball_component.is_homing = false;
+      // Save game event
+      IDComponent& ball_id_c = registry.get<IDComponent>(entity);
+      GameEvent homing_ball_end_event;
+      homing_ball_end_event.type = GameEvent::HOMING_BALL_END;
+      homing_ball_end_event.homing_ball_end.ball_id = ball_id_c.id;
+      dispatcher.trigger(homing_ball_end_event);
+    }
     ball_component.homer_cid = -1;
   }
 }
