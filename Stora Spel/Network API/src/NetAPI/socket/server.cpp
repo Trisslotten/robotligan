@@ -57,6 +57,8 @@ void NetAPI::Socket::Server::ListenForClients() {
     auto port = ntohs(client_addr.sin_port);
     // auto ID = getHashedID(addr, port);
     std::string address = addr + (":" + std::to_string(port));
+    // std::string address = addr; För att kunna reconnecta till pågående match,
+    // låter vara så folk kan debugga ordentligt.
 
     std::cout << "DEBUG: tcp connection accepted: "
               << addr + (":" + std::to_string(port)) << "\n";
@@ -69,8 +71,10 @@ void NetAPI::Socket::Server::ListenForClients() {
       client_data->client.Disconnect();
       delete client_data;
       connection_client_->ID = find_res->second;
+      connection_client_->reconnected = true;
       client_data_[find_res->second] = connection_client_;
       std::cout << "DEBUG: Found existing client, overwriting\n";
+      connected_players_++;
     } else if (connected_players_ < NetAPI::Common::kMaxPlayers) {
       std::cout << "DEBUG: adding new client\n";
 

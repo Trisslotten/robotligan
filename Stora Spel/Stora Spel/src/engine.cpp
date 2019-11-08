@@ -174,7 +174,7 @@ void Engine::Update(float dt) {
     current_state_->Init();
   }
 
-  if(Input::IsKeyPressed(GLFW_KEY_F5)) {
+  if (Input::IsKeyPressed(GLFW_KEY_F5)) {
     glob::ReloadShaders();
   }
 
@@ -659,10 +659,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
   }
 }
 
-void Engine::Render() {
-  //
-  glob::Render();
-}
+void Engine::Render() { glob::Render(); }
 
 void Engine::SetCurrentRegistry(entt::registry* registry) {
   this->registry_current_ = registry;
@@ -678,8 +675,7 @@ void Engine::UpdateChat(float dt) {
         } else {
           chat_.SetSendMessage(true);
           message_ = chat_.GetCurrentMessage();
-          if (current_state_ == &play_state_)
-			chat_.CloseChat();
+          if (current_state_ == &play_state_) chat_.CloseChat();
         }
       }
       chat_.Update(dt);

@@ -252,6 +252,10 @@ void ServerPlayState::Update(float dt) {
       EndGame();
     }
   }
+  if (reconnect_id_ < 50) {
+    Reconnect(reconnect_id_);
+    reconnect_id_ = 100;
+  }
 }
 
 void ServerPlayState::HandleDataToSend() {
@@ -682,7 +686,6 @@ void ServerPlayState::CreatePlayerEntity() {
       0.0f               // Remaining shoot cooldown
   );*/
 
-
   /*if (last_spawned_team_ == 1) {
     registry.assign<TeamComponent>(entity, TEAM_BLUE);
     last_spawned_team_ = 0;
@@ -987,6 +990,68 @@ void ServerPlayState::CreateGoals() {
   registry.assign<GoalComponenet>(entity_red);
   auto& trans_comp2 = registry.assign<TransformComponent>(entity_red);
   trans_comp2.position = glm::vec3(48.f, -6.f, 0.f);
+}
+
+void ServerPlayState::Reconnect(int id) {
+  auto& server = game_server_->GetServer();
+  auto& registry = game_server_->GetRegistry();
+  NetAPI::Common::Packet to_send;
+  to_send.GetHeader()->receiver = id;
+
+  auto team_view = registry.view<TeamComponent, IDComponent, PlayerComponent>();
+
+  unsigned int team_id = 0;
+  for (auto team : team_view) {
+    auto& team_c = team_view.get<TeamComponent>(team);
+    auto& id_c = team_view.get<IDComponent>(team);
+    auto& player_c = team_view.get<PlayerComponent>(team);
+
+    to_send << team_c.team;
+    to_send << id_c.id;
+    to_send << player_c.client_id;
+
+    if (id_c.id == clients_player_ids_[id]) {
+      team_id = team_c.team;
+    }
+  }
+  to_send << (int)team_view.size();
+
+  to_send << team_id;
+
+  auto ball_view = registry.view<BallComponent, IDComponent>();
+  for (auto ball : ball_view) {
+    auto& ball_c = ball_view.get<BallComponent>(ball);
+    auto& id_c = ball_view.get<IDComponent>(ball);
+
+    to_send << id_c.id;
+
+    break;
+  }
+
+  to_send << clients_player_ids_[id];
+
+  for (auto ids : clients_player_ids_) {
+    to_send << ids.second;
+  }
+
+  int num_players = server.GetConnectedPlayers();
+  std::cout << "Num players : " << num_players << std::endl;
+  to_send << num_players;
+  to_send << client_abilities_[id];
+
+  to_send << PacketBlockType::GAME_START;
+
+  auto pick_up_view =
+      registry.view<PickUpComponent, TransformComponent, IDComponent>();
+  for (auto entity : pick_up_view) {
+    auto& t = pick_up_view.get<TransformComponent>(entity);
+    auto& id = pick_up_view.get<IDComponent>(entity);
+    to_send << t.position;
+    to_send << id.id;
+    to_send << PacketBlockType::CREATE_PICK_UP;
+  }
+
+  server.Send(to_send);
 }
 
 /*
