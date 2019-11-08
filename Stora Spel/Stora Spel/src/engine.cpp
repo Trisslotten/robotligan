@@ -174,6 +174,10 @@ void Engine::Update(float dt) {
     current_state_->Init();
   }
 
+  if(Input::IsKeyPressed(GLFW_KEY_F5)) {
+    glob::ReloadShaders();
+  }
+
   Input::Reset();
 }
 

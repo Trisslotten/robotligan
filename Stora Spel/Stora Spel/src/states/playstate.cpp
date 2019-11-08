@@ -1042,9 +1042,9 @@ void PlayState::CreatePlayerEntities() {
     model_c.handles.push_back(player_model);
     model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
     if (engine_->GetPlayerTeam(entity_id) == TEAM_BLUE) {
-      model_c.material_index = 1;
+      model_c.diffuse_index = 1;
     } else {
-      model_c.material_index = 0;
+      model_c.diffuse_index = 0;
     }
 
     registry_gameplay_.assign<AnimationComponent>(
@@ -1280,11 +1280,8 @@ void PlayState::CreateTeleportProjectile(EntityID id) {
   auto teleport_projectile = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
-  glob::ModelHandle model_ball = glob::GetModel("assets/Ball/Ball.fbx");
-  auto& model_c =
-      registry_gameplay_.assign<ModelComponent>(teleport_projectile);
-  model_c.handles.push_back(model_ball);
-
+  registry_gameplay_.assign<TrailComponent>(teleport_projectile, 0.5f,
+                                            glm::vec4(1, 1, 1, 1));
   registry_gameplay_.assign<TransformComponent>(teleport_projectile, zero_vec,
                                                 zero_vec, glm::vec3(0.3f));
   registry_gameplay_.assign<IDComponent>(teleport_projectile, id);
@@ -1322,6 +1319,8 @@ void PlayState::CreateMissileObject(EntityID id) {
   registry_gameplay_.assign<IDComponent>(missile_object, id);
   registry_gameplay_.assign<SoundComponent>(missile_object,
                                             sound_engine.CreatePlayer());
+  registry_gameplay_.assign<TrailComponent>(missile_object, 0.2f,
+                                            glm::vec4(1.0f, 0.6f, 0.2f, 1.0f));
 }
 
 void PlayState::DestroyEntity(EntityID id) {
@@ -1519,6 +1518,90 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       registry_gameplay_.assign<ParticleComponent>(ent, handles, offsets,
                                                    directions);
       registry_gameplay_.assign<int>(ent, 0);
+      break;
+    }
+    case GameEvent::MISSILE_IMPACT: {
+      auto ent = registry_gameplay_.create();
+      auto handle = glob::CreateParticleSystem();
+
+      std::vector handles = {handle};
+      std::vector<glm::vec3> offsets;
+      std::vector<glm::vec3> directions;
+
+      glob::SetParticleSettings(handle, "missile_impact.txt");
+
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller = registry->view<IDComponent, TransformComponent>();
+
+      for (auto proj_ent : view_controller) {
+        auto& id_c = view_controller.get<IDComponent>(proj_ent);
+        auto& trans_c = view_controller.get<TransformComponent>(proj_ent);
+
+        if (id_c.id == e.force_push_impact.projectile_id) {
+          glob::SetEmitPosition(handle, trans_c.position);
+          break;
+        }
+      }
+
+      registry_gameplay_.assign<ParticleComponent>(ent, handles, offsets,
+                                                   directions);
+      registry_gameplay_.assign<int>(ent, 0);
+      break;
+    }
+    case GameEvent::TELEPORT_CAST: {
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, TransformComponent>();
+      for (auto entity : view_controller) {
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+        PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
+        TransformComponent& t_c =
+            view_controller.get<TransformComponent>(entity);
+
+        if (id_c.id == e.teleport_cast.player_id) {
+          // Particles
+          entt::entity particle_entity = registry_gameplay_.create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+          glob::SetParticleSettings(handle, "teleport.txt");
+          glob::SetEmitPosition(handle, t_c.position);
+          in_handles.push_back(handle);
+          ParticleComponent& par_c =
+              registry_gameplay_.assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
+          break;
+        }
+      }
+      break;
+    }
+    case GameEvent::TELEPORT_IMPACT: {
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, TransformComponent>();
+      for (auto entity : view_controller) {
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+        PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
+        TransformComponent& t_c =
+            view_controller.get<TransformComponent>(entity);
+
+        if (id_c.id == e.teleport_impact.player_id) {
+          // Particles
+          entt::entity particle_entity = registry_gameplay_.create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+          glob::SetParticleSettings(handle, "teleport.txt");
+          glob::SetEmitPosition(handle, e.teleport_impact.hit_pos);
+          in_handles.push_back(handle);
+          ParticleComponent& par_c =
+              registry_gameplay_.assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
+          break;
+        }
+      }
       break;
     }
     case GameEvent::GRAVITY_DROP: {

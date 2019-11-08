@@ -21,6 +21,7 @@ struct Vertex {
 
 struct Texture {
   GLuint id_texture;
+  int slot = 0;
   std::string type;
   aiString path;
 };

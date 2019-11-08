@@ -100,6 +100,7 @@ class LobbyState : public State {
   void SetMyId(int client_id) { my_id_ = client_id; }
 
  private:
+  glm::vec2 ws_;
   entt::registry registry_lobby_;
   void CreateBackgroundEntities();
   void CreateGUIElements();
@@ -147,6 +148,7 @@ class ConnectMenuState : public State {
   void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
+  void CreateBackground();
   StateType Type() { return StateType::CONNECT_MENU; }
 
  private:
@@ -166,11 +168,14 @@ class ConnectMenuState : public State {
   };
   int frames_ = 0;
   bool connection_success_ = true;
-  std::string last_msg_ = "Failed to connect: Timeout";
+  std::string last_msg_ = "Status: Failed to connect, Timeout";
+  glob::GUIHandle bg_ = 0;
+  glm::vec4 color_ = glm::vec4(1, 1, 1, 1);
   std::string ip_ = "localhost";
   std::string port_ = "1337";
   glob::Font2DHandle font_test_ = 0;
   entt::registry registry_connect_menu_;
+  int prv_ = -1;
 };
 
 /////////////////////// SETTINGS ///////////////////
@@ -193,7 +198,10 @@ class SettingsState : public State {
   float setting_volume_ = 100.f;
   float setting_mouse_sens_ = 1.0f;
 
+  glm::vec2 ws_;
   std::string setting_username_ = "fel";
+  bool applied_ = false;
+  std::chrono::time_point<std::chrono::high_resolution_clock> time_;
 };
 
 /////////////////////// PLAY ///////////////////////
@@ -257,7 +265,7 @@ class PlayState : public State {
 
   float GetPitch() { return pitch_; }
   float GetYaw() { return yaw_; }
-  void SetTeam(unsigned int team) {my_team_ = team;}
+  void SetTeam(unsigned int team) { my_team_ = team; }
   void CreateNewBallEntity(bool fake, EntityID id);
   void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
 
@@ -344,7 +352,7 @@ class PlayState : public State {
   int frame_id = 0;
   float pitch_ = 0.0f;
   float yaw_ = 0.0f;
-  
+
   float timer_ = 0.0f;
   float primary_cd_ = 0.0f;
 };
