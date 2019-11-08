@@ -39,7 +39,7 @@ Material Materials::GetMaterial(
     std::unordered_map<materials::Type, std::string> wanted_textures) {
   Material result;
   for (auto& [type, path] : wanted_textures) {
-    std::cout << "Loading material texture: " << path << "\n";
+    //std::cout << "Loading material texture: " << path << "\n";
     switch (type) {
       case materials::NORMAL:
         result.AddTexture(type, GetNormalMap(path), TEXTURE_SLOT_NORMAL,
