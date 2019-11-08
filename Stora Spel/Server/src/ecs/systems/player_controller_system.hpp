@@ -154,12 +154,12 @@ void Update(entt::registry& registry, float dt) {
     // IF player is pressing space
     // AND is not airborne
     // AND has more enery than the cost for jumping
-    if (player_c.actions[PlayerAction::JUMP] && !physics_c.is_airborne &&
+    if (player_c.actions[PlayerAction::JUMP] && player_c.can_jump &&
         player_c.energy_current > player_c.cost_jump && !player_c.no_clip) {
       // Add velocity upwards
       final_velocity += up * player_c.jump_speed;
       // Set them to be airborne
-      physics_c.is_airborne = true;
+      player_c.can_jump = false;
       // Subtract energy cost from resources
       player_c.energy_current -= player_c.cost_jump;
 

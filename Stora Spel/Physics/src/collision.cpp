@@ -427,21 +427,14 @@ physics::IntersectData physics::Intersect(const MeshHitbox& m,
   return data;
 }
 
-physics::IntersectData physics::Intersect(const physics::MeshHitbox& m, const physics::OBB& o){
+physics::IntersectData physics::Intersect(const physics::MeshHitbox& m, const physics::OBB& o, const glm::vec3& vel){
   IntersectData data;
   data.normal = glm::vec3(0.f);
   data.collision = false;
-  std::vector<float> mini1;
-  std::vector<float> mini2;
-  std::vector<float> maxi1;
-  std::vector<float> maxi2;
+  float mini1, mini2, maxi1, maxi2;
   std::vector<glm::vec3> L;
-  mini1.reserve(13);
-  mini2.reserve(13);
-  maxi1.reserve(13);
-  maxi2.reserve(13);
   L.reserve(13);
-  //std::cout << "begin" << std::endl;
+
   Corners c1 = GetCorners(o);
   float minimum = 1000.0f;
   glm::vec3 Normal;
@@ -464,8 +457,6 @@ physics::IntersectData physics::Intersect(const physics::MeshHitbox& m, const ph
         L.push_back(glm::cross(o.normals[k], E[j]));
       }
 	}
-    //L.clear();
-    //    L.push_back(glm::vec3(1.f, 0.f, 0.f));
    
     bool collision = true;
     for (int k = 0; k < L.size(); ++k) {
@@ -477,36 +468,31 @@ physics::IntersectData physics::Intersect(const physics::MeshHitbox& m, const ph
         collision = false;
         break;
       }
-      mini1.push_back(min1);
-      mini2.push_back(min2);
-      maxi1.push_back(max1);
-      maxi2.push_back(max2);
+      if (k == 0) {
+		mini1 = min1;
+		mini2 = min2;
+		maxi1 = max1;
+		maxi2 = max2;
+      }
     }
-    if (collision == true) {//do stuff
+    if (collision == true && glm::dot(N, vel) >= 0) {//do stuff
       float min_dist = 1000.0f;
       data.collision = true;
-      for (int k = 0; k < L.size(); ++k) {
-		if (glm::length(L[k]) > 0.f) {
-		  if ((maxi2[k] - mini1[k]) / glm::length(L[k]) < min_dist) {
-		    min_dist = (maxi2[k] - mini1[k]) / glm::length(L[k]);
-		    data.normal = L[k];
-		  }
-		  if ((maxi1[k] - mini2[k]) / glm::length(L[k]) < min_dist) {
-		    min_dist = (maxi1[k] - mini2[k]) / glm::length(L[k]);
-		    data.normal = -L[k];
-		  }
-		}
-      }
-      data.normal = glm::normalize(N);
+	  if (glm::length(L[0]) > 0.f) {
+	    if ((maxi2 - mini1) / glm::length(L[0]) < min_dist) {
+	      min_dist = (maxi2 - mini1) / glm::length(L[0]);
+	      data.normal = L[0];
+	    }
+	    if ((maxi1 - mini2) / glm::length(L[0]) < min_dist) {
+	      min_dist = (maxi1 - mini2) / glm::length(L[0]);
+	      data.normal = -L[0];
+	    }
+	  }
+      data.normal = glm::normalize(data.normal);
       data.move_vector = min_dist * data.normal;
       return data;
 	}
     L.clear();
-    mini1.clear();
-    mini2.clear();
-    maxi1.clear();
-    maxi2.clear();
   }
- 
   return data;
 }

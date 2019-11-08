@@ -208,7 +208,7 @@ void PlayState::Update(float dt) {
     actions_.clear();
   }
   timer_ += dt;
-  if (timer_ > 1.0f / 64.0f) {
+  if (timer_ > 1.0f / kClientUpdateRate) {
     MoveBall(dt);
     timer_ -= dt;
   }
@@ -225,6 +225,7 @@ void PlayState::Update(float dt) {
       glm::vec3 temp =
           lerp(predicted_state_.position, server_predicted_.position, 0.5f);
       trans_c.position = glm::lerp(trans_c.position, temp, 0.2f);
+     
       glm::quat orientation =
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
@@ -634,7 +635,9 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action,
       if (a == PlayerAction::SPRINT && current_stamina_ > 60.0f * dt) {
         sprint = true;
       }
-      if (a == PlayerAction::JUMP && !state.is_airborne) {
+      auto& player_c = registry_gameplay_.get<PlayerComponent>(my_entity_);
+      if (a == PlayerAction::JUMP && player_c.can_jump) {
+        player_c.can_jump = false;
         // Add velocity upwards
         final_velocity += up * 6.0f;
         // Set them to be airborne
@@ -681,7 +684,6 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action,
     po.max_speed = 1000;
     po.position = state.position;
     po.velocity = new_state.velocity;
-
     physics::Update(&po, dt);
     new_state.velocity = po.velocity;
     new_state.position = po.position;
@@ -748,16 +750,6 @@ void PlayState::OnServerFrame() {
     trans_c.position = server_predicted_.position;
     return;
   }
-
-  for (auto& frame : history_) {
-    for (auto a : frame.actions) {
-      if (a == PlayerAction::JUMP) {
-        return;
-      }
-    }
-  }
-  // predicted_state_.is_airborne = false;
-  // predicted_state_.velocity.y = 0.0f;
 }
 
 void PlayState::MoveBall(float dt) {
@@ -837,19 +829,37 @@ void PlayState::Collision() {
 
   auto& my_obb = registry_gameplay_.get<physics::OBB>(my_entity_);
   auto& my_phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
-  auto& arena_hitbox = registry_gameplay_.get<physics::Arena>(arena_entity_);
+  auto& arena_hitbox = registry_gameplay_.get<physics::MeshHitbox>(arena_entity_);
 
-  physics::IntersectData data = Intersect(arena_hitbox, my_obb);
-  if (data.collision == true) {
-    my_obb.center += data.move_vector;
-    if (data.move_vector.y > 0.0f) {
-      // my_phys_c.is_airborne = false;
-      predicted_state_.is_airborne = false;
-      predicted_state_.velocity.y = 0.f;
-    } else if (data.move_vector.y < 0.0f) {
-      my_phys_c.velocity.y = 0.f;
+    physics::IntersectData data =
+        Intersect(arena_hitbox, my_obb, -my_phys_c.velocity);
+    if (data.collision) {
+      my_obb.center += data.move_vector;
+      if (data.normal.y > 0.25) {
+        auto& player_c = registry_gameplay_.get<PlayerComponent>(my_entity_);
+        my_phys_c.velocity.y = 0.f;
+        predicted_state_.velocity.y = 0.f;
+        server_predicted_.velocity.y = 0.f;
+        if (player_c.can_jump == false) {
+          player_c.can_jump = true;
+        }
+      } else if (data.move_vector.y < 0.0f) {
+        my_phys_c.velocity.y = 0.f;
+        predicted_state_.velocity.y = 0.f;
+        server_predicted_.velocity.y = 0.f;
+      }
     }
-  }
+    if (my_obb.center.x > 46.7) {
+      my_obb.center.x = 46.7;
+    } else if (my_obb.center.x < -46.7) {
+      my_obb.center.x = -46.7;
+    }
+    if (my_obb.center.y - my_obb.extents[1] <= -11.1094f) {
+      my_phys_c.velocity.y = 0.0f;
+      predicted_state_.velocity.y = 0.f;
+      server_predicted_.velocity.y = 0.f;
+      my_obb.center.y = -11.1094f + my_obb.extents[1];
+    }
   // collision with walls
   auto view_walls = registry_gameplay_.view<physics::OBB>();
   for (auto wall : view_walls) {
@@ -1058,6 +1068,16 @@ void PlayState::CreateArenaEntity() {
 
   // Add a hitbox
   registry_gameplay_.assign<physics::Arena>(arena, -v2, v2, -v3, v4, -v1, v1);
+
+  auto md = glob::GetMeshData(model_arena);
+  glm::mat4 matrix =
+      glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f)) *
+      glm::rotate(90.f * glm::pi<float>() / 180.f, glm::vec3(0.f, 0.f, 1.f));
+
+  for (auto& v : md.pos) v = matrix * glm::vec4(v, 1.f);
+  for (auto& v : md.pos) v *= arena_scale;
+  auto& mh = registry_gameplay_.assign<physics::MeshHitbox>(arena, std::move(md.pos),
+                                                  std::move(md.indices));
   arena_entity_ = arena;
 }
 
@@ -1409,7 +1429,10 @@ void PlayState::Reset() {
     yaw_ = 0.0f;
   }
   pitch_ = 0.0f;
-  predicted_state_.is_airborne = true;
+ 
+  auto& player_c = registry_gameplay_.get<PlayerComponent>(my_entity_);
+  player_c.can_jump = false;
+  server_predicted_.velocity = glm::vec3(0.0f);
   predicted_state_.velocity = glm::vec3(0.0f);
 }
 
