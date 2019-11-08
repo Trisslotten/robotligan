@@ -129,6 +129,7 @@ struct GameEvent {
     TELEPORT_CAST,
     TELEPORT_IMPACT,
     HOMING_BALL,
+    HOMING_BALL_END,
     FORCE_PUSH,
     FORCE_PUSH_IMPACT,
     SWITCH_GOALS,
@@ -218,6 +219,11 @@ struct GameEvent {
     struct {
       EntityID ball_id;
     } homing_ball;
+
+    // Ability Homing Ball End
+    struct {
+      EntityID ball_id;
+    } homing_ball_end;
 
     // Ability Force Push
     struct {
