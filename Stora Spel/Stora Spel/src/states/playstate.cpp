@@ -1261,6 +1261,11 @@ void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {
   registry_gameplay_.assign<TransformComponent>(
       pick_up, position, glm::vec3(0.0f, 0.0f, 0.f), glm::vec3(0.4f));
   registry_gameplay_.assign<PickUpComponent>(pick_up);
+  
+  GameEvent e;
+  e.pickup_spawned.pickup_id = id;
+  e.type = GameEvent::PICKUP_SPAWNED;
+  //dispatcher.trigger(e);
 }
 
 void PlayState::CreateCannonBall(EntityID id) {

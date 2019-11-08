@@ -145,6 +145,8 @@ class ServerPlayState : public ServerState {
   Timer match_timer_;
   Timer countdown_timer_;
   Timer reset_timer_;
+  Timer pickup_spawn_timer_;
+  float pickup_spawn_time_ = 10.0f;
   bool reset_ = false;
 
   int switch_goal_time_ =

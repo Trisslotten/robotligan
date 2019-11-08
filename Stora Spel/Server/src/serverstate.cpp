@@ -252,6 +252,10 @@ void ServerPlayState::Update(float dt) {
       EndGame();
     }
   }
+
+  if (pickup_spawn_timer_.Elapsed() >= pickup_spawn_time_) {
+    CreatePickUpComponents();
+  }
 }
 
 void ServerPlayState::HandleDataToSend() {
@@ -682,7 +686,6 @@ void ServerPlayState::CreatePlayerEntity() {
       0.0f               // Remaining shoot cooldown
   );*/
 
-
   /*if (last_spawned_team_ == 1) {
     registry.assign<TeamComponent>(entity, TEAM_BLUE);
     last_spawned_team_ = 0;
@@ -833,8 +836,23 @@ void ServerPlayState::ResetEntities() {
 
 void ServerPlayState::CreatePickUpComponents() {
   auto& registry = game_server_->GetRegistry();
-  glm::vec3 pos = glm::vec3(30 * float(rand()) / RAND_MAX - 15.f, -8.5f,
-                            30 * float(rand()) / RAND_MAX - 15.f);
+
+  int rand_id = rand() % 2;
+  std::string config_str = "PICKUPPOSITION" + std::to_string(rand_id);
+  glm::vec3 pos;
+  pos.x = GlobalSettings::Access()->ValueOf(config_str + "X");
+  pos.y = GlobalSettings::Access()->ValueOf(config_str + "Y");
+  pos.z = GlobalSettings::Access()->ValueOf(config_str + "Z");
+
+  // glm::vec3 pos = glm::vec3(30 * float(rand()) / RAND_MAX - 15.f, -8.5f,
+  //                        30 * float(rand()) / RAND_MAX - 15.f);
+
+  int flip = rand() % 2;
+
+  if (flip) {
+    pos.x *= -1;
+  }
+
   auto entity = CreateIDEntity();
   registry.assign<TransformComponent>(entity, pos, glm::vec3(0.f),
                                       glm::vec3(1.f));
