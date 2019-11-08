@@ -580,24 +580,28 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::CREATE_PROJECTILE: {
       ProjectileID p_id;
       EntityID e_id;
+      glm::vec3 pos;
+      glm::quat ori;
+      packet >> ori;
+      packet >> pos;
       packet >> p_id;
       packet >> e_id;
 
       switch (p_id) {
         case ProjectileID::CANNON_BALL: {
-          play_state_.CreateCannonBall(e_id);
+          play_state_.CreateCannonBall(e_id, pos, ori);
           break;
         }
         case ProjectileID::TELEPORT_PROJECTILE: {
-          play_state_.CreateTeleportProjectile(e_id);
+          play_state_.CreateTeleportProjectile(e_id, pos, ori);
           break;
         }
         case ProjectileID::FORCE_PUSH_OBJECT: {
-          play_state_.CreateForcePushObject(e_id);
+          play_state_.CreateForcePushObject(e_id, pos, ori);
           break;
         }
         case ProjectileID::MISSILE_OBJECT: {
-          play_state_.CreateMissileObject(e_id);
+          play_state_.CreateMissileObject(e_id, pos, ori);
           // TODO: Dont trigger this event on the client like this. Fix so that
           // event is sent/received AFTER the create_projectile packet on server
           // instead Note: Sometimes this plays on player entity rather than the

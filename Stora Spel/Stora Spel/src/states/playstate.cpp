@@ -1358,42 +1358,41 @@ void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {
   registry_gameplay_.assign<PickUpComponent>(pick_up);
 }
 
-void PlayState::CreateCannonBall(EntityID id) {
+void PlayState::CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori) {
   auto cannonball = registry_gameplay_.create();
-  glm::vec3 zero_vec = glm::vec3(0.0f);
 
   glob::ModelHandle model_ball = glob::GetModel("assets/Rocket/Rocket.fbx");
   auto& model_c = registry_gameplay_.assign<ModelComponent>(cannonball);
   model_c.handles.push_back(model_ball);
 
-  registry_gameplay_.assign<TransformComponent>(cannonball, zero_vec, zero_vec,
+  registry_gameplay_.assign<TransformComponent>(cannonball, pos, ori,
                                                 glm::vec3(0.3f));
   registry_gameplay_.assign<IDComponent>(cannonball, id);
 }
 
-void PlayState::CreateTeleportProjectile(EntityID id) {
+void PlayState::CreateTeleportProjectile(EntityID id, glm::vec3 pos, glm::quat ori) {
   auto teleport_projectile = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
   registry_gameplay_.assign<TrailComponent>(teleport_projectile, 0.5f,
                                             glm::vec4(1, 1, 1, 1));
-  registry_gameplay_.assign<TransformComponent>(teleport_projectile, zero_vec,
-                                                zero_vec, glm::vec3(0.3f));
+  registry_gameplay_.assign<TransformComponent>(teleport_projectile, pos,
+                                                ori, glm::vec3(0.3f));
   registry_gameplay_.assign<IDComponent>(teleport_projectile, id);
 }
 
-void PlayState::CreateForcePushObject(EntityID id) {
+void PlayState::CreateForcePushObject(EntityID id, glm::vec3 pos,
+                                      glm::quat ori) {
   auto& sound_engine = engine_->GetSoundEngine();
 
   auto force_object = registry_gameplay_.create();
-  glm::vec3 zero_vec = glm::vec3(0.0f);
   glob::ModelHandle model_ball =
       glob::GetModel("assets/Ball/force_push_ball.fbx");
   auto& model_c = registry_gameplay_.assign<ModelComponent>(force_object);
   model_c.handles.push_back(model_ball);
 
-  registry_gameplay_.assign<TransformComponent>(force_object, zero_vec,
-                                                zero_vec, glm::vec3(0.5f));
+  registry_gameplay_.assign<TransformComponent>(force_object, pos,
+                                                ori, glm::vec3(0.5f));
   registry_gameplay_.assign<IDComponent>(force_object, id);
   registry_gameplay_.assign<SoundComponent>(force_object,
                                             sound_engine.CreatePlayer());
@@ -1401,16 +1400,15 @@ void PlayState::CreateForcePushObject(EntityID id) {
                                             glm::vec4(1, 1, 0, 1));
 }
 
-void PlayState::CreateMissileObject(EntityID id) {
+void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
   auto& sound_engine = engine_->GetSoundEngine();
 
   auto missile_object = registry_gameplay_.create();
-  glm::vec3 zero_vec = glm::vec3(0.0f);
   glob::ModelHandle model_ball = glob::GetModel("assets/Rocket/Rocket.fbx");
   auto& model_c = registry_gameplay_.assign<ModelComponent>(missile_object);
   model_c.handles.push_back(model_ball);
-  registry_gameplay_.assign<TransformComponent>(missile_object, zero_vec,
-                                                zero_vec, glm::vec3(0.5f));
+  registry_gameplay_.assign<TransformComponent>(missile_object, pos,
+                                                ori, glm::vec3(0.5f));
   registry_gameplay_.assign<IDComponent>(missile_object, id);
   registry_gameplay_.assign<SoundComponent>(missile_object,
                                             sound_engine.CreatePlayer());

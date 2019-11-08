@@ -10,6 +10,7 @@
 #define POINTS_SAVE 4
 
 #include <glm/glm.hpp>
+#include<glm/gtx/quaternion.hpp>
 
 const double kClientUpdateRate = 128;
 const double kServerUpdateRate = 128;
@@ -317,5 +318,7 @@ enum class ProjectileID {
 struct Projectile {
   EntityID entity_id;
   ProjectileID projectile_id;
+  glm::vec3 pos;
+  glm::quat ori;
 };
 #endif  // SHARED_HPP_
