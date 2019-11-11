@@ -66,6 +66,9 @@ class Camera {
   EXPORT void MoveCamera(glm::vec3 in_vec);
   EXPORT void SetPosition(glm::vec3 in_vec);
 
+  EXPORT glm::mat4 GetViewMatrix() {return view_mat_;}
+  EXPORT glm::mat4 GetProjectionMatrix() {return perspective_mat_;}
+
   glm::vec3 GetUpVector() const { return orientation_ * glm::vec3(0.f, 1.f, 0.f); }
   glm::vec3 GetDir() const { return orientation_ * glm::vec3(1.f, 0.f, 0.f); }
   EXPORT void SetFov(float val) {

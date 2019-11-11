@@ -1172,7 +1172,7 @@ void PlayState::CreateArenaEntity() {
   glob::ModelHandle model_arena =
       glob::GetModel("assets/Map/Map_singular_TMP.fbx");
   auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
-  model_c.handles.push_back(model_arena);
+  //model_c.handles.push_back(model_arena);
 
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                 arena_scale);
