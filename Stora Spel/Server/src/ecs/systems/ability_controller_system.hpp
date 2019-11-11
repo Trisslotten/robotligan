@@ -21,6 +21,7 @@ Timer gravity_timer;
 Timer blackout_timer;
 bool gravity_used = false;
 bool blackout_used = false;
+bool blackout_in_effect = false;
 // TODO: Make unique for each player
 
 bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
@@ -137,10 +138,18 @@ void Update(entt::registry& registry, float dt) {
     gravity_used = false;
     physics::SetGravity(GlobalSettings::Access()->ValueOf("PHYSICS_GRAVITY"));
   }
-  if (blackout_used &&
+  if (blackout_used && blackout_timer.Elapsed() >= 0.35) {
+    blackout_used = false;
+    blackout_in_effect = true;
+    // Save game event, turn off lights on client
+    GameEvent event;
+    event.type = GameEvent::BLACKOUT_TRIGGER;
+    dispatcher.trigger<GameEvent>(event);
+  }
+  if (blackout_in_effect &&
       blackout_timer.Elapsed() >=
           GlobalSettings::Access()->ValueOf("ABILITY_BLACKOUT_DURATION")) {
-    blackout_used = false;
+    blackout_in_effect = false;
     // Save game event, turn on lights on client
     GameEvent event;
     event.type = GameEvent::BLACKOUT_END;
@@ -604,7 +613,7 @@ bool DoBlackout(entt::registry& registry) {
   blackout_timer.Restart();
   blackout_used = true;
 
-  // Save game event, turn off lights on client
+  // Save game event, play blackout sound on client
   GameEvent event;
   event.type = GameEvent::BLACKOUT_CAST;
   dispatcher.trigger<GameEvent>(event);

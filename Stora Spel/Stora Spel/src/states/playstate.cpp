@@ -1814,7 +1814,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       registry_gameplay_.assign<int>(entity, 0);
       break;
     }
-    case GameEvent::BLACKOUT_CAST: {
+    case GameEvent::BLACKOUT_TRIGGER: {
       glob::SetBlackout(true);
       auto registry = engine_->GetCurrentRegistry();
       auto view_controller = registry->view<LightComponent>();

@@ -143,6 +143,7 @@ struct GameEvent {
     INVISIBILITY_CAST,
     INVISIBILITY_END,
     BLACKOUT_CAST,
+    BLACKOUT_TRIGGER,
     BLACKOUT_END,
     SPRINT_START,
     SPRINT_END,
@@ -271,6 +272,10 @@ struct GameEvent {
     // Ability Blackout Cast
     struct {
     } blackout_cast;
+
+    // Ability Blackout trigger
+    struct {
+    } blackout_trigger;
 
     // Ability Blackout End
     struct {
