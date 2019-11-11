@@ -78,7 +78,9 @@ void RenderSystem(entt::registry& registry) {
     // glm::mat4_cast(glm::quat(transform.rotation));
     glm::vec3 pos = transform.position;
     glm::vec3 dir = glm::quat(transform.rotation) * glm::vec3(1.f, 0.f, 0.f);
-    glob::SubmitLightSource(pos, light.color, light.radius, light.ambient);
+    if (!light.blackout) {
+      glob::SubmitLightSource(pos, light.color, light.radius, light.ambient);
+    }
   }
 
   // Render wireframes
@@ -119,8 +121,11 @@ void RenderSystem(entt::registry& registry) {
     glm::vec2 button_pos = glm::vec2(trans_c.position.x, trans_c.position.y);
 
     if (button_c.visible) {
+      glob::Submit(button_c.f_handle, button_pos + glm::vec2(1, -1),
+                   button_c.font_size, button_c.text, glm::vec4(0, 0, 0, 1));
       glob::Submit(button_c.f_handle, button_pos, button_c.font_size,
                    button_c.text, button_c.text_current_color);
+      
       if (button_c.gui_handle_current) {
         glob::Submit(button_c.gui_handle_current, button_pos, 1.f);
 

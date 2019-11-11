@@ -388,31 +388,34 @@ void PlayState::Update(float dt) {
     glm::vec2 pos = glob::window::GetWindowDimensions();
     pos /= 2;
     pos.y -= 160;
-    pos.x -= 175;
 
-    std::string best_team = "    BLUE";
+    std::string best_team = "BLUE";
     glm::vec4 best_team_color = glm::vec4(0.13f, 0.13f, 1.f, 1.f);
 
     if (engine_->GetTeamScores()[0] > engine_->GetTeamScores()[1]) {
-      best_team = "    RED";
+      best_team = "RED";
       best_team_color = glm::vec4(1.f, 0.13f, 0.13f, 1.f);
-    } else if (engine_->GetTeamScores()[0] == engine_->GetTeamScores()[1]) {
-      best_team = "  NO TEAM";
-      best_team_color = glm::vec4(.8f, .4f, .4f, 1.f);
     }
 
-    glob::Submit(font_test_, pos + glm::vec2(41, -1), 48, best_team + " wins!",
+    std::string winnin_team_text = best_team + " wins!";
+    double width = glob::GetWidthOfText(font_test_, winnin_team_text, 48);
+
+    pos.x -= width / 2;
+
+    glob::Submit(font_test_, pos + glm::vec2(1, -1), 48, winnin_team_text,
                  glm::vec4(0, 0, 0, 0.7f));
 
-    glob::Submit(font_test_, pos + glm::vec2(40, 0), 48, best_team + " wins!",
-                 best_team_color);
+    glob::Submit(font_test_, pos, 48, winnin_team_text, best_team_color);
 
     int game_end_timeout = 5;
     std::string end_countdown_text =
         std::to_string((int)(game_end_timeout - end_game_timer_.Elapsed()));
 
-    glob::Submit(font_test_, pos + glm::vec2(0, -50), 48,
-                 "Returning to lobby in: " + end_countdown_text);
+    std::string return_to_lobby_test =
+        "Returning to lobby in: " + end_countdown_text;
+    width = glob::GetWidthOfText(font_test_, return_to_lobby_test, 48);
+    pos.x = (glob::window::GetWindowDimensions().x / 2) - (width / 2);
+    glob::Submit(font_test_, pos + glm::vec2(0, -40), 48, return_to_lobby_test);
 
     if (end_game_timer_.Elapsed() >= 5.0f) {
       engine_->ChangeState(StateType::LOBBY);
@@ -1227,7 +1230,8 @@ void PlayState::CreateMapEntity() {
 }
 
 void AddLightToBall(entt::registry& registry, entt::entity& ball) {
-  registry.assign<LightComponent>(ball, glm::vec3(0.f, 1.f, 0.f), 20.f, 0.f);
+  registry.assign<LightComponent>(ball, glm::vec3(0.f, 1.f, 0.f), 20.f, 0.f,
+                                  false);
 }
 
 void PlayState::CreateBallEntity() {
@@ -1345,9 +1349,63 @@ void PlayState::TestCreateLights() {
 
   auto light = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(light, glm::vec3(0.4f, 0.4f, 0.4f),
-                                            90.f, 0.1f);
+                                            90.f, 0.2f);
   registry_gameplay_.assign<TransformComponent>(
       light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
+}
+
+void PlayState::AddPlayer() {
+  player_ids_.clear();
+  auto& sound_engine = engine_->GetSoundEngine();
+  for (auto entity_id : player_ids_) {
+    auto entity = registry_gameplay_.create();
+
+    glm::vec3 alter_scale =
+        glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
+    glm::vec3 character_scale = glm::vec3(0.0033f);
+
+    registry_gameplay_.assign<IDComponent>(entity, entity_id);
+    auto& pc = registry_gameplay_.assign<PlayerComponent>(entity);
+    registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(0.f),
+                                                  glm::quat(), character_scale);
+
+    glob::ModelHandle player_model = glob::GetModel("Assets/Mech/Mech.fbx");
+    auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
+    model_c.handles.push_back(player_model);
+    model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
+    if (engine_->GetPlayerTeam(entity_id) == TEAM_BLUE) {
+      model_c.diffuse_index = 1;
+    } else {
+      model_c.diffuse_index = 0;
+    }
+
+    registry_gameplay_.assign<AnimationComponent>(
+        entity, glob::GetAnimationData(player_model));
+    registry_gameplay_.assign<PhysicsComponent>(entity);
+    registry_gameplay_.assign<SoundComponent>(entity,
+                                              sound_engine.CreatePlayer());
+
+    if (entity_id == my_id_) {
+      glm::vec3 camera_offset = glm::vec3(0.5f, 0.7f, 0.f);
+      registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
+                                                 glm::quat(glm::vec3(0.f)));
+      character_scale = glm::vec3(0.1f);
+      float coeff_x_side = (11.223f - (-0.205f));
+      float coeff_y_side = (8.159f - (-10.316f));
+      float coeff_z_side = (10.206f - (-1.196f));
+      registry_gameplay_.assign<physics::OBB>(
+          entity,
+          alter_scale * character_scale,            // Center
+          glm::vec3(1.f, 0.f, 0.f),                 //
+          glm::vec3(0.f, 1.f, 0.f),                 // Normals
+          glm::vec3(0.f, 0.f, 1.f),                 //
+          coeff_x_side * character_scale.x * 0.5f,  //
+          coeff_y_side * character_scale.y * 0.5f,  // Length of each plane
+          coeff_z_side * character_scale.z * 0.5f   //
+      );
+      my_entity_ = entity;
+    }
+  }
 }
 
 void PlayState::CreateWall(EntityID id, glm::vec3 position,
@@ -1785,26 +1843,90 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       registry_gameplay_.assign<int>(entity, 0);
       break;
     }
+    case GameEvent::BLACKOUT_TRIGGER: {
+      glob::SetBlackout(true);
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller = registry->view<LightComponent>();
+      for (auto entity : view_controller) {
+        LightComponent& light_c = view_controller.get(entity);
+
+        // Turn off all light sources affected by blackout
+        if (!registry->has<BallComponent>(entity) &&
+            (entity != red_goal_light_ && entity != blue_goal_light_)) {
+          light_c.blackout = true;
+        }
+      }
+      break;
+    }
+    case GameEvent::BLACKOUT_END: {
+      glob::SetBlackout(false);
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller = registry->view<LightComponent>();
+      for (auto entity : view_controller) {
+        LightComponent& light_c = view_controller.get(entity);
+
+        light_c.blackout = false;
+      }
+    }
+    case GameEvent::SUPER_KICK: {
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, TransformComponent>();
+      for (auto entity : view_controller) {
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+        PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
+        TransformComponent& t_c =
+            view_controller.get<TransformComponent>(entity);
+
+        if (id_c.id == e.super_kick.player_id) {
+          // Particles
+          entt::entity particle_entity = registry_gameplay_.create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+          glob::SetParticleSettings(handle, "superkick.txt");
+          glob::SetParticleDirection(handle, t_c.Forward());
+          glob::SetEmitPosition(handle, t_c.position);
+          in_handles.push_back(handle);
+          ParticleComponent& par_c =
+              registry_gameplay_.assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
+          registry_gameplay_.assign<int>(particle_entity, 0);
+
+          break;
+        }
+      }
+    }
   }
 }
 
 void PlayState::Reset() {
   auto view_particle = registry_gameplay_.view<ParticleComponent>();
   for (auto& entity : view_particle) {
-    auto& particle_c = view_particle.get(entity);
+                                      auto& particle_c =
+                                          view_particle.get(entity);
 
-    for (int i = 0; i < particle_c.handles.size(); ++i) {
-      glob::ResetParticles(particle_c.handles[i]);
-    }
-  }
+                                      for (int i = 0;
+                                           i < particle_c.handles.size(); ++i) {
+                                        glob::ResetParticles(
+                                            particle_c.handles[i]);
+                                      }
+                                    }
 
-  auto view_delete = registry_gameplay_.view<ParticleComponent, int>();
-  for (auto& entity : view_delete) {
-    auto& particle_c = view_delete.get<ParticleComponent>(entity);
+                                    auto view_delete =
+                                        registry_gameplay_
+                                            .view<ParticleComponent, int>();
+                                    for (auto& entity : view_delete) {
+                                      auto& particle_c =
+                                          view_delete.get<ParticleComponent>(
+                                              entity);
 
-    for (int i = 0; i < particle_c.handles.size(); ++i) {
-      glob::DestroyParticleSystem(particle_c.handles[i]);
-    }
+                                      for (int i = 0;
+                                           i < particle_c.handles.size(); ++i) {
+                                        glob::DestroyParticleSystem(
+                                            particle_c.handles[i]);
+                                      }
 
     registry_gameplay_.destroy(entity);
   }
@@ -1822,23 +1944,23 @@ void PlayState::Reset() {
   predicted_state_.velocity = glm::vec3(0.0f);
 }
 
-void PlayState::EndGame() {
-  end_game_timer_.Restart();
-  game_has_ended_ = true;
-}
+  void PlayState::EndGame() {
+    end_game_timer_.Restart();
+    game_has_ended_ = true;
+  }
 
-void PlayState::OverTime() { overtime_has_started_ = true; }
+  void PlayState::OverTime() { overtime_has_started_ = true; }
 
-void PlayState::AddPitchYaw(float pitch, float yaw) {
-  pitch_ += pitch;
-  yaw_ += yaw;
-  constexpr float pi = glm::pi<float>();
-  pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
-}
+  void PlayState::AddPitchYaw(float pitch, float yaw) {
+    pitch_ += pitch;
+    yaw_ += yaw;
+    constexpr float pi = glm::pi<float>();
+    pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
+  }
 
-void PlayState::SetPitchYaw(float pitch, float yaw) {
-  pitch_ = pitch;
-  yaw_ = yaw;
-  constexpr float pi = glm::pi<float>();
-  pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
-}
+  void PlayState::SetPitchYaw(float pitch, float yaw) {
+    pitch_ = pitch;
+    yaw_ = yaw;
+    constexpr float pi = glm::pi<float>();
+    pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
+  }

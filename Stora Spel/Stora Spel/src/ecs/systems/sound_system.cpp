@@ -76,6 +76,7 @@ void SoundSystem::Init(Engine* engine) {
   sound_ability_fake_ball_poof_ =
     sound_engine_.GetSound("assets/sound/poof.mp3");
   sound_ability_invisibility_end_ = sound_engine_.GetSound("assets/sound/invis_end.mp3");
+  sound_ability_blackout_end_ = sound_engine_.GetSound("assets/sound/blackout_end.mp3");
 
   ability_sounds_[AbilityID::GRAVITY_CHANGE] =
     sound_engine_.GetSound("assets/sound/gravitydrop.wav");
@@ -95,6 +96,8 @@ void SoundSystem::Init(Engine* engine) {
     sound_engine_.GetSound("assets/sound/fake_ball.wav");
   ability_sounds_[AbilityID::INVISIBILITY] =
     sound_engine_.GetSound("assets/sound/invis_pop.mp3");
+  ability_sounds_[AbilityID::BLACKOUT] =
+      sound_engine_.GetSound("assets/sound/blackout_start.mp3");
 }
 
 void SoundSystem::PlayAmbientSound(entt::registry& registry) {
@@ -375,6 +378,22 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         sound_c.sound_player->Play(sound_ability_invisibility_end_);
         break;
       }
+    }
+  }
+  if (event.type == GameEvent::BLACKOUT_CAST) {
+    auto view = registry->view<CameraComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& sound_c = view.get<SoundComponent>(entity);
+      sound_c.sound_player->Play(ability_sounds_[AbilityID::BLACKOUT]);
+      break;
+    }
+  }
+  if (event.type == GameEvent::BLACKOUT_END) {
+    auto view = registry->view<CameraComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& sound_c = view.get<SoundComponent>(entity);
+      sound_c.sound_player->Play(sound_ability_blackout_end_);
+      break;
     }
   }
 }

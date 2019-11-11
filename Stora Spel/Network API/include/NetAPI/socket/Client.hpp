@@ -23,6 +23,7 @@ class EXPORT Client {
  private:
   unsigned short ID_ = 0;
   NetAPI::Socket::TcpClient* client_ = nullptr;
+  std::string GetHWID();
 };
 }  // namespace Socket
 }  // namespace NetAPI

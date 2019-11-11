@@ -54,6 +54,10 @@ void Create() {
 
   const char* title_str = "Robotligan";
 
+  if(!fullscreen) {
+    primary = nullptr;
+  }
+
   glfw_window =
       glfwCreateWindow(window_width, window_height, title_str, primary, NULL);
 

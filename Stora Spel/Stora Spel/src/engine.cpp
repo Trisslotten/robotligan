@@ -91,6 +91,7 @@ void Engine::Init() {
   wanted_state_type_ = StateType::MAIN_MENU;
 
   UpdateSettingsValues();
+  chat_.SetFont(font_test2_);
 }
 
 void Engine::Update(float dt) {
@@ -670,10 +671,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
   }
 }
 
-void Engine::Render() {
-  //
-  glob::Render();
-}
+void Engine::Render() { glob::Render(); }
 
 void Engine::SetCurrentRegistry(entt::registry* registry) {
   this->registry_current_ = registry;
@@ -689,12 +687,11 @@ void Engine::UpdateChat(float dt) {
         } else {
           chat_.SetSendMessage(true);
           message_ = chat_.GetCurrentMessage();
-          if (current_state_ == &play_state_)
-			chat_.CloseChat();
+          if (current_state_ == &play_state_) chat_.CloseChat();
         }
       }
       chat_.Update(dt);
-      chat_.SubmitText(font_test2_);
+      chat_.SubmitText();
       if (chat_.IsTakingChatInput() == true &&
           chat_.GetCurrentMessage().size() == 0)
         glob::Submit(font_test2_, chat_.GetPosition() + glm::vec2(0, -20.f * 5),

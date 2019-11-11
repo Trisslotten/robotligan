@@ -80,7 +80,7 @@ void MainMenuState::CreateMainMenu() {
 void MainMenuState::CreateInformationMenu() {
   // BACK BUTTON in Information - go back to main menu
   ButtonComponent* b_c = GenerateButtonEntity(registry_information_, "BACK",
-                                              glm::vec2(100, 140), font_test_);
+                                              glm::vec2(60, 50), font_test_);
   b_c->button_func = [&]() {
     engine_->SetCurrentRegistry(&registry_mainmenu_);
   };
@@ -109,7 +109,7 @@ void MainMenuState::CreateBackgroundEnitites() {
     auto arena = registry_mainmenu_.create();
     glm::vec3 arena_scale = glm::vec3(4.0f);
     glob::ModelHandle model_arena =
-        glob::GetModel("assets/Map/Map_unified_TMP.fbx");
+        glob::GetModel("assets/Map/Map_singular_TMP.fbx");
     auto& model_c = registry_mainmenu_.assign<ModelComponent>(arena);
     model_c.handles.push_back(model_arena);
     registry_mainmenu_.assign<TransformComponent>(arena, zero_vec, zero_vec,

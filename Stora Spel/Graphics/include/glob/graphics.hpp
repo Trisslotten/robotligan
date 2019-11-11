@@ -114,6 +114,8 @@ EXPORT void LoadWireframeMesh(ModelHandle model_h,
                               const std::vector<unsigned int>& indices);
 
 EXPORT double GetWidthOfText(Font2DHandle font_handle, std::string text, float size);
+EXPORT double GetWidthOfChatText(Font2DHandle font_handle, std::string text,
+                             float size);
 EXPORT void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
                    std::string text, glm::vec4 color = glm::vec4(1, 1, 1, 1),
                    bool visible = true, bool equal_spacing = false, float spacing = 13.0f);
@@ -139,6 +141,8 @@ EXPORT void SetSSAO(bool val);
 EXPORT void ReloadShaders();
 
 EXPORT void SetInvisibleEffect(bool in_bool);
+
+EXPORT void SetBlackout(bool blackout);
 
 /*
  * Render all items submitted this frame
