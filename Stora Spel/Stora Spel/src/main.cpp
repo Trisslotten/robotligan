@@ -61,7 +61,7 @@ int main(unsigned argc, char** argv) {
       num_render_updates = 0;
     }
 
-    if (Input::IsKeyDown(GLFW_KEY_F6)) {
+    if (Input::IsKeyPressed(GLFW_KEY_F6)) {
       std::cout << "RAM usage: " << util::MemoryInfo::GetInstance().GetUsedRAM()
                 << " MB\n";
       std::cout << "VRAM usage: "

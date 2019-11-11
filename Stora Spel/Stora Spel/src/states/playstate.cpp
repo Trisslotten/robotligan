@@ -1317,7 +1317,7 @@ void PlayState::TestCreateLights() {
 
   auto light = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(light, glm::vec3(0.4f, 0.4f, 0.4f),
-                                            90.f, 0.1f);
+                                            90.f, 0.2f);
   registry_gameplay_.assign<TransformComponent>(
       light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
 }

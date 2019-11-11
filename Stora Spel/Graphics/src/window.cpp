@@ -24,6 +24,7 @@ namespace window {
 
 unsigned int window_width = 1600;
 unsigned int window_height = 900;
+bool fullscreen = false;
 
 void Create() {
   if (glfw_window) {
@@ -54,8 +55,12 @@ void Create() {
 
   const char* title_str = "Robotligan";
 
+  if(!fullscreen) {
+    primary = nullptr;
+  }
+
   glfw_window =
-      glfwCreateWindow(window_width, window_height, title_str, NULL, NULL);
+      glfwCreateWindow(window_width, window_height, title_str, primary, NULL);
 
   if (!glfw_window) {
     std::cout << "ERROR window.cpp: Could not create glfw window\n";

@@ -134,6 +134,14 @@ void SetDefaultMaterials(ShaderProgram &shader) {
   glActiveTexture(GL_TEXTURE0 + TEXTURE_SLOT_NORMAL);
   glBindTexture(GL_TEXTURE_2D, default_normal_texture);
   shader.uniform("texture_normal", TEXTURE_SLOT_NORMAL);
+
+  glActiveTexture(GL_TEXTURE0 + TEXTURE_SLOT_METALLIC);
+  glBindTexture(GL_TEXTURE_2D, black_texture);
+  shader.uniform("texture_metallic", TEXTURE_SLOT_METALLIC);
+
+  glActiveTexture(GL_TEXTURE0 + TEXTURE_SLOT_ROUGHNESS);
+  glBindTexture(GL_TEXTURE_2D, black_texture);
+  shader.uniform("texture_roughness", TEXTURE_SLOT_ROUGHNESS);
 }
 
 void DrawFullscreenQuad() {
@@ -1270,6 +1278,7 @@ void Render() {
     }
     shader->uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
     shader->uniform("cam_transform", cam_transform);
+    shader->uniform("cam_position", camera.GetPosition());
     shadows.SetUniforms(*shader);
   }
 

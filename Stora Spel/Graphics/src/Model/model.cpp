@@ -3,12 +3,12 @@
 #include <iostream>
 #include <sstream>
 
-#include <Model\modelconfig.hpp>
 #include <glm/ext.hpp>
 #include <lodepng.hpp>
-#include "../usegl.hpp"
-#include "material/material.hpp"
 #include <textureslots.hpp>
+#include "Model/modelconfig.hpp"
+#include "material/material.hpp"
+#include "usegl.hpp"
 
 namespace glob {
 
@@ -61,7 +61,6 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   }
 
   // Process faces / indices
-
   for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
     aiFace temp_faces = mesh->mFaces[i];
     for (GLuint y = 0; y < temp_faces.mNumIndices; y++) {
@@ -84,10 +83,27 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
       wanted_textures[materials::NORMAL] = *normal_map;
     }
     auto normal_map_scale = config.GetFloat("normal_map_scale");
-    if(normal_map_scale) {
+    if (normal_map_scale) {
       normal_map_scale_ = *normal_map_scale;
     }
-    // get more texture-words here
+
+    auto metallic_map = config.GetWord("metallic_map");
+    if (metallic_map) {
+      wanted_textures[materials::METALLIC] = *metallic_map;
+    }
+    auto metallic_map_scale = config.GetFloat("metallic_map_scale");
+    if (metallic_map_scale) {
+      metallic_map_scale_ = *metallic_map_scale;
+    }
+
+    auto roughness_map = config.GetWord("roughness_map");
+    if (roughness_map) {
+      wanted_textures[materials::ROUGHNESS] = *roughness_map;
+    }
+    auto roughness_map_scale = config.GetFloat("roughness_map_scale");
+    if (roughness_map_scale) {
+      roughness_map_scale_ = *roughness_map_scale;
+    }
 
     material_ = materials::Get(wanted_textures);
   }
@@ -100,21 +116,19 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
       std::vector<Texture> diffuse_maps =
           LoadMaterielTextures(temp_material, aiTextureType_DIFFUSE,
                                "texture_diffuse", TEXTURE_SLOT_DIFFUSE
-                               
+
           );
       textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
 
       std::vector<Texture> specular_maps =
           LoadMaterielTextures(temp_material, aiTextureType_SPECULAR,
-                               "texture_specular", TEXTURE_SLOT_SPECULAR
-          );
+                               "texture_specular", TEXTURE_SLOT_SPECULAR);
       textures.insert(textures.end(), specular_maps.begin(),
                       specular_maps.end());
 
       std::vector<Texture> emissive_maps =
           LoadMaterielTextures(temp_material, aiTextureType_EMISSIVE,
-                               "texture_emissive", TEXTURE_SLOT_EMISSIVE
-          );
+                               "texture_emissive", TEXTURE_SLOT_EMISSIVE);
       textures.insert(textures.end(), emissive_maps.begin(),
                       emissive_maps.end());
     }
@@ -374,7 +388,8 @@ void Model::ProcessNode(aiNode* node, const aiScene* scene) {
 
 std::vector<Texture> Model::LoadMaterielTextures(aiMaterial* material,
                                                  aiTextureType type,
-                                                 std::string type_name, int tex_slot) {
+                                                 std::string type_name,
+                                                 int tex_slot) {
   std::vector<Texture> texture;
 
   for (unsigned int i = 0; i < material->GetTextureCount(type); i++) {
@@ -422,6 +437,8 @@ void Model::LoadFromFile(const std::string& path) { LoadModel(path); }
 void Model::Draw(ShaderProgram& shader) {
   material_.Bind(shader);
   shader.uniform("normal_map_scale", normal_map_scale_);
+  shader.uniform("metallic_map_scale", metallic_map_scale_);
+  shader.uniform("roughness_map_scale", roughness_map_scale_);
   shader.uniform("num_diffuse_textures", num_diffuse_textures_);
   for (unsigned int i = 0; i < mesh_.size(); i++) {
     mesh_[i].Draw(shader);
