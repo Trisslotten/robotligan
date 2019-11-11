@@ -117,11 +117,12 @@ class ServerPlayState : public ServerState {
   void CreateBallEntity();
   void CreatePlayerEntity();
   void CreateGoals();
+  void CreatePickupSpawners();
   void Record(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value,
               const float& in_dt, unsigned int in_player_index);
   void Replay(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value,
               unsigned int in_player_index);
-  void CreatePickUpComponents();
+  EntityID CreatePickUpComponents(glm::vec3 pos);
   EntityID GetNextEntityGuid() { return entity_guid_++; }
   void OverTime();
   void EndGame();
@@ -146,6 +147,8 @@ class ServerPlayState : public ServerState {
   Timer match_timer_;
   Timer countdown_timer_;
   Timer reset_timer_;
+  Timer pickup_spawn_timer_;
+  float pickup_spawn_time_ = 10.0f;
   bool reset_ = false;
 
   int switch_goal_time_ =

@@ -152,6 +152,7 @@ struct GameEvent {
     RESET,
     PRIMARY_USED,
     SECONDARY_USED,
+    PICKUP_SPAWNED,
     NUM_EVENTS
   } type;
   union {
@@ -321,6 +322,9 @@ struct GameEvent {
       EntityID player_id;
     } secondary_used;
 
+    struct {
+      EntityID pickup_id;
+    } pickup_spawned;
   };
 };
 

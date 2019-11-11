@@ -166,6 +166,7 @@
     <ClInclude Include="src\ecs\components\match_timer_component.hpp" />
     <ClInclude Include="src\ecs\components\missile_component.hpp" />
     <ClInclude Include="src\ecs\components\physics_component.hpp" />
+    <ClInclude Include="src\ecs\components\pickup_spawner_component.hpp" />
     <ClInclude Include="src\ecs\components\pick_up_event.hpp" />
     <ClInclude Include="src\ecs\components\player_component.hpp" />
     <ClInclude Include="src\ecs\components\points_component.hpp" />
@@ -181,6 +182,7 @@
     <ClInclude Include="src\ecs\systems\lifetime_system.hpp" />
     <ClInclude Include="src\ecs\systems\missile_system.hpp" />
     <ClInclude Include="src\ecs\systems\physics_system.hpp" />
+    <ClInclude Include="src\ecs\systems\pickup_spawner_system.hpp" />
     <ClInclude Include="src\ecs\systems\player_controller_system.hpp" />
     <ClInclude Include="src\ecs\systems\target_system.hpp" />
     <ClInclude Include="src\gameserver.hpp" />
