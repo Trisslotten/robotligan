@@ -138,7 +138,7 @@ void Update(entt::registry& registry, float dt) {
     gravity_used = false;
     physics::SetGravity(GlobalSettings::Access()->ValueOf("PHYSICS_GRAVITY"));
   }
-  if (blackout_used && blackout_timer.Elapsed() >= 0.35) {
+  if (blackout_used && blackout_timer.Elapsed() >= 0.1) {
     blackout_used = false;
     blackout_in_effect = true;
     // Save game event, turn off lights on client
