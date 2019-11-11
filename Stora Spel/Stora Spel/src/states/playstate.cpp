@@ -1839,60 +1839,104 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         light_c.blackout = false;
       }
     }
+    case GameEvent::SUPER_KICK: {
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, TransformComponent>();
+      for (auto entity : view_controller) {
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+        PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
+        TransformComponent& t_c =
+            view_controller.get<TransformComponent>(entity);
+
+        if (id_c.id == e.super_kick.player_id) {
+          // Particles
+          entt::entity particle_entity = registry_gameplay_.create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+          glob::SetParticleSettings(handle, "superkick.txt");
+          glob::SetParticleDirection(handle, t_c.Forward());
+          glob::SetEmitPosition(handle, t_c.position);
+          in_handles.push_back(handle);
+          ParticleComponent& par_c =
+              registry_gameplay_.assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
+          registry_gameplay_.assign<int>(particle_entity, 0);
+
+          break;
+        }
+      }
+    }
   }
 }
 
 void PlayState::Reset() {
   auto view_particle = registry_gameplay_.view<ParticleComponent>();
   for (auto& entity : view_particle) {
-    auto& particle_c = view_particle.get(entity);
+                                      auto& particle_c =
+                                          view_particle.get(entity);
 
-    for (int i = 0; i < particle_c.handles.size(); ++i) {
-      glob::ResetParticles(particle_c.handles[i]);
-    }
+                                      for (int i = 0;
+                                           i < particle_c.handles.size(); ++i) {
+                                        glob::ResetParticles(
+                                            particle_c.handles[i]);
+                                      }
+                                    }
+
+                                    auto view_delete =
+                                        registry_gameplay_
+                                            .view<ParticleComponent, int>();
+                                    for (auto& entity : view_delete) {
+                                      auto& particle_c =
+                                          view_delete.get<ParticleComponent>(
+                                              entity);
+
+                                      for (int i = 0;
+                                           i < particle_c.handles.size(); ++i) {
+                                        glob::DestroyParticleSystem(
+                                            particle_c.handles[i]);
+                                      }
+
+                                      registry_gameplay_.destroy(entity);
+                                    }
+                                    if ((my_team_ == TEAM_BLUE &&
+                                         goals_swapped_ == false) ||
+                                        (my_team_ == TEAM_RED &&
+                                         goals_swapped_ == true)) {
+                                      yaw_ = glm::pi<float>();
+                                    } else {
+                                      yaw_ = 0.0f;
+                                    }
+                                    pitch_ = 0.0f;
+
+                                    auto& player_c =
+                                        registry_gameplay_.get<PlayerComponent>(
+                                            my_entity_);
+                                    player_c.can_jump = false;
+                                    server_predicted_.velocity =
+                                        glm::vec3(0.0f);
+                                    predicted_state_.velocity = glm::vec3(0.0f);
   }
 
-  auto view_delete = registry_gameplay_.view<ParticleComponent, int>();
-  for (auto& entity : view_delete) {
-    auto& particle_c = view_delete.get<ParticleComponent>(entity);
-
-    for (int i = 0; i < particle_c.handles.size(); ++i) {
-      glob::DestroyParticleSystem(particle_c.handles[i]);
-    }
-
-    registry_gameplay_.destroy(entity);
+  void PlayState::EndGame() {
+    end_game_timer_.Restart();
+    game_has_ended_ = true;
   }
-  if ((my_team_ == TEAM_BLUE && goals_swapped_ == false) ||
-      (my_team_ == TEAM_RED && goals_swapped_ == true)) {
-    yaw_ = glm::pi<float>();
-  } else {
-    yaw_ = 0.0f;
+
+  void PlayState::OverTime() { overtime_has_started_ = true; }
+
+  void PlayState::AddPitchYaw(float pitch, float yaw) {
+    pitch_ += pitch;
+    yaw_ += yaw;
+    constexpr float pi = glm::pi<float>();
+    pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
   }
-  pitch_ = 0.0f;
 
-  auto& player_c = registry_gameplay_.get<PlayerComponent>(my_entity_);
-  player_c.can_jump = false;
-  server_predicted_.velocity = glm::vec3(0.0f);
-  predicted_state_.velocity = glm::vec3(0.0f);
-}
-
-void PlayState::EndGame() {
-  end_game_timer_.Restart();
-  game_has_ended_ = true;
-}
-
-void PlayState::OverTime() { overtime_has_started_ = true; }
-
-void PlayState::AddPitchYaw(float pitch, float yaw) {
-  pitch_ += pitch;
-  yaw_ += yaw;
-  constexpr float pi = glm::pi<float>();
-  pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
-}
-
-void PlayState::SetPitchYaw(float pitch, float yaw) {
-  pitch_ = pitch;
-  yaw_ = yaw;
-  constexpr float pi = glm::pi<float>();
-  pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
-}
+  void PlayState::SetPitchYaw(float pitch, float yaw) {
+    pitch_ = pitch;
+    yaw_ = yaw;
+    constexpr float pi = glm::pi<float>();
+    pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
+  }
