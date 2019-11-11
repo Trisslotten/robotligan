@@ -35,7 +35,7 @@ void main()
 
 		color = g_color[0];
 		vec3 point_to_cam = cam_pos - g_pos[0];
-		mat4 rotate = rotationMatrix(point_to_cam, g_time[0]);
+		//mat4 rotate = rotationMatrix(point_to_cam, g_time[0]);
 		
 		vec3 right = cross(cam_up, point_to_cam);
 		vec3 up = cross(right, point_to_cam);
@@ -43,8 +43,12 @@ void main()
 		up = normalize(up) * g_size[0];
 		right = normalize(right) * g_size[0];
 
-		up = (rotate * vec4(up, 0)).xyz;
-		right = (rotate * vec4(right, 0)).xyz;
+		//up = (rotate * vec4(up, 0)).xyz;
+		//right = (rotate * vec4(right, 0)).xyz;
+		if (g_pos[0].y == -11.0) {
+			up = vec3(1,0.2,0) * g_size[0];
+			right = vec3(0,0.2,1) * g_size[0];
+		}
 
 		vec3 world_pos = g_pos[0] + right + up;
 		gl_Position = cam_transform * vec4(world_pos, 1.0);

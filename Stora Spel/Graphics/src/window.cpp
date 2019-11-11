@@ -22,8 +22,8 @@ namespace glob {
 
 namespace window {
 
-unsigned int window_width = 1600;
-unsigned int window_height = 900;
+unsigned int window_width = 1920;
+unsigned int window_height = 1080;
 bool fullscreen = false;
 
 void Create() {
@@ -60,7 +60,7 @@ void Create() {
   }
 
   glfw_window =
-      glfwCreateWindow(window_width, window_height, title_str, primary, NULL);
+      glfwCreateWindow(window_width, window_height, title_str, NULL, NULL);
 
   if (!glfw_window) {
     std::cout << "ERROR window.cpp: Could not create glfw window\n";

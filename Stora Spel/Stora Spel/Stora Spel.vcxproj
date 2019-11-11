@@ -280,6 +280,8 @@
     <None Include="Assets\shaders\fullscreenquad.vert" />
     <None Include="Assets\shaders\shading.vert" />
     <None Include="Assets\shaders\shadow.frag" />
+    <None Include="Assets\shaders\sky.frag" />
+    <None Include="Assets\shaders\sky.vert" />
     <None Include="Assets\shaders\ssao.frag" />
     <None Include="Assets\shaders\ssao.vert" />
     <None Include="Assets\shaders\text2Dshader.frag" />

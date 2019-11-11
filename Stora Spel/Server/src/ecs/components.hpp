@@ -15,5 +15,6 @@
 #include "components/missile_component.hpp"
 #include "components/timer_component.hpp"
 #include "components/wall_component.hpp"
+#include "components/pickup_spawner_component.hpp"
 
 #endif  // COMPONENTS_HPP_

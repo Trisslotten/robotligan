@@ -23,7 +23,7 @@ void NetAPI::Socket::Server::Receive() {
                 << ", isConnected=" << c.second->client.IsConnected() << "\n";
       c.second->client.Disconnect();
       c.second->is_active = false;
-      connected_players_--;
+      //connected_players_--;
       continue;
     }
     if (c.second && c.second->client.IsConnected()) {
@@ -101,14 +101,13 @@ void NetAPI::Socket::Server::ListenForClients() {
       connection_client_->reconnected = true;
       client_data_[find_res->second] = connection_client_;
       std::cout << "DEBUG: Found existing client, overwriting\n";
-      connected_players_++;
     } else if (game_players_ < NetAPI::Common::kMaxPlayers) {
       std::cout << "DEBUG: adding new client\n";
 
       connection_client_->ID = current_client_guid_;
       ids_[address] = current_client_guid_;
       client_data_[current_client_guid_] = connection_client_;
-
+	  
       connected_players_++;
 	  game_players_++;
       current_client_guid_++;

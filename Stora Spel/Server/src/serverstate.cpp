@@ -102,7 +102,7 @@ void ServerPlayState::Init() {
   // Start the countdown and match timer
   match_timer_.Restart();
   countdown_timer_.Restart();
-
+  CreatePickupSpawners();
   CreateInitialEntities(server.GetConnectedPlayers());
 
   ResetEntities();
@@ -540,7 +540,7 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
     view_iter++;
   }
 
-  CreateArenaEntity();
+  CreateMapEntity();
   CreateBallEntity();
   CreateGoals();
 
@@ -549,11 +549,11 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
   }
 }
 
-void ServerPlayState::CreateArenaEntity() {
+void ServerPlayState::CreateMapEntity() {
   auto& registry = game_server_->GetRegistry();
 
   auto entity = registry.create();
-  glm::vec3 arena_scale = glm::vec3(4.0f, 4.0f, 4.0f);
+  glm::vec3 arena_scale = glm::vec3(2.6f);
   // Prepare hard-coded values
   // Scale on the hitbox for the map
   float v1 = 6.8f * arena_scale.z;
@@ -562,17 +562,17 @@ void ServerPlayState::CreateArenaEntity() {
   float v4 = 5.723f * arena_scale.y;
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
-  glob::ModelHandle model_arena =
-      glob::GetModel("assets/Map/Map_singular_TMP.fbx");
-  ;
+  glob::ModelHandle model_map =
+      glob::GetModel("assets/MapV3/Map_Hitbox.fbx");
 
   // Add components for an arena
   // registry_.assign<ModelComponent>(entity, model_arena);
-  registry.assign<TransformComponent>(entity, zero_vec, zero_vec, arena_scale);
+  registry.assign<TransformComponent>(entity, zero_vec,
+                                      zero_vec, arena_scale);
 
   // Add a hitbox
   registry.assign<physics::Arena>(entity, -v2, v2, -v3, v4, -v1, v1);
-  auto md = glob::GetMeshData(model_arena);
+  auto md = glob::GetMeshData(model_map);
   glm::mat4 matrix =
       glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f)) *
       glm::rotate(90.f * glm::pi<float>() / 180.f, glm::vec3(0.f, 0.f, 1.f));
@@ -799,8 +799,12 @@ void ServerPlayState::ResetEntities() {
                                  -1, AbilityID::NULL_ABILITY);
     registry.destroy(pick_up);
   }
+  auto spawner_view = registry.view<PickupSpawnerComponent, IDComponent>();
+  for (auto spawner : spawner_view) {
+    registry.get<PickupSpawnerComponent>(spawner).override_respawn = true;
+  }
 
-  CreatePickUpComponents();
+  // CreatePickUpComponents();
 
   //  std::cout << "reset entities\n";
 
@@ -848,18 +852,25 @@ void ServerPlayState::ResetEntities() {
   }
 }
 
-void ServerPlayState::CreatePickUpComponents() {
+EntityID ServerPlayState::CreatePickUpComponents(glm::vec3 pos) {
   auto& registry = game_server_->GetRegistry();
-  glm::vec3 pos = glm::vec3(30 * float(rand()) / RAND_MAX - 15.f, -8.5f,
-                            30 * float(rand()) / RAND_MAX - 15.f);
+
+  int rand_id = rand() % 2;
+  std::string config_str = "PICKUPPOSITION" + std::to_string(rand_id);
+
+  // glm::vec3 pos = glm::vec3(30 * float(rand()) / RAND_MAX - 15.f, -8.5f,
+  //                        30 * float(rand()) / RAND_MAX - 15.f);
+
+
   auto entity = CreateIDEntity();
   registry.assign<TransformComponent>(entity, pos, glm::vec3(0.f),
                                       glm::vec3(1.f));
-  registry.assign<PickUpComponent>(entity);
+  registry.assign<PickUpComponent>(entity, pos);
   registry.assign<physics::OBB>(entity, pos, glm::vec3(1.f, 0.f, 0.f),
                                 glm::vec3(0.f, 1.f, 0.f),
                                 glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
   created_pick_ups_.push_back(entity);
+  return registry.get<IDComponent>(entity).id;
 }
 
 void ServerPlayState::OverTime() {
@@ -1006,6 +1017,25 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
 
       break;
     }
+    case Event::SPAWNER_SPAWNED_PICKUP: {
+      auto& registry = game_server_->GetRegistry();
+      glm::vec3 pos(0);
+
+      auto view_spawners =
+          registry
+              .view<PickupSpawnerComponent, TransformComponent, IDComponent>();
+      entt::entity spawner;
+      for (auto entity : view_spawners) {
+        if (registry.get<IDComponent>(entity).id == e.e_id) {
+          spawner = entity;
+          pos = registry.get<TransformComponent>(entity).position;
+        }
+      }
+
+      EntityID id = CreatePickUpComponents(pos);
+      registry.get<PickupSpawnerComponent>(spawner).spawned_id = id;
+      break;
+    }
     default:
       break;
   }
@@ -1021,7 +1051,7 @@ void ServerPlayState::CreateGoals() {
   registry.assign<TeamComponent>(entity_blue, TEAM_BLUE);
   registry.assign<GoalComponenet>(entity_blue);
   auto& trans_comp = registry.assign<TransformComponent>(entity_blue);
-  trans_comp.position = glm::vec3(-48.f, -6.f, 0.f);
+  trans_comp.position = glm::vec3(-40.f, -3.9f, 0.f);
 
   // red team's goal, place at blue goal in world
   auto entity_red = registry.create();
@@ -1031,7 +1061,7 @@ void ServerPlayState::CreateGoals() {
   registry.assign<TeamComponent>(entity_red, TEAM_RED);
   registry.assign<GoalComponenet>(entity_red);
   auto& trans_comp2 = registry.assign<TransformComponent>(entity_red);
-  trans_comp2.position = glm::vec3(48.f, -6.f, 0.f);
+  trans_comp2.position = glm::vec3(40.f, -3.9f, 0.f);
 }
 
 void ServerPlayState::Reconnect(int id) {
@@ -1094,6 +1124,35 @@ void ServerPlayState::Reconnect(int id) {
   }
 
   server.Send(to_send);
+}
+
+void ServerPlayState::CreatePickupSpawners() {
+  std::vector<glm::vec3> positions;
+
+  std::string config_str = "PICKUPPOSITION0";
+  glm::vec3 pos;
+  pos.x = GlobalSettings::Access()->ValueOf(config_str + "X");
+  pos.y = GlobalSettings::Access()->ValueOf(config_str + "Y");
+  pos.z = GlobalSettings::Access()->ValueOf(config_str + "Z");
+  positions.push_back(pos);
+  pos.x *= -1;
+  positions.push_back(pos);
+  pos.z *= -1;
+  positions.push_back(pos);
+  pos.x *= -1;
+  positions.push_back(pos);
+
+  auto& registry = this->game_server_->GetRegistry();
+
+  for (int i = 0; i < 4; i++) {
+    auto spawner = registry.create();
+
+    auto& spawner_c = registry.assign<PickupSpawnerComponent>(spawner);
+    auto& trans_c = registry.assign<TransformComponent>(spawner);
+    registry.assign<IDComponent>(spawner, GetNextEntityGuid());
+    trans_c.position = positions[i];
+    spawner_c.override_respawn = true;
+  }
 }
 
 /*

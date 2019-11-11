@@ -123,6 +123,8 @@
     <None Include="Assets\Pickup\Pickup.mcfg" />
     <None Include="Assets\shaders\Particle compute shaders\dust.comp" />
     <None Include="Assets\shaders\compute_shader.comp" />
+    <None Include="Assets\shaders\sky.vert" />
+    <None Include="Assets\shaders\sky.frag" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />
