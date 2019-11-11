@@ -18,10 +18,10 @@
 
 namespace ability_controller {
 Timer gravity_timer;
+Timer blackout_timer;
 bool gravity_used = false;
+bool blackout_used = false;
 // TODO: Make unique for each player
-Timer invisibility_timer;
-bool invisibility_used = false;
 
 bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
                     PlayerID player_id, entt::entity caster);
@@ -30,12 +30,13 @@ bool DoSuperStrike(entt::registry& registry);
 entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id);
 void DoSwitchGoals(entt::registry& registry);
 entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id);
-void GravityChange(entt::registry& registry);
+void GravityChange();
 void DoTeleport(entt::registry& registry, PlayerID id);
 bool DoHomingBall(entt::registry& registry, PlayerID id);
 void CreateFakeBalls(entt::registry& registry, EntityID id);
 bool BuildWall(entt::registry& registry, PlayerID id);
 bool DoInvisibility(entt::registry& registry, PlayerID id);
+bool DoBlackout(entt::registry& registry);
 
 std::unordered_map<AbilityID, float> ability_cooldowns;
 
@@ -133,7 +134,17 @@ void Update(entt::registry& registry, float dt) {
   if (gravity_used &&
       gravity_timer.Elapsed() >=
           GlobalSettings::Access()->ValueOf("ABILITY_GRAVITY_DURATION")) {
+    gravity_used = false;
     physics::SetGravity(GlobalSettings::Access()->ValueOf("PHYSICS_GRAVITY"));
+  }
+  if (blackout_used &&
+      blackout_timer.Elapsed() >=
+          GlobalSettings::Access()->ValueOf("ABILITY_BLACKOUT_DURATION")) {
+    blackout_used = false;
+    // Save game event, turn on lights on client
+    GameEvent event;
+    event.type = GameEvent::BLACKOUT_END;
+    dispatcher.trigger<GameEvent>(event);
   }
 }
 
@@ -160,7 +171,7 @@ bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
       break;
     }
     case AbilityID::GRAVITY_CHANGE:
-      GravityChange(registry);
+      GravityChange();
       return true;
       break;
     case AbilityID::HOMING_BALL:
@@ -183,6 +194,9 @@ bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
     case AbilityID::TELEPORT:
       DoTeleport(registry, player_id);
       return true;
+      break;
+    case AbilityID::BLACKOUT:
+      return DoBlackout(registry);
       break;
     default:
       return false;
@@ -398,7 +412,7 @@ entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id) {
   }
 }
 
-void GravityChange(entt::registry& registry) {
+void GravityChange() {
   physics::SetGravity(
       GlobalSettings::Access()->ValueOf("ABILITY_GRAVITY_CHANGE"));
   gravity_timer.Restart();
@@ -570,9 +584,6 @@ bool DoInvisibility(entt::registry& registry, PlayerID id) {
     IDComponent& idc = view_controller.get<IDComponent>(entity);
 
     if (pc.client_id == id) {
-      invisibility_timer.Restart();
-      invisibility_used = true;
-
       pc.invisible = true;
       pc.invisibility_remaining =
           GlobalSettings::Access()->ValueOf("ABILITY_INVISIBILITY_DURATION");
@@ -587,6 +598,18 @@ bool DoInvisibility(entt::registry& registry, PlayerID id) {
     }
   }
   return false;
+}
+
+bool DoBlackout(entt::registry& registry) {
+  blackout_timer.Restart();
+  blackout_used = true;
+
+  // Save game event, turn off lights on client
+  GameEvent event;
+  event.type = GameEvent::BLACKOUT_CAST;
+  dispatcher.trigger<GameEvent>(event);
+
+  return true;
 }
 
 void CreateFakeBalls(entt::registry& registry, EntityID id) {

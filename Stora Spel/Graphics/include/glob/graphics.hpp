@@ -140,6 +140,8 @@ EXPORT void ReloadShaders();
 
 EXPORT void SetInvisibleEffect(bool in_bool);
 
+EXPORT void SetBlackout(bool blackout);
+
 /*
  * Render all items submitted this frame
  */
