@@ -87,6 +87,7 @@
     <ClInclude Include="shared\shared\lifetime_component.hpp" />
     <ClInclude Include="src\ecs\components\trail_component.hpp" />
     <ClInclude Include="src\ecs\systems\trail_system.hpp" />
+    <ClInclude Include="src\ecs\components\wall_component.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />
@@ -121,6 +122,7 @@
     <None Include="Assets\Map\Map_singular_TMP.mcfg" />
     <None Include="Assets\Pickup\Pickup.mcfg" />
     <None Include="Assets\shaders\Particle compute shaders\dust.comp" />
+    <None Include="Assets\shaders\compute_shader.comp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />

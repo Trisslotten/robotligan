@@ -1171,6 +1171,21 @@ void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale, float rotDegrees,
   e2D_items_to_render.push_back(to_render);
 }
 
+void Submit(E2DHandle e2D_h, glm::vec3 pos, glm::mat4 matrix) {
+  auto find_res = e2D_elements.find(e2D_h);
+  if (find_res == e2D_elements.end()) {
+    std::cout << "ERROR graphics.cpp: could not find submitted e2D item\n";
+    return;
+  }
+
+  E2DItem to_render;
+  to_render.e2D = &find_res->second;
+  to_render.pos = pos;
+  to_render.scale = 1.f;
+  to_render.rot = matrix;
+  e2D_items_to_render.push_back(to_render);
+}
+
 void SubmitTrail(const std::vector<glm::vec3> &pos_history, float width,
                  glm::vec4 color) {
   trails_to_render.push_back({pos_history, width, color});

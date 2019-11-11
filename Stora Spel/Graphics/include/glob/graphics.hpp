@@ -127,6 +127,8 @@ EXPORT void Submit(GUIHandle gui_h, glm::vec2 pos, float scale,
 EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale,
                    float rotDegrees, glm::vec3 rotAxis);
 
+EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, glm::mat4 matrix);
+
 EXPORT void SubmitTrail(const std::vector<glm::vec3>& pos_history, float width, glm::vec4 color);
 
 EXPORT Camera& GetCamera();

@@ -12,6 +12,7 @@
 #include "ecs/components.hpp"
 #include "ecs/components/match_timer_component.hpp"
 #include "gameserver.hpp"
+#include <glm/gtx/compatibility.hpp>
 
 #include <map>
 
@@ -173,6 +174,7 @@ void ServerPlayState::Init() {
 }
 
 void ServerPlayState::Update(float dt) {
+  WallAnimation();
   auto& registry = game_server_->GetRegistry();
   auto& server = game_server_->GetServer();
 
@@ -359,6 +361,7 @@ void ServerPlayState::HandleDataToSend() {
     for (auto entity : created_walls_) {
       auto& t = registry.get<TransformComponent>(entity);
       auto& id = registry.get<IDComponent>(entity);
+      std::cout << "server y: " << t.position.y << std::endl;
 
       to_send << t.rotation;
       to_send << t.position;
@@ -874,6 +877,21 @@ void ServerPlayState::EndGame() {
     to_send << PacketBlockType::GAME_END;
   }
   game_server_->ChangeState(ServerStateType::LOBBY);
+}
+
+void ServerPlayState::WallAnimation() {
+  auto view_wall = game_server_->GetRegistry().view<TimerComponent, WallComponent, TransformComponent>();
+
+  for (auto wall : view_wall) {
+    auto& timer = view_wall.get<TimerComponent>(wall);
+    auto& trans = view_wall.get<TransformComponent>(wall);
+
+    float delta = 10 - timer.time_left;
+    if (delta > 1.f) delta = 1.f;
+    float y = glm::lerp(-12.f - 8.3f, -12.f, delta);
+    
+    trans.position.y = y;
+  }
 }
 
 void ServerPlayState::ReceiveEvent(const EventInfo& e) {
