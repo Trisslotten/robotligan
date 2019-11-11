@@ -27,8 +27,9 @@ class Materials {
  private:
   Materials() {}
   GLuint GetNormalMap(const std::string& path);
+  GLuint GetSingleChannelMap(const std::string& path);
 
-  std::unordered_map<std::string, GLuint> normal_maps_;
+  std::unordered_map<std::string, GLuint> textures_;
 };
 }  // namespace
 
@@ -38,10 +39,19 @@ Material Materials::GetMaterial(
     std::unordered_map<materials::Type, std::string> wanted_textures) {
   Material result;
   for (auto& [type, path] : wanted_textures) {
+    //std::cout << "Loading material texture: " << path << "\n";
     switch (type) {
       case materials::NORMAL:
-        GLuint id = GetNormalMap(path);
-        result.AddTexture(type, id, TEXTURE_SLOT_NORMAL, "texture_normal");
+        result.AddTexture(type, GetNormalMap(path), TEXTURE_SLOT_NORMAL,
+                          "texture_normal");
+        break;
+      case materials::METALLIC:
+        result.AddTexture(type, GetSingleChannelMap(path),
+                          TEXTURE_SLOT_METALLIC, "texture_metallic");
+        break;
+      case materials::ROUGHNESS:
+        result.AddTexture(type, GetSingleChannelMap(path),
+                          TEXTURE_SLOT_ROUGHNESS, "texture_roughness");
         break;
     }
   }
@@ -50,8 +60,8 @@ Material Materials::GetMaterial(
 
 GLuint Materials::GetNormalMap(const std::string& path) {
   GLuint result = 0;
-  auto iter = normal_maps_.find(path);
-  if (iter != normal_maps_.end()) {
+  auto iter = textures_.find(path);
+  if (iter != textures_.end()) {
     result = iter->second;
   } else {
     std::vector<unsigned char> image;
@@ -88,7 +98,36 @@ GLuint Materials::GetNormalMap(const std::string& path) {
                  GL_UNSIGNED_BYTE, to_upload.data());
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    normal_maps_[path] = result;
+    textures_[path] = result;
+  }
+  return result;
+}
+GLuint Materials::GetSingleChannelMap(const std::string& path) {
+  GLuint result = 0;
+  auto iter = textures_.find(path);
+  if (iter != textures_.end()) {
+    result = iter->second;
+  } else {
+    std::vector<unsigned char> image;
+    unsigned width, height;
+    unsigned error = lodepng::decode(image, width, height, path, LCT_GREY);
+    if (error != 0) {
+      std::cout << "ERROR: material.cpp: Could not load material texture: "
+                << path << "\n";
+      return result;
+    }
+    glGenTextures(1, &result);
+    glBindTexture(GL_TEXTURE_2D, result);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                    GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED,
+                 GL_UNSIGNED_BYTE, image.data());
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    textures_[path] = result;
   }
   return result;
 }

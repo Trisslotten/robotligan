@@ -13,6 +13,8 @@ namespace glob {
 namespace materials {
 enum Type {
   NORMAL,
+  METALLIC,
+  ROUGHNESS,
 };
 }
 
@@ -23,8 +25,8 @@ class Material {
 
  private:
   struct Texture {
-    GLuint id;
-    int slot;
+    GLuint id = 0;
+    int slot = 0;
     std::string uniform_name;
   };
   std::unordered_map<materials::Type, Texture> textures_;
