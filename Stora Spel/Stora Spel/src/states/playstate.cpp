@@ -1457,7 +1457,7 @@ void PlayState::CreateForcePushObject(EntityID id, glm::vec3 pos,
   registry_gameplay_.assign<SoundComponent>(force_object,
                                             sound_engine.CreatePlayer());
   registry_gameplay_.assign<TrailComponent>(force_object, 1.f,
-                                            glm::vec4(1, 1, 0, 1));
+                                            glm::vec4(0.4, 0.4, 1, 1));
 }
 
 void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
