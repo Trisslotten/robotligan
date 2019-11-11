@@ -22,8 +22,9 @@ namespace glob {
 
 namespace window {
 
-unsigned int window_width = 1600;
-unsigned int window_height = 900;
+unsigned int window_width = 1920;
+unsigned int window_height = 1080;
+bool fullscreen = false;
 
 void Create() {
   if (glfw_window) {
@@ -53,6 +54,10 @@ void Create() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
 
   const char* title_str = "Robotligan";
+
+  if(!fullscreen) {
+    primary = nullptr;
+  }
 
   glfw_window =
       glfwCreateWindow(window_width, window_height, title_str, NULL, NULL);

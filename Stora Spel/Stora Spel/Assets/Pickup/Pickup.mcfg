@@ -1,4 +1,6 @@
 
-
-w normal_map assets/texture/normal_metal_weavy.png
+w normal_map assets/materials/normal_metal_weavy.png
 f normal_map_scale 10.0
+
+w metallic_map assets/materials/full_metallic.png
+f metallic_map_scale 10.0;

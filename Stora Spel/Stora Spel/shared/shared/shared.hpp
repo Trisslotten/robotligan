@@ -10,6 +10,7 @@
 #define POINTS_SAVE 4
 
 #include <glm/glm.hpp>
+#include<glm/gtx/quaternion.hpp>
 
 const double kClientUpdateRate = 128;
 const double kServerUpdateRate = 128;
@@ -84,6 +85,7 @@ enum : int16_t {
   CREATE_FAKE_BALL,
   SERVER_STATE,
   MY_NAME,
+  HWID,
   PLAYER_LOOK_DIR,
   PLAYER_MOVE_DIR,
   TO_CLIENT_NAME,
@@ -104,6 +106,7 @@ enum class AbilityID {
   SUPER_STRIKE,
   SWITCH_GOALS,
   TELEPORT,
+  BLACKOUT,
   // Fill with more abilities and passive boosts
   NUM_OF_ABILITY_IDS
 };
@@ -139,6 +142,9 @@ struct GameEvent {
     FAKE_BALL_POOF,
     INVISIBILITY_CAST,
     INVISIBILITY_END,
+    BLACKOUT_CAST,
+    BLACKOUT_TRIGGER,
+    BLACKOUT_END,
     SPRINT_START,
     SPRINT_END,
     RUN_START,
@@ -264,6 +270,18 @@ struct GameEvent {
       EntityID player_id;
     } invisibility_end;
 
+    // Ability Blackout Cast
+    struct {
+    } blackout_cast;
+
+    // Ability Blackout trigger
+    struct {
+    } blackout_trigger;
+
+    // Ability Blackout End
+    struct {
+    } blackout_end;
+
     // Player Sprint start
     struct {
       EntityID player_id;
@@ -321,5 +339,7 @@ enum class ProjectileID {
 struct Projectile {
   EntityID entity_id;
   ProjectileID projectile_id;
+  glm::vec3 pos;
+  glm::quat ori;
 };
 #endif  // SHARED_HPP_

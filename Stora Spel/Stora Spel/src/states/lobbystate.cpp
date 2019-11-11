@@ -217,7 +217,7 @@ void LobbyState::CreateBackgroundEntities() {
     auto arena = registry_lobby_.create();
     glm::vec3 arena_scale = glm::vec3(4.0f);
     glob::ModelHandle model_arena =
-        glob::GetModel("assets/Map/Map_unified_TMP.fbx");
+        glob::GetModel("assets/Map/Map_singular_TMP.fbx");
     auto& model_c = registry_lobby_.assign<ModelComponent>(arena);
     model_c.handles.push_back(model_arena);
     registry_lobby_.assign<TransformComponent>(arena, zero_vec, zero_vec,
@@ -382,7 +382,8 @@ void LobbyState::CreateGUIElements() {
   button_comp.gui_handle_current = ready_back_normal_;
   button_comp.gui_handle_hover = ready_back_hover_;
   button_comp.gui_handle_icon = ready_empty_icon_;
-  button_comp.bounds = glm::vec2(50, 50);
+  button_comp.click_offset = glm::vec2(-150, 0);
+  button_comp.bounds = glm::vec2(200, 50);
   button_comp.button_func = [&] {
     if (engine_->GetServerState() == ServerStateType::LOBBY) {
       ReadyButtonFunc();

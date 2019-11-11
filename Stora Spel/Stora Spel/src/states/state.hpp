@@ -231,10 +231,10 @@ class PlayState : public State {
 
   void CreateWall(EntityID id, glm::vec3 position, glm::quat rotation);
   void CreatePickUp(EntityID id, glm::vec3 position);
-  void CreateCannonBall(EntityID id);
-  void CreateTeleportProjectile(EntityID id);
-  void CreateForcePushObject(EntityID id);
-  void CreateMissileObject(EntityID id);
+  void CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori);
+  void CreateTeleportProjectile(EntityID id, glm::vec3 pos, glm::quat ori);
+  void CreateForcePushObject(EntityID id, glm::vec3 pos, glm::quat ori);
+  void CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori);
   void DestroyEntity(EntityID id);
   void SwitchGoals();
   void SetMyPrimaryAbility(int id) { my_primary_ability_id = id; }
@@ -274,9 +274,10 @@ class PlayState : public State {
   void CreateInitialEntities();
   void CreatePlayerEntities();
   void CreateArenaEntity();
+  void CreateMapEntity();
   void CreateBallEntity();
   void CreateInGameMenu();
-
+  void AddPlayer();
   void TestCreateLights();
 
   void ToggleInGameMenu();

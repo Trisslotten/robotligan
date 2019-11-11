@@ -80,7 +80,7 @@ void MainMenuState::CreateMainMenu() {
 void MainMenuState::CreateInformationMenu() {
   // BACK BUTTON in Information - go back to main menu
   ButtonComponent* b_c = GenerateButtonEntity(registry_information_, "BACK",
-                                              glm::vec2(100, 140), font_test_);
+                                              glm::vec2(60, 50), font_test_);
   b_c->button_func = [&]() {
     engine_->SetCurrentRegistry(&registry_mainmenu_);
   };
@@ -88,26 +88,28 @@ void MainMenuState::CreateInformationMenu() {
 
 void MainMenuState::CreateBackgroundEnitites() {
   // add the lights to scene
+  
   auto light_test = registry_mainmenu_.create();  // Get from engine
   registry_mainmenu_.assign<LightComponent>(light_test, glm::vec3(0.05f), 30.f,
                                             0.2f);
   registry_mainmenu_.assign<TransformComponent>(
       light_test, glm::vec3(0.f, 16.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
+          
+  glm::vec3 zero_vec = glm::vec3(0.0f);
 
   auto light_test2 = registry_mainmenu_.create();  // Get from engine
   registry_mainmenu_.assign<LightComponent>(
-      light_test2, glm::vec3(0.f, 0.f, 1.0f), 50.f, 0.2f);
+      light_test2, glm::vec3(1.f, 1.f, 1.0f), 50.f, 0.2f);
   registry_mainmenu_.assign<TransformComponent>(
-      light_test2, glm::vec3(48.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      light_test2, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
-  glm::vec3 zero_vec = glm::vec3(0.0f);
   {
     // ladda in och skapa entity för bana
     auto arena = registry_mainmenu_.create();
     glm::vec3 arena_scale = glm::vec3(4.0f);
     glob::ModelHandle model_arena =
-        glob::GetModel("assets/Map/Map_unified_TMP.fbx");
+        glob::GetModel("assets/Map/Map_singular_TMP.fbx");
     auto& model_c = registry_mainmenu_.assign<ModelComponent>(arena);
     model_c.handles.push_back(model_arena);
     registry_mainmenu_.assign<TransformComponent>(arena, zero_vec, zero_vec,
@@ -168,8 +170,9 @@ void MainMenuState::CreateBackgroundEnitites() {
     auto camera = registry_mainmenu_.create();
     auto& cam_c = registry_mainmenu_.assign<CameraComponent>(camera);
     auto& cam_trans = registry_mainmenu_.assign<TransformComponent>(camera);
-    cam_trans.position = glm::vec3(28.f, -8.f, 0.f);
+    cam_trans.position = glm::vec3(26.f, -8.f, 0.f);
     glm::vec3 dir = glm::vec3(0) - cam_trans.position;
     cam_c.orientation = glm::quat(glm::vec3(0.f, 0.f, 0.f));
   }
+
 }
