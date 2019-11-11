@@ -16,6 +16,7 @@
 #include <map>
 
 void ServerLobbyState::Init() {
+  srand(time(NULL));
   start_game_timer.Restart();
   starting_ = false;
   for (auto& ready_c : clients_ready_) {
