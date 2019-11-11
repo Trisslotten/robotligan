@@ -1393,9 +1393,7 @@ void Render() {
     glBindTexture(GL_TEXTURE_2D, sky_texture);
     sky_shader.uniform("texture_sky", 0);
     glDepthFunc(GL_LEQUAL);
-    //glDisable(GL_CULL_FACE);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    //glEnable(GL_CULL_FACE);
     glDepthFunc(GL_LESS);
 
     // TODO: Sort all transparent triangles
