@@ -75,7 +75,7 @@ int main(unsigned argc, char** argv) {
 
     dt = frame_timer.Restart();
     double frame_time = net_update_timer.Restart();
-    net_update_accum += glm::min(frame_time, net_update_time * 4);
+    net_update_accum += frame_time;
   }
 
   glob::window::Cleanup();
