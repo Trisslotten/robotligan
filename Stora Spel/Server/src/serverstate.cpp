@@ -662,12 +662,12 @@ void ServerPlayState::CreatePlayerEntity() {
   // Add a hitbox
   registry.assign<physics::OBB>(
       entity,
-      alter_scale * character_scale,             // Center
+      (alter_scale * character_scale),             // Center
       glm::vec3(1.f, 0.f, 0.f),                  //
       glm::vec3(0.f, 1.f, 0.f),                  // Normals
       glm::vec3(0.f, 0.f, 1.f),                  //
       coeff_x_side * character_scale.x * 0.4f,   //
-      coeff_y_side * character_scale.y * 0.75f,  // Length of each plane
+      coeff_y_side * character_scale.y * 0.5f,  // Length of each plane
       coeff_z_side * character_scale.z * 0.7f    //
   );
   glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
