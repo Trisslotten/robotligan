@@ -77,6 +77,15 @@ DataFrame* GeometricReplay::InterpolateDataFrame(
     unsigned int in_entry_index_b, unsigned int in_target_frame_num) {
   // Get the DataFrame at 'a' and interpolate it forwards
   // towards 'b' to find the DataFrame representing the current frame
+
+  // Prevent 'b' index from being out of scope
+  // This can occur if there is only one entry in
+  // channel
+  if (in_entry_index_b <= this->channels_.at(in_channel_index).entries.size()) {
+    in_entry_index_b = in_entry_index_a;
+  }
+
+  // Calculate distances in 'frames'
   unsigned int dist_to_target =
       in_target_frame_num - this->channels_.at(in_channel_index)
                                 .entries.at(in_entry_index_a)
@@ -115,28 +124,29 @@ DataFrame* GeometricReplay::InterpolateDataFrame(
 void GeometricReplay::InterpolateEntityData(unsigned int in_channel_index,
                                             entt::entity& in_entity,
                                             entt::registry& in_registry) {
-  // Check the current reading frame and determine the indices
+  // Check the current reading frame,'c', and determine the indices
   // for interpolation points 'a' & 'b' in the FrameChannel
-  unsigned int& c = this->current_frame_number_read_;
-  unsigned int& a = this->channels_.at(in_channel_index).index_a;
-  unsigned int& b = this->channels_.at(in_channel_index).index_b;
+  unsigned int& c_frame = this->current_frame_number_read_;
+  unsigned int& a_index = this->channels_.at(in_channel_index).index_a;
+  unsigned int& b_index = this->channels_.at(in_channel_index).index_b;
 
   // If the current frame is at or has surpassed the frame at point 'b'
-  if (c >= this->channels_.at(in_channel_index).entries.at(b).frame_number) {
+  if (c_frame >=
+      this->channels_.at(in_channel_index).entries.at(b_index).frame_number) {
     // Move 'a' forward to 'b'
     // Note that we move 'a' to 'b', and do not increment it
     // This is to prevent 'a' going out of scope
-    a = b;
+    a_index = b_index;
     // Move 'b' forward to the next index if it won't go
     // over the channel's last entry
-    if ((b) != (this->channels_.at(in_channel_index).entries.size() - 1)) {
-      b++;
+    if (b_index != (this->channels_.at(in_channel_index).entries.size() - 1)) {
+      b_index++;
     }
   }
 
   // Interpolate a new frame (allocates memory)
-  DataFrame* interpolated_frame_ptr = this->InterpolateDataFrame(
-      in_channel_index, a, b, this->current_frame_number_read_);
+  DataFrame* interpolated_frame_ptr =
+      this->InterpolateDataFrame(in_channel_index, a_index, b_index, c_frame);
 
   // Load the data from the created frame into the
   // components of the entity
@@ -244,6 +254,9 @@ GeometricReplay::GeometricReplay() {
 GeometricReplay::GeometricReplay(unsigned int in_replay_length_sec,
                                  unsigned int in_frames_per_sec) {
   this->threshhold_age_ = in_replay_length_sec * in_frames_per_sec;
+
+  this->current_frame_number_write_ = 0;
+  this->current_frame_number_read_ = 0;
 }
 
 GeometricReplay::~GeometricReplay() {}
@@ -358,6 +371,12 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
 }
 
 bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
+  // Return true if end of the replay has been reached
+  // (that is to say: the read has caught up with the write)
+  if (this->current_frame_number_read_ >= this->current_frame_number_write_) {
+    return true;
+  }
+
   // Get all entities with an IDComponent
   entt::basic_view view = in_registry.view<IDComponent>();
 
@@ -387,17 +406,26 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
     }
   }
 
-  return true;
+  // Increment read index
+  this->current_frame_number_read_++;
+
+  return false;
 }
 
-void GeometricReplay::SetReadFrame(unsigned int in_frame_number) {
-  this->current_frame_number_read_ = in_frame_number;
+void GeometricReplay::SetReadFrameToStart() {
+  this->current_frame_number_read_ =
+      this->current_frame_number_write_ - this->threshhold_age_;
 }
 
 void GeometricReplay::ChannelCatchUp() {
   // Goes through all channels and moves all
   // channels to have their first entry not lie
   // beyond the threshold age
+
+  // Set the number of the first frame(s) as the number
+  // the reading tracker starts from
+  this->current_frame_number_read_ =
+      this->current_frame_number_write_ - this->threshhold_age_;
 
   for (unsigned int i = 0; i < this->channels_.size(); i++) {
     // Check the age of the first entry
@@ -408,11 +436,13 @@ void GeometricReplay::ChannelCatchUp() {
     if (age > this->threshhold_age_) {
       // Create an interpolation that lies right
       // at the the threshold
-      unsigned int threshold_frame = age - this->threshhold_age_;
+      // unsigned int threshold_frame = age - this->threshhold_age_;
+      unsigned int threshold_frame = this->current_frame_number_read_;
 
-      DataFrame* threshold_frame_ptr = this->InterpolateDataFrame(i, 0, 1, threshold_frame);
+      DataFrame* threshold_frame_ptr =
+          this->InterpolateDataFrame(i, 0, 1, threshold_frame);
 
-	  //Replace the data in first entry with the just calculated stuff
+      // Replace the data in first entry with the just calculated stuff
       this->channels_.at(i).entries.at(0).frame_number = threshold_frame;
       delete this->channels_.at(i).entries.at(0).data_ptr;
       this->channels_.at(i).entries.at(0).data_ptr = threshold_frame_ptr;
@@ -431,29 +461,47 @@ std::string GeometricReplay::GetGeometricReplayTree() {
                std::to_string(this->channels_.at(i).object_type) + "\n";
     ret_str += "\t\tChannel Entries: " +
                std::to_string(this->channels_.at(i).entries.size()) + "\n";
+    ret_str += "\t\tChannel write ended at frame: " +
+               std::to_string(this->current_frame_number_write_) + "\n";
+    ret_str += "\t\tChannel read starts at frame: " +
+               std::to_string(this->current_frame_number_read_) + "\n";
 
     unsigned int oea = this->current_frame_number_write_ -
                        this->channels_.at(i).entries.at(0).frame_number;
     unsigned int nea = this->current_frame_number_write_ -
-                       this->channels_.at(i)
-                           .entries.at(this->channels_.at(i).entries.size() - 1)
-                           .frame_number;
+                       this->channels_.at(i).entries.back().frame_number;
 
     ret_str += "\t\t\tOldest Entry Age: " + std::to_string(oea) + "\n";
     ret_str += "\t\t\tNewest Entry Age: " + std::to_string(nea) + "\n";
 
-    // ret_str += "\t\t\t";
-    // std::string obj_id = std::to_string(this->channels_.at(i).object_id);
-    // for (unsigned int j = 0; j < this->channels_.at(i).entries.size(); j++) {
-    //  ret_str += "[" + obj_id;
-    //  if (this->channels_.at(i).entries.at(j).ending_entry) {
-    //  Goes out of scope?
-    //    ret_str += ":end";
-    //  }
-    //  ret_str += "] ";
-    //}
+    //---
+    ret_str += "\t\t\t\t";
+    for (unsigned int j = 0; j < this->channels_.at(i).entries.size(); j++) {
+      std::string age_str =
+          std::to_string(this->current_frame_number_write_ -
+                         this->channels_.at(i).entries.at(j).frame_number);
+      ret_str += "[" + age_str;
+      if (this->channels_.at(i).entries.at(j).ending_entry) {
+        ret_str += ":end";
+      }
+      ret_str += "] ";
+    }
+    ret_str += "\n";
+    //---
     ret_str += "\t\t---\n";
   }
+
+  return ret_str;
+}
+
+std::string GeometricReplay::GetStateOfReplay() {
+  std::string ret_str = "";
+
+  ret_str += "\tFrame-stride:\t";
+  ret_str +=
+      std::to_string(this->current_frame_number_write_ - this->threshhold_age_);
+  ret_str += "  [" + std::to_string(this->current_frame_number_read_) + "]  ";
+  ret_str += std::to_string(this->current_frame_number_write_);
 
   return ret_str;
 }

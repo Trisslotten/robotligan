@@ -110,11 +110,12 @@ class GeometricReplay {
   // which means that the write-frame number can tell us the age
   // of the replay
 
-  void SetReadFrame(unsigned int in_frame_number);
+  void SetReadFrameToStart();
 
   void ChannelCatchUp();
 
   std::string GetGeometricReplayTree();
+  std::string GetStateOfReplay();
 };
 
 #endif  // !GEOMETRIC_REPLAY_HPP_

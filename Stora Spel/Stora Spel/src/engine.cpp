@@ -162,7 +162,7 @@ void Engine::Update(float dt) {
     }
     if (Input::IsKeyPressed(GLFW_KEY_O)) {
       this->SaveRecording();
-      std::cout << this->replay_machine_->GetSelectedReplayString() << "\n";
+      std::cout << this->replay_machine_->GetSelectedReplayStringTree() << "\n";
     }
     if (Input::IsKeyPressed(GLFW_KEY_P)) {
       this->BeginReplay();
@@ -770,6 +770,8 @@ void Engine::PlayReplay() {
   }
 
   std::cout << "<Replaying>" << std::endl;
+  std::cout << this->replay_machine_->GetSelectedReplayStringState()
+            << std::endl;
 
   // Send in registry to get the next frame from the replay machine
   if (this->replay_machine_->LoadFrame(*(this->registry_current_))) {
