@@ -10,6 +10,7 @@
 #define POINTS_SAVE 4
 
 #include <glm/glm.hpp>
+#include<glm/gtx/quaternion.hpp>
 
 const double kClientUpdateRate = 128;
 const double kServerUpdateRate = 128;
@@ -129,6 +130,7 @@ struct GameEvent {
     TELEPORT_CAST,
     TELEPORT_IMPACT,
     HOMING_BALL,
+    HOMING_BALL_END,
     FORCE_PUSH,
     FORCE_PUSH_IMPACT,
     SWITCH_GOALS,
@@ -217,6 +219,11 @@ struct GameEvent {
     struct {
       EntityID ball_id;
     } homing_ball;
+
+    // Ability Homing Ball End
+    struct {
+      EntityID ball_id;
+    } homing_ball_end;
 
     // Ability Force Push
     struct {
@@ -311,5 +318,7 @@ enum class ProjectileID {
 struct Projectile {
   EntityID entity_id;
   ProjectileID projectile_id;
+  glm::vec3 pos;
+  glm::quat ori;
 };
 #endif  // SHARED_HPP_

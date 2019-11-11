@@ -397,7 +397,7 @@ void ServerPlayState::HandleDataToSend() {
       }
       if (!sent_switch) {
         to_send << switch_goal_time_;
-        to_send << (int)switch_goal_timer_.Elapsed();
+        to_send << (float)switch_goal_timer_.Elapsed();
         to_send << PacketBlockType::SWITCH_GOALS;
         sent_switch = true;
 
@@ -431,6 +431,8 @@ void ServerPlayState::HandleDataToSend() {
     for (auto projectiles : created_projectiles_) {
       to_send << projectiles.entity_id;
       to_send << projectiles.projectile_id;
+      to_send << projectiles.pos;
+      to_send << projectiles.ori;
       to_send << PacketBlockType::CREATE_PROJECTILE;
     }
     // send destroy entity
@@ -763,6 +765,7 @@ void ServerPlayState::ResetEntities() {
 
     player_component.pitch = 0.f;
     player_component.yaw = orientation_value;
+    player_component.can_jump = false;
     physics_component.velocity = glm::vec3(0.0f);
     physics_component.is_airborne = true;
 
@@ -826,7 +829,15 @@ void ServerPlayState::ResetEntities() {
     transform_component.position = pos;
 
     ball_component.rotation = glm::vec3(0.f);
-    ball_component.is_homing = false;
+    if (ball_component.is_homing) {
+      ball_component.is_homing = false;
+      // Save game event
+      IDComponent& ball_id_c = registry.get<IDComponent>(entity);
+      GameEvent homing_ball_end_event;
+      homing_ball_end_event.type = GameEvent::HOMING_BALL_END;
+      homing_ball_end_event.homing_ball_end.ball_id = ball_id_c.id;
+      dispatcher.trigger(homing_ball_end_event);
+    }
     ball_component.homer_cid = -1;
   }
 }
@@ -878,7 +889,11 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       projectile.entity_id = GetNextEntityGuid();
       registry.assign<IDComponent>(e.entity, projectile.entity_id);
       projectile.projectile_id = ProjectileID::CANNON_BALL;
+      auto& trans_c = registry.get<TransformComponent>(e.entity);
+      projectile.pos = trans_c.position;
+      projectile.ori = trans_c.rotation;
       created_projectiles_.push_back(projectile);
+
       break;
     }
     case Event::CREATE_TELEPORT_PROJECTILE: {
@@ -887,6 +902,9 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       projectile.entity_id = GetNextEntityGuid();
       registry.assign<IDComponent>(e.entity, projectile.entity_id);
       projectile.projectile_id = ProjectileID::TELEPORT_PROJECTILE;
+      auto& trans_c = registry.get<TransformComponent>(e.entity);
+      projectile.pos = trans_c.position;
+      projectile.ori = trans_c.rotation;
       created_projectiles_.push_back(projectile);
       break;
     }
@@ -896,6 +914,9 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       projectile.entity_id = GetNextEntityGuid();
       registry.assign<IDComponent>(e.entity, projectile.entity_id);
       projectile.projectile_id = ProjectileID::FORCE_PUSH_OBJECT;
+      auto& trans_c = registry.get<TransformComponent>(e.entity);
+      projectile.pos = trans_c.position;
+      projectile.ori = trans_c.rotation;
       created_projectiles_.push_back(projectile);
       break;
     }
@@ -905,6 +926,9 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       projectile.entity_id = GetNextEntityGuid();
       registry.assign<IDComponent>(e.entity, projectile.entity_id);
       projectile.projectile_id = ProjectileID::MISSILE_OBJECT;
+      auto& trans_c = registry.get<TransformComponent>(e.entity);
+      projectile.pos = trans_c.position;
+      projectile.ori = trans_c.rotation;
       created_projectiles_.push_back(projectile);
 
       // Save game event

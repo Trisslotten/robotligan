@@ -66,7 +66,7 @@ class Engine {
   void SetPlayingPlayers(std::unordered_map<int, LobbyPlayer> plyrs) { playing_players_ = plyrs; }
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
-  int GetSwitchGoalCountdownTimer() const;
+  float GetSwitchGoalCountdownTimer() const;
   int GetSwitchGoalTime() const;
   unsigned int GetPlayerTeam(EntityID id) {
     for (auto p_score : player_scores_) {
@@ -130,7 +130,7 @@ class Engine {
 
   int gameplay_timer_sec_ = 0;
   int countdown_timer_sec_ = 0;
-  int switch_goal_timer_sec_ = 0;
+  float switch_goal_timer_ = 0.f;
   int switch_goal_time_ = 0;
 
   Chat chat_;

@@ -100,6 +100,7 @@ class LobbyState : public State {
   void SetMyId(int client_id) { my_id_ = client_id; }
 
  private:
+  glm::vec2 ws_;
   entt::registry registry_lobby_;
   void CreateBackgroundEntities();
   void CreateGUIElements();
@@ -174,6 +175,7 @@ class ConnectMenuState : public State {
   std::string port_ = "1337";
   glob::Font2DHandle font_test_ = 0;
   entt::registry registry_connect_menu_;
+  int prv_ = -1;
 };
 
 /////////////////////// SETTINGS ///////////////////
@@ -196,7 +198,10 @@ class SettingsState : public State {
   float setting_volume_ = 100.f;
   float setting_mouse_sens_ = 1.0f;
 
+  glm::vec2 ws_;
   std::string setting_username_ = "fel";
+  bool applied_ = false;
+  std::chrono::time_point<std::chrono::high_resolution_clock> time_;
 };
 
 /////////////////////// PLAY ///////////////////////
@@ -226,10 +231,10 @@ class PlayState : public State {
 
   void CreateWall(EntityID id, glm::vec3 position, glm::quat rotation);
   void CreatePickUp(EntityID id, glm::vec3 position);
-  void CreateCannonBall(EntityID id);
-  void CreateTeleportProjectile(EntityID id);
-  void CreateForcePushObject(EntityID id);
-  void CreateMissileObject(EntityID id);
+  void CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori);
+  void CreateTeleportProjectile(EntityID id, glm::vec3 pos, glm::quat ori);
+  void CreateForcePushObject(EntityID id, glm::vec3 pos, glm::quat ori);
+  void CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori);
   void DestroyEntity(EntityID id);
   void SwitchGoals();
   void SetMyPrimaryAbility(int id) { my_primary_ability_id = id; }
