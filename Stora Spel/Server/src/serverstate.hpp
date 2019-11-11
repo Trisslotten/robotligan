@@ -110,7 +110,7 @@ class ServerPlayState : public ServerState {
   entt::entity CreateIDEntity();
 
   void CreateInitialEntities(int num_players);
-  void CreateArenaEntity();
+  void CreateMapEntity();
   void CreateBallEntity();
   void CreatePlayerEntity();
   void CreateGoals();

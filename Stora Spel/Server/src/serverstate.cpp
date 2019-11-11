@@ -531,7 +531,7 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
     view_iter++;
   }
 
-  CreateArenaEntity();
+  CreateMapEntity();
   CreateBallEntity();
   CreateGoals();
 
@@ -540,7 +540,7 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
   }
 }
 
-void ServerPlayState::CreateArenaEntity() {
+void ServerPlayState::CreateMapEntity() {
   auto& registry = game_server_->GetRegistry();
 
   auto entity = registry.create();
@@ -553,17 +553,17 @@ void ServerPlayState::CreateArenaEntity() {
   float v4 = 5.723f * arena_scale.y;
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
-  glob::ModelHandle model_arena =
-      glob::GetModel("assets/Map/Map_singular_TMP.fbx");
-  ;
+  glob::ModelHandle model_map =
+      glob::GetModel("assets/MapV3/Map_Walls.fbx");
 
   // Add components for an arena
   // registry_.assign<ModelComponent>(entity, model_arena);
-  registry.assign<TransformComponent>(entity, zero_vec, zero_vec, arena_scale);
+  registry.assign<TransformComponent>(entity, glm::vec3(0.0f, -11.f, 0.0f),
+                                      zero_vec, arena_scale);
 
   // Add a hitbox
   registry.assign<physics::Arena>(entity, -v2, v2, -v3, v4, -v1, v1);
-  auto md = glob::GetMeshData(model_arena);
+  auto md = glob::GetMeshData(model_map);
   glm::mat4 matrix =
       glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f)) *
       glm::rotate(90.f * glm::pi<float>() / 180.f, glm::vec3(0.f, 0.f, 1.f));

@@ -1062,7 +1062,8 @@ void PlayState::CreatePlayerEntities() {
       float coeff_x_side = (11.223f - (-0.205f));
       float coeff_y_side = (8.159f - (-10.316f));
       float coeff_z_side = (10.206f - (-1.196f));
-      registry_gameplay_.assign<physics::OBB>(
+      
+	  registry_gameplay_.assign<physics::OBB>(
           entity,
           alter_scale * character_scale,            // Center
           glm::vec3(1.f, 0.f, 0.f),                 //
@@ -1098,7 +1099,7 @@ void PlayState::CreateMapEntity() {
   auto arena = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f);
-  glob::ModelHandle model_arena = glob::GetModel("assets/MapV3/Map_Walls.fbx");
+  glob::ModelHandle model_map = glob::GetModel("assets/MapV3/Map_Walls.fbx");
   glob::ModelHandle model_map_floor =
       glob::GetModel("assets/MapV3/Map_Floor.fbx");
   glob::ModelHandle model_map_projectors =
@@ -1107,7 +1108,7 @@ void PlayState::CreateMapEntity() {
       glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
 
   auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
-  model_c.handles.push_back(model_arena);
+  model_c.handles.push_back(model_map);
   model_c.handles.push_back(model_map_floor);
   model_c.handles.push_back(model_map_projectors);
   model_c.handles.push_back(model_map_walls);
@@ -1125,7 +1126,7 @@ void PlayState::CreateMapEntity() {
   // Add a hitbox
   registry_gameplay_.assign<physics::Arena>(arena, -v2, v2, -v3, v4, -v1, v1);
 
-  auto md = glob::GetMeshData(model_arena);
+  auto md = glob::GetMeshData(model_map);
   glm::mat4 matrix =
       glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f)) *
       glm::rotate(90.f * glm::pi<float>() / 180.f, glm::vec3(0.f, 0.f, 1.f));
