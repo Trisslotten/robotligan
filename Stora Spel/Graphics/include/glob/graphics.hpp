@@ -144,6 +144,8 @@ EXPORT void SetInvisibleEffect(bool in_bool);
 
 EXPORT void SetBlackout(bool blackout);
 
+EXPORT void SetSky(const std::string& texture);
+
 /*
  * Render all items submitted this frame
  */
