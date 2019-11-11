@@ -6,7 +6,6 @@ layout(location = 1) out vec4 out_emission;
 uniform sampler2D texture_sky;
 
 in vec2 uv;
-in vec4 proj_pos;
 
 void main() {
 	out_color = vec4(texture(texture_sky, uv).rgb, 1.);
