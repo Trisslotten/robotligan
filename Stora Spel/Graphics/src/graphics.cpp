@@ -1071,6 +1071,26 @@ double GetWidthOfText(Font2DHandle font_handle, std::string text, float size) {
   return (offset_accum - 0.7 * len + 4.) * 93. / 97.;
 }
 
+double GetWidthOfChatText(Font2DHandle font_handle, std::string text, float size) {
+  const char *chars = text.c_str();
+  int len = text.length();
+
+  //////////////////////////////////
+  // for backwards compatibility
+  size *= 16. / 28.;
+  //////////////////////////////////
+
+  double offset_accum = 0;
+  for (int i = 0; i < len; i++) {
+    unsigned char cur = *(unsigned char *)(chars + i);
+
+    offset_accum += fonts[font_handle].GetAdvance(cur, size);
+
+    // std::cout << offset_accum << "\n";
+  }
+  return offset_accum;
+}
+
 void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
             std::string text, glm::vec4 color, bool visible, bool equal_spacing,
             float spacing) {

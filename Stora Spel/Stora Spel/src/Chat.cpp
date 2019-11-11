@@ -15,7 +15,8 @@ void Chat::AddMessage(std::string name, std::string text, unsigned int message_f
   //std::string row;
   row.name = name;
   row.message_from = message_from;
-  row.offset = glob::GetWidthOfText(font_, name, 28) - 10;
+  row.offset = glob::GetWidthOfChatText(font_, name, 28) - 23;
+
   for (int i = 0; i < result.size(); ++i) {
     int space_left = row_length_ - (row.message.size() + row.name.size());
   
