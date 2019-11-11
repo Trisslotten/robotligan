@@ -770,8 +770,8 @@ void Engine::PlayReplay() {
   }
 
   std::cout << "<Replaying>" << std::endl;
-  std::cout << this->replay_machine_->GetSelectedReplayStringState()
-            << std::endl;
+  // std::cout << this->replay_machine_->GetSelectedReplayStringState()
+  //          << std::endl;
 
   // Send in registry to get the next frame from the replay machine
   if (this->replay_machine_->LoadFrame(*(this->registry_current_))) {
@@ -786,9 +786,9 @@ void Engine::PlayReplay() {
 
     this->replaying_ = false;
 
-	this->replay_machine_->ResetSelectedReplay();
+    this->replay_machine_->ResetSelectedReplay();
 
-	std::cout << "<Replay finished>" << std::endl;
+    std::cout << "<Replay finished>" << std::endl;
   }
 }
 

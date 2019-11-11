@@ -4,6 +4,8 @@
 
 #include <util/global_settings.hpp>
 
+#include <iostream>  //TEMP
+
 //##############################
 //			DataFrame
 //##############################
@@ -34,6 +36,9 @@ PlayerFrame::PlayerFrame(TransformComponent& in_transform_c,
   this->position_ = in_transform_c.position;
   this->rotation_ = in_transform_c.rotation;
   this->scale_ = in_transform_c.scale;
+
+  std::cout << "PlayerFrame constructor scale player: " << in_transform_c.scale.x << " "
+            << in_transform_c.scale.y << " " << in_transform_c.scale.z << "\n";
 
   //
   this->sprint_coeff_ = in_player_c.sprint_coeff;
@@ -83,7 +88,6 @@ bool PlayerFrame::ThresholdCheck(DataFrame& in_future_df) {
     return true;
   }
 
-  
   // ANIMATIONS
   if (this->sprinting_ != future_pf.sprinting_) {
     return true;
@@ -146,7 +150,7 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
       ret_frame->sprinting_ = point_b.sprinting_;
       ret_frame->running_ = point_b.running_;
       ret_frame->jumping_ = point_b.jumping_;
-	}
+    }
 
     return ret_frame;
 
@@ -166,7 +170,6 @@ void PlayerFrame::WriteBack(TransformComponent& in_transform_c,
   in_player_c.sprinting = this->sprinting_;
   in_player_c.running = this->running_;
   in_player_c.jumping = this->jumping_;
-
 }
 
 //##############################
@@ -254,9 +257,8 @@ DataFrame* BallFrame::InterpolateForward(unsigned int in_dist_to_target,
     ret_frame->rotation_ =
         glm::slerp(this->rotation_, point_b.rotation_, percentage_a);
 
-    // SCALE : (NTS: Is this even needed?)
-    ret_frame->scale_ =
-        this->scale_ + (point_b.scale_ - this->scale_) * percentage_a;
+    // SCALE
+    ret_frame->scale_ = this->scale_;
 
     return ret_frame;
 
