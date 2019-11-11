@@ -584,8 +584,8 @@ void PlayerWallCollision(entt::registry& registry) {
         auto& physics = view_player.get<PhysicsComponent>(player);
         physics.velocity.y = 0.f;
         player_hitbox.center -= data.move_vector;
-        auto& health = registry.get<HealthComponent>(wall);
-        health.health -= 1;
+        //auto& health = registry.get<HealthComponent>(wall);
+        //health.health -= 1;
       }
     }
   }
