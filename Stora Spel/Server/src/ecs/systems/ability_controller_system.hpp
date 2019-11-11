@@ -609,8 +609,6 @@ bool DoBlackout(entt::registry& registry) {
   event.type = GameEvent::BLACKOUT_CAST;
   dispatcher.trigger<GameEvent>(event);
 
-  std::cout << "XD BLACKOUT :P" << std::endl;
-
   return true;
 }
 
