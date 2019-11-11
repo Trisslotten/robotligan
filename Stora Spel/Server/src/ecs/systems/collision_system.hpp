@@ -931,11 +931,13 @@ void EndHomingBall(entt::registry& registry, entt::entity& in_ball) {
   BallComponent& ball_c = registry.get<BallComponent>(in_ball);
   ball_c.is_homing = false;
   // Save game event
-  IDComponent& ball_id_c = registry.get<IDComponent>(in_ball);
-  GameEvent homing_ball_end_event;
-  homing_ball_end_event.type = GameEvent::HOMING_BALL_END;
-  homing_ball_end_event.homing_ball_end.ball_id = ball_id_c.id;
-  dispatcher.trigger(homing_ball_end_event);
+  if (registry.has<IDComponent>(in_ball)) {
+    IDComponent& ball_id_c = registry.get<IDComponent>(in_ball);
+    GameEvent homing_ball_end_event;
+    homing_ball_end_event.type = GameEvent::HOMING_BALL_END;
+    homing_ball_end_event.homing_ball_end.ball_id = ball_id_c.id;
+    dispatcher.trigger(homing_ball_end_event);
+  }
 }
 
 void DestroyEntity(entt::registry& registry, entt::entity entity) {

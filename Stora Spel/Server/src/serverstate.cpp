@@ -399,14 +399,20 @@ void ServerPlayState::HandleDataToSend() {
       if (goal_goal_c.switched_this_tick) {
         switch_goal_timer_.Restart();
       }
-      if (!sent_switch) {
-        to_send << switch_goal_time_;
-        to_send << (float)switch_goal_timer_.Elapsed();
-        to_send << PacketBlockType::SWITCH_GOALS;
-        sent_switch = true;
-
-        if (switch_goal_timer_.Elapsed() >= switch_goal_time_) {
+      if (switch_goal_timer_.Elapsed() <= switch_goal_time_) {
+        if (!sent_switch) {
+          to_send << switch_goal_time_;
+          to_send << (float)switch_goal_timer_.Elapsed();
+          to_send << PacketBlockType::SWITCH_GOALS;
+          sent_switch = true;
+        }
+      } else {
+        if (!sent_switch) {
           switch_goal_timer_.Pause();
+          to_send << switch_goal_time_;
+          to_send << (float)switch_goal_time_;
+          to_send << PacketBlockType::SWITCH_GOALS;
+          sent_switch = true;
         }
       }
     }
@@ -656,13 +662,13 @@ void ServerPlayState::CreatePlayerEntity() {
   // Add a hitbox
   registry.assign<physics::OBB>(
       entity,
-      alter_scale * character_scale,            // Center
-      glm::vec3(1.f, 0.f, 0.f),                 //
-      glm::vec3(0.f, 1.f, 0.f),                 // Normals
-      glm::vec3(0.f, 0.f, 1.f),                 //
-      coeff_x_side * character_scale.x * 0.5f,  //
-      coeff_y_side * character_scale.y * 0.5f,  // Length of each plane
-      coeff_z_side * character_scale.z * 0.5f   //
+      alter_scale * character_scale,             // Center
+      glm::vec3(1.f, 0.f, 0.f),                  //
+      glm::vec3(0.f, 1.f, 0.f),                  // Normals
+      glm::vec3(0.f, 0.f, 1.f),                  //
+      coeff_x_side * character_scale.x * 0.4f,   //
+      coeff_y_side * character_scale.y * 0.75f,  // Length of each plane
+      coeff_z_side * character_scale.z * 0.7f    //
   );
   glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
   registry.assign<CameraComponent>(entity, camera_offset);
