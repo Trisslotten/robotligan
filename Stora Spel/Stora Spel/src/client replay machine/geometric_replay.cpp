@@ -246,7 +246,10 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
 // Protected-------------------------------------------------------------------
 
 GeometricReplay::GeometricReplay() {
-  // Empty constructor
+  // "Empty" constructor
+  this->threshhold_age_ = 0;
+  this->current_frame_number_write_ = 0;
+  this->current_frame_number_read_ = 0;
 }
 
 // Public----------------------------------------------------------------------
@@ -413,6 +416,12 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
 }
 
 void GeometricReplay::SetReadFrameToStart() {
+  // Prevent looping
+  if (this->current_frame_number_write_ < this->threshhold_age_) {
+    this->current_frame_number_read_ = 0;
+    return;
+  }
+
   this->current_frame_number_read_ =
       this->current_frame_number_write_ - this->threshhold_age_;
 }
@@ -424,8 +433,7 @@ void GeometricReplay::ChannelCatchUp() {
 
   // Set the number of the first frame(s) as the number
   // the reading tracker starts from
-  this->current_frame_number_read_ =
-      this->current_frame_number_write_ - this->threshhold_age_;
+  this->SetReadFrameToStart();
 
   for (unsigned int i = 0; i < this->channels_.size(); i++) {
     // Check the age of the first entry
@@ -497,9 +505,13 @@ std::string GeometricReplay::GetGeometricReplayTree() {
 std::string GeometricReplay::GetStateOfReplay() {
   std::string ret_str = "";
 
+  unsigned int start_frame = 0;
+  if (this->current_frame_number_write_ > this->threshhold_age_) {
+    start_frame = this->current_frame_number_write_ - this->threshhold_age_;
+  }
+
   ret_str += "\tFrame-stride:\t";
-  ret_str +=
-      std::to_string(this->current_frame_number_write_ - this->threshhold_age_);
+  ret_str += std::to_string(start_frame);
   ret_str += "  [" + std::to_string(this->current_frame_number_read_) + "]  ";
   ret_str += std::to_string(this->current_frame_number_write_);
 

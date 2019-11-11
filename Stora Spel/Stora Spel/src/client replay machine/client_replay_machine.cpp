@@ -18,9 +18,6 @@ ClientReplayMachine::ClientReplayMachine(unsigned int in_replay_length_sec,
   // ---
   this->selected_replay_index_ = 0;
 
-  // Reset and pause the timer
-  // this->replay_timer_.Restart();
-  // this->replay_timer_.Pause();
 }
 
 ClientReplayMachine::~ClientReplayMachine() {
@@ -45,7 +42,8 @@ void ClientReplayMachine::RecordFrame(entt::registry& in_registry) {
 void ClientReplayMachine::StoreReplay() {
   // Take a copy of the current state of the
   // primary replay and store it in the vector
-  this->stored_replays_.push_back(this->primary_replay_->Clone());
+  GeometricReplay* replay_to_save = this->primary_replay_->Clone();
+  this->stored_replays_.push_back(replay_to_save);
 
   // Adjust the beginning of the stored vector
   // to lie at its threshold value
@@ -74,11 +72,7 @@ bool ClientReplayMachine::SelectReplay(unsigned int in_index) {
   this->selected_replay_index_ = in_index;
 
   // Set its read to the start
-  this->stored_replays_.at(this->selected_replay_index_)->SetReadFrameToStart();
-
-  // Reset and pause the timer
-  // this->replay_timer_.Restart();
-  // this->replay_timer_.Pause();
+  this->ResetSelectedReplay();
 
   return true;
 }
@@ -91,17 +85,6 @@ bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
     return true;
   }
 
-  //// If the timer has yet to be started, start it
-  //if (this->replay_timer_.Elapsed() == 0) {
-  //  this->replay_timer_.Resume();
-  //}
-  //
-  //// If the timer shows we have run out of time, return
-  //if (this->replay_timer_.Elapsed() >= (double)this->replay_length_sec_) {
-  //  this->replay_timer_.Pause();
-  //  return true;
-  //}
-
   // Otherwise read a frame into the registry
   // LoadFrame() returns true if the read index has
   // caught up with the write index
@@ -109,6 +92,11 @@ bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
                          ->LoadFrame(in_registry);
 
   return load_result;
+}
+
+void ClientReplayMachine::ResetSelectedReplay() {
+  // Resets current replay to start
+  this->stored_replays_.at(this->selected_replay_index_)->SetReadFrameToStart();
 }
 
 std::string ClientReplayMachine::GetSelectedReplayStringTree() {

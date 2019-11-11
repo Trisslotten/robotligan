@@ -750,7 +750,7 @@ void Engine::BeginReplay() {
   std::cout << "<Starting replay>" << std::endl;
 
   // Stop recording
-  this->recording_ = false;
+  this->StopRecording();
 
   // Swap to the registry of the replay machine
   // if we are not already replaying
@@ -785,6 +785,10 @@ void Engine::PlayReplay() {
     this->registry_on_hold_ = nullptr;
 
     this->replaying_ = false;
+
+	this->replay_machine_->ResetSelectedReplay();
+
+	std::cout << "<Replay finished>" << std::endl;
   }
 }
 

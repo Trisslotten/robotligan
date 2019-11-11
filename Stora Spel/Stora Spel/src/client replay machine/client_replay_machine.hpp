@@ -3,8 +3,6 @@
 
 #include <vector>
 
-//#include <util/timer.hpp>
-
 #include "geometric_replay.hpp"
 
 
@@ -16,8 +14,6 @@ class ClientReplayMachine {
   
   std::vector<GeometricReplay*> stored_replays_;
   unsigned int selected_replay_index_;
-  
-  //Timer replay_timer_;
 
  public:
   ClientReplayMachine(unsigned int in_replay_length_sec,
@@ -31,6 +27,7 @@ class ClientReplayMachine {
   int CurrentlySelectedReplay() const;
   bool SelectReplay(unsigned int in_index);
   bool LoadFrame(entt::registry& in_registry);
+  void ResetSelectedReplay();
 
   std::string GetSelectedReplayStringTree();
   std::string GetSelectedReplayStringState();
