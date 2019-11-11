@@ -85,7 +85,7 @@ void PlayState::CreateGoalParticles(float x) {
   //= {glm::vec3(0.f, 1.f, 0.f)};
 
   glob::SetParticleSettings(handle, "confetti.txt");
-  glob::SetEmitPosition(handle, glm::vec3(x * 0.9f, -10.f, 0.f));
+  glob::SetEmitPosition(handle, glm::vec3(x * 0.9f, 5.f, 0.f));
   float x_dir = (x > 0) ? -1 : 1;
   glob::SetParticleDirection(handle, glm::vec3(x_dir, 5.f, 0.f));
 
@@ -1102,7 +1102,7 @@ void PlayState::SetCameraOrientation(glm::quat orientation) {
 void PlayState::CreateInitialEntities() {
   CreatePlayerEntities();
   CreateMapEntity();
-  //CreateArenaEntity();
+  CreateArenaEntity();
   CreateBallEntity();
   TestCreateLights();
 }
@@ -1183,7 +1183,7 @@ void PlayState::CreateArenaEntity() {
   model_c.handles.push_back(model_arena);
   model_c.handles.push_back(model_arena_banner);
   model_c.handles.push_back(model_map);
-  //model_c.handles.push_back(model_map_floor);
+  model_c.handles.push_back(model_map_floor);
   model_c.handles.push_back(model_map_projectors);
 
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
@@ -1200,8 +1200,7 @@ void PlayState::CreateMapEntity() {
       glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
 
   auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
-  //model_c.handles.push_back(model_map_walls);
-  model_c.handles.push_back(model_hitbox);
+  model_c.handles.push_back(model_map_walls);
 
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                 arena_scale);
