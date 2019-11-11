@@ -547,7 +547,7 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
 
       glm::vec3 position =
           camera.GetLookDir() * 4.5f + trans_c.position + camera.offset;
-      position.y = -12.f;
+      position.y = -0.f;
 
       for (auto entity_goal : view_goals) {
         auto& goal_transform = view_goals.get<TransformComponent>(entity_goal);

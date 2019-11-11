@@ -537,7 +537,7 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
     view_iter++;
   }
 
-  CreateArenaEntity();
+  CreateMapEntity();
   CreateBallEntity();
   CreateGoals();
 
@@ -546,11 +546,11 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
   }
 }
 
-void ServerPlayState::CreateArenaEntity() {
+void ServerPlayState::CreateMapEntity() {
   auto& registry = game_server_->GetRegistry();
 
   auto entity = registry.create();
-  glm::vec3 arena_scale = glm::vec3(4.0f, 4.0f, 4.0f);
+  glm::vec3 arena_scale = glm::vec3(2.6f);
   // Prepare hard-coded values
   // Scale on the hitbox for the map
   float v1 = 6.8f * arena_scale.z;
@@ -559,17 +559,17 @@ void ServerPlayState::CreateArenaEntity() {
   float v4 = 5.723f * arena_scale.y;
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
-  glob::ModelHandle model_arena =
-      glob::GetModel("assets/Map/Map_singular_TMP.fbx");
-  ;
+  glob::ModelHandle model_map =
+      glob::GetModel("assets/MapV3/Map_Hitbox.fbx");
 
   // Add components for an arena
   // registry_.assign<ModelComponent>(entity, model_arena);
-  registry.assign<TransformComponent>(entity, zero_vec, zero_vec, arena_scale);
+  registry.assign<TransformComponent>(entity, zero_vec,
+                                      zero_vec, arena_scale);
 
   // Add a hitbox
   registry.assign<physics::Arena>(entity, -v2, v2, -v3, v4, -v1, v1);
-  auto md = glob::GetMeshData(model_arena);
+  auto md = glob::GetMeshData(model_map);
   glm::mat4 matrix =
       glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f)) *
       glm::rotate(90.f * glm::pi<float>() / 180.f, glm::vec3(0.f, 0.f, 1.f));
@@ -1003,7 +1003,7 @@ void ServerPlayState::CreateGoals() {
   registry.assign<TeamComponent>(entity_blue, TEAM_BLUE);
   registry.assign<GoalComponenet>(entity_blue);
   auto& trans_comp = registry.assign<TransformComponent>(entity_blue);
-  trans_comp.position = glm::vec3(-48.f, -6.f, 0.f);
+  trans_comp.position = glm::vec3(-40.f, -3.9f, 0.f);
 
   // red team's goal, place at blue goal in world
   auto entity_red = registry.create();
@@ -1013,7 +1013,7 @@ void ServerPlayState::CreateGoals() {
   registry.assign<TeamComponent>(entity_red, TEAM_RED);
   registry.assign<GoalComponenet>(entity_red);
   auto& trans_comp2 = registry.assign<TransformComponent>(entity_red);
-  trans_comp2.position = glm::vec3(48.f, -6.f, 0.f);
+  trans_comp2.position = glm::vec3(40.f, -3.9f, 0.f);
 }
 
 void ServerPlayState::Reconnect(int id) {
