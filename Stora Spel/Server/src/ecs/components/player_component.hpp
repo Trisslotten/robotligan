@@ -27,6 +27,9 @@ struct PlayerComponent {  // Server side
   float kick_reach = GlobalSettings::Access()->ValueOf("PLAYER_KICK_REACH");
   float kick_fov = GlobalSettings::Access()->ValueOf("PLAYER_KICK_FOV");
   float kick_force = GlobalSettings::Access()->ValueOf("PLAYER_KICK_FORCE");
+  float kick_others_force =
+      GlobalSettings::Access()->ValueOf("PLAYER_KICK_OTHERS_FORCE");
+  float rocket_speed = GlobalSettings::Access()->ValueOf("PLAYER_ROCKET_SPEED");
   Timer kick_timer;
 
   // input from client
@@ -34,18 +37,19 @@ struct PlayerComponent {  // Server side
   float yaw = 0;
   float pitch = 0;
 
+  glm::vec3 wanted_move_dir;
+
   EntityID target = -1;
 
   // States
   bool sprinting = false;
   bool running = false;
+  bool invisible = false;
+  float invisibility_remaining = 0.0f;
 
+  bool can_jump = false;
   // Comparasion Operators
   bool operator==(const PlayerComponent& rhs) {
-    // if (this->client_id != rhs.client_id) {
-    //  return false;
-    // }
-
     return (this->client_id == rhs.client_id) &&
            (this->walkspeed == rhs.walkspeed) &&
            (this->jump_speed == rhs.jump_speed) &&
@@ -65,6 +69,7 @@ struct PlayerComponent {  // Server side
   }
 
   bool operator!=(const PlayerComponent& rhs) { return !((*this) == rhs); }
+
 };
 
 #endif  // PLAYER_COMPONENT_H_

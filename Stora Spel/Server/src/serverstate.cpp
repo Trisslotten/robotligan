@@ -31,11 +31,11 @@ void ServerLobbyState::Update(float dt) {
       cli.second->is_active = false;
       this->client_teams_.erase(cli.second->ID);
       this->clients_ready_.erase(cli.second->ID);
-      this->game_server_->GetServer().KickPlayer(cli.second->ID);
-      teams_updated_ = true;
       NetAPI::Common::Packet p;
       p << cli.second->ID;
       p << PacketBlockType::PLAYER_LOBBY_DISCONNECT;
+      this->game_server_->GetServer().KickPlayer(cli.second->ID);
+      teams_updated_ = true;
       this->game_server_->GetServer().SendToAll(p);
     }
   }
@@ -60,6 +60,10 @@ void ServerLobbyState::Update(float dt) {
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     if (teams_updated_) {
       for (auto client_team : client_teams_) {
+        std::string name = game_server_->GetClientNames()[client_team.first];
+
+        to_send.Add(name.c_str(), name.size());
+        to_send << name.size();
         to_send << client_team.first;   // send id
         to_send << client_team.second;  // send team
         bool ready = clients_ready_[client_team.first];
@@ -77,7 +81,13 @@ void ServerLobbyState::Cleanup() {
   //
 }
 
+void ServerLobbyState::HandleDataToSend() {}
+
 void ServerPlayState::Init() {
+  score_.reserve(2);
+  score_.push_back(0);
+  score_.push_back(0);
+
   reset_timer_.Restart();
   reset_timer_.Pause();
   auto& server = game_server_->GetServer();
@@ -91,10 +101,11 @@ void ServerPlayState::Init() {
   // Start the countdown and match timer
   match_timer_.Restart();
   countdown_timer_.Restart();
-
+  CreatePickupSpawners();
   CreateInitialEntities(server.GetConnectedPlayers());
 
   ResetEntities();
+  created_pick_ups_.clear();
 
   // Replay machine
   this->replay_machine_ = nullptr;
@@ -102,6 +113,27 @@ void ServerPlayState::Init() {
   for (auto& [client_id, client_data] : server.GetClients()) {
     NetAPI::Common::Packet to_send;
     to_send.GetHeader()->receiver = client_id;
+
+    auto team_view =
+        registry.view<TeamComponent, IDComponent, PlayerComponent>();
+
+    unsigned int team_id = 0;
+    for (auto team : team_view) {
+      auto& team_c = team_view.get<TeamComponent>(team);
+      auto& id_c = team_view.get<IDComponent>(team);
+      auto& player_c = team_view.get<PlayerComponent>(team);
+
+      to_send << team_c.team;
+      to_send << id_c.id;
+      to_send << player_c.client_id;
+
+      if (id_c.id == clients_player_ids_[client_id]) {
+        team_id = team_c.team;
+      }
+    }
+    to_send << (int)team_view.size();
+
+    to_send << team_id;
 
     auto ball_view = registry.view<BallComponent, IDComponent>();
     for (auto ball : ball_view) {
@@ -125,8 +157,19 @@ void ServerPlayState::Init() {
 
     to_send << PacketBlockType::GAME_START;
 
+    auto pick_up_view =
+        registry.view<PickUpComponent, TransformComponent, IDComponent>();
+    for (auto entity : pick_up_view) {
+      auto& t = pick_up_view.get<TransformComponent>(entity);
+      auto& id = pick_up_view.get<IDComponent>(entity);
+      to_send << t.position;
+      to_send << id.id;
+      to_send << PacketBlockType::CREATE_PICK_UP;
+    }
+
     server.Send(to_send);
   }
+  reset_ = false;
 }
 
 void ServerPlayState::Update(float dt) {
@@ -151,9 +194,17 @@ void ServerPlayState::Update(float dt) {
     if (!this->replay_) {
       auto inputs = players_inputs_[player_c.client_id];
 
-      player_c.actions = inputs.first;
-      player_c.pitch += inputs.second.x;
-      player_c.yaw += inputs.second.y;
+      if (countdown_timer_.Elapsed() <= count_down_time_) {
+        match_timer_.Pause();
+      } else {
+        player_c.actions = inputs.first;
+        if (!reset_) {
+          match_timer_.Resume();
+        }
+        countdown_timer_.Pause();
+      }
+      player_c.pitch = inputs.second.x;
+      player_c.yaw = inputs.second.y;
       // Check if the game should be be recorded
       if (this->record_) {
         this->Record(player_c.actions, player_c.pitch, player_c.yaw, dt,
@@ -168,6 +219,49 @@ void ServerPlayState::Update(float dt) {
 
   // players_inputs_.clear();
 
+  if (reset_timer_.Elapsed() > 3.0f) {
+    ResetEntities();
+    reset_timer_.Restart();
+    reset_timer_.Pause();
+    reset_ = false;
+
+    match_timer_.Resume();
+
+    GameEvent reset_event;
+    reset_event.type = GameEvent::RESET;
+    dispatcher.trigger<GameEvent>(reset_event);
+  }
+
+  // Get scores
+  auto en = registry.view<TeamComponent, GoalComponenet>();
+  for (auto te : en) {
+    GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(te);
+    TeamComponent& goal_team_c = registry.get<TeamComponent>(te);
+    /*to_send << goal_team_c;
+    to_send << goal_goal_c.goals;*/
+
+    if (score_[goal_team_c.team] != goal_goal_c.goals) {
+    }
+    score_[goal_team_c.team] = goal_goal_c.goals;
+  }
+
+  if (match_timer_.Elapsed() > match_time_) {
+    if (score_[0] == score_[1]) {
+      OverTime();
+    } else {
+      EndGame();
+    }
+  }
+  if (reconnect_id_ < 50) {
+    Reconnect(reconnect_id_);
+    reconnect_id_ = 100;
+  }
+}
+
+void ServerPlayState::HandleDataToSend() {
+  bool pick_ups_sent = false;
+
+  auto& registry = game_server_->GetRegistry();
   for (auto& [client_id, to_send] : game_server_->GetPackets()) {
     EntityID client_player_id = clients_player_ids_[client_id];
 
@@ -177,15 +271,25 @@ void ServerPlayState::Update(float dt) {
     }
 
     auto view_cam = registry.view<CameraComponent, IDComponent>();
+    // for (auto cam : view_cam) {
+    //  auto& cam_c = view_cam.get<CameraComponent>(cam);
+    //  auto& id_c = view_cam.get<IDComponent>(cam);
+    //  if (client_player_id == id_c.id) {
+    //    to_send << cam_c.orientation;
+    //    break;
+    //  }
+    //}
+    // to_send << PacketBlockType::CAMERA_TRANSFORM;
+
     for (auto cam : view_cam) {
       auto& cam_c = view_cam.get<CameraComponent>(cam);
       auto& id_c = view_cam.get<IDComponent>(cam);
-      if (client_player_id == id_c.id) {
-        to_send << cam_c.orientation;
-        break;
-      }
+      to_send << cam_c.GetLookDir();
+      to_send << id_c.id;
     }
-    to_send << PacketBlockType::CAMERA_TRANSFORM;
+    int num_dirs = view_cam.size();
+    to_send << num_dirs;
+    to_send << PacketBlockType::PLAYER_LOOK_DIR;
 
     auto view_entities = registry.view<TransformComponent, IDComponent>();
     int num_entities = view_entities.size();
@@ -222,9 +326,18 @@ void ServerPlayState::Update(float dt) {
     }
     to_send << PacketBlockType::PLAYER_STAMINA;
 
+    auto view_player_id = registry.view<PlayerComponent, IDComponent>();
+    for (auto player : view_player_id) {
+      auto& player_c = view_player_id.get<PlayerComponent>(player);
+      auto& id_c = view_player_id.get<IDComponent>(player);
+      to_send << player_c.wanted_move_dir;
+      to_send << id_c.id;
+    }
+    to_send << (int)view_player_id.size();
+    to_send << PacketBlockType::PLAYER_MOVE_DIR;
+
     auto view_players2 = registry.view<PlayerComponent, TeamComponent,
                                        PointsComponent, IDComponent>();
-
     for (auto player : view_players2) {
       auto& player_player_c = registry.get<PlayerComponent>(player);
       auto& player_points_c = registry.get<PointsComponent>(player);
@@ -243,13 +356,24 @@ void ServerPlayState::Update(float dt) {
       }
     }
 
+    for (auto entity : created_walls_) {
+      auto& t = registry.get<TransformComponent>(entity);
+      auto& id = registry.get<IDComponent>(entity);
+
+      to_send << t.rotation;
+      to_send << t.position;
+      to_send << id.id;
+      to_send << PacketBlockType::CREATE_WALL;
+    }
+
     for (auto entity : created_pick_ups_) {
       auto& t = registry.get<TransformComponent>(entity);
       auto& id = registry.get<IDComponent>(entity);
       to_send << t.position;
       to_send << id.id;
       to_send << PacketBlockType::CREATE_PICK_UP;
-      // std::cout << "PACKET: CREATED_PICK_UP\n";
+      pick_ups_sent = true;
+      // std::cout << "PACKET: CREATED_PICK_UP id: " << id.id << std::endl;
     }
 
     auto pick_up_events = registry.view<PickUpEvent>();
@@ -261,7 +385,7 @@ void ServerPlayState::Update(float dt) {
         to_send << pick_event.ability_id;
         to_send << PacketBlockType::RECEIVE_PICK_UP;
       }
-      registry.remove<PickUpEvent>(entity);
+      // registry.remove<PickUpEvent>(entity);
     }
     auto view_goals = registry.view<GoalComponenet, TeamComponent>();
     entt::entity blue_goal;
@@ -273,17 +397,46 @@ void ServerPlayState::Update(float dt) {
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
       if (goal_goal_c.switched_this_tick) {
-        if (!sent_switch) {
-          to_send << PacketBlockType::SWITCH_GOALS;
-          sent_switch = true;
+        switch_goal_timer_.Restart();
+      }
+      if (!sent_switch) {
+        to_send << switch_goal_time_;
+        to_send << (float)switch_goal_timer_.Elapsed();
+        to_send << PacketBlockType::SWITCH_GOALS;
+        sent_switch = true;
+
+        if (switch_goal_timer_.Elapsed() >= switch_goal_time_) {
+          switch_goal_timer_.Pause();
         }
       }
     }
+
+    // Tell client if secondary ability was used
+    // already added game event for this, sry :P not ideal to set
+    // use_secondary to false here since ability_controller::TriggerAbility
+    // can return false, i.e. too far away to use super strike or homing
+    // ball
+
+    /*auto view_abilities = registry.view<PlayerComponent,
+    AbilityComponent>(); for (auto entity : view_abilities) { auto& player =
+    view_abilities.get<PlayerComponent>(entity);
+
+      if (player.client_id == client_id) {
+        auto& ability = view_abilities.get<AbilityComponent>(entity);
+
+        if (ability.use_secondary) {
+          ability.use_secondary = false;
+          to_send << PacketBlockType::SECONDARY_USED;
+        }
+      }
+    }*/
 
     // send created projectiles
     for (auto projectiles : created_projectiles_) {
       to_send << projectiles.entity_id;
       to_send << projectiles.projectile_id;
+      to_send << projectiles.pos;
+      to_send << projectiles.ori;
       to_send << PacketBlockType::CREATE_PROJECTILE;
     }
     // send destroy entity
@@ -305,6 +458,11 @@ void ServerPlayState::Update(float dt) {
   created_projectiles_.clear();
   destroy_entities_.clear();
 
+  auto pick_up_events = registry.view<PickUpEvent>();
+  for (auto entity : pick_up_events) {
+    registry.destroy(entity);
+  }
+
   // switch goal cleanup
   auto view_goals = registry.view<GoalComponenet, TeamComponent>();
   for (auto goal : view_goals) {
@@ -314,25 +472,9 @@ void ServerPlayState::Update(float dt) {
       goal_goal_c.switched_this_tick = false;
     }
   }
-  destroy_entities_.clear();
-  created_projectiles_.clear();
-  created_pick_ups_.clear();
 
-  if (reset_timer_.Elapsed() > 3.0f) {
-    ResetEntities();
-    reset_timer_.Restart();
-    reset_timer_.Pause();
-    reset_ = false;
-
-    match_timer_.Resume();
-
-    GameEvent reset_event;
-    reset_event.type = GameEvent::RESET;
-    dispatcher.trigger<GameEvent>(reset_event);
-  }
-  if (match_timer_.Elapsed() > match_time_) {
-    EndGame();
-  }
+  created_walls_.clear();
+  if (pick_ups_sent) created_pick_ups_.clear();
 }
 
 void ServerPlayState::Cleanup() {
@@ -340,7 +482,7 @@ void ServerPlayState::Cleanup() {
     delete this->replay_machine_;
   }
   game_server_->GetRegistry().reset();
-
+  game_server_->GetServer().ResetPlayers();
   client_abilities_.clear();
   client_teams_.clear();
   clients_player_ids_.clear();
@@ -377,9 +519,8 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
                                    client_teams_[player_c.client_id]);
 
     AbilityID primary_id = client_abilities_[player_c.client_id];
-    AbilityID secondary_id = AbilityID::SWITCH_GOALS;
-    float primary_cooldown =
-        GlobalSettings::Access()->ValueOf("ABILITY_SUPER_STRIKE_COOLDOWN");
+    AbilityID secondary_id = AbilityID::NULL_ABILITY;
+    float primary_cooldown = game_server_->GetAbilityCooldowns()[primary_id];
 
     // Add components for a player
     registry.assign<AbilityComponent>(
@@ -396,7 +537,7 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
     view_iter++;
   }
 
-  CreateArenaEntity();
+  CreateMapEntity();
   CreateBallEntity();
   CreateGoals();
 
@@ -405,11 +546,11 @@ void ServerPlayState::CreateInitialEntities(int num_players) {
   }
 }
 
-void ServerPlayState::CreateArenaEntity() {
+void ServerPlayState::CreateMapEntity() {
   auto& registry = game_server_->GetRegistry();
 
   auto entity = registry.create();
-  glm::vec3 arena_scale = glm::vec3(4.0f, 4.0f, 4.0f);
+  glm::vec3 arena_scale = glm::vec3(2.6f);
   // Prepare hard-coded values
   // Scale on the hitbox for the map
   float v1 = 6.8f * arena_scale.z;
@@ -418,17 +559,17 @@ void ServerPlayState::CreateArenaEntity() {
   float v4 = 5.723f * arena_scale.y;
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
-  glob::ModelHandle model_arena =
-      glob::GetModel("assets/Map/Map_singular_TMP.fbx");
-  ;
+  glob::ModelHandle model_map =
+      glob::GetModel("assets/MapV3/Map_Hitbox.fbx");
 
   // Add components for an arena
   // registry_.assign<ModelComponent>(entity, model_arena);
-  registry.assign<TransformComponent>(entity, zero_vec, zero_vec, arena_scale);
+  registry.assign<TransformComponent>(entity, zero_vec,
+                                      zero_vec, arena_scale);
 
   // Add a hitbox
   registry.assign<physics::Arena>(entity, -v2, v2, -v3, v4, -v1, v1);
-  auto md = glob::GetMeshData(model_arena);
+  auto md = glob::GetMeshData(model_map);
   glm::mat4 matrix =
       glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f)) *
       glm::rotate(90.f * glm::pi<float>() / 180.f, glm::vec3(0.f, 0.f, 1.f));
@@ -547,21 +688,6 @@ void ServerPlayState::CreatePlayerEntity() {
       0.0f               // Remaining shoot cooldown
   );*/
 
-  // START ---------- Buff component [MOVE TO PICK-UP EVENT] ----------
-  // Available buffs: SPEED_BOOST, JUMP_BOOST, INFINITE_STAMINA
-  BuffID buff_id = SPEED_BOOST;
-  float buff_duration =
-      GlobalSettings::Access()->ValueOf("BUFF_SPEED_BOOST_DURATION");
-
-  // Add component for a player
-  registry.assign<BuffComponent>(entity,         // Entity
-                                 buff_id,        // Active buff
-                                 true,           // Toggle buff
-                                 buff_duration,  // Buff duration
-                                 0.0f            // Remaining duration
-  );
-  // END ---------- Buff component [MOVE TO PICK-UP EVENT] ----------
-
   /*if (last_spawned_team_ == 1) {
     registry.assign<TeamComponent>(entity, TEAM_BLUE);
     last_spawned_team_ = 0;
@@ -572,7 +698,8 @@ void ServerPlayState::CreatePlayerEntity() {
     red_players_++;
   }*/
 
-  // TEMP : Just so the replay knows the number of players all get added to the blue team
+  // TEMP : Just so the replay knows the number of players all get added to
+  // the blue team
   this->blue_players_++;
   // TEMP
 
@@ -610,7 +737,7 @@ void ServerPlayState::ResetEntities() {
       auto& trans = view_goal.get<TransformComponent>(entity);
       if (trans.position.x > 0) {
         switched_goals = true;
-        
+
         break;
       }
     }
@@ -641,6 +768,7 @@ void ServerPlayState::ResetEntities() {
 
     player_component.pitch = 0.f;
     player_component.yaw = orientation_value;
+    player_component.can_jump = false;
     physics_component.velocity = glm::vec3(0.0f);
     physics_component.is_airborne = true;
 
@@ -661,10 +789,19 @@ void ServerPlayState::ResetEntities() {
   }
 
   // reset pick-up
-  auto pick_up_view = registry.view<PickUpComponent>();
-  for (auto entity : pick_up_view) registry.destroy(entity);
+  auto pick_up_view = registry.view<PickUpComponent, IDComponent>();
+  for (auto pick_up : pick_up_view) {
+    auto entity = registry.create();
+    registry.assign<PickUpEvent>(entity, registry.get<IDComponent>(pick_up).id,
+                                 -1, AbilityID::NULL_ABILITY);
+    registry.destroy(pick_up);
+  }
+  auto spawner_view = registry.view<PickupSpawnerComponent, IDComponent>();
+  for (auto spawner : spawner_view) {
+    registry.get<PickupSpawnerComponent>(spawner).override_respawn = true;
+  }
 
-  CreatePickUpComponents();
+  // CreatePickUpComponents();
 
   //  std::cout << "reset entities\n";
 
@@ -675,7 +812,12 @@ void ServerPlayState::ResetEntities() {
     BallComponent& ball_component = ball_view.get<BallComponent>(entity);
 
     if (ball_component.is_real == false) {
-      registry.destroy(entity);
+      EventInfo e;
+      e.event = Event::DESTROY_ENTITY;
+      e.entity = entity;
+      e.e_id = registry.get<IDComponent>(entity).id;
+      // registry.destroy(entity);
+      dispatcher.enqueue(e);
       continue;
     }
 
@@ -694,23 +836,48 @@ void ServerPlayState::ResetEntities() {
     transform_component.position = pos;
 
     ball_component.rotation = glm::vec3(0.f);
-    ball_component.is_homing = false;
+    if (ball_component.is_homing) {
+      ball_component.is_homing = false;
+      // Save game event
+      IDComponent& ball_id_c = registry.get<IDComponent>(entity);
+      GameEvent homing_ball_end_event;
+      homing_ball_end_event.type = GameEvent::HOMING_BALL_END;
+      homing_ball_end_event.homing_ball_end.ball_id = ball_id_c.id;
+      dispatcher.trigger(homing_ball_end_event);
+    }
     ball_component.homer_cid = -1;
   }
 }
 
-void ServerPlayState::CreatePickUpComponents() {
+EntityID ServerPlayState::CreatePickUpComponents(glm::vec3 pos) {
   auto& registry = game_server_->GetRegistry();
-  glm::vec3 pos = glm::vec3(30 * float(rand()) / RAND_MAX - 15.f, -8.5f,
-                            30 * float(rand()) / RAND_MAX - 15.f);
+
+  int rand_id = rand() % 2;
+  std::string config_str = "PICKUPPOSITION" + std::to_string(rand_id);
+
+  // glm::vec3 pos = glm::vec3(30 * float(rand()) / RAND_MAX - 15.f, -8.5f,
+  //                        30 * float(rand()) / RAND_MAX - 15.f);
+
+
   auto entity = CreateIDEntity();
   registry.assign<TransformComponent>(entity, pos, glm::vec3(0.f),
                                       glm::vec3(1.f));
-  registry.assign<PickUpComponent>(entity);
+  registry.assign<PickUpComponent>(entity, pos);
   registry.assign<physics::OBB>(entity, pos, glm::vec3(1.f, 0.f, 0.f),
                                 glm::vec3(0.f, 1.f, 0.f),
                                 glm::vec3(0.f, 0.f, 1.f), 1.f, 1.f, 1.f);
   created_pick_ups_.push_back(entity);
+  return registry.get<IDComponent>(entity).id;
+}
+
+void ServerPlayState::OverTime() {
+  for (auto& [client_id, to_send] : game_server_->GetPackets()) {
+    to_send << PacketBlockType::GAME_OVERTIME;
+  }
+
+  if (score_[0] > score_[1] || score_[1] > score_[0]) {
+    EndGame();
+  }
 }
 
 void ServerPlayState::EndGame() {
@@ -723,7 +890,11 @@ void ServerPlayState::EndGame() {
 void ServerPlayState::ReceiveEvent(const EventInfo& e) {
   switch (e.event) {
     case Event::DESTROY_ENTITY: {
-      destroy_entities_.push_back(e.e_id);
+      auto& registry = game_server_->GetRegistry();
+      if (registry.valid(e.entity)) {
+        destroy_entities_.push_back(e.e_id);
+        registry.destroy(e.entity);
+      }
       break;
     }
     case Event::CREATE_CANNONBALL: {
@@ -732,7 +903,11 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       projectile.entity_id = GetNextEntityGuid();
       registry.assign<IDComponent>(e.entity, projectile.entity_id);
       projectile.projectile_id = ProjectileID::CANNON_BALL;
+      auto& trans_c = registry.get<TransformComponent>(e.entity);
+      projectile.pos = trans_c.position;
+      projectile.ori = trans_c.rotation;
       created_projectiles_.push_back(projectile);
+
       break;
     }
     case Event::CREATE_TELEPORT_PROJECTILE: {
@@ -741,6 +916,9 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       projectile.entity_id = GetNextEntityGuid();
       registry.assign<IDComponent>(e.entity, projectile.entity_id);
       projectile.projectile_id = ProjectileID::TELEPORT_PROJECTILE;
+      auto& trans_c = registry.get<TransformComponent>(e.entity);
+      projectile.pos = trans_c.position;
+      projectile.ori = trans_c.rotation;
       created_projectiles_.push_back(projectile);
       break;
     }
@@ -750,6 +928,9 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       projectile.entity_id = GetNextEntityGuid();
       registry.assign<IDComponent>(e.entity, projectile.entity_id);
       projectile.projectile_id = ProjectileID::FORCE_PUSH_OBJECT;
+      auto& trans_c = registry.get<TransformComponent>(e.entity);
+      projectile.pos = trans_c.position;
+      projectile.ori = trans_c.rotation;
       created_projectiles_.push_back(projectile);
       break;
     }
@@ -759,7 +940,17 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       projectile.entity_id = GetNextEntityGuid();
       registry.assign<IDComponent>(e.entity, projectile.entity_id);
       projectile.projectile_id = ProjectileID::MISSILE_OBJECT;
+      auto& trans_c = registry.get<TransformComponent>(e.entity);
+      projectile.pos = trans_c.position;
+      projectile.ori = trans_c.rotation;
       created_projectiles_.push_back(projectile);
+
+      // Save game event
+      GameEvent missile_fire_event;
+      missile_fire_event.type = GameEvent::MISSILE_FIRE;
+      missile_fire_event.missile_fire.projectile_id = projectile.entity_id;
+      dispatcher.trigger(missile_fire_event);
+
       break;
     }
     case Event::CHANGED_TARGET: {
@@ -768,6 +959,63 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       auto p_c = game_server_->GetRegistry().get<PlayerComponent>(e.entity);
       packets[p_c.client_id] << e.e_id;
       packets[p_c.client_id] << PacketBlockType::YOUR_TARGET;
+      break;
+    }
+    case Event::CREATE_FAKE_BALL: {
+      auto& registry = game_server_->GetRegistry();
+      std::unordered_map<int, NetAPI::Common::Packet>& packets =
+          game_server_->GetPackets();
+      EntityID new_id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, new_id);
+
+      unsigned int faker_team =
+          registry.get<BallComponent>(e.entity).faker_team;
+
+      auto view_players =
+          registry.view<PlayerComponent, TeamComponent, IDComponent>();
+
+      for (auto player : view_players) {
+        auto& player_player_c = registry.get<PlayerComponent>(player);
+        auto& player_team_c = registry.get<TeamComponent>(player);
+        auto& player_id_c = registry.get<IDComponent>(player);
+
+        if (player_team_c.team == faker_team) {
+          packets[player_player_c.client_id] << new_id;
+          packets[player_player_c.client_id]
+              << PacketBlockType::CREATE_FAKE_BALL;
+        } else {
+          packets[player_player_c.client_id] << new_id;
+          packets[player_player_c.client_id] << PacketBlockType::CREATE_BALL;
+        }
+      }
+      break;
+    }
+    case Event::BUILD_WALL: {
+      auto& registry = game_server_->GetRegistry();
+      auto id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, id);
+
+      created_walls_.push_back(e.entity);
+
+      break;
+    }
+    case Event::SPAWNER_SPAWNED_PICKUP: {
+      auto& registry = game_server_->GetRegistry();
+      glm::vec3 pos(0);
+
+      auto view_spawners =
+          registry
+              .view<PickupSpawnerComponent, TransformComponent, IDComponent>();
+      entt::entity spawner;
+      for (auto entity : view_spawners) {
+        if (registry.get<IDComponent>(entity).id == e.e_id) {
+          spawner = entity;
+          pos = registry.get<TransformComponent>(entity).position;
+        }
+      }
+
+      EntityID id = CreatePickUpComponents(pos);
+      registry.get<PickupSpawnerComponent>(spawner).spawned_id = id;
       break;
     }
     default:
@@ -785,7 +1033,7 @@ void ServerPlayState::CreateGoals() {
   registry.assign<TeamComponent>(entity_blue, TEAM_BLUE);
   registry.assign<GoalComponenet>(entity_blue);
   auto& trans_comp = registry.assign<TransformComponent>(entity_blue);
-  trans_comp.position = glm::vec3(-48.f, -6.f, 0.f);
+  trans_comp.position = glm::vec3(-40.f, -3.9f, 0.f);
 
   // red team's goal, place at blue goal in world
   auto entity_red = registry.create();
@@ -795,7 +1043,98 @@ void ServerPlayState::CreateGoals() {
   registry.assign<TeamComponent>(entity_red, TEAM_RED);
   registry.assign<GoalComponenet>(entity_red);
   auto& trans_comp2 = registry.assign<TransformComponent>(entity_red);
-  trans_comp2.position = glm::vec3(48.f, -6.f, 0.f);
+  trans_comp2.position = glm::vec3(40.f, -3.9f, 0.f);
+}
+
+void ServerPlayState::Reconnect(int id) {
+  auto& server = game_server_->GetServer();
+  auto& registry = game_server_->GetRegistry();
+  NetAPI::Common::Packet to_send;
+  to_send.GetHeader()->receiver = id;
+
+  auto team_view = registry.view<TeamComponent, IDComponent, PlayerComponent>();
+
+  unsigned int team_id = 0;
+  for (auto team : team_view) {
+    auto& team_c = team_view.get<TeamComponent>(team);
+    auto& id_c = team_view.get<IDComponent>(team);
+    auto& player_c = team_view.get<PlayerComponent>(team);
+
+    to_send << team_c.team;
+    to_send << id_c.id;
+    to_send << player_c.client_id;
+
+    if (id_c.id == clients_player_ids_[id]) {
+      team_id = team_c.team;
+    }
+  }
+  to_send << (int)team_view.size();
+
+  to_send << team_id;
+
+  auto ball_view = registry.view<BallComponent, IDComponent>();
+  for (auto ball : ball_view) {
+    auto& ball_c = ball_view.get<BallComponent>(ball);
+    auto& id_c = ball_view.get<IDComponent>(ball);
+
+    to_send << id_c.id;
+
+    break;
+  }
+
+  to_send << clients_player_ids_[id];
+
+  for (auto ids : clients_player_ids_) {
+    to_send << ids.second;
+  }
+
+  int num_players = server.GetConnectedPlayers();
+  std::cout << "Num players : " << num_players << std::endl;
+  to_send << num_players;
+  to_send << client_abilities_[id];
+
+  to_send << PacketBlockType::GAME_START;
+
+  auto pick_up_view =
+      registry.view<PickUpComponent, TransformComponent, IDComponent>();
+  for (auto entity : pick_up_view) {
+    auto& t = pick_up_view.get<TransformComponent>(entity);
+    auto& id = pick_up_view.get<IDComponent>(entity);
+    to_send << t.position;
+    to_send << id.id;
+    to_send << PacketBlockType::CREATE_PICK_UP;
+  }
+
+  server.Send(to_send);
+}
+
+void ServerPlayState::CreatePickupSpawners() {
+  std::vector<glm::vec3> positions;
+
+  std::string config_str = "PICKUPPOSITION0";
+  glm::vec3 pos;
+  pos.x = GlobalSettings::Access()->ValueOf(config_str + "X");
+  pos.y = GlobalSettings::Access()->ValueOf(config_str + "Y");
+  pos.z = GlobalSettings::Access()->ValueOf(config_str + "Z");
+  positions.push_back(pos);
+  pos.x *= -1;
+  positions.push_back(pos);
+  pos.z *= -1;
+  positions.push_back(pos);
+  pos.x *= -1;
+  positions.push_back(pos);
+
+  auto& registry = this->game_server_->GetRegistry();
+
+  for (int i = 0; i < 4; i++) {
+    auto spawner = registry.create();
+
+    auto& spawner_c = registry.assign<PickupSpawnerComponent>(spawner);
+    auto& trans_c = registry.assign<TransformComponent>(spawner);
+    registry.assign<IDComponent>(spawner, GetNextEntityGuid());
+    trans_c.position = positions[i];
+    spawner_c.override_respawn = true;
+  }
 }
 
 /*

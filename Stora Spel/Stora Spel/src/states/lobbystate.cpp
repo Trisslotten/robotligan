@@ -17,9 +17,8 @@ void LobbyState::ReadyButtonFunc() {
     auto& packet = engine_->GetPacket();
     packet << PacketBlockType::CLIENT_READY;
     for (auto button : view_ready_button) {
-      ButtonComponent& b_c = registry_lobby_.get<ButtonComponent>(button);
-      b_c.text_normal_color = glm::vec4(0.f, 1.f, 0.f, 1.f);
-      b_c.text_hover_color = glm::vec4(0.f, .6f, 0.f, 1.f);
+      auto& b_c = registry_lobby_.get<ButtonComponent>(button);
+      b_c.gui_handle_icon = ready_icon_;
       break;
     }
     // b_c.text_current_color = glm::vec4(0.f, 1.f, 0.f, 1.f);
@@ -29,9 +28,8 @@ void LobbyState::ReadyButtonFunc() {
     packet << PacketBlockType::CLIENT_NOT_READY;
 
     for (auto button : view_ready_button) {
-      ButtonComponent& b_c = registry_lobby_.get<ButtonComponent>(button);
-      b_c.text_normal_color = glm::vec4(1.f, 0.f, 0.f, 1.f);
-      b_c.text_hover_color = glm::vec4(.6f, 0.f, 0.f, 1.f);
+      auto& b_c = registry_lobby_.get<ButtonComponent>(button);
+      b_c.gui_handle_icon = ready_empty_icon_;
       break;
     }
     // b_c.text_current_color = glm::vec4(1.f, 0.f, 0.f, 1.f);
@@ -62,9 +60,13 @@ entt::entity LobbyState::GetAbilityButton(std::string find_string) {
 void LobbyState::SelectAbilityHandler(int id) {
   my_selected_ability_ = id;
   auto view_buttons = registry_lobby_.view<ButtonComponent>();
+
+  // reset all ability buttons
   for (auto button : view_buttons) {
     ButtonComponent& b_c = registry_lobby_.get<ButtonComponent>(button);
-    b_c.gui_handle_normal = ability_back_normal_;
+    if (b_c.find_name.find("ability") != std::string::npos) {
+      b_c.gui_handle_normal = ability_back_normal_;
+    }
   }
   entt::entity selected_button =
       GetAbilityButton("ability_" + std::to_string((int)id));
@@ -87,12 +89,22 @@ bool LobbyState::IsAbilityBlackListed(int id) {
   }
   return false;
 }
+void LobbyState::SendMyName() {
+  auto& packet = engine_->GetPacket();
+  std::string name = GlobalSettings::Access()->StringValueOf("USERNAME");
+  packet.Add(name.c_str(), name.size());
+  packet << name.size();
+  packet << PacketBlockType::MY_NAME;
+}
+
 void LobbyState::Startup() {
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+  ws_ = glob::window::GetWindowDimensions();
 }
 
 void LobbyState::Init() {
   //
+
   glob::window::SetMouseLocked(false);
   auto& cli = engine_->GetClient();
   engine_->SetSendInput(false);
@@ -103,16 +115,55 @@ void LobbyState::Init() {
   CreateBackgroundEntities();
   CreateGUIElements();
   SelectAbilityHandler(my_selected_ability_);
+  SendMyName();
 
   engine_->GetChat()->SetPosition(glm::vec2(20, 140));
 
-  engine_->GetAnimationSystem().Reset();
+  engine_->GetAnimationSystem().Reset(registry_lobby_);
+
+  engine_->GetChat()->SetShowChat();
 }
 
 void LobbyState::Update(float dt) {
-  //
+  server_state_ = engine_->GetServerState();
   DrawTeamSelect();
   DrawAbilitySelect();
+
+  // draw ready string
+  glm::vec2 pos = glm::vec2(glob::window::GetWindowDimensions().x - 330, 120);
+  glob::Submit(font_test_, pos, 72, "Ready: ");
+
+  bool everyone_ready = true;
+  for (auto lp : lobby_players_) {
+    if (!lp.second.ready) {
+      everyone_ready = false;
+      break;
+    }
+  }
+  if (everyone_ready) {
+    glm::vec2 bottom_pos =
+        glm::vec2((glob::window::GetWindowDimensions().x / 2) - 235, 30);
+
+    if (engine_->GetServerState() == ServerStateType::LOBBY) {
+      glob::Submit(font_test_, bottom_pos, 28,
+                   "All players are ready. Match will start soon.");
+    } else {
+      glob::Submit(font_test_, bottom_pos, 28, "Match is currently in session");
+    }
+
+    // auto game_clients = engine_->GetPlayingPlayers();
+
+    /*
+    if (engine_->GetStateType() == 1)
+    {
+            if (game_clients && std::find(game_clients->begin(),
+    game_clients->end(), this->my_id_) != game_clients->end())
+            {
+                    engine_->ChangeState(StateType::PLAY);
+            }
+    }*/
+  }
+  glob::Submit(chatbox_back_, glm::vec2(10, 24), 1.0f);
 }
 
 void LobbyState::UpdateNetwork() {}
@@ -129,15 +180,22 @@ void LobbyState::HandleUpdateLobbyTeamPacket(NetAPI::Common::Packet& packet) {
   int id = -1;
   unsigned int team = 0;
   bool ready = false;
+  size_t len;
+  std::string name = "";
   packet >> ready;
   packet >> team;
   packet >> id;
+  packet >> len;
+  name.resize(len);
+  packet.Remove(name.data(), len);
+  std::cout << "Lobby: name: " << name << "\n";
   if (id != -1) {
     LobbyPlayer plyr;
     plyr.ready = ready;
     plyr.team = team;
     lobby_players_[id] = plyr;
   }
+  engine_->player_names_[id] = name;
 }
 
 void LobbyState::HandlePlayerDisconnect(NetAPI::Common::Packet& packet) {
@@ -152,13 +210,13 @@ void LobbyState::CreateBackgroundEntities() {
   registry_lobby_.assign<LightComponent>(
       light_test, glm::vec3(0.1f, 0.1f, 1.0f), 30.f, 0.2f);
   registry_lobby_.assign<TransformComponent>(
-      light_test, glm::vec3(12.f, -4.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      light_test, glm::vec3(12.f, -16.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
   glm::vec3 zero_vec = glm::vec3(0.0f);
   {
     // ladda in och skapa entity för bana
     auto arena = registry_lobby_.create();
-    glm::vec3 arena_scale = glm::vec3(1.0f);
+    glm::vec3 arena_scale = glm::vec3(4.0f);
     glob::ModelHandle model_arena =
         glob::GetModel(kModelPathMapUnified);
     auto& model_c = registry_lobby_.assign<ModelComponent>(arena);
@@ -170,9 +228,14 @@ void LobbyState::CreateBackgroundEntities() {
   {
     // ladda in och skapa entity för boll
     auto ball = registry_lobby_.create();
-    glob::ModelHandle model_ball = glob::GetModel(kModelPathBallTest);
+    glob::ModelHandle model_ball_projectors_p =
+        glob::GetModel("Assets/Ball_new/Ball_projectors.fbx");
+    glob::ModelHandle model_ball_sphere_p =
+        glob::GetTransparentModel("Assets/Ball_new/Ball_Sphere.fbx");
+    // glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
     auto& model_c = registry_lobby_.assign<ModelComponent>(ball);
-    model_c.handles.push_back(model_ball);
+    model_c.handles.push_back(model_ball_sphere_p);
+    model_c.handles.push_back(model_ball_projectors_p);
     registry_lobby_.assign<TransformComponent>(ball, glm::vec3(0, -4, 0),
                                                zero_vec, glm::vec3(1.0f));
     registry_lobby_.assign<BallComponent>(ball);
@@ -203,7 +266,7 @@ void LobbyState::CreateBackgroundEntities() {
 }
 
 void LobbyState::CreateGUIElements() {
-  // ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
+  ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
   team_select_back_ =
       glob::GetGUIItem("Assets/GUI_elements/lobby_team_no_names.png");
   font_team_names_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
@@ -216,33 +279,39 @@ void LobbyState::CreateGUIElements() {
   ability_back_hover_ = glob::GetGUIItem(
       "Assets/GUI_elements/ability_icons/ability_back_hover.png");
 
+  ready_back_normal_ =
+      glob::GetGUIItem("Assets/GUI_elements/lobby/ready_unchecked.png");
+  ready_back_hover_ =
+      glob::GetGUIItem("Assets/GUI_elements/lobby/ready_hover.png");
+
+  ready_icon_ = glob::GetGUIItem("Assets/GUI_elements/lobby/ready_icon.png");
+  chatbox_back_ = glob::GetGUIItem("Assets/GUI_elements/chat_back.png");
+  ready_empty_icon_ =
+      glob::GetGUIItem("Assets/GUI_elements/lobby/dummy_icon.png");
+
   int num_abilites = (int)AbilityID::NUM_OF_ABILITY_IDS;
   ability_icons_.resize(num_abilites);
   for (int i = 0; i < num_abilites; i++) {
     ability_icons_[i] = glob::GetGUIItem("Assets/GUI_elements/ability_icons/" +
                                          std::to_string(i) + ".png");
   }
-
-  // ready button
-  auto button = registry_lobby_.create();
-  ButtonComponent& b_c = registry_lobby_.assign<ButtonComponent>(button);
-  /*ready_button_c = GenerateButtonEntity(
-      registry_lobby_, "READY", glob::window::Relative720(glm::vec2(1120, 40)),
-      font_test_);*/
-  b_c.text = "READY";
-  b_c.font_size = 72;  // menu_settings::font_size;
-  b_c.bounds = glm::vec2(b_c.font_size * b_c.text.size() / 2, b_c.font_size);
-  b_c.f_handle = font_test_;
-  glm::vec2 pos = glob::window::Relative720(glm::vec2(1120, 40));
-  registry_lobby_.assign<TransformComponent>(
-      button, glm::vec3(glob::window::GetWindowDimensions().x - 200, 82, 0));
-  b_c.text_current_color = glm::vec4(1.f, 0.f, 0.f, 1.f);
-  b_c.text_normal_color = glm::vec4(1.f, 0.f, 0.f, 1.f);
-  b_c.text_hover_color = glm::vec4(0.6f, 0.f, 0.f, 1.f);
-  b_c.visible = true;
-  registry_lobby_.assign<ReadyButtonComponent>(button);
-
-  b_c.button_func = [&]() { this->ReadyButtonFunc(); };
+  ability_tooltips_.resize(num_abilites);
+  ability_tooltips_[1] = "BUILD WALL: construct a wall on the field.";
+  ability_tooltips_[2] =
+      "FAKE BALL: Spawn a number of fake balls around the ball.";
+  ability_tooltips_[3] =
+      "FORCE PUSH: Throw an explosive projectile that pushes opponents back.";
+  ability_tooltips_[4] = "GRAVITY: Lower the gravity of the arena.";
+  ability_tooltips_[5] =
+      "HOMING BALL: Kick the ball and guide it with your aim.";
+  ability_tooltips_[6] =
+      "INVISIBILITY: Turn invisible for a short amount of time.";
+  ability_tooltips_[7] = "MISSILE: Shoot a guided missile at your target.";
+  ability_tooltips_[8] =
+      "SUPER STRIKE: Kick the ball with an insane amount of force.";
+  ability_tooltips_[9] = "SWITCH GOALS: Flip both teams goals around.";
+  ability_tooltips_[10] =
+      "TELEPORT: Fire a projectile that teleports you to the point of impact.";
 
   // auto button_join_red = registry_lobby_.create();
   ButtonComponent* button_c = GenerateButtonEntity(
@@ -291,9 +360,43 @@ void LobbyState::CreateGUIElements() {
       b_c->gui_handle_hover = ability_back_hover_;
       b_c->bounds = glm::vec2(82, 82);
       b_c->find_name = "ability_" + std::to_string(i);
+      b_c->hover_text = ability_tooltips_[i];
       c++;
     }
   }
+
+  // ready button
+  auto button = registry_lobby_.create();
+  registry_lobby_.assign<ReadyButtonComponent>(button);
+  ButtonComponent& button_comp =
+      registry_lobby_.assign<ButtonComponent>(button);
+  /*ready_button_c = GenerateButtonEntity(
+      registry_lobby_, "READY", glob::window::Relative720(glm::vec2(1120, 40)),
+      font_test_);*/
+  button_comp.text = "";
+  button_comp.font_size = 0;  // menu_settings::font_size;
+  button_comp.f_handle = font_test_;
+  registry_lobby_.assign<TransformComponent>(
+      button, glm::vec3(glob::window::GetWindowDimensions().x - 200, 82, 0));
+  button_comp.visible = true;
+  button_comp.gui_handle_normal = ready_back_normal_;
+  button_comp.gui_handle_current = ready_back_normal_;
+  button_comp.gui_handle_hover = ready_back_hover_;
+  button_comp.gui_handle_icon = ready_empty_icon_;
+  button_comp.click_offset = glm::vec2(-150, 0);
+  button_comp.bounds = glm::vec2(200, 50);
+  button_comp.button_func = [&] {
+    if (engine_->GetServerState() == ServerStateType::LOBBY) {
+      ReadyButtonFunc();
+    }
+  };
+  ButtonComponent* b_c = GenerateButtonEntity(
+      registry_lobby_, "DISCONNECT",
+      glm::vec2(glob::window::GetWindowDimensions().x - 330, 65), font_test_);
+  b_c->button_func = [&]() {
+    engine_->GetClient().Disconnect();
+    engine_->ChangeState(StateType::MAIN_MENU);
+  };
 }
 void LobbyState::DrawTeamSelect() {
   glm::vec2 team_select_box_pos =

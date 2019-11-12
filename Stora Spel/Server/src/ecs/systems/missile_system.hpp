@@ -72,13 +72,21 @@ void Update(entt::registry& registry, float dt) {
     missile_phys_c.velocity =
         missile_trans_c.rotation * glm::vec3(missile_missile_c.speed, 0, 0);
     if (exploded) {
+      // Save game event
+      GameEvent missile_impact_event;
+      missile_impact_event.type = GameEvent::MISSILE_IMPACT;
+      missile_impact_event.missile_impact.projectile_id = registry.get<IDComponent>(missile).id;
+      dispatcher.trigger(missile_impact_event);
+      
       EventInfo info;
-      if (registry.has<IDComponent>(missile) == false) return;
-      auto id = registry.get<IDComponent>(missile);
-      info.event = Event::DESTROY_ENTITY;
-      info.e_id = id.id;
-      dispatcher.enqueue<EventInfo>(info);
-      registry.destroy(missile);
+      if (registry.has<IDComponent>(missile)) {
+        auto id = registry.get<IDComponent>(missile);
+        info.event = Event::DESTROY_ENTITY;
+        info.e_id = id.id;
+        info.entity = missile;
+        dispatcher.enqueue<EventInfo>(info);
+	  }
+      //registry.destroy(missile);
     }
   }
 
@@ -89,11 +97,12 @@ void Update(entt::registry& registry, float dt) {
 
 void UpdateHomingBalls(entt::registry& registry, float dt) {
   auto view_balls =
-      registry.view<BallComponent, PhysicsComponent, TransformComponent>();
+      registry.view<BallComponent, PhysicsComponent, TransformComponent, IDComponent>();
   for (auto ball : view_balls) {
     auto& ball_ball_c = registry.get<BallComponent>(ball);
     auto& ball_trans_c = registry.get<TransformComponent>(ball);
     auto& ball_phys_c = registry.get<PhysicsComponent>(ball);
+    auto& ball_id_c = registry.get<IDComponent>(ball);
 
     if (ball_ball_c.is_homing) {
       entt::entity play;
@@ -122,6 +131,12 @@ void UpdateHomingBalls(entt::registry& registry, float dt) {
         balls_are_homing = false;
         ball_ball_c.is_homing = false;
         ball_ball_c.homer_cid = -1;
+
+        // Save game event
+        GameEvent homing_ball_end_event;
+        homing_ball_end_event.type = GameEvent::HOMING_BALL_END;
+        homing_ball_end_event.homing_ball_end.ball_id = ball_id_c.id;
+        dispatcher.trigger(homing_ball_end_event);
       }
     }
   }

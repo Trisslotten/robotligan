@@ -17,10 +17,6 @@ struct AbilityComponent {
 
   // Comparasion Operators
   bool operator==(const AbilityComponent& rhs) {
-    // if (this->client_id != rhs.client_id) {
-    //  return false;
-    // }
-
     return (this->primary_ability == rhs.primary_ability) &&
            (this->use_primary == rhs.use_primary) &&
            (this->cooldown_max == rhs.cooldown_max) &&

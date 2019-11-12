@@ -93,6 +93,9 @@
     <ClInclude Include="src\client replay machine\geometric_replay.hpp" />
     <ClInclude Include="src\client replay machine\data_frame.hpp" />
     <ClInclude Include="src\util\asset_paths.hpp" />
+    <ClInclude Include="shared\shared\lifetime_component.hpp" />
+    <ClInclude Include="src\ecs\components\trail_component.hpp" />
+    <ClInclude Include="src\ecs\systems\trail_system.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />
@@ -117,7 +120,19 @@
     <None Include="Assets\shaders\shadow.frag" />
     <None Include="Assets\shaders\shading.vert" />
     <None Include="Assets\shaders\particle.geom" />
+    <None Include="Assets\shaders\text3Dshader.vert" />
+    <None Include="Assets\shaders\text3Dshader.frag" />
+    <None Include="Assets\shaders\trail.vert" />
+    <None Include="Assets\shaders\trail.frag" />
+    <None Include="Assets\Mech\Mech.mcfg" />
+    <None Include="Assets\shaders\ssao.frag" />
+    <None Include="Assets\shaders\ssao.vert" />
+    <None Include="Assets\Map\Map_singular_TMP.mcfg" />
+    <None Include="Assets\Pickup\Pickup.mcfg" />
+    <None Include="Assets\shaders\Particle compute shaders\dust.comp" />
     <None Include="Assets\shaders\compute_shader.comp" />
+    <None Include="Assets\shaders\sky.vert" />
+    <None Include="Assets\shaders\sky.frag" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />

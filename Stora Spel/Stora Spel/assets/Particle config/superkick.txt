@@ -1,0 +1,10 @@
+>time= 3
+>radius= 0
+>size= 0.08
+>dir_val= 0.90
+>velocity= 20
+>color= 0.62 0.51 0.45 0.7
+>burst= 1
+>burst_particles= 50
+>number_of_bursts= 1
+>texture= dust

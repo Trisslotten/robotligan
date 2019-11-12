@@ -26,7 +26,7 @@
 
 namespace glob {
 
-void checkLinkError(GLuint id, const std::string& paths) {
+bool checkLinkError(GLuint id, const std::string& paths) {
   GLint success = 0;
   glGetProgramiv(id, GL_LINK_STATUS, &success);
   if (success == GL_FALSE) {
@@ -41,7 +41,9 @@ void checkLinkError(GLuint id, const std::string& paths) {
 
       glDeleteProgram(id);
     }
-    // system("pause");
+    return false;
+  } else {
+    return true;
   }
 }
 
@@ -80,8 +82,8 @@ GLuint compileShader(GLenum type, const std::string& name) {
 
     glDeleteShader(shader);
     // system("pause");
+    return 0;
   }
-
   return shader;
 }
 
@@ -89,17 +91,15 @@ ShaderProgram::ShaderProgram() { id = 0; }
 
 ShaderProgram::~ShaderProgram() {
   if (glob::kModelUseGL) {
-  
     for (auto& i : ids) {
       glDeleteShader(i.second);
     }
     glDeleteProgram(id);
-  
   }
 }
 
 void ShaderProgram::add(GLenum type, const std::string& path) {
-  //glDeleteShader(ids[type]);
+  // glDeleteShader(ids[type]);
   paths.insert(std::make_pair(type, SHADERS_PATH + path));
 }
 
@@ -123,38 +123,46 @@ void ShaderProgram::compile() {
 
   std::string paths_str;
 
-  for (auto& shader_id : ids) {
-    glDeleteShader(shader_id.second);
-  }
+  std::unordered_multimap<GLenum, GLuint> temp_ids;
+  GLuint temp_id;
 
-  glDeleteProgram(id);
+  bool success = true;
+
   for (auto& path : paths) {
     GLuint shader_id = compileShader(path.first, path.second);
-    ids.insert(std::make_pair(path.first, shader_id));
-
+    if (shader_id != 0) {
+      temp_ids.insert(std::make_pair(path.first, shader_id));
+    } else {
+      success = false;
+    }
     paths_str += path.second + "\n";
   }
 
-  id = glCreateProgram();
-  for (auto& i : ids) {
-    glAttachShader(id, i.second);
+  if (success) {
+    temp_id = glCreateProgram();
+    for (auto& i : temp_ids) {
+      glAttachShader(temp_id, i.second);
+    }
+    glLinkProgram(temp_id);
+
+    if (checkLinkError(temp_id, paths_str)) {
+      id = temp_id;
+      ids = temp_ids;
+      compiled = true;
+    }
   }
-  glLinkProgram(id);
-
-  checkLinkError(id, paths_str);
-
-  compiled = true;
 }
 
 void ShaderProgram::reload() {
-  for (auto elem : ids) glDeleteShader(elem.second);
-
-  glDeleteProgram(id);
-
+  /*
+    for (auto elem : ids) glDeleteShader(elem.second);
+    glDeleteProgram(id);
+  */
   std::cout << "DEBUG shader.cpp: Reloading Shaders:\n";
   for (auto elem : paths) {
     std::cout << "  " << elem.second << "\n";
   }
+  uniform_locations.clear();
 
   compile();
 }

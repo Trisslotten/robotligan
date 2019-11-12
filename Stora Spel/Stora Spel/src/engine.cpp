@@ -6,11 +6,13 @@
 #include <glob/graphics.hpp>
 #include <iostream>
 
+#include <ecs\systems\trail_system.hpp>
 #include <glob\window.hpp>
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "ecs/systems/animation_system.hpp"
 #include "ecs/systems/gui_system.hpp"
+#include "ecs/systems/input_system.hpp"
 #include "ecs/systems/particle_system.hpp"
 #include "ecs/systems/render_system.hpp"
 #include "ecs/systems/sound_system.hpp"
@@ -43,6 +45,9 @@ void Engine::Init() {
   GlobalSettings::Access()->UpdateValuesFromFile();
 
   // glob::GetModel("Assets/Mech/Mech_humanoid_posed_unified_AO.fbx");
+
+  menu_dispatcher.sink<MenuEvent>().connect<&SoundSystem::ReceiveMenuEvent>(
+      sound_system_);
 
   dispatcher.sink<GameEvent>().connect<&SoundSystem::ReceiveGameEvent>(
       sound_system_);
@@ -93,6 +98,7 @@ void Engine::Init() {
   wanted_state_type_ = StateType::MAIN_MENU;
 
   UpdateSettingsValues();
+  chat_.SetFont(font_test2_);
 
   // Initiate the Replay Machine
   unsigned int length_sec =
@@ -119,7 +125,6 @@ void Engine::Update(float dt) {
         }
   }
   for (int i = 0; i < counter; ++i) time_test.pop_front();*/
-
   if (take_game_input_ == true) {
     // accumulate key presses
     for (auto const& [key, action] : keybinds_) {
@@ -136,15 +141,9 @@ void Engine::Update(float dt) {
     // accumulate mouse movement
     float mouse_sensitivity = 0.003f * mouse_sensitivity_;
     glm::vec2 mouse_movement = mouse_sensitivity * Input::MouseMov();
-    accum_yaw_ -= mouse_movement.x;
-    accum_pitch_ -= mouse_movement.y;
 
-    // constexpr float pi = glm::pi<float>();
-    // test_yaw_ -= mouse_movement.x;
-    // test_pitch_ -= mouse_movement.y;
-    // test_pitch_ = glm::clamp(test_pitch_, -0.49f * pi, 0.49f * pi);
+    play_state_.AddPitchYaw(-mouse_movement.y, -mouse_movement.x);
 
-    // play_state_.SetCameraOrientation(test_pitch_, test_yaw_);
     if (Input::IsKeyPressed(GLFW_KEY_K)) {
       new_team_ = TEAM_BLUE;
     }
@@ -188,29 +187,45 @@ void Engine::Update(float dt) {
   if (wanted_state_type_ != current_state_->Type()) {
     // cleanup old state
     current_state_->Cleanup();
-
     // set new state
     switch (wanted_state_type_) {
       case StateType::MAIN_MENU:
         current_state_ = &main_menu_state_;
+        // std::cout << "CHANGE STATE: MAIN_MENU\n";
         break;
       case StateType::CONNECT_MENU:
         current_state_ = &connect_menu_state_;
+        // std::cout << "CHANGE STATE: CONNECT_MENU\n";
         break;
       case StateType::LOBBY:
         current_state_ = &lobby_state_;
+        // std::cout << "CHANGE STATE: LOBBY\n";
         break;
       case StateType::PLAY:
+        current_state_ = &play_state_;
+        // std::cout << "CHANGE STATE: PLAY\n";
+        // ReInit();
         scores_[0] = 0;
         scores_[1] = 0;
-        current_state_ = &play_state_;
         break;
       case StateType::SETTINGS:
         current_state_ = &settings_state_;
+        // std::cout << "CHANGE STATE: SETTINGS\n";
         break;
     }
     // init new state
     current_state_->Init();
+  }
+
+  if (Input::IsKeyPressed(GLFW_KEY_F7)) {
+    glob::SetSSAO(true);
+  }
+  if (Input::IsKeyPressed(GLFW_KEY_F8)) {
+    glob::SetSSAO(false);
+  }
+
+  if(Input::IsKeyPressed(GLFW_KEY_F5)) {
+    glob::ReloadShaders();
   }
 
   Input::Reset();
@@ -261,20 +276,17 @@ void Engine::UpdateNetwork() {
   */
 
   if (should_send_input_) {
+    // play_state_.AddPitchYaw(accum_pitch_, accum_yaw_);
     to_send << action_bits;
-    to_send << accum_pitch_;
-    to_send << accum_yaw_;
+    to_send << play_state_.GetPitch();
+    to_send << play_state_.GetYaw();
     to_send << PacketBlockType::INPUT;
-    play_state_.AddAction(100);
-    play_state_.SetPitchYaw(accum_pitch_, accum_yaw_);
   } else {
     play_state_.ClearActions();
   }
   if (client_.IsConnected() && !to_send.IsEmpty()) {
     client_.Send(to_send);
   }
-  accum_yaw_ = 0.f;
-  accum_pitch_ = 0.f;
   packet_ = NetAPI::Common::Packet();
 
   // handle received data
@@ -298,16 +310,18 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
   packet >> block_type;
   switch (block_type) {
     case PacketBlockType::TEST_STRING: {
+      // std::cout << "PACKET: TEST_STRING\n";
       size_t strsize = 0;
       packet >> strsize;
       std::string str;
       str.resize(strsize);
-      std::cout << "Packet Size: " << packet.GetPacketSize() << "\n";
+      // std::cout << "Packet Size: " << packet.GetPacketSize() << "\n";
       packet.Remove(str.data(), strsize);
-      std::cout << "PACKET: TEST_STRING: '" << str << "'\n";
+      // std::cout << "PACKET: TEST_STRING: '" << str << "'\n";
       break;
     }
     case PacketBlockType::ENTITY_TRANSFORMS: {
+      // std::cout << "PACKET: ENTITY_TRANSFORMS\n";
       int size = -1;
       packet >> size;
       for (int i = 0; i < size; i++) {
@@ -322,6 +336,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::PHYSICS_DATA: {
+      // std::cout << "PACKET: PHYSICS_DATA\n";
       int size = -1;
       packet >> size;
       for (int i = 0; i < size; i++) {
@@ -336,32 +351,81 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::CAMERA_TRANSFORM: {
+      // std::cout << "PACKET: CAMERA_TRANSFORM\n";
       glm::quat orientation;
       packet >> orientation;
       play_state_.SetCameraOrientation(orientation);
       break;
     }
+    case PacketBlockType::PLAYER_LOOK_DIR: {
+      int num_dirs = -1;
+      packet >> num_dirs;
+      for (int i = 0; i < num_dirs; i++) {
+        EntityID id = 0;
+        glm::vec3 look_dir;
+        packet >> id;
+        packet >> look_dir;
+        play_state_.SetPlayerLookDir(id, look_dir);
+      }
+      break;
+    }
+    case PacketBlockType::PLAYER_MOVE_DIR: {
+      int num_dirs = -1;
+      packet >> num_dirs;
+      for (int i = 0; i < num_dirs; i++) {
+        EntityID id = 0;
+        glm::vec3 move_dir;
+        packet >> id;
+        packet >> move_dir;
+        play_state_.SetPlayerMoveDir(id, move_dir);
+      }
+      break;
+    }
+
     case PacketBlockType::GAME_START: {
+      // std::cout << "PACKET: GAME_START\n";
+      unsigned int team;
       int num_players = -1;
       std::vector<EntityID> player_ids;
       EntityID my_id;
       EntityID ball_id;
       int ability_id;
+      int num_team_ids;
       packet >> ability_id;
       packet >> num_players;
       player_ids.resize(num_players);
       packet.Remove(player_ids.data(), player_ids.size());
       packet >> my_id;
       packet >> ball_id;
-
+      packet >> team;
       play_state_.SetEntityIDs(player_ids, my_id, ball_id);
       play_state_.SetMyPrimaryAbility(ability_id);
+      play_state_.SetTeam(team);
+      packet >> num_team_ids;
+      for (int i = 0; i < num_team_ids; i++) {
+        long client_id;
+        EntityID e_id;
+        unsigned int team;
+        packet >> client_id;
+        packet >> e_id;
+        packet >> team;
+        PlayerStatInfo psbi;
+        psbi.goals = 0;
+        psbi.points = 0;
+        psbi.team = team;
+        psbi.enttity_id = e_id;
+        psbi.assists = 0;
+        psbi.saves = 0;
+        player_scores_[client_id] = psbi;
+      }
 
       ChangeState(StateType::PLAY);
+
       std::cout << "PACKET: GAME_START\n";
       break;
     }
     case PacketBlockType::MESSAGE: {
+      // std::cout << "PACKET: MESSAGE\n";
       unsigned int message_from;
       packet >> message_from;
       size_t strsize = 0;
@@ -386,12 +450,14 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::PLAYER_STAMINA: {
+      // std::cout << "PACKET: PLAYER_STAMINA\n";
       float stamina = 0.f;
       packet >> stamina;
       play_state_.SetCurrentStamina(stamina);
       break;
     }
     case PacketBlockType::PING: {
+      // std::cout << "PACKET: PING\n";
       int challenge = 0;
       packet >> challenge;
       challenge *= -1;
@@ -401,6 +467,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::PING_RECIEVE: {
+      // std::cout << "PACKET: PING_RECIEVE\n";
       unsigned length = 0;
       packet >> length;
       client_pings_.resize(length);
@@ -408,16 +475,15 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::TEAM_SCORE: {
+      // std::cout << "PACKET: TEAM_SCORE\n";
       unsigned int score, team;
       packet >> score;
       packet >> team;
-      if (scores_[team] != score) {
-        play_state_.TestParticles();
-      }
       scores_[team] = score;
       break;
     }
     case PacketBlockType::MATCH_TIMER: {
+      // std::cout << "PACKET: MATCH_TIMER\n";
       int time = 0;
       int countdown_time = 0;
       packet >> countdown_time;
@@ -448,10 +514,13 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
     */
     case PacketBlockType::SWITCH_GOALS: {
-      // TODO: maybe move, is hack now
-      if (current_state_->Type() == StateType::PLAY) {
-        play_state_.SwitchGoals();
-      }
+      // std::cout << "PACKET: SWITCH_GOALS\n";
+      packet >> switch_goal_timer_;
+      packet >> switch_goal_time_;
+      break;
+    }
+    case PacketBlockType::SECONDARY_USED: {
+      second_ability_ = AbilityID::NULL_ABILITY;
       break;
     }
     case PacketBlockType::UPDATE_POINTS: {
@@ -477,6 +546,17 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       player_scores_[id] = psbi;
       break;
     }
+    case PacketBlockType::CREATE_WALL: {
+      glm::quat rot;
+      glm::vec3 pos;
+      EntityID id;
+
+      packet >> id;
+      packet >> pos;
+      packet >> rot;
+      play_state_.CreateWall(id, pos, rot);
+      break;
+    }
     case PacketBlockType::CREATE_PICK_UP: {
       glm::vec3 pos;
       EntityID id;
@@ -489,14 +569,28 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       EntityID id;
       packet >> id;
       if (current_state_->Type() == StateType::PLAY) {
-        auto pick_up_view = registry_current_->view<PickUpComponent>();
+        auto pick_up_view =
+            registry_current_->view<PickUpComponent, IDComponent>();
         for (auto entity : pick_up_view) {
-          if (id == pick_up_view.get(entity).id) {
+          if (id == pick_up_view.get<IDComponent>(entity).id) {
             registry_current_->destroy(entity);
             break;
           }
         }
       }
+      break;
+    }
+    case PacketBlockType::SERVER_CAN_JOIN: {
+      // std::cout << "PACKET: SERVER_CAN_JOIN\n";
+      packet >> server_connected_;
+      std::cout << server_connected_;
+      break;
+    }
+    case PacketBlockType::SERVER_STATE: {
+      // std::cout << "PACKET: STATE\n";
+      ServerStateType state;
+      packet >> state;
+      SetServerState(state);
       break;
     }
     case PacketBlockType::RECEIVE_PICK_UP: {
@@ -510,14 +604,17 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::LOBBY_UPDATE_TEAM: {
+      // std::cout << "PACKET: LOBBY_UPDATE_TEAM\n";
       lobby_state_.HandleUpdateLobbyTeamPacket(packet);
       break;
     }
     case PacketBlockType::PLAYER_LOBBY_DISCONNECT: {
+      // std::cout << "PACKET: PLAYER_LOBBY_DISCONNECT\n";
       lobby_state_.HandlePlayerDisconnect(packet);
       break;
     }
     case PacketBlockType::LOBBY_YOUR_ID: {
+      // std::cout << "PACKET: LOBBY_YOUR_ID\n";
       int id = 0;
       packet >> id;
       lobby_state_.SetMyId(id);
@@ -526,24 +623,36 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::CREATE_PROJECTILE: {
       ProjectileID p_id;
       EntityID e_id;
+      glm::vec3 pos;
+      glm::quat ori;
+      packet >> ori;
+      packet >> pos;
       packet >> p_id;
       packet >> e_id;
 
       switch (p_id) {
         case ProjectileID::CANNON_BALL: {
-          play_state_.CreateCannonBall(e_id);
+          play_state_.CreateCannonBall(e_id, pos, ori);
           break;
         }
         case ProjectileID::TELEPORT_PROJECTILE: {
-          play_state_.CreateTeleportProjectile(e_id);
+          play_state_.CreateTeleportProjectile(e_id, pos, ori);
           break;
         }
         case ProjectileID::FORCE_PUSH_OBJECT: {
-          play_state_.CreateForcePushObject(e_id);
+          play_state_.CreateForcePushObject(e_id, pos, ori);
           break;
         }
         case ProjectileID::MISSILE_OBJECT: {
-          play_state_.CreateMissileObject(e_id);
+          play_state_.CreateMissileObject(e_id, pos, ori);
+          // TODO: Dont trigger this event on the client like this. Fix so that
+          // event is sent/received AFTER the create_projectile packet on server
+          // instead Note: Sometimes this plays on player entity rather than the
+          // missile entity [???]
+          GameEvent missile_event;
+          missile_event.type = GameEvent::MISSILE_FIRE;
+          missile_event.missile_fire.projectile_id = e_id;
+          dispatcher.trigger(missile_event);
           break;
         }
       }
@@ -556,8 +665,14 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::GAME_END: {
+      // std::cout << "PACKET: GAME_END\n";
       play_state_.EndGame();
+      previous_state_ = StateType::LOBBY;
       // ChangeState(StateType::LOBBY);
+      break;
+    }
+    case PacketBlockType::GAME_OVERTIME: {
+      play_state_.OverTime();
       break;
     }
     case PacketBlockType::YOUR_TARGET: {
@@ -570,6 +685,29 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       int id;
       packet >> id;
       play_state_.UpdateHistory(id);
+      break;
+    }
+    case PacketBlockType::CREATE_BALL: {
+      EntityID id;
+      packet >> id;
+      play_state_.CreateNewBallEntity(false, id);
+      break;
+    }
+    case PacketBlockType::CREATE_FAKE_BALL: {
+      EntityID id;
+      packet >> id;
+      play_state_.CreateNewBallEntity(true, id);
+      break;
+    }
+    case PacketBlockType::TO_CLIENT_NAME: {
+      long client_id;
+      size_t name_size = 0;
+      std::string name;
+      packet >> client_id;
+      packet >> name_size;
+      name.resize(name_size);
+      packet.Remove(name.data(), name.size());
+      player_names_[client_id] = name;
       break;
     }
   }
@@ -591,15 +729,15 @@ void Engine::UpdateChat(float dt) {
         } else {
           chat_.SetSendMessage(true);
           message_ = chat_.GetCurrentMessage();
-          chat_.CloseChat();
+          if (current_state_ == &play_state_) chat_.CloseChat();
         }
       }
       chat_.Update(dt);
-      chat_.SubmitText(font_test2_);
+      chat_.SubmitText();
       if (chat_.IsTakingChatInput() == true &&
           chat_.GetCurrentMessage().size() == 0)
         glob::Submit(font_test2_, chat_.GetPosition() + glm::vec2(0, -20.f * 5),
-                     20, "Enter message", glm::vec4(1, 1, 1, 1));
+                     28, "Enter message", glm::vec4(1, 1, 1, 1));
     }
     if (Input::IsKeyPressed(GLFW_KEY_ENTER) && !chat_.IsVisable()) {
       // glob::window::SetMouseLocked(false);
@@ -622,9 +760,11 @@ void Engine::UpdateSystems(float dt) {
   }
 
   gui_system::Update(*registry_current_);
+  input_system::Update(*registry_current_);
   ParticleSystem(*registry_current_, dt);
-  RenderSystem(*registry_current_);
   animation_system_.UpdateAnimations(*registry_current_, dt);
+  trailsystem::Update(*registry_current_, dt);
+  RenderSystem(*registry_current_);
 }
 
 void Engine::SetKeybinds() {
@@ -713,9 +853,24 @@ void Engine::DrawScoreboard() {
   }
 }
 
+std::vector<int>* Engine::GetPlayingPlayers() {
+  auto val = play_state_.GetPlayerIDs();
+  if (val && !val->empty()) {
+    return val;
+  } else {
+    return nullptr;
+  }
+}
+
 int Engine::GetGameplayTimer() const { return gameplay_timer_sec_; }
 
 int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }
+
+float Engine::GetSwitchGoalCountdownTimer() const {
+  return switch_goal_timer_;
+}
+
+int Engine::GetSwitchGoalTime() const { return switch_goal_time_; }
 
 // Replay Functions ---
 void Engine::BeginRecording() {

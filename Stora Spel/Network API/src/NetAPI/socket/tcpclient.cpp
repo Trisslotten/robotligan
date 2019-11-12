@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <chrono>
 NetAPI::Socket::TcpClient::TcpClient() {
   rec_buffer_ = new char[buffer_size_];
   temp_buffer_ = new char[buffer_size_];
@@ -76,29 +77,37 @@ bool NetAPI::Socket::TcpClient::Connect(const char* addr, unsigned short port) {
 bool NetAPI::Socket::TcpClient::Send(NetAPI::Common::Packet& p) {
   auto h = p.GetHeader();
   h->packet_size = p.GetPacketSize();
-
+  FD_ZERO(&write_fd); //Reset the File Descriptor
+  FD_SET(send_socket_, &write_fd);
+  timeout_.tv_sec = 0;
+  timeout_.tv_usec = 50;
   // std::cout << "Network: send packet size=" << p.GetPacketSize() << "\n";
-
-  error_ = send(send_socket_, p.GetRaw(), (int)p.GetPacketSize(), 0);
-  if (error_ == SOCKET_ERROR) {
-    error_ = WSAGetLastError();
-    if (error_ == WSAECONNRESET || error_ == WSAECONNABORTED ||
-        error_ == WSAENETRESET || error_ == WSAENOTCONN) {
-      this->Disconnect();
-    }
-    return false;
+  if (select(send_socket_, NULL, &write_fd, NULL, &timeout_) > 0)
+  {
+	  error_ = send(send_socket_, p.GetRaw(), (int)p.GetPacketSize(), 0);
+  }
+  else
+  {
+	  FD_ZERO(&write_fd);
+	  if (error_ == SOCKET_ERROR) {
+		  error_ = WSAGetLastError();
+		  if (error_ == WSAECONNRESET || error_ == WSAECONNABORTED ||
+			  error_ == WSAENETRESET || error_ == WSAENOTCONN) {
+			  this->Disconnect();
+		  }
+		  return false;
+	  }
   }
   return true;
 }
 std::vector<NetAPI::Common::Packet> NetAPI::Socket::TcpClient::Receive(
-    unsigned short timeout) {
+    double timeout) {
   int bytes = 1;
   FD_ZERO(&read_set_);
   FD_SET(send_socket_, &read_set_);
   timeout_.tv_usec = timeout;
 
   std::vector<NetAPI::Common::Packet> result;
-
   if (select(send_socket_, &read_set_, NULL, NULL, &timeout_) == 1) {
     last_buff_len_ = recv(send_socket_, rec_buffer_, buffer_size_, 0);
     // std::cout << "last_buff_len_=" << last_buff_len_ << "\n";

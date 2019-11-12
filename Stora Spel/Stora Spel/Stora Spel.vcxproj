@@ -94,6 +94,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;%(AdditionalIncludeDirectories);$(SolutionDir)Physics\include;$(SolutionDir)glm</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -109,6 +110,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)glm;$(SolutionDir)Graphics\external\include;$(SolutionDir)Graphics\include;$(SolutionDir)entt-master\src\entt;$(SolutionDir)Stora Spel\Components;$(SolutionDIr)Stora Spel\Entt systems;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -179,6 +181,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="shared\shared\bit_pack.hpp" />
+    <ClInclude Include="shared\shared\lifetime_component.hpp" />
     <ClInclude Include="shared\shared\physics_component.hpp" />
     <ClInclude Include="shared\shared\pick_up_component.hpp" />
     <ClInclude Include="shared\shared\reg_pack.hpp" />
@@ -199,6 +202,7 @@
     <ClInclude Include="ecs\components\player_component.hpp" />
     <ClInclude Include="src\ecs\components\slider_component.hpp" />
     <ClInclude Include="src\ecs\components\sound_component.hpp" />
+    <ClInclude Include="src\ecs\components\trail_component.hpp" />
     <ClInclude Include="src\ecs\systems\animation_system.hpp" />
     <ClInclude Include="src\ecs\systems\particle_system.hpp" />
     <ClInclude Include="src\ecs\systems\gui_system.hpp" />
@@ -228,6 +232,7 @@
     <ClInclude Include="Entt systems\player_controller_system.hpp" />
     <ClInclude Include="Entt systems\ability_controller_system.hpp" />
     <ClInclude Include="Entt systems\print_position_system.hpp" />
+    <ClInclude Include="src\ecs\systems\trail_system.hpp" />
     <ClInclude Include="src\util\asset_paths.hpp" />
     <ClInclude Include="util\global_settings.hpp" />
     <ClInclude Include="util\input.hpp" />
@@ -263,6 +268,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\Map\Map_singular_TMP.mcfg" />
+    <None Include="Assets\Mech\Mech.mcfg" />
+    <None Include="Assets\Pickup\Pickup.mcfg" />
     <None Include="Assets\shaders\compute_shader.comp" />
     <None Include="assets\shaders\e2Dshader.frag" />
     <None Include="assets\shaders\e2Dshader.vert" />
@@ -273,14 +281,23 @@
     <None Include="Assets\shaders\modelemissive.frag" />
     <None Include="assets\shaders\modelshader.frag" />
     <None Include="assets\shaders\modelshader.vert" />
+    <None Include="Assets\shaders\Particle compute shaders\dust.comp" />
     <None Include="Assets\shaders\particle.geom" />
     <None Include="Assets\shaders\shading.frag" />
     <None Include="Assets\shaders\fullscreenquad.frag" />
     <None Include="Assets\shaders\fullscreenquad.vert" />
     <None Include="Assets\shaders\shading.vert" />
     <None Include="Assets\shaders\shadow.frag" />
+    <None Include="Assets\shaders\sky.frag" />
+    <None Include="Assets\shaders\sky.vert" />
+    <None Include="Assets\shaders\ssao.frag" />
+    <None Include="Assets\shaders\ssao.vert" />
     <None Include="Assets\shaders\text2Dshader.frag" />
     <None Include="Assets\shaders\text2Dshader.vert" />
+    <None Include="Assets\shaders\text3Dshader.frag" />
+    <None Include="Assets\shaders\text3Dshader.vert" />
+    <None Include="Assets\shaders\trail.frag" />
+    <None Include="Assets\shaders\trail.vert" />
     <None Include="Assets\shaders\wireframe.frag" />
     <None Include="shaders\testshader.frag" />
     <None Include="shaders\testshader.vert" />

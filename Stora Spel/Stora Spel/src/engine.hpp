@@ -24,14 +24,13 @@ struct PlayerStatInfo {
   unsigned int team = TEAM_RED;
   EntityID enttity_id = 0;
 };
-
 class Engine {
  public:
   Engine();
   ~Engine();
   Engine(const Engine&) = delete;
   Engine& operator=(const Engine&) = delete;
-
+  int IsConnected() { return server_connected_; }
   void Init();
   void Update(float dt);
   void UpdateNetwork();
@@ -51,6 +50,7 @@ class Engine {
   }
   NetAPI::Socket::Client& GetClient() { return client_; }
   NetAPI::Common::Packet& GetPacket() { return packet_; }
+  void SetTakeInput(bool should_take) { take_game_input_ = should_take; }
   void SetSendInput(bool should_send) { should_send_input_ = should_send; }
   void SetEnableChat(bool should_enable) { this->enable_chat_ = should_enable; }
   SoundSystem& GetSoundSystem() { return sound_system_; }
@@ -58,14 +58,17 @@ class Engine {
   AnimationSystem& GetAnimationSystem() { return animation_system_; }
   entt::registry* GetCurrentRegistry() { return registry_current_; }
 
-  std::unordered_map<PlayerID, std::string> player_names_;
+  std::unordered_map<long, std::string> player_names_;
 
+  void SetSecondaryAbility(AbilityID id) { second_ability_ = id; }
   AbilityID GetSecondaryAbility() { return second_ability_; }
-
   std::vector<unsigned int> GetTeamScores() { return scores_; }
-
+  std::vector<int>* GetPlayingPlayers();
+  void SetPlayingPlayers(std::unordered_map<int, LobbyPlayer> plyrs) { playing_players_ = plyrs; }
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
+  float GetSwitchGoalCountdownTimer() const;
+  int GetSwitchGoalTime() const;
   unsigned int GetPlayerTeam(EntityID id) {
     for (auto p_score : player_scores_) {
       if (p_score.second.enttity_id == id) {
@@ -80,7 +83,13 @@ class Engine {
   Chat* GetChat() { return &chat_; }
 
   StateType GetPreviousStateType() { return previous_state_; }
+  ServerStateType GetServerState() { return server_state_; }
+  void SetServerState(ServerStateType state) { server_state_ = state; }
+  void ReInit() { play_state_.Cleanup(); play_state_.Init();}
 
+  std::unordered_map<PlayerID, PlayerStatInfo> GetPlayerScores() {
+    return player_scores_;
+  }
  private:
   void SetKeybinds();
 
@@ -99,6 +108,7 @@ class Engine {
 
   NetAPI::Socket::Client client_;
   NetAPI::Common::Packet packet_;
+  int server_connected_ = 0;
 
   std::vector<unsigned> client_pings_;
   StateType wanted_state_type_ = StateType::MAIN_MENU;
@@ -111,15 +121,13 @@ class Engine {
 
   // Registry
   entt::registry* registry_current_;
-
+  std::unordered_map<int, LobbyPlayer> playing_players_;
   bool should_send_input_ = false;
 
   std::unordered_map<int, int> keybinds_;
   std::unordered_map<int, int> mousebinds_;
   std::unordered_map<int, int> key_presses_;
   std::unordered_map<int, int> mouse_presses_;
-  float accum_yaw_ = 0.f;
-  float accum_pitch_ = 0.f;
 
   glob::Font2DHandle font_test_ = 0;
   glob::Font2DHandle font_test2_ = 0;
@@ -134,12 +142,14 @@ class Engine {
 
   int gameplay_timer_sec_ = 0;
   int countdown_timer_sec_ = 0;
+  float switch_goal_timer_ = 0.f;
+  int switch_goal_time_ = 0;
 
   Chat chat_;
   std::string message_ = "";
 
   bool enable_chat_ = false;
-
+  ServerStateType server_state_;
   SoundSystem sound_system_;
   AnimationSystem animation_system_;
 

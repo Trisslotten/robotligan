@@ -8,12 +8,13 @@ void DeterministicReplay::WriteInputFrame(const std::bitset<10>& in_bitset,
                                           const unsigned int in_player_num) {
   // Format:
   // {			:	(for every change 1+X bits are stored,
-  // 				where X is the number of bits needed
-  // 				to represent the largest index in binary)
-  // 	1 bit	:	1, indicating a change
-  // 	X bits	:	index int
+  //				where X is the number of bits needed
+  //				to represent the largest index in
+  //				binary)
+  //	1 bit	:	1, indicating a change
+  //	X bits	:	index int
   // }
-  // 1 bit		:	0, indicating the end of the first section
+  // 1 bit	:	0, indicating the end of the first section
   // 32 bits	:	x_value float
   // 32 bits	:	y_value float
 
