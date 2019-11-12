@@ -305,7 +305,7 @@ void PlayState::Update(float dt) {
   // draw crosshair
   glm::vec2 crosshair_pos = glob::window::GetWindowDimensions();
   crosshair_pos /= 2;
-  glob::Submit(gui_crosshair_, crosshair_pos, 1.f);
+  glob::Submit(gui_crosshair_, crosshair_pos - glm::vec2(19, 20), 1.f);
 
   // draw Minimap
   glob::Submit(gui_minimap_,
