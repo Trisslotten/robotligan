@@ -196,6 +196,7 @@
     <ClInclude Include="src\ecs\components\slider_component.hpp" />
     <ClInclude Include="src\ecs\components\sound_component.hpp" />
     <ClInclude Include="src\ecs\components\trail_component.hpp" />
+    <ClInclude Include="src\ecs\components\wall_component.hpp" />
     <ClInclude Include="src\ecs\systems\animation_system.hpp" />
     <ClInclude Include="src\ecs\systems\particle_system.hpp" />
     <ClInclude Include="src\ecs\systems\gui_system.hpp" />

@@ -87,6 +87,7 @@
     <ClInclude Include="shared\shared\lifetime_component.hpp" />
     <ClInclude Include="src\ecs\components\trail_component.hpp" />
     <ClInclude Include="src\ecs\systems\trail_system.hpp" />
+    <ClInclude Include="src\ecs\components\wall_component.hpp" />
     <ClInclude Include="shared\shared\fail_safe_arena.hpp" />
   </ItemGroup>
   <ItemGroup>

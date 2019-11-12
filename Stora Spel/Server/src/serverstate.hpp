@@ -126,6 +126,7 @@ class ServerPlayState : public ServerState {
   EntityID GetNextEntityGuid() { return entity_guid_++; }
   void OverTime();
   void EndGame();
+  void WallAnimation();
 
   std::unordered_map<long, bool> clients_receive_updates_;
   std::unordered_map<int, EntityID> clients_player_ids_;
