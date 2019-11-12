@@ -88,7 +88,7 @@ void PlayState::CreateGoalParticles(float x) {
   //= {glm::vec3(0.f, 1.f, 0.f)};
 
   glob::SetParticleSettings(handle, "confetti.txt");
-  glob::SetEmitPosition(handle, glm::vec3(x * 0.9f, 5.f, 0.f));
+  glob::SetEmitPosition(handle, glm::vec3(x * 0.9f, 1.f, 0.f));
   float x_dir = (x > 0) ? -1 : 1;
   glob::SetParticleDirection(handle, glm::vec3(x_dir, 5.f, 0.f));
 
@@ -96,12 +96,12 @@ void PlayState::CreateGoalParticles(float x) {
   handle = glob::CreateParticleSystem();
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
-  glob::SetEmitPosition(handle, glm::vec3(x * 0.85f, -10.f, 25.f));
+  glob::SetEmitPosition(handle, glm::vec3(x * 1.0f, 0.f, 15.f));
   e = registry_gameplay_.create();
   handle = glob::CreateParticleSystem();
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
-  glob::SetEmitPosition(handle, glm::vec3(x * 0.85f, -10.f, -25.f));
+  glob::SetEmitPosition(handle, glm::vec3(x * 1.0f, 0.f, -15.f));
   // std::unordered_map<std::string, std::string> map;
   // map["color"] = "1.0 0.0 0.0 0.4";
   // glob::SetParticleSettings(handle, map);
