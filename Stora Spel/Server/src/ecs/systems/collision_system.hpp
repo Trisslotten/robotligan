@@ -15,7 +15,7 @@
 #include "collision.hpp"
 #include "ecs/components.hpp"
 #include "ecs/components/pick_up_event.hpp"
-#include "ecs/components/projectile_component.hpp"
+#include "shared/projectile_component.hpp"
 #include "ecs/systems/missile_system.hpp"
 #include "shared/fail_safe_arena.hpp"
 #include "shared/id_component.hpp"

@@ -13,6 +13,7 @@ enum ReplayObjectType {
   REPLAY_PLAYER = 0,  // Start
   REPLAY_BALL,
   REPLAY_PICKUP,
+  REPLAY_SHOT,
   NUM_OF_REPLAY_OBJECT_TYPES  // End
 };
 
