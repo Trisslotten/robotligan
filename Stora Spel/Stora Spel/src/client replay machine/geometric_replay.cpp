@@ -2,9 +2,7 @@
 
 #include <map>
 
-#include <ecs/components/ball_component.hpp>
-#include <ecs/components/model_component.hpp>
-#include <ecs/components/player_component.hpp>
+#include <ecs/components.hpp>
 #include <glob/graphics.hpp>
 #include <shared/pick_up_component.hpp>
 #include <shared/transform_component.hpp>
@@ -26,6 +24,8 @@ ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
     return ReplayObjectType::REPLAY_BALL;
   } else if (in_registry.has<PickUpComponent>(in_entity)) {
     return ReplayObjectType::REPLAY_PICKUP;
+  } else if (in_registry.has<ProjectileComponent>(in_entity)) {
+    return ReplayObjectType::REPLAY_SHOT;
   }
 
   // If entity couldn't be identified, return number of types
@@ -76,6 +76,11 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
     ret_ptr = new BallFrame(transform_c);
   } else if (object_type == REPLAY_PICKUP) {
     // TBA
+  } else if (object_type == REPLAY_SHOT) {
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
+
+    ret_ptr = new ShotFrame(transform_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unidentified entity");
@@ -201,6 +206,14 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     bf_c_ptr->WriteBack(transform_c);
   } else if (in_type == REPLAY_PICKUP) {
     // TBA
+  } else if (in_type == REPLAY_SHOT) {
+    // Cast
+    ShotFrame* bf_c_ptr = dynamic_cast<ShotFrame*>(in_df_ptr);
+    // Get
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
+    // Transfer
+    bf_c_ptr->WriteBack(transform_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -224,7 +237,7 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
   // NTS: DATAFRAME IF CASE
   // - Cast DataFrame to correct type
   // - Assign the relevant components to entity
-  // - Assign a model component to thew entity
+  // - Assign a model component to the entity
   // - Add the relevant ModelHandle:s to entity
   //
   if (object_type == REPLAY_PLAYER) {
@@ -260,6 +273,20 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     model_c.handles.push_back(mh_ball_sphe);
   } else if (object_type == REPLAY_PICKUP) {
     // TBA
+  } else if (object_type == REPLAY_SHOT) {
+    ShotFrame* bf_ptr = dynamic_cast<ShotFrame*>(df_ptr);
+    in_registry.assign<IDComponent>(
+        entity, this->channels_.at(in_channel_index).object_id);
+
+    //
+    TransformComponent& transform_c =
+        in_registry.assign<TransformComponent>(entity);
+    bf_ptr->WriteBack(transform_c);
+
+    // Create and add ModelHandle
+    glob::ModelHandle mh_shot = glob::GetModel(kModelPathRocket);
+    ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    model_c.handles.push_back(mh_shot);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");

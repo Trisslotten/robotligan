@@ -1524,12 +1524,13 @@ void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {
 void PlayState::CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori) {
   auto cannonball = registry_gameplay_.create();
 
-  glob::ModelHandle model_ball = glob::GetModel(kModelPathBall);
-    auto& model_c = registry_gameplay_.assign<ModelComponent>(cannonball);
-  model_c.handles.push_back(model_ball);
+  glob::ModelHandle model_shot = glob::GetModel(kModelPathRocket);
+  auto& model_c = registry_gameplay_.assign<ModelComponent>(cannonball);
+  model_c.handles.push_back(model_shot);
 
   registry_gameplay_.assign<TransformComponent>(cannonball, pos, ori,
                                                 glm::vec3(0.3f));
+  registry_gameplay_.assign<ProjectileComponent>(cannonball, ProjectileID::CANNON_BALL);
   registry_gameplay_.assign<IDComponent>(cannonball, id);
 }
 
