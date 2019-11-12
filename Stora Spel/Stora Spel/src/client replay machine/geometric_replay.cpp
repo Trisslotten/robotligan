@@ -14,6 +14,12 @@
 
 ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
                                                  entt::registry& in_registry) {
+  //
+  // NTS: DATAFRAME IF CASE
+  // - Identify given entity type
+  // - Return enum type (enum defined in geometric_replay.hpp)
+  //
+
   if (in_registry.has<PlayerComponent>(in_entity)) {
     return ReplayObjectType::REPLAY_PLAYER;
   } else if (in_registry.has<BallComponent>(in_entity)) {
@@ -50,6 +56,12 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
   // are trying to save
 
   ReplayObjectType object_type = this->IdentifyEntity(in_entity, in_registry);
+
+  //
+  // NTS: DATAFRAME IF CASE
+  // - Fetch relevant components
+  // - Pass them to a new DataFrame for the object type
+  //
 
   if (object_type == REPLAY_PLAYER) {
     TransformComponent& transform_c =
@@ -163,6 +175,13 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
                                                ReplayObjectType in_type,
                                                entt::entity& in_entity,
                                                entt::registry& in_registry) {
+  //
+  // NTS: DATAFRAME IF CASE
+  // - Cast DataFrame to correct type
+  // - Fetch relevant components
+  // - Pass them to the casted DataFrame's WriteBack function
+  //
+
   if (in_type == REPLAY_PLAYER) {
     // Cast
     PlayerFrame* pf_c_ptr = dynamic_cast<PlayerFrame*>(in_df_ptr);
@@ -201,9 +220,13 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
   // Create base entity
   entt::entity entity = in_registry.create();
 
-  // Switch-case over object types
-  // In each:
-  //	- Read data and assign components for that entity type
+  //
+  // NTS: DATAFRAME IF CASE
+  // - Cast DataFrame to correct type
+  // - Assign the relevant components to entity
+  // - Assign a model component to thew entity
+  // - Add the relevant ModelHandle:s to entity
+  //
   if (object_type == REPLAY_PLAYER) {
     PlayerFrame* pf_ptr = dynamic_cast<PlayerFrame*>(df_ptr);
     in_registry.assign<IDComponent>(
@@ -290,24 +313,7 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
         // If it does we check if a new interpolation point should be added
         // dependent on the object's type
         DataFrame* temp_df = nullptr;
-        ReplayObjectType temp_object_type =
-            this->IdentifyEntity(entity, in_registry);
-
-        if (temp_object_type == REPLAY_PLAYER) {
-          TransformComponent& transform_c =
-              in_registry.get<TransformComponent>(entity);
-          PlayerComponent& player_c = in_registry.get<PlayerComponent>(entity);
-          temp_df = new PlayerFrame(transform_c, player_c);
-        } else if (temp_object_type == REPLAY_BALL) {
-          TransformComponent& transform_c =
-              in_registry.get<TransformComponent>(entity);
-          temp_df = new BallFrame(transform_c);
-        } else if (temp_object_type == REPLAY_PICKUP) {
-          // TBA
-        } else {
-          GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
-                                               "Unknown FrameType");
-        }
+		temp_df = this->PolymorphIntoDataFrame(entity, in_registry);
 
         // Compare last entry to what would be the current frame's
         if ((temp_df != nullptr) &&

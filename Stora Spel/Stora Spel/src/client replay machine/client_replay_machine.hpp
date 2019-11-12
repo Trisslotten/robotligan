@@ -26,8 +26,10 @@ class ClientReplayMachine {
   unsigned int NumberOfStoredReplays() const;
   int CurrentlySelectedReplay() const;
   bool SelectReplay(unsigned int in_index);
-  bool LoadFrame(entt::registry& in_registry);
   void ResetSelectedReplay();
+
+  bool LoadFrame(entt::registry& in_registry);
+  
 
   std::string GetSelectedReplayStringTree();
   std::string GetSelectedReplayStringState();
