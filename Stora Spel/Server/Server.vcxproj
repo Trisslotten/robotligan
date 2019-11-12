@@ -194,13 +194,9 @@
     <ClInclude Include="src\serverstate.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\replay machine\bit_pack.cpp" />
-    <ClCompile Include="src\replay machine\reg_pack.cpp" />
     <ClCompile Include="src\replay machine\replay_machine.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\replay machine\bit_pack.hpp" />
-    <ClInclude Include="src\replay machine\reg_pack.hpp" />
     <ClInclude Include="src\replay machine\replay_machine.hpp" />
   </ItemGroup>
   <ItemGroup>

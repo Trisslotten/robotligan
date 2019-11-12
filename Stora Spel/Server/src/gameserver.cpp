@@ -253,13 +253,6 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       break;
     }
 
-    case PacketBlockType::TEST_REPLAY_KEYS: {
-      // If P is pressed, record 10 seconds
-      bool start_replay;
-      packet >> start_replay;
-      if (start_replay) play_state_.StartRecording(10);
-      break;
-    }
     case PacketBlockType::MESSAGE: {
       size_t strsize = 0;
       packet >> strsize;

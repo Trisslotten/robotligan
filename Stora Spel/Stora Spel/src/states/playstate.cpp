@@ -24,6 +24,7 @@
 #include "eventdispatcher.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
+#include <util/asset_paths.hpp>
 
 void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
@@ -434,6 +435,7 @@ void PlayState::Update(float dt) {
 
   glob::Submit(test_ball_, glm::mat4());
 }
+
 void PlayState::UpdateNetwork() {
   auto& packet = engine_->GetPacket();
 
@@ -442,9 +444,9 @@ void PlayState::UpdateNetwork() {
   packet << PacketBlockType::FRAME_ID;
 
   // TEMP: Start recording replay
-  bool temp = Input::IsKeyPressed(GLFW_KEY_P);
-  packet << temp;
-  packet << PacketBlockType::TEST_REPLAY_KEYS;
+  //bool temp = Input::IsKeyPressed(GLFW_KEY_P);
+  //packet << temp;
+  //packet << PacketBlockType::TEST_REPLAY_KEYS;
 }
 
 void PlayState::Cleanup() {
@@ -1166,6 +1168,8 @@ void PlayState::CreatePlayerEntities() {
         glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
     glm::vec3 character_scale = glm::vec3(0.0033f);
 
+    //glob::ModelHandle player_model = glob::GetModel(kModelPathMech);
+
     registry_gameplay_.assign<IDComponent>(entity, entity_id);
     auto& pc = registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(0.f),
@@ -1225,6 +1229,7 @@ void PlayState::CreateArenaEntity() {
   glob::ModelHandle model_map_projectors =
       glob::GetModel("assets/MapV3/Map_Projectors.fbx");
 
+    //glob::GetModel(kModelPathMapSingular);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
   model_c.handles.push_back(model_arena);
   model_c.handles.push_back(model_arena_banner);
@@ -1303,11 +1308,9 @@ void PlayState::CreateBallEntity() {
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f);
   auto ball = registry_gameplay_.create();
-  glob::ModelHandle model_ball_projectors_p =
-      glob::GetModel("Assets/Ball_new/Ball_projectors.fbx");
-  glob::ModelHandle model_ball_sphere_p =
-      glob::GetTransparentModel("Assets/Ball_new/Ball_Sphere.fbx");
-  // glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
+  glob::ModelHandle model_ball_projectors_p = glob::GetModel(kModelPathBallProjectors);
+  glob::ModelHandle model_ball_sphere_p = glob::GetTransparentModel(kModelPathBallSphere);
+  //glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
   auto& model_c = registry_gameplay_.assign<ModelComponent>(ball);
   model_c.handles.push_back(model_ball_sphere_p);
   model_c.handles.push_back(model_ball_projectors_p);
@@ -1501,7 +1504,8 @@ void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {
 
   registry_gameplay_.assign<IDComponent>(pick_up, id);
 
-  glob::ModelHandle model_pick_up = glob::GetModel("assets/Pickup/Pickup.fbx");
+  glob::ModelHandle model_pick_up =
+    glob::GetModel(kModelPathPickup);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(pick_up);
   model_c.handles.push_back(model_pick_up);
 
@@ -1520,8 +1524,8 @@ void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {
 void PlayState::CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori) {
   auto cannonball = registry_gameplay_.create();
 
-  glob::ModelHandle model_ball = glob::GetModel("assets/Rocket/Rocket.fbx");
-  auto& model_c = registry_gameplay_.assign<ModelComponent>(cannonball);
+  glob::ModelHandle model_ball = glob::GetModel(kModelPathBall);
+    auto& model_c = registry_gameplay_.assign<ModelComponent>(cannonball);
   model_c.handles.push_back(model_ball);
 
   registry_gameplay_.assign<TransformComponent>(cannonball, pos, ori,
@@ -1546,8 +1550,9 @@ void PlayState::CreateForcePushObject(EntityID id, glm::vec3 pos,
   auto& sound_engine = engine_->GetSoundEngine();
 
   auto force_object = registry_gameplay_.create();
-  glob::ModelHandle model_ball =
-      glob::GetModel("assets/Ball/force_push_ball.fbx");
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glob::ModelHandle model_ball = glob::GetModel(kModelPathBall);
+  //"assets/Ball/force_push_ball.fbx"	TODO: Swap path to this one
   auto& model_c = registry_gameplay_.assign<ModelComponent>(force_object);
   model_c.handles.push_back(model_ball);
 
@@ -1564,7 +1569,8 @@ void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
   auto& sound_engine = engine_->GetSoundEngine();
 
   auto missile_object = registry_gameplay_.create();
-  glob::ModelHandle model_ball = glob::GetModel("assets/Rocket/Rocket.fbx");
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glob::ModelHandle model_ball = glob::GetModel(kModelPathRocket);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(missile_object);
   model_c.handles.push_back(model_ball);
   registry_gameplay_.assign<TransformComponent>(missile_object, pos, ori,

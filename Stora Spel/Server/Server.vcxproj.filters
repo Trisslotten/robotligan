@@ -154,24 +154,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\replay machine\bit_pack.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\replay machine\replay_machine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\replay machine\reg_pack.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\replay machine\bit_pack.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\replay machine\replay_machine.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\replay machine\reg_pack.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
