@@ -35,6 +35,7 @@ void PlayState::Startup() {
   e2D_test_ = glob::GetE2DItem("assets/GUI_elements/point_table.png");
   e2D_test2_ = glob::GetE2DItem("assets/GUI_elements/Scoreboard_V1.png");
   e2D_target_ = glob::GetE2DItem("assets/GUI_elements/target.png");
+  e2D_outline_ = glob::GetE2DItem("assets/GUI_elements/wall_outline.png");
 
   // Create GUI elementds
   gui_test_ = glob::GetGUIItem("assets/GUI_elements/Scoreboard_V1.png");
@@ -293,6 +294,7 @@ void PlayState::Update(float dt) {
   UpdateGameplayTimer();
   UpdateSwitchGoalTimer();
   DrawNameOverPlayer();
+  DrawWallOutline();
 
   // draw stamina bar
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
@@ -571,6 +573,42 @@ void PlayState::DrawNameOverPlayer() {
       }
     }
     break;
+  }
+}
+
+void PlayState::DrawWallOutline() {
+  if (my_primary_ability_id == (int)AbilityID::BUILD_WALL && primary_cd_ <= 0.f || engine_->GetSecondaryAbility() == AbilityID::BUILD_WALL) {
+    auto& trans = registry_gameplay_.get<TransformComponent>(my_entity_);
+    auto& camera = registry_gameplay_.get<CameraComponent>(my_entity_);
+
+    glm::vec3 pos =
+        camera.GetLookDir() * 4.5f + trans.position + camera.offset;
+    pos.y = 0.05f;
+
+    auto goal1_trans =
+        registry_gameplay_.get<TransformComponent>(red_goal_light_);
+    auto goal2_trans =
+        registry_gameplay_.get<TransformComponent>(blue_goal_light_);
+    if (glm::distance(pos, goal1_trans.position) < 20.f ||
+        glm::distance(pos, goal2_trans.position) < 20.f) {
+      return;
+    }
+
+    glm::mat4 mat =
+        glm::rotate(glm::pi<float>() * 0.5f, glm::vec3(-1.f, 0.f, 0.f));
+
+    mat = glm::rotate(glm::pi<float>() * 0.5f, glm::vec3(0.f, 1.f, 0.f)) * mat;
+    mat = glm::scale(glm::vec3(5, 0.f, 5)) * mat;
+    mat = glm::toMat4(trans.rotation) * mat;
+    //*glm::toMat4(trans.rotation) *
+    //                    glm::scale(glm::vec3(1, 0.f, 5));
+    glob::Submit(
+        e2D_outline_, pos,
+        mat);
+
+    //glob::SubmitCube(glm::translate(pos) *
+    //                 glm::toMat4(trans.rotation) *
+    //    glm::scale(glm::vec3(1, 0.f, 5)));
   }
 }
 
@@ -999,6 +1037,9 @@ void PlayState::Collision() {
     physics::IntersectData data = Intersect(hitbox, my_obb);
     if (data.collision == true) {
       hitbox.center += data.move_vector;
+      my_phys_c.velocity.y = 0.0f;
+      predicted_state_.velocity.y = 0.f;
+      server_predicted_.velocity.y = 0.f;
     }
   }
   // update positions
@@ -1427,6 +1468,7 @@ void PlayState::CreateWall(EntityID id, glm::vec3 position,
   std::vector<glob::ModelHandle> hs;
   hs.push_back(model);
   registry_gameplay_.assign<ModelComponent>(wall, hs);
+  registry_gameplay_.assign<WallComponent>(wall);
 
   GameEvent wall_event;
   wall_event.type = GameEvent::BUILD_WALL;
@@ -1519,6 +1561,7 @@ void PlayState::DestroyEntity(EntityID id) {
 
   glm::vec3 pos(0);
   bool was_ball = false;
+  bool was_wall = false;
 
   for (auto entity : id_view) {
     auto& e_id = id_view.get(entity);
@@ -1537,6 +1580,9 @@ void PlayState::DestroyEntity(EntityID id) {
           dispatcher.trigger(ge);
         }
       }
+      if (registry_gameplay_.has<WallComponent>(entity)) {
+        was_wall = true;
+      }
       if (registry_gameplay_.has<TransformComponent>(entity)) {
         pos = registry_gameplay_.get<TransformComponent>(entity).position;
       }
@@ -1545,7 +1591,7 @@ void PlayState::DestroyEntity(EntityID id) {
     }
   }
 
-  if (was_ball) {
+  if (was_ball || was_wall) {
     auto e = registry_gameplay_.create();
     auto handle = glob::CreateParticleSystem();
 
