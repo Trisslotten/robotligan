@@ -208,12 +208,12 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     // TBA
   } else if (in_type == REPLAY_SHOT) {
     // Cast
-    ShotFrame* bf_c_ptr = dynamic_cast<ShotFrame*>(in_df_ptr);
+    ShotFrame* sf_c_ptr = dynamic_cast<ShotFrame*>(in_df_ptr);
     // Get
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
     // Transfer
-    bf_c_ptr->WriteBack(transform_c);
+    sf_c_ptr->WriteBack(transform_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
