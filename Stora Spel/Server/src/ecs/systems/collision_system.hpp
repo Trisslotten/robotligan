@@ -262,20 +262,7 @@ void HandleMultiBallCollision(entt::registry& registry,
       //break;
     } else if (obj.tag == WALL) {
       ball_hitbox.center += obj.move_vector;
-      // ball_physics.velocity = glm::vec3(0.f);
       BallCollision(&ball_physics, obj.normal);
-
-      //float vel = glm::length(ball_physics.velocity);
-      //if (vel > 20.f) {
-      //  auto& health = registry.get<HealthComponent>(obj.entity);
-      //  health.health -= 50;
-      //} else if (vel > 10) {
-      //  auto& health = registry.get<HealthComponent>(obj.entity);
-      //  health.health -= 30;
-      //} else if (vel > 6) {
-      //  auto& health = registry.get<HealthComponent>(obj.entity);
-      //  health.health -= 10;
-      //}
     }
   }
 
