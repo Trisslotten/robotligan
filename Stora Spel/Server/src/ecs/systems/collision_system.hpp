@@ -306,7 +306,7 @@ void PlayerBallCollision(entt::registry& registry,
   if (ball_speed < player_speed) {
     ball_physics.velocity =
         object.normal *
-        (glm::dot(player_physics.velocity, object.normal) + 1.f);
+        (glm::dot(player_physics.velocity, object.normal));
 
   } else {
     BallCollision(&ball_physics, object.normal);  // player_physics.velocity);
