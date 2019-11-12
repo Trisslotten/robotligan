@@ -361,7 +361,6 @@ void ServerPlayState::HandleDataToSend() {
     for (auto entity : created_walls_) {
       auto& t = registry.get<TransformComponent>(entity);
       auto& id = registry.get<IDComponent>(entity);
-      std::cout << "server y: " << t.position.y << std::endl;
 
       to_send << t.rotation;
       to_send << t.position;
@@ -899,7 +898,7 @@ void ServerPlayState::WallAnimation() {
 
     float delta = 10 - timer.time_left;
     if (delta > 1.f) delta = 1.f;
-    float y = glm::lerp(-12.f - 8.3f, -12.f, delta);
+    float y = glm::lerp(-9.3f, -1.f, delta);
     
     trans.position.y = y;
   }

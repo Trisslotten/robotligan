@@ -583,7 +583,7 @@ void PlayState::DrawWallOutline() {
 
     glm::vec3 pos =
         camera.GetLookDir() * 4.5f + trans.position + camera.offset;
-    pos.y = -11;
+    pos.y = 0.05f;
 
     auto goal1_trans =
         registry_gameplay_.get<TransformComponent>(red_goal_light_);
@@ -1452,8 +1452,6 @@ void PlayState::AddPlayer() {
 
 void PlayState::CreateWall(EntityID id, glm::vec3 position,
                            glm::quat rotation) {
-  std::cout << "y: " << position.y << std::endl;
-  position.y = -12 - 8.3;
   auto wall = registry_gameplay_.create();
   auto& sound_engine = engine_->GetSoundEngine();
   registry_gameplay_.assign<SoundComponent>(wall, sound_engine.CreatePlayer());
