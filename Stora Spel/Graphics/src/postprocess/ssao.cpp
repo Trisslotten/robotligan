@@ -33,7 +33,7 @@ void Ssao::Finish(Blur& blur) {
   glViewport(0, 0, ws.x, ws.y);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glBindTexture(GL_TEXTURE_2D, ssao_texture_);
-  glGenerateMipmap(GL_TEXTURE_2D);
+  //glGenerateMipmap(GL_TEXTURE_2D);
 
   blurred_ssao_texture_ = blur.BlurTexture(blur_id_, 3, ssao_texture_, 0);
 }
