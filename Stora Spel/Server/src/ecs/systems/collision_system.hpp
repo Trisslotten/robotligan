@@ -122,19 +122,29 @@ void UpdateCollisions(entt::registry& registry) {
     for (auto wall : view_wall) {
       auto& wall_hitbox = view_wall.get<physics::OBB>(wall);
       
-      glm::vec3 step = ball_physics.velocity * 1.0f / 64.f;
-      ball_hitbox.center -= step;
-      step *= 0.1;
-      for (int i = 0; i < 10; ++i) {
+      if (glm::dot(ball_physics.velocity, ball_hitbox.center - wall_hitbox.center) < 0.f) {
+        glm::vec3 step = ball_physics.velocity * 1.0f / 64.f;
+        ball_hitbox.center -= step;
+        step *= 0.1;
+        for (int i = 0; i < 10; ++i) {
+          physics::IntersectData data = Intersect(ball_hitbox, wall_hitbox);
+
+          if (data.collision) {
+            EndHomingBall(registry, ball_entity);
+            ball_collisions[ball_counter].collision_list.push_back(
+                {wall, data.normal, data.move_vector, WALL});
+            break;
+          }
+          ball_hitbox.center += step;
+        }
+      } else {
         physics::IntersectData data = Intersect(ball_hitbox, wall_hitbox);
 
         if (data.collision) {
           EndHomingBall(registry, ball_entity);
           ball_collisions[ball_counter].collision_list.push_back(
               {wall, data.normal, data.move_vector, WALL});
-          break;
         }
-        ball_hitbox.center += step;
       }
     }
 
@@ -255,17 +265,17 @@ void HandleMultiBallCollision(entt::registry& registry,
       // ball_physics.velocity = glm::vec3(0.f);
       BallCollision(&ball_physics, obj.normal);
 
-      float vel = glm::length(ball_physics.velocity);
-      if (vel > 20.f) {
-        auto& health = registry.get<HealthComponent>(obj.entity);
-        health.health -= 50;
-      } else if (vel > 10) {
-        auto& health = registry.get<HealthComponent>(obj.entity);
-        health.health -= 30;
-      } else if (vel > 6) {
-        auto& health = registry.get<HealthComponent>(obj.entity);
-        health.health -= 10;
-      }
+      //float vel = glm::length(ball_physics.velocity);
+      //if (vel > 20.f) {
+      //  auto& health = registry.get<HealthComponent>(obj.entity);
+      //  health.health -= 50;
+      //} else if (vel > 10) {
+      //  auto& health = registry.get<HealthComponent>(obj.entity);
+      //  health.health -= 30;
+      //} else if (vel > 6) {
+      //  auto& health = registry.get<HealthComponent>(obj.entity);
+      //  health.health -= 10;
+      //}
     }
   }
 

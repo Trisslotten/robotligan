@@ -585,12 +585,9 @@ void PlayState::DrawWallOutline() {
         camera.GetLookDir() * 4.5f + trans.position + camera.offset;
     pos.y = 0.05f;
 
-    auto goal1_trans =
-        registry_gameplay_.get<TransformComponent>(red_goal_light_);
-    auto goal2_trans =
-        registry_gameplay_.get<TransformComponent>(blue_goal_light_);
-    if (glm::distance(pos, goal1_trans.position) < 20.f ||
-        glm::distance(pos, goal2_trans.position) < 20.f) {
+   
+    if (glm::distance(pos, glm::vec3(-40.f, -3.9f, 0.f)) < 20.f ||
+        glm::distance(pos, glm::vec3(40.f, -3.9f, 0.f)) < 20.f) {
       return;
     }
 
