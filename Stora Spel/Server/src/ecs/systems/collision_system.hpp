@@ -161,7 +161,7 @@ void UpdateCollisions(entt::registry& registry) {
         ball_ball.last_touch = player_player.client_id;
 
        EndHomingBall(registry, ball_entity);
-
+        std::cout << data.normal << std::endl;
         ball_ball.homer_cid = -1;
         // missile_system::SetBallsAreHoming(false);
       }
