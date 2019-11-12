@@ -143,6 +143,7 @@ struct GameEvent {
     INVISIBILITY_CAST,
     INVISIBILITY_END,
     BLACKOUT_CAST,
+    BLACKOUT_TRIGGER,
     BLACKOUT_END,
     SPRINT_START,
     SPRINT_END,
@@ -151,6 +152,7 @@ struct GameEvent {
     RESET,
     PRIMARY_USED,
     SECONDARY_USED,
+    PICKUP_SPAWNED,
     NUM_EVENTS
   } type;
   union {
@@ -272,6 +274,10 @@ struct GameEvent {
     struct {
     } blackout_cast;
 
+    // Ability Blackout trigger
+    struct {
+    } blackout_trigger;
+
     // Ability Blackout End
     struct {
     } blackout_end;
@@ -316,6 +322,9 @@ struct GameEvent {
       EntityID player_id;
     } secondary_used;
 
+    struct {
+      EntityID pickup_id;
+    } pickup_spawned;
   };
 };
 

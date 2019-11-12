@@ -48,6 +48,7 @@ ShaderProgram wireframe_shader;
 ShaderProgram gui_shader;
 ShaderProgram e2D_shader;
 ShaderProgram ssao_shader;
+ShaderProgram sky_shader;
 
 std::vector<ShaderProgram *> mesh_render_group;
 
@@ -60,6 +61,8 @@ GLuint trail_vao, trail_vbo;
 
 GLuint black_texture;
 GLuint default_normal_texture;
+
+GLuint sky_texture = 0;
 
 PostProcess post_process;
 Blur blur;
@@ -278,7 +281,7 @@ GLint TextureFromFile(std::string filename) {
 
 void Init() {
   camera = Camera(glm::vec3(25, 5, 0), glm::vec3(0, 3, 0), 90, 16.f / 9.f, 0.1f,
-                  100.f);
+                  200.f);
 
   // std::cout << "Max uniform size: " << MAX_VERTEX_UNIFORM_COMPONENTS_ARB <<
   // "\n";
@@ -348,6 +351,10 @@ void Init() {
   e2D_shader.add("e2Dshader.vert");
   e2D_shader.add("e2Dshader.frag");
   e2D_shader.compile();
+
+  sky_shader.add("sky.vert");
+  sky_shader.add("sky.frag");
+  sky_shader.compile();
 
   glGenVertexArrays(1, &triangle_vao);
   glBindVertexArray(triangle_vao);
@@ -463,6 +470,8 @@ void Init() {
   ssao.Init(blur);
 
   buffer_particle_systems.reserve(10);
+
+  SetSky("assets/texture/nightsky.png");
 }
 
 // H=Handle, A=Asset
@@ -1079,7 +1088,8 @@ double GetWidthOfText(Font2DHandle font_handle, std::string text, float size) {
   return (offset_accum - 0.7 * len + 4.) * 93. / 97.;
 }
 
-double GetWidthOfChatText(Font2DHandle font_handle, std::string text, float size) {
+double GetWidthOfChatText(Font2DHandle font_handle, std::string text,
+                          float size) {
   const char *chars = text.c_str();
   int len = text.length();
 
@@ -1152,6 +1162,29 @@ void SetBlackout(bool blackout) {
   } else {
     shadows.SetNumUsed(4);
   }
+}
+
+void SetSky(const std::string &file) {
+  if (sky_texture != 0) {
+    glDeleteTextures(1, &sky_texture);
+    sky_texture = 0;
+  }
+  std::vector<unsigned char> image;
+  unsigned width, height;
+  unsigned error = lodepng::decode(image, width, height, file, LCT_RGB);
+  if (error != 0) {
+    std::cout << "ERROR: Could not load sky texture: " << file << "\n";
+    return;
+  }
+  glGenTextures(1, &sky_texture);
+  // Set some parameters for the texture
+  glBindTexture(GL_TEXTURE_2D, sky_texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB,
+               GL_UNSIGNED_BYTE, image.data());
 }
 
 void ReloadShaders() {
@@ -1336,6 +1369,33 @@ void Render() {
       BARI.model->Draw(animated_model_shader);
     }
 
+    // render wireframe cubes
+    for (auto &m : cubes) DrawCube(m);
+    // render wireframe meshes
+    for (auto &m : wireframe_meshes) DrawWireFrameMeshes(m);
+
+    // render gui elements
+    glBindVertexArray(quad_vao);
+    // render 2D elements
+    e2D_shader.use();
+    e2D_shader.uniform("cam_transform", cam_transform);
+    for (auto &e2D_item : e2D_items_to_render) {
+      e2D_item.e2D->DrawInWorld(e2D_shader, e2D_item.pos, e2D_item.scale,
+                                e2D_item.rot);
+    }
+
+    // draw sky
+    sky_shader.use();
+    glm::mat4 view = glm::mat3(camera.GetViewMatrix());
+    sky_shader.uniform("view", view);
+    sky_shader.uniform("projection", camera.GetProjectionMatrix());
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, sky_texture);
+    sky_shader.uniform("texture_sky", 0);
+    glDepthFunc(GL_LEQUAL);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glDepthFunc(GL_LESS);
+
     // TODO: Sort all transparent triangles
     // maybe sort internally in modell and then and externally
     glEnable(GL_BLEND);
@@ -1350,22 +1410,8 @@ void Render() {
     }
     glDisable(GL_BLEND);
 
-    // render wireframe cubes
-    for (auto &m : cubes) DrawCube(m);
-    // render wireframe meshes
-    for (auto &m : wireframe_meshes) DrawWireFrameMeshes(m);
-
-    // render text and gui elements
+    // render text
     glBindVertexArray(quad_vao);
-
-    // render 2D elements
-    e2D_shader.use();
-    e2D_shader.uniform("cam_transform", cam_transform);
-    for (auto &e2D_item : e2D_items_to_render) {
-      e2D_item.e2D->DrawInWorld(e2D_shader, e2D_item.pos, e2D_item.scale,
-                                e2D_item.rot);
-    }
-
     text3D_shader.use();
     text3D_shader.uniform("cam_transform", cam_transform);
     for (auto &text3D : text3D_to_render) {
@@ -1385,6 +1431,10 @@ void Render() {
     trail_shader.use();
     trail_shader.uniform("cam_transform", cam_transform);
     trail_shader.uniform("cam_pos", camera.GetPosition());
+    glBindVertexArray(trail_vao);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     for (auto &trail_item : trails_to_render) {
       trail_shader.uniform("width", trail_item.width);
       trail_shader.uniform("color", trail_item.color);
@@ -1393,14 +1443,10 @@ void Render() {
       int history_size = glm::min((int)ph.size(), max_positions);
       trail_shader.uniformv("position_history", history_size, ph.data());
       trail_shader.uniform("history_size", history_size);
-      glDisable(GL_CULL_FACE);
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      glBindVertexArray(trail_vao);
       glDrawArrays(GL_TRIANGLES, 0, num_trail_quads * 6);
-      glDisable(GL_BLEND);
-      glEnable(GL_CULL_FACE);
     }
+    glDisable(GL_BLEND);
+    glEnable(GL_CULL_FACE);
   }
   post_process.AfterDraw(blur);
 

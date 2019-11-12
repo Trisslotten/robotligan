@@ -720,7 +720,7 @@ void ProjectileBallCollision(entt::registry& registry, entt::entity ball) {
 }
 
 void ProjectileArenaCollision(entt::registry& registry) {
-  auto view_arena = registry.view<physics::Arena>();
+  auto view_arena = registry.view<FailSafeArenaComponent>();
   auto view_projectile =
       registry.view<physics::Sphere, ProjectileComponent, IDComponent>();
 
@@ -731,7 +731,7 @@ void ProjectileArenaCollision(entt::registry& registry) {
       auto& proj_id = view_projectile.get<ProjectileComponent>(projectile);
       auto& id_c = view_projectile.get<IDComponent>(projectile);
 
-      physics::IntersectData data = Intersect(arena_hitbox, proj_hitbox);
+      physics::IntersectData data = Intersect(arena_hitbox.arena, proj_hitbox);
       if (data.collision) {
         switch (proj_id.projectile_id) {
           case ProjectileID::CANNON_BALL: {

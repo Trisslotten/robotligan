@@ -72,6 +72,7 @@ void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
 
   test_ball_ = glob::GetTransparentModel("Assets/Ball_new/Ball_Sphere.fbx");
+  glob::GetModel("assets/Pickup/Pickup.fbx");
 }
 
 void PlayState::CreateGoalParticles(float x) {
@@ -85,7 +86,7 @@ void PlayState::CreateGoalParticles(float x) {
   //= {glm::vec3(0.f, 1.f, 0.f)};
 
   glob::SetParticleSettings(handle, "confetti.txt");
-  glob::SetEmitPosition(handle, glm::vec3(x * 0.9f, -10.f, 0.f));
+  glob::SetEmitPosition(handle, glm::vec3(x * 0.9f, 5.f, 0.f));
   float x_dir = (x > 0) ? -1 : 1;
   glob::SetParticleDirection(handle, glm::vec3(x_dir, 5.f, 0.f));
 
@@ -233,11 +234,12 @@ void PlayState::Update(float dt) {
     auto& trans_c = view_entities.get<TransformComponent>(entity);
     auto& id_c = view_entities.get<IDComponent>(entity);
     if (id_c.id == my_id_) {
+      auto trans = new_transforms_[id_c.id];
       auto& cam_c = registry_gameplay_.get<CameraComponent>(my_entity_);
       glm::vec3 temp =
           lerp(predicted_state_.position, server_predicted_.position, 0.5f);
       trans_c.position = glm::lerp(trans_c.position, temp, 0.2f);
-
+      trans_c.position = trans.first;
       glm::quat orientation =
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
@@ -1103,6 +1105,7 @@ void PlayState::SetCameraOrientation(glm::quat orientation) {
 
 void PlayState::CreateInitialEntities() {
   CreatePlayerEntities();
+  CreateMapEntity();
   CreateArenaEntity();
   CreateBallEntity();
   TestCreateLights();
@@ -1150,6 +1153,7 @@ void PlayState::CreatePlayerEntities() {
       float coeff_x_side = (11.223f - (-0.205f));
       float coeff_y_side = (8.159f - (-10.316f));
       float coeff_z_side = (10.206f - (-1.196f));
+
       registry_gameplay_.assign<physics::OBB>(
           entity,
           alter_scale * character_scale,            // Center
@@ -1168,15 +1172,42 @@ void PlayState::CreatePlayerEntities() {
 void PlayState::CreateArenaEntity() {
   auto arena = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 arena_scale = glm::vec3(4.0f, 4.0f, 4.0f);
+  glm::vec3 arena_scale = glm::vec3(1.0f);
   glob::ModelHandle model_arena =
-      glob::GetModel("assets/Map/Map_singular_TMP.fbx");
+      glob::GetModel("assets/Arena/Map_V3_ARENA.fbx");
+  glob::ModelHandle model_arena_banner =
+      glob::GetModel("assets/Arena/Map_V3_ARENA_SIGNS.fbx");
+  glob::ModelHandle model_map = glob::GetModel("assets/MapV3/Map_Walls.fbx");
+  glob::ModelHandle model_map_floor =
+      glob::GetModel("assets/MapV3/Map_Floor.fbx");
+  glob::ModelHandle model_map_projectors =
+      glob::GetModel("assets/MapV3/Map_Projectors.fbx");
+
   auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
   model_c.handles.push_back(model_arena);
+  model_c.handles.push_back(model_arena_banner);
+  model_c.handles.push_back(model_map);
+  model_c.handles.push_back(model_map_floor);
+  model_c.handles.push_back(model_map_projectors);
 
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                 arena_scale);
+}
 
+void PlayState::CreateMapEntity() {
+  auto arena = registry_gameplay_.create();
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glm::vec3 arena_scale = glm::vec3(2.6f);
+  glob::ModelHandle model_hitbox =
+      glob::GetModel("assets/MapV3/Map_Hitbox.fbx");
+  glob::ModelHandle model_map_walls =
+      glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
+
+  auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
+  model_c.handles.push_back(model_map_walls);
+
+  registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
+                                                arena_scale);
   // Prepare hard-coded values
   // Scale on the hitbox for the map
   float v1 = 6.8f * arena_scale.z;
@@ -1187,7 +1218,7 @@ void PlayState::CreateArenaEntity() {
   // Add a hitbox
   registry_gameplay_.assign<physics::Arena>(arena, -v2, v2, -v3, v4, -v1, v1);
 
-  auto md = glob::GetMeshData(model_arena);
+  auto md = glob::GetMeshData(model_hitbox);
   glm::mat4 matrix =
       glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f)) *
       glm::rotate(90.f * glm::pi<float>() / 180.f, glm::vec3(0.f, 0.f, 1.f));
@@ -1415,6 +1446,13 @@ void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {
   registry_gameplay_.assign<TransformComponent>(
       pick_up, position, glm::vec3(0.0f, 0.0f, 0.f), glm::vec3(0.4f));
   registry_gameplay_.assign<PickUpComponent>(pick_up);
+  auto& snd = registry_gameplay_.assign<SoundComponent>(pick_up);
+  snd.sound_player = engine_->GetSoundEngine().CreatePlayer();
+
+  GameEvent e;
+  e.pickup_spawned.pickup_id = id;
+  e.type = GameEvent::PICKUP_SPAWNED;
+  dispatcher.trigger(e);
 }
 
 void PlayState::CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori) {
@@ -1457,7 +1495,7 @@ void PlayState::CreateForcePushObject(EntityID id, glm::vec3 pos,
   registry_gameplay_.assign<SoundComponent>(force_object,
                                             sound_engine.CreatePlayer());
   registry_gameplay_.assign<TrailComponent>(force_object, 1.f,
-                                            glm::vec4(1, 1, 0, 1));
+                                            glm::vec4(0.4, 0.4, 1, 1));
 }
 
 void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
@@ -1806,7 +1844,6 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       std::vector handles = {handle};
       std::vector<glm::vec3> offsets;
       std::vector<glm::vec3> directions;
-
       glob::SetParticleSettings(handle, "dust.txt");
 
       registry_gameplay_.assign<ParticleComponent>(entity, handles, offsets,
@@ -1814,7 +1851,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       registry_gameplay_.assign<int>(entity, 0);
       break;
     }
-    case GameEvent::BLACKOUT_CAST: {
+    case GameEvent::BLACKOUT_TRIGGER: {
       glob::SetBlackout(true);
       auto registry = engine_->GetCurrentRegistry();
       auto view_controller = registry->view<LightComponent>();
@@ -1839,26 +1876,65 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         light_c.blackout = false;
       }
     }
+    case GameEvent::SUPER_KICK: {
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, TransformComponent>();
+      for (auto entity : view_controller) {
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+        PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
+        TransformComponent& t_c =
+            view_controller.get<TransformComponent>(entity);
+
+        if (id_c.id == e.super_kick.player_id) {
+          // Particles
+          entt::entity particle_entity = registry_gameplay_.create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+          glob::SetParticleSettings(handle, "superkick.txt");
+          glob::SetParticleDirection(handle, t_c.Forward());
+          glob::SetEmitPosition(handle, t_c.position);
+          in_handles.push_back(handle);
+          ParticleComponent& par_c =
+              registry_gameplay_.assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
+          registry_gameplay_.assign<int>(particle_entity, 0);
+
+          break;
+        }
+      }
+    }
   }
 }
 
 void PlayState::Reset() {
   auto view_particle = registry_gameplay_.view<ParticleComponent>();
   for (auto& entity : view_particle) {
-    auto& particle_c = view_particle.get(entity);
+                                      auto& particle_c =
+                                          view_particle.get(entity);
 
-    for (int i = 0; i < particle_c.handles.size(); ++i) {
-      glob::ResetParticles(particle_c.handles[i]);
-    }
-  }
+                                      for (int i = 0;
+                                           i < particle_c.handles.size(); ++i) {
+                                        glob::ResetParticles(
+                                            particle_c.handles[i]);
+                                      }
+                                    }
 
-  auto view_delete = registry_gameplay_.view<ParticleComponent, int>();
-  for (auto& entity : view_delete) {
-    auto& particle_c = view_delete.get<ParticleComponent>(entity);
+                                    auto view_delete =
+                                        registry_gameplay_
+                                            .view<ParticleComponent, int>();
+                                    for (auto& entity : view_delete) {
+                                      auto& particle_c =
+                                          view_delete.get<ParticleComponent>(
+                                              entity);
 
-    for (int i = 0; i < particle_c.handles.size(); ++i) {
-      glob::DestroyParticleSystem(particle_c.handles[i]);
-    }
+                                      for (int i = 0;
+                                           i < particle_c.handles.size(); ++i) {
+                                        glob::DestroyParticleSystem(
+                                            particle_c.handles[i]);
+                                      }
 
     registry_gameplay_.destroy(entity);
   }
@@ -1876,23 +1952,23 @@ void PlayState::Reset() {
   predicted_state_.velocity = glm::vec3(0.0f);
 }
 
-void PlayState::EndGame() {
-  end_game_timer_.Restart();
-  game_has_ended_ = true;
-}
+  void PlayState::EndGame() {
+    end_game_timer_.Restart();
+    game_has_ended_ = true;
+  }
 
-void PlayState::OverTime() { overtime_has_started_ = true; }
+  void PlayState::OverTime() { overtime_has_started_ = true; }
 
-void PlayState::AddPitchYaw(float pitch, float yaw) {
-  pitch_ += pitch;
-  yaw_ += yaw;
-  constexpr float pi = glm::pi<float>();
-  pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
-}
+  void PlayState::AddPitchYaw(float pitch, float yaw) {
+    pitch_ += pitch;
+    yaw_ += yaw;
+    constexpr float pi = glm::pi<float>();
+    pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
+  }
 
-void PlayState::SetPitchYaw(float pitch, float yaw) {
-  pitch_ = pitch;
-  yaw_ = yaw;
-  constexpr float pi = glm::pi<float>();
-  pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
-}
+  void PlayState::SetPitchYaw(float pitch, float yaw) {
+    pitch_ = pitch;
+    yaw_ = yaw;
+    constexpr float pi = glm::pi<float>();
+    pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
+  }
