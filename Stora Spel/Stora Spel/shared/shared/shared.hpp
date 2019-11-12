@@ -53,7 +53,6 @@ enum : int16_t {
   GAME_START,        // game start after lobby
   CLIENT_RECEIVE_UPDATES,
   TEST_STRING,
-  //TEST_REPLAY_KEYS,	//TEMP: Just for testing
   TEAM_SCORE,
   CHOOSE_TEAM,
   SWITCH_GOALS,
