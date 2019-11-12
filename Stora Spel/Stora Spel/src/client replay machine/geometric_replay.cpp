@@ -1,17 +1,13 @@
 #include "geometric_replay.hpp"
 
-#include <map>
-
-#include <ecs/components/ball_component.hpp>
-#include <ecs/components/model_component.hpp>
-#include <ecs/components/player_component.hpp>
+#include <ecs/components.hpp>
 #include <glob/graphics.hpp>
+#include <map>
 #include <shared/pick_up_component.hpp>
 #include <shared/transform_component.hpp>
 #include <util/asset_paths.hpp>
 #include <util/global_settings.hpp>
 // Private---------------------------------------------------------------------
-
 ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
                                                  entt::registry& in_registry) {
   //
@@ -26,6 +22,8 @@ ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
     return ReplayObjectType::REPLAY_BALL;
   } else if (in_registry.has<PickUpComponent>(in_entity)) {
     return ReplayObjectType::REPLAY_PICKUP;
+  } else if (in_registry.has<WallComponent>(in_entity)) {
+    return ReplayObjectType::REPLAY_WALL;
   }
 
   // If entity couldn't be identified, return number of types
@@ -76,6 +74,10 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
     ret_ptr = new BallFrame(transform_c);
   } else if (object_type == REPLAY_PICKUP) {
     // TBA
+  } else if (object_type == REPLAY_WALL) {
+    TransformComponent& trans_c =
+        in_registry.get<TransformComponent>(in_entity);
+    ret_ptr = new WallFrame(trans_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unidentified entity");
@@ -201,6 +203,14 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     bf_c_ptr->WriteBack(transform_c);
   } else if (in_type == REPLAY_PICKUP) {
     // TBA
+  } else if (in_type == REPLAY_WALL) {
+    // Cast
+    WallFrame* wf_c_ptr = dynamic_cast<WallFrame*>(in_df_ptr);
+    // Get
+    TransformComponent& trans_c =
+        in_registry.get<TransformComponent>(in_entity);
+    // Transfer
+    wf_c_ptr->WriteBack(trans_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -209,7 +219,7 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
 
 void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
                                               entt::registry& in_registry) {
-  // Get the first frame of the channel that is tracking the entity
+  // Get the first frame of the channel that is tracking the entity 
   DataFrame* df_ptr =
       this->channels_.at(in_channel_index).entries.at(0).data_ptr;
 
@@ -260,6 +270,19 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     model_c.handles.push_back(mh_ball_sphe);
   } else if (object_type == REPLAY_PICKUP) {
     // TBA
+  } else if (object_type == REPLAY_WALL) {
+    // -Cast DataFrame to correct type
+    WallFrame* wf_c_ptr = dynamic_cast<WallFrame*>(df_ptr);
+    in_registry.assign<IDComponent>(
+        entity, this->channels_.at(in_channel_index).object_id);
+    // - Assign the relevant components to entity
+    TransformComponent& trans_c = in_registry.assign<TransformComponent>(entity);
+    wf_c_ptr->WriteBack(trans_c);
+    // - Assign a model component to thew entity
+    glob::ModelHandle wall_model = glob::GetModel(kModelPathWall);
+    ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    // - Add the relevant ModelHandle:s to entity
+    model_c.handles.push_back(wall_model);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -313,7 +336,7 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
         // If it does we check if a new interpolation point should be added
         // dependent on the object's type
         DataFrame* temp_df = nullptr;
-		temp_df = this->PolymorphIntoDataFrame(entity, in_registry);
+        temp_df = this->PolymorphIntoDataFrame(entity, in_registry);
 
         // Compare last entry to what would be the current frame's
         if ((temp_df != nullptr) &&

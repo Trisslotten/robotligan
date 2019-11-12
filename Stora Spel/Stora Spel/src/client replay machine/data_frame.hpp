@@ -85,4 +85,23 @@ class BallFrame : public DataFrame {
   void WriteBack(TransformComponent& in_transform_c);
 };
 
+
+//-----Wall---------------
+class WallFrame : public DataFrame {
+ protected:
+  glm::vec3 position_;
+  glm::quat rotation_;
+ public:
+  WallFrame();
+  WallFrame(TransformComponent& trans_c);
+  ~WallFrame();
+
+  DataFrame* Clone();
+  DataFrame* InterpolateForward(unsigned int in_dist_to_target,
+                                unsigned int in_dist_to_point_b,
+                                DataFrame& in_point_b);
+  bool ThresholdCheck(DataFrame& in_future_df);
+  void WriteBack(TransformComponent& trans_c);
+
+};
 #endif  // DATA_FRAME_HPP_
