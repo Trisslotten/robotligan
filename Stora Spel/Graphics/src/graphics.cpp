@@ -130,21 +130,26 @@ std::vector<E2DItem> e2D_items_to_render;
 std::vector<TrailItem> trails_to_render;
 
 void SetDefaultMaterials(ShaderProgram &shader) {
+  /*
   glActiveTexture(GL_TEXTURE0 + TEXTURE_SLOT_EMISSIVE);
   glBindTexture(GL_TEXTURE_2D, black_texture);
-  shader.uniform("texture_emissive", TEXTURE_SLOT_EMISSIVE);
-
   glActiveTexture(GL_TEXTURE0 + TEXTURE_SLOT_NORMAL);
   glBindTexture(GL_TEXTURE_2D, default_normal_texture);
-  shader.uniform("texture_normal", TEXTURE_SLOT_NORMAL);
-
   glActiveTexture(GL_TEXTURE0 + TEXTURE_SLOT_METALLIC);
   glBindTexture(GL_TEXTURE_2D, black_texture);
-  shader.uniform("texture_metallic", TEXTURE_SLOT_METALLIC);
-
   glActiveTexture(GL_TEXTURE0 + TEXTURE_SLOT_ROUGHNESS);
   glBindTexture(GL_TEXTURE_2D, black_texture);
+  */
+  shader.uniform("use_emissive", 0);
+  shader.uniform("use_normal_map", 0);
+  shader.uniform("use_metallic", 0);
+  shader.uniform("use_roughness", 0);
+  /*
+  shader.uniform("texture_emissive", TEXTURE_SLOT_EMISSIVE);
+  shader.uniform("texture_normal", TEXTURE_SLOT_NORMAL);
+  shader.uniform("texture_metallic", TEXTURE_SLOT_METALLIC);
   shader.uniform("texture_roughness", TEXTURE_SLOT_ROUGHNESS);
+  */
 }
 
 void DrawFullscreenQuad() {
@@ -1322,7 +1327,7 @@ void Render() {
         numBones++;
       }
       */
-      shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
+      //shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
       BARI.model->Draw(animated_model_shader);
     }
   };
@@ -1372,7 +1377,7 @@ void Render() {
         numBones++;
       }
       */
-      animated_model_shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
+      //animated_model_shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
       SetDefaultMaterials(animated_model_shader);
       BARI.model->Draw(animated_model_shader);
     }

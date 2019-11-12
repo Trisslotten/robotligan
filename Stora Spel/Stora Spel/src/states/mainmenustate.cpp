@@ -199,6 +199,6 @@ void MainMenuState::CreateBackgroundEnitites() {
     auto& cam_trans = registry_mainmenu_.assign<TransformComponent>(camera);
     cam_trans.position = glm::vec3(15.f, 3.f, 0.f);
     glm::vec3 dir = glm::vec3(0) - cam_trans.position;
-    cam_c.orientation = glm::quat(glm::vec3(0.f, 0.f, glm::radians(-86.f)));
+    cam_c.orientation = glm::quat(glm::vec3(0.f, 0.f, 0.f*glm::radians(-86.f)));
   }
 }

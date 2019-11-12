@@ -21,14 +21,9 @@ in vec3 local_pos;
 in vec3 local_normal;
 in vec3 v_normal;
 
-uniform sampler2D texture_normal;
-uniform float normal_map_scale;
-
-uniform sampler2D texture_metallic;
-uniform float metallic_map_scale;
-
 uniform sampler2D texture_roughness;
 uniform float roughness_map_scale;
+uniform int use_roughness;
 
 uniform vec3 cam_position;
 
@@ -117,7 +112,12 @@ struct Lighting {
 };
 
 Lighting shading(vec3 position, float metallic, vec3 normal) {
-	float roughness = triplanarRoughness();
+	float roughness = 0.;
+	if(use_roughness != 0)
+	{
+		roughness = triplanarRoughness();
+	}
+
 	vec3 view_dir = normalize(cam_position - position);
 
 	Lighting lighting;

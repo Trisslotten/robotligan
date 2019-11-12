@@ -17,15 +17,18 @@ uniform vec3 cam_position;
 uniform sampler2D texture_diffuse;
 uniform sampler2D texture_specular;
 uniform sampler2D texture_emissive;
+uniform int use_emissive;
 
 uniform int num_diffuse_textures;
 uniform int diffuse_index;
 
 uniform sampler2D texture_normal;
 uniform float normal_map_scale;
+uniform int use_normal_map;
 
 uniform sampler2D texture_metallic;
 uniform float metallic_map_scale;
+uniform int use_metallic;
 
 struct Lighting {
 	vec3 specular;
@@ -140,10 +143,16 @@ vec3 fakeCubeMap(vec3 dir) {
 }
 
 void main() {
-	
-	float metallic = triplanarMetallic();
-	vec3 normal = triplanarNormal();
-
+	float metallic = 0.;
+	if(use_metallic != 0) 
+	{
+		metallic = triplanarMetallic();
+	}
+	vec3 normal = v_normal;
+	if(use_normal_map != 0)
+	{
+		normal = triplanarNormal();
+	}
 	// calculate diffuse texture coords
 	vec2 tex = v_tex;
 	float mat_dist = 1.0/float(num_diffuse_textures);
@@ -159,7 +168,11 @@ void main() {
 	vec4 surface_color = texture(texture_diffuse, tex);
 	float alpha = surface_color.a;
 
-	float emission_strength = texture(texture_emissive, v_tex).r;
+	float emission_strength = 0.0;
+	if(use_emissive != 0)
+	{
+		emission_strength = texture(texture_emissive, v_tex).r;
+	}
 
 	vec3 iron_color = vec3(0.8862745098039216, 0.8862745098039216, 0.82352941176);
 	surface_color.rgb = mix(surface_color.rgb, iron_color, metallic*(1-emission_strength));
@@ -173,7 +186,10 @@ void main() {
 
 	vec3 color = surface_color.rgb;
 	color *= mix(shading, vec3(1), emission_strength);
-	color += fakeCubeMap(reflect(view_dir, normal)) * metallic*(1-emission_strength);
+	if(use_metallic != 0)
+	{
+		color += fakeCubeMap(reflect(view_dir, normal)) * metallic*(1-emission_strength);
+	}
 	color += dither();
 	
 	//float gamma = 2.2;
