@@ -14,6 +14,7 @@
 
 #include <collision.hpp>
 #include <ecs\components\trail_component.hpp>
+#include <shared/fail_safe_arena.hpp>
 #include <physics.hpp>
 #include <shared/physics_component.hpp>
 #include <shared/pick_up_component.hpp>
@@ -239,7 +240,7 @@ void PlayState::Update(float dt) {
       glm::vec3 temp =
           lerp(predicted_state_.position, server_predicted_.position, 0.5f);
       trans_c.position = glm::lerp(trans_c.position, temp, 0.2f);
-      trans_c.position = trans.first;
+      //trans_c.position = trans.first;
       glm::quat orientation =
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
@@ -950,6 +951,8 @@ void PlayState::Collision() {
   auto& my_phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
   auto& arena_hitbox =
       registry_gameplay_.get<physics::MeshHitbox>(arena_entity_);
+  auto& arena_hitbox2 =
+      registry_gameplay_.get<FailSafeArenaComponent>(arena_entity_);
 
   physics::IntersectData data =
       Intersect(arena_hitbox, my_obb, -my_phys_c.velocity);
@@ -969,17 +972,18 @@ void PlayState::Collision() {
       server_predicted_.velocity.y = 0.f;
     }
   }
-  if (my_obb.center.x > 46.7) {
-    my_obb.center.x = 46.7;
-  } else if (my_obb.center.x < -46.7) {
-    my_obb.center.x = -46.7;
+  if (my_obb.center.x > arena_hitbox2.arena.xmax - 0.9f) {
+    my_obb.center.x = arena_hitbox2.arena.xmax - 0.9f;
+  } else if (my_obb.center.x < arena_hitbox2.arena.xmin + 0.9f) {
+    my_obb.center.x = arena_hitbox2.arena.xmin + 0.9f;
   }
-  if (my_obb.center.y - my_obb.extents[1] <= -11.1094f) {
+  if (my_obb.center.y - my_obb.extents[1] <= arena_hitbox2.arena.ymin) {
     my_phys_c.velocity.y = 0.0f;
     predicted_state_.velocity.y = 0.f;
     server_predicted_.velocity.y = 0.f;
-    my_obb.center.y = -11.1094f + my_obb.extents[1];
+    my_obb.center.y = arena_hitbox2.arena.ymin + my_obb.extents[1];
   }
+  
   // collision with walls
   auto view_walls = registry_gameplay_.view<physics::OBB>();
   for (auto wall : view_walls) {
@@ -1225,6 +1229,25 @@ void PlayState::CreateMapEntity() {
 
   for (auto& v : md.pos) v = matrix * glm::vec4(v, 1.f);
   for (auto& v : md.pos) v *= arena_scale;
+  
+
+   physics::Arena a;
+  a.xmax = -1;
+  a.xmin = 1;
+  a.ymax = -1;
+  a.ymin = 1;
+  a.zmax = -1;
+  a.zmin = 1;
+  for (auto& v : md.pos) {
+    if (v.x > a.xmax) a.xmax = v.x;
+    if (v.x < a.xmin) a.xmin = v.x;
+    if (v.y > a.ymax) a.ymax = v.y;
+    if (v.y < a.ymin) a.ymin = v.y;
+    if (v.z > a.zmax) a.zmax = v.z;
+    if (v.z < a.zmin) a.zmin = v.z;
+  }
+
+  registry_gameplay_.assign<FailSafeArenaComponent>(arena, a);
   auto& mh = registry_gameplay_.assign<physics::MeshHitbox>(
       arena, std::move(md.pos), std::move(md.indices));
   arena_entity_ = arena;

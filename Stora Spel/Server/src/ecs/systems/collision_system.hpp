@@ -17,6 +17,7 @@
 #include "ecs/components/pick_up_event.hpp"
 #include "ecs/components/projectile_component.hpp"
 #include "ecs/systems/missile_system.hpp"
+#include "shared/fail_safe_arena.hpp"
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 
@@ -440,13 +441,14 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
 
 void PlayerArenaCollision(entt::registry& registry) {
   auto view_player = registry.view<physics::OBB, PhysicsComponent>();
-  auto view_mesh_arena = registry.view<physics::MeshHitbox>();
+  auto view_mesh_arena = registry.view<physics::MeshHitbox, FailSafeArenaComponent>();
   for (auto player : view_player) {
     auto& player_hitbox = view_player.get<physics::OBB>(player);
     auto& physics_c = view_player.get<PhysicsComponent>(player);
-
+    FailSafeArenaComponent arena_hitbox2;
     for (auto arena : view_mesh_arena) {
-      auto& arena_hitbox = view_mesh_arena.get(arena);
+      auto& arena_hitbox = view_mesh_arena.get<physics::MeshHitbox>(arena);
+      arena_hitbox2 = view_mesh_arena.get<FailSafeArenaComponent>(arena);
 
       physics::IntersectData data = Intersect(arena_hitbox, player_hitbox, -physics_c.velocity);
       if (data.collision) {
@@ -467,15 +469,16 @@ void PlayerArenaCollision(entt::registry& registry) {
         }
       }
     }
-    if (player_hitbox.center.x > 46.7) {
-      player_hitbox.center.x = 46.7;
-    } else if (player_hitbox.center.x < -46.7) {
-      player_hitbox.center.x = -46.7;
+    if (player_hitbox.center.x > arena_hitbox2.arena.xmax - 0.9f) {
+      player_hitbox.center.x = arena_hitbox2.arena.xmax - 0.9f;
+    } else if (player_hitbox.center.x < arena_hitbox2.arena.xmin +0.9f) {
+      player_hitbox.center.x = arena_hitbox2.arena.xmin + 0.9f;
     }
 
-    if (player_hitbox.center.y - player_hitbox.extents[1] <= -11.1094f) {
+    if (player_hitbox.center.y - player_hitbox.extents[1] <= arena_hitbox2.arena.ymin) {
       physics_c.velocity.y = 0.0f;
-      player_hitbox.center.y = -11.1094f + player_hitbox.extents[1];
+      player_hitbox.center.y =
+          arena_hitbox2.arena.ymin + player_hitbox.extents[1];
     }
   }
 
