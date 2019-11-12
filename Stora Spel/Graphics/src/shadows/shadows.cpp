@@ -11,6 +11,8 @@ glob::Shadows::Shadows() {
   size_ = 512;
   blurred_level_ = 0;
   internal_format_ = GL_RG32F;
+
+  num_maps_used_ = 2;
 }
 
 void glob::Shadows::Init(Blur& blur) {

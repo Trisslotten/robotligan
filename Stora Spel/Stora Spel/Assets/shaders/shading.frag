@@ -58,7 +58,7 @@ float shadow(vec3 position, int index) {
 	}
 	float frag_depth = length(position - shadow_light_positions[index]);
 
-	vec2 depths = textureLod(shadow_maps[index], uv, 0).xy;
+	vec2 depths = texture(shadow_maps[index], uv).xy;
 	float E_x2 = depths.y;
 	float Ex_2 = depths.x*depths.x;
 	float variance = E_x2 - Ex_2;

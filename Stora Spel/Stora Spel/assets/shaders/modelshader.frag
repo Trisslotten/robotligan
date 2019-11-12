@@ -181,9 +181,10 @@ void main() {
 
 	out_color = vec4(color, alpha);
 	out_emission = vec4(emission, 1);
-
+	/*
 	float depth = gl_FragCoord.z;
 	out_depth = vec4(depth,0,0,0);
 	out_normal = vec4(normalize(v_normal), 1);
 	out_pos = vec4(frag_pos.xyz, 1);
+	*/
 }
