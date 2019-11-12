@@ -1543,6 +1543,8 @@ void PlayState::CreateTeleportProjectile(EntityID id, glm::vec3 pos,
                                             glm::vec4(1, 1, 1, 1));
   registry_gameplay_.assign<TransformComponent>(teleport_projectile, pos, ori,
                                                 glm::vec3(0.3f));
+  registry_gameplay_.assign<ProjectileComponent>(teleport_projectile,
+                                                 ProjectileID::TELEPORT_PROJECTILE);
   registry_gameplay_.assign<IDComponent>(teleport_projectile, id);
 }
 

@@ -106,4 +106,24 @@ class ShotFrame : public DataFrame {
   void WriteBack(TransformComponent& in_transform_c);
 };
 
+//---
+
+class TeleportShotFrame : public DataFrame {
+ protected:
+  glm::vec3 position_;
+
+ public:
+  TeleportShotFrame();
+  TeleportShotFrame(TransformComponent& in_transform_c);
+  ~TeleportShotFrame();
+
+  TeleportShotFrame* Clone();
+
+  bool ThresholdCheck(DataFrame& in_future_df);
+  DataFrame* InterpolateForward(unsigned int in_dist_to_target,
+                                unsigned int in_dist_to_point_b,
+                                DataFrame& in_point_b);
+  void WriteBack(TransformComponent& in_transform_c);
+};
+
 #endif  // DATA_FRAME_HPP_

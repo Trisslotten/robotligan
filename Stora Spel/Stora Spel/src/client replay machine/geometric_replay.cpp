@@ -25,7 +25,13 @@ ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
   } else if (in_registry.has<PickUpComponent>(in_entity)) {
     return ReplayObjectType::REPLAY_PICKUP;
   } else if (in_registry.has<ProjectileComponent>(in_entity)) {
-    return ReplayObjectType::REPLAY_SHOT;
+    ProjectileComponent& proj_c =
+        in_registry.get<ProjectileComponent>(in_entity);
+    if (proj_c.projectile_id == ProjectileID::CANNON_BALL) {
+      return ReplayObjectType::REPLAY_SHOT;
+    } else if (proj_c.projectile_id == ProjectileID::TELEPORT_PROJECTILE) {
+      return ReplayObjectType::REPLAY_TELEPORT_SHOT;
+    }
   }
 
   // If entity couldn't be identified, return number of types
@@ -81,6 +87,11 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
         in_registry.get<TransformComponent>(in_entity);
 
     ret_ptr = new ShotFrame(transform_c);
+  } else if (object_type == REPLAY_TELEPORT_SHOT) {
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
+
+    ret_ptr = new TeleportShotFrame(transform_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unidentified entity");
@@ -214,6 +225,14 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
         in_registry.get<TransformComponent>(in_entity);
     // Transfer
     sf_c_ptr->WriteBack(transform_c);
+  } else if (in_type == REPLAY_TELEPORT_SHOT) {
+    // Cast
+    TeleportShotFrame* tsf_c_ptr = dynamic_cast<TeleportShotFrame*>(in_df_ptr);
+    // Get
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
+    // Transfer
+    tsf_c_ptr->WriteBack(transform_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -287,6 +306,22 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     glob::ModelHandle mh_shot = glob::GetModel(kModelPathRocket);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     model_c.handles.push_back(mh_shot);
+  } else if (object_type == REPLAY_TELEPORT_SHOT) {
+    TeleportShotFrame* tsf_ptr = dynamic_cast<TeleportShotFrame*>(df_ptr);
+    in_registry.assign<IDComponent>(
+        entity, this->channels_.at(in_channel_index).object_id);
+
+    //
+    TransformComponent& transform_c =
+        in_registry.assign<TransformComponent>(entity);
+    tsf_ptr->WriteBack(transform_c);
+
+    // Create and add ModelHandle
+    glob::ModelHandle mh_shot = glob::GetModel(kModelPathPickup);
+    ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    model_c.handles.push_back(mh_shot);
+
+    // Fix with trail here
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -340,7 +375,7 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
         // If it does we check if a new interpolation point should be added
         // dependent on the object's type
         DataFrame* temp_df = nullptr;
-		temp_df = this->PolymorphIntoDataFrame(entity, in_registry);
+        temp_df = this->PolymorphIntoDataFrame(entity, in_registry);
 
         // Compare last entry to what would be the current frame's
         if ((temp_df != nullptr) &&

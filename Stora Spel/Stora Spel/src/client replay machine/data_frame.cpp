@@ -348,5 +348,72 @@ void ShotFrame::WriteBack(TransformComponent& in_transform_c) {
   in_transform_c.position = this->position_;
   in_transform_c.rotation = this->rotation_;
   // in_transform_c.scale = this->scale_;
-  in_transform_c.scale = glm::vec3(0.5);
+  in_transform_c.scale = glm::vec3(0.5f);
+}
+
+//##############################
+//			TeleportShotFrame
+//##############################
+
+// Private---------------------------------------------------------------------
+
+// Public----------------------------------------------------------------------
+
+TeleportShotFrame::TeleportShotFrame() {}
+
+TeleportShotFrame::TeleportShotFrame(TransformComponent& in_transform_c) {
+  this->position_ = in_transform_c.position;
+}
+
+TeleportShotFrame::~TeleportShotFrame() {}
+
+TeleportShotFrame* TeleportShotFrame::Clone() {
+  TeleportShotFrame* ret_ptr = new TeleportShotFrame();
+
+  ret_ptr->position_ = this->position_;
+
+  return ret_ptr;
+}
+
+bool TeleportShotFrame::ThresholdCheck(DataFrame& in_future_df) {
+  return false;
+}
+
+DataFrame* TeleportShotFrame::InterpolateForward(
+    unsigned int in_dist_to_target, unsigned int in_dist_to_point_b,
+    DataFrame& in_point_b) {
+  // Cast the DataFrame to ShotFrame
+  try {
+    TeleportShotFrame& point_b = dynamic_cast<TeleportShotFrame&>(in_point_b);
+    // Skips forward if std::bad_cast
+
+    // INTERPOLATED FRAME
+    TeleportShotFrame* ret_frame = new TeleportShotFrame();
+
+    // RATIO
+    if (in_dist_to_point_b < 1) {
+      // Prevent division on zero
+      in_dist_to_point_b = 1;
+    }
+    float percentage_a = in_dist_to_target / in_dist_to_point_b;
+
+    // INTERPOLATION
+    // vvv
+
+    // POSITION
+    ret_frame->position_ =
+        this->position_ + (point_b.position_ - this->position_) * percentage_a;
+
+    return ret_frame;
+
+  } catch (std::bad_cast exp) {
+    GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__, "Bad cast");
+    return nullptr;
+  }
+}
+
+void TeleportShotFrame::WriteBack(TransformComponent& in_transform_c) {
+  in_transform_c.position = this->position_;
+  in_transform_c.rotation = glm::quat();
+  in_transform_c.scale = glm::vec3(0.0f);
 }
