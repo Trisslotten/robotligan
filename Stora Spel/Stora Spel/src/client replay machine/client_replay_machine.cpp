@@ -1,4 +1,5 @@
 #include "client_replay_machine.hpp"
+#include "engine.hpp"
 
 // Private---------------------------------------------------------------------
 
@@ -17,7 +18,6 @@ ClientReplayMachine::ClientReplayMachine(unsigned int in_replay_length_sec,
 
   // ---
   this->selected_replay_index_ = 0;
-
 }
 
 ClientReplayMachine::~ClientReplayMachine() {
@@ -115,4 +115,10 @@ std::string ClientReplayMachine::GetSelectedReplayStringState() {
 
   return this->stored_replays_.at(this->selected_replay_index_)
       ->GetStateOfReplay();
+}
+
+void ClientReplayMachine::ReceiveGameEvent(GameEvent event) {
+  if (this->engine_->IsRecording()) {
+    primary_replay_->ReceiveGameEvent(event);
+  }
 }

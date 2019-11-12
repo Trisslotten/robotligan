@@ -4,14 +4,15 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include <ecs/components.hpp>
 #include <ecs/components/player_component.hpp>
 #include <shared/transform_component.hpp>
 
+#include <glob/graphics.hpp>
 //---
 
 class DataFrame {
  private:
-
  public:
   DataFrame();
   ~DataFrame();
@@ -31,7 +32,7 @@ class PlayerFrame : public DataFrame {
   // Transform values
   glm::vec3 position_;
   glm::quat rotation_;
-  //glm::vec3 scale_;	
+  glm::vec3 scale_;
 
   // NTS:
   // Scale for players has been hard-coded to be
@@ -46,10 +47,15 @@ class PlayerFrame : public DataFrame {
   bool sprinting_;
   bool running_;
   bool jumping_;
+  PlayerComponent player_c;
+
+  // physics stuff
+  glm::vec3 velocity_;
 
  public:
   PlayerFrame();
-  PlayerFrame(TransformComponent& in_transform_c, PlayerComponent& in_player_c);
+  PlayerFrame(TransformComponent& in_transform_c, PlayerComponent& in_player_c,
+              AnimationComponent& in_anim_c, PhysicsComponent& in_phys_c);
   ~PlayerFrame();
 
   DataFrame* Clone();
@@ -58,7 +64,9 @@ class PlayerFrame : public DataFrame {
   DataFrame* InterpolateForward(unsigned int in_dist_to_target,
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
-  void WriteBack(TransformComponent& in_transform_c, PlayerComponent& in_player_c);
+  void WriteBack(TransformComponent& in_transform_c,
+                 PlayerComponent& in_player_c, AnimationComponent& in_anim_c,
+                 PhysicsComponent& in_phys_c);
 };
 
 //---
@@ -67,9 +75,9 @@ class BallFrame : public DataFrame {
  protected:
   glm::vec3 position_;
   glm::quat rotation_;
-  //glm::vec3 scale_;
+  // glm::vec3 scale_;
 
-  //NTS: See comment in declaration of PlayerFrame
+  // NTS: See comment in declaration of PlayerFrame
 
  public:
   BallFrame();
