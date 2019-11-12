@@ -35,10 +35,7 @@ PlayerFrame::PlayerFrame(TransformComponent& in_transform_c,
   //
   this->position_ = in_transform_c.position;
   this->rotation_ = in_transform_c.rotation;
-  this->scale_ = in_transform_c.scale;
-
-  std::cout << "PlayerFrame constructor scale player: " << in_transform_c.scale.x << " "
-            << in_transform_c.scale.y << " " << in_transform_c.scale.z << "\n";
+  // this->scale_ = in_transform_c.scale;
 
   //
   this->sprint_coeff_ = in_player_c.sprint_coeff;
@@ -54,7 +51,7 @@ DataFrame* PlayerFrame::Clone() {
 
   ret_ptr->position_ = this->position_;
   ret_ptr->rotation_ = this->rotation_;
-  ret_ptr->scale_ = this->scale_;
+  //ret_ptr->scale_ = this->scale_;
 
   ret_ptr->sprint_coeff_ = this->sprint_coeff_;
   ret_ptr->sprinting_ = this->sprinting_;
@@ -121,7 +118,7 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
     float percentage_a = in_dist_to_target / in_dist_to_point_b;
 
     // INTERPOLATION
-    //
+    // vvv
 
     // POSITION
     ret_frame->position_ =
@@ -132,7 +129,7 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
         glm::slerp(this->rotation_, point_b.rotation_, percentage_a);
 
     // SCALE : Can just be straight set as it never changes
-    ret_frame->scale_ = this->scale_;
+    //ret_frame->scale_ = this->scale_;
 
     // SPRINT COEFFICIENT : (NTS: Should this even be interpolated? If no we do
     // not even need to save it)
@@ -164,7 +161,8 @@ void PlayerFrame::WriteBack(TransformComponent& in_transform_c,
                             PlayerComponent& in_player_c) {
   in_transform_c.position = this->position_;
   in_transform_c.rotation = this->rotation_;
-  in_transform_c.scale = this->scale_;
+  //in_transform_c.scale = this->scale_;
+  in_transform_c.scale = glm::vec3(0.1);
 
   in_player_c.sprint_coeff = this->sprint_coeff_;
   in_player_c.sprinting = this->sprinting_;
@@ -186,7 +184,7 @@ BallFrame::BallFrame(TransformComponent& in_transform_c) {
   //
   this->position_ = in_transform_c.position;
   this->rotation_ = in_transform_c.rotation;
-  this->scale_ = in_transform_c.scale;
+  //this->scale_ = in_transform_c.scale;
 }
 
 BallFrame::~BallFrame() {}
@@ -196,7 +194,7 @@ DataFrame* BallFrame::Clone() {
 
   ret_ptr->position_ = this->position_;
   ret_ptr->rotation_ = this->rotation_;
-  ret_ptr->scale_ = this->scale_;
+  //ret_ptr->scale_ = this->scale_;
 
   return ret_ptr;
 }
@@ -247,7 +245,7 @@ DataFrame* BallFrame::InterpolateForward(unsigned int in_dist_to_target,
     float percentage_a = in_dist_to_target / in_dist_to_point_b;
 
     // INTERPOLATION
-    //
+    // vvv
 
     // POSITION
     ret_frame->position_ =
@@ -258,7 +256,7 @@ DataFrame* BallFrame::InterpolateForward(unsigned int in_dist_to_target,
         glm::slerp(this->rotation_, point_b.rotation_, percentage_a);
 
     // SCALE
-    ret_frame->scale_ = this->scale_;
+    //ret_frame->scale_ = this->scale_;
 
     return ret_frame;
 
@@ -271,5 +269,6 @@ DataFrame* BallFrame::InterpolateForward(unsigned int in_dist_to_target,
 void BallFrame::WriteBack(TransformComponent& in_transform_c) {
   in_transform_c.position = this->position_;
   in_transform_c.rotation = this->rotation_;
-  in_transform_c.scale = this->scale_;
+  //in_transform_c.scale = this->scale_;
+  in_transform_c.scale = glm::vec3(1.0);
 }

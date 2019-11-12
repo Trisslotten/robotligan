@@ -35,7 +35,15 @@ class PlayerFrame : public DataFrame {
   // Transform values
   glm::vec3 position_;
   glm::quat rotation_;
-  glm::vec3 scale_;
+  //glm::vec3 scale_;	
+
+  // NTS:
+  // Scale for players has been hard-coded to be
+  // vec3(0.1) as they otherwise become really small
+  // since the transform_c.scale yields a vector containing
+  // 0.00000033 or something. We thusly don't save scale at
+  // all and save space
+  // this->scale_ = glm::vec3(0.1);
 
   // Player values (for animations)
   float sprint_coeff_;
@@ -63,7 +71,9 @@ class BallFrame : public DataFrame {
  protected:
   glm::vec3 position_;
   glm::quat rotation_;
-  glm::vec3 scale_;
+  //glm::vec3 scale_;
+
+  //NTS: See comment in declaration of PlayerFrame
 
  public:
   BallFrame();
