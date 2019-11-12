@@ -14,6 +14,7 @@
 
 #include <collision.hpp>
 #include <ecs\components\trail_component.hpp>
+#include <shared/fail_safe_arena.hpp>
 #include <physics.hpp>
 #include <shared/physics_component.hpp>
 #include <shared/pick_up_component.hpp>
@@ -36,6 +37,7 @@ void PlayState::Startup() {
   e2D_test_ = glob::GetE2DItem("assets/GUI_elements/point_table.png");
   e2D_test2_ = glob::GetE2DItem("assets/GUI_elements/Scoreboard_V1.png");
   e2D_target_ = glob::GetE2DItem("assets/GUI_elements/target.png");
+  e2D_outline_ = glob::GetE2DItem("assets/GUI_elements/wall_outline.png");
 
   // Create GUI elementds
   gui_test_ = glob::GetGUIItem("assets/GUI_elements/Scoreboard_V1.png");
@@ -240,7 +242,7 @@ void PlayState::Update(float dt) {
       glm::vec3 temp =
           lerp(predicted_state_.position, server_predicted_.position, 0.5f);
       trans_c.position = glm::lerp(trans_c.position, temp, 0.2f);
-      trans_c.position = trans.first;
+      //trans_c.position = trans.first;
       glm::quat orientation =
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
@@ -294,6 +296,7 @@ void PlayState::Update(float dt) {
   UpdateGameplayTimer();
   UpdateSwitchGoalTimer();
   DrawNameOverPlayer();
+  DrawWallOutline();
 
   // draw stamina bar
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
@@ -303,7 +306,7 @@ void PlayState::Update(float dt) {
   // draw crosshair
   glm::vec2 crosshair_pos = glob::window::GetWindowDimensions();
   crosshair_pos /= 2;
-  glob::Submit(gui_crosshair_, crosshair_pos, 1.f);
+  glob::Submit(gui_crosshair_, crosshair_pos - glm::vec2(19, 20), 1.f);
 
   // draw Minimap
   glob::Submit(gui_minimap_,
@@ -573,6 +576,39 @@ void PlayState::DrawNameOverPlayer() {
       }
     }
     break;
+  }
+}
+
+void PlayState::DrawWallOutline() {
+  if (my_primary_ability_id == (int)AbilityID::BUILD_WALL && primary_cd_ <= 0.f || engine_->GetSecondaryAbility() == AbilityID::BUILD_WALL) {
+    auto& trans = registry_gameplay_.get<TransformComponent>(my_entity_);
+    auto& camera = registry_gameplay_.get<CameraComponent>(my_entity_);
+
+    glm::vec3 pos =
+        camera.GetLookDir() * 4.5f + trans.position + camera.offset;
+    pos.y = 0.05f;
+
+   
+    if (glm::distance(pos, glm::vec3(-40.f, -3.9f, 0.f)) < 20.f ||
+        glm::distance(pos, glm::vec3(40.f, -3.9f, 0.f)) < 20.f) {
+      return;
+    }
+
+    glm::mat4 mat =
+        glm::rotate(glm::pi<float>() * 0.5f, glm::vec3(-1.f, 0.f, 0.f));
+
+    mat = glm::rotate(glm::pi<float>() * 0.5f, glm::vec3(0.f, 1.f, 0.f)) * mat;
+    mat = glm::scale(glm::vec3(5, 0.f, 5)) * mat;
+    mat = glm::toMat4(trans.rotation) * mat;
+    //*glm::toMat4(trans.rotation) *
+    //                    glm::scale(glm::vec3(1, 0.f, 5));
+    glob::Submit(
+        e2D_outline_, pos,
+        mat);
+
+    //glob::SubmitCube(glm::translate(pos) *
+    //                 glm::toMat4(trans.rotation) *
+    //    glm::scale(glm::vec3(1, 0.f, 5)));
   }
 }
 
@@ -952,6 +988,8 @@ void PlayState::Collision() {
   auto& my_phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
   auto& arena_hitbox =
       registry_gameplay_.get<physics::MeshHitbox>(arena_entity_);
+  auto& arena_hitbox2 =
+      registry_gameplay_.get<FailSafeArenaComponent>(arena_entity_);
 
   physics::IntersectData data =
       Intersect(arena_hitbox, my_obb, -my_phys_c.velocity);
@@ -971,17 +1009,18 @@ void PlayState::Collision() {
       server_predicted_.velocity.y = 0.f;
     }
   }
-  if (my_obb.center.x > 46.7) {
-    my_obb.center.x = 46.7;
-  } else if (my_obb.center.x < -46.7) {
-    my_obb.center.x = -46.7;
+  if (my_obb.center.x > arena_hitbox2.arena.xmax - 0.9f) {
+    my_obb.center.x = arena_hitbox2.arena.xmax - 0.9f;
+  } else if (my_obb.center.x < arena_hitbox2.arena.xmin + 0.9f) {
+    my_obb.center.x = arena_hitbox2.arena.xmin + 0.9f;
   }
-  if (my_obb.center.y - my_obb.extents[1] <= -11.1094f) {
+  if (my_obb.center.y - my_obb.extents[1] <= arena_hitbox2.arena.ymin) {
     my_phys_c.velocity.y = 0.0f;
     predicted_state_.velocity.y = 0.f;
     server_predicted_.velocity.y = 0.f;
-    my_obb.center.y = -11.1094f + my_obb.extents[1];
+    my_obb.center.y = arena_hitbox2.arena.ymin + my_obb.extents[1];
   }
+  
   // collision with walls
   auto view_walls = registry_gameplay_.view<physics::OBB>();
   for (auto wall : view_walls) {
@@ -1001,6 +1040,9 @@ void PlayState::Collision() {
     physics::IntersectData data = Intersect(hitbox, my_obb);
     if (data.collision == true) {
       hitbox.center += data.move_vector;
+      my_phys_c.velocity.y = 0.0f;
+      predicted_state_.velocity.y = 0.f;
+      server_predicted_.velocity.y = 0.f;
     }
   }
   // update positions
@@ -1230,6 +1272,25 @@ void PlayState::CreateMapEntity() {
 
   for (auto& v : md.pos) v = matrix * glm::vec4(v, 1.f);
   for (auto& v : md.pos) v *= arena_scale;
+  
+
+   physics::Arena a;
+  a.xmax = -1;
+  a.xmin = 1;
+  a.ymax = -1;
+  a.ymin = 1;
+  a.zmax = -1;
+  a.zmin = 1;
+  for (auto& v : md.pos) {
+    if (v.x > a.xmax) a.xmax = v.x;
+    if (v.x < a.xmin) a.xmin = v.x;
+    if (v.y > a.ymax) a.ymax = v.y;
+    if (v.y < a.ymin) a.ymin = v.y;
+    if (v.z > a.zmax) a.zmax = v.z;
+    if (v.z < a.zmin) a.zmin = v.z;
+  }
+
+  registry_gameplay_.assign<FailSafeArenaComponent>(arena, a);
   auto& mh = registry_gameplay_.assign<physics::MeshHitbox>(
       arena, std::move(md.pos), std::move(md.indices));
   arena_entity_ = arena;
@@ -1430,6 +1491,7 @@ void PlayState::CreateWall(EntityID id, glm::vec3 position,
   std::vector<glob::ModelHandle> hs;
   hs.push_back(model);
   registry_gameplay_.assign<ModelComponent>(wall, hs);
+  registry_gameplay_.assign<WallComponent>(wall);
 
   GameEvent wall_event;
   wall_event.type = GameEvent::BUILD_WALL;
@@ -1525,6 +1587,7 @@ void PlayState::DestroyEntity(EntityID id) {
 
   glm::vec3 pos(0);
   bool was_ball = false;
+  bool was_wall = false;
 
   for (auto entity : id_view) {
     auto& e_id = id_view.get(entity);
@@ -1543,6 +1606,9 @@ void PlayState::DestroyEntity(EntityID id) {
           dispatcher.trigger(ge);
         }
       }
+      if (registry_gameplay_.has<WallComponent>(entity)) {
+        was_wall = true;
+      }
       if (registry_gameplay_.has<TransformComponent>(entity)) {
         pos = registry_gameplay_.get<TransformComponent>(entity).position;
       }
@@ -1551,7 +1617,7 @@ void PlayState::DestroyEntity(EntityID id) {
     }
   }
 
-  if (was_ball) {
+  if (was_ball || was_wall) {
     auto e = registry_gameplay_.create();
     auto handle = glob::CreateParticleSystem();
 

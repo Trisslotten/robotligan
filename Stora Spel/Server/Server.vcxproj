@@ -160,7 +160,6 @@
     <ClInclude Include="src\ecs\components\ability_component.hpp" />
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
     <ClInclude Include="src\ecs\components\buff_component.hpp" />
-    <ClInclude Include="src\ecs\components\fail_safe_arena.hpp" />
     <ClInclude Include="src\ecs\components\goal_component.hpp" />
     <ClInclude Include="src\ecs\components\health_component.hpp" />
     <ClInclude Include="src\ecs\components\match_timer_component.hpp" />
