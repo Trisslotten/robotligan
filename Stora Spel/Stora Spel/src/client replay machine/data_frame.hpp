@@ -11,7 +11,6 @@
 
 class DataFrame {
  private:
-
  public:
   DataFrame();
   ~DataFrame();
@@ -31,7 +30,7 @@ class PlayerFrame : public DataFrame {
   // Transform values
   glm::vec3 position_;
   glm::quat rotation_;
-  //glm::vec3 scale_;	
+  // glm::vec3 scale_;
 
   // NTS:
   // Scale for players has been hard-coded to be
@@ -58,7 +57,8 @@ class PlayerFrame : public DataFrame {
   DataFrame* InterpolateForward(unsigned int in_dist_to_target,
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
-  void WriteBack(TransformComponent& in_transform_c, PlayerComponent& in_player_c);
+  void WriteBack(TransformComponent& in_transform_c,
+                 PlayerComponent& in_player_c);
 };
 
 //---
@@ -67,9 +67,9 @@ class BallFrame : public DataFrame {
  protected:
   glm::vec3 position_;
   glm::quat rotation_;
-  //glm::vec3 scale_;
+  // glm::vec3 scale_;
 
-  //NTS: See comment in declaration of PlayerFrame
+  // NTS: See comment in declaration of PlayerFrame
 
  public:
   BallFrame();
@@ -82,6 +82,26 @@ class BallFrame : public DataFrame {
   DataFrame* InterpolateForward(unsigned int in_dist_to_target,
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
+  void WriteBack(TransformComponent& in_transform_c);
+};
+
+//---
+
+class PickUpFrame : public DataFrame {
+ protected:
+  glm::vec3 position_;
+  glm::quat rotation_;
+
+ public:
+  PickUpFrame();
+  PickUpFrame(TransformComponent& in_transform_c);
+  ~PickUpFrame();
+
+  DataFrame* Clone();
+  DataFrame* InterpolateForward(unsigned int in_dist_to_target,
+                                unsigned int in_dist_to_point_b,
+                                DataFrame& in_point_b);
+  bool ThresholdCheck(DataFrame& in_future_df);
   void WriteBack(TransformComponent& in_transform_c);
 };
 

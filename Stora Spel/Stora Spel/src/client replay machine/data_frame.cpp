@@ -51,7 +51,7 @@ DataFrame* PlayerFrame::Clone() {
 
   ret_ptr->position_ = this->position_;
   ret_ptr->rotation_ = this->rotation_;
-  //ret_ptr->scale_ = this->scale_;
+  // ret_ptr->scale_ = this->scale_;
 
   ret_ptr->sprint_coeff_ = this->sprint_coeff_;
   ret_ptr->sprinting_ = this->sprinting_;
@@ -129,7 +129,7 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
         glm::slerp(this->rotation_, point_b.rotation_, percentage_a);
 
     // SCALE : Can just be straight set as it never changes
-    //ret_frame->scale_ = this->scale_;
+    // ret_frame->scale_ = this->scale_;
 
     // SPRINT COEFFICIENT : (NTS: Should this even be interpolated? If no we do
     // not even need to save it)
@@ -161,7 +161,7 @@ void PlayerFrame::WriteBack(TransformComponent& in_transform_c,
                             PlayerComponent& in_player_c) {
   in_transform_c.position = this->position_;
   in_transform_c.rotation = this->rotation_;
-  //in_transform_c.scale = this->scale_;
+  // in_transform_c.scale = this->scale_;
   in_transform_c.scale = glm::vec3(0.1);
 
   in_player_c.sprint_coeff = this->sprint_coeff_;
@@ -184,7 +184,7 @@ BallFrame::BallFrame(TransformComponent& in_transform_c) {
   //
   this->position_ = in_transform_c.position;
   this->rotation_ = in_transform_c.rotation;
-  //this->scale_ = in_transform_c.scale;
+  // this->scale_ = in_transform_c.scale;
 }
 
 BallFrame::~BallFrame() {}
@@ -194,7 +194,7 @@ DataFrame* BallFrame::Clone() {
 
   ret_ptr->position_ = this->position_;
   ret_ptr->rotation_ = this->rotation_;
-  //ret_ptr->scale_ = this->scale_;
+  // ret_ptr->scale_ = this->scale_;
 
   return ret_ptr;
 }
@@ -256,7 +256,7 @@ DataFrame* BallFrame::InterpolateForward(unsigned int in_dist_to_target,
         glm::slerp(this->rotation_, point_b.rotation_, percentage_a);
 
     // SCALE
-    //ret_frame->scale_ = this->scale_;
+    // ret_frame->scale_ = this->scale_;
 
     return ret_frame;
 
@@ -269,6 +269,103 @@ DataFrame* BallFrame::InterpolateForward(unsigned int in_dist_to_target,
 void BallFrame::WriteBack(TransformComponent& in_transform_c) {
   in_transform_c.position = this->position_;
   in_transform_c.rotation = this->rotation_;
-  //in_transform_c.scale = this->scale_;
+  // in_transform_c.scale = this->scale_;
   in_transform_c.scale = glm::vec3(1.0);
+}
+
+PickUpFrame::PickUpFrame() {
+  position_ = glm::vec3(0.f);
+  rotation_ = glm::quat();
+}
+
+PickUpFrame::PickUpFrame(TransformComponent& in_transform_c) {
+  position_ = in_transform_c.position;
+  rotation_ = in_transform_c.rotation;
+}
+
+PickUpFrame::~PickUpFrame() {}
+
+DataFrame* PickUpFrame::Clone() {
+  PickUpFrame* ret_ptr = new PickUpFrame();
+
+  ret_ptr->position_ = position_;
+  ret_ptr->rotation_ = rotation_;
+
+  return ret_ptr;
+}
+
+DataFrame* PickUpFrame::InterpolateForward(unsigned int in_dist_to_target,
+                                           unsigned int in_dist_to_point_b,
+                                           DataFrame& in_point_b) {
+  // Cast the DataFrame to PlayerFrame
+  try {
+    PickUpFrame& point_b = dynamic_cast<PickUpFrame&>(in_point_b);
+    // Skips forward if std::bad_cast
+
+    // INTERPOLATED FRAME
+    PickUpFrame* ret_frame = new PickUpFrame();
+
+    // RATIO
+    if (in_dist_to_point_b < 1) {
+      // Prevent division on zero
+      in_dist_to_point_b = 1;
+    }
+    float percentage_a = in_dist_to_target / in_dist_to_point_b;
+
+    // INTERPOLATION
+    // vvv
+
+    // POSITION
+    ret_frame->position_ =
+        this->position_ + (point_b.position_ - this->position_) * percentage_a;
+
+    // ROTATION
+    ret_frame->rotation_ =
+        glm::slerp(this->rotation_, point_b.rotation_, percentage_a);
+
+    // SCALE
+    // ret_frame->scale_ = this->scale_;
+
+    return ret_frame;
+
+  } catch (std::bad_cast exp) {
+    GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__, "Bad cast");
+    return nullptr;
+  }
+
+  return nullptr;
+}
+
+bool PickUpFrame::ThresholdCheck(
+    DataFrame& in_future_df) {  // Cast to BallFrame
+  PickUpFrame& future_pf = dynamic_cast<PickUpFrame&>(in_future_df);
+
+  float threshold = 0.0f;
+
+  // POSITION
+  float pos_diff = glm::distance(position_, future_pf.position_);
+  threshold =
+      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_PICKUP_POSITION");
+  if (pos_diff > threshold) {
+    // If we have moved over the threshold value away
+    return true;
+  }
+
+  // ROTATION
+  float rot_diff = glm::dot(rotation_, future_pf.rotation_);
+  threshold =
+      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_PICKUP_ROTATION");
+  if (abs(rot_diff - 1.0f) > threshold) {
+    // If we have rotated more than the theshhold value allows
+    return true;
+  }
+
+  return false;
+}
+
+void PickUpFrame::WriteBack(TransformComponent& in_transform_c) {
+  in_transform_c.position = this->position_;
+  in_transform_c.rotation = this->rotation_;
+  // in_transform_c.scale = this->scale_;
+  in_transform_c.scale = glm::vec3(0.4f);
 }
