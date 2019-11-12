@@ -1029,6 +1029,9 @@ void PlayState::Collision() {
     physics::IntersectData data = Intersect(hitbox, my_obb);
     if (data.collision == true) {
       my_obb.center -= data.move_vector;
+      my_phys_c.velocity.y = 0.0f;
+      predicted_state_.velocity.y = 0.f;
+      server_predicted_.velocity.y = 0.f;
     }
   }
   // collision with ball
