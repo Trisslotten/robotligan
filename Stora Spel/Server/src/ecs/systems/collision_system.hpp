@@ -391,7 +391,7 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
   float dot_val = glm::dot(object.normal, ball_physics.velocity);
   if (dot_val < 0.f) {
     ball_physics.velocity =
-        ball_physics.velocity - object.normal * dot_val * 0.8f * 2.f;
+        ball_physics.velocity - object.normal * dot_val * 0.7f * 2.f;
     bounced = true;
 
     if (object.normal.y > 0.f) {
