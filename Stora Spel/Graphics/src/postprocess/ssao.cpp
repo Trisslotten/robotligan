@@ -17,7 +17,7 @@ void Ssao::Init(Blur& blur) {
   CreateFrameBuffers();
 
   auto ws = glob::window::GetWindowDimensions();
-  blur_id_ = blur.CreatePass(ws.x/4, ws.y/4, GL_R32F);
+  blur_id_ = blur.CreatePass(ws.x/4, ws.y/4, GL_R8);
 }
 
 void Ssao::BindFrameBuffer() {
@@ -33,7 +33,6 @@ void Ssao::Finish(Blur& blur) {
   glViewport(0, 0, ws.x, ws.y);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glBindTexture(GL_TEXTURE_2D, ssao_texture_);
-  //glGenerateMipmap(GL_TEXTURE_2D);
 
   blurred_ssao_texture_ = blur.BlurTexture(blur_id_, 3, ssao_texture_, 0);
 }

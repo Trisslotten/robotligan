@@ -18,6 +18,7 @@
     <ClCompile Include="src\ecs\systems\sound_system.cpp" />
     <ClCompile Include="src\ecs\systems\animation_system.cpp" />
     <ClCompile Include="src\states\settingsstate.cpp" />
+    <ClCompile Include="src\util\debugoverlay.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
@@ -87,6 +88,7 @@
     <ClInclude Include="shared\shared\lifetime_component.hpp" />
     <ClInclude Include="src\ecs\components\trail_component.hpp" />
     <ClInclude Include="src\ecs\systems\trail_system.hpp" />
+    <ClInclude Include="src\util\debugoverlay.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

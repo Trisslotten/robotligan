@@ -140,6 +140,7 @@ vec3 fakeCubeMap(vec3 dir) {
 }
 
 void main() {
+	
 	float metallic = triplanarMetallic();
 	vec3 normal = triplanarNormal();
 
@@ -174,7 +175,7 @@ void main() {
 	color *= mix(shading, vec3(1), emission_strength);
 	color += fakeCubeMap(reflect(view_dir, normal)) * metallic*(1-emission_strength);
 	color += dither();
-
+	
 	//float gamma = 2.2;
     //color = pow(color, vec3(gamma));
 
