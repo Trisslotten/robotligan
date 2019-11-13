@@ -395,6 +395,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       EntityID ball_id;
       int ability_id;
       int num_team_ids;
+      glm::vec3 arena_scale;
+      packet >> arena_scale;
       packet >> ability_id;
       packet >> num_players;
       player_ids.resize(num_players);
@@ -405,6 +407,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetEntityIDs(player_ids, my_id, ball_id);
       play_state_.SetMyPrimaryAbility(ability_id);
       play_state_.SetTeam(team);
+      play_state_.SetArenaScale(arena_scale);
       packet >> num_team_ids;
       for (int i = 0; i < num_team_ids; i++) {
         long client_id;

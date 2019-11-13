@@ -89,7 +89,7 @@ void PlayState::CreateGoalParticles(float x) {
   //= {glm::vec3(0.f, 1.f, 0.f)};
 
   glob::SetParticleSettings(handle, "confetti.txt");
-  glob::SetEmitPosition(handle, glm::vec3(x * 0.9f, 1.f, 0.f));
+  glob::SetEmitPosition(handle, glm::vec3(x * 0.9f, 0.f, 0.f));
   float x_dir = (x > 0) ? -1 : 1;
   glob::SetParticleDirection(handle, glm::vec3(x_dir, 5.f, 0.f));
 
@@ -97,12 +97,12 @@ void PlayState::CreateGoalParticles(float x) {
   handle = glob::CreateParticleSystem();
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
-  glob::SetEmitPosition(handle, glm::vec3(x * 1.0f, 0.f, 15.f));
+  glob::SetEmitPosition(handle, glm::vec3(x * 1.0f, 0.f, 15.f * arena_scale_.z));
   e = registry_gameplay_.create();
   handle = glob::CreateParticleSystem();
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
-  glob::SetEmitPosition(handle, glm::vec3(x * 1.0f, 0.f, -15.f));
+  glob::SetEmitPosition(handle, glm::vec3(x * 1.0f, 0.f, -15.f * arena_scale_.z));
   // std::unordered_map<std::string, std::string> map;
   // map["color"] = "1.0 0.0 0.0 0.4";
   // glob::SetParticleSettings(handle, map);
@@ -290,7 +290,7 @@ void PlayState::Update(float dt) {
   // glm::vec3(0, 1, 0));
   // glob::Submit(e2D_test_, glm::vec3(-10.5f, 1.0f, 0.0f), 2, 90.0f,
   // glm::vec3(0, 1, 0));
-  glob::Submit(e2D_test2_, glm::vec3(0.0f, 1.0f, -28.0f), 7, 0.0f,
+  glob::Submit(e2D_test2_, glm::vec3(0.0f, 3.0f, -28.0f) * arena_scale_, 7, 0.0f,
                glm::vec3(1));
 
   UpdateGameplayTimer();
@@ -339,8 +339,8 @@ void PlayState::Update(float dt) {
 
     // Normalize and project player pos to screen space (Z in world space is X
     // in screen space and vice versa)
-    float norm_pos_x = trans_c.position.z / 28.1f;
-    float norm_pos_y = trans_c.position.x / 40.6f;
+    float norm_pos_x = trans_c.position.z / (28.1f * arena_scale_.z);
+    float norm_pos_y = trans_c.position.x / (40.6f * arena_scale_.x);
     float minimap_pos_x = (norm_pos_x * 120.f) +
                           glob::window::GetWindowDimensions().x - 130.f - 11.f;
     float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 20.f;
@@ -364,8 +364,8 @@ void PlayState::Update(float dt) {
 
     // Normalize and project player pos to screen space (Z in world space is X
     // in screen space and vice versa)
-    float norm_pos_x = trans_c.position.z / 28.1f;
-    float norm_pos_y = trans_c.position.x / 40.6f;
+    float norm_pos_x = trans_c.position.z / (28.1f * arena_scale_.z);
+    float norm_pos_y = trans_c.position.x / (40.6f * arena_scale_.x);
     float minimap_pos_x = (norm_pos_x * 120.f) +
                           glob::window::GetWindowDimensions().x - 130.f - 20.f;
     float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 20.f;
@@ -589,8 +589,8 @@ void PlayState::DrawWallOutline() {
     glm::vec3 pos = camera.GetLookDir() * 4.5f + trans.position + camera.offset;
     pos.y = 0.05f;
 
-    if (glm::distance(pos, glm::vec3(-40.f, -3.9f, 0.f)) < 20.f ||
-        glm::distance(pos, glm::vec3(40.f, -3.9f, 0.f)) < 20.f) {
+    if (glm::distance(glm::vec2(pos.x, pos.z), glm::vec2(-41.f, 0.f) * glm::vec2(arena_scale_.x, arena_scale_.z)) < 20.f * arena_scale_.x ||
+        glm::distance(glm::vec2(pos.x, pos.z), glm::vec2(41.f, 0.f) * glm::vec2(arena_scale_.x, arena_scale_.z)) < 20.f * arena_scale_.x) {
       return;
     }
 
@@ -1207,9 +1207,9 @@ void PlayState::CreatePlayerEntities() {
           glm::vec3(1.f, 0.f, 0.f),                 //
           glm::vec3(0.f, 1.f, 0.f),                 // Normals
           glm::vec3(0.f, 0.f, 1.f),                 //
-          coeff_x_side * character_scale.x * 0.5f,  //
+          coeff_x_side * character_scale.x * 0.4f,  //
           coeff_y_side * character_scale.y * 0.5f,  // Length of each plane
-          coeff_z_side * character_scale.z * 0.5f   //
+          coeff_z_side * character_scale.z * 0.7f   //
       );
       my_entity_ = entity;
     }
@@ -1219,7 +1219,7 @@ void PlayState::CreatePlayerEntities() {
 void PlayState::CreateArenaEntity() {
   auto arena = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 arena_scale = glm::vec3(1.0f);
+  glm::vec3 arena_scale = glm::vec3(1.0f) * arena_scale_;
   glob::ModelHandle model_arena =
       glob::GetModel("assets/Arena/Map_V3_ARENA.fbx");
   glob::ModelHandle model_arena_banner =
@@ -1245,7 +1245,7 @@ void PlayState::CreateArenaEntity() {
 void PlayState::CreateMapEntity() {
   auto arena = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 arena_scale = glm::vec3(2.6f);
+  glm::vec3 arena_scale = glm::vec3(2.6f) * arena_scale_;
   glob::ModelHandle model_hitbox =
       glob::GetModel("assets/MapV3/Map_Hitbox.fbx");
   glob::ModelHandle model_map_walls =
@@ -2067,7 +2067,7 @@ void PlayState::FetchMapAndArena(entt::registry& in_registry) {
 
   // Arena
   entt::entity arena = in_registry.create();
-  glm::vec3 arena_scale = glm::vec3(1.0f);
+  glm::vec3 arena_scale = glm::vec3(1.0f) * arena_scale_;
   glob::ModelHandle model_arena =
       glob::GetModel("assets/Arena/Map_V3_ARENA.fbx");
   glob::ModelHandle model_arena_banner =
