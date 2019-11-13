@@ -77,6 +77,11 @@ bool ClientReplayMachine::SelectReplay(unsigned int in_index) {
   return true;
 }
 
+void ClientReplayMachine::ResetSelectedReplay() {
+  // Resets current replay to start
+  this->stored_replays_.at(this->selected_replay_index_)->SetReadFrameToStart();
+}
+
 bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
   // Returns true when replay is done
 
@@ -94,10 +99,6 @@ bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
   return load_result;
 }
 
-void ClientReplayMachine::ResetSelectedReplay() {
-  // Resets current replay to start
-  this->stored_replays_.at(this->selected_replay_index_)->SetReadFrameToStart();
-}
 
 std::string ClientReplayMachine::GetSelectedReplayStringTree() {
   if (this->stored_replays_.empty()) {
