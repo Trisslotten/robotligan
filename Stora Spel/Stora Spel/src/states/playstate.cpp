@@ -2067,7 +2067,7 @@ void PlayState::FetchMapAndArena(entt::registry& in_registry) {
 
   // Arena
   entt::entity arena = in_registry.create();
-  glm::vec3 arena_scale = glm::vec3(1.0f);
+  glm::vec3 arena_scale = glm::vec3(1.0f) * arena_scale_;
   glob::ModelHandle model_arena =
       glob::GetModel("assets/Arena/Map_V3_ARENA.fbx");
   glob::ModelHandle model_arena_banner =
