@@ -4,8 +4,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include <ecs/components/player_component.hpp>
 #include <shared/transform_component.hpp>
+#include <ecs/components.hpp>
 
 //---
 
@@ -146,17 +146,18 @@ class ShotFrame : public DataFrame {
   void WriteBack(TransformComponent& in_transform_c);
 };
 
-#endif  // DATA_FRAME_HPP_
-
 //-----Force push---------------
 class ForcePushFrame : public DataFrame {
  protected:
   glm::vec3 position_;
   glm::quat rotation_;
+  // Trail
+  float width_;
+  glm::vec4 color_;
 
  public:
   ForcePushFrame();
-  ForcePushFrame(TransformComponent& trans_c);
+  ForcePushFrame(TransformComponent& trans_c, TrailComponent& trail_c);
   ~ForcePushFrame();
 
   DataFrame* Clone();
@@ -164,7 +165,7 @@ class ForcePushFrame : public DataFrame {
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
   bool ThresholdCheck(DataFrame& in_future_df);
-  void WriteBack(TransformComponent& trans_c);
+  void WriteBack(TransformComponent& trans_c, TrailComponent& trail_c);
 };
 
 #endif  // DATA_FRAME_HPP_

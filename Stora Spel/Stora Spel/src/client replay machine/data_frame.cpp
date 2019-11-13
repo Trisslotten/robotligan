@@ -531,11 +531,15 @@ void ShotFrame::WriteBack(TransformComponent& in_transform_c) {
 ForcePushFrame::ForcePushFrame() {
   position_ = glm::vec3(0.f);
   rotation_ = glm::quat();
+  width_ = 0.f;
+  color_ = glm::vec4(0.f);
 }
 
-ForcePushFrame::ForcePushFrame(TransformComponent& trans_c) {
+ForcePushFrame::ForcePushFrame(TransformComponent& trans_c, TrailComponent& trail_c) {
   position_ = trans_c.position;
   rotation_ = trans_c.rotation;
+  width_ = trail_c.width;
+  color_ = trail_c.color;
 }
 
 ForcePushFrame::~ForcePushFrame() {}
@@ -545,6 +549,8 @@ DataFrame* ForcePushFrame::Clone() {
 
   force_push_return->position_ = position_;
   force_push_return->rotation_ = rotation_;
+  force_push_return->width_ = width_;
+  force_push_return->color_ = color_;
 
   return force_push_return;
 }
@@ -612,8 +618,11 @@ bool ForcePushFrame::ThresholdCheck(DataFrame& in_future_df) {
   return false;
 }
 
-void ForcePushFrame::WriteBack(TransformComponent& trans_c) {
+void ForcePushFrame::WriteBack(TransformComponent& trans_c, TrailComponent& trail_c) {
   trans_c.position = position_;
   trans_c.rotation = rotation_;
   trans_c.scale = glm::vec3(0.5f);
+
+  trail_c.width = 1.f;
+  trail_c.color = glm::vec4(0.4f, 0.4f, 1.f, 1.f);
 }

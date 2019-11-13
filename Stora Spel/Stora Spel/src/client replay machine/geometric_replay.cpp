@@ -25,7 +25,13 @@ ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
   } else if (in_registry.has<WallComponent>(in_entity)) {
     return ReplayObjectType::REPLAY_WALL;
   } else if (in_registry.has<ProjectileComponent>(in_entity)) {
-    return ReplayObjectType::REPLAY_SHOT;
+    ProjectileComponent& proj_c =
+        in_registry.get<ProjectileComponent>(in_entity);
+    if (proj_c.projectile_id == ProjectileID::CANNON_BALL) {
+      return ReplayObjectType::REPLAY_SHOT;
+    } else if (proj_c.projectile_id == ProjectileID::FORCE_PUSH_OBJECT) {
+      return ReplayObjectType::REPLAY_FORCE_PUSH;
+    }
   }
 
   // If entity couldn't be identified, return number of types
@@ -91,7 +97,8 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
   } else if (object_type == REPLAY_FORCE_PUSH) {
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
-    ret_ptr = new ForcePushFrame(trans_c);
+    TrailComponent& trail_c = in_registry.get<TrailComponent>(in_entity);
+    ret_ptr = new ForcePushFrame(trans_c, trail_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unidentified entity");
@@ -243,8 +250,9 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     // Get
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
+    TrailComponent& trail_c = in_registry.get<TrailComponent>(in_entity);
     // Transfer
-    fp_c_ptr->WriteBack(trans_c);
+    fp_c_ptr->WriteBack(trans_c, trail_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -350,7 +358,8 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     // - Assign the relevant components to entity
     TransformComponent& trans_c =
         in_registry.assign<TransformComponent>(entity);
-    fp_c_ptr->WriteBack(trans_c);
+    TrailComponent& trail_c = in_registry.assign<TrailComponent>(entity);
+    fp_c_ptr->WriteBack(trans_c, trail_c);
     // - Assign a model component to thew entity
     glob::ModelHandle force_push_model = glob::GetModel(kModelPathBall);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
