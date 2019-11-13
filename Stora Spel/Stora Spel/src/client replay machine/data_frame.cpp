@@ -763,15 +763,6 @@ bool ForcePushFrame::ThresholdCheck(DataFrame& in_future_df) {
     return true;
   }
 
-  // ROTATION
-  float rot_diff = glm::dot(rotation_, future_pf.rotation_);
-  threshold =
-      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_FORCE_PUSH_ROTATION");
-  if (abs(rot_diff - 1.0f) > threshold) {
-    // If we have rotated more than the theshhold value allows
-    return true;
-  }
-
   return false;
 }
 
