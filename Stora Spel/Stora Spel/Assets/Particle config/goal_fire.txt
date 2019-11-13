@@ -1,7 +1,7 @@
 
 >color= 1 1 0 0.4
 >end_color= 1 0 0 0.4
->velocity= 10
+>velocity= 20
 >end_velocity= 5
 >spawn_rate=500
 >direction= 0 1 0

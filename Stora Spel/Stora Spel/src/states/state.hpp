@@ -269,6 +269,7 @@ class PlayState : public State {
   void CreateNewBallEntity(bool fake, EntityID id);
   void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
   void SetCountdownInProgress(bool val) { countdown_in_progress_ = val;  }
+  void SetArenaScale(glm::vec3 arena_scale) { arena_scale_ = arena_scale; }
 
  private:
   ServerStateType server_state_;
@@ -350,7 +351,7 @@ class PlayState : public State {
   glob::ModelHandle test_ball_;
   std::list<PlayerData> history_;
   FrameState predicted_state_;
-
+  glm::vec3 arena_scale_;
   std::vector<int> actions_;
   int frame_id = 0;
   float pitch_ = 0.0f;

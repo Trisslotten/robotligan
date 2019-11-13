@@ -281,7 +281,7 @@ GLint TextureFromFile(std::string filename) {
 
 void Init() {
   camera = Camera(glm::vec3(25, 5, 0), glm::vec3(0, 3, 0), 90, 16.f / 9.f, 0.1f,
-                  200.f);
+                  500.f);
 
   // std::cout << "Max uniform size: " << MAX_VERTEX_UNIFORM_COMPONENTS_ARB <<
   // "\n";
