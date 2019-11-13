@@ -89,7 +89,7 @@ void RenderSystem(entt::registry& registry) {
   auto view_wireframe_arena = registry.view<physics::Arena>();
   auto view_wireframe_mesh =
       registry.view<physics::MeshHitbox, ModelComponent>();
-  if (GlobalSettings::Access()->ValueOf("RENDER_WIREFRAME") == 0.0f) {
+  if (GlobalSettings::Access()->ValueOf("RENDER_WIREFRAME") == 1.0f) {
     for (auto& w : view_wireframe_obb) {
       auto& obb = view_wireframe_obb.get<physics::OBB>(w);
       auto& transform = view_wireframe_obb.get<TransformComponent>(w);

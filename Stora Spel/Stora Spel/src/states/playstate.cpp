@@ -115,7 +115,6 @@ void PlayState::CreateGoalParticles(float x) {
 }
 
 void PlayState::Init() {
-  std::cout << "init play state" << std::endl;
   glob::window::SetMouseLocked(true);
   engine_->SetSendInput(true);
   engine_->SetCurrentRegistry(&registry_gameplay_);
@@ -1241,15 +1240,6 @@ void PlayState::CreateArenaEntity() {
 
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                 arena_scale);
-  auto goal = registry_gameplay_.create();
-  registry_gameplay_.assign<physics::OBB>(goal, glm::vec3(0.f, 0.f, 0.f),
-                                glm::vec3(1, 0, 0), glm::vec3(0, 1, 0),
-                                glm::vec3(0, 0, 1), 2.f * arena_scale_.x,
-                                2.f * arena_scale_.y, 6.5f * arena_scale_.z);
-  
-  auto& trans_comp = registry_gameplay_.assign<TransformComponent>(goal);
-  trans_comp.position =
-      glm::vec3(41.f * arena_scale_.x, 2.0f * arena_scale_.y, 0.f);
 }
 
 void PlayState::CreateMapEntity() {
