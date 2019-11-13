@@ -123,6 +123,8 @@ physics::IntersectData physics::Intersect(const physics::Sphere& s,
       }
     }
     data.normal = impact_normal;
+    if (glm::length(v) >= 0.00000001)
+		data.normal = -glm::normalize(v);
     data.move_vector = (s.radius - glm::length(retPt - s.center)) * data.normal;
   }
 

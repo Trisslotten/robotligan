@@ -229,7 +229,7 @@ bool BallFrame::ThresholdCheck(DataFrame& in_future_df) {
 DataFrame* BallFrame::InterpolateForward(unsigned int in_dist_to_target,
                                          unsigned int in_dist_to_point_b,
                                          DataFrame& in_point_b) {
-  // Cast the DataFrame to PlayerFrame
+  // Cast the DataFrame to BallFrame
   try {
     BallFrame& point_b = dynamic_cast<BallFrame&>(in_point_b);
     // Skips forward if std::bad_cast
@@ -448,6 +448,84 @@ void WallFrame::WriteBack(TransformComponent& trans_c) {
   trans_c.rotation = rotation_;
   trans_c.scale =
       glm::vec3(1.f, 4.f, 5.f);  // Values from Playstate -> CreateWall
+}
+
+//##############################
+//			ShotFrame
+//##############################
+
+// Private---------------------------------------------------------------------
+
+// Public----------------------------------------------------------------------
+
+ShotFrame::ShotFrame() {}
+
+ShotFrame::ShotFrame(TransformComponent& in_transform_c) {
+  //
+  this->position_ = in_transform_c.position;
+  this->rotation_ = in_transform_c.rotation;
+  // this->scale_ = in_transform_c.scale;
+}
+
+ShotFrame::~ShotFrame() {}
+
+ShotFrame* ShotFrame::Clone() {
+  ShotFrame* ret_ptr = new ShotFrame();
+
+  ret_ptr->position_ = this->position_;
+  ret_ptr->rotation_ = this->rotation_;
+  // ret_ptr->scale_ = this->scale_;
+
+  return ret_ptr;
+}
+
+bool ShotFrame::ThresholdCheck(DataFrame& in_future_df) { return false; }
+
+DataFrame* ShotFrame::InterpolateForward(unsigned int in_dist_to_target,
+                                         unsigned int in_dist_to_point_b,
+                                         DataFrame& in_point_b) {
+  // Cast the DataFrame to ShotFrame
+  try {
+    ShotFrame& point_b = dynamic_cast<ShotFrame&>(in_point_b);
+    // Skips forward if std::bad_cast
+
+    // INTERPOLATED FRAME
+    ShotFrame* ret_frame = new ShotFrame();
+
+    // RATIO
+    if (in_dist_to_point_b < 1) {
+      // Prevent division on zero
+      in_dist_to_point_b = 1;
+    }
+    float percentage_a = in_dist_to_target / in_dist_to_point_b;
+
+    // INTERPOLATION
+    // vvv
+
+    // POSITION
+    ret_frame->position_ =
+        this->position_ + (point_b.position_ - this->position_) * percentage_a;
+
+    // ROTATION
+    ret_frame->rotation_ =
+        glm::slerp(this->rotation_, point_b.rotation_, percentage_a);
+
+    // SCALE
+    // ret_frame->scale_ = this->scale_;
+
+    return ret_frame;
+
+  } catch (std::bad_cast exp) {
+    GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__, "Bad cast");
+    return nullptr;
+  }
+}
+
+void ShotFrame::WriteBack(TransformComponent& in_transform_c) {
+  in_transform_c.position = this->position_;
+  in_transform_c.rotation = this->rotation_;
+  // in_transform_c.scale = this->scale_;
+  in_transform_c.scale = glm::vec3(0.5);
 }
 
 ForcePushFrame::ForcePushFrame() {

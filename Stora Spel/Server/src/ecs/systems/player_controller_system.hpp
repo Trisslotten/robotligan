@@ -33,7 +33,7 @@ void Update(entt::registry& registry, float dt) {
     unsigned int player_team = TEAM_RED;
     if (registry.has<TeamComponent>(entity)) {
       player_team = registry.get<TeamComponent>(entity).team;
-	}
+    }
 
     constexpr float pi = glm::pi<float>();
     player_c.pitch = glm::clamp(player_c.pitch, -0.49f * pi, 0.49f * pi);
@@ -234,7 +234,8 @@ void Update(entt::registry& registry, float dt) {
             dot > player_c.kick_fov) {  // if player is close enough to ball and
                                         // looking at it
           // perform kick
-          ball_physics_c.velocity += kick_dir * player_c.kick_force;
+          kick_dir = glm::normalize(kick_dir);
+          ball_physics_c.velocity = kick_dir * player_c.kick_force;
           ball_physics_c.is_airborne = true;
           ball_c.last_touch = player_c.client_id;
 

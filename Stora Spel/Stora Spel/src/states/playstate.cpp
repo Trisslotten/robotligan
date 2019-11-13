@@ -89,7 +89,7 @@ void PlayState::CreateGoalParticles(float x) {
   //= {glm::vec3(0.f, 1.f, 0.f)};
 
   glob::SetParticleSettings(handle, "confetti.txt");
-  glob::SetEmitPosition(handle, glm::vec3(x * 0.9f, 5.f, 0.f));
+  glob::SetEmitPosition(handle, glm::vec3(x * 0.9f, 1.f, 0.f));
   float x_dir = (x > 0) ? -1 : 1;
   glob::SetParticleDirection(handle, glm::vec3(x_dir, 5.f, 0.f));
 
@@ -97,12 +97,12 @@ void PlayState::CreateGoalParticles(float x) {
   handle = glob::CreateParticleSystem();
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
-  glob::SetEmitPosition(handle, glm::vec3(x * 0.85f, -10.f, 25.f));
+  glob::SetEmitPosition(handle, glm::vec3(x * 1.0f, 0.f, 15.f));
   e = registry_gameplay_.create();
   handle = glob::CreateParticleSystem();
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
-  glob::SetEmitPosition(handle, glm::vec3(x * 0.85f, -10.f, -25.f));
+  glob::SetEmitPosition(handle, glm::vec3(x * 1.0f, 0.f, -15.f));
   // std::unordered_map<std::string, std::string> map;
   // map["color"] = "1.0 0.0 0.0 0.4";
   // glob::SetParticleSettings(handle, map);
@@ -241,7 +241,7 @@ void PlayState::Update(float dt) {
       auto& cam_c = registry_gameplay_.get<CameraComponent>(my_entity_);
       glm::vec3 temp =
           lerp(predicted_state_.position, server_predicted_.position, 0.5f);
-      trans_c.position = glm::lerp(trans_c.position, temp, 0.2f);
+      trans_c.position = glm::lerp(trans_c.position, temp, 0.8f);
       //trans_c.position = trans.first;
       glm::quat orientation =
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
@@ -619,7 +619,7 @@ void PlayState::UpdateSwitchGoalTimer() {
   int count = (int)time;
 
   // Start countdown
-  if (count == 0) {
+  if (time < temp_time) {
     countdown_in_progress_ = true;
   }
 
@@ -705,7 +705,7 @@ void PlayState::UpdateSwitchGoalTimer() {
                  std::to_string(temp_time - count), glm::vec4(0.8));
 
     // After timer reaches zero swap goals
-    if (temp_time - count <= 0) {
+    if (temp_time - time <= 0) {
       auto& blue_light =
           registry_gameplay_.get<LightComponent>(blue_goal_light_);
       blue_light.color = glm::vec3(0.1f, 0.1f, 1.f);
@@ -789,14 +789,14 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action,
       if (a == PlayerAction::WALK_LEFT) {
         accum_velocity -= right;
       }
-      if (a == PlayerAction::SPRINT && current_stamina_ > 60.0f * dt) {
+      if (a == PlayerAction::SPRINT && sprinting_) {
         sprint = true;
       }
       auto& player_c = registry_gameplay_.get<PlayerComponent>(my_entity_);
       if (a == PlayerAction::JUMP && player_c.can_jump) {
         player_c.can_jump = false;
         // Add velocity upwards
-        final_velocity += up * 6.0f;
+        final_velocity += up * 8.0f;
         // Set them to be airborne
         new_state.is_airborne = true;
         // Subtract energy cost from resources
@@ -1031,6 +1031,9 @@ void PlayState::Collision() {
     physics::IntersectData data = Intersect(hitbox, my_obb);
     if (data.collision == true) {
       my_obb.center -= data.move_vector;
+      my_phys_c.velocity.y = 0.0f;
+      predicted_state_.velocity.y = 0.f;
+      server_predicted_.velocity.y = 0.f;
     }
   }
   // collision with ball
@@ -1525,11 +1528,12 @@ void PlayState::CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori) {
   auto cannonball = registry_gameplay_.create();
 
   glob::ModelHandle model_shot = glob::GetModel(kModelPathRocket);
-    auto& model_c = registry_gameplay_.assign<ModelComponent>(cannonball);
+  auto& model_c = registry_gameplay_.assign<ModelComponent>(cannonball);
   model_c.handles.push_back(model_shot);
 
   registry_gameplay_.assign<TransformComponent>(cannonball, pos, ori,
                                                 glm::vec3(0.3f));
+  registry_gameplay_.assign<ProjectileComponent>(cannonball, ProjectileID::CANNON_BALL);
   registry_gameplay_.assign<IDComponent>(cannonball, id);
 }
 
@@ -1977,6 +1981,14 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           break;
         }
       }
+    }
+    case GameEvent::SPRINT_START: {
+      sprinting_ = true;
+      break;
+    }
+    case GameEvent::SPRINT_END: {
+      sprinting_ = false;
+      break;
     }
   }
 }
