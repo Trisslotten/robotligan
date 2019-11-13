@@ -207,6 +207,21 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
                     &ac.model_data.upperBody, &ac.model_data.arms);
       PlayAnimation("LookAhead", 1.f, &ac, 21, 0.f, LOOP,
                     &ac.model_data.upperBody, &ac.model_data.arms);
+
+      if (pl.running) {
+        PlayAnimation("Run", 1.f, &ac, 15, 1.f, LOOP);
+      }
+      if (pl.jumping) {
+        PlayAnimation("JumpStart", 0.5f, &ac, 25, 1.f, LOOP);
+        PlayAnimation("JumpEnd", 0.5f, &ac, 25, 0.f, LOOP);
+      }
+      if (pl.sprinting) {
+        PlayAnimation("SlideF", 1.f, &ac, 20, 0.f, LOOP);
+        PlayAnimation("SlideB", 1.f, &ac, 20, 0.f, LOOP);
+        PlayAnimation("SlideR", 1.f, &ac, 20, 0.f, LOOP);
+        PlayAnimation("SlideL", 1.f, &ac, 20, 0.f, LOOP);
+      }
+
       ac.init = false;
     }
 
@@ -360,7 +375,7 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
 
       } catch (std::exception& e) {
         // ???
-        //std::cout << e.what() << '\n';
+        // std::cout << e.what() << '\n';
       }
     }
 

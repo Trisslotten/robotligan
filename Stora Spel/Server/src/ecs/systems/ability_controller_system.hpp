@@ -551,8 +551,10 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
 
       for (auto entity_goal : view_goals) {
         auto& goal_transform = view_goals.get<TransformComponent>(entity_goal);
-
-        if (glm::distance(position, goal_transform.position) < 20.f) {
+        float arena_scale;
+        arena_scale = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
+    
+        if (glm::distance(glm::vec2(position.x,position.z), glm::vec2(goal_transform.position.x, goal_transform.position.z)) < 20.f * arena_scale) {
           return false;
         }
       }
