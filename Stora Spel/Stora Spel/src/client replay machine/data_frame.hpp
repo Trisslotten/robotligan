@@ -36,7 +36,13 @@ class PlayerFrame : public DataFrame {
   glm::vec3 scale_;
 
   // Player values (for animations)
-  PlayerComponent player_c_;
+  bool pc_sprinting_ = false;
+  bool pc_running_ = false;
+  bool pc_jumping_ = false;
+
+  glm::vec3 pc_vel_dir_ = glm::vec3(1.f, 0.f, 0.f);
+  glm::vec3 pc_look_dir_ = glm::vec3(1.f, 0.f, 0.f);
+  glm::vec3 pc_move_dir_ = glm::vec3(1.f, 0.f, 0.f);
 
   // physics stuff
   glm::vec3 velocity_;

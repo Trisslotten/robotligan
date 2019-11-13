@@ -249,7 +249,7 @@ class PlayState : public State {
   void Reset();
   void EndGame();
   void OverTime();
-  void CreateGoalParticles(float x);
+  void CreateGoalParticles(float x, entt::registry& registry);
 
   void OnServerFrame();
   void AddAction(int action) { actions_.push_back(action); }

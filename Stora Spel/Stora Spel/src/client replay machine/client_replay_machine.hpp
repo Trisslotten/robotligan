@@ -36,7 +36,10 @@ class ClientReplayMachine {
   std::string GetSelectedReplayStringTree();
   std::string GetSelectedReplayStringState();
 
-  void SetEngine(Engine* eng) { engine_ = eng; }
+  void SetEngine(Engine* eng) {
+    engine_ = eng;
+    primary_replay_->SetEngine(eng);
+  }
   void ReceiveGameEvent(GameEvent event);
   
 };
