@@ -34,20 +34,8 @@ class PlayerFrame : public DataFrame {
   glm::quat rotation_;
   glm::vec3 scale_;
 
-  // NTS:
-  // Scale for players has been hard-coded to be
-  // vec3(0.1) as they otherwise become really small
-  // since the transform_c.scale yields a vector containing
-  // 0.00000033 or something. We thusly don't save scale at
-  // all and save space
-  // this->scale_ = glm::vec3(0.1);
-
   // Player values (for animations)
-  float sprint_coeff_;
-  bool sprinting_;
-  bool running_;
-  bool jumping_;
-  PlayerComponent player_c;
+  PlayerComponent player_c_;
 
   // physics stuff
   glm::vec3 velocity_;
@@ -55,7 +43,7 @@ class PlayerFrame : public DataFrame {
  public:
   PlayerFrame();
   PlayerFrame(TransformComponent& in_transform_c, PlayerComponent& in_player_c,
-              AnimationComponent& in_anim_c, PhysicsComponent& in_phys_c);
+              PhysicsComponent& in_phys_c);
   ~PlayerFrame();
 
   DataFrame* Clone();
@@ -65,8 +53,7 @@ class PlayerFrame : public DataFrame {
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
   void WriteBack(TransformComponent& in_transform_c,
-                 PlayerComponent& in_player_c, AnimationComponent& in_anim_c,
-                 PhysicsComponent& in_phys_c);
+                 PlayerComponent& in_player_c, PhysicsComponent& in_phys_c);
 };
 
 //---

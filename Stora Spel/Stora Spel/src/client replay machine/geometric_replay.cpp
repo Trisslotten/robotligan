@@ -59,10 +59,9 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
     PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
-    AnimationComponent& anim_c = in_registry.get<AnimationComponent>(in_entity);
     PhysicsComponent& phys_c = in_registry.get<PhysicsComponent>(in_entity);
 
-    ret_ptr = new PlayerFrame(transform_c, player_c, anim_c, phys_c);
+    ret_ptr = new PlayerFrame(transform_c, player_c, phys_c);
   } else if (object_type == REPLAY_BALL) {
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
@@ -176,11 +175,10 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
     PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
-    AnimationComponent& anim_c = in_registry.get<AnimationComponent>(in_entity);
     PhysicsComponent& phys_c = in_registry.get<PhysicsComponent>(in_entity);
 
     // Transfer
-    pf_c_ptr->WriteBack(transform_c, player_c, anim_c, phys_c);
+    pf_c_ptr->WriteBack(transform_c, player_c, phys_c);
   } else if (in_type == REPLAY_BALL) {
     // Cast
     BallFrame* bf_c_ptr = dynamic_cast<BallFrame*>(in_df_ptr);
@@ -231,7 +229,7 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     model_c.handles.push_back(mh_mech);
 
 	AnimationComponent& anim_c = in_registry.assign<AnimationComponent>(entity, glob::GetAnimationData(mh_mech));
-    pf_ptr->WriteBack(transform_c, player_c, anim_c, phys_c);
+    pf_ptr->WriteBack(transform_c, player_c, phys_c);
   } else if (object_type == REPLAY_BALL) {
     BallFrame* bf_ptr = dynamic_cast<BallFrame*>(df_ptr);
     in_registry.assign<IDComponent>(
@@ -318,11 +316,9 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
           TransformComponent& transform_c =
               in_registry.get<TransformComponent>(entity);
           PlayerComponent& player_c = in_registry.get<PlayerComponent>(entity);
-          AnimationComponent& anim_c =
-              in_registry.get<AnimationComponent>(entity);
           PhysicsComponent& phys_c = in_registry.get<PhysicsComponent>(entity);
 
-          temp_df = new PlayerFrame(transform_c, player_c, anim_c, phys_c);
+          temp_df = new PlayerFrame(transform_c, player_c, phys_c);
         } else if (temp_object_type == REPLAY_BALL) {
           TransformComponent& transform_c =
               in_registry.get<TransformComponent>(entity);

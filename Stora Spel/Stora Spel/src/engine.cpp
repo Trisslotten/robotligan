@@ -103,7 +103,7 @@ void Engine::Init() {
   // Initiate the Replay Machine
   unsigned int length_sec =
       (unsigned int)GlobalSettings::Access()->ValueOf("REPLAY_LENGTH_SECONDS");
-  unsigned int approximate_tickrate = 30;  // TODO: Replace with better
+  unsigned int approximate_tickrate = 64;  // TODO: Replace with better
                                             // approximation
   this->replay_machine_ =
       new ClientReplayMachine(length_sec, approximate_tickrate);
