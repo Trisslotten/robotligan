@@ -31,17 +31,21 @@ DataFrame::~DataFrame() {}
 PlayerFrame::PlayerFrame() {}
 
 PlayerFrame::PlayerFrame(TransformComponent& in_transform_c,
-                         PlayerComponent& in_player_c) {
+                         PlayerComponent& in_player_c_,
+                         PhysicsComponent& in_phys_c) {
   //
   this->position_ = in_transform_c.position;
   this->rotation_ = in_transform_c.rotation;
-  // this->scale_ = in_transform_c.scale;
+  this->scale_ = in_transform_c.scale;
 
-  //
-  this->sprint_coeff_ = in_player_c.sprint_coeff;
-  this->sprinting_ = in_player_c.sprinting;
-  this->running_ = in_player_c.running;
-  this->jumping_ = in_player_c.jumping;
+  player_c_ = in_player_c_;
+
+  /*for (auto anim : in_anim_c.active_animations) {
+    active_animations_.push_back(anim);
+  }*/
+
+  // physic stuff
+  this->velocity_ = in_phys_c.velocity;
 }
 
 PlayerFrame::~PlayerFrame() {}
@@ -51,12 +55,11 @@ DataFrame* PlayerFrame::Clone() {
 
   ret_ptr->position_ = this->position_;
   ret_ptr->rotation_ = this->rotation_;
-  // ret_ptr->scale_ = this->scale_;
+  ret_ptr->scale_ = this->scale_;
 
-  ret_ptr->sprint_coeff_ = this->sprint_coeff_;
-  ret_ptr->sprinting_ = this->sprinting_;
-  ret_ptr->running_ = this->running_;
-  ret_ptr->jumping_ = this->jumping_;
+  ret_ptr->player_c_ = this->player_c_;
+
+  ret_ptr->velocity_ = this->velocity_;
 
   return ret_ptr;
 }
@@ -86,13 +89,13 @@ bool PlayerFrame::ThresholdCheck(DataFrame& in_future_df) {
   }
 
   // ANIMATIONS
-  if (this->sprinting_ != future_pf.sprinting_) {
+  if (this->player_c_.sprinting != future_pf.player_c_.sprinting) {
     return true;
   }
-  if (this->running_ != future_pf.running_) {
+  if (this->player_c_.running != future_pf.player_c_.running) {
     return true;
   }
-  if (this->jumping_ != future_pf.jumping_) {
+  if (this->player_c_.jumping != future_pf.player_c_.jumping) {
     return true;
   }
 
@@ -128,25 +131,16 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
     ret_frame->rotation_ =
         glm::slerp(this->rotation_, point_b.rotation_, percentage_a);
 
-    // SCALE : Can just be straight set as it never changes
-    // ret_frame->scale_ = this->scale_;
+    ret_frame->scale_ = this->scale_;
 
-    // SPRINT COEFFICIENT : (NTS: Should this even be interpolated? If no we do
-    // not even need to save it)
-    ret_frame->sprint_coeff_ =
-        this->sprint_coeff_ +
-        (point_b.sprint_coeff_ - this->sprint_coeff_) * percentage_a;
-
-    // PLAYER BOOLEANS : Set it dependnat on how far we are towards the next
+    // PLAYER COMPONENT : Set it dependnat on how far we are towards the next
     // point
     if (percentage_a < 0.5) {
-      ret_frame->sprinting_ = this->sprinting_;
-      ret_frame->running_ = this->running_;
-      ret_frame->jumping_ = this->jumping_;
+      ret_frame->velocity_ = this->velocity_;
+      ret_frame->player_c_ = this->player_c_;
     } else {
-      ret_frame->sprinting_ = point_b.sprinting_;
-      ret_frame->running_ = point_b.running_;
-      ret_frame->jumping_ = point_b.jumping_;
+      ret_frame->velocity_ = point_b.velocity_;
+      ret_frame->player_c_ = point_b.player_c_;
     }
 
     return ret_frame;
@@ -158,16 +152,14 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
 }
 
 void PlayerFrame::WriteBack(TransformComponent& in_transform_c,
-                            PlayerComponent& in_player_c) {
+                            PlayerComponent& in_player_c_,
+                            PhysicsComponent& in_phys_c) {
   in_transform_c.position = this->position_;
   in_transform_c.rotation = this->rotation_;
-  // in_transform_c.scale = this->scale_;
-  in_transform_c.scale = glm::vec3(0.1);
+  in_transform_c.scale = this->scale_;
 
-  in_player_c.sprint_coeff = this->sprint_coeff_;
-  in_player_c.sprinting = this->sprinting_;
-  in_player_c.running = this->running_;
-  in_player_c.jumping = this->jumping_;
+  in_player_c_ = player_c_;
+  in_phys_c.velocity = velocity_;
 }
 
 //##############################

@@ -61,6 +61,14 @@ class GeometricReplay {
     unsigned int index_b = 0;
   };
 
+  struct CapturedGameEvent {
+    GameEvent event;
+    unsigned int frame_number;
+  };
+
+  std::vector<CapturedGameEvent> captured_events_;
+  unsigned int next_index_to_read_ = 0;
+
   ReplayObjectType IdentifyEntity(entt::entity& in_entity,
                                   entt::registry& in_registry);
 
@@ -83,6 +91,8 @@ class GeometricReplay {
 
   void CreateEntityFromChannel(unsigned int in_channel_index,
                                entt::registry& in_registry);
+
+  
 
  protected:
   std::vector<FrameChannel> channels_;
@@ -119,6 +129,8 @@ class GeometricReplay {
 
   std::string GetGeometricReplayTree();
   std::string GetStateOfReplay();
+
+  void ReceiveGameEvent(GameEvent event);
 };
 
 #endif  // !GEOMETRIC_REPLAY_HPP_

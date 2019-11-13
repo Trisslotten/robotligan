@@ -481,6 +481,9 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
            const std::string filepath) {
   H result = 0;
 
+  std::string borg = filepath;
+  std::transform(borg.begin(), borg.end(), borg.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
   auto item = handles.find(filepath);
   if (item == handles.end()) {
     // std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";
