@@ -2056,7 +2056,7 @@ void PlayState::FetchMapAndArena(entt::registry& in_registry) {
   // Map
   entt::entity map = in_registry.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 map_scale = glm::vec3(2.6f);
+  glm::vec3 map_scale = glm::vec3(2.6f) * arena_scale_;
   glob::ModelHandle model_map_walls =
       glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
 
