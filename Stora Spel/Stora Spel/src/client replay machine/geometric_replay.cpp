@@ -33,6 +33,8 @@ ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
       return ReplayObjectType::REPLAY_TELEPORT_SHOT;
     } else if (proj_c.projectile_id == ProjectileID::MISSILE_OBJECT) {
       return ReplayObjectType::REPLAY_MISSILE;
+    } else if (proj_c.projectile_id == ProjectileID::FORCE_PUSH_OBJECT) {
+      return ReplayObjectType::REPLAY_FORCE_PUSH;
     }
   }
 
@@ -106,6 +108,10 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
         in_registry.get<TransformComponent>(in_entity);
 
     ret_ptr = new MissileFrame(transform_c);
+  } else if (object_type == REPLAY_FORCE_PUSH) {
+    TransformComponent& trans_c =
+        in_registry.get<TransformComponent>(in_entity);
+    ret_ptr = new ForcePushFrame(trans_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unidentified entity");
@@ -267,6 +273,14 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
         in_registry.get<TransformComponent>(in_entity);
     // Transfer
     mf_c_ptr->WriteBack(transform_c);
+  } else if (in_type == REPLAY_FORCE_PUSH) {
+    // Cast
+    ForcePushFrame* fp_c_ptr = dynamic_cast<ForcePushFrame*>(in_df_ptr);
+    // Get
+    TransformComponent& trans_c =
+        in_registry.get<TransformComponent>(in_entity);
+    // Transfer
+    fp_c_ptr->WriteBack(trans_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -275,7 +289,7 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
 
 void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
                                               entt::registry& in_registry) {
-  // Get the first frame of the channel that is tracking the entity 
+  // Get the first frame of the channel that is tracking the entity
   DataFrame* df_ptr =
       this->channels_.at(in_channel_index).entries.at(0).data_ptr;
 
@@ -342,7 +356,8 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     in_registry.assign<IDComponent>(
         entity, this->channels_.at(in_channel_index).object_id);
     // - Assign the relevant components to entity
-    TransformComponent& trans_c = in_registry.assign<TransformComponent>(entity);
+    TransformComponent& trans_c =
+        in_registry.assign<TransformComponent>(entity);
     wf_c_ptr->WriteBack(trans_c);
     // - Assign a model component to thew entity
     glob::ModelHandle wall_model = glob::GetModel(kModelPathWall);
@@ -394,6 +409,23 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     // Add trail
     in_registry.assign<TrailComponent>(entity, 0.2f,
                                        glm::vec4(1.0f, 0.6f, 0.2f, 1.0f));
+    // Fix with trail here
+  } else if (object_type == REPLAY_FORCE_PUSH) {
+    // -Cast DataFrame to correct type
+    ForcePushFrame* fp_c_ptr = dynamic_cast<ForcePushFrame*>(df_ptr);
+    in_registry.assign<IDComponent>(entity,
+                                    channels_.at(in_channel_index).object_id);
+    // - Assign the relevant components to entity
+    TransformComponent& trans_c =
+        in_registry.assign<TransformComponent>(entity);
+    TrailComponent& trail_c = in_registry.assign<TrailComponent>(
+        entity, 1.f, glm::vec4(0.4, 0.4, 1, 1));
+    fp_c_ptr->WriteBack(trans_c);
+    // - Assign a model component to thew entity
+    glob::ModelHandle force_push_model = glob::GetModel(kModelPathBall);
+    ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    // - Add the relevant ModelHandle:s to entity
+    model_c.handles.push_back(force_push_model);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");

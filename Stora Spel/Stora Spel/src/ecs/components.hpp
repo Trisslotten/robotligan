@@ -18,5 +18,4 @@
 #include "components/slider_component.hpp"
 #include "components/trail_component.hpp"
 #include "components/wall_component.hpp"
-
 #endif COMPONENTS_HPP_

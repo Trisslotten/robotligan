@@ -4,8 +4,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include <ecs/components/player_component.hpp>
 #include <shared/transform_component.hpp>
+#include <ecs/components.hpp>
 
 //---
 
@@ -187,4 +187,22 @@ class MissileFrame : public DataFrame {
    void WriteBack(TransformComponent& in_transform_c);
 };
 
+//-----Force push---------------
+class ForcePushFrame : public DataFrame {
+ protected:
+  glm::vec3 position_;
+  glm::quat rotation_;
+
+ public:
+  ForcePushFrame();
+  ForcePushFrame(TransformComponent& trans_c);
+  ~ForcePushFrame();
+
+  DataFrame* Clone();
+  DataFrame* InterpolateForward(unsigned int in_dist_to_target,
+                                unsigned int in_dist_to_point_b,
+                                DataFrame& in_point_b);
+  bool ThresholdCheck(DataFrame& in_future_df);
+  void WriteBack(TransformComponent& trans_c);
+};
 #endif  // DATA_FRAME_HPP_
