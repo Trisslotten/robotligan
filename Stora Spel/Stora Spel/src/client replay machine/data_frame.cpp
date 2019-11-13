@@ -337,7 +337,7 @@ DataFrame* PickUpFrame::InterpolateForward(unsigned int in_dist_to_target,
 }
 
 bool PickUpFrame::ThresholdCheck(DataFrame& in_future_df) {
-  // Cast to BallFrame
+  // Cast to PickupFrame
   PickUpFrame& future_pf = dynamic_cast<PickUpFrame&>(in_future_df);
 
   float threshold = 0.0f;
