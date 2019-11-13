@@ -8,8 +8,6 @@
 #include <util/asset_paths.hpp>
 #include <util/global_settings.hpp>
 
-#include <iostream>
-
 // Private---------------------------------------------------------------------
 ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
                                                  entt::registry& in_registry) {
@@ -200,7 +198,6 @@ void GeometricReplay::InterpolateEntityData(unsigned int in_channel_index,
   // but instead remove the entity from the registry
   // and return
   if (this->channels_.at(in_channel_index).entries.at(a_index).ending_entry) {
-    std::cout << "Destroyed entity\n";
     in_registry.destroy(in_entity);
     return;
   }
@@ -353,8 +350,8 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     model_c.handles.push_back(mh_ball_sphe);
 
     // Add light
-    in_registry.assign<LightComponent>(entity, glm::vec3(0.f, 1.f, 0.f), 20.f, 0.f,
-                                    false);
+    in_registry.assign<LightComponent>(entity, glm::vec3(0.f, 1.f, 0.f), 20.f,
+                                       0.f, false);
 
     // Add trail
     in_registry.assign<TrailComponent>(entity);
@@ -409,8 +406,7 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     tsf_ptr->WriteBack(transform_c);
 
     // Add trail
-    in_registry.assign<TrailComponent>(entity, 0.5f,
-                                              glm::vec4(1, 1, 1, 1));
+    in_registry.assign<TrailComponent>(entity, 0.5f, glm::vec4(1, 1, 1, 1));
   } else if (object_type == REPLAY_MISSILE) {
     MissileFrame* mf_ptr = dynamic_cast<MissileFrame*>(df_ptr);
     in_registry.assign<IDComponent>(
@@ -616,19 +612,19 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
 
 void GeometricReplay::SetEndingFrame(EntityID in_id,
                                      entt::registry& in_registry) {
-  std::cout << "Setting ending frame\n";
-
   // Loop through the channels and search
   // for the given id
   bool unfound = true;
+
   for (unsigned int i = 0; i < this->channels_.size(); i++) {
+
     if (in_id == this->channels_.at(i).object_id) {
       // If a channel is found, fetch the entity
       // from the registry
       entt::basic_view view = in_registry.view<IDComponent>();
-      entt::entity target;
       for (entt::entity entity : view) {
         IDComponent& id_c = in_registry.get<IDComponent>(entity);
+
         if (in_id == id_c.id) {
           // Create a ChannelEntry for the ending frame
           // and push it into the FrameChannel
@@ -638,10 +634,10 @@ void GeometricReplay::SetEndingFrame(EntityID in_id,
           ending_ce.ending_entry = true;
 
           this->channels_.at(i).entries.push_back(ending_ce);
+
+          unfound = false;
         }
       }
-
-      unfound = false;
     }
   }
 
@@ -721,6 +717,7 @@ std::string GeometricReplay::GetGeometricReplayTree() {
     ret_str += "\t\t\tNewest Entry Age: " + std::to_string(nea) + "\n";
 
     //---
+    /*
     ret_str += "\t\t\t\t";
     for (unsigned int j = 0; j < this->channels_.at(i).entries.size(); j++) {
       std::string age_str =
@@ -733,6 +730,7 @@ std::string GeometricReplay::GetGeometricReplayTree() {
       ret_str += "] ";
     }
     ret_str += "\n";
+    */
     //---
     ret_str += "\t\t---\n";
   }

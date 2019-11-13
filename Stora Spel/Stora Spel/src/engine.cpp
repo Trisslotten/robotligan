@@ -224,7 +224,7 @@ void Engine::Update(float dt) {
     glob::SetSSAO(false);
   }
 
-  if(Input::IsKeyPressed(GLFW_KEY_F5)) {
+  if (Input::IsKeyPressed(GLFW_KEY_F5)) {
     glob::ReloadShaders();
   }
 
@@ -661,14 +661,18 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::DESTROY_ENTITIES: {
       EntityID id;
       packet >> id;
-      play_state_.DestroyEntity(id);
 
-	  //If we are recording
-	  //notify replay machine
+      // If we are recording notify replay machine
+	  //before entity is gone
       if (this->recording_) {
-        this->replay_machine_->NotifyDestroyedObject(id, *(this->registry_current_));
+        this->replay_machine_->NotifyDestroyedObject(
+            id, *(this->registry_current_));
       }
 
+	  // Remove the entity
+      play_state_.DestroyEntity(id);
+
+	  //Contemplate life
       break;
     }
     case PacketBlockType::GAME_END: {
@@ -873,9 +877,7 @@ int Engine::GetGameplayTimer() const { return gameplay_timer_sec_; }
 
 int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }
 
-float Engine::GetSwitchGoalCountdownTimer() const {
-  return switch_goal_timer_;
-}
+float Engine::GetSwitchGoalCountdownTimer() const { return switch_goal_timer_; }
 
 int Engine::GetSwitchGoalTime() const { return switch_goal_time_; }
 
@@ -919,8 +921,7 @@ void Engine::BeginReplay() {
   if (!this->replaying_) {
     this->registry_on_hold_ = this->registry_current_;
     this->registry_replay_ = new entt::registry;
-    this->play_state_
-        .FetchMapAndArena(*(this->registry_replay_));
+    this->play_state_.FetchMapAndArena(*(this->registry_replay_));
     this->registry_current_ = this->registry_replay_;
 
     this->replaying_ = true;
