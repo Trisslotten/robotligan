@@ -5,6 +5,7 @@
 
 #include "geometric_replay.hpp"
 
+class Engine;
 
 class ClientReplayMachine {
  private:
@@ -14,6 +15,7 @@ class ClientReplayMachine {
   
   std::vector<GeometricReplay*> stored_replays_;
   unsigned int selected_replay_index_;
+  Engine* engine_;
 
  public:
   ClientReplayMachine(unsigned int in_replay_length_sec,
@@ -33,6 +35,10 @@ class ClientReplayMachine {
 
   std::string GetSelectedReplayStringTree();
   std::string GetSelectedReplayStringState();
+
+  void SetEngine(Engine* eng) { engine_ = eng; }
+  void ReceiveGameEvent(GameEvent event);
+  
 };
 
 #endif  // !CLIENT_REPLAY_MACHINE_HPP_

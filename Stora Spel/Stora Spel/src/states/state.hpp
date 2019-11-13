@@ -271,6 +271,9 @@ class PlayState : public State {
   void SetCountdownInProgress(bool val) { countdown_in_progress_ = val;  }
   void SetArenaScale(glm::vec3 arena_scale) { arena_scale_ = arena_scale; }
 
+  
+  void FetchMapAndArena(entt::registry& in_registry);
+
  private:
   ServerStateType server_state_;
   void CreateInitialEntities();

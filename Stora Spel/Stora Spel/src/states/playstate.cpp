@@ -1545,6 +1545,8 @@ void PlayState::CreateTeleportProjectile(EntityID id, glm::vec3 pos,
                                             glm::vec4(1, 1, 1, 1));
   registry_gameplay_.assign<TransformComponent>(teleport_projectile, pos, ori,
                                                 glm::vec3(0.3f));
+  registry_gameplay_.assign<ProjectileComponent>(
+      teleport_projectile, ProjectileID::TELEPORT_PROJECTILE);
   registry_gameplay_.assign<IDComponent>(teleport_projectile, id);
 }
 
@@ -1564,6 +1566,8 @@ void PlayState::CreateForcePushObject(EntityID id, glm::vec3 pos,
   registry_gameplay_.assign<IDComponent>(force_object, id);
   registry_gameplay_.assign<SoundComponent>(force_object,
                                             sound_engine.CreatePlayer());
+  registry_gameplay_.assign<ProjectileComponent>(
+      force_object, ProjectileID::FORCE_PUSH_OBJECT);
   registry_gameplay_.assign<TrailComponent>(force_object, 1.f,
                                             glm::vec4(0.4, 0.4, 1, 1));
 }
@@ -1581,6 +1585,7 @@ void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
   registry_gameplay_.assign<IDComponent>(missile_object, id);
   registry_gameplay_.assign<SoundComponent>(missile_object,
                                             sound_engine.CreatePlayer());
+  registry_gameplay_.assign<ProjectileComponent>(missile_object, ProjectileID::MISSILE_OBJECT);
   registry_gameplay_.assign<TrailComponent>(missile_object, 0.2f,
                                             glm::vec4(1.0f, 0.6f, 0.2f, 1.0f));
 }
@@ -2045,4 +2050,49 @@ void PlayState::SetPitchYaw(float pitch, float yaw) {
   yaw_ = yaw;
   constexpr float pi = glm::pi<float>();
   pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
+}
+
+void PlayState::FetchMapAndArena(entt::registry& in_registry) {
+  // Map
+  entt::entity map = in_registry.create();
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glm::vec3 map_scale = glm::vec3(2.6f);
+  glob::ModelHandle model_map_walls =
+      glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
+
+  ModelComponent& model_map_c = in_registry.assign<ModelComponent>(map);
+  model_map_c.handles.push_back(model_map_walls);
+
+  in_registry.assign<TransformComponent>(map, zero_vec, zero_vec, map_scale);
+
+  // Arena
+  entt::entity arena = in_registry.create();
+  glm::vec3 arena_scale = glm::vec3(1.0f);
+  glob::ModelHandle model_arena =
+      glob::GetModel("assets/Arena/Map_V3_ARENA.fbx");
+  glob::ModelHandle model_arena_banner =
+      glob::GetModel("assets/Arena/Map_V3_ARENA_SIGNS.fbx");
+  glob::ModelHandle model_map = glob::GetModel("assets/MapV3/Map_Walls.fbx");
+  glob::ModelHandle model_map_floor =
+      glob::GetModel("assets/MapV3/Map_Floor.fbx");
+  glob::ModelHandle model_map_projectors =
+      glob::GetModel("assets/MapV3/Map_Projectors.fbx");
+
+  // glob::GetModel(kModelPathMapSingular);
+  ModelComponent& model_arena_c = in_registry.assign<ModelComponent>(arena);
+  model_arena_c.handles.push_back(model_arena);
+  model_arena_c.handles.push_back(model_arena_banner);
+  model_arena_c.handles.push_back(model_map);
+  model_arena_c.handles.push_back(model_map_floor);
+  model_arena_c.handles.push_back(model_map_projectors);
+
+  in_registry.assign<TransformComponent>(arena, zero_vec, zero_vec,
+                                         arena_scale);
+
+  // Lights
+  entt::entity light = in_registry.create();
+  in_registry.assign<LightComponent>(light, glm::vec3(0.4f, 0.4f, 0.4f),
+                                            90.f, 0.2f);
+  in_registry.assign<TransformComponent>(
+      light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
 }
