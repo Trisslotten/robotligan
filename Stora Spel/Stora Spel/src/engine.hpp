@@ -10,7 +10,7 @@
 #include <util/global_settings.hpp>
 #include <vector>
 #include "Chat.hpp"
-#include "client replay machine/client_replay_machine.hpp"
+//#include "client replay machine/client_replay_machine.hpp"
 #include "ecs/systems/animation_system.hpp"
 #include "ecs/systems/sound_system.hpp"
 #include "shared/shared.hpp"
@@ -64,7 +64,9 @@ class Engine {
   AbilityID GetSecondaryAbility() { return second_ability_; }
   std::vector<unsigned int> GetTeamScores() { return scores_; }
   std::vector<int>* GetPlayingPlayers();
-  void SetPlayingPlayers(std::unordered_map<int, LobbyPlayer> plyrs) { playing_players_ = plyrs; }
+  void SetPlayingPlayers(std::unordered_map<int, LobbyPlayer> plyrs) {
+    playing_players_ = plyrs;
+  }
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
   float GetSwitchGoalCountdownTimer() const;
@@ -85,26 +87,22 @@ class Engine {
   StateType GetPreviousStateType() { return previous_state_; }
   ServerStateType GetServerState() { return server_state_; }
   void SetServerState(ServerStateType state) { server_state_ = state; }
-  void ReInit() { play_state_.Cleanup(); play_state_.Init();}
+  void ReInit() {
+    play_state_.Cleanup();
+    play_state_.Init();
+  }
 
   std::unordered_map<PlayerID, PlayerStatInfo> GetPlayerScores() {
     return player_scores_;
   }
+ /* ClientReplayMachine* GetReplayMachine() const { return replay_machine_;
+  }*/
  private:
   void SetKeybinds();
 
   void UpdateChat(float dt);
   void UpdateSystems(float dt);
   void HandlePacketBlock(NetAPI::Common::Packet& packet);
-
-  // Replay Functions---
-  void BeginRecording();
-  //void DoRecording();
-  void StopRecording();
-  void SaveRecording();
-  void BeginReplay();
-  void PlayReplay();
-  // Replay Functions---
 
   NetAPI::Socket::Client client_;
   NetAPI::Common::Packet packet_;
@@ -165,13 +163,13 @@ class Engine {
   std::list<NetAPI::Common::Packet> packet_test;
   std::list<float> time_test;
 
-  // Replay Variables ---
-  bool recording_ = false;
-  bool replaying_ = false;
-  entt::registry* registry_on_hold_ = nullptr;
-  entt::registry* registry_replay_ = nullptr;
-  ClientReplayMachine* replay_machine_ = nullptr;
-  // Replay Variables ---
+  //// Replay Variables ---
+  //bool recording_ = true;
+  //bool replaying_ = false;
+  //entt::registry* registry_on_hold_ = nullptr;
+  //entt::registry* registry_replay_ = nullptr;
+  //ClientReplayMachine* replay_machine_ = nullptr;
+  //// Replay Variables ---
 };
 
 #endif  // ENGINE_HPP_

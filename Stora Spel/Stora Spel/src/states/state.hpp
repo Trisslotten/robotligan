@@ -12,6 +12,7 @@
 #include "Chat.hpp"
 #include "eventdispatcher.hpp"
 #include "shared/shared.hpp"
+#include <client replay machine/client_replay_machine.hpp>
 
 class Engine;
 
@@ -362,6 +363,12 @@ class PlayState : public State {
   float primary_cd_ = 0.0f;
 
   bool sprinting_ = false;
+
+  
+  ClientReplayMachine* replay_machine_ = nullptr;
+  bool recording_ = true;
+  bool replaying_ = false;
+  entt::registry replay_registry_;
 };
 
 #endif  // STATE_HPP_

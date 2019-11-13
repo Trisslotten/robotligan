@@ -24,6 +24,8 @@ class ClientReplayMachine {
   
   void StoreReplay();
   unsigned int NumberOfStoredReplays() const;
+  unsigned int ReplayLength() const { return replay_length_sec_;
+  }
   int CurrentlySelectedReplay() const;
   bool SelectReplay(unsigned int in_index);
   void ResetSelectedReplay();

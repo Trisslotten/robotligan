@@ -129,6 +129,14 @@ void PlayState::Init() {
   CreateInitialEntities();
   // TestParticles();
 
+  // Initiate the Replay Machine
+  unsigned int length_sec =
+      (unsigned int)GlobalSettings::Access()->ValueOf("REPLAY_LENGTH_SECONDS");
+  unsigned int approximate_tickrate = 128;  // TODO: Replace with better
+                                            // approximation
+  replay_machine_ = new ClientReplayMachine(length_sec, approximate_tickrate);
+  replay_registry_.reset();
+
   engine_->GetChat()->SetPosition(
       glm::vec2(30, glob::window::GetWindowDimensions().y - 30));
 
@@ -387,14 +395,19 @@ void PlayState::Update(float dt) {
     }
   }
 
+  // Record replay
+  if (recording_) {
+    replay_machine_->RecordFrame(*(engine_->GetCurrentRegistry()));
+  }
+
   if (game_has_ended_) {
-    engine_->DrawScoreboard();
+    // engine_->DrawScoreboard();
 
     glm::vec2 pos = glob::window::GetWindowDimensions();
     pos /= 2;
     pos.y -= 160;
 
-    std::string best_team = "BLUE";
+    /*std::string best_team = "BLUE";
     glm::vec4 best_team_color = glm::vec4(0.13f, 0.13f, 1.f, 1.f);
 
     if (engine_->GetTeamScores()[0] > engine_->GetTeamScores()[1]) {
@@ -410,19 +423,27 @@ void PlayState::Update(float dt) {
     glob::Submit(font_test_, pos + glm::vec2(1, -1), 48, winnin_team_text,
                  glm::vec4(0, 0, 0, 0.7f));
 
-    glob::Submit(font_test_, pos, 48, winnin_team_text, best_team_color);
+    glob::Submit(font_test_, pos, 48, winnin_team_text, best_team_color);*/
 
-    int game_end_timeout = 5;
+    int game_end_timeout = 20;
     std::string end_countdown_text =
         std::to_string((int)(game_end_timeout - end_game_timer_.Elapsed()));
 
     std::string return_to_lobby_test =
         "Returning to lobby in: " + end_countdown_text;
-    width = glob::GetWidthOfText(font_test_, return_to_lobby_test, 48);
+    double width = glob::GetWidthOfText(font_test_, return_to_lobby_test, 48);
     pos.x = (glob::window::GetWindowDimensions().x / 2) - (width / 2);
     glob::Submit(font_test_, pos + glm::vec2(0, -40), 48, return_to_lobby_test);
 
-    if (end_game_timer_.Elapsed() >= 5.0f) {
+    if (replay_machine_->NumberOfStoredReplays() > 0) {
+      recording_ = false;
+
+      if (replay_machine_->LoadFrame(replay_registry_)) {
+		  replay_registry_.reset();
+	  }
+    }
+
+    if (end_game_timer_.Elapsed() >= 20.0f) {
       engine_->ChangeState(StateType::LOBBY);
     }
   }
@@ -1585,7 +1606,8 @@ void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
   registry_gameplay_.assign<IDComponent>(missile_object, id);
   registry_gameplay_.assign<SoundComponent>(missile_object,
                                             sound_engine.CreatePlayer());
-  registry_gameplay_.assign<ProjectileComponent>(missile_object, ProjectileID::MISSILE_OBJECT);
+  registry_gameplay_.assign<ProjectileComponent>(missile_object,
+                                                 ProjectileID::MISSILE_OBJECT);
   registry_gameplay_.assign<TrailComponent>(missile_object, 0.2f,
                                             glm::vec4(1.0f, 0.6f, 0.2f, 1.0f));
 }
@@ -1674,6 +1696,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
   switch (e.type) {
     case GameEvent::GOAL: {
       CreateGoalParticles(e.goal.x);
+      replay_machine_->StoreReplay();
       break;
     }
     case GameEvent::RESET: {
@@ -2091,8 +2114,8 @@ void PlayState::FetchMapAndArena(entt::registry& in_registry) {
 
   // Lights
   entt::entity light = in_registry.create();
-  in_registry.assign<LightComponent>(light, glm::vec3(0.4f, 0.4f, 0.4f),
-                                            90.f, 0.2f);
+  in_registry.assign<LightComponent>(light, glm::vec3(0.4f, 0.4f, 0.4f), 90.f,
+                                     0.2f);
   in_registry.assign<TransformComponent>(
       light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
 }
