@@ -293,14 +293,14 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
   } else if (object_type == REPLAY_PICKUP) {
     // TBA
   } else if (object_type == REPLAY_SHOT) {
-    ShotFrame* bf_ptr = dynamic_cast<ShotFrame*>(df_ptr);
+    ShotFrame* sf_ptr = dynamic_cast<ShotFrame*>(df_ptr);
     in_registry.assign<IDComponent>(
         entity, this->channels_.at(in_channel_index).object_id);
 
     //
     TransformComponent& transform_c =
         in_registry.assign<TransformComponent>(entity);
-    bf_ptr->WriteBack(transform_c);
+    sf_ptr->WriteBack(transform_c);
 
     // Create and add ModelHandle
     glob::ModelHandle mh_shot = glob::GetModel(kModelPathRocket);
@@ -315,11 +315,6 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     TransformComponent& transform_c =
         in_registry.assign<TransformComponent>(entity);
     tsf_ptr->WriteBack(transform_c);
-
-    // Create and add ModelHandle
-    glob::ModelHandle mh_shot = glob::GetModel(kModelPathPickup);
-    ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
-    model_c.handles.push_back(mh_shot);
 
     // Fix with trail here
   } else {

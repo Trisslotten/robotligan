@@ -415,5 +415,5 @@ DataFrame* TeleportShotFrame::InterpolateForward(
 void TeleportShotFrame::WriteBack(TransformComponent& in_transform_c) {
   in_transform_c.position = this->position_;
   in_transform_c.rotation = glm::quat();
-  in_transform_c.scale = glm::vec3(0.0f);
+  in_transform_c.scale = glm::vec3(1.0f);
 }
