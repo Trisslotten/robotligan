@@ -29,8 +29,8 @@ ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
         in_registry.get<ProjectileComponent>(in_entity);
     if (proj_c.projectile_id == ProjectileID::CANNON_BALL) {
       return ReplayObjectType::REPLAY_SHOT;
-    } else if (proj_c.projectile_id == ProjectileID::FORCE_PUSH_OBJECT) {
-      return ReplayObjectType::REPLAY_FORCE_PUSH;
+    } else if (proj_c.projectile_id == ProjectileID::TELEPORT_PROJECTILE) {
+      return ReplayObjectType::REPLAY_TELEPORT_SHOT;
     }
   }
 
@@ -94,6 +94,11 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
         in_registry.get<TransformComponent>(in_entity);
 
     ret_ptr = new ShotFrame(transform_c);
+  } else if (object_type == REPLAY_TELEPORT_SHOT) {
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
+
+    ret_ptr = new TeleportShotFrame(transform_c);
   } else if (object_type == REPLAY_FORCE_PUSH) {
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
@@ -244,6 +249,14 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
         in_registry.get<TransformComponent>(in_entity);
     // Transfer
     sf_c_ptr->WriteBack(transform_c);
+  } else if (in_type == REPLAY_TELEPORT_SHOT) {
+    // Cast
+    TeleportShotFrame* tsf_c_ptr = dynamic_cast<TeleportShotFrame*>(in_df_ptr);
+    // Get
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
+    // Transfer
+    tsf_c_ptr->WriteBack(transform_c);
   } else if (in_type == REPLAY_FORCE_PUSH) {
     // Cast
     ForcePushFrame* fp_c_ptr = dynamic_cast<ForcePushFrame*>(in_df_ptr);
@@ -337,19 +350,30 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     // - Add the relevant ModelHandle:s to entity
     model_c.handles.push_back(wall_model);
   } else if (object_type == REPLAY_SHOT) {
-    ShotFrame* bf_ptr = dynamic_cast<ShotFrame*>(df_ptr);
+    ShotFrame* sf_ptr = dynamic_cast<ShotFrame*>(df_ptr);
     in_registry.assign<IDComponent>(
         entity, this->channels_.at(in_channel_index).object_id);
 
     //
     TransformComponent& transform_c =
         in_registry.assign<TransformComponent>(entity);
-    bf_ptr->WriteBack(transform_c);
+    sf_ptr->WriteBack(transform_c);
 
     // Create and add ModelHandle
     glob::ModelHandle mh_shot = glob::GetModel(kModelPathRocket);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     model_c.handles.push_back(mh_shot);
+  } else if (object_type == REPLAY_TELEPORT_SHOT) {
+    TeleportShotFrame* tsf_ptr = dynamic_cast<TeleportShotFrame*>(df_ptr);
+    in_registry.assign<IDComponent>(
+        entity, this->channels_.at(in_channel_index).object_id);
+
+    //
+    TransformComponent& transform_c =
+        in_registry.assign<TransformComponent>(entity);
+    tsf_ptr->WriteBack(transform_c);
+
+    // Fix with trail here
   } else if (object_type == REPLAY_FORCE_PUSH) {
     // -Cast DataFrame to correct type
     ForcePushFrame* fp_c_ptr = dynamic_cast<ForcePushFrame*>(df_ptr);
