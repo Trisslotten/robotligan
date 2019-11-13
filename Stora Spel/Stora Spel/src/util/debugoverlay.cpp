@@ -51,8 +51,8 @@ void DebubOverlay::Update() {
 
   if (active_) {
     auto ws = glob::window::GetWindowDimensions();
-    float box_height = 200;
-    float box_width = 200;
+    float box_height = 150;
+    float box_width = 300;
     glm::vec2 box_offset(30, -30);
     glm::vec2 text_offset(13, -10);
     float spacing_y = 30;

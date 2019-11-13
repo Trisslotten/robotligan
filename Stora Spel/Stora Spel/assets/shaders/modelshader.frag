@@ -143,6 +143,7 @@ vec3 fakeCubeMap(vec3 dir) {
 }
 
 void main() {
+
 	float metallic = 0.;
 	if(use_metallic != 0) 
 	{
@@ -160,6 +161,12 @@ void main() {
 	tex.x = tex.x * mat_dist + mat_offset;
 
 	Lighting lighting = shading(frag_pos, metallic, normal);
+	/*
+	lighting.ambient = vec3(0.1);
+	lighting.diffuse = vec3(0);
+	lighting.specular = vec3(0);
+	*/
+	
 	vec3 shading = vec3(0);
 	shading += lighting.ambient;
 	shading += lighting.diffuse;
@@ -191,16 +198,17 @@ void main() {
 		color += fakeCubeMap(reflect(view_dir, normal)) * metallic*(1-emission_strength);
 	}
 	color += dither();
-	
 	//float gamma = 2.2;
     //color = pow(color, vec3(gamma));
 
 	out_color = vec4(color, alpha);
 	out_emission = vec4(emission, 1);
-	/*
+	
+	//out_color = vec4(1,0,0,1);
+	//out_emission = vec4(0,0,0,1);
+
 	float depth = gl_FragCoord.z;
 	out_depth = vec4(depth,0,0,0);
 	out_normal = vec4(normalize(v_normal), 1);
 	out_pos = vec4(frag_pos.xyz, 1);
-	*/
 }

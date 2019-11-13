@@ -99,8 +99,10 @@ void glob::PostProcess::BeforeDraw() {
 }
 
 void glob::PostProcess::AfterDraw(Blur& blur) {
+  /*
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  */
   glBindTexture(GL_TEXTURE_2D, draw_emission_texture_);
   glGenerateMipmap(GL_TEXTURE_2D);
 

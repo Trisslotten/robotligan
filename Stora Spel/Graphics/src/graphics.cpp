@@ -1477,33 +1477,20 @@ void Render() {
   post_process.AfterDraw(blur);
 
   if (use_ao) {
-    ssao.BindFrameBuffer();
-    ssao_shader.use();
-    post_process.BindDepthTex(0);
-    ssao_shader.uniform("texture_depth", 0);
-    post_process.BindNormalTex(1);
-    ssao_shader.uniform("texture_normals", 1);
-    ssao.BindNoiseTexture(2);
-    ssao_shader.uniform("texture_noise", 2);
-    post_process.BindPositionTex(3);
-    ssao_shader.uniform("texture_position", 3);
-    ssao_shader.uniformv("samples", (GLuint)ssao.GetKernel().size(),
-                         ssao.GetKernel().data());
-    ssao_shader.uniform("projection", cam_transform);
-    ssao_shader.uniform("inv_projection", inverse(cam_transform));
-    ssao_shader.uniform("screen_dims", window::GetWindowDimensions());
-
-    DrawFullscreenQuad();  // do ssao pass same way we do final color pass
-    ssao.Finish(blur);
+    ssao.Process(post_process, blur, cam_transform);
   }
 
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glViewport(0, 0, ws.x, ws.y);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
   fullscreen_shader.use();
-  fullscreen_shader.uniform("is_invisible", is_invisible);
   post_process.BindColorTex(0);
-  fullscreen_shader.uniform("texture_color", 0);
   post_process.BindEmissionTex(1);
-  fullscreen_shader.uniform("texture_emission", 1);
   ssao.BindSsaoTexture(2);
+  fullscreen_shader.uniform("is_invisible", is_invisible);
+  fullscreen_shader.uniform("texture_color", 0);
+  fullscreen_shader.uniform("texture_emission", 1);
   fullscreen_shader.uniform("texture_ssao", 2);
   fullscreen_shader.uniform("use_ao", use_ao);
   DrawFullscreenQuad();
@@ -1518,7 +1505,7 @@ void Render() {
     gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale,
                                gui_item.scale_x, gui_item.opacity);
   }
-  glBindTexture(GL_TEXTURE_2D, 0);
+  //glBindTexture(GL_TEXTURE_2D, 0);
 
   text_shader.use();
   for (auto &text_item : text_to_render) {
