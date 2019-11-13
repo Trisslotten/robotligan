@@ -335,6 +335,7 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     glob::ModelHandle mh_mech = glob::GetModel(kModelPathMech);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     model_c.handles.push_back(mh_mech);
+    model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
 
 	AnimationComponent& anim_c = in_registry.assign<AnimationComponent>(entity, glob::GetAnimationData(mh_mech));
     pf_ptr->WriteBack(transform_c, player_c, phys_c);
