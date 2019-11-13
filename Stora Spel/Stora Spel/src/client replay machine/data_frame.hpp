@@ -187,7 +187,6 @@ class MissileFrame : public DataFrame {
    void WriteBack(TransformComponent& in_transform_c);
 };
 
-#endif  // DATA_FRAME_HPP_
 //-----Force push---------------
 class ForcePushFrame : public DataFrame {
  protected:
@@ -206,5 +205,4 @@ class ForcePushFrame : public DataFrame {
   bool ThresholdCheck(DataFrame& in_future_df);
   void WriteBack(TransformComponent& trans_c);
 };
-
 #endif  // DATA_FRAME_HPP_
