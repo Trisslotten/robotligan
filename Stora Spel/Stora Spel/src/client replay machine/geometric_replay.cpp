@@ -75,7 +75,9 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
 
     ret_ptr = new BallFrame(transform_c);
   } else if (object_type == REPLAY_PICKUP) {
-    // TBA
+    TransformComponent& trans_c =
+        in_registry.get<TransformComponent>(in_entity);
+    ret_ptr = new PickUpFrame(trans_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unidentified entity");
@@ -200,7 +202,10 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     // Transfer
     bf_c_ptr->WriteBack(transform_c);
   } else if (in_type == REPLAY_PICKUP) {
-    // TBA
+    PickUpFrame* pu_c_ptr = dynamic_cast<PickUpFrame*>(in_df_ptr);
+    TransformComponent& trans_c =
+        in_registry.get<TransformComponent>(in_entity);
+    pu_c_ptr->WriteBack(trans_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -259,7 +264,16 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     model_c.handles.push_back(mh_ball_proj);
     model_c.handles.push_back(mh_ball_sphe);
   } else if (object_type == REPLAY_PICKUP) {
-    // TBA
+    PickUpFrame* pu_ptr = dynamic_cast<PickUpFrame*>(df_ptr);
+    in_registry.assign<IDComponent>(entity,
+                                    channels_.at(in_channel_index).object_id);
+    TransformComponent& trans_c =
+        in_registry.assign<TransformComponent>(entity);
+    pu_ptr->WriteBack(trans_c);
+
+    glob::ModelHandle pickup_model = glob::GetModel(kModelPathPickup);
+    ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    model_c.handles.push_back(pickup_model);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -313,7 +327,7 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
         // If it does we check if a new interpolation point should be added
         // dependent on the object's type
         DataFrame* temp_df = nullptr;
-		temp_df = this->PolymorphIntoDataFrame(entity, in_registry);
+        temp_df = this->PolymorphIntoDataFrame(entity, in_registry);
 
         // Compare last entry to what would be the current frame's
         if ((temp_df != nullptr) &&
