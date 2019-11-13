@@ -98,7 +98,7 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
   glob::SetEmitPosition(handle, glm::vec3(x * 1.0f, 0.f, 15.f * arena_scale_.z));
-  e = registry_gameplay_.create();
+  e = registry.create();
   handle = glob::CreateParticleSystem();
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
