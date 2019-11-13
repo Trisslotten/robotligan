@@ -53,7 +53,6 @@ enum : int16_t {
   GAME_START,        // game start after lobby
   CLIENT_RECEIVE_UPDATES,
   TEST_STRING,
-  TEST_REPLAY_KEYS,
   TEAM_SCORE,
   CHOOSE_TEAM,
   SWITCH_GOALS,
@@ -106,6 +105,7 @@ enum class AbilityID {
   SUPER_STRIKE,
   SWITCH_GOALS,
   TELEPORT,
+  BLACKOUT,
   // Fill with more abilities and passive boosts
   NUM_OF_ABILITY_IDS
 };
@@ -141,6 +141,9 @@ struct GameEvent {
     FAKE_BALL_POOF,
     INVISIBILITY_CAST,
     INVISIBILITY_END,
+    BLACKOUT_CAST,
+    BLACKOUT_TRIGGER,
+    BLACKOUT_END,
     SPRINT_START,
     SPRINT_END,
     RUN_START,
@@ -148,6 +151,7 @@ struct GameEvent {
     RESET,
     PRIMARY_USED,
     SECONDARY_USED,
+    PICKUP_SPAWNED,
     NUM_EVENTS
   } type;
   union {
@@ -265,6 +269,18 @@ struct GameEvent {
       EntityID player_id;
     } invisibility_end;
 
+    // Ability Blackout Cast
+    struct {
+    } blackout_cast;
+
+    // Ability Blackout trigger
+    struct {
+    } blackout_trigger;
+
+    // Ability Blackout End
+    struct {
+    } blackout_end;
+
     // Player Sprint start
     struct {
       EntityID player_id;
@@ -305,6 +321,9 @@ struct GameEvent {
       EntityID player_id;
     } secondary_used;
 
+    struct {
+      EntityID pickup_id;
+    } pickup_spawned;
   };
 };
 

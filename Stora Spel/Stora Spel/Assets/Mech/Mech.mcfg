@@ -1,6 +1,11 @@
 
 i num_diffuse_textures 2
 
-w normal_map assets/texture/normal_brushed_iron.png
-f normal_map_scale 10.0
+w normal_map assets/materials/Painted_metal_02_2K_Normal.png
+f normal_map_scale 5.0
 
+w metallic_map assets/materials/Painted_metal_02_2K_Metallic.png
+f metallic_map_scale 5.0
+
+w roughness_map assets/materials/Painted_metal_02_2K_Roughness.png
+f roughness_map_scale 5.0

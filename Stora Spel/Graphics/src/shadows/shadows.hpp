@@ -30,11 +30,13 @@ class Shadows {
   int GetNumMaps() { return num_maps_used_; }
   int GetMaxMaps() { return max_maps_; }
 
+  void SetNumUsed(int num_used) { num_maps_used_ = num_used; }
+
  private:
   int GetBlurredSize() { return size_ / glm::pow(2, blurred_level_); }
 
   static const int max_maps_ = 4;
-  int num_maps_used_ = 0;
+  int num_maps_used_ = 4;
   GLuint framebuffer_ = 0;
   GLuint renderbuffer_ = 0;
   GLuint texture_ = 0;

@@ -21,6 +21,7 @@
 #include "ecs/systems/physics_system.hpp"
 #include "ecs/systems/player_controller_system.hpp"
 #include "ecs/systems/target_system.hpp"
+#include "ecs/systems/pickup_spawner_system.hpp"
 
 namespace {}  // namespace
 
@@ -59,6 +60,8 @@ void GameServer::Init(double in_update_rate) {
       GlobalSettings::Access()->ValueOf("ABILITY_SWITCH_GOALS_COOLDOWN");
   ability_cooldowns_[AbilityID::TELEPORT] =
       GlobalSettings::Access()->ValueOf("ABILITY_TELEPORT_COOLDOWN");
+  ability_cooldowns_[AbilityID::BLACKOUT] =
+      GlobalSettings::Access()->ValueOf("ABILITY_BLACKOUT_COOLDOWN");
 
   ability_controller::ability_cooldowns = ability_cooldowns_;
 
@@ -250,13 +253,6 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       break;
     }
 
-    case PacketBlockType::TEST_REPLAY_KEYS: {
-      // If P is pressed, record 10 seconds
-      bool start_replay;
-      packet >> start_replay;
-      if (start_replay) play_state_.StartRecording(10);
-      break;
-    }
     case PacketBlockType::MESSAGE: {
       size_t strsize = 0;
       packet >> strsize;
@@ -379,6 +375,7 @@ void GameServer::UpdateSystems(float dt) {
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);
   lifetime::Update(registry_, dt);
+  pickup_spawner_system::Update(registry_, dt);
 
   if (!play_state_.IsResetting()) goal_system::Update(registry_);
 

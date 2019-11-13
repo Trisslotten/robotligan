@@ -61,7 +61,7 @@ int main(unsigned argc, char** argv) {
       num_render_updates = 0;
     }
 
-    if (Input::IsKeyDown(GLFW_KEY_F6)) {
+    if (Input::IsKeyPressed(GLFW_KEY_F6)) {
       std::cout << "RAM usage: " << util::MemoryInfo::GetInstance().GetUsedRAM()
                 << " MB\n";
       std::cout << "VRAM usage: "
@@ -75,7 +75,7 @@ int main(unsigned argc, char** argv) {
 
     dt = frame_timer.Restart();
     double frame_time = net_update_timer.Restart();
-    net_update_accum += glm::min(frame_time, net_update_time * 4);
+    net_update_accum += frame_time;
   }
 
   glob::window::Cleanup();

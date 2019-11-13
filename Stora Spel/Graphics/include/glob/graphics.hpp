@@ -114,6 +114,8 @@ EXPORT void LoadWireframeMesh(ModelHandle model_h,
                               const std::vector<unsigned int>& indices);
 
 EXPORT double GetWidthOfText(Font2DHandle font_handle, std::string text, float size);
+EXPORT double GetWidthOfChatText(Font2DHandle font_handle, std::string text,
+                             float size);
 EXPORT void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
                    std::string text, glm::vec4 color = glm::vec4(1, 1, 1, 1),
                    bool visible = true, bool equal_spacing = false, float spacing = 13.0f);
@@ -127,6 +129,8 @@ EXPORT void Submit(GUIHandle gui_h, glm::vec2 pos, float scale,
 EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale,
                    float rotDegrees, glm::vec3 rotAxis);
 
+EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, glm::mat4 matrix);
+
 EXPORT void SubmitTrail(const std::vector<glm::vec3>& pos_history, float width, glm::vec4 color);
 
 EXPORT Camera& GetCamera();
@@ -139,6 +143,10 @@ EXPORT void SetSSAO(bool val);
 EXPORT void ReloadShaders();
 
 EXPORT void SetInvisibleEffect(bool in_bool);
+
+EXPORT void SetBlackout(bool blackout);
+
+EXPORT void SetSky(const std::string& texture);
 
 /*
  * Render all items submitted this frame

@@ -77,7 +77,6 @@ void glob::Shadows::RenderToMaps(
     std::function<void(ShaderProgram&)> anim_draw_function, Blur& blur) {
   float xrot = 1.f;
   float zrot = 1.f;
-  num_maps_used_ = 4;
   for (int i = 0; i < num_maps_used_; i++) {
     positions_[i] = glm::vec3(xrot * 40.0, 20.0, zrot * 20.0);
     transforms_[i] =

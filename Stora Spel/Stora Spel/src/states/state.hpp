@@ -275,6 +275,7 @@ class PlayState : public State {
   void CreateInitialEntities();
   void CreatePlayerEntities();
   void CreateArenaEntity();
+  void CreateMapEntity();
   void CreateBallEntity();
   void CreateInGameMenu();
   void AddPlayer();
@@ -286,6 +287,7 @@ class PlayState : public State {
   void UpdateSwitchGoalTimer();
 
   void DrawNameOverPlayer();
+  void DrawWallOutline();
 
   void DrawTopScores();
   void DrawTarget();
@@ -321,7 +323,7 @@ class PlayState : public State {
 
   glob::Font2DHandle font_test_ = 0;
   glob::Font2DHandle font_scores_ = 0;
-  glob::E2DHandle e2D_test_, e2D_test2_, e2D_target_;
+  glob::E2DHandle e2D_test_, e2D_test2_, e2D_target_, e2D_outline_;
   glob::GUIHandle in_game_menu_gui_ = 0;
   glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
       gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_, gui_minimap_,

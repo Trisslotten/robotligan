@@ -4,6 +4,7 @@
 #include "..//ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
+#include <util/asset_paths.hpp>
 
 struct ReadyButtonComponent {};
 
@@ -217,7 +218,7 @@ void LobbyState::CreateBackgroundEntities() {
     auto arena = registry_lobby_.create();
     glm::vec3 arena_scale = glm::vec3(4.0f);
     glob::ModelHandle model_arena =
-        glob::GetModel("assets/Map/Map_unified_TMP.fbx");
+        glob::GetModel(kModelPathMapUnified);
     auto& model_c = registry_lobby_.assign<ModelComponent>(arena);
     model_c.handles.push_back(model_arena);
     registry_lobby_.assign<TransformComponent>(arena, zero_vec, zero_vec,
@@ -245,7 +246,7 @@ void LobbyState::CreateBackgroundEntities() {
     auto robot = registry_lobby_.create();
     auto& trans = registry_lobby_.assign<TransformComponent>(
         robot, zero_vec, glm::vec3(0.f, 180.f, 0.f), glm::vec3(0.01f));
-    glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
+    glob::ModelHandle model_robot = glob::GetModel(kModelPathMech);
     auto& model_c = registry_lobby_.assign<ModelComponent>(robot);
     model_c.handles.push_back(model_robot);
     // registry_lobby_.assign<AnimationComponent>(robot,

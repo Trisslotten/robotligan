@@ -155,12 +155,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\Chat.cpp" />
+    <ClCompile Include="src\client replay machine\data_frame.cpp" />
     <ClCompile Include="src\ecs\systems\animation_system.cpp" />
     <ClCompile Include="src\ecs\systems\sound_system.cpp" />
+    <ClCompile Include="src\client replay machine\geometric_replay.cpp" />
     <ClCompile Include="src\engine.cpp" />
     <ClCompile Include="src\entitycreation.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\states\connectmenustate.cpp" />
+    <ClCompile Include="src\client replay machine\client_replay_machine.cpp" />
     <ClCompile Include="src\states\lobbystate.cpp" />
     <ClCompile Include="src\states\mainmenustate.cpp" />
     <ClCompile Include="src\states\playstate.cpp" />
@@ -177,9 +180,16 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="shared\shared\bit_pack.hpp" />
+    <ClInclude Include="shared\shared\fail_safe_arena.hpp" />
     <ClInclude Include="shared\shared\lifetime_component.hpp" />
     <ClInclude Include="shared\shared\physics_component.hpp" />
     <ClInclude Include="shared\shared\pick_up_component.hpp" />
+    <ClInclude Include="shared\shared\projectile_component.hpp" />
+    <ClInclude Include="shared\shared\reg_pack.hpp" />
+    <ClInclude Include="src\client replay machine\client_replay_machine.hpp" />
+    <ClInclude Include="src\client replay machine\data_frame.hpp" />
+    <ClInclude Include="src\client replay machine\geometric_replay.hpp" />
     <ClInclude Include="src\ecs\components.hpp" />
     <ClInclude Include="src\ecs\components\animation_component.hpp" />
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
@@ -195,6 +205,7 @@
     <ClInclude Include="src\ecs\components\slider_component.hpp" />
     <ClInclude Include="src\ecs\components\sound_component.hpp" />
     <ClInclude Include="src\ecs\components\trail_component.hpp" />
+    <ClInclude Include="src\ecs\components\wall_component.hpp" />
     <ClInclude Include="src\ecs\systems\animation_system.hpp" />
     <ClInclude Include="src\ecs\systems\particle_system.hpp" />
     <ClInclude Include="src\ecs\systems\gui_system.hpp" />
@@ -225,6 +236,7 @@
     <ClInclude Include="Entt systems\ability_controller_system.hpp" />
     <ClInclude Include="Entt systems\print_position_system.hpp" />
     <ClInclude Include="src\ecs\systems\trail_system.hpp" />
+    <ClInclude Include="src\util\asset_paths.hpp" />
     <ClInclude Include="util\global_settings.hpp" />
     <ClInclude Include="util\input.hpp" />
     <ClInclude Include="src\ecs\systems\sound_system.hpp" />
@@ -279,6 +291,8 @@
     <None Include="Assets\shaders\fullscreenquad.vert" />
     <None Include="Assets\shaders\shading.vert" />
     <None Include="Assets\shaders\shadow.frag" />
+    <None Include="Assets\shaders\sky.frag" />
+    <None Include="Assets\shaders\sky.vert" />
     <None Include="Assets\shaders\ssao.frag" />
     <None Include="Assets\shaders\ssao.vert" />
     <None Include="Assets\shaders\text2Dshader.frag" />
