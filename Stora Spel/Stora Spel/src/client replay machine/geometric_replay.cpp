@@ -7,13 +7,13 @@
 #include <ecs/components/model_component.hpp>
 #include <ecs/components/player_component.hpp>
 #include <entt.hpp>
-#include <ecs/components.hpp>
 #include <glob/graphics.hpp>
 #include <map>
 #include <shared/pick_up_component.hpp>
 #include <shared/transform_component.hpp>
 #include <util/asset_paths.hpp>
 #include <util/global_settings.hpp>
+#include <engine.hpp>
 #include "eventdispatcher.hpp"
 
 // Private---------------------------------------------------------------------
@@ -272,7 +272,7 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
 
 void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
                                               entt::registry& in_registry) {
-  // Get the first frame of the channel that is tracking the entity 
+  // Get the first frame of the channel that is tracking the entity
   DataFrame* df_ptr =
       this->channels_.at(in_channel_index).entries.at(0).data_ptr;
 
@@ -300,14 +300,18 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
         in_registry.assign<TransformComponent>(entity);
     PlayerComponent& player_c = in_registry.assign<PlayerComponent>(entity);
     PhysicsComponent& phys_c = in_registry.assign<PhysicsComponent>(entity);
-    
 
     // Create and add ModelHandle
     glob::ModelHandle mh_mech = glob::GetModel(kModelPathMech);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     model_c.handles.push_back(mh_mech);
 
-	AnimationComponent& anim_c = in_registry.assign<AnimationComponent>(entity, glob::GetAnimationData(mh_mech));
+    AnimationComponent& anim_c = in_registry.assign<AnimationComponent>(
+        entity, glob::GetAnimationData(mh_mech));
+
+	in_registry.assign<SoundComponent>(
+        entity, engine_->GetSoundEngine().CreatePlayer());
+
     pf_ptr->WriteBack(transform_c, player_c, phys_c);
   } else if (object_type == REPLAY_BALL) {
     BallFrame* bf_ptr = dynamic_cast<BallFrame*>(df_ptr);
@@ -343,7 +347,8 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     in_registry.assign<IDComponent>(
         entity, this->channels_.at(in_channel_index).object_id);
     // - Assign the relevant components to entity
-    TransformComponent& trans_c = in_registry.assign<TransformComponent>(entity);
+    TransformComponent& trans_c =
+        in_registry.assign<TransformComponent>(entity);
     wf_c_ptr->WriteBack(trans_c);
     // - Assign a model component to thew entity
     glob::ModelHandle wall_model = glob::GetModel(kModelPathWall);
@@ -372,9 +377,9 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     //
     TransformComponent& transform_c =
         in_registry.assign<TransformComponent>(entity);
+    TrailComponent& trail_c =
+        in_registry.assign<TrailComponent>(entity, 0.5f, glm::vec4(1, 1, 1, 1));
     tsf_ptr->WriteBack(transform_c);
-
-    // Fix with trail here
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -418,6 +423,7 @@ GeometricReplay* GeometricReplay::Clone() {
   clone->current_frame_number_write_ = this->current_frame_number_write_;
   clone->current_frame_number_read_ = this->current_frame_number_read_;
   clone->captured_events_ = this->captured_events_;
+  clone->engine_ = this->engine_; 
 
   return clone;
 }

@@ -38,7 +38,13 @@ PlayerFrame::PlayerFrame(TransformComponent& in_transform_c,
   this->rotation_ = in_transform_c.rotation;
   this->scale_ = in_transform_c.scale;
 
-  player_c_ = in_player_c_;
+  pc_sprinting_ = in_player_c_.sprinting;
+  pc_running_ = in_player_c_.running;
+  pc_jumping_ = in_player_c_.jumping;
+  pc_vel_dir_ = in_player_c_.vel_dir;
+  pc_look_dir_ = in_player_c_.look_dir;
+  pc_move_dir_ = in_player_c_.move_dir;
+
 
   /*for (auto anim : in_anim_c.active_animations) {
     active_animations_.push_back(anim);
@@ -57,7 +63,12 @@ DataFrame* PlayerFrame::Clone() {
   ret_ptr->rotation_ = this->rotation_;
   ret_ptr->scale_ = this->scale_;
 
-  ret_ptr->player_c_ = this->player_c_;
+  ret_ptr->pc_sprinting_ = this->pc_sprinting_;
+  ret_ptr->pc_jumping_ = this->pc_jumping_;
+  ret_ptr->pc_running_ = this->pc_running_;
+  ret_ptr->pc_vel_dir_ = this->pc_vel_dir_;
+  ret_ptr->pc_look_dir_ = this->pc_look_dir_;
+  ret_ptr->pc_move_dir_ = this->pc_move_dir_;
 
   ret_ptr->velocity_ = this->velocity_;
 
@@ -89,13 +100,13 @@ bool PlayerFrame::ThresholdCheck(DataFrame& in_future_df) {
   }
 
   // ANIMATIONS
-  if (this->player_c_.sprinting != future_pf.player_c_.sprinting) {
+  if (this->pc_sprinting_ != future_pf.pc_sprinting_) {
     return true;
   }
-  if (this->player_c_.running != future_pf.player_c_.running) {
+  if (this->pc_running_ != future_pf.pc_running_) {
     return true;
   }
-  if (this->player_c_.jumping != future_pf.player_c_.jumping) {
+  if (this->pc_jumping_ != future_pf.pc_jumping_) {
     return true;
   }
 
@@ -137,10 +148,20 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
     // point
     if (percentage_a < 0.5) {
       ret_frame->velocity_ = this->velocity_;
-      ret_frame->player_c_ = this->player_c_;
+      ret_frame->pc_sprinting_ = this->pc_sprinting_;
+      ret_frame->pc_jumping_ = this->pc_jumping_;
+      ret_frame->pc_running_ = this->pc_running_;
+      ret_frame->pc_vel_dir_ = this->pc_vel_dir_;
+      ret_frame->pc_look_dir_ = this->pc_look_dir_;
+      ret_frame->pc_move_dir_ = this->pc_move_dir_;
     } else {
       ret_frame->velocity_ = point_b.velocity_;
-      ret_frame->player_c_ = point_b.player_c_;
+      ret_frame->pc_sprinting_ = point_b.pc_sprinting_;
+      ret_frame->pc_jumping_ = point_b.pc_jumping_;
+      ret_frame->pc_running_ = point_b.pc_running_;
+      ret_frame->pc_vel_dir_ = point_b.pc_vel_dir_;
+      ret_frame->pc_look_dir_ = point_b.pc_look_dir_;
+      ret_frame->pc_move_dir_ = point_b.pc_move_dir_;
     }
 
     return ret_frame;
@@ -158,7 +179,12 @@ void PlayerFrame::WriteBack(TransformComponent& in_transform_c,
   in_transform_c.rotation = this->rotation_;
   in_transform_c.scale = this->scale_;
 
-  in_player_c_ = player_c_;
+  in_player_c_.jumping = pc_jumping_;
+  in_player_c_.sprinting = pc_sprinting_;
+  in_player_c_.running = pc_running_;
+  in_player_c_.vel_dir = pc_vel_dir_;
+  in_player_c_.look_dir = pc_look_dir_;
+  in_player_c_.move_dir= pc_move_dir_;
   in_phys_c.velocity = velocity_;
 }
 

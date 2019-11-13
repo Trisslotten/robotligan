@@ -14,17 +14,17 @@
 
 #include <collision.hpp>
 #include <ecs\components\trail_component.hpp>
-#include <shared/fail_safe_arena.hpp>
 #include <physics.hpp>
+#include <shared/fail_safe_arena.hpp>
 #include <shared/physics_component.hpp>
 #include <shared/pick_up_component.hpp>
+#include <util/asset_paths.hpp>
 #include "ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
 #include "eventdispatcher.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
-#include <util/asset_paths.hpp>
 
 void PlayState::Startup() {
   ///////////////////////////////////////////////////////////////
@@ -78,8 +78,8 @@ void PlayState::Startup() {
   glob::GetModel("assets/Pickup/Pickup.fbx");
 }
 
-void PlayState::CreateGoalParticles(float x) {
-  auto e = registry_gameplay_.create();
+void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
+  auto e = registry.create();
   auto handle = glob::CreateParticleSystem();
 
   std::vector handles = {handle};
@@ -93,12 +93,12 @@ void PlayState::CreateGoalParticles(float x) {
   float x_dir = (x > 0) ? -1 : 1;
   glob::SetParticleDirection(handle, glm::vec3(x_dir, 5.f, 0.f));
 
-  e = registry_gameplay_.create();
+  e = registry.create();
   handle = glob::CreateParticleSystem();
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
   glob::SetEmitPosition(handle, glm::vec3(x * 1.0f, 0.f, 15.f));
-  e = registry_gameplay_.create();
+  e = registry.create();
   handle = glob::CreateParticleSystem();
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
@@ -108,10 +108,10 @@ void PlayState::CreateGoalParticles(float x) {
   // glob::SetParticleSettings(handle, map);
   // auto ball_view = registry_gameplay_.view<
 
-  registry_gameplay_.assign<ParticleComponent>(e, handles, offsets, directions);
+  registry.assign<ParticleComponent>(e, handles, offsets, directions);
   // std::cout << handles.size() << " particle systems" << std::endl;
   // Temp
-  registry_gameplay_.assign<int>(e, 0);
+  registry.assign<int>(e, 0);
 }
 
 void PlayState::Init() {
@@ -242,7 +242,7 @@ void PlayState::Update(float dt) {
       glm::vec3 temp =
           lerp(predicted_state_.position, server_predicted_.position, 0.5f);
       trans_c.position = glm::lerp(trans_c.position, temp, 0.8f);
-      //trans_c.position = trans.first;
+      // trans_c.position = trans.first;
       glm::quat orientation =
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
@@ -444,9 +444,9 @@ void PlayState::UpdateNetwork() {
   packet << PacketBlockType::FRAME_ID;
 
   // TEMP: Start recording replay
-  //bool temp = Input::IsKeyPressed(GLFW_KEY_P);
-  //packet << temp;
-  //packet << PacketBlockType::TEST_REPLAY_KEYS;
+  // bool temp = Input::IsKeyPressed(GLFW_KEY_P);
+  // packet << temp;
+  // packet << PacketBlockType::TEST_REPLAY_KEYS;
 }
 
 void PlayState::Cleanup() {
@@ -580,15 +580,15 @@ void PlayState::DrawNameOverPlayer() {
 }
 
 void PlayState::DrawWallOutline() {
-  if (my_primary_ability_id == (int)AbilityID::BUILD_WALL && primary_cd_ <= 0.f || engine_->GetSecondaryAbility() == AbilityID::BUILD_WALL) {
+  if (my_primary_ability_id == (int)AbilityID::BUILD_WALL &&
+          primary_cd_ <= 0.f ||
+      engine_->GetSecondaryAbility() == AbilityID::BUILD_WALL) {
     auto& trans = registry_gameplay_.get<TransformComponent>(my_entity_);
     auto& camera = registry_gameplay_.get<CameraComponent>(my_entity_);
 
-    glm::vec3 pos =
-        camera.GetLookDir() * 4.5f + trans.position + camera.offset;
+    glm::vec3 pos = camera.GetLookDir() * 4.5f + trans.position + camera.offset;
     pos.y = 0.05f;
 
-   
     if (glm::distance(pos, glm::vec3(-40.f, -3.9f, 0.f)) < 20.f ||
         glm::distance(pos, glm::vec3(40.f, -3.9f, 0.f)) < 20.f) {
       return;
@@ -602,11 +602,9 @@ void PlayState::DrawWallOutline() {
     mat = glm::toMat4(trans.rotation) * mat;
     //*glm::toMat4(trans.rotation) *
     //                    glm::scale(glm::vec3(1, 0.f, 5));
-    glob::Submit(
-        e2D_outline_, pos,
-        mat);
+    glob::Submit(e2D_outline_, pos, mat);
 
-    //glob::SubmitCube(glm::translate(pos) *
+    // glob::SubmitCube(glm::translate(pos) *
     //                 glm::toMat4(trans.rotation) *
     //    glm::scale(glm::vec3(1, 0.f, 5)));
   }
@@ -1020,7 +1018,7 @@ void PlayState::Collision() {
     server_predicted_.velocity.y = 0.f;
     my_obb.center.y = arena_hitbox2.arena.ymin + my_obb.extents[1];
   }
-  
+
   // collision with walls
   auto view_walls = registry_gameplay_.view<physics::OBB>();
   for (auto wall : view_walls) {
@@ -1171,7 +1169,7 @@ void PlayState::CreatePlayerEntities() {
         glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
     glm::vec3 character_scale = glm::vec3(0.0033f);
 
-    //glob::ModelHandle player_model = glob::GetModel(kModelPathMech);
+    // glob::ModelHandle player_model = glob::GetModel(kModelPathMech);
 
     registry_gameplay_.assign<IDComponent>(entity, entity_id);
     auto& pc = registry_gameplay_.assign<PlayerComponent>(entity);
@@ -1232,7 +1230,7 @@ void PlayState::CreateArenaEntity() {
   glob::ModelHandle model_map_projectors =
       glob::GetModel("assets/MapV3/Map_Projectors.fbx");
 
-    //glob::GetModel(kModelPathMapSingular);
+  // glob::GetModel(kModelPathMapSingular);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
   model_c.handles.push_back(model_arena);
   model_c.handles.push_back(model_arena_banner);
@@ -1275,9 +1273,8 @@ void PlayState::CreateMapEntity() {
 
   for (auto& v : md.pos) v = matrix * glm::vec4(v, 1.f);
   for (auto& v : md.pos) v *= arena_scale;
-  
 
-   physics::Arena a;
+  physics::Arena a;
   a.xmax = -1;
   a.xmin = 1;
   a.ymax = -1;
@@ -1311,9 +1308,11 @@ void PlayState::CreateBallEntity() {
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f);
   auto ball = registry_gameplay_.create();
-  glob::ModelHandle model_ball_projectors_p = glob::GetModel(kModelPathBallProjectors);
-  glob::ModelHandle model_ball_sphere_p = glob::GetTransparentModel(kModelPathBallSphere);
-  //glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
+  glob::ModelHandle model_ball_projectors_p =
+      glob::GetModel(kModelPathBallProjectors);
+  glob::ModelHandle model_ball_sphere_p =
+      glob::GetTransparentModel(kModelPathBallSphere);
+  // glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
   auto& model_c = registry_gameplay_.assign<ModelComponent>(ball);
   model_c.handles.push_back(model_ball_sphere_p);
   model_c.handles.push_back(model_ball_projectors_p);
@@ -1507,8 +1506,7 @@ void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {
 
   registry_gameplay_.assign<IDComponent>(pick_up, id);
 
-  glob::ModelHandle model_pick_up =
-    glob::GetModel(kModelPathPickup);
+  glob::ModelHandle model_pick_up = glob::GetModel(kModelPathPickup);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(pick_up);
   model_c.handles.push_back(model_pick_up);
 
@@ -1533,7 +1531,8 @@ void PlayState::CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori) {
 
   registry_gameplay_.assign<TransformComponent>(cannonball, pos, ori,
                                                 glm::vec3(0.3f));
-  registry_gameplay_.assign<ProjectileComponent>(cannonball, ProjectileID::CANNON_BALL);
+  registry_gameplay_.assign<ProjectileComponent>(cannonball,
+                                                 ProjectileID::CANNON_BALL);
   registry_gameplay_.assign<IDComponent>(cannonball, id);
 }
 
@@ -1546,8 +1545,8 @@ void PlayState::CreateTeleportProjectile(EntityID id, glm::vec3 pos,
                                             glm::vec4(1, 1, 1, 1));
   registry_gameplay_.assign<TransformComponent>(teleport_projectile, pos, ori,
                                                 glm::vec3(0.3f));
-  registry_gameplay_.assign<ProjectileComponent>(teleport_projectile,
-                                                 ProjectileID::TELEPORT_PROJECTILE);
+  registry_gameplay_.assign<ProjectileComponent>(
+      teleport_projectile, ProjectileID::TELEPORT_PROJECTILE);
   registry_gameplay_.assign<IDComponent>(teleport_projectile, id);
 }
 
@@ -1669,9 +1668,13 @@ void PlayState::SetPlayerMoveDir(EntityID id, glm::vec3 move_dir) {
 }
 
 void PlayState::ReceiveGameEvent(const GameEvent& e) {
+  entt::registry* correct_registry = &registry_gameplay_;
+  if (engine_->IsReplaying()) {
+    correct_registry = engine_->GetCurrentRegistry();
+  }
   switch (e.type) {
     case GameEvent::GOAL: {
-      CreateGoalParticles(e.goal.x);
+      CreateGoalParticles(e.goal.x, *correct_registry);
       break;
     }
     case GameEvent::RESET: {
@@ -1706,7 +1709,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           m_c.invisible = true;
 
           // Particles
-          entt::entity particle_entity = registry_gameplay_.create();
+          entt::entity particle_entity = correct_registry->create();
           glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
           std::vector<glob::ParticleSystemHandle> in_handles;
           std::vector<glm::vec3> in_offsets;
@@ -1717,9 +1720,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           in_handles.push_back(handle);
 
           ParticleComponent& par_c =
-              registry_gameplay_.assign<ParticleComponent>(
+              correct_registry->assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
-          registry_gameplay_.assign<int>(particle_entity, 0);
+          correct_registry->assign<int>(particle_entity, 0);
 
           if (e.invisibility_cast.player_id == my_id_) {
             // TODO: Add effect to let player know it's invisible
@@ -1745,7 +1748,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           m_c.invisible = false;
 
           // Particles
-          entt::entity particle_entity = registry_gameplay_.create();
+          entt::entity particle_entity = correct_registry->create();
           glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
           std::vector<glob::ParticleSystemHandle> in_handles;
           std::vector<glm::vec3> in_offsets;
@@ -1756,9 +1759,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           in_handles.push_back(handle);
 
           ParticleComponent& par_c =
-              registry_gameplay_.assign<ParticleComponent>(
+              correct_registry->assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
-          registry_gameplay_.assign<int>(particle_entity, 0);
+          correct_registry->assign<int>(particle_entity, 0);
 
           if (e.invisibility_end.player_id == my_id_) {
             // TODO: Remove effect to let player know it's visible again
@@ -1769,7 +1772,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       break;
     }
     case GameEvent::FORCE_PUSH_IMPACT: {
-      auto ent = registry_gameplay_.create();
+      auto ent = correct_registry->create();
       auto handle = glob::CreateParticleSystem();
 
       std::vector handles = {handle};
@@ -1791,13 +1794,13 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         }
       }
 
-      registry_gameplay_.assign<ParticleComponent>(ent, handles, offsets,
+      correct_registry->assign<ParticleComponent>(ent, handles, offsets,
                                                    directions);
-      registry_gameplay_.assign<int>(ent, 0);
+      correct_registry->assign<int>(ent, 0);
       break;
     }
     case GameEvent::MISSILE_IMPACT: {
-      auto ent = registry_gameplay_.create();
+      auto ent = correct_registry->create();
       auto handle = glob::CreateParticleSystem();
 
       std::vector handles = {handle};
@@ -1819,9 +1822,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         }
       }
 
-      registry_gameplay_.assign<ParticleComponent>(ent, handles, offsets,
+      correct_registry->assign<ParticleComponent>(ent, handles, offsets,
                                                    directions);
-      registry_gameplay_.assign<int>(ent, 0);
+      correct_registry->assign<int>(ent, 0);
       break;
     }
     case GameEvent::TELEPORT_CAST: {
@@ -1836,7 +1839,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
         if (id_c.id == e.teleport_cast.player_id) {
           // Particles
-          entt::entity particle_entity = registry_gameplay_.create();
+          entt::entity particle_entity = correct_registry->create();
           glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
           std::vector<glob::ParticleSystemHandle> in_handles;
           std::vector<glm::vec3> in_offsets;
@@ -1845,9 +1848,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           glob::SetEmitPosition(handle, t_c.position);
           in_handles.push_back(handle);
           ParticleComponent& par_c =
-              registry_gameplay_.assign<ParticleComponent>(
+              correct_registry->assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
-          registry_gameplay_.assign<int>(particle_entity, 0);
+          correct_registry->assign<int>(particle_entity, 0);
 
           break;
         }
@@ -1866,7 +1869,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
         if (id_c.id == e.teleport_impact.player_id) {
           // Particles
-          entt::entity particle_entity = registry_gameplay_.create();
+          entt::entity particle_entity = correct_registry->create();
           glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
           std::vector<glob::ParticleSystemHandle> in_handles;
           std::vector<glm::vec3> in_offsets;
@@ -1875,9 +1878,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           glob::SetEmitPosition(handle, e.teleport_impact.hit_pos);
           in_handles.push_back(handle);
           ParticleComponent& par_c =
-              registry_gameplay_.assign<ParticleComponent>(
+              correct_registry->assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
-          registry_gameplay_.assign<int>(particle_entity, 0);
+          correct_registry->assign<int>(particle_entity, 0);
           break;
         }
       }
@@ -1916,7 +1919,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       break;
     }
     case GameEvent::GRAVITY_DROP: {
-      auto entity = registry_gameplay_.create();
+      auto entity = correct_registry->create();
       auto handle = glob::CreateParticleSystem();
 
       std::vector handles = {handle};
@@ -1924,9 +1927,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       std::vector<glm::vec3> directions;
       glob::SetParticleSettings(handle, "dust.txt");
 
-      registry_gameplay_.assign<ParticleComponent>(entity, handles, offsets,
+      correct_registry->assign<ParticleComponent>(entity, handles, offsets,
                                                    directions);
-      registry_gameplay_.assign<int>(entity, 0);
+      correct_registry->assign<int>(entity, 0);
       break;
     }
     case GameEvent::BLACKOUT_TRIGGER: {
@@ -1966,7 +1969,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
         if (id_c.id == e.super_kick.player_id) {
           // Particles
-          entt::entity particle_entity = registry_gameplay_.create();
+          entt::entity particle_entity = correct_registry->create();
           glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
           std::vector<glob::ParticleSystemHandle> in_handles;
           std::vector<glm::vec3> in_offsets;
@@ -1976,9 +1979,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           glob::SetEmitPosition(handle, t_c.position);
           in_handles.push_back(handle);
           ParticleComponent& par_c =
-              registry_gameplay_.assign<ParticleComponent>(
+              correct_registry->assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
-          registry_gameplay_.assign<int>(particle_entity, 0);
+          correct_registry->assign<int>(particle_entity, 0);
 
           break;
         }
@@ -1998,29 +2001,20 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 void PlayState::Reset() {
   auto view_particle = registry_gameplay_.view<ParticleComponent>();
   for (auto& entity : view_particle) {
-                                      auto& particle_c =
-                                          view_particle.get(entity);
+    auto& particle_c = view_particle.get(entity);
 
-                                      for (int i = 0;
-                                           i < particle_c.handles.size(); ++i) {
-                                        glob::ResetParticles(
-                                            particle_c.handles[i]);
-                                      }
-                                    }
+    for (int i = 0; i < particle_c.handles.size(); ++i) {
+      glob::ResetParticles(particle_c.handles[i]);
+    }
+  }
 
-                                    auto view_delete =
-                                        registry_gameplay_
-                                            .view<ParticleComponent, int>();
-                                    for (auto& entity : view_delete) {
-                                      auto& particle_c =
-                                          view_delete.get<ParticleComponent>(
-                                              entity);
+  auto view_delete = registry_gameplay_.view<ParticleComponent, int>();
+  for (auto& entity : view_delete) {
+    auto& particle_c = view_delete.get<ParticleComponent>(entity);
 
-                                      for (int i = 0;
-                                           i < particle_c.handles.size(); ++i) {
-                                        glob::DestroyParticleSystem(
-                                            particle_c.handles[i]);
-                                      }
+    for (int i = 0; i < particle_c.handles.size(); ++i) {
+      glob::DestroyParticleSystem(particle_c.handles[i]);
+    }
 
     registry_gameplay_.destroy(entity);
   }
@@ -2038,23 +2032,23 @@ void PlayState::Reset() {
   predicted_state_.velocity = glm::vec3(0.0f);
 }
 
-  void PlayState::EndGame() {
-    end_game_timer_.Restart();
-    game_has_ended_ = true;
-  }
+void PlayState::EndGame() {
+  end_game_timer_.Restart();
+  game_has_ended_ = true;
+}
 
-  void PlayState::OverTime() { overtime_has_started_ = true; }
+void PlayState::OverTime() { overtime_has_started_ = true; }
 
-  void PlayState::AddPitchYaw(float pitch, float yaw) {
-    pitch_ += pitch;
-    yaw_ += yaw;
-    constexpr float pi = glm::pi<float>();
-    pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
-  }
+void PlayState::AddPitchYaw(float pitch, float yaw) {
+  pitch_ += pitch;
+  yaw_ += yaw;
+  constexpr float pi = glm::pi<float>();
+  pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
+}
 
-  void PlayState::SetPitchYaw(float pitch, float yaw) {
-    pitch_ = pitch;
-    yaw_ = yaw;
-    constexpr float pi = glm::pi<float>();
-    pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
-  }
+void PlayState::SetPitchYaw(float pitch, float yaw) {
+  pitch_ = pitch;
+  yaw_ = yaw;
+  constexpr float pi = glm::pi<float>();
+  pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
+}
