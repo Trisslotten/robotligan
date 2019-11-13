@@ -269,6 +269,8 @@ class PlayState : public State {
   void CreateNewBallEntity(bool fake, EntityID id);
   void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
   void SetCountdownInProgress(bool val) { countdown_in_progress_ = val;  }
+  
+  void FetchMapAndArena(entt::registry& in_registry);
 
  private:
   ServerStateType server_state_;
