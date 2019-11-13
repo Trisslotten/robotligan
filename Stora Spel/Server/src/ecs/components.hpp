@@ -5,9 +5,9 @@
 #include "components/ability_component.hpp"
 #include "components/ball_component.hpp"
 #include "components/buff_component.hpp"
-#include "shared/fail_safe_arena.hpp"
+#include <shared/fail_safe_arena.hpp>
 #include "components/player_component.hpp"
-#include "components/projectile_component.hpp"
+#include <shared/projectile_component.hpp>
 #include "components/team_component.hpp"
 #include "components/goal_component.hpp"
 #include "components/health_component.hpp"

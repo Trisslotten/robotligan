@@ -268,6 +268,7 @@ class PlayState : public State {
   void SetTeam(unsigned int team) { my_team_ = team; }
   void CreateNewBallEntity(bool fake, EntityID id);
   void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
+  void SetCountdownInProgress(bool val) { countdown_in_progress_ = val;  }
 
  private:
   ServerStateType server_state_;
@@ -357,6 +358,8 @@ class PlayState : public State {
 
   float timer_ = 0.0f;
   float primary_cd_ = 0.0f;
+
+  bool sprinting_ = false;
 };
 
 #endif  // STATE_HPP_

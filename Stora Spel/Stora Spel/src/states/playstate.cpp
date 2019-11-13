@@ -619,7 +619,7 @@ void PlayState::UpdateSwitchGoalTimer() {
   int count = (int)time;
 
   // Start countdown
-  if (count == 0) {
+  if (time < temp_time) {
     countdown_in_progress_ = true;
   }
 
@@ -705,7 +705,7 @@ void PlayState::UpdateSwitchGoalTimer() {
                  std::to_string(temp_time - count), glm::vec4(0.8));
 
     // After timer reaches zero swap goals
-    if (temp_time - count <= 0) {
+    if (temp_time - time <= 0) {
       auto& blue_light =
           registry_gameplay_.get<LightComponent>(blue_goal_light_);
       blue_light.color = glm::vec3(0.1f, 0.1f, 1.f);
@@ -789,14 +789,14 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action,
       if (a == PlayerAction::WALK_LEFT) {
         accum_velocity -= right;
       }
-      if (a == PlayerAction::SPRINT && current_stamina_ > 60.0f * dt) {
+      if (a == PlayerAction::SPRINT && sprinting_) {
         sprint = true;
       }
       auto& player_c = registry_gameplay_.get<PlayerComponent>(my_entity_);
       if (a == PlayerAction::JUMP && player_c.can_jump) {
         player_c.can_jump = false;
         // Add velocity upwards
-        final_velocity += up * 6.0f;
+        final_velocity += up * 8.0f;
         // Set them to be airborne
         new_state.is_airborne = true;
         // Subtract energy cost from resources
@@ -1528,11 +1528,12 @@ void PlayState::CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori) {
   auto cannonball = registry_gameplay_.create();
 
   glob::ModelHandle model_shot = glob::GetModel(kModelPathRocket);
-    auto& model_c = registry_gameplay_.assign<ModelComponent>(cannonball);
+  auto& model_c = registry_gameplay_.assign<ModelComponent>(cannonball);
   model_c.handles.push_back(model_shot);
 
   registry_gameplay_.assign<TransformComponent>(cannonball, pos, ori,
                                                 glm::vec3(0.3f));
+  registry_gameplay_.assign<ProjectileComponent>(cannonball, ProjectileID::CANNON_BALL);
   registry_gameplay_.assign<IDComponent>(cannonball, id);
 }
 
@@ -1545,6 +1546,8 @@ void PlayState::CreateTeleportProjectile(EntityID id, glm::vec3 pos,
                                             glm::vec4(1, 1, 1, 1));
   registry_gameplay_.assign<TransformComponent>(teleport_projectile, pos, ori,
                                                 glm::vec3(0.3f));
+  registry_gameplay_.assign<ProjectileComponent>(teleport_projectile,
+                                                 ProjectileID::TELEPORT_PROJECTILE);
   registry_gameplay_.assign<IDComponent>(teleport_projectile, id);
 }
 
@@ -1581,6 +1584,7 @@ void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
   registry_gameplay_.assign<IDComponent>(missile_object, id);
   registry_gameplay_.assign<SoundComponent>(missile_object,
                                             sound_engine.CreatePlayer());
+  registry_gameplay_.assign<ProjectileComponent>(missile_object, ProjectileID::MISSILE_OBJECT);
   registry_gameplay_.assign<TrailComponent>(missile_object, 0.2f,
                                             glm::vec4(1.0f, 0.6f, 0.2f, 1.0f));
 }
@@ -1980,6 +1984,14 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           break;
         }
       }
+    }
+    case GameEvent::SPRINT_START: {
+      sprinting_ = true;
+      break;
+    }
+    case GameEvent::SPRINT_END: {
+      sprinting_ = false;
+      break;
     }
   }
 }

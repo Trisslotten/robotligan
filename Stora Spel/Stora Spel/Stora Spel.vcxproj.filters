@@ -98,6 +98,7 @@
     <ClInclude Include="src\ecs\systems\trail_system.hpp" />
     <ClInclude Include="src\ecs\components\wall_component.hpp" />
     <ClInclude Include="shared\shared\fail_safe_arena.hpp" />
+    <ClInclude Include="shared\shared\projectile_component.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

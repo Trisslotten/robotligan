@@ -229,7 +229,7 @@ bool BallFrame::ThresholdCheck(DataFrame& in_future_df) {
 DataFrame* BallFrame::InterpolateForward(unsigned int in_dist_to_target,
                                          unsigned int in_dist_to_point_b,
                                          DataFrame& in_point_b) {
-  // Cast the DataFrame to PlayerFrame
+  // Cast the DataFrame to BallFrame
   try {
     BallFrame& point_b = dynamic_cast<BallFrame&>(in_point_b);
     // Skips forward if std::bad_cast
@@ -448,4 +448,245 @@ void WallFrame::WriteBack(TransformComponent& trans_c) {
   trans_c.rotation = rotation_;
   trans_c.scale =
       glm::vec3(1.f, 4.f, 5.f);  // Values from Playstate -> CreateWall
+}
+
+//##############################
+//			ShotFrame
+//##############################
+
+// Private---------------------------------------------------------------------
+
+// Public----------------------------------------------------------------------
+
+ShotFrame::ShotFrame() {}
+
+ShotFrame::ShotFrame(TransformComponent& in_transform_c) {
+  //
+  this->position_ = in_transform_c.position;
+  this->rotation_ = in_transform_c.rotation;
+  // this->scale_ = in_transform_c.scale;
+}
+
+ShotFrame::~ShotFrame() {}
+
+ShotFrame* ShotFrame::Clone() {
+  ShotFrame* ret_ptr = new ShotFrame();
+
+  ret_ptr->position_ = this->position_;
+  ret_ptr->rotation_ = this->rotation_;
+  // ret_ptr->scale_ = this->scale_;
+
+  return ret_ptr;
+}
+
+bool ShotFrame::ThresholdCheck(DataFrame& in_future_df) { return false; }
+
+DataFrame* ShotFrame::InterpolateForward(unsigned int in_dist_to_target,
+                                         unsigned int in_dist_to_point_b,
+                                         DataFrame& in_point_b) {
+  // Cast the DataFrame to ShotFrame
+  try {
+    ShotFrame& point_b = dynamic_cast<ShotFrame&>(in_point_b);
+    // Skips forward if std::bad_cast
+
+    // INTERPOLATED FRAME
+    ShotFrame* ret_frame = new ShotFrame();
+
+    // RATIO
+    if (in_dist_to_point_b < 1) {
+      // Prevent division on zero
+      in_dist_to_point_b = 1;
+    }
+    float percentage_a = in_dist_to_target / in_dist_to_point_b;
+
+    // INTERPOLATION
+    // vvv
+
+    // POSITION
+    ret_frame->position_ =
+        this->position_ + (point_b.position_ - this->position_) * percentage_a;
+
+    // ROTATION
+    ret_frame->rotation_ =
+        glm::slerp(this->rotation_, point_b.rotation_, percentage_a);
+
+    // SCALE
+    // ret_frame->scale_ = this->scale_;
+
+    return ret_frame;
+
+  } catch (std::bad_cast exp) {
+    GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__, "Bad cast");
+    return nullptr;
+  }
+}
+
+void ShotFrame::WriteBack(TransformComponent& in_transform_c) {
+  in_transform_c.position = this->position_;
+  in_transform_c.rotation = this->rotation_;
+  // in_transform_c.scale = this->scale_;
+  in_transform_c.scale = glm::vec3(0.5f);
+}
+
+//##############################
+//			TeleportShotFrame
+//##############################
+
+// Private---------------------------------------------------------------------
+
+// Public----------------------------------------------------------------------
+
+TeleportShotFrame::TeleportShotFrame() {}
+
+TeleportShotFrame::TeleportShotFrame(TransformComponent& in_transform_c) {
+  this->position_ = in_transform_c.position;
+}
+
+TeleportShotFrame::~TeleportShotFrame() {}
+
+TeleportShotFrame* TeleportShotFrame::Clone() {
+  TeleportShotFrame* ret_ptr = new TeleportShotFrame();
+
+  ret_ptr->position_ = this->position_;
+
+  return ret_ptr;
+}
+
+bool TeleportShotFrame::ThresholdCheck(DataFrame& in_future_df) {
+  return false;
+}
+
+DataFrame* TeleportShotFrame::InterpolateForward(
+    unsigned int in_dist_to_target, unsigned int in_dist_to_point_b,
+    DataFrame& in_point_b) {
+  // Cast the DataFrame to TeleportShotFrame
+  try {
+    TeleportShotFrame& point_b = dynamic_cast<TeleportShotFrame&>(in_point_b);
+    // Skips forward if std::bad_cast
+
+    // INTERPOLATED FRAME
+    TeleportShotFrame* ret_frame = new TeleportShotFrame();
+
+    // RATIO
+    if (in_dist_to_point_b < 1) {
+      // Prevent division on zero
+      in_dist_to_point_b = 1;
+    }
+    float percentage_a = in_dist_to_target / in_dist_to_point_b;
+
+    // INTERPOLATION
+    // vvv
+
+    // POSITION
+    ret_frame->position_ =
+        this->position_ + (point_b.position_ - this->position_) * percentage_a;
+
+    return ret_frame;
+
+  } catch (std::bad_cast exp) {
+    GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__, "Bad cast");
+    return nullptr;
+  }
+}
+
+void TeleportShotFrame::WriteBack(TransformComponent& in_transform_c) {
+  in_transform_c.position = this->position_;
+  in_transform_c.rotation = glm::quat();
+  in_transform_c.scale = glm::vec3(1.0f);
+}
+
+//##############################
+//			TeleportShotFrame
+//##############################
+
+// Private---------------------------------------------------------------------
+
+// Public----------------------------------------------------------------------
+
+MissileFrame::MissileFrame() {}
+
+MissileFrame::MissileFrame(TransformComponent& in_transform_c) {
+  this->position_ = in_transform_c.position;
+  this->rotation_ = in_transform_c.rotation;
+}
+
+MissileFrame::~MissileFrame() {}
+
+MissileFrame* MissileFrame::Clone() {
+  MissileFrame* ret_ptr = new MissileFrame();
+
+  ret_ptr->position_ = this->position_;
+  ret_ptr->rotation_ = this->rotation_;
+
+  return ret_ptr;
+}
+
+bool MissileFrame::ThresholdCheck(DataFrame& in_future_df) {
+  // Cast to BallFrame
+  MissileFrame& future_mf = dynamic_cast<MissileFrame&>(in_future_df);
+
+  float threshold = 0.0f;
+
+  // POSITION
+  float pos_diff = glm::distance(this->position_, future_mf.position_);
+  threshold =
+      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_MISSILE_POSITION");
+  if (pos_diff > threshold) {
+    // If we have moved over the threshold value away
+    return true;
+  }
+
+  // ROTATION
+  float rot_diff = glm::dot(this->rotation_, future_mf.rotation_);
+  threshold =
+      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_MISSILE_ROTATION");
+  if (abs(rot_diff - 1.0f) > threshold) {
+    // If we have rotated more than the theshhold value allows
+    return true;
+  }
+
+  return false;
+}
+
+DataFrame* MissileFrame::InterpolateForward(unsigned int in_dist_to_target,
+                                            unsigned int in_dist_to_point_b,
+                                            DataFrame& in_point_b) {
+  // Cast the DataFrame to MissileFrame
+  try {
+    MissileFrame& point_b = dynamic_cast<MissileFrame&>(in_point_b);
+    // Skips forward if std::bad_cast
+
+    // INTERPOLATED FRAME
+    MissileFrame* ret_frame = new MissileFrame();
+
+    // RATIO
+    if (in_dist_to_point_b < 1) {
+      // Prevent division on zero
+      in_dist_to_point_b = 1;
+    }
+    float percentage_a = in_dist_to_target / in_dist_to_point_b;
+
+    // INTERPOLATION
+    // vvv
+
+    // POSITION
+    ret_frame->position_ =
+        this->position_ + (point_b.position_ - this->position_) * percentage_a;
+
+    // ROTATION
+    ret_frame->rotation_ =
+        glm::slerp(this->rotation_, point_b.rotation_, percentage_a);
+
+    return ret_frame;
+
+  } catch (std::bad_cast exp) {
+    GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__, "Bad cast");
+    return nullptr;
+  }
+}
+
+void MissileFrame::WriteBack(TransformComponent& in_transform_c) {
+  in_transform_c.position = this->position_;
+  in_transform_c.rotation = this->rotation_;
+  in_transform_c.scale = glm::vec3(0.5f);
 }

@@ -24,6 +24,16 @@ ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
     return ReplayObjectType::REPLAY_PICKUP;
   } else if (in_registry.has<WallComponent>(in_entity)) {
     return ReplayObjectType::REPLAY_WALL;
+  } else if (in_registry.has<ProjectileComponent>(in_entity)) {
+    ProjectileComponent& proj_c =
+        in_registry.get<ProjectileComponent>(in_entity);
+    if (proj_c.projectile_id == ProjectileID::CANNON_BALL) {
+      return ReplayObjectType::REPLAY_SHOT;
+    } else if (proj_c.projectile_id == ProjectileID::TELEPORT_PROJECTILE) {
+      return ReplayObjectType::REPLAY_TELEPORT_SHOT;
+    } else if (proj_c.projectile_id == ProjectileID::MISSILE_OBJECT) {
+      return ReplayObjectType::REPLAY_MISSILE;
+    }
   }
 
   // If entity couldn't be identified, return number of types
@@ -81,6 +91,21 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
     ret_ptr = new WallFrame(trans_c);
+  } else if (object_type == REPLAY_SHOT) {
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
+
+    ret_ptr = new ShotFrame(transform_c);
+  } else if (object_type == REPLAY_TELEPORT_SHOT) {
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
+
+    ret_ptr = new TeleportShotFrame(transform_c);
+  } else if (object_type == REPLAY_MISSILE) {
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
+
+    ret_ptr = new MissileFrame(transform_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unidentified entity");
@@ -218,6 +243,30 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
         in_registry.get<TransformComponent>(in_entity);
     // Transfer
     wf_c_ptr->WriteBack(trans_c);
+  } else if (in_type == REPLAY_SHOT) {
+    // Cast
+    ShotFrame* sf_c_ptr = dynamic_cast<ShotFrame*>(in_df_ptr);
+    // Get
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
+    // Transfer
+    sf_c_ptr->WriteBack(transform_c);
+  } else if (in_type == REPLAY_TELEPORT_SHOT) {
+    // Cast
+    TeleportShotFrame* tsf_c_ptr = dynamic_cast<TeleportShotFrame*>(in_df_ptr);
+    // Get
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
+    // Transfer
+    tsf_c_ptr->WriteBack(transform_c);
+  } else if (in_type == REPLAY_MISSILE) {
+    // Cast
+    MissileFrame* mf_c_ptr = dynamic_cast<MissileFrame*>(in_df_ptr);
+    // Get
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
+    // Transfer
+    mf_c_ptr->WriteBack(transform_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -241,7 +290,7 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
   // NTS: DATAFRAME IF CASE
   // - Cast DataFrame to correct type
   // - Assign the relevant components to entity
-  // - Assign a model component to thew entity
+  // - Assign a model component to the entity
   // - Add the relevant ModelHandle:s to entity
   //
   if (object_type == REPLAY_PLAYER) {
@@ -300,6 +349,51 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     // - Add the relevant ModelHandle:s to entity
     model_c.handles.push_back(wall_model);
+  } else if (object_type == REPLAY_SHOT) {
+    ShotFrame* sf_ptr = dynamic_cast<ShotFrame*>(df_ptr);
+    in_registry.assign<IDComponent>(
+        entity, this->channels_.at(in_channel_index).object_id);
+
+    //
+    TransformComponent& transform_c =
+        in_registry.assign<TransformComponent>(entity);
+    sf_ptr->WriteBack(transform_c);
+
+    // Create and add ModelHandle
+    glob::ModelHandle mh_shot = glob::GetModel(kModelPathRocket);
+    ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    model_c.handles.push_back(mh_shot);
+  } else if (object_type == REPLAY_TELEPORT_SHOT) {
+    TeleportShotFrame* tsf_ptr = dynamic_cast<TeleportShotFrame*>(df_ptr);
+    in_registry.assign<IDComponent>(
+        entity, this->channels_.at(in_channel_index).object_id);
+
+    //
+    TransformComponent& transform_c =
+        in_registry.assign<TransformComponent>(entity);
+    tsf_ptr->WriteBack(transform_c);
+
+    // Add trail
+    in_registry.assign<TrailComponent>(entity, 0.5f,
+                                              glm::vec4(1, 1, 1, 1));
+  } else if (object_type == REPLAY_MISSILE) {
+    MissileFrame* mf_ptr = dynamic_cast<MissileFrame*>(df_ptr);
+    in_registry.assign<IDComponent>(
+        entity, this->channels_.at(in_channel_index).object_id);
+
+    //
+    TransformComponent& transform_c =
+        in_registry.assign<TransformComponent>(entity);
+    mf_ptr->WriteBack(transform_c);
+
+    // Create and add ModelHandle
+    glob::ModelHandle mh_missile = glob::GetModel(kModelPathRocket);
+    ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    model_c.handles.push_back(mh_missile);
+
+    // Add trail
+    in_registry.assign<TrailComponent>(entity, 0.2f,
+                                       glm::vec4(1.0f, 0.6f, 0.2f, 1.0f));
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
