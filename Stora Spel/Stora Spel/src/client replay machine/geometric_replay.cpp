@@ -31,6 +31,8 @@ ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
       return ReplayObjectType::REPLAY_SHOT;
     } else if (proj_c.projectile_id == ProjectileID::TELEPORT_PROJECTILE) {
       return ReplayObjectType::REPLAY_TELEPORT_SHOT;
+    } else if (proj_c.projectile_id == ProjectileID::MISSILE_OBJECT) {
+      return ReplayObjectType::REPLAY_MISSILE;
     } else if (proj_c.projectile_id == ProjectileID::FORCE_PUSH_OBJECT) {
       return ReplayObjectType::REPLAY_FORCE_PUSH;
     }
@@ -101,6 +103,11 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
         in_registry.get<TransformComponent>(in_entity);
 
     ret_ptr = new TeleportShotFrame(transform_c);
+  } else if (object_type == REPLAY_MISSILE) {
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
+
+    ret_ptr = new MissileFrame(transform_c);
   } else if (object_type == REPLAY_FORCE_PUSH) {
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
@@ -258,6 +265,14 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
         in_registry.get<TransformComponent>(in_entity);
     // Transfer
     tsf_c_ptr->WriteBack(transform_c);
+  } else if (in_type == REPLAY_MISSILE) {
+    // Cast
+    MissileFrame* mf_c_ptr = dynamic_cast<MissileFrame*>(in_df_ptr);
+    // Get
+    TransformComponent& transform_c =
+        in_registry.get<TransformComponent>(in_entity);
+    // Transfer
+    mf_c_ptr->WriteBack(transform_c);
   } else if (in_type == REPLAY_FORCE_PUSH) {
     // Cast
     ForcePushFrame* fp_c_ptr = dynamic_cast<ForcePushFrame*>(in_df_ptr);
@@ -373,6 +388,27 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
         in_registry.assign<TransformComponent>(entity);
     tsf_ptr->WriteBack(transform_c);
 
+    // Add trail
+    in_registry.assign<TrailComponent>(entity, 0.5f,
+                                              glm::vec4(1, 1, 1, 1));
+  } else if (object_type == REPLAY_MISSILE) {
+    MissileFrame* mf_ptr = dynamic_cast<MissileFrame*>(df_ptr);
+    in_registry.assign<IDComponent>(
+        entity, this->channels_.at(in_channel_index).object_id);
+
+    //
+    TransformComponent& transform_c =
+        in_registry.assign<TransformComponent>(entity);
+    mf_ptr->WriteBack(transform_c);
+
+    // Create and add ModelHandle
+    glob::ModelHandle mh_missile = glob::GetModel(kModelPathRocket);
+    ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    model_c.handles.push_back(mh_missile);
+
+    // Add trail
+    in_registry.assign<TrailComponent>(entity, 0.2f,
+                                       glm::vec4(1.0f, 0.6f, 0.2f, 1.0f));
     // Fix with trail here
   } else if (object_type == REPLAY_FORCE_PUSH) {
     // -Cast DataFrame to correct type
