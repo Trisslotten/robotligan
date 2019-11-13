@@ -662,6 +662,9 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       EntityID id;
       packet >> id;
       play_state_.DestroyEntity(id);
+
+	  // NTS: Notify replay here
+
       break;
     }
     case PacketBlockType::GAME_END: {

@@ -5,13 +5,12 @@
 
 #include "geometric_replay.hpp"
 
-
 class ClientReplayMachine {
  private:
   GeometricReplay* primary_replay_;
   unsigned int replay_length_sec_;
   unsigned int replay_frames_per_sec_;
-  
+
   std::vector<GeometricReplay*> stored_replays_;
   unsigned int selected_replay_index_;
 
@@ -21,7 +20,8 @@ class ClientReplayMachine {
   ~ClientReplayMachine();
 
   void RecordFrame(entt::registry& in_registry);
-  
+  void NotifyDestroyedObject(EntityID in_id, entt::registry& in_registry);
+
   void StoreReplay();
   unsigned int NumberOfStoredReplays() const;
   int CurrentlySelectedReplay() const;
@@ -29,7 +29,6 @@ class ClientReplayMachine {
   void ResetSelectedReplay();
 
   bool LoadFrame(entt::registry& in_registry);
-  
 
   std::string GetSelectedReplayStringTree();
   std::string GetSelectedReplayStringState();

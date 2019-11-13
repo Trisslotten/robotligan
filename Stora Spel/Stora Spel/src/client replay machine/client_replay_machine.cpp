@@ -17,7 +17,6 @@ ClientReplayMachine::ClientReplayMachine(unsigned int in_replay_length_sec,
 
   // ---
   this->selected_replay_index_ = 0;
-
 }
 
 ClientReplayMachine::~ClientReplayMachine() {
@@ -37,6 +36,11 @@ ClientReplayMachine::~ClientReplayMachine() {
 void ClientReplayMachine::RecordFrame(entt::registry& in_registry) {
   // Tell primary replay to save the data
   this->primary_replay_->SaveFrame(in_registry);
+}
+
+void ClientReplayMachine::NotifyDestroyedObject(EntityID in_id,
+                                                entt::registry& in_registry) {
+  this->primary_replay_->SetEndingFrame(in_id, in_registry);
 }
 
 void ClientReplayMachine::StoreReplay() {
@@ -98,7 +102,6 @@ bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
 
   return load_result;
 }
-
 
 std::string ClientReplayMachine::GetSelectedReplayStringTree() {
   if (this->stored_replays_.empty()) {

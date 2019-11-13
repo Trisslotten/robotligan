@@ -161,6 +161,15 @@ void GeometricReplay::InterpolateEntityData(unsigned int in_channel_index,
     }
   }
 
+  //Ed.
+  // If 'a' holds an Ending Frame we do not interpolate
+  // but instead remove the entity from the registry
+  // and return
+  if (this->channels_.at(in_channel_index).entries.at(a_index).ending_entry) {
+    in_registry.destroy(in_entity);
+    return;
+  }
+
   // Interpolate a new frame (allocates memory)
   DataFrame* interpolated_frame_ptr =
       this->InterpolateDataFrame(in_channel_index, a_index, b_index, c_frame);
@@ -226,7 +235,7 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
 
 void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
                                               entt::registry& in_registry) {
-  // Get the first frame of the channel that is tracking the entity 
+  // Get the first frame of the channel that is tracking the entity
   DataFrame* df_ptr =
       this->channels_.at(in_channel_index).entries.at(0).data_ptr;
 
@@ -293,7 +302,8 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     in_registry.assign<IDComponent>(
         entity, this->channels_.at(in_channel_index).object_id);
     // - Assign the relevant components to entity
-    TransformComponent& trans_c = in_registry.assign<TransformComponent>(entity);
+    TransformComponent& trans_c =
+        in_registry.assign<TransformComponent>(entity);
     wf_c_ptr->WriteBack(trans_c);
     // - Assign a model component to thew entity
     glob::ModelHandle wall_model = glob::GetModel(kModelPathWall);
@@ -438,8 +448,12 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
       IDComponent& id_c = in_registry.get<IDComponent>(entity);
 
       if (this->channels_.at(i).object_id == id_c.id) {
-        // If the id is found set the entity's
-        // component data using the interpolation function
+        // -	If the id is found set the entity's
+        // component data using the interpolation function.
+        // -	Or, potentially destroy the entity if the channel
+        // reached an ending frame. This would mean that
+        // the entity will be missing the next time the
+        // view is created
         this->InterpolateEntityData(i, entity, in_registry);
 
         // Note that we found id and jump out of for-loop
@@ -448,9 +462,12 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
       }
     }
 
-    if (id_unfound) {
+    if (id_unfound && !this->channels_.at(i)
+                           .entries.at(this->channels_.at(i).index_a)
+                           .ending_entry) {	//Ed.
       // Create the entity that existed in the replay
-      // but not in the registry
+      // but not in the registry if its point 'a'
+      // (first interpolation index) is not an ending entry
       this->CreateEntityFromChannel(i, in_registry);
     }
   }
@@ -459,6 +476,43 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
   this->current_frame_number_read_++;
 
   return false;
+}
+
+void GeometricReplay::SetEndingFrame(EntityID in_id,
+                                     entt::registry& in_registry) {
+  // Loop through the channels and search
+  // for the given id
+  bool unfound = true;
+  for (unsigned int i = 0; i < this->channels_.size(); i++) {
+    if (in_id == this->channels_.at(i).object_id) {
+      // If a channel is found, fetch the entity
+      // from the registry
+      entt::basic_view view = in_registry.view<IDComponent>();
+      entt::entity target;
+      for (entt::entity entity : view) {
+        IDComponent& id_c = in_registry.get<IDComponent>(entity);
+        if (in_id == id_c.id) {
+          // Create a ChannelEntry for the ending frame
+          // and push it into the FrameChannel
+          ChannelEntry ending_ce;
+          this->FillChannelEntry(ending_ce, entity, in_registry);
+		  //Edit it to be an Ending Entry
+          ending_ce.ending_entry = true;
+
+          this->channels_.at(i).entries.push_back(ending_ce);
+        }
+      }
+
+      unfound = false;
+    }
+  }
+
+  // If still unfound, spit out an error
+  if (unfound) {
+    GlobalSettings::Access()->WriteError(
+        __FILE__, __FUNCTION__,
+        "Tried to set ending frame for non-existing object");
+  }
 }
 
 void GeometricReplay::SetReadFrameToStart() {
