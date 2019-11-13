@@ -1524,9 +1524,9 @@ void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {
 void PlayState::CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori) {
   auto cannonball = registry_gameplay_.create();
 
-  glob::ModelHandle model_ball = glob::GetModel(kModelPathBall);
+  glob::ModelHandle model_shot = glob::GetModel(kModelPathRocket);
     auto& model_c = registry_gameplay_.assign<ModelComponent>(cannonball);
-  model_c.handles.push_back(model_ball);
+  model_c.handles.push_back(model_shot);
 
   registry_gameplay_.assign<TransformComponent>(cannonball, pos, ori,
                                                 glm::vec3(0.3f));
@@ -1570,9 +1570,9 @@ void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
 
   auto missile_object = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glob::ModelHandle model_ball = glob::GetModel(kModelPathRocket);
+  glob::ModelHandle model_missile = glob::GetModel(kModelPathRocket);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(missile_object);
-  model_c.handles.push_back(model_ball);
+  model_c.handles.push_back(model_missile);
   registry_gameplay_.assign<TransformComponent>(missile_object, pos, ori,
                                                 glm::vec3(0.5f));
   registry_gameplay_.assign<IDComponent>(missile_object, id);
