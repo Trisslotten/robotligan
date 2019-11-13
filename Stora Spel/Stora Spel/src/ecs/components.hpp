@@ -13,9 +13,9 @@
 #include <shared/camera_component.hpp>
 #include <shared/physics_component.hpp>
 #include <shared/id_component.hpp>
+#include <shared/projectile_component.hpp>
 #include "components/sound_component.hpp"
 #include "components/slider_component.hpp"
 #include "components/trail_component.hpp"
 #include "components/wall_component.hpp"
-
 #endif COMPONENTS_HPP_

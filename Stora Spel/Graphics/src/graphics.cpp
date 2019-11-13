@@ -1399,6 +1399,14 @@ void Render() {
                                 e2D_item.rot);
     }
 
+    // render particles
+    particle_shader.use();
+    particle_shader.uniform("cam_transform", cam_transform);
+    particle_shader.uniform("cam_pos", camera.GetPosition());
+    particle_shader.uniform("cam_up", camera.GetUpVector());
+    for (auto p : particles_to_render) {
+      buffer_particle_systems[p].system.Draw(particle_shader);
+    }
     // draw sky
     sky_shader.use();
     glm::mat4 view = glm::mat3(camera.GetViewMatrix());
@@ -1434,14 +1442,6 @@ void Render() {
                           text3D.color, text3D.rotation);
     }
 
-    // render particles
-    particle_shader.use();
-    particle_shader.uniform("cam_transform", cam_transform);
-    particle_shader.uniform("cam_pos", camera.GetPosition());
-    particle_shader.uniform("cam_up", camera.GetUpVector());
-    for (auto p : particles_to_render) {
-      buffer_particle_systems[p].system.Draw(particle_shader);
-    }
 
     trail_shader.use();
     trail_shader.uniform("cam_transform", cam_transform);

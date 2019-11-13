@@ -15,7 +15,7 @@
 #include "collision.hpp"
 #include "ecs/components.hpp"
 #include "ecs/components/pick_up_event.hpp"
-#include "ecs/components/projectile_component.hpp"
+#include "shared/projectile_component.hpp"
 #include "ecs/systems/missile_system.hpp"
 #include "shared/fail_safe_arena.hpp"
 #include "shared/id_component.hpp"
@@ -160,8 +160,7 @@ void UpdateCollisions(entt::registry& registry) {
         ball_ball.prev_touch = ball_ball.last_touch;
         ball_ball.last_touch = player_player.client_id;
 
-       EndHomingBall(registry, ball_entity);
-
+        EndHomingBall(registry, ball_entity);
         ball_ball.homer_cid = -1;
         // missile_system::SetBallsAreHoming(false);
       }
@@ -307,7 +306,7 @@ void PlayerBallCollision(entt::registry& registry,
   if (ball_speed < player_speed) {
     ball_physics.velocity =
         object.normal *
-        (glm::dot(player_physics.velocity, object.normal) + 1.f);
+        (glm::dot(player_physics.velocity, object.normal));
 
   } else {
     BallCollision(&ball_physics, object.normal);  // player_physics.velocity);
@@ -809,18 +808,25 @@ void ProjectileBallCollision(entt::registry& registry, entt::entity ball) {
 }
 
 void ProjectileArenaCollision(entt::registry& registry) {
-  auto view_arena = registry.view<FailSafeArenaComponent>();
+  auto view_arena =
+      registry.view<FailSafeArenaComponent, physics::MeshHitbox>();
   auto view_projectile =
       registry.view<physics::Sphere, ProjectileComponent, IDComponent>();
 
   for (auto arena : view_arena) {
-    auto& arena_hitbox = view_arena.get(arena);
+    auto& arena_hitbox = view_arena.get < physics::MeshHitbox>(arena);
+    auto& fail_safe_arena_hitbox = view_arena.get<FailSafeArenaComponent>(arena);
     for (auto projectile : view_projectile) {
       auto& proj_hitbox = view_projectile.get<physics::Sphere>(projectile);
       auto& proj_id = view_projectile.get<ProjectileComponent>(projectile);
       auto& id_c = view_projectile.get<IDComponent>(projectile);
 
-      physics::IntersectData data = Intersect(arena_hitbox.arena, proj_hitbox);
+      physics::IntersectData data = Intersect(arena_hitbox, proj_hitbox);
+
+      if (data.collision == false) {
+        data = Intersect(fail_safe_arena_hitbox.arena, proj_hitbox);
+      }
+
       if (data.collision) {
         switch (proj_id.projectile_id) {
           case ProjectileID::CANNON_BALL: {
@@ -1020,11 +1026,13 @@ void EndHomingBall(entt::registry& registry, entt::entity& in_ball) {
   BallComponent& ball_c = registry.get<BallComponent>(in_ball);
   ball_c.is_homing = false;
   // Save game event
-  IDComponent& ball_id_c = registry.get<IDComponent>(in_ball);
-  GameEvent homing_ball_end_event;
-  homing_ball_end_event.type = GameEvent::HOMING_BALL_END;
-  homing_ball_end_event.homing_ball_end.ball_id = ball_id_c.id;
-  dispatcher.trigger(homing_ball_end_event);
+  if (registry.has<IDComponent>(in_ball)) {
+    IDComponent& ball_id_c = registry.get<IDComponent>(in_ball);
+    GameEvent homing_ball_end_event;
+    homing_ball_end_event.type = GameEvent::HOMING_BALL_END;
+    homing_ball_end_event.homing_ball_end.ball_id = ball_id_c.id;
+    dispatcher.trigger(homing_ball_end_event);
+  }
 }
 
 void DestroyEntity(entt::registry& registry, entt::entity entity) {
