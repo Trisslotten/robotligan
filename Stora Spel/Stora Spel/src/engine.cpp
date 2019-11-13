@@ -912,6 +912,8 @@ void Engine::BeginReplay() {
   if (!this->replaying_) {
     this->registry_on_hold_ = this->registry_current_;
     this->registry_replay_ = new entt::registry;
+    this->play_state_
+        .FetchMapAndArena(*(this->registry_replay_));
     this->registry_current_ = this->registry_replay_;
 
     this->replaying_ = true;
