@@ -7,6 +7,9 @@
 #include <shared/transform_component.hpp>
 #include <util/asset_paths.hpp>
 #include <util/global_settings.hpp>
+
+#include <iostream>
+
 // Private---------------------------------------------------------------------
 ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
                                                  entt::registry& in_registry) {
@@ -161,11 +164,12 @@ void GeometricReplay::InterpolateEntityData(unsigned int in_channel_index,
     }
   }
 
-  //Ed.
+  // Ed.
   // If 'a' holds an Ending Frame we do not interpolate
   // but instead remove the entity from the registry
   // and return
   if (this->channels_.at(in_channel_index).entries.at(a_index).ending_entry) {
+    std::cout << "Destroyed entity\n";
     in_registry.destroy(in_entity);
     return;
   }
@@ -464,7 +468,7 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
 
     if (id_unfound && !this->channels_.at(i)
                            .entries.at(this->channels_.at(i).index_a)
-                           .ending_entry) {	//Ed.
+                           .ending_entry) {  // Ed.
       // Create the entity that existed in the replay
       // but not in the registry if its point 'a'
       // (first interpolation index) is not an ending entry
@@ -480,6 +484,8 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
 
 void GeometricReplay::SetEndingFrame(EntityID in_id,
                                      entt::registry& in_registry) {
+  std::cout << "Setting ending frame\n";
+
   // Loop through the channels and search
   // for the given id
   bool unfound = true;
@@ -496,7 +502,7 @@ void GeometricReplay::SetEndingFrame(EntityID in_id,
           // and push it into the FrameChannel
           ChannelEntry ending_ce;
           this->FillChannelEntry(ending_ce, entity, in_registry);
-		  //Edit it to be an Ending Entry
+          // Edit it to be an Ending Entry
           ending_ce.ending_entry = true;
 
           this->channels_.at(i).entries.push_back(ending_ce);

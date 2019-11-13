@@ -663,7 +663,11 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> id;
       play_state_.DestroyEntity(id);
 
-	  // NTS: Notify replay here
+	  //If we are recording
+	  //notify replay machine
+      if (this->recording_) {
+        this->replay_machine_->NotifyDestroyedObject(id, *(this->registry_current_));
+      }
 
       break;
     }
