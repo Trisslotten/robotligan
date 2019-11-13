@@ -90,6 +90,8 @@ class Engine {
   std::unordered_map<PlayerID, PlayerStatInfo> GetPlayerScores() {
     return player_scores_;
   }
+
+  bool IsRecording() { return recording_; }
  private:
   void SetKeybinds();
 

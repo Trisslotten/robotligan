@@ -1,12 +1,21 @@
 #include "geometric_replay.hpp"
 
 #include <ecs/components.hpp>
+#include <map>
+
+#include <ecs/components.hpp>
+#include <ecs/components/ball_component.hpp>
+#include <ecs/components/model_component.hpp>
+#include <ecs/components/player_component.hpp>
+#include <entt.hpp>
 #include <glob/graphics.hpp>
 #include <map>
 #include <shared/pick_up_component.hpp>
 #include <shared/transform_component.hpp>
 #include <util/asset_paths.hpp>
 #include <util/global_settings.hpp>
+#include "eventdispatcher.hpp"
+
 // Private---------------------------------------------------------------------
 ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
                                                  entt::registry& in_registry) {
@@ -77,8 +86,9 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
     PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
+    PhysicsComponent& phys_c = in_registry.get<PhysicsComponent>(in_entity);
 
-    ret_ptr = new PlayerFrame(transform_c, player_c);
+    ret_ptr = new PlayerFrame(transform_c, player_c, phys_c);
   } else if (object_type == REPLAY_BALL) {
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
@@ -225,8 +235,10 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
     PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
+    PhysicsComponent& phys_c = in_registry.get<PhysicsComponent>(in_entity);
+
     // Transfer
-    pf_c_ptr->WriteBack(transform_c, player_c);
+    pf_c_ptr->WriteBack(transform_c, player_c, phys_c);
   } else if (in_type == REPLAY_BALL) {
     // Cast
     BallFrame* bf_c_ptr = dynamic_cast<BallFrame*>(in_df_ptr);
@@ -316,12 +328,17 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     TransformComponent& transform_c =
         in_registry.assign<TransformComponent>(entity);
     PlayerComponent& player_c = in_registry.assign<PlayerComponent>(entity);
-    pf_ptr->WriteBack(transform_c, player_c);
+    PhysicsComponent& phys_c = in_registry.assign<PhysicsComponent>(entity);
+    
 
     // Create and add ModelHandle
     glob::ModelHandle mh_mech = glob::GetModel(kModelPathMech);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     model_c.handles.push_back(mh_mech);
+    model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
+
+	AnimationComponent& anim_c = in_registry.assign<AnimationComponent>(entity, glob::GetAnimationData(mh_mech));
+    pf_ptr->WriteBack(transform_c, player_c, phys_c);
   } else if (object_type == REPLAY_BALL) {
     BallFrame* bf_ptr = dynamic_cast<BallFrame*>(df_ptr);
     in_registry.assign<IDComponent>(
@@ -439,6 +456,13 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
   }
 }
 
+void GeometricReplay::ReceiveGameEvent(GameEvent event) {
+  CapturedGameEvent cge;
+  cge.event = event;
+  cge.frame_number = current_frame_number_write_;
+  captured_events_.push_back(cge);
+}
+
 // Protected-------------------------------------------------------------------
 
 GeometricReplay::GeometricReplay() {
@@ -468,6 +492,7 @@ GeometricReplay* GeometricReplay::Clone() {
   clone->threshhold_age_ = this->threshhold_age_;
   clone->current_frame_number_write_ = this->current_frame_number_write_;
   clone->current_frame_number_read_ = this->current_frame_number_read_;
+  clone->captured_events_ = this->captured_events_;
 
   return clone;
 }
@@ -588,6 +613,15 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
     }
   }
 
+  if (next_index_to_read_ < captured_events_.size()) {
+    while (captured_events_[next_index_to_read_].frame_number ==
+           current_frame_number_read_) {
+      dispatcher.trigger(captured_events_[next_index_to_read_].event);
+      printf("Triggered event of type: %i \n",
+             captured_events_[next_index_to_read_].event.type);
+      next_index_to_read_++;
+    }
+  }
   // Increment read index
   this->current_frame_number_read_++;
 
