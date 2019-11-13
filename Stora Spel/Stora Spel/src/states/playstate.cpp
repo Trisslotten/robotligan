@@ -619,7 +619,7 @@ void PlayState::UpdateSwitchGoalTimer() {
   int count = (int)time;
 
   // Start countdown
-  if (count == 0) {
+  if (time < temp_time) {
     countdown_in_progress_ = true;
   }
 
@@ -705,7 +705,7 @@ void PlayState::UpdateSwitchGoalTimer() {
                  std::to_string(temp_time - count), glm::vec4(0.8));
 
     // After timer reaches zero swap goals
-    if (temp_time - count <= 0) {
+    if (temp_time - time <= 0) {
       auto& blue_light =
           registry_gameplay_.get<LightComponent>(blue_goal_light_);
       blue_light.color = glm::vec3(0.1f, 0.1f, 1.f);
@@ -789,14 +789,14 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action,
       if (a == PlayerAction::WALK_LEFT) {
         accum_velocity -= right;
       }
-      if (a == PlayerAction::SPRINT && current_stamina_ > 60.0f * dt) {
+      if (a == PlayerAction::SPRINT && sprinting_) {
         sprint = true;
       }
       auto& player_c = registry_gameplay_.get<PlayerComponent>(my_entity_);
       if (a == PlayerAction::JUMP && player_c.can_jump) {
         player_c.can_jump = false;
         // Add velocity upwards
-        final_velocity += up * 6.0f;
+        final_velocity += up * 8.0f;
         // Set them to be airborne
         new_state.is_airborne = true;
         // Subtract energy cost from resources
@@ -1981,6 +1981,14 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           break;
         }
       }
+    }
+    case GameEvent::SPRINT_START: {
+      sprinting_ = true;
+      break;
+    }
+    case GameEvent::SPRINT_END: {
+      sprinting_ = false;
+      break;
     }
   }
 }
