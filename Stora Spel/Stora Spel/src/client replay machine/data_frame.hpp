@@ -124,7 +124,7 @@ class WallFrame : public DataFrame {
   void WriteBack(TransformComponent& trans_c);
 
 };
-#endif  // DATA_FRAME_HPP_
+
 //---
 
 class ShotFrame : public DataFrame {
