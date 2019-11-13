@@ -54,9 +54,6 @@
     <ClInclude Include="src\ecs\components\ball_component.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\ecs\components\projectile_component.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\ecs\components.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

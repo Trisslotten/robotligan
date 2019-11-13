@@ -124,4 +124,26 @@ class WallFrame : public DataFrame {
   void WriteBack(TransformComponent& trans_c);
 
 };
+
+//---
+
+class ShotFrame : public DataFrame {
+ protected:
+  glm::vec3 position_;
+  glm::quat rotation_;
+
+ public:
+  ShotFrame();
+  ShotFrame(TransformComponent& in_transform_c);
+  ~ShotFrame();
+
+  ShotFrame* Clone();
+
+  bool ThresholdCheck(DataFrame& in_future_df);
+  DataFrame* InterpolateForward(unsigned int in_dist_to_target,
+                                unsigned int in_dist_to_point_b,
+                                DataFrame& in_point_b);
+  void WriteBack(TransformComponent& in_transform_c);
+};
+
 #endif  // DATA_FRAME_HPP_

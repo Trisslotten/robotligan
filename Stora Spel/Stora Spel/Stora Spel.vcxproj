@@ -185,6 +185,7 @@
     <ClInclude Include="shared\shared\lifetime_component.hpp" />
     <ClInclude Include="shared\shared\physics_component.hpp" />
     <ClInclude Include="shared\shared\pick_up_component.hpp" />
+    <ClInclude Include="shared\shared\projectile_component.hpp" />
     <ClInclude Include="shared\shared\reg_pack.hpp" />
     <ClInclude Include="src\client replay machine\client_replay_machine.hpp" />
     <ClInclude Include="src\client replay machine\data_frame.hpp" />

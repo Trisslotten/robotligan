@@ -14,6 +14,7 @@ enum ReplayObjectType {
   REPLAY_BALL,
   REPLAY_PICKUP,
   REPLAY_WALL,
+  REPLAY_SHOT,
   NUM_OF_REPLAY_OBJECT_TYPES  // End
 };
 
