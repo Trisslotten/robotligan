@@ -827,7 +827,7 @@ void ProjectileArenaCollision(entt::registry& registry) {
       auto& id_c = view_projectile.get<IDComponent>(projectile);
 
       physics::IntersectData data = Intersect(arena_hitbox, proj_hitbox);
-      if (data.collision == false || true) {
+      if (data.collision == false) {
         data = Intersect(fail_safe_arena_hitbox.arena, proj_hitbox);
       }
 
