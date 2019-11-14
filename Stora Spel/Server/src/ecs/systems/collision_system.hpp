@@ -174,6 +174,10 @@ void UpdateCollisions(entt::registry& registry) {
 
   
   // check player collision
+  // collision with arena and projectiles
+  ProjectileArenaCollision(registry);
+  // Collision between player and projectile
+  PlayerProjectileCollision(registry);
   // Collision between player and player
   PlayerPlayerCollision(registry);
   // Collision between Player and Arena
@@ -189,10 +193,7 @@ void UpdateCollisions(entt::registry& registry) {
   }
   BallBallCollision(registry);
 
-  // collision with arena and projectiles
-  ProjectileArenaCollision(registry);
-  // Collision between player and projectile
-  PlayerProjectileCollision(registry);
+ 
   // NEEDS TO BE CALLED LAST
   UpdateTransform(registry);
 
@@ -540,7 +541,7 @@ void PlayerArenaCollision(entt::registry& registry) {
         data = Intersect(arena_hitbox2.arena, player_hitbox);
       if (data.collision) {
         player_hitbox.center += data.move_vector;
-        if (data.normal.y > 0.25) {
+        if (data.normal.y > 0.25 && physics_c.velocity.y < 0) {
           physics_c.velocity.y = 0.f;
           auto& player_c = registry.get<PlayerComponent>(player);
           // save game event
@@ -551,7 +552,7 @@ void PlayerArenaCollision(entt::registry& registry) {
             dispatcher.trigger(land_event);
 			player_c.can_jump = true;
           }
-        } else if (data.move_vector.y < 0.0f && physics_c.velocity.y < 0) {
+        } else if (data.move_vector.y < 0.0f) {
           physics_c.velocity.y = 0.f;
         }
       }
@@ -562,7 +563,8 @@ void PlayerArenaCollision(entt::registry& registry) {
       player_hitbox.center.x = arena_hitbox2.arena.xmin + 0.9f;
     }
 
-    if (player_hitbox.center.y - player_hitbox.extents[1] <= arena_hitbox2.arena.ymin) {
+    if (player_hitbox.center.y - player_hitbox.extents[1] <=
+            arena_hitbox2.arena.ymin && physics_c.velocity.y < 0) {
       physics_c.velocity.y = 0.0f;
       player_hitbox.center.y =
           arena_hitbox2.arena.ymin + player_hitbox.extents[1];
