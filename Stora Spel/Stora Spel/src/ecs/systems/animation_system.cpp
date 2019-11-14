@@ -123,29 +123,31 @@ void AnimationSystem::PlayAnimation(std::string name, float speed,
   p_anim->time_ = 0;
   p_anim->strength_ = strength;
 
-  if (bodyInclude != nullptr) {
-    for (int i = 0; i < bodyInclude->size(); i++) {
-      bool found = false;
-      for (int j = 0; j < p_anim->body_include_->size(); j++) {
-        if (bodyInclude->at(i) == p_anim->body_include_->at(j)) {
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        if (bodyExclude != nullptr) {
-          bool excluded = false;
-          for (int j = 0; j < bodyExclude->size(); j++) {
-            if (bodyInclude->at(i) == bodyExclude->at(j)) {
-              excluded = true;
-              break;
-            }
+  if (ac->model_data.humanoid) {
+    if (bodyInclude != nullptr) {
+      for (int i = 0; i < bodyInclude->size(); i++) {
+        bool found = false;
+        for (int j = 0; j < p_anim->body_include_->size(); j++) {
+          if (bodyInclude->at(i) == p_anim->body_include_->at(j)) {
+            found = true;
+            break;
           }
-          if (!excluded) {
+        }
+        if (!found) {
+          if (bodyExclude != nullptr) {
+            bool excluded = false;
+            for (int j = 0; j < bodyExclude->size(); j++) {
+              if (bodyInclude->at(i) == bodyExclude->at(j)) {
+                excluded = true;
+                break;
+              }
+            }
+            if (!excluded) {
+              p_anim->body_include_->push_back(bodyInclude->at(i));
+            }
+          } else {
             p_anim->body_include_->push_back(bodyInclude->at(i));
           }
-        } else {
-          p_anim->body_include_->push_back(bodyInclude->at(i));
         }
       }
     }
@@ -205,158 +207,168 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
     auto& ph = players.get<PhysicsComponent>(entity);
     auto& m = players.get<ModelComponent>(entity);
 
-    if (ac.init) {
-      PlayAnimation("Resting", 0.5f, &ac, 10, 1.f, LOOP);
-
-      PlayAnimation("LookUp", 0.5f, &ac, 21, 0.f, LOOP,
-                    &ac.model_data.upperBody, &ac.model_data.arms);
-      PlayAnimation("LookDown", 0.5f, &ac, 21, 0.f, LOOP,
-                    &ac.model_data.upperBody, &ac.model_data.arms);
-      PlayAnimation("LookLeft", 0.5f, &ac, 21, 0.f, LOOP,
-                    &ac.model_data.upperBody, &ac.model_data.arms);
-      PlayAnimation("LookRight", 0.5f, &ac, 21, 0.f, LOOP,
-                    &ac.model_data.upperBody, &ac.model_data.arms);
-      PlayAnimation("LookAhead", 1.f, &ac, 21, 0.f, LOOP,
-                    &ac.model_data.upperBody, &ac.model_data.arms);
-      ac.init = false;
-    }
-
-    glm::vec3 LRlookDir =
-        glm::normalize(pl.look_dir * glm::vec3(1.f, 0.f, 1.f));
-    glm::vec3 UDlookDir = glm::normalize(pl.look_dir);
-    glm::vec3 moveDir;
-    if (abs(ph.velocity.x) > 0.01 || abs(ph.velocity.y > 0.01) ||
-        abs(ph.velocity.z > 0.01)) {
-      moveDir = ph.velocity;
-      pl.vel_dir = moveDir;
-    } else {
-      moveDir = pl.vel_dir;
-    }
-    // SLIDE ANIMATIONS
-    constexpr float pi = glm::pi<float>();
-    if (!pl.sprinting) {
-      glm::quat offset = -t.rotation;
-
-      float yaw = atan2(moveDir.x, moveDir.z);
-      offset += glm::quat(glm::vec3(0.f, yaw - pi / 2.f, 0.f));
-
-      m.rot_offset = offset;
-
-      float strength = 0.f;
-      float totStrength = 0.f;
-      for (int i = 0; i < 4; i++) {
-        int anim = GetActiveAnimationByName(look_anims_[i], &ac);
-        switch (i) {
-          case 0: {  // U
-            strength = glm::clamp(glm::dot(glm::vec3(0.f, 1.f, 0.f), UDlookDir),
-                                  0.f, 1.f);
-            break;
-          }
-          case 1: {  // D
-            strength = glm::clamp(
-                glm::dot(glm::vec3(0.f, -1.f, 0.f), UDlookDir), 0.f, 1.f);
-            break;
-          }
-          case 2: {  // R
-            strength =
-                abs(std::clamp(glm::dot(glm::vec3(1.f, 0.f, 0.f) * (t.rotation),
-                                        glm::vec3(0.f, 0.f, 1.f) *
-                                            (t.rotation + m.rot_offset) / 1.5f),
-                               -1.f, 0.f));
-            break;
-          }
-          case 3: {  // L
-            strength =
-                std::clamp(glm::dot(glm::vec3(1.f, 0.f, 0.f) * (t.rotation),
-                                    glm::vec3(0.f, 0.f, 1.f) *
-                                        (t.rotation + m.rot_offset) / 1.5f),
-                           0.f, 1.f);
-            break;
-          }
-        }
-        totStrength += strength;
-        ac.active_animations.at(anim)->strength_ = strength;
+    if (pl.localPlayer) {
+      if (ac.init) {
+        PlayAnimation("Resting", 1.f, &ac, 10, 1.f, LOOP);
+        ac.init = false;
       }
-      float LAStrength = 1.f - glm::clamp(totStrength, 0.f, 1.f);
-      int LAAnim = GetActiveAnimationByName("LookAhead", &ac);
-      ac.active_animations.at(LAAnim)->strength_ = LAStrength;
 
-    } else {
-      m.rot_offset = glm::quat();
+    }else{
+      if (ac.init) {
+        PlayAnimation("Resting", 0.5f, &ac, 10, 1.f, LOOP);
 
-      float strength = 0.f;
-      float totStrength = 0.f;
-      float cutoffSpeed = 5.f;
-      float speed = glm::length(ph.velocity);
-      glm::vec3 h_lookDir;
-      for (int i = 0; i < 4; i++) {
-        int anim = GetActiveAnimationByName(slide_anims_[i], &ac);
-        switch (i) {
-          case 0: {  // F
-            h_lookDir = glm::normalize(LRlookDir);
-            strength = std::clamp(glm::dot(h_lookDir, moveDir), 0.f, 1.f);
-            break;
+        PlayAnimation("LookUp", 0.5f, &ac, 21, 0.f, LOOP,
+                      &ac.model_data.upperBody, &ac.model_data.arms);
+        PlayAnimation("LookDown", 0.5f, &ac, 21, 0.f, LOOP,
+                      &ac.model_data.upperBody, &ac.model_data.arms);
+        PlayAnimation("LookLeft", 0.5f, &ac, 21, 0.f, LOOP,
+                      &ac.model_data.upperBody, &ac.model_data.arms);
+        PlayAnimation("LookRight", 0.5f, &ac, 21, 0.f, LOOP,
+                      &ac.model_data.upperBody, &ac.model_data.arms);
+        PlayAnimation("LookAhead", 1.f, &ac, 21, 0.f, LOOP,
+                      &ac.model_data.upperBody, &ac.model_data.arms);
+        ac.init = false;
+      }
+
+      glm::vec3 LRlookDir =
+          glm::normalize(pl.look_dir * glm::vec3(1.f, 0.f, 1.f));
+      glm::vec3 UDlookDir = glm::normalize(pl.look_dir);
+      glm::vec3 moveDir;
+      if (abs(ph.velocity.x) > 0.01 || abs(ph.velocity.y > 0.01) ||
+          abs(ph.velocity.z > 0.01)) {
+        moveDir = ph.velocity;
+        pl.vel_dir = moveDir;
+      } else {
+        moveDir = pl.vel_dir;
+      }
+      // SLIDE ANIMATIONS
+      constexpr float pi = glm::pi<float>();
+      if (!pl.sprinting) {
+        glm::quat offset = -t.rotation;
+
+        float yaw = atan2(moveDir.x, moveDir.z);
+        offset += glm::quat(glm::vec3(0.f, yaw - pi / 2.f, 0.f));
+
+        m.rot_offset = offset;
+
+        float strength = 0.f;
+        float totStrength = 0.f;
+        for (int i = 0; i < 4; i++) {
+          int anim = GetActiveAnimationByName(look_anims_[i], &ac);
+          switch (i) {
+            case 0: {  // U
+              strength = glm::clamp(
+                  glm::dot(glm::vec3(0.f, 1.f, 0.f), UDlookDir), 0.f, 1.f);
+              break;
+            }
+            case 1: {  // D
+              strength = glm::clamp(
+                  glm::dot(glm::vec3(0.f, -1.f, 0.f), UDlookDir), 0.f, 1.f);
+              break;
+            }
+            case 2: {  // R
+              strength = abs(
+                  std::clamp(glm::dot(glm::vec3(1.f, 0.f, 0.f) * (t.rotation),
+                                      glm::vec3(0.f, 0.f, 1.f) *
+                                          (t.rotation + m.rot_offset) / 1.5f),
+                             -1.f, 0.f));
+              break;
+            }
+            case 3: {  // L
+              strength =
+                  std::clamp(glm::dot(glm::vec3(1.f, 0.f, 0.f) * (t.rotation),
+                                      glm::vec3(0.f, 0.f, 1.f) *
+                                          (t.rotation + m.rot_offset) / 1.5f),
+                             0.f, 1.f);
+              break;
+            }
           }
-          case 1: {  // B
-            h_lookDir = glm::normalize(LRlookDir);
-            strength = abs(std::clamp(glm::dot(h_lookDir, moveDir), -1.f, 0.f));
-            break;
+          totStrength += strength;
+          ac.active_animations.at(anim)->strength_ = strength;
+        }
+        float LAStrength = 1.f - glm::clamp(totStrength, 0.f, 1.f);
+        int LAAnim = GetActiveAnimationByName("LookAhead", &ac);
+        ac.active_animations.at(LAAnim)->strength_ = LAStrength;
+
+      } else {
+        m.rot_offset = glm::quat();
+
+        float strength = 0.f;
+        float totStrength = 0.f;
+        float cutoffSpeed = 5.f;
+        float speed = glm::length(ph.velocity);
+        glm::vec3 h_lookDir;
+        for (int i = 0; i < 4; i++) {
+          int anim = GetActiveAnimationByName(slide_anims_[i], &ac);
+          switch (i) {
+            case 0: {  // F
+              h_lookDir = glm::normalize(LRlookDir);
+              strength = std::clamp(glm::dot(h_lookDir, moveDir), 0.f, 1.f);
+              break;
+            }
+            case 1: {  // B
+              h_lookDir = glm::normalize(LRlookDir);
+              strength =
+                  abs(std::clamp(glm::dot(h_lookDir, moveDir), -1.f, 0.f));
+              break;
+            }
+            case 2: {  // R
+              h_lookDir = glm::normalize(glm::cross(LRlookDir, up));
+              strength = std::clamp(glm::dot(h_lookDir, moveDir), 0.f, 1.f);
+              break;
+            }
+            case 3: {  // L
+              h_lookDir = glm::normalize(glm::cross(LRlookDir, up));
+              strength =
+                  abs(std::clamp(glm::dot(h_lookDir, moveDir), -1.f, 0.f));
+              break;
+            }
           }
-          case 2: {  // R
-            h_lookDir = glm::normalize(glm::cross(LRlookDir, up));
-            strength = std::clamp(glm::dot(h_lookDir, moveDir), 0.f, 1.f);
-            break;
+          if (speed < cutoffSpeed) {
+            strength = std::clamp(strength - pl.sprint_coeff, 0.f, 1.f);
+            pl.sprint_coeff += 1.f * dt;
+          } else {
+            pl.sprint_coeff -= 1.f * dt;
           }
-          case 3: {  // L
-            h_lookDir = glm::normalize(glm::cross(LRlookDir, up));
-            strength = abs(std::clamp(glm::dot(h_lookDir, moveDir), -1.f, 0.f));
-            break;
-          }
+          pl.sprint_coeff = std::clamp(pl.sprint_coeff, 0.f, 1.f);
+          ac.active_animations.at(anim)->strength_ = strength;
+          totStrength += strength;
         }
         if (speed < cutoffSpeed) {
-          strength = std::clamp(strength - pl.sprint_coeff, 0.f, 1.f);
-          pl.sprint_coeff += 1.f * dt;
-        } else {
-          pl.sprint_coeff -= 1.f * dt;
+          int f = GetActiveAnimationByName("SlideF", &ac);
+          int b = GetActiveAnimationByName("SlideB", &ac);
+          float defaultPoseModifier =
+              std::clamp(1.f - totStrength, 0.f, 1.f) / 2.f;
+          ac.active_animations.at(f)->strength_ = defaultPoseModifier;
+          ac.active_animations.at(b)->strength_ = defaultPoseModifier;
         }
-        pl.sprint_coeff = std::clamp(pl.sprint_coeff, 0.f, 1.f);
-        ac.active_animations.at(anim)->strength_ = strength;
-        totStrength += strength;
       }
-      if (speed < cutoffSpeed) {
-        int f = GetActiveAnimationByName("SlideF", &ac);
-        int b = GetActiveAnimationByName("SlideB", &ac);
-        float defaultPoseModifier =
-            std::clamp(1.f - totStrength, 0.f, 1.f) / 2.f;
-        ac.active_animations.at(f)->strength_ = defaultPoseModifier;
-        ac.active_animations.at(b)->strength_ = defaultPoseModifier;
+
+      // RUNNING ANIMATIONS
+
+      // JUMPING ANIMATIONS
+      if (pl.jumping) {
+        float startStrength = 0.f;
+        float endStrength = 0.f;
+
+        float velCoeff =
+            std::clamp(glm::dot(ph.velocity / pl.jump_force, up), 0.f, 1.f);
+
+        startStrength = velCoeff;
+
+        int js = GetActiveAnimationByName("JumpStart", &ac);
+        ac.active_animations.at(js)->strength_ = startStrength;
+
+        endStrength = 1.f - velCoeff;
+
+        int es = GetActiveAnimationByName("JumpEnd", &ac);
+        ac.active_animations.at(es)->strength_ = endStrength;
       }
-    }
 
-    // RUNNING ANIMATIONS
-
-    // JUMPING ANIMATIONS
-    if (pl.jumping) {
-      float startStrength = 0.f;
-      float endStrength = 0.f;
-
-      float velCoeff =
-          std::clamp(glm::dot(ph.velocity / pl.jump_force, up), 0.f, 1.f);
-
-      startStrength = velCoeff;
-
-      int js = GetActiveAnimationByName("JumpStart", &ac);
-      ac.active_animations.at(js)->strength_ = startStrength;
-
-      endStrength = 1.f - velCoeff;
-
-      int es = GetActiveAnimationByName("JumpEnd", &ac);
-      ac.active_animations.at(es)->strength_ = endStrength;
-    }
-
-    // lookDirs
-    if (!pl.sprinting) {
-      glm::vec3 m_front = glm::normalize(glm::cross(LRlookDir, up));
+      // lookDirs
+      if (!pl.sprinting) {
+        glm::vec3 m_front = glm::normalize(glm::cross(LRlookDir, up));
+      }
     }
   }
 }
@@ -370,8 +382,12 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
         if (view.get<IDComponent>(entity).id == event.shoot.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
-          PlayAnimation("Shoot", 4.f, &ac, 14, 1.f, PARTIAL_MUTE,
-                        &ac.model_data.upperBody);
+          if (pc.localPlayer) {
+            PlayAnimation("Shoot", 1.f, &ac, 14, 1.f, MUTE_ALL);
+		  } else {
+            PlayAnimation("Shoot", 4.f, &ac, 14, 1.f, PARTIAL_MUTE,
+                          &ac.model_data.upperBody);
+          }
           break;
         }
       }
@@ -384,8 +400,12 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
         if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
-          PlayAnimation("Kick", 4.f, &ac, 14, 1.f, PARTIAL_MUTE,
-                        &ac.model_data.upperBody);
+          if (pc.localPlayer) {
+            PlayAnimation("Kick", 1.f, &ac, 14, 1.f, MUTE_ALL);
+          } else {
+            PlayAnimation("Kick", 4.f, &ac, 14, 1.f, PARTIAL_MUTE,
+                          &ac.model_data.upperBody);
+          }
           break;
         }
       }
@@ -461,17 +481,22 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
         if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
           auto& pc = view.get<PlayerComponent>(entity);
           auto& ac = view.get<AnimationComponent>(entity);
-          pc.sprinting = true;
-          PlayAnimation("SlideF", 1.f, &ac, 20, 0.f, LOOP);
-          PlayAnimation("SlideB", 1.f, &ac, 20, 0.f, LOOP);
-          PlayAnimation("SlideR", 1.f, &ac, 20, 0.f, LOOP);
-          PlayAnimation("SlideL", 1.f, &ac, 20, 0.f, LOOP);
 
-          StopAnimation("LookUp", &ac);
-          StopAnimation("LookDown", &ac);
-          StopAnimation("LookRight", &ac);
-          StopAnimation("LookLeft", &ac);
-          StopAnimation("LookAhead", &ac);
+          pc.sprinting = true;
+          if (pc.localPlayer) {
+            PlayAnimation("Slide", 1.f, &ac, 20, 1.f, LOOP);
+          } else {
+            PlayAnimation("SlideF", 1.f, &ac, 20, 0.f, LOOP);
+            PlayAnimation("SlideB", 1.f, &ac, 20, 0.f, LOOP);
+            PlayAnimation("SlideR", 1.f, &ac, 20, 0.f, LOOP);
+            PlayAnimation("SlideL", 1.f, &ac, 20, 0.f, LOOP);
+
+            StopAnimation("LookUp", &ac);
+            StopAnimation("LookDown", &ac);
+            StopAnimation("LookRight", &ac);
+            StopAnimation("LookLeft", &ac);
+            StopAnimation("LookAhead", &ac);
+		  }
 
           break;
         }
@@ -485,23 +510,28 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
         if (view.get<IDComponent>(entity).id == event.sprint_end.player_id) {
           auto& pc = view.get<PlayerComponent>(entity);
           auto& ac = view.get<AnimationComponent>(entity);
-          pc.sprinting = false;
-          StopAnimation("SlideF", &ac);
-          StopAnimation("SlideB", &ac);
-          StopAnimation("SlideR", &ac);
-          StopAnimation("SlideL", &ac);
-          pc.sprint_coeff = 0.f;
 
-          PlayAnimation("LookUp", 0.5f, &ac, 21, 0.f, LOOP,
-                        &ac.model_data.upperBody, &ac.model_data.arms);
-          PlayAnimation("LookDown", 0.5f, &ac, 21, 0.f, LOOP,
-                        &ac.model_data.upperBody, &ac.model_data.arms);
-          PlayAnimation("LookLeft", 0.5f, &ac, 21, 0.f, LOOP,
-                        &ac.model_data.upperBody, &ac.model_data.arms);
-          PlayAnimation("LookRight", 0.5f, &ac, 21, 0.f, LOOP,
-                        &ac.model_data.upperBody, &ac.model_data.arms);
-          PlayAnimation("LookAhead", 1.f, &ac, 21, 0.f, LOOP,
-                        &ac.model_data.upperBody, &ac.model_data.arms);
+          pc.sprinting = false;
+          if (pc.localPlayer) {
+            StopAnimation("Slide", &ac);
+          } else {
+            StopAnimation("SlideF", &ac);
+            StopAnimation("SlideB", &ac);
+            StopAnimation("SlideR", &ac);
+            StopAnimation("SlideL", &ac);
+            pc.sprint_coeff = 0.f;
+
+            PlayAnimation("LookUp", 0.5f, &ac, 21, 0.f, LOOP,
+                          &ac.model_data.upperBody, &ac.model_data.arms);
+            PlayAnimation("LookDown", 0.5f, &ac, 21, 0.f, LOOP,
+                          &ac.model_data.upperBody, &ac.model_data.arms);
+            PlayAnimation("LookLeft", 0.5f, &ac, 21, 0.f, LOOP,
+                          &ac.model_data.upperBody, &ac.model_data.arms);
+            PlayAnimation("LookRight", 0.5f, &ac, 21, 0.f, LOOP,
+                          &ac.model_data.upperBody, &ac.model_data.arms);
+            PlayAnimation("LookAhead", 1.f, &ac, 21, 0.f, LOOP,
+                          &ac.model_data.upperBody, &ac.model_data.arms);
+		  }
 
           break;
         }
