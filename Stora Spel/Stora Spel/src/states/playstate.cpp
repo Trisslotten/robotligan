@@ -102,7 +102,7 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
   glob::SetParticleSettings(handle, "goal_fire.txt");
   glob::SetEmitPosition(handle,
                         glm::vec3(x * 1.0f, 0.f, 15.f * arena_scale_.z));
-  e = registry_gameplay_.create();
+  e = registry.create();
   handle = glob::CreateParticleSystem();
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
@@ -131,6 +131,7 @@ void PlayState::Init() {
 
   CreateInGameMenu();
   CreateInitialEntities();
+  CreateSpotlights();
   // TestParticles();
 
   engine_->GetChat()->SetPosition(
@@ -243,6 +244,9 @@ void PlayState::Update(float dt) {
     if (id_c.id == my_id_) {
       auto trans = new_transforms_[id_c.id];
       auto& cam_c = registry_gameplay_.get<CameraComponent>(my_entity_);
+
+      auto& mc = registry_gameplay_.get<ModelComponent>(my_entity_);
+
       glm::vec3 temp =
           lerp(predicted_state_.position, server_predicted_.position, 0.5f);
       trans_c.position = glm::lerp(trans_c.position, temp, 0.8f);
@@ -250,6 +254,20 @@ void PlayState::Update(float dt) {
       glm::quat orientation =
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
+      cam_c.orientation = orientation;
+      trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
+
+      // FPS Model rotations
+      mc.rot_offset = orientation - glm::quat(glm::vec3(0.f, yaw_, 0.f));
+
+      // rotate model offset as well, this does not want to work...
+      /*glm::mat4 translateMat = glm::translate(glm::mat4(1.f), cam_c.offset);
+      glm::mat4 rotMat = glm::mat4(mc.rot_offset);
+          glm::mat4 transform = translateMat * rotMat *
+      glm::inverse(translateMat); glm::vec3 f = transform *
+      glm::vec4(mc.offset, 1.f); mc.offset = glm::vec3(f.x, f.y, f.z);
+
+          std::cout << f.x << ", " << f.y << ", " << f.z << "\n";*/
       if (!show_in_game_menu_buttons_) {
         cam_c.orientation = orientation;
         trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
@@ -1193,29 +1211,22 @@ void PlayState::CreatePlayerEntities() {
         glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
     glm::vec3 character_scale = glm::vec3(0.0033f);
 
+    glob::ModelHandle player_model = glob::GetModel(kModelPathMech);
+    glob::ModelHandle FPS_model = glob::GetModel("Assets/Mech/FPS_body.fbx");
+
     registry_gameplay_.assign<IDComponent>(entity, entity_id);
     auto& pc = registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(0.f),
                                                   glm::quat(), character_scale);
 
-    glob::ModelHandle player_model = glob::GetModel(kModelPathMech);
-    auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
-    model_c.handles.push_back(player_model);
-    model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
-    if (engine_->GetPlayerTeam(entity_id) == TEAM_BLUE) {
-      model_c.diffuse_index = 1;
-    } else {
-      model_c.diffuse_index = 0;
-    }
-
-    registry_gameplay_.assign<AnimationComponent>(
-        entity, glob::GetAnimationData(player_model));
     registry_gameplay_.assign<PhysicsComponent>(entity);
     registry_gameplay_.assign<SoundComponent>(entity,
                                               sound_engine.CreatePlayer());
 
+	auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
+
     if (entity_id == my_id_) {
-      glm::vec3 camera_offset = glm::vec3(0.5f, 0.7f, 0.f);
+      glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
                                                  glm::quat(glm::vec3(0.f)));
       character_scale = glm::vec3(0.1f);
@@ -1233,7 +1244,27 @@ void PlayState::CreatePlayerEntities() {
           coeff_y_side * character_scale.y * 0.5f,  // Length of each plane
           coeff_z_side * character_scale.z * 0.7f   //
       );
+      model_c.handles.push_back(FPS_model);
+
+      registry_gameplay_.assign<AnimationComponent>(
+          entity, glob::GetAnimationData(FPS_model));
+
+      pc.localPlayer = true;
+
       my_entity_ = entity;
+    } else {
+      model_c.handles.push_back(player_model);
+
+      registry_gameplay_.assign<AnimationComponent>(
+          entity, glob::GetAnimationData(player_model));
+    }
+
+	model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
+
+    if (engine_->GetPlayerTeam(entity_id) == TEAM_BLUE) {
+      model_c.diffuse_index = 1;
+    } else {
+      model_c.diffuse_index = 0;
     }
   }
 }
@@ -1357,8 +1388,47 @@ void PlayState::CreateBallEntity() {
   registry_gameplay_.assign<TrailComponent>(ball);
 }
 
-void PlayState::ParticleComponentDestroyed(entt::entity e,
-                                           entt::registry& registry) {
+void PlayState::CreateSpotlights() {
+  glm::vec3 pos_base;
+  pos_base.x = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEX");
+  pos_base.y = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEY");
+  pos_base.z = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEZ");
+
+  pos_base *= arena_scale_;
+
+  float xrot = 1.f;
+  float zrot = 1.f;
+  for (int i = 0; i < 4; i++) {
+    glm::vec3 temp_pos =
+        glm::vec3(xrot * pos_base.x, pos_base.y, zrot * pos_base.z);
+    glm::mat4 temp_trans =
+        glm::perspective(glm::radians(70.f), 1.f, 0.1f, 100.f) *
+        glm::lookAt(temp_pos, glm::vec3(0, -40.0, 0), glm::vec3(0, 1, 0));
+
+    // Add model entity for spotlight
+    auto entity = registry_gameplay_.create();
+    ModelComponent& model_c = registry_gameplay_.assign<ModelComponent>(entity);
+    glob::ModelHandle m_hndl = glob::GetModel("assets/Spotlight/Spotlight.fbx");
+    model_c.handles.push_back(m_hndl);
+    TransformComponent& trans_c =
+        registry_gameplay_.assign<TransformComponent>(entity);
+    trans_c.position = temp_pos;
+    // trans_c.rotation = glm::toQuat(
+    //  glm::lookAt(temp_pos, glm::vec3(0, -40.0, 0), glm::vec3(0, 1, 0)));
+    trans_c.rotation *= glm::quatLookAtRH(
+        glm::normalize(glm::vec3(0.f, -40.0f, 0.f) - temp_pos),
+        glm::vec3(0, 1, 0));
+    trans_c.Rotate(glm::vec3(0, glm::radians(90.f), 0));
+
+    // add the spotlight to glob::Shadow object in glob
+    glob::AddSpotlight(temp_pos, temp_trans);
+
+    std::swap(xrot, zrot);
+    zrot *= -1.f;
+  }
+}
+
+void PlayState::ParticleComponentDestroyed(entt::entity e, entt::registry& registry) {
   auto& pc = registry.get<ParticleComponent>(e);
   for (int i = 0; i < pc.handles.size(); ++i) {
     glob::DestroyParticleSystem(pc.handles[i]);
@@ -2124,12 +2194,22 @@ void PlayState::FetchMapAndArena(entt::registry& in_registry) {
   ModelComponent& model_arena_c = in_registry.assign<ModelComponent>(arena);
   model_arena_c.handles.push_back(model_arena);
   model_arena_c.handles.push_back(model_arena_banner);
-  model_arena_c.handles.push_back(model_map);
-  model_arena_c.handles.push_back(model_map_floor);
   model_arena_c.handles.push_back(model_map_projectors);
 
   in_registry.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                          arena_scale);
+
+  entt::entity arena_floor = in_registry.create();
+  ModelComponent& floor_model_c =
+      in_registry.assign<ModelComponent>(arena_floor);
+  floor_model_c.handles.push_back(model_map);
+  floor_model_c.handles.push_back(model_map_floor);
+  TransformComponent& trans_c = in_registry.assign<TransformComponent>(arena_floor, zero_vec, zero_vec,
+                                         arena_scale);
+
+  if (goals_swapped_) {
+    trans_c.rotation *= glm::quat(glm::vec3(0.f, glm::pi<float>(), 0.f));
+  }
 
   // Lights
   entt::entity light = in_registry.create();
@@ -2137,6 +2217,39 @@ void PlayState::FetchMapAndArena(entt::registry& in_registry) {
                                      0.2f);
   in_registry.assign<TransformComponent>(
       light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
+
+  glm::vec3 pos_base;
+  pos_base.x = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEX");
+  pos_base.y = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEY");
+  pos_base.z = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEZ");
+
+  // Spotlights
+  pos_base *= arena_scale_;
+
+  float xrot = 1.f;
+  float zrot = 1.f;
+  for (int i = 0; i < 4; i++) {
+    glm::vec3 temp_pos =
+        glm::vec3(xrot * pos_base.x, pos_base.y, zrot * pos_base.z);
+
+    // Add model entity for spotlight
+    auto entity = in_registry.create();
+    ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    glob::ModelHandle m_hndl = glob::GetModel("assets/Spotlight/Spotlight.fbx");
+    model_c.handles.push_back(m_hndl);
+    TransformComponent& trans_c =
+        in_registry.assign<TransformComponent>(entity);
+    trans_c.position = temp_pos;
+    // trans_c.rotation = glm::toQuat(
+    //  glm::lookAt(temp_pos, glm::vec3(0, -40.0, 0), glm::vec3(0, 1, 0)));
+    trans_c.rotation *= glm::quatLookAtRH(
+        glm::normalize(glm::vec3(0.f, -40.0f, 0.f) - temp_pos),
+        glm::vec3(0, 1, 0));
+    trans_c.Rotate(glm::vec3(0, glm::radians(90.f), 0));
+
+    std::swap(xrot, zrot);
+    zrot *= -1.f;
+  }
 
   // Camera
   entt::entity camera = in_registry.create();

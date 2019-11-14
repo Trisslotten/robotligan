@@ -878,14 +878,7 @@ animData GetAnimationData(ModelHandle handle) {
 
   // copy animations
   for (auto source : model->animations_) {
-    glob::Animation a;
-    a.name_ = source->name_;
-    a.duration_ = source->duration_;
-    a.current_frame_time_ = source->current_frame_time_;
-    a.tick_per_second_ = source->tick_per_second_;
-    a.channels_ = source->channels_;
-    a.armature_transform_ = source->armature_transform_;
-    data.animations.push_back(a);
+    data.animations.push_back(source);
   }
 
   data.globalInverseTransform = model->globalInverseTransform_;
@@ -1294,6 +1287,10 @@ void LoadWireframeMesh(ModelHandle model_h,
   }
 }
 
+void AddSpotlight(glm::vec3 position, glm::mat4 transform) {
+  shadows.AddSpotlight(position, transform);
+}
+
 void Render() {
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
 
@@ -1445,7 +1442,6 @@ void Render() {
       text3D.font->Draw3D(text3D_shader, text3D.pos, text3D.size, text3D.text,
                           text3D.color, text3D.rotation);
     }
-
 
     trail_shader.use();
     trail_shader.uniform("cam_transform", cam_transform);

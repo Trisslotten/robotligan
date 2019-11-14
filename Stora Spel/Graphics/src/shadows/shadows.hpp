@@ -32,6 +32,8 @@ class Shadows {
 
   void SetNumUsed(int num_used) { num_maps_used_ = num_used; }
 
+  void AddSpotlight(glm::vec3 position, glm::mat4 transform);
+
  private:
   int GetBlurredSize() { return size_ / glm::pow(2, blurred_level_); }
 
@@ -51,6 +53,8 @@ class Shadows {
   int start_slots_[max_maps_];
   glm::vec3 positions_[max_maps_];
   glm::mat4 transforms_[max_maps_];
+
+  bool set_manually_ = false;
 };
 
 }  // namespace glob

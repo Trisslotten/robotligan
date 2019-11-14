@@ -23,7 +23,7 @@ namespace glob {
 
 struct animData {
   std::vector<Joint> bones;
-  std::vector<Animation> animations;
+  std::vector<Animation*> animations;
   glm::mat4 globalInverseTransform;
   // groups
   bool humanoid = false;
@@ -147,6 +147,8 @@ EXPORT void SetInvisibleEffect(bool in_bool);
 EXPORT void SetBlackout(bool blackout);
 
 EXPORT void SetSky(const std::string& texture);
+
+EXPORT void AddSpotlight(glm::vec3 position, glm::mat4 transform);
 
 /*
  * Render all items submitted this frame
