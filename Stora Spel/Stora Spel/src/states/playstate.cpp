@@ -76,6 +76,8 @@ void PlayState::Startup() {
 
   test_ball_ = glob::GetTransparentModel("Assets/Ball_new/Ball_Sphere.fbx");
   glob::GetModel("assets/Pickup/Pickup.fbx");
+
+  registry_gameplay_.on_destroy<ParticleComponent>().connect<&PlayState::ParticleComponentDestroyed>(*this);
 }
 
 void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
@@ -111,9 +113,8 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
   // auto ball_view = registry_gameplay_.view<
 
   registry.assign<ParticleComponent>(e, handles, offsets, directions);
+  registry.assign<TimerComponent>(e, 5.f);
   // std::cout << handles.size() << " particle systems" << std::endl;
-  // Temp
-  registry.assign<int>(e, 0);
 }
 
 void PlayState::Init() {
@@ -1343,6 +1344,13 @@ void PlayState::CreateBallEntity() {
   registry_gameplay_.assign<TrailComponent>(ball);
 }
 
+void PlayState::ParticleComponentDestroyed(entt::entity e, entt::registry& registry) {
+  auto& pc = registry.get<ParticleComponent>(e);
+  for (int i = 0; i < pc.handles.size(); ++i) {
+    glob::DestroyParticleSystem(pc.handles[i]);
+  }
+}
+
 void PlayState::CreateNewBallEntity(bool fake, EntityID id) {
   auto& sound_engine = engine_->GetSoundEngine();
 
@@ -1658,6 +1666,7 @@ void PlayState::DestroyEntity(EntityID id) {
 
     auto& p_c = registry_gameplay_.assign<ParticleComponent>(
         e, handles, offsets, directions);
+    registry_gameplay_.assign<TimerComponent>(e, 5.f);
   }
 }
 
@@ -1744,7 +1753,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           ParticleComponent& par_c =
               correct_registry->assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
-          correct_registry->assign<int>(particle_entity, 0);
+          correct_registry->assign<TimerComponent>(particle_entity, 5.f);
 
           if (e.invisibility_cast.player_id == my_id_) {
             // TODO: Add effect to let player know it's invisible
@@ -1783,7 +1792,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           ParticleComponent& par_c =
               correct_registry->assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
-          correct_registry->assign<int>(particle_entity, 0);
+          correct_registry->assign<TimerComponent>(particle_entity, 5.f);
 
           if (e.invisibility_end.player_id == my_id_) {
             // TODO: Remove effect to let player know it's visible again
@@ -1818,7 +1827,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
       correct_registry->assign<ParticleComponent>(ent, handles, offsets,
                                                    directions);
-      correct_registry->assign<int>(ent, 0);
+      correct_registry->assign<TimerComponent>(ent, 1.f);
       break;
     }
     case GameEvent::MISSILE_IMPACT: {
@@ -1846,7 +1855,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
       correct_registry->assign<ParticleComponent>(ent, handles, offsets,
                                                    directions);
-      correct_registry->assign<int>(ent, 0);
+      correct_registry->assign<TimerComponent>(ent, 1.f);
       break;
     }
     case GameEvent::TELEPORT_CAST: {
@@ -1872,7 +1881,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           ParticleComponent& par_c =
               correct_registry->assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
-          correct_registry->assign<int>(particle_entity, 0);
+          correct_registry->assign<TimerComponent>(particle_entity, 1.f);
 
           break;
         }
@@ -1902,7 +1911,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           ParticleComponent& par_c =
               correct_registry->assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
-          correct_registry->assign<int>(particle_entity, 0);
+          correct_registry->assign<TimerComponent>(particle_entity, 1.f);
           break;
         }
       }
@@ -1951,7 +1960,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
       correct_registry->assign<ParticleComponent>(entity, handles, offsets,
                                                    directions);
-      correct_registry->assign<int>(entity, 0);
+      correct_registry->assign<TimerComponent>(entity, 13.f);
       break;
     }
     case GameEvent::BLACKOUT_TRIGGER: {
@@ -2003,7 +2012,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           ParticleComponent& par_c =
               correct_registry->assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
-          correct_registry->assign<int>(particle_entity, 0);
+          correct_registry->assign<TimerComponent>(particle_entity, 4.f);
 
           break;
         }
@@ -2030,14 +2039,8 @@ void PlayState::Reset() {
     }
   }
 
-  auto view_delete = registry_gameplay_.view<ParticleComponent, int>();
+  auto view_delete = registry_gameplay_.view<ParticleComponent, TimerComponent>();
   for (auto& entity : view_delete) {
-    auto& particle_c = view_delete.get<ParticleComponent>(entity);
-
-    for (int i = 0; i < particle_c.handles.size(); ++i) {
-      glob::DestroyParticleSystem(particle_c.handles[i]);
-    }
-
     registry_gameplay_.destroy(entity);
   }
   if ((my_team_ == TEAM_BLUE && goals_swapped_ == false) ||

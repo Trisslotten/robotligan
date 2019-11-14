@@ -13,6 +13,7 @@
 #include "ecs/systems/animation_system.hpp"
 #include "ecs/systems/gui_system.hpp"
 #include "ecs/systems/input_system.hpp"
+#include "ecs/systems/lifetime_system.hpp"
 #include "ecs/systems/particle_system.hpp"
 #include "ecs/systems/render_system.hpp"
 #include "ecs/systems/sound_system.hpp"
@@ -771,6 +772,7 @@ void Engine::UpdateSystems(float dt) {
   ParticleSystem(*registry_current_, dt);
   animation_system_.UpdateAnimations(*registry_current_, dt);
   trailsystem::Update(*registry_current_, dt);
+  lifetime::Update(*registry_current_, dt);
   RenderSystem(*registry_current_);
 }
 
