@@ -136,7 +136,6 @@ void PlayState::Init() {
                                             // approximation
   replay_machine_ = new ClientReplayMachine(length_sec, approximate_tickrate);
   replay_registry_ = new entt::registry;
-  replay_counter_ = 0;
 
   engine_->GetChat()->SetPosition(
       glm::vec2(30, glob::window::GetWindowDimensions().y - 30));
@@ -402,31 +401,11 @@ void PlayState::Update(float dt) {
   }
 
   if (game_has_ended_) {
-    // engine_->DrawScoreboard();
-
     glm::vec2 pos = glob::window::GetWindowDimensions();
     pos /= 2;
     pos.y -= 160;
 
-    /*std::string best_team = "BLUE";
-    glm::vec4 best_team_color = glm::vec4(0.13f, 0.13f, 1.f, 1.f);
-
-    if (engine_->GetTeamScores()[0] > engine_->GetTeamScores()[1]) {
-      best_team = "RED";
-      best_team_color = glm::vec4(1.f, 0.13f, 0.13f, 1.f);
-    }
-
-    std::string winnin_team_text = best_team + " wins!";
-    double width = glob::GetWidthOfText(font_test_, winnin_team_text, 48);
-
-    pos.x -= width / 2;
-
-    glob::Submit(font_test_, pos + glm::vec2(1, -1), 48, winnin_team_text,
-                 glm::vec4(0, 0, 0, 0.7f));
-
-    glob::Submit(font_test_, pos, 48, winnin_team_text, best_team_color);*/
-
-    int game_end_timeout = 20;
+    int game_end_timeout = replay_machine_->ReplayLength() + 5;
     std::string end_countdown_text =
         std::to_string((int)(game_end_timeout - end_game_timer_.Elapsed()));
 
@@ -439,10 +418,30 @@ void PlayState::Update(float dt) {
     if (replay_machine_->NumberOfStoredReplays() > 0) {
       StartReplayMode();
     }
+    if (game_end_timeout - end_game_timer_.Elapsed() <= 5) {
+      engine_->DrawScoreboard();
+      std::string best_team = "BLUE";
+      glm::vec4 best_team_color = glm::vec4(0.13f, 0.13f, 1.f, 1.f);
 
-    PlayReplay();
+      if (engine_->GetTeamScores()[0] > engine_->GetTeamScores()[1]) {
+        best_team = "RED";
+        best_team_color = glm::vec4(1.f, 0.13f, 0.13f, 1.f);
+      }
 
-    if (end_game_timer_.Elapsed() >= 20.0f) {
+      std::string winnin_team_text = best_team + " wins!";
+      double width = glob::GetWidthOfText(font_test_, winnin_team_text, 48);
+
+      pos.x -= width / 2;
+
+      glob::Submit(font_test_, pos + glm::vec2(1, -1), 48, winnin_team_text,
+                   glm::vec4(0, 0, 0, 0.7f));
+
+      glob::Submit(font_test_, pos, 48, winnin_team_text, best_team_color);
+
+    } else {
+      PlayReplay();
+    }
+    if (end_game_timer_.Elapsed() >= game_end_timeout) {
       engine_->ChangeState(StateType::LOBBY);
     }
   }
@@ -1102,6 +1101,7 @@ void PlayState::StartReplayMode() {
 
   recording_ = false;
   replaying_ = true;
+  replay_counter_ = replay_machine_->NumberOfStoredReplays() - 1;
   replay_machine_->SelectReplay(replay_counter_);
   engine_->SetReplayRegistry(replay_registry_);
 }
@@ -1113,11 +1113,7 @@ void PlayState::PlayReplay() {
 
   if (replay_machine_->LoadFrame(*(replay_registry_))) {
     replay_registry_->reset();
-    replay_counter_++;
-    if (!replay_machine_->SelectReplay(replay_counter_)) {
-      replay_counter_ = 0;
-      replaying_ = false;
-    }
+    replay_machine_->SelectReplay(replay_counter_);
   }
 }
 

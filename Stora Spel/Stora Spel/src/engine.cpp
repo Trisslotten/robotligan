@@ -785,7 +785,7 @@ void Engine::DrawScoreboard() {
   scoreboard_pos /= 2;
   scoreboard_pos.x -= 290;
   scoreboard_pos.y -= 150;
-  glob::Submit(gui_scoreboard_back_, scoreboard_pos, 0.6, 100);
+  glob::Submit(gui_scoreboard_back_, scoreboard_pos, 0.6, 100, 0.5f);
   int red_count = 0;
   int blue_count = 0;
   int jump = -16;

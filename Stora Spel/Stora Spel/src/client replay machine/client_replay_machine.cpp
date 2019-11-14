@@ -64,7 +64,7 @@ int ClientReplayMachine::CurrentlySelectedReplay() const {
 
 bool ClientReplayMachine::SelectReplay(unsigned int in_index) {
   // If the index is out of scope return false
-  if (in_index > this->stored_replays_.size()) {
+  if (in_index >= this->stored_replays_.size()) {
     return false;
   }
 
