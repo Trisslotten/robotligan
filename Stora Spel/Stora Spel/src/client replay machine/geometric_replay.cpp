@@ -594,12 +594,17 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
       }
     }
 
-    if (id_unfound && !this->channels_.at(i)
-                           .entries.at(this->channels_.at(i).index_a)
-                           .ending_entry) {  // Ed.
-      // Create the entity that existed in the replay
-      // but not in the registry if its point 'a'
-      // (first interpolation index) is not an ending entry
+    // Create entity IF:
+    //	a- entity existed in the replay but not in the registry (id_unfound)
+    //	b- its point 'a' (first interpolation index) is not an ending entry
+    //	c- the current read frame is further along than the first entry
+    bool b = !this->channels_.at(i)
+                  .entries.at(this->channels_.at(i).index_a)
+                  .ending_entry;
+    bool c = (this->current_frame_number_read_ >
+              this->channels_.at(i).entries.at(0).frame_number);
+    if (id_unfound && b && c) {  // Ed.
+
       this->CreateEntityFromChannel(i, in_registry);
     }
   }
@@ -617,7 +622,6 @@ void GeometricReplay::SetEndingFrame(EntityID in_id,
   bool unfound = true;
 
   for (unsigned int i = 0; i < this->channels_.size(); i++) {
-
     if (in_id == this->channels_.at(i).object_id) {
       // If a channel is found, fetch the entity
       // from the registry
