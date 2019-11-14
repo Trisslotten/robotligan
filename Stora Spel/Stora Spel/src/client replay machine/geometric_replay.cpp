@@ -717,7 +717,6 @@ std::string GeometricReplay::GetGeometricReplayTree() {
     ret_str += "\t\t\tNewest Entry Age: " + std::to_string(nea) + "\n";
 
     //---
-    /*
     ret_str += "\t\t\t\t";
     for (unsigned int j = 0; j < this->channels_.at(i).entries.size(); j++) {
       std::string age_str =
@@ -730,7 +729,6 @@ std::string GeometricReplay::GetGeometricReplayTree() {
       ret_str += "] ";
     }
     ret_str += "\n";
-    */
     //---
     ret_str += "\t\t---\n";
   }
