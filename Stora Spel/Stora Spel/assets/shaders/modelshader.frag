@@ -140,30 +140,35 @@ vec3 fakeCubeMap(vec3 dir) {
 	return n.rrr;
 }
 
-void main() {
+vec2 calcTexCoords()
+{
+	vec2 tex = v_tex;
+	float mat_dist = 1.0/float(num_diffuse_textures);
+	float mat_offset = mat_dist * float(diffuse_index);
+	tex.x = tex.x * mat_dist + mat_offset;
+	return tex;
+}
+const vec3 iron_color = vec3(0.8862745098039216, 0.8862745098039216, 0.82352941176);
 
+void main() {
 	float metallic = 0.;
 	if(use_metallic != 0) 
 	{
 		metallic = triplanarMetallic();
 	}
 	vec3 normal = v_normal;
+
 	if(use_normal_map != 0)
 	{
 		normal = triplanarNormal();
 	}
 	// calculate diffuse texture coords
-	vec2 tex = v_tex;
-	float mat_dist = 1.0/float(num_diffuse_textures);
-	float mat_offset = mat_dist * float(diffuse_index);
-	tex.x = tex.x * mat_dist + mat_offset;
+	vec2 tex = calcTexCoords();
 
 	Lighting lighting = shading(frag_pos, metallic, normal);
-	/*
-	lighting.ambient = vec3(0.1);
-	lighting.diffuse = vec3(0);
-	lighting.specular = vec3(0);
-	*/
+	//	lighting.ambient = vec3(0.1);
+	//	lighting.diffuse = vec3(0);
+	//	lighting.specular = vec3(0);
 	vec3 shading = vec3(0);
 	shading += lighting.ambient;
 	shading += lighting.diffuse;
@@ -178,8 +183,7 @@ void main() {
 		emission_strength = texture(texture_emissive, v_tex).r;
 	}
 
-	vec3 iron_color = vec3(0.8862745098039216, 0.8862745098039216, 0.82352941176);
-	surface_color.rgb = mix(surface_color.rgb, iron_color, metallic*(1-emission_strength));
+	surface_color.rgb = mix(surface_color.rgb, iron_color, metallic*(1.-emission_strength));
 	
 	vec3 emission = emission_strength * surface_color.rgb;
 
@@ -196,7 +200,10 @@ void main() {
 	}
 	color += dither();
 	//float gamma = 2.2;
-    //color = pow(color, vec3(gamma));
+	//color = pow(color, vec3(gamma));
+	//vec3 color = vec3(1);
+	//float alpha = 1.0;
+	//vec3 emission = vec3(1); 
 	out_color = vec4(color, alpha);
 	out_emission = vec4(emission, 1);
 	out_depth = vec4(gl_FragCoord.z,0,0,0);

@@ -151,6 +151,9 @@ void SetDefaultMaterials(ShaderProgram &shader) {
   shader.uniform("texture_roughness", TEXTURE_SLOT_ROUGHNESS);
   */
 }
+glm::mat3 calcNormalTransform(glm::mat4 model_transform) {
+  return glm::transpose(glm::inverse(glm::mat3(model_transform)));
+}
 
 void DrawFullscreenQuad() {
   glBindVertexArray(triangle_vao);
@@ -1318,7 +1321,8 @@ void Render() {
   auto anim_draw_function = [&](ShaderProgram &shader) {
     for (auto &BARI : bone_animated_items_to_render) {
       shader.uniform("model_transform", BARI.transform);
-      shader.uniformv("bone_transform", BARI.bone_transforms.size(), BARI.bone_transforms.data());
+      shader.uniformv("bone_transform", BARI.bone_transforms.size(),
+                      BARI.bone_transforms.data());
       /*
       int numBones = 0;
       for (auto &bone : BARI.bone_transforms) {
@@ -1327,7 +1331,7 @@ void Render() {
         numBones++;
       }
       */
-      //shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
+      // shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
       BARI.model->Draw(animated_model_shader);
     }
   };
@@ -1360,6 +1364,8 @@ void Render() {
     for (auto &render_item : normal_items) {
       SetDefaultMaterials(model_shader);
       model_shader.uniform("model_transform", render_item.transform);
+      model_shader.uniform("normal_transform",
+                           calcNormalTransform(render_item.transform));
       render_item.model->Draw(model_shader);
     }
 
@@ -1368,7 +1374,11 @@ void Render() {
     for (auto &BARI : bone_animated_items_to_render) {
       animated_model_shader.uniform("diffuse_index", BARI.material_index);
       animated_model_shader.uniform("model_transform", BARI.transform);
-      animated_model_shader.uniformv("bone_transform", BARI.bone_transforms.size(), BARI.bone_transforms.data());
+      animated_model_shader.uniformv("bone_transform",
+                                     BARI.bone_transforms.size(),
+                                     BARI.bone_transforms.data());
+      animated_model_shader.uniform("normal_transform",
+                                    calcNormalTransform(BARI.transform));
       /*
       int numBones = 0;
       for (auto &bone : BARI.bone_transforms) {
@@ -1377,7 +1387,8 @@ void Render() {
         numBones++;
       }
       */
-      //animated_model_shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
+      // animated_model_shader.uniform("NR_OF_BONES",
+      // (int)BARI.bone_transforms.size());
       SetDefaultMaterials(animated_model_shader);
       BARI.model->Draw(animated_model_shader);
     }
@@ -1424,6 +1435,8 @@ void Render() {
       for (auto &render_item : render_items) {
         SetDefaultMaterials(model_shader);
         model_shader.uniform("model_transform", render_item.transform);
+        model_shader.uniform("normal_transform",
+                           calcNormalTransform(render_item.transform));
         render_item.model->Draw(model_shader);
       }
     }
@@ -1505,7 +1518,7 @@ void Render() {
     gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale,
                                gui_item.scale_x, gui_item.opacity);
   }
-  //glBindTexture(GL_TEXTURE_2D, 0);
+  // glBindTexture(GL_TEXTURE_2D, 0);
 
   text_shader.use();
   for (auto &text_item : text_to_render) {
