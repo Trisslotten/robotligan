@@ -101,6 +101,7 @@
     <ClInclude Include="shared\shared\projectile_component.hpp" />
     <ClInclude Include="src\ecs\components\timer_component.hpp" />
     <ClInclude Include="src\ecs\systems\lifetime_system.hpp" />
+    <ClInclude Include="src\ecs\components\target_component.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

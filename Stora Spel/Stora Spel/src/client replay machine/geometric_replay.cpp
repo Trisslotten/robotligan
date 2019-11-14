@@ -357,6 +357,9 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     BallFrame* bf_ptr = dynamic_cast<BallFrame*>(df_ptr);
     in_registry.assign<IDComponent>(
         entity, this->channels_.at(in_channel_index).object_id);
+    // Assign target component
+    // TODO: Make work when fakeballs are present
+    in_registry.assign<TargetComponent>(entity);
 
     //
     TransformComponent& transform_c =
