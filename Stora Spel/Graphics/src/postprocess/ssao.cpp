@@ -11,7 +11,7 @@ namespace glob {
 Ssao::Ssao() {
   internal_format_ = GL_R8;
   downscale_ = 4.f;
-  num_samples_ = 8;
+  num_samples_ = 16;
 }
 
 Ssao::~Ssao() {}
@@ -96,10 +96,10 @@ void Ssao::Process(PostProcess& post_process, Blur& blur,
 
   shader.use();
   post_process.BindDepthTex(0);
-  BindNoiseTexture(2);
+  //BindNoiseTexture(2);
   glBindImageTexture(0, ssao_texture_, 0, GL_FALSE, 0, GL_WRITE_ONLY, internal_format_);
   shader.uniform("texture_depth", 0);
-  shader.uniform("texture_noise", 2);
+  //shader.uniform("texture_noise", 2);
 
   shader.uniformv("samples", (GLuint)kernel_.size(), kernel_.data());
   shader.uniform("projection", cam_transform);
@@ -118,6 +118,6 @@ void Ssao::Process(PostProcess& post_process, Blur& blur,
   //glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
   blurred_ssao_texture_  = ssao_texture_;
-  blurred_ssao_texture_ = blur.BlurTexture(blur_id_, 4, ssao_texture_, 0);
+  blurred_ssao_texture_ = blur.BlurTexture(blur_id_, 3, ssao_texture_, 0);
 }
 }  // namespace glob
