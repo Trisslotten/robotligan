@@ -878,14 +878,7 @@ animData GetAnimationData(ModelHandle handle) {
 
   // copy animations
   for (auto source : model->animations_) {
-    glob::Animation a;
-    a.name_ = source->name_;
-    a.duration_ = source->duration_;
-    a.current_frame_time_ = source->current_frame_time_;
-    a.tick_per_second_ = source->tick_per_second_;
-    a.channels_ = source->channels_;
-    a.armature_transform_ = source->armature_transform_;
-    data.animations.push_back(a);
+    data.animations.push_back(source);
   }
 
   data.globalInverseTransform = model->globalInverseTransform_;

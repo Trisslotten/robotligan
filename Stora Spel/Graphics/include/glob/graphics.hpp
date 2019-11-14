@@ -23,7 +23,7 @@ namespace glob {
 
 struct animData {
   std::vector<Joint> bones;
-  std::vector<Animation> animations;
+  std::vector<Animation*> animations;
   glm::mat4 globalInverseTransform;
   // groups
   bool humanoid = false;
