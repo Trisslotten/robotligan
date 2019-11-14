@@ -84,12 +84,12 @@ void RenderSystem(entt::registry& registry) {
   }
 
   // Render wireframes
-  auto view_wireframe_obb = registry.view<physics::OBB, TransformComponent>();
-  auto view_wireframe_sphere = registry.view<physics::Sphere>();
-  auto view_wireframe_arena = registry.view<physics::Arena>();
-  auto view_wireframe_mesh =
-      registry.view<physics::MeshHitbox, ModelComponent>();
   if (GlobalSettings::Access()->ValueOf("RENDER_WIREFRAME") == 1.0f) {
+    auto view_wireframe_obb = registry.view<physics::OBB, TransformComponent>();
+    auto view_wireframe_sphere = registry.view<physics::Sphere>();
+    auto view_wireframe_arena = registry.view<physics::Arena>();
+    auto view_wireframe_mesh =
+        registry.view<physics::MeshHitbox, ModelComponent>();
     for (auto& w : view_wireframe_obb) {
       auto& obb = view_wireframe_obb.get<physics::OBB>(w);
       auto& transform = view_wireframe_obb.get<TransformComponent>(w);
