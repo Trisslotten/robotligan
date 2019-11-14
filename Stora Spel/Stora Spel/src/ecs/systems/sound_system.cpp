@@ -239,7 +239,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& sound_c = view.get<SoundComponent>(entity);
       // Keep cout here for later use when solving order of entity
       // creaton/deletion and game event triggers std::cout << "entity id: " <<
-      // id_c.id << std::endl << "proj id: " <<
+      // id_c.id << std::endl << " " <<
       // event.missile_impact.projectile_id << std::endl;
       if (id_c.id == event.missile_impact.projectile_id) {
         sound_c.sound_player->Stop(ability_sounds_[AbilityID::MISSILE]);
@@ -299,9 +299,6 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
-      std::cout << "entity id: " << id_c.id << std::endl
-                << "proj id: " << event.force_push_impact.projectile_id
-                << std::endl;
       if (id_c.id == event.force_push_impact.projectile_id) {
         sound_c.sound_player->Play(sound_ability_force_push_impact_, 0, 1.5f);
         break;

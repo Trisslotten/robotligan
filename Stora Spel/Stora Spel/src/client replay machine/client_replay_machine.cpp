@@ -18,6 +18,8 @@ ClientReplayMachine::ClientReplayMachine(unsigned int in_replay_length_sec,
 
   // ---
   this->selected_replay_index_ = 0;
+
+  //NTS: Engine uninitialized. Is that a problem?
 }
 
 ClientReplayMachine::~ClientReplayMachine() {
@@ -37,6 +39,11 @@ ClientReplayMachine::~ClientReplayMachine() {
 void ClientReplayMachine::RecordFrame(entt::registry& in_registry) {
   // Tell primary replay to save the data
   this->primary_replay_->SaveFrame(in_registry);
+}
+
+void ClientReplayMachine::NotifyDestroyedObject(EntityID in_id,
+                                                entt::registry& in_registry) {
+  this->primary_replay_->SetEndingFrame(in_id, in_registry);
 }
 
 void ClientReplayMachine::StoreReplay() {
@@ -77,6 +84,11 @@ bool ClientReplayMachine::SelectReplay(unsigned int in_index) {
   return true;
 }
 
+void ClientReplayMachine::ResetSelectedReplay() {
+  // Resets current replay to start
+  this->stored_replays_.at(this->selected_replay_index_)->SetReadFrameToStart();
+}
+
 bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
   // Returns true when replay is done
 
@@ -92,11 +104,6 @@ bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
                          ->LoadFrame(in_registry);
 
   return load_result;
-}
-
-void ClientReplayMachine::ResetSelectedReplay() {
-  // Resets current replay to start
-  this->stored_replays_.at(this->selected_replay_index_)->SetReadFrameToStart();
 }
 
 std::string ClientReplayMachine::GetSelectedReplayStringTree() {
