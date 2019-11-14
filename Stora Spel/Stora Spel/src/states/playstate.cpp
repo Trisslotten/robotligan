@@ -76,6 +76,8 @@ void PlayState::Startup() {
 
   test_ball_ = glob::GetTransparentModel("Assets/Ball_new/Ball_Sphere.fbx");
   glob::GetModel("assets/Pickup/Pickup.fbx");
+
+  registry_gameplay_.on_destroy<ParticleComponent>().connect<&PlayState::ParticleComponentDestroyed>(*this);
 }
 
 void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
@@ -111,9 +113,8 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
   // auto ball_view = registry_gameplay_.view<
 
   registry.assign<ParticleComponent>(e, handles, offsets, directions);
+  registry.assign<TimerComponent>(e, 5.f);
   // std::cout << handles.size() << " particle systems" << std::endl;
-  // Temp
-  registry.assign<int>(e, 0);
 }
 
 void PlayState::Init() {
@@ -868,6 +869,13 @@ void PlayState::MovePlayer(float dt) {
   new_frame.pitch = predicted_state_.pitch;
   new_frame.yaw = predicted_state_.yaw;
 
+  actions_.clear();
+  for (auto const& [key, action] : engine_->GetKeyBinds()) {
+   
+    if (Input::IsKeyDown(key)) {
+      AddAction(action);
+    }
+  }
   for (auto& a : actions_) {
     new_frame.actions.push_back(a);
   }
@@ -1178,14 +1186,12 @@ void PlayState::CreatePlayerEntities() {
         glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
     glm::vec3 character_scale = glm::vec3(0.0033f);
 
-    // glob::ModelHandle player_model = glob::GetModel(kModelPathMech);
-
     registry_gameplay_.assign<IDComponent>(entity, entity_id);
     auto& pc = registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(0.f),
                                                   glm::quat(), character_scale);
 
-    glob::ModelHandle player_model = glob::GetModel("Assets/Mech/Mech.fbx");
+    glob::ModelHandle player_model = glob::GetModel(kModelPathMech);
     auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
     model_c.handles.push_back(player_model);
     model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
@@ -1381,6 +1387,13 @@ void PlayState::CreateSpotlights() {
 
     std::swap(xrot, zrot);
     zrot *= -1.f;
+  }
+}
+
+void PlayState::ParticleComponentDestroyed(entt::entity e, entt::registry& registry) {
+  auto& pc = registry.get<ParticleComponent>(e);
+  for (int i = 0; i < pc.handles.size(); ++i) {
+    glob::DestroyParticleSystem(pc.handles[i]);
   }
 }
 
@@ -1699,6 +1712,7 @@ void PlayState::DestroyEntity(EntityID id) {
 
     auto& p_c = registry_gameplay_.assign<ParticleComponent>(
         e, handles, offsets, directions);
+    registry_gameplay_.assign<TimerComponent>(e, 5.f);
   }
 }
 
@@ -1786,7 +1800,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           ParticleComponent& par_c =
               correct_registry->assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
-          correct_registry->assign<int>(particle_entity, 0);
+          correct_registry->assign<TimerComponent>(particle_entity, 5.f);
 
           if (e.invisibility_cast.player_id == my_id_) {
             // TODO: Add effect to let player know it's invisible
@@ -1825,7 +1839,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           ParticleComponent& par_c =
               correct_registry->assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
-          correct_registry->assign<int>(particle_entity, 0);
+          correct_registry->assign<TimerComponent>(particle_entity, 5.f);
 
           if (e.invisibility_end.player_id == my_id_) {
             // TODO: Remove effect to let player know it's visible again
@@ -1859,8 +1873,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       }
 
       correct_registry->assign<ParticleComponent>(ent, handles, offsets,
-                                                  directions);
-      correct_registry->assign<int>(ent, 0);
+                                                   directions);
+      correct_registry->assign<TimerComponent>(ent, 1.f);
       break;
     }
     case GameEvent::MISSILE_IMPACT: {
@@ -1887,8 +1901,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       }
 
       correct_registry->assign<ParticleComponent>(ent, handles, offsets,
-                                                  directions);
-      correct_registry->assign<int>(ent, 0);
+                                                   directions);
+      correct_registry->assign<TimerComponent>(ent, 1.f);
       break;
     }
     case GameEvent::TELEPORT_CAST: {
@@ -1914,7 +1928,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           ParticleComponent& par_c =
               correct_registry->assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
-          correct_registry->assign<int>(particle_entity, 0);
+          correct_registry->assign<TimerComponent>(particle_entity, 1.f);
 
           break;
         }
@@ -1944,7 +1958,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           ParticleComponent& par_c =
               correct_registry->assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
-          correct_registry->assign<int>(particle_entity, 0);
+          correct_registry->assign<TimerComponent>(particle_entity, 1.f);
           break;
         }
       }
@@ -1992,8 +2006,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       glob::SetParticleSettings(handle, "dust.txt");
 
       correct_registry->assign<ParticleComponent>(entity, handles, offsets,
-                                                  directions);
-      correct_registry->assign<int>(entity, 0);
+                                                   directions);
+      correct_registry->assign<TimerComponent>(entity, 13.f);
       break;
     }
     case GameEvent::BLACKOUT_TRIGGER: {
@@ -2045,7 +2059,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           ParticleComponent& par_c =
               correct_registry->assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
-          correct_registry->assign<int>(particle_entity, 0);
+          correct_registry->assign<TimerComponent>(particle_entity, 4.f);
 
           break;
         }
@@ -2072,14 +2086,8 @@ void PlayState::Reset() {
     }
   }
 
-  auto view_delete = registry_gameplay_.view<ParticleComponent, int>();
+  auto view_delete = registry_gameplay_.view<ParticleComponent, TimerComponent>();
   for (auto& entity : view_delete) {
-    auto& particle_c = view_delete.get<ParticleComponent>(entity);
-
-    for (int i = 0; i < particle_c.handles.size(); ++i) {
-      glob::DestroyParticleSystem(particle_c.handles[i]);
-    }
-
     registry_gameplay_.destroy(entity);
   }
   if ((my_team_ == TEAM_BLUE && goals_swapped_ == false) ||

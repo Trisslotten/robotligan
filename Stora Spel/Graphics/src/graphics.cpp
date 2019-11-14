@@ -776,6 +776,7 @@ void DestroyParticleSystem(ParticleSystemHandle handle) {
   }
   int index = find_res->second;
   buffer_particle_systems[index].in_use = false;
+  buffer_particle_systems[index].system.Reset();
   particle_systems.erase(handle);
 }
 

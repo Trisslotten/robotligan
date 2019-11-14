@@ -13,6 +13,7 @@
 #include "ecs/systems/animation_system.hpp"
 #include "ecs/systems/gui_system.hpp"
 #include "ecs/systems/input_system.hpp"
+#include "ecs/systems/lifetime_system.hpp"
 #include "ecs/systems/particle_system.hpp"
 #include "ecs/systems/render_system.hpp"
 #include "ecs/systems/sound_system.hpp"
@@ -228,7 +229,7 @@ void Engine::Update(float dt) {
     glob::SetSSAO(false);
   }
 
-  if(Input::IsKeyPressed(GLFW_KEY_F5)) {
+  if (Input::IsKeyPressed(GLFW_KEY_F5)) {
     glob::ReloadShaders();
   }
 
@@ -243,7 +244,7 @@ void Engine::UpdateNetwork() {
   for (auto const& [key, action] : keybinds_) {
     auto& presses = key_presses_[key];
     if (presses > 0) {
-      play_state_.AddAction(action);
+      //play_state_.AddAction(action);
       actions.set(action, true);
     }
   }
@@ -286,7 +287,7 @@ void Engine::UpdateNetwork() {
     to_send << play_state_.GetYaw();
     to_send << PacketBlockType::INPUT;
   } else {
-    play_state_.ClearActions();
+    //play_state_.ClearActions();
   }
   if (client_.IsConnected() && !to_send.IsEmpty()) {
     client_.Send(to_send);
@@ -668,7 +669,18 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::DESTROY_ENTITIES: {
       EntityID id;
       packet >> id;
+
+      // If we are recording notify replay machine
+	  //before entity is gone
+      if (this->recording_) {
+        this->replay_machine_->NotifyDestroyedObject(
+            id, *(this->registry_current_));
+      }
+
+	  // Remove the entity
       play_state_.DestroyEntity(id);
+
+	  //Contemplate life
       break;
     }
     case PacketBlockType::GAME_END: {
@@ -771,6 +783,7 @@ void Engine::UpdateSystems(float dt) {
   ParticleSystem(*registry_current_, dt);
   animation_system_.UpdateAnimations(*registry_current_, dt);
   trailsystem::Update(*registry_current_, dt);
+  lifetime::Update(*registry_current_, dt);
   RenderSystem(*registry_current_);
 }
 
@@ -873,9 +886,7 @@ int Engine::GetGameplayTimer() const { return gameplay_timer_sec_; }
 
 int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }
 
-float Engine::GetSwitchGoalCountdownTimer() const {
-  return switch_goal_timer_;
-}
+float Engine::GetSwitchGoalCountdownTimer() const { return switch_goal_timer_; }
 
 int Engine::GetSwitchGoalTime() const { return switch_goal_time_; }
 
@@ -919,8 +930,7 @@ void Engine::BeginReplay() {
   if (!this->replaying_) {
     this->registry_on_hold_ = this->registry_current_;
     this->registry_replay_ = new entt::registry;
-    this->play_state_
-        .FetchMapAndArena(*(this->registry_replay_));
+    this->play_state_.FetchMapAndArena(*(this->registry_replay_));
     this->registry_current_ = this->registry_replay_;
 
     this->replaying_ = true;
