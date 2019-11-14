@@ -33,7 +33,7 @@ void Update(entt::registry& registry, float dt) {
     unsigned int player_team = TEAM_RED;
     if (registry.has<TeamComponent>(entity)) {
       player_team = registry.get<TeamComponent>(entity).team;
-	}
+    }
 
     constexpr float pi = glm::pi<float>();
     player_c.pitch = glm::clamp(player_c.pitch, -0.49f * pi, 0.49f * pi);
@@ -117,22 +117,26 @@ void Update(entt::registry& registry, float dt) {
       }
 
       if (player_c.actions[PlayerAction::SPRINT]) {
-        if (!player_c.sprinting) {
+        if (!player_c.sprinting && player_c.energy_current > 20.0f) {
+          player_c.sprinting = true;
+
           GameEvent sprint_event;
           sprint_event.type = GameEvent::SPRINT_START;
           sprint_event.sprint_start.player_id =
               registry.get<IDComponent>(entity).id;
           dispatcher.trigger(sprint_event);
         }
-        player_c.sprinting = true;
 
-        if (player_c.energy_current > player_c.cost_sprint * dt) {
+        if (player_c.sprinting &&
+            player_c.energy_current > player_c.cost_sprint * dt) {
           accum_velocity *= 2.f;
           player_c.energy_current -= player_c.cost_sprint * dt;
         }
-      } else if (!player_c.actions[PlayerAction::SPRINT] &&
-                 player_c.sprinting) {
+      }
+      if ((!player_c.actions[PlayerAction::SPRINT] ||
+           player_c.energy_current <= 0.1f) && player_c.sprinting) {
         player_c.sprinting = false;
+
         GameEvent sprint_event;
         sprint_event.type = GameEvent::SPRINT_END;
         sprint_event.sprint_end.player_id =
@@ -154,12 +158,12 @@ void Update(entt::registry& registry, float dt) {
     // IF player is pressing space
     // AND is not airborne
     // AND has more enery than the cost for jumping
-    if (player_c.actions[PlayerAction::JUMP] && !physics_c.is_airborne &&
+    if (player_c.actions[PlayerAction::JUMP] && player_c.can_jump &&
         player_c.energy_current > player_c.cost_jump && !player_c.no_clip) {
       // Add velocity upwards
       final_velocity += up * player_c.jump_speed;
       // Set them to be airborne
-      physics_c.is_airborne = true;
+      player_c.can_jump = false;
       // Subtract energy cost from resources
       player_c.energy_current -= player_c.cost_jump;
 
@@ -234,7 +238,8 @@ void Update(entt::registry& registry, float dt) {
             dot > player_c.kick_fov) {  // if player is close enough to ball and
                                         // looking at it
           // perform kick
-          ball_physics_c.velocity += kick_dir * player_c.kick_force;
+          kick_dir = glm::normalize(kick_dir);
+          ball_physics_c.velocity = kick_dir * player_c.kick_force;
           ball_physics_c.is_airborne = true;
           ball_c.last_touch = player_c.client_id;
 

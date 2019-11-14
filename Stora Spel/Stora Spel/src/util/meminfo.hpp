@@ -26,7 +26,7 @@ class MemoryInfo {
   }
   unsigned GetUsedRAM(unsigned short suffix = MB) {
     GetProcessMemoryInfo(GetCurrentProcess(), &pmc_, sizeof(pmc_));
-    return (unsigned)(pmc_.WorkingSetSize >> suffix);
+    return (unsigned)(pmc_.WorkingSetSize >> suffix) - GetUsedVRAM();
   }
   /*
 	Returnerar hur mycket VRAM processen använder sig utav

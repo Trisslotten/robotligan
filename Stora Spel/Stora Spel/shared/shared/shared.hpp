@@ -9,8 +9,11 @@
 #define POINTS_ASSIST 2
 #define POINTS_SAVE 4
 
-const double kClientUpdateRate = 64;
-const double kServerUpdateRate = 64;
+#include <glm/glm.hpp>
+#include<glm/gtx/quaternion.hpp>
+
+const double kClientUpdateRate = 128;
+const double kServerUpdateRate = 128;
 const unsigned kServerTimeout = 6;
 
 enum class ServerStateType {
@@ -50,7 +53,6 @@ enum : int16_t {
   GAME_START,        // game start after lobby
   CLIENT_RECEIVE_UPDATES,
   TEST_STRING,
-  TEST_REPLAY_KEYS,
   TEAM_SCORE,
   CHOOSE_TEAM,
   SWITCH_GOALS,
@@ -73,6 +75,7 @@ enum : int16_t {
   MATCH_TIMER,
   GAME_EVENT,
   PHYSICS_DATA,
+  GAME_OVERTIME,
   GAME_END,
   YOUR_TARGET,
   FRAME_ID,
@@ -81,6 +84,7 @@ enum : int16_t {
   CREATE_FAKE_BALL,
   SERVER_STATE,
   MY_NAME,
+  HWID,
   PLAYER_LOOK_DIR,
   PLAYER_MOVE_DIR,
   TO_CLIENT_NAME,
@@ -101,6 +105,7 @@ enum class AbilityID {
   SUPER_STRIKE,
   SWITCH_GOALS,
   TELEPORT,
+  BLACKOUT,
   // Fill with more abilities and passive boosts
   NUM_OF_ABILITY_IDS
 };
@@ -110,7 +115,7 @@ struct MenuEvent {
 };
 
 struct GameEvent {
-  enum {
+  enum Type : uint32_t {
     GOAL = 0,
     KICK,
     HIT,
@@ -126,25 +131,33 @@ struct GameEvent {
     TELEPORT_CAST,
     TELEPORT_IMPACT,
     HOMING_BALL,
+    HOMING_BALL_END,
     FORCE_PUSH,
     FORCE_PUSH_IMPACT,
     SWITCH_GOALS,
     SWITCH_GOALS_DONE,
+    BUILD_WALL,
+    FAKE_BALL_CREATED,
+    FAKE_BALL_POOF,
+    INVISIBILITY_CAST,
+    INVISIBILITY_END,
+    BLACKOUT_CAST,
+    BLACKOUT_TRIGGER,
+    BLACKOUT_END,
     SPRINT_START,
     SPRINT_END,
     RUN_START,
     RUN_END,
     RESET,
-    BUILD_WALL,
     PRIMARY_USED,
     SECONDARY_USED,
-    FAKE_BALL_CREATED,
-    FAKE_BALL_POOF,
+    PICKUP_SPAWNED,
     NUM_EVENTS
   } type;
   union {
     // Goal
     struct {
+      float x;
     } goal;
 
     // Kick
@@ -199,6 +212,7 @@ struct GameEvent {
     // Ability Teleport Impact
     struct {
       EntityID player_id;
+      glm::vec3 hit_pos;
     } teleport_impact;
 
     // Ability Super Kick
@@ -210,6 +224,11 @@ struct GameEvent {
     struct {
       EntityID ball_id;
     } homing_ball;
+
+    // Ability Homing Ball End
+    struct {
+      EntityID ball_id;
+    } homing_ball_end;
 
     // Ability Force Push
     struct {
@@ -224,6 +243,43 @@ struct GameEvent {
     // Ability Switch Goals
     struct {
     } switch_goals;
+
+    // Ability Build Wall
+    struct {
+      EntityID wall_id;
+    } build_wall;
+
+    // Ability Fake Ball Created
+    struct {
+      EntityID ball_id;
+    } fake_ball_created;
+
+    // Ability Fake Ball Poofed
+    struct {
+      EntityID ball_id;
+    } fake_ball_poofed;
+
+    // Ability Invisibility Cast
+    struct {
+      EntityID player_id;
+    } invisibility_cast;
+
+    // Ability Invisibility End
+    struct {
+      EntityID player_id;
+    } invisibility_end;
+
+    // Ability Blackout Cast
+    struct {
+    } blackout_cast;
+
+    // Ability Blackout trigger
+    struct {
+    } blackout_trigger;
+
+    // Ability Blackout End
+    struct {
+    } blackout_end;
 
     // Player Sprint start
     struct {
@@ -254,11 +310,6 @@ struct GameEvent {
     struct {
     } reset;
 
-    // BUILD WALL
-    struct {
-      EntityID wall_id;
-    } build_wall;
-
     // Primary ability used
     struct {
       EntityID player_id;
@@ -270,14 +321,9 @@ struct GameEvent {
       EntityID player_id;
     } secondary_used;
 
-    // ability fake ball created
     struct {
-      EntityID ball_id;
-    } fake_ball_created;
-    // ability fake ball poofed
-    struct {
-      EntityID ball_id;
-    } fake_ball_poofed;
+      EntityID pickup_id;
+    } pickup_spawned;
   };
 };
 
@@ -292,5 +338,7 @@ enum class ProjectileID {
 struct Projectile {
   EntityID entity_id;
   ProjectileID projectile_id;
+  glm::vec3 pos;
+  glm::quat ori;
 };
 #endif  // SHARED_HPP_

@@ -54,9 +54,6 @@
     <ClInclude Include="src\ecs\components\ball_component.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\ecs\components\projectile_component.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\ecs\components.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -108,9 +105,6 @@
     <ClInclude Include="src\ecs\components\physics_component.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\ecs\components\fail_safe_arena.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\replay machine\deterministic_replay.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -127,6 +121,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ecs\components\wall_component.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ecs\components\pickup_spawner_component.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ecs\systems\pickup_spawner_system.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -151,24 +151,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\replay machine\bit_pack.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\replay machine\replay_machine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\replay machine\reg_pack.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\replay machine\bit_pack.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\replay machine\replay_machine.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\replay machine\reg_pack.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

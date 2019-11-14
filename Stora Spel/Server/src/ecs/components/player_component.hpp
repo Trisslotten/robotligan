@@ -44,7 +44,10 @@ struct PlayerComponent {  // Server side
   // States
   bool sprinting = false;
   bool running = false;
+  bool invisible = false;
+  float invisibility_remaining = 0.0f;
 
+  bool can_jump = false;
   // Comparasion Operators
   bool operator==(const PlayerComponent& rhs) {
     return (this->client_id == rhs.client_id) &&
@@ -66,6 +69,7 @@ struct PlayerComponent {  // Server side
   }
 
   bool operator!=(const PlayerComponent& rhs) { return !((*this) == rhs); }
+
 };
 
 #endif  // PLAYER_COMPONENT_H_

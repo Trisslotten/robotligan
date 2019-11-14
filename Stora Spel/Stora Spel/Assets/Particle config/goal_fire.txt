@@ -1,0 +1,11 @@
+
+>color= 1 1 0 0.4
+>end_color= 1 0 0 0.4
+>velocity= 20
+>end_velocity= 5
+>spawn_rate=500
+>direction= 0 1 0
+>dir_val= 0.99
+>time= 1
+>size= 0.3
+>end_size= 0.5

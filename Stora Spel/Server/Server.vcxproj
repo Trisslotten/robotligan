@@ -160,16 +160,15 @@
     <ClInclude Include="src\ecs\components\ability_component.hpp" />
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
     <ClInclude Include="src\ecs\components\buff_component.hpp" />
-    <ClInclude Include="src\ecs\components\fail_safe_arena.hpp" />
     <ClInclude Include="src\ecs\components\goal_component.hpp" />
     <ClInclude Include="src\ecs\components\health_component.hpp" />
     <ClInclude Include="src\ecs\components\match_timer_component.hpp" />
     <ClInclude Include="src\ecs\components\missile_component.hpp" />
     <ClInclude Include="src\ecs\components\physics_component.hpp" />
+    <ClInclude Include="src\ecs\components\pickup_spawner_component.hpp" />
     <ClInclude Include="src\ecs\components\pick_up_event.hpp" />
     <ClInclude Include="src\ecs\components\player_component.hpp" />
     <ClInclude Include="src\ecs\components\points_component.hpp" />
-    <ClInclude Include="src\ecs\components\projectile_component.hpp" />
     <ClInclude Include="src\ecs\components\team_component.hpp" />
     <ClInclude Include="src\ecs\components\timer_component.hpp" />
     <ClInclude Include="src\ecs\components\wall_component.hpp" />
@@ -181,6 +180,7 @@
     <ClInclude Include="src\ecs\systems\lifetime_system.hpp" />
     <ClInclude Include="src\ecs\systems\missile_system.hpp" />
     <ClInclude Include="src\ecs\systems\physics_system.hpp" />
+    <ClInclude Include="src\ecs\systems\pickup_spawner_system.hpp" />
     <ClInclude Include="src\ecs\systems\player_controller_system.hpp" />
     <ClInclude Include="src\ecs\systems\target_system.hpp" />
     <ClInclude Include="src\gameserver.hpp" />
@@ -193,13 +193,9 @@
     <ClInclude Include="src\serverstate.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\replay machine\bit_pack.cpp" />
-    <ClCompile Include="src\replay machine\reg_pack.cpp" />
     <ClCompile Include="src\replay machine\replay_machine.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\replay machine\bit_pack.hpp" />
-    <ClInclude Include="src\replay machine\reg_pack.hpp" />
     <ClInclude Include="src\replay machine\replay_machine.hpp" />
   </ItemGroup>
   <ItemGroup>

@@ -4,6 +4,8 @@
 #include <map>
 #include <string>
 
+//#define __FILENAME__ (strchr(__FILE__, '\\') ? strchr(__FILE__. '\\') + 1 : __FILE__)
+
 class GlobalSettings {
  private:
   // Map for all the values

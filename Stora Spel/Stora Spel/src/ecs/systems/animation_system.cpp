@@ -216,18 +216,33 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       if (ac.init) {
         PlayAnimation("Resting", 0.5f, &ac, 10, 1.f, LOOP);
 
-        PlayAnimation("LookUp", 0.5f, &ac, 21, 0.f, LOOP,
-                      &ac.model_data.upperBody, &ac.model_data.arms);
-        PlayAnimation("LookDown", 0.5f, &ac, 21, 0.f, LOOP,
-                      &ac.model_data.upperBody, &ac.model_data.arms);
-        PlayAnimation("LookLeft", 0.5f, &ac, 21, 0.f, LOOP,
-                      &ac.model_data.upperBody, &ac.model_data.arms);
-        PlayAnimation("LookRight", 0.5f, &ac, 21, 0.f, LOOP,
-                      &ac.model_data.upperBody, &ac.model_data.arms);
-        PlayAnimation("LookAhead", 1.f, &ac, 21, 0.f, LOOP,
-                      &ac.model_data.upperBody, &ac.model_data.arms);
-        ac.init = false;
+      PlayAnimation("LookUp", 0.5f, &ac, 21, 0.f, LOOP,
+                    &ac.model_data.upperBody, &ac.model_data.arms);
+      PlayAnimation("LookDown", 0.5f, &ac, 21, 0.f, LOOP,
+                    &ac.model_data.upperBody, &ac.model_data.arms);
+      PlayAnimation("LookLeft", 0.5f, &ac, 21, 0.f, LOOP,
+                    &ac.model_data.upperBody, &ac.model_data.arms);
+      PlayAnimation("LookRight", 0.5f, &ac, 21, 0.f, LOOP,
+                    &ac.model_data.upperBody, &ac.model_data.arms);
+      PlayAnimation("LookAhead", 1.f, &ac, 21, 0.f, LOOP,
+                    &ac.model_data.upperBody, &ac.model_data.arms);
+
+      if (pl.running) {
+        PlayAnimation("Run", 1.f, &ac, 15, 1.f, LOOP);
       }
+      if (pl.jumping) {
+        PlayAnimation("JumpStart", 0.5f, &ac, 25, 1.f, LOOP);
+        PlayAnimation("JumpEnd", 0.5f, &ac, 25, 0.f, LOOP);
+      }
+      if (pl.sprinting) {
+        PlayAnimation("SlideF", 1.f, &ac, 20, 0.f, LOOP);
+        PlayAnimation("SlideB", 1.f, &ac, 20, 0.f, LOOP);
+        PlayAnimation("SlideR", 1.f, &ac, 20, 0.f, LOOP);
+        PlayAnimation("SlideL", 1.f, &ac, 20, 0.f, LOOP);
+      }
+
+      ac.init = false;
+    }
 
       glm::vec3 LRlookDir =
           glm::normalize(pl.look_dir * glm::vec3(1.f, 0.f, 1.f));
@@ -355,19 +370,35 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
 
         startStrength = velCoeff;
 
+      try {
         int js = GetActiveAnimationByName("JumpStart", &ac);
-        ac.active_animations.at(js)->strength_ = startStrength;
+        // std::cout << js << " : js\n";
+        if (js < 0 || js >= ac.active_animations.size()) {
+          std::cout << "Error: could not find animation JumpStart" << std::endl;
+        } else {
+          ac.active_animations.at(js)->strength_ = startStrength;
+        }
+        // std::cout << startStrength << "\n";
 
         endStrength = 1.f - velCoeff;
 
         int es = GetActiveAnimationByName("JumpEnd", &ac);
-        ac.active_animations.at(es)->strength_ = endStrength;
-      }
+        // std::cout << es << " : es\n";
+        if (es < 0 || es >= ac.active_animations.size()) {
+          std::cout << "Error: could not find animation JumpEnd" << std::endl;
+        } else {
+          ac.active_animations.at(es)->strength_ = endStrength;
+        }
 
-      // lookDirs
-      if (!pl.sprinting) {
-        glm::vec3 m_front = glm::normalize(glm::cross(LRlookDir, up));
+      } catch (std::exception& e) {
+        // ???
+        // std::cout << e.what() << '\n';
       }
+    }
+
+    // lookDirs
+    if (!pl.sprinting) {
+      glm::vec3 m_front = glm::normalize(glm::cross(LRlookDir, up));
     }
   }
 }
@@ -396,7 +427,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
       auto view =
           registry->view<IDComponent, AnimationComponent, PlayerComponent>();
       for (auto entity : view) {
-        if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
+        if (view.get<IDComponent>(entity).id == event.kick.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           if (pc.localPlayer) {
@@ -414,7 +445,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
       auto view =
           registry->view<IDComponent, AnimationComponent, PlayerComponent>();
       for (auto entity : view) {
-        if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
+        if (view.get<IDComponent>(entity).id == event.jump.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           pc.jumping = true;
@@ -431,7 +462,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
       auto view =
           registry->view<IDComponent, AnimationComponent, PlayerComponent>();
       for (auto entity : view) {
-        if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
+        if (view.get<IDComponent>(entity).id == event.land.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           pc.jumping = false;
@@ -447,7 +478,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
       auto view =
           registry->view<IDComponent, AnimationComponent, PlayerComponent>();
       for (auto entity : view) {
-        if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
+        if (view.get<IDComponent>(entity).id == event.run_start.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           pc.running = true;
@@ -462,7 +493,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
       auto view =
           registry->view<IDComponent, AnimationComponent, PlayerComponent>();
       for (auto entity : view) {
-        if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
+        if (view.get<IDComponent>(entity).id == event.run_end.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           pc.running = false;

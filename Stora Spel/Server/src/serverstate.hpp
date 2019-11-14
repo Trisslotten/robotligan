@@ -1,5 +1,6 @@
 #ifndef SERVER_STATE_HPP_
 #define SERVER_STATE_HPP_
+
 #include <NetAPI/socket/server.hpp>
 #include <entity/registry.hpp>
 #include <entt.hpp>
@@ -105,26 +106,33 @@ class ServerPlayState : public ServerState {
   void ReceiveEvent(const EventInfo& e);
   // EntityID GetNextEntityGuid() { return entity_guid_++; }
   void SetFrameID(int client_id, int id) { player_frame_id_[client_id] = id; }
+  void Reconnect(int id);
+  void SetReconnect(unsigned int ID) { reconnect_id_ = ID; }
 
  private:
   entt::entity CreateIDEntity();
-
+  unsigned short reconnect_id_ = 100;
   void CreateInitialEntities(int num_players);
-  void CreateArenaEntity();
+  void CreateMapEntity();
   void CreateBallEntity();
   void CreatePlayerEntity();
   void CreateGoals();
+  void CreatePickupSpawners();
   void Record(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value,
               const float& in_dt, unsigned int in_player_index);
   void Replay(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value,
               unsigned int in_player_index);
-  void CreatePickUpComponents();
+  EntityID CreatePickUpComponents(glm::vec3 pos);
   EntityID GetNextEntityGuid() { return entity_guid_++; }
+  void OverTime();
   void EndGame();
+  void WallAnimation();
 
   std::unordered_map<long, bool> clients_receive_updates_;
   std::unordered_map<int, EntityID> clients_player_ids_;
   std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
+
+  std::vector<unsigned int> score_;
 
   std::vector<entt::entity> created_pick_ups_;
   std::vector<entt::entity> created_walls_;
@@ -140,6 +148,8 @@ class ServerPlayState : public ServerState {
   Timer match_timer_;
   Timer countdown_timer_;
   Timer reset_timer_;
+  Timer pickup_spawn_timer_;
+  float pickup_spawn_time_ = 10.0f;
   bool reset_ = false;
 
   int switch_goal_time_ =

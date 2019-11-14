@@ -10,6 +10,7 @@
 #include <util/global_settings.hpp>
 #include <vector>
 #include "Chat.hpp"
+#include "client replay machine/client_replay_machine.hpp"
 #include "ecs/systems/animation_system.hpp"
 #include "ecs/systems/sound_system.hpp"
 #include "shared/shared.hpp"
@@ -49,15 +50,16 @@ class Engine {
   }
   NetAPI::Socket::Client& GetClient() { return client_; }
   NetAPI::Common::Packet& GetPacket() { return packet_; }
+  void SetTakeInput(bool should_take) { take_game_input_ = should_take; }
   void SetSendInput(bool should_send) { should_send_input_ = should_send; }
   void SetEnableChat(bool should_enable) { this->enable_chat_ = should_enable; }
   SoundSystem& GetSoundSystem() { return sound_system_; }
   slob::SoundEngine& GetSoundEngine() { return sound_system_.GetSoundEngine(); }
   AnimationSystem& GetAnimationSystem() { return animation_system_; }
   entt::registry* GetCurrentRegistry() { return registry_current_; }
+  std::unordered_map<int, int> GetKeyBinds() { return keybinds_; };
 
-  std::unordered_map<PlayerID, std::string> player_names_;
-
+  std::unordered_map<long, std::string> player_names_;
   void SetSecondaryAbility(AbilityID id) { second_ability_ = id; }
   AbilityID GetSecondaryAbility() { return second_ability_; }
   std::vector<unsigned int> GetTeamScores() { return scores_; }
@@ -65,7 +67,7 @@ class Engine {
   void SetPlayingPlayers(std::unordered_map<int, LobbyPlayer> plyrs) { playing_players_ = plyrs; }
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
-  int GetSwitchGoalCountdownTimer() const;
+  float GetSwitchGoalCountdownTimer() const;
   int GetSwitchGoalTime() const;
   unsigned int GetPlayerTeam(EntityID id) {
     for (auto p_score : player_scores_) {
@@ -88,12 +90,24 @@ class Engine {
   std::unordered_map<PlayerID, PlayerStatInfo> GetPlayerScores() {
     return player_scores_;
   }
+
+  bool IsRecording() { return recording_; }
+  bool IsReplaying() { return replaying_; }
  private:
   void SetKeybinds();
 
   void UpdateChat(float dt);
   void UpdateSystems(float dt);
   void HandlePacketBlock(NetAPI::Common::Packet& packet);
+
+  // Replay Functions---
+  void BeginRecording();
+  //void DoRecording();
+  void StopRecording();
+  void SaveRecording();
+  void BeginReplay();
+  void PlayReplay();
+  // Replay Functions---
 
   NetAPI::Socket::Client client_;
   NetAPI::Common::Packet packet_;
@@ -107,6 +121,8 @@ class Engine {
   PlayState play_state_;
   ConnectMenuState connect_menu_state_;
   SettingsState settings_state_;
+
+  // Registry
   entt::registry* registry_current_;
   std::unordered_map<int, LobbyPlayer> playing_players_;
   bool should_send_input_ = false;
@@ -115,8 +131,6 @@ class Engine {
   std::unordered_map<int, int> mousebinds_;
   std::unordered_map<int, int> key_presses_;
   std::unordered_map<int, int> mouse_presses_;
-  float accum_yaw_ = 0.f;
-  float accum_pitch_ = 0.f;
 
   glob::Font2DHandle font_test_ = 0;
   glob::Font2DHandle font_test2_ = 0;
@@ -131,7 +145,7 @@ class Engine {
 
   int gameplay_timer_sec_ = 0;
   int countdown_timer_sec_ = 0;
-  int switch_goal_timer_sec_ = 0;
+  float switch_goal_timer_ = 0.f;
   int switch_goal_time_ = 0;
 
   Chat chat_;
@@ -153,6 +167,14 @@ class Engine {
 
   std::list<NetAPI::Common::Packet> packet_test;
   std::list<float> time_test;
+
+  // Replay Variables ---
+  bool recording_ = false;
+  bool replaying_ = false;
+  entt::registry* registry_on_hold_ = nullptr;
+  entt::registry* registry_replay_ = nullptr;
+  ClientReplayMachine* replay_machine_ = nullptr;
+  // Replay Variables ---
 };
 
 #endif  // ENGINE_HPP_

@@ -11,7 +11,9 @@
 
 #include <vector>
 #include <thread>
-
+#include <chrono>
+typedef std::chrono::microseconds t;
+typedef std::chrono::duration<double> dur;
 namespace NetAPI {
 namespace Socket {
 class EXPORT TcpClient {
@@ -25,7 +27,7 @@ class EXPORT TcpClient {
   void FlushBuffers();
   bool Connect(const char* addr, unsigned short port);
   bool Send(NetAPI::Common::Packet& p);
-  std::vector<NetAPI::Common::Packet> Receive(unsigned short timeout = 50);
+  std::vector<NetAPI::Common::Packet> Receive(double timeout = 50);
   int QuerryError() { return error_; }
   void SetBlocking(bool block = true) { blocking_ = block; }
   void SetActive(bool c = true) { connected_ = c; };
@@ -42,6 +44,7 @@ class EXPORT TcpClient {
   int last_buff_len_ = -1;
   timeval timeout_ = {};
   fd_set read_set_ = {};
+  fd_set write_fd = {};
   bool blocking_ = false;
   int error_ = 0;
   bool connected_ = false;

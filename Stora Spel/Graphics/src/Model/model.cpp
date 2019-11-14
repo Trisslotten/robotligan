@@ -5,7 +5,10 @@
 
 #include <glm/ext.hpp>
 #include <lodepng.hpp>
-#include "../usegl.hpp"
+#include <textureslots.hpp>
+#include "Model/modelconfig.hpp"
+#include "material/material.hpp"
+#include "usegl.hpp"
 
 #include <glob/AssimpToGLMConverter.hpp>
 
@@ -60,12 +63,51 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   }
 
   // Process faces / indices
-
   for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
     aiFace temp_faces = mesh->mFaces[i];
     for (GLuint y = 0; y < temp_faces.mNumIndices; y++) {
       indices.push_back(temp_faces.mIndices[y]);
     }
+  }
+
+  std::string config_path = filepath_.substr(0, filepath_.find_last_of('.'));
+  config_path += ".mcfg";
+  ModelConfig config{config_path};
+  if (config.isLoaded()) {
+    auto num_diff = config.GetInt("num_diffuse_textures");
+    if (num_diff) {
+      num_diffuse_textures_ = *num_diff;
+    }
+
+    std::unordered_map<materials::Type, std::string> wanted_textures;
+    auto normal_map = config.GetWord("normal_map");
+    if (normal_map) {
+      wanted_textures[materials::NORMAL] = *normal_map;
+    }
+    auto normal_map_scale = config.GetFloat("normal_map_scale");
+    if (normal_map_scale) {
+      normal_map_scale_ = *normal_map_scale;
+    }
+
+    auto metallic_map = config.GetWord("metallic_map");
+    if (metallic_map) {
+      wanted_textures[materials::METALLIC] = *metallic_map;
+    }
+    auto metallic_map_scale = config.GetFloat("metallic_map_scale");
+    if (metallic_map_scale) {
+      metallic_map_scale_ = *metallic_map_scale;
+    }
+
+    auto roughness_map = config.GetWord("roughness_map");
+    if (roughness_map) {
+      wanted_textures[materials::ROUGHNESS] = *roughness_map;
+    }
+    auto roughness_map_scale = config.GetFloat("roughness_map_scale");
+    if (roughness_map_scale) {
+      roughness_map_scale_ = *roughness_map_scale;
+    }
+
+    material_ = materials::Get(wanted_textures);
   }
 
   // std::cout << "glob::kModelUseGL: " << glob::kModelUseGL << "\n";
@@ -75,21 +117,20 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
       aiMaterial* temp_material = scene->mMaterials[mesh->mMaterialIndex];
       std::vector<Texture> diffuse_maps =
           LoadMaterielTextures(temp_material, aiTextureType_DIFFUSE,
-                               "texture_diffuse"  // Make sure this in glsl
+                               "texture_diffuse", TEXTURE_SLOT_DIFFUSE
+
           );
       textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
 
       std::vector<Texture> specular_maps =
           LoadMaterielTextures(temp_material, aiTextureType_SPECULAR,
-                               "texture_specular"  // Make sure this in glsl
-          );
+                               "texture_specular", TEXTURE_SLOT_SPECULAR);
       textures.insert(textures.end(), specular_maps.begin(),
                       specular_maps.end());
 
       std::vector<Texture> emissive_maps =
           LoadMaterielTextures(temp_material, aiTextureType_EMISSIVE,
-                               "texture_emissive"  // Make sure this in glsl
-          );
+                               "texture_emissive", TEXTURE_SLOT_EMISSIVE);
       textures.insert(textures.end(), emissive_maps.begin(),
                       emissive_maps.end());
     }
@@ -182,6 +223,8 @@ void Model::LoadModel(std::string path) {
   flags |= aiProcess_Triangulate;
   flags |= aiProcess_FlipUVs;
 
+  filepath_ = path;
+
   const aiScene* scene = import.ReadFile(path, flags);
 
   if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE ||
@@ -201,7 +244,7 @@ void Model::LoadModel(std::string path) {
 
   MakeArmature(scene->mRootNode);
 
-  //std::cout << "Bone size: " << bones_.size() << "\n";
+  // std::cout << "Bone size: " << bones_.size() << "\n";
 
   if (bones_.size() > 0) {
     int rootBone = 0;
@@ -211,13 +254,13 @@ void Model::LoadModel(std::string path) {
         break;
       }
     }
-    //std::cout << PrintArmature(*bones_.at(rootBone), 0) << "\n";
+    // std::cout << PrintArmature(*bones_.at(rootBone), 0) << "\n";
   }
 
   if (scene->HasAnimations()) {
     // load animations
     int numAnimations = scene->mNumAnimations;
-    //std::cout << numAnimations << " animations detected.\n";
+    // std::cout << numAnimations << " animations detected.\n";
     for (int i = 0; i < numAnimations; i++) {
       Animation* anim = new Animation();
       anim->name_ = scene->mAnimations[i]->mName.data;
@@ -257,7 +300,7 @@ void Model::LoadModel(std::string path) {
         if (channel.position_keys.size() == 0 &&
             channel.rotation_keys.size() == 0 &&
             channel.scaling_keys.size() == 0) {
-          //std::cout << "Empty channel!\n";
+          // std::cout << "Empty channel!\n";
         }
         anim->channels_.push_back(channel);
       }
@@ -318,7 +361,7 @@ Joint* Model::MakeArmature(aiNode* node) {
       }
     }
     if (knownChildren) {
-      //std::cout << "Armature created from " << node->mName.data << "\n";
+      // std::cout << "Armature created from " << node->mName.data << "\n";
       j->id = bones_.size();
       bones_.push_back(j);
     } else {
@@ -347,7 +390,8 @@ void Model::ProcessNode(aiNode* node, const aiScene* scene) {
 
 std::vector<Texture> Model::LoadMaterielTextures(aiMaterial* material,
                                                  aiTextureType type,
-                                                 std::string type_name) {
+                                                 std::string type_name,
+                                                 int tex_slot) {
   std::vector<Texture> texture;
 
   for (unsigned int i = 0; i < material->GetTextureCount(type); i++) {
@@ -369,6 +413,7 @@ std::vector<Texture> Model::LoadMaterielTextures(aiMaterial* material,
           TextureFromFile(ai_string.C_Str(), directory_, type);
       temp_texture.type = type_name;
       temp_texture.path = ai_string;
+      temp_texture.slot = tex_slot;
       texture.push_back(temp_texture);
       texture_loaded_.push_back(temp_texture);
     }
@@ -392,6 +437,11 @@ Model::~Model() {
 void Model::LoadFromFile(const std::string& path) { LoadModel(path); }
 
 void Model::Draw(ShaderProgram& shader) {
+  material_.Bind(shader);
+  shader.uniform("normal_map_scale", normal_map_scale_);
+  shader.uniform("metallic_map_scale", metallic_map_scale_);
+  shader.uniform("roughness_map_scale", roughness_map_scale_);
+  shader.uniform("num_diffuse_textures", num_diffuse_textures_);
   for (unsigned int i = 0; i < mesh_.size(); i++) {
     mesh_[i].Draw(shader);
   }
@@ -401,10 +451,10 @@ float Model::MaxDistance(glm::mat4 transform, glm::vec3 point) {
   float result = 0.f;
   for (int i = 0; i < mesh_.size(); i++) {
     MeshData temp = mesh_[i].GetMeshData();
-    for(auto pos : temp.pos) {
+    for (auto pos : temp.pos) {
       glm::vec3 transformed = transform * glm::vec4(pos, 1);
       int len = length(point - transformed);
-      if(len > result) {
+      if (len > result) {
         result = len;
       }
     }

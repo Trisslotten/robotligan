@@ -18,7 +18,11 @@
 
 namespace ability_controller {
 Timer gravity_timer;
+Timer blackout_timer;
 bool gravity_used = false;
+bool blackout_used = false;
+bool blackout_in_effect = false;
+// TODO: Make unique for each player
 
 bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
                     PlayerID player_id, entt::entity caster);
@@ -27,21 +31,24 @@ bool DoSuperStrike(entt::registry& registry);
 entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id);
 void DoSwitchGoals(entt::registry& registry);
 entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id);
-void GravityChange(entt::registry& registry);
+void GravityChange();
 void DoTeleport(entt::registry& registry, PlayerID id);
 bool DoHomingBall(entt::registry& registry, PlayerID id);
 void CreateFakeBalls(entt::registry& registry, EntityID id);
 bool BuildWall(entt::registry& registry, PlayerID id);
+bool DoInvisibility(entt::registry& registry, PlayerID id);
+bool DoBlackout(entt::registry& registry);
 
 std::unordered_map<AbilityID, float> ability_cooldowns;
 
 void Update(entt::registry& registry, float dt) {
-  auto view_players =
-      registry.view<PlayerComponent, TransformComponent, AbilityComponent>();
+  auto view_players = registry.view<PlayerComponent, TransformComponent,
+                                    AbilityComponent, IDComponent>();
   for (auto player : view_players) {
     auto& ability_component = registry.get<AbilityComponent>(player);
     auto& transform_component = registry.get<TransformComponent>(player);
     auto& player_component = registry.get<PlayerComponent>(player);
+    auto& id_component = registry.get<IDComponent>(player);
 
     // Loop over each entity with a PlayerComponent
     // and Ability Component
@@ -54,6 +61,10 @@ void Update(entt::registry& registry, float dt) {
     }
     if (ability_component.shoot_cooldown < 0.0f) {
       ability_component.shoot_cooldown = 0.0f;
+    }
+    // Update invisibility duration
+    if (player_component.invisible) {
+      player_component.invisibility_remaining -= dt;
     }
 
     // First check if primary ability is being used
@@ -69,8 +80,7 @@ void Update(entt::registry& registry, float dt) {
             ability_cooldowns[ability_component.primary_ability];
         GameEvent primary_used_event;
         primary_used_event.type = GameEvent::PRIMARY_USED;
-        primary_used_event.primary_used.player_id =
-            registry.get<IDComponent>(player).id;
+        primary_used_event.primary_used.player_id = id_component.id;
         primary_used_event.primary_used.cd =
             ability_component.cooldown_remaining;
         dispatcher.trigger(primary_used_event);
@@ -90,14 +100,24 @@ void Update(entt::registry& registry, float dt) {
 
         GameEvent secondary_used_event;
         secondary_used_event.type = GameEvent::SECONDARY_USED;
-        secondary_used_event.secondary_used.player_id =
-            registry.get<IDComponent>(player).id;
+        secondary_used_event.secondary_used.player_id = id_component.id;
         dispatcher.trigger(secondary_used_event);
         // TODO: send that ability is used
       }
     }
     // When finished set secondary ability to not activated
     ability_component.use_secondary = false;
+
+    // Check if player is invisible
+    if (player_component.invisible &&
+        player_component.invisibility_remaining <= 0.0f) {
+      player_component.invisible = false;
+      // Save game event
+      GameEvent invisibility_end_event;
+      invisibility_end_event.type = GameEvent::INVISIBILITY_END;
+      invisibility_end_event.invisibility_end.player_id = id_component.id;
+      dispatcher.trigger(invisibility_end_event);
+    }
 
     // Check if the player should shoot
     if (ability_component.shoot && ability_component.shoot_cooldown <= 0.0f) {
@@ -115,7 +135,25 @@ void Update(entt::registry& registry, float dt) {
   if (gravity_used &&
       gravity_timer.Elapsed() >=
           GlobalSettings::Access()->ValueOf("ABILITY_GRAVITY_DURATION")) {
+    gravity_used = false;
     physics::SetGravity(GlobalSettings::Access()->ValueOf("PHYSICS_GRAVITY"));
+  }
+  if (blackout_used && blackout_timer.Elapsed() >= 0.1) {
+    blackout_used = false;
+    blackout_in_effect = true;
+    // Save game event, turn off lights on client
+    GameEvent event;
+    event.type = GameEvent::BLACKOUT_TRIGGER;
+    dispatcher.trigger<GameEvent>(event);
+  }
+  if (blackout_in_effect &&
+      blackout_timer.Elapsed() >=
+          GlobalSettings::Access()->ValueOf("ABILITY_BLACKOUT_DURATION")) {
+    blackout_in_effect = false;
+    // Save game event, turn on lights on client
+    GameEvent event;
+    event.type = GameEvent::BLACKOUT_END;
+    dispatcher.trigger<GameEvent>(event);
   }
 }
 
@@ -142,14 +180,14 @@ bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
       break;
     }
     case AbilityID::GRAVITY_CHANGE:
-      GravityChange(registry);
+      GravityChange();
       return true;
       break;
     case AbilityID::HOMING_BALL:
       return DoHomingBall(registry, player_id);
       break;
     case AbilityID::INVISIBILITY:
-      return true;
+      return DoInvisibility(registry, player_id);
       break;
     case AbilityID::MISSILE:
       CreateMissileEntity(registry, player_id);
@@ -165,6 +203,9 @@ bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
     case AbilityID::TELEPORT:
       DoTeleport(registry, player_id);
       return true;
+      break;
+    case AbilityID::BLACKOUT:
+      return DoBlackout(registry);
       break;
     default:
       return false;
@@ -263,7 +304,6 @@ bool DoSuperStrike(entt::registry& registry) {
                                                   "ABILITY_SUPER_STRIKE_FORCE");
         physics_c_ball.is_airborne = true;
         ball_ball_c.is_super_striked = true;
-        return true;
 
         // Save game event
         if (registry.has<IDComponent>(player_entity)) {
@@ -273,6 +313,7 @@ bool DoSuperStrike(entt::registry& registry) {
               registry.get<IDComponent>(player_entity).id;
           dispatcher.trigger(super_kick_event);
         }
+        return true;
       }
     }
   }
@@ -380,7 +421,7 @@ entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id) {
   }
 }
 
-void GravityChange(entt::registry& registry) {
+void GravityChange() {
   physics::SetGravity(
       GlobalSettings::Access()->ValueOf("ABILITY_GRAVITY_CHANGE"));
   gravity_timer.Restart();
@@ -401,7 +442,7 @@ void DoTeleport(entt::registry& registry, PlayerID id) {
     IDComponent& idc = view_controller.get<IDComponent>(entity);
 
     if (pc.client_id == id) {
-      float speed = 50.0f;
+      float speed = 100.0f;
       auto teleport_projectile = registry.create();
 
       registry.assign<PhysicsComponent>(teleport_projectile,
@@ -409,7 +450,7 @@ void DoTeleport(entt::registry& registry, PlayerID id) {
                                         glm::vec3(0.f), false, 0.0f);
       registry.assign<TransformComponent>(
           teleport_projectile,
-          glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),
+          glm::vec3(tc.position + cc.offset),
           glm::vec3(0, 0, 0), glm::vec3(.3f, .3f, .3f));
       registry.assign<physics::Sphere>(teleport_projectile,
                                        glm::vec3(tc.position + cc.offset), .3f);
@@ -504,23 +545,26 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
       auto& trans_c = view_players.get<TransformComponent>(entity);
       auto& camera = view_players.get<CameraComponent>(entity);
 
-      glm::vec3 position = camera.GetLookDir() * 4.5f + trans_c.position + camera.offset;
-      position.y = -12.f;
+      glm::vec3 position =
+          camera.GetLookDir() * 4.5f + trans_c.position + camera.offset;
+      position.y = -9.3f;
 
       for (auto entity_goal : view_goals) {
         auto& goal_transform = view_goals.get<TransformComponent>(entity_goal);
-
-        if (glm::distance(position, goal_transform.position) < 20.f) {
+        float arena_scale;
+        arena_scale = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
+    
+        if (glm::distance(glm::vec2(position.x,position.z), glm::vec2(goal_transform.position.x, goal_transform.position.z)) < 20.f * arena_scale) {
           return false;
         }
       }
 
       auto orientation = trans_c.rotation;
-      //orientation.y = camera.GetLookDir().y;
+      // orientation.y = camera.GetLookDir().y;
 
       auto wall = registry.create();
       registry.assign<WallComponent>(wall);
-      registry.assign<TimerComponent>(wall, 5.f);
+      registry.assign<TimerComponent>(wall, 10.f);
       registry.assign<HealthComponent>(wall, 100);
       registry.assign<TransformComponent>(wall, position, orientation);
       auto& obb = registry.assign<physics::OBB>(wall);
@@ -531,7 +575,7 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
       EventInfo e;
       e.event = Event::BUILD_WALL;
       e.entity = wall;
-      
+
       dispatcher.enqueue<EventInfo>(e);
 
       return true;
@@ -539,6 +583,44 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
   }
 
   return false;
+}
+
+bool DoInvisibility(entt::registry& registry, PlayerID id) {
+  auto view_controller = registry.view<CameraComponent, PlayerComponent,
+                                       TransformComponent, IDComponent>();
+  for (auto entity : view_controller) {
+    CameraComponent& cc = view_controller.get<CameraComponent>(entity);
+    PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
+    TransformComponent& tc = view_controller.get<TransformComponent>(entity);
+    IDComponent& idc = view_controller.get<IDComponent>(entity);
+
+    if (pc.client_id == id) {
+      pc.invisible = true;
+      pc.invisibility_remaining =
+          GlobalSettings::Access()->ValueOf("ABILITY_INVISIBILITY_DURATION");
+
+      // Save game event
+      GameEvent invisibility_event;
+      invisibility_event.type = GameEvent::INVISIBILITY_CAST;
+      invisibility_event.invisibility_cast.player_id = idc.id;
+      dispatcher.trigger(invisibility_event);
+
+      return true;
+    }
+  }
+  return false;
+}
+
+bool DoBlackout(entt::registry& registry) {
+  blackout_timer.Restart();
+  blackout_used = true;
+
+  // Save game event, play blackout sound on client
+  GameEvent event;
+  event.type = GameEvent::BLACKOUT_CAST;
+  dispatcher.trigger<GameEvent>(event);
+
+  return true;
 }
 
 void CreateFakeBalls(entt::registry& registry, EntityID id) {
@@ -586,8 +668,9 @@ void CreateFakeBalls(entt::registry& registry, EntityID id) {
 
   // create fake balls
   for (int i = 0; i < num_balls; i++) {
-    glm::vec3 dir = glm::vec3((float)(rand() % 5) / 10.f, (float)(rand() % 5) / 10.f,
-                         (float)(rand() % 5) / 10.f);
+    glm::vec3 dir =
+        glm::vec3((float)(rand() % 5) / 10.f, (float)(rand() % 5) / 10.f,
+                  (float)(rand() % 5) / 10.f);
     dir = glm::normalize(dir);
     if (glm::length(ball_vel) > 0) {
       dir += ball_vel;
