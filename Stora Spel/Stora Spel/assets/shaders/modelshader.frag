@@ -2,9 +2,7 @@
 
 layout(location = 0) out vec4 out_color;
 layout(location = 1) out vec4 out_emission;
-layout(location = 2) out vec4 out_normal;
-layout(location = 3) out vec4 out_depth;
-layout(location = 4) out vec4 out_pos;
+layout(location = 2) out vec4 out_depth;
 
 in vec3 local_pos;
 in vec3 local_normal;
@@ -166,7 +164,6 @@ void main() {
 	lighting.diffuse = vec3(0);
 	lighting.specular = vec3(0);
 	*/
-	
 	vec3 shading = vec3(0);
 	shading += lighting.ambient;
 	shading += lighting.diffuse;
@@ -200,15 +197,7 @@ void main() {
 	color += dither();
 	//float gamma = 2.2;
     //color = pow(color, vec3(gamma));
-
 	out_color = vec4(color, alpha);
 	out_emission = vec4(emission, 1);
-	
-	//out_color = vec4(1,0,0,1);
-	//out_emission = vec4(0,0,0,1);
-
-	float depth = gl_FragCoord.z;
-	out_depth = vec4(depth,0,0,0);
-	out_normal = vec4(normalize(v_normal), 1);
-	out_pos = vec4(frag_pos.xyz, 1);
+	out_depth = vec4(gl_FragCoord.z,0,0,0);
 }

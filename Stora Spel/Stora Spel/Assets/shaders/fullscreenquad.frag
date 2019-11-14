@@ -42,6 +42,7 @@ void main() {
 		color = mix(color, effect, smoothstep(0.35,0.85, length(v_uv-0.5)));
 	}
 
+	//color = texture(texture_ssao, v_uv).rrr;
 	out_color = vec4(color, 1);
 	//if(use_ao) out_color = vec4(vec3(ao),1);
 }

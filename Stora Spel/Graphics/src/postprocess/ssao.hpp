@@ -6,7 +6,8 @@
 #include <vector>
 
 #include "blur.hpp"
-#include "postprocess.hpp"
+#include "postprocess.hpp"  
+#include "glob/camera.hpp"
 
 namespace glob {
 class Ssao {
@@ -15,7 +16,7 @@ class Ssao {
   ~Ssao();
   void Init(Blur& blur);
 
-  void Process(PostProcess& post_process, Blur& blur, glm::mat4 cam_transform);
+  void Process(PostProcess& post_process, Blur& blur, Camera camera);
 
   void BindSsaoTexture(int slot);
 
@@ -26,6 +27,10 @@ class Ssao {
   GLuint noise_texture_;
   GLuint ssao_texture_;
   GLuint blurred_ssao_texture_;
+  GLuint internal_format_ = 0;
+
+  float downscale_ = 1.f;
+  int num_samples_ = 0;
 
   uint64_t blur_id_;
 

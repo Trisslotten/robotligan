@@ -127,16 +127,19 @@ Lighting shading(vec3 position, float metallic, vec3 normal) {
 
 	for(int l = 0; l < NR_OF_LIGHTS; l++){
 		vec3 pointToLight = light_pos[l] - position;
-		vec3 light_dir = normalize(pointToLight);
-		vec3 light_color = light_col[l];
-
-		float intensity = 1.f - clamp(length(pointToLight), 0, light_radius[l]) / light_radius[l];
-		float diffuse = (1-metallic)*calcDiffuse(position, normal, light_dir);
-		float specular = metallic * calcSpecular(position, normal, light_dir, view_dir, roughness);
-
-		lighting.diffuse += diffuse * intensity * light_color;
-		lighting.specular += specular * intensity * light_color;
+		float radius = light_radius[l];
 		lighting.ambient += (1-metallic) * light_amb[l];
+		if(length(pointToLight) <= radius) {
+			vec3 light_dir = normalize(pointToLight);
+			vec3 light_color = light_col[l];
+
+			float intensity = 1.f - clamp(length(pointToLight)/radius, 0., 1.);
+			float diffuse = (1-metallic)*calcDiffuse(position, normal, light_dir);
+			float specular = metallic * calcSpecular(position, normal, light_dir, view_dir, roughness);
+
+			lighting.diffuse += diffuse * intensity * light_color;
+			lighting.specular += specular * intensity * light_color;
+		}
 	}
 
 	for(int i = 0; i < num_shadows; i++) {

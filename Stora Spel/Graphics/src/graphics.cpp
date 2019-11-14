@@ -1477,7 +1477,7 @@ void Render() {
   post_process.AfterDraw(blur);
 
   if (use_ao) {
-    ssao.Process(post_process, blur, cam_transform);
+    ssao.Process(post_process, blur, camera);
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
