@@ -226,17 +226,17 @@ void PlayState::Update(float dt) {
       cam_c.orientation = orientation;
       trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
 
-	  //FPS Model rotations
+      // FPS Model rotations
       mc.rot_offset = orientation -= glm::quat(glm::vec3(0.f, yaw_, 0.f));
 
-	  //rotate model offset as well, this does not want to work...
+      // rotate model offset as well, this does not want to work...
       /*glm::mat4 translateMat = glm::translate(glm::mat4(1.f), cam_c.offset);
       glm::mat4 rotMat = glm::mat4(mc.rot_offset);
-	  glm::mat4 transform = translateMat * rotMat * glm::inverse(translateMat);
-      glm::vec3 f = transform * glm::vec4(mc.offset, 1.f);
-      mc.offset = glm::vec3(f.x, f.y, f.z);
+          glm::mat4 transform = translateMat * rotMat *
+      glm::inverse(translateMat); glm::vec3 f = transform *
+      glm::vec4(mc.offset, 1.f); mc.offset = glm::vec3(f.x, f.y, f.z);
 
-	  std::cout << f.x << ", " << f.y << ", " << f.z << "\n";*/
+          std::cout << f.x << ", " << f.y << ", " << f.z << "\n";*/
     } else {
       auto trans = new_transforms_[id_c.id];
       if (glm::length(trans_c.position - trans.first) > 10) {

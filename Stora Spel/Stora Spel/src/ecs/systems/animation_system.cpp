@@ -113,8 +113,7 @@ void AnimationSystem::PlayAnimation(std::string name, float speed,
       new std::vector<glm::vec3>(ac->model_data.bones.size());
   p_anim->bone_rotation_ =
       new std::vector<glm::quat>(ac->model_data.bones.size());
-  p_anim->bone_scale_ =
-      new std::vector<glm::vec3>(ac->model_data.bones.size());
+  p_anim->bone_scale_ = new std::vector<glm::vec3>(ac->model_data.bones.size());
 
   p_anim->speed_ = speed;
   p_anim->priority_ = priority;
@@ -213,7 +212,7 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
         ac.init = false;
       }
 
-    }else{
+    } else {
       if (ac.init) {
         PlayAnimation("Resting", 0.5f, &ac, 10, 1.f, LOOP);
 
@@ -384,7 +383,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           auto& pc = view.get<PlayerComponent>(entity);
           if (pc.localPlayer) {
             PlayAnimation("Shoot", 1.f, &ac, 14, 1.f, MUTE_ALL);
-		  } else {
+          } else {
             PlayAnimation("Shoot", 4.f, &ac, 14, 1.f, PARTIAL_MUTE,
                           &ac.model_data.upperBody);
           }
@@ -496,7 +495,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
             StopAnimation("LookRight", &ac);
             StopAnimation("LookLeft", &ac);
             StopAnimation("LookAhead", &ac);
-		  }
+          }
 
           break;
         }
@@ -531,7 +530,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
                           &ac.model_data.upperBody, &ac.model_data.arms);
             PlayAnimation("LookAhead", 1.f, &ac, 21, 0.f, LOOP,
                           &ac.model_data.upperBody, &ac.model_data.arms);
-		  }
+          }
 
           break;
         }
@@ -601,7 +600,7 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
                 InterpolateVector(anim->time_, &channel->scaling_keys);
             glm::mat4 scaling = glm::scale(scale);
 
-			anim->bone_position_->at(jointId) = pos;
+            anim->bone_position_->at(jointId) = pos;
             anim->bone_rotation_->at(jointId) = rotation;
             anim->bone_scale_->at(jointId) = scale;
 
