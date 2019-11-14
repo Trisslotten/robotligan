@@ -97,12 +97,14 @@ void PlayState::CreateGoalParticles(float x) {
   handle = glob::CreateParticleSystem();
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
-  glob::SetEmitPosition(handle, glm::vec3(x * 1.0f, 0.f, 15.f * arena_scale_.z));
+  glob::SetEmitPosition(handle,
+                        glm::vec3(x * 1.0f, 0.f, 15.f * arena_scale_.z));
   e = registry_gameplay_.create();
   handle = glob::CreateParticleSystem();
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
-  glob::SetEmitPosition(handle, glm::vec3(x * 1.0f, 0.f, -15.f * arena_scale_.z));
+  glob::SetEmitPosition(handle,
+                        glm::vec3(x * 1.0f, 0.f, -15.f * arena_scale_.z));
   // std::unordered_map<std::string, std::string> map;
   // map["color"] = "1.0 0.0 0.0 0.4";
   // glob::SetParticleSettings(handle, map);
@@ -290,8 +292,8 @@ void PlayState::Update(float dt) {
   // glm::vec3(0, 1, 0));
   // glob::Submit(e2D_test_, glm::vec3(-10.5f, 1.0f, 0.0f), 2, 90.0f,
   // glm::vec3(0, 1, 0));
-  glob::Submit(e2D_test2_, glm::vec3(0.0f, 3.0f, -28.0f) * arena_scale_, 7, 0.0f,
-               glm::vec3(1));
+  glob::Submit(e2D_test2_, glm::vec3(0.0f, 3.0f, -28.0f) * arena_scale_, 7,
+               0.0f, glm::vec3(1));
 
   UpdateGameplayTimer();
   UpdateSwitchGoalTimer();
@@ -589,8 +591,14 @@ void PlayState::DrawWallOutline() {
     glm::vec3 pos = camera.GetLookDir() * 4.5f + trans.position + camera.offset;
     pos.y = 0.05f;
 
-    if (glm::distance(glm::vec2(pos.x, pos.z), glm::vec2(-41.f, 0.f) * glm::vec2(arena_scale_.x, arena_scale_.z)) < 20.f * arena_scale_.x ||
-        glm::distance(glm::vec2(pos.x, pos.z), glm::vec2(41.f, 0.f) * glm::vec2(arena_scale_.x, arena_scale_.z)) < 20.f * arena_scale_.x) {
+    if (glm::distance(
+            glm::vec2(pos.x, pos.z),
+            glm::vec2(-41.f, 0.f) * glm::vec2(arena_scale_.x, arena_scale_.z)) <
+            20.f * arena_scale_.x ||
+        glm::distance(
+            glm::vec2(pos.x, pos.z),
+            glm::vec2(41.f, 0.f) * glm::vec2(arena_scale_.x, arena_scale_.z)) <
+            20.f * arena_scale_.x) {
       return;
     }
 
@@ -1234,12 +1242,18 @@ void PlayState::CreateArenaEntity() {
   auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
   model_c.handles.push_back(model_arena);
   model_c.handles.push_back(model_arena_banner);
-  model_c.handles.push_back(model_map);
-  model_c.handles.push_back(model_map_floor);
   model_c.handles.push_back(model_map_projectors);
 
+  registry_gameplay_.assign<TransformComponent>(
+      arena, zero_vec, zero_vec, arena_scale);
+
+  arena = registry_gameplay_.create();
+  auto& model_c2 = registry_gameplay_.assign<ModelComponent>(arena);
+  model_c2.handles.push_back(model_map);
+  model_c2.handles.push_back(model_map_floor);
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                 arena_scale);
+  map_visual_entity_ = arena;
 }
 
 void PlayState::CreateMapEntity() {
@@ -1585,7 +1599,8 @@ void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
   registry_gameplay_.assign<IDComponent>(missile_object, id);
   registry_gameplay_.assign<SoundComponent>(missile_object,
                                             sound_engine.CreatePlayer());
-  registry_gameplay_.assign<ProjectileComponent>(missile_object, ProjectileID::MISSILE_OBJECT);
+  registry_gameplay_.assign<ProjectileComponent>(missile_object,
+                                                 ProjectileID::MISSILE_OBJECT);
   registry_gameplay_.assign<TrailComponent>(missile_object, 0.2f,
                                             glm::vec4(1.0f, 0.6f, 0.2f, 1.0f));
 }
@@ -1660,6 +1675,10 @@ void PlayState::SwitchGoals() {
   glm::vec3 blue_light_pos = blue_light_trans_c.position;
   blue_light_trans_c.position = red_light_trans_c.position;
   red_light_trans_c.position = blue_light_pos;
+
+  auto& map_trans = registry_gameplay_.get<TransformComponent>(map_visual_entity_);
+
+  map_trans.rotation *= glm::quat(glm::vec3(0.f, glm::pi<float>(), 0.f));
 }
 
 void PlayState::SetPlayerLookDir(EntityID id, glm::vec3 look_dir) {
@@ -2091,8 +2110,8 @@ void PlayState::FetchMapAndArena(entt::registry& in_registry) {
 
   // Lights
   entt::entity light = in_registry.create();
-  in_registry.assign<LightComponent>(light, glm::vec3(0.4f, 0.4f, 0.4f),
-                                            90.f, 0.2f);
+  in_registry.assign<LightComponent>(light, glm::vec3(0.4f, 0.4f, 0.4f), 90.f,
+                                     0.2f);
   in_registry.assign<TransformComponent>(
       light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
 }

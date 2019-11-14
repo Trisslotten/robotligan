@@ -316,7 +316,7 @@ class PlayState : public State {
   std::unordered_map<EntityID, glm::vec3> player_look_dirs_;
   std::unordered_map<EntityID, glm::vec3> player_move_dirs_;
   FrameState server_predicted_;
-  entt::entity my_entity_, arena_entity_;
+  entt::entity my_entity_, arena_entity_, map_visual_entity_;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
 
