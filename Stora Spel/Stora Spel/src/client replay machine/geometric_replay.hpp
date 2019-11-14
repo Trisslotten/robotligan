@@ -121,11 +121,7 @@ class GeometricReplay {
   bool SaveFrame(entt::registry& in_registry);
   bool LoadFrame(entt::registry& in_registry);
 
-  // void SetWriteFrame(unsigned int in_frame_number);
-  // NTS: Do not use this (^^^) function. The only place where
-  // the write-frame number is set is in the SaveFrame() function
-  // which means that the write-frame number can tell us the age
-  // of the replay
+  void SetEndingFrame(EntityID in_id, entt::registry& in_registry);
 
   void SetReadFrameToStart();
 
