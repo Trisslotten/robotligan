@@ -1,12 +1,22 @@
 #include "geometric_replay.hpp"
 
 #include <ecs/components.hpp>
+#include <map>
+
+#include <ecs/components.hpp>
+#include <ecs/components/ball_component.hpp>
+#include <ecs/components/model_component.hpp>
+#include <ecs/components/player_component.hpp>
+#include <entt.hpp>
 #include <glob/graphics.hpp>
 #include <map>
 #include <shared/pick_up_component.hpp>
 #include <shared/transform_component.hpp>
 #include <util/asset_paths.hpp>
 #include <util/global_settings.hpp>
+#include <engine.hpp>
+#include "eventdispatcher.hpp"
+
 // Private---------------------------------------------------------------------
 ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
                                                  entt::registry& in_registry) {
@@ -77,8 +87,9 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
     PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
+    PhysicsComponent& phys_c = in_registry.get<PhysicsComponent>(in_entity);
 
-    ret_ptr = new PlayerFrame(transform_c, player_c);
+    ret_ptr = new PlayerFrame(transform_c, player_c, phys_c);
   } else if (object_type == REPLAY_BALL) {
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
@@ -192,6 +203,15 @@ void GeometricReplay::InterpolateEntityData(unsigned int in_channel_index,
     }
   }
 
+  // Ed.
+  // If 'a' holds an Ending Frame we do not interpolate
+  // but instead remove the entity from the registry
+  // and return
+  if (this->channels_.at(in_channel_index).entries.at(a_index).ending_entry) {
+    in_registry.destroy(in_entity);
+    return;
+  }
+
   // Interpolate a new frame (allocates memory)
   DataFrame* interpolated_frame_ptr =
       this->InterpolateDataFrame(in_channel_index, a_index, b_index, c_frame);
@@ -225,8 +245,10 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
     PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
+    PhysicsComponent& phys_c = in_registry.get<PhysicsComponent>(in_entity);
+
     // Transfer
-    pf_c_ptr->WriteBack(transform_c, player_c);
+    pf_c_ptr->WriteBack(transform_c, player_c, phys_c);
   } else if (in_type == REPLAY_BALL) {
     // Cast
     BallFrame* bf_c_ptr = dynamic_cast<BallFrame*>(in_df_ptr);
@@ -316,12 +338,21 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     TransformComponent& transform_c =
         in_registry.assign<TransformComponent>(entity);
     PlayerComponent& player_c = in_registry.assign<PlayerComponent>(entity);
-    pf_ptr->WriteBack(transform_c, player_c);
+    PhysicsComponent& phys_c = in_registry.assign<PhysicsComponent>(entity);
 
     // Create and add ModelHandle
     glob::ModelHandle mh_mech = glob::GetModel(kModelPathMech);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     model_c.handles.push_back(mh_mech);
+    model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
+
+    AnimationComponent& anim_c = in_registry.assign<AnimationComponent>(
+        entity, glob::GetAnimationData(mh_mech));
+
+	in_registry.assign<SoundComponent>(
+        entity, engine_->GetSoundEngine().CreatePlayer());
+
+    pf_ptr->WriteBack(transform_c, player_c, phys_c);
   } else if (object_type == REPLAY_BALL) {
     BallFrame* bf_ptr = dynamic_cast<BallFrame*>(df_ptr);
     in_registry.assign<IDComponent>(
@@ -340,8 +371,8 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     model_c.handles.push_back(mh_ball_sphe);
 
     // Add light
-    in_registry.assign<LightComponent>(entity, glm::vec3(0.f, 1.f, 0.f), 20.f, 0.f,
-                                    false);
+    in_registry.assign<LightComponent>(entity, glm::vec3(0.f, 1.f, 0.f), 20.f,
+                                       0.f, false);
 
     // Add trail
     in_registry.assign<TrailComponent>(entity);
@@ -396,8 +427,7 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     tsf_ptr->WriteBack(transform_c);
 
     // Add trail
-    in_registry.assign<TrailComponent>(entity, 0.5f,
-                                              glm::vec4(1, 1, 1, 1));
+    in_registry.assign<TrailComponent>(entity, 0.5f, glm::vec4(1, 1, 1, 1));
   } else if (object_type == REPLAY_MISSILE) {
     MissileFrame* mf_ptr = dynamic_cast<MissileFrame*>(df_ptr);
     in_registry.assign<IDComponent>(
@@ -439,6 +469,13 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
   }
 }
 
+void GeometricReplay::ReceiveGameEvent(GameEvent event) {
+  CapturedGameEvent cge;
+  cge.event = event;
+  cge.frame_number = current_frame_number_write_;
+  captured_events_.push_back(cge);
+}
+
 // Protected-------------------------------------------------------------------
 
 GeometricReplay::GeometricReplay() {
@@ -468,6 +505,8 @@ GeometricReplay* GeometricReplay::Clone() {
   clone->threshhold_age_ = this->threshhold_age_;
   clone->current_frame_number_write_ = this->current_frame_number_write_;
   clone->current_frame_number_read_ = this->current_frame_number_read_;
+  clone->captured_events_ = this->captured_events_;
+  clone->engine_ = this->engine_; 
 
   return clone;
 }
@@ -571,8 +610,12 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
       IDComponent& id_c = in_registry.get<IDComponent>(entity);
 
       if (this->channels_.at(i).object_id == id_c.id) {
-        // If the id is found set the entity's
-        // component data using the interpolation function
+        // -	If the id is found set the entity's
+        // component data using the interpolation function.
+        // -	Or, potentially destroy the entity if the channel
+        // reached an ending frame. This would mean that
+        // the entity will be missing the next time the
+        // view is created
         this->InterpolateEntityData(i, entity, in_registry);
 
         // Note that we found id and jump out of for-loop
@@ -581,17 +624,72 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
       }
     }
 
-    if (id_unfound) {
-      // Create the entity that existed in the replay
-      // but not in the registry
+    // Create entity IF:
+    //	a- entity existed in the replay but not in the registry (id_unfound)
+    //	b- its point 'a' (first interpolation index) is not an ending entry
+    //	c- the current read frame is further along than the first entry
+    bool b = !this->channels_.at(i)
+                  .entries.at(this->channels_.at(i).index_a)
+                  .ending_entry;
+    bool c = (this->current_frame_number_read_ >
+              this->channels_.at(i).entries.at(0).frame_number);
+    if (id_unfound && b && c) {  // Ed.
+
       this->CreateEntityFromChannel(i, in_registry);
     }
   }
 
+  if (next_index_to_read_ < captured_events_.size()) {
+    while (captured_events_[next_index_to_read_].frame_number ==
+           current_frame_number_read_) {
+      dispatcher.trigger(captured_events_[next_index_to_read_].event);
+      printf("Triggered event of type: %i \n",
+             captured_events_[next_index_to_read_].event.type);
+      next_index_to_read_++;
+    }
+  }
   // Increment read index
   this->current_frame_number_read_++;
 
   return false;
+}
+
+void GeometricReplay::SetEndingFrame(EntityID in_id,
+                                     entt::registry& in_registry) {
+  // Loop through the channels and search
+  // for the given id
+  bool unfound = true;
+
+  for (unsigned int i = 0; i < this->channels_.size(); i++) {
+    if (in_id == this->channels_.at(i).object_id) {
+      // If a channel is found, fetch the entity
+      // from the registry
+      entt::basic_view view = in_registry.view<IDComponent>();
+      for (entt::entity entity : view) {
+        IDComponent& id_c = in_registry.get<IDComponent>(entity);
+
+        if (in_id == id_c.id) {
+          // Create a ChannelEntry for the ending frame
+          // and push it into the FrameChannel
+          ChannelEntry ending_ce;
+          this->FillChannelEntry(ending_ce, entity, in_registry);
+          // Edit it to be an Ending Entry
+          ending_ce.ending_entry = true;
+
+          this->channels_.at(i).entries.push_back(ending_ce);
+
+          unfound = false;
+        }
+      }
+    }
+  }
+
+  // If still unfound, spit out an error
+  if (unfound) {
+    GlobalSettings::Access()->WriteError(
+        __FILE__, __FUNCTION__,
+        "Tried to set ending frame for non-existing object");
+  }
 }
 
 void GeometricReplay::SetReadFrameToStart() {

@@ -151,11 +151,14 @@ void ServerPlayState::Init() {
     for (auto ids : clients_player_ids_) {
       to_send << ids.second;
     }
-
+    glm::vec3 arena_scale;
+    arena_scale.x = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
+    arena_scale.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
+    arena_scale.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
     int num_players = server.GetConnectedPlayers();
     to_send << num_players;
     to_send << client_abilities_[client_id];
-
+    to_send << arena_scale;
     to_send << PacketBlockType::GAME_START;
 
     auto pick_up_view =
@@ -558,7 +561,11 @@ void ServerPlayState::CreateMapEntity() {
   auto& registry = game_server_->GetRegistry();
 
   auto entity = registry.create();
-  glm::vec3 arena_scale = glm::vec3(2.6f);
+  glm::vec3 arena_scale2;
+  arena_scale2.x = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
+  arena_scale2.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
+  arena_scale2.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
+  glm::vec3 arena_scale = glm::vec3(2.6f) * arena_scale2;
   // Prepare hard-coded values
   // Scale on the hitbox for the map
   float v1 = 6.8f * arena_scale.z;
@@ -724,13 +731,17 @@ void ServerPlayState::ResetEntities() {
 
   // Reset Players
   glm::vec3 player_pos[3];
+  glm::vec3 arena_scale;
+  arena_scale.x = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
+  arena_scale.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
+  arena_scale.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
   for (int i = 0; i < 3; ++i) {
     player_pos[i].x = GlobalSettings::Access()->ValueOf(
-        std::string("PLAYERPOSITION") + std::to_string(i) + "X");
+        std::string("PLAYERPOSITION") + std::to_string(i) + "X") * arena_scale.x;
     player_pos[i].y = GlobalSettings::Access()->ValueOf(
         std::string("PLAYERPOSITION") + std::to_string(i) + "Y");
     player_pos[i].z = GlobalSettings::Access()->ValueOf(
-        std::string("PLAYERPOSITION") + std::to_string(i) + "Z");
+        std::string("PLAYERPOSITION") + std::to_string(i) + "Z") * arena_scale.z;
   }
 
   unsigned int blue_counter = 0;
@@ -1049,24 +1060,28 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
 void ServerPlayState::CreateGoals() {
   auto& registry = game_server_->GetRegistry();
   // blue team's goal, place at red goal in world
+  glm::vec3 arena_scale;
+  arena_scale.x = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
+  arena_scale.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
+  arena_scale.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
   auto entity_blue = registry.create();
   registry.assign<physics::OBB>(entity_blue, glm::vec3(0.f, 0.f, 0.f),
                                 glm::vec3(1, 0, 0), glm::vec3(0, 1, 0),
-                                glm::vec3(0, 0, 1), 4.f, 4.f, 8.f);
+                                glm::vec3(0, 0, 1), 2.f * arena_scale.x, 2.f * arena_scale.y, 6.5f * arena_scale.z);
   registry.assign<TeamComponent>(entity_blue, TEAM_BLUE);
   registry.assign<GoalComponenet>(entity_blue);
   auto& trans_comp = registry.assign<TransformComponent>(entity_blue);
-  trans_comp.position = glm::vec3(-40.f, -3.9f, 0.f);
+  trans_comp.position = glm::vec3(-41.f * arena_scale.x, 2.0f * arena_scale.y, 0.f);
 
   // red team's goal, place at blue goal in world
   auto entity_red = registry.create();
   registry.assign<physics::OBB>(entity_red, glm::vec3(0.f, 0.f, 0.f),
                                 glm::vec3(1, 0, 0), glm::vec3(0, 1, 0),
-                                glm::vec3(0, 0, 1), 4.f, 4.f, 8.f);
+                                glm::vec3(0, 0, 1), 2.f * arena_scale.x, 2.f * arena_scale.y, 6.5f * arena_scale.z);
   registry.assign<TeamComponent>(entity_red, TEAM_RED);
   registry.assign<GoalComponenet>(entity_red);
   auto& trans_comp2 = registry.assign<TransformComponent>(entity_red);
-  trans_comp2.position = glm::vec3(40.f, -3.9f, 0.f);
+  trans_comp2.position = glm::vec3(41.f * arena_scale.x, 2.f * arena_scale.y, 0.f);
 }
 
 void ServerPlayState::Reconnect(int id) {
@@ -1110,12 +1125,15 @@ void ServerPlayState::Reconnect(int id) {
   for (auto ids : clients_player_ids_) {
     to_send << ids.second;
   }
-
+  glm::vec3 arena_scale;
+  arena_scale.x = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
+  arena_scale.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
+  arena_scale.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
   int num_players = server.GetConnectedPlayers();
   std::cout << "Num players : " << num_players << std::endl;
   to_send << num_players;
   to_send << client_abilities_[id];
-
+  to_send << arena_scale;
   to_send << PacketBlockType::GAME_START;
 
   auto pick_up_view =
@@ -1136,9 +1154,13 @@ void ServerPlayState::CreatePickupSpawners() {
 
   std::string config_str = "PICKUPPOSITION0";
   glm::vec3 pos;
-  pos.x = GlobalSettings::Access()->ValueOf(config_str + "X");
+  glm::vec3 arena_scale;
+  arena_scale.x = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
+  arena_scale.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
+  arena_scale.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
+  pos.x = GlobalSettings::Access()->ValueOf(config_str + "X") * arena_scale.x;
   pos.y = GlobalSettings::Access()->ValueOf(config_str + "Y");
-  pos.z = GlobalSettings::Access()->ValueOf(config_str + "Z");
+  pos.z = GlobalSettings::Access()->ValueOf(config_str + "Z") * arena_scale.z;
   positions.push_back(pos);
   pos.x *= -1;
   positions.push_back(pos);

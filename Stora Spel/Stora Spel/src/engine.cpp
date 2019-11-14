@@ -13,6 +13,7 @@
 #include "ecs/systems/animation_system.hpp"
 #include "ecs/systems/gui_system.hpp"
 #include "ecs/systems/input_system.hpp"
+#include "ecs/systems/lifetime_system.hpp"
 #include "ecs/systems/particle_system.hpp"
 #include "ecs/systems/render_system.hpp"
 #include "ecs/systems/sound_system.hpp"
@@ -55,7 +56,7 @@ void Engine::Init() {
       animation_system_);
   dispatcher.sink<GameEvent>().connect<&PlayState::ReceiveGameEvent>(
       play_state_);
-
+  
   SetKeybinds();
 
   scores_.reserve(2);
@@ -107,6 +108,10 @@ void Engine::Init() {
 //                                            // approximation
 //  this->replay_machine_ =
 //      new ClientReplayMachine(length_sec, approximate_tickrate);
+  // Initiate the Replay Machine
+  
+  dispatcher.sink<GameEvent>().connect<&ClientReplayMachine::ReceiveGameEvent>(
+      *replay_machine_);
 }
 
 void Engine::Update(float dt) {
@@ -224,7 +229,7 @@ void Engine::Update(float dt) {
     glob::SetSSAO(false);
   }
 
-  if(Input::IsKeyPressed(GLFW_KEY_F5)) {
+  if (Input::IsKeyPressed(GLFW_KEY_F5)) {
     glob::ReloadShaders();
   }
 
@@ -239,7 +244,7 @@ void Engine::UpdateNetwork() {
   for (auto const& [key, action] : keybinds_) {
     auto& presses = key_presses_[key];
     if (presses > 0) {
-      play_state_.AddAction(action);
+      //play_state_.AddAction(action);
       actions.set(action, true);
     }
   }
@@ -282,7 +287,7 @@ void Engine::UpdateNetwork() {
     to_send << play_state_.GetYaw();
     to_send << PacketBlockType::INPUT;
   } else {
-    play_state_.ClearActions();
+    //play_state_.ClearActions();
   }
   if (client_.IsConnected() && !to_send.IsEmpty()) {
     client_.Send(to_send);
@@ -391,6 +396,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       EntityID ball_id;
       int ability_id;
       int num_team_ids;
+      glm::vec3 arena_scale;
+      packet >> arena_scale;
       packet >> ability_id;
       packet >> num_players;
       player_ids.resize(num_players);
@@ -401,6 +408,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetEntityIDs(player_ids, my_id, ball_id);
       play_state_.SetMyPrimaryAbility(ability_id);
       play_state_.SetTeam(team);
+      play_state_.SetArenaScale(arena_scale);
       packet >> num_team_ids;
       for (int i = 0; i < num_team_ids; i++) {
         long client_id;
@@ -661,7 +669,18 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::DESTROY_ENTITIES: {
       EntityID id;
       packet >> id;
+
+      // If we are recording notify replay machine
+	  //before entity is gone
+      if (this->recording_) {
+        this->replay_machine_->NotifyDestroyedObject(
+            id, *(this->registry_current_));
+      }
+
+	  // Remove the entity
       play_state_.DestroyEntity(id);
+
+	  //Contemplate life
       break;
     }
     case PacketBlockType::GAME_END: {
@@ -764,6 +783,7 @@ void Engine::UpdateSystems(float dt) {
   ParticleSystem(*registry_current_, dt);
   animation_system_.UpdateAnimations(*registry_current_, dt);
   trailsystem::Update(*registry_current_, dt);
+  lifetime::Update(*registry_current_, dt);
   RenderSystem(*registry_current_);
 }
 
@@ -866,9 +886,7 @@ int Engine::GetGameplayTimer() const { return gameplay_timer_sec_; }
 
 int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }
 
-float Engine::GetSwitchGoalCountdownTimer() const {
-  return switch_goal_timer_;
-}
+float Engine::GetSwitchGoalCountdownTimer() const { return switch_goal_timer_; }
 
 int Engine::GetSwitchGoalTime() const { return switch_goal_time_; }
 

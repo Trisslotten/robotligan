@@ -9,6 +9,8 @@
 
 #include "data_frame.hpp"
 
+class Engine;
+
 enum ReplayObjectType {
   REPLAY_PLAYER = 0,  // Start
   REPLAY_BALL,
@@ -63,6 +65,14 @@ class GeometricReplay {
     unsigned int index_b = 0;
   };
 
+  struct CapturedGameEvent {
+    GameEvent event;
+    unsigned int frame_number;
+  };
+
+  std::vector<CapturedGameEvent> captured_events_;
+  unsigned int next_index_to_read_ = 0;
+
   ReplayObjectType IdentifyEntity(entt::entity& in_entity,
                                   entt::registry& in_registry);
 
@@ -85,6 +95,8 @@ class GeometricReplay {
 
   void CreateEntityFromChannel(unsigned int in_channel_index,
                                entt::registry& in_registry);
+
+  Engine* engine_;
 
  protected:
   std::vector<FrameChannel> channels_;
@@ -109,11 +121,7 @@ class GeometricReplay {
   bool SaveFrame(entt::registry& in_registry);
   bool LoadFrame(entt::registry& in_registry);
 
-  // void SetWriteFrame(unsigned int in_frame_number);
-  // NTS: Do not use this (^^^) function. The only place where
-  // the write-frame number is set is in the SaveFrame() function
-  // which means that the write-frame number can tell us the age
-  // of the replay
+  void SetEndingFrame(EntityID in_id, entt::registry& in_registry);
 
   void SetReadFrameToStart();
 
@@ -121,6 +129,9 @@ class GeometricReplay {
 
   std::string GetGeometricReplayTree();
   std::string GetStateOfReplay();
+
+  void ReceiveGameEvent(GameEvent event);
+  void SetEngine(Engine* eng) { engine_ = eng; }
 };
 
 #endif  // !GEOMETRIC_REPLAY_HPP_

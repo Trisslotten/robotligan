@@ -99,6 +99,8 @@
     <ClInclude Include="src\ecs\components\wall_component.hpp" />
     <ClInclude Include="shared\shared\fail_safe_arena.hpp" />
     <ClInclude Include="shared\shared\projectile_component.hpp" />
+    <ClInclude Include="src\ecs\components\timer_component.hpp" />
+    <ClInclude Include="src\ecs\systems\lifetime_system.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

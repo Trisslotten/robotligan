@@ -207,6 +207,21 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
                     &ac.model_data.upperBody, &ac.model_data.arms);
       PlayAnimation("LookAhead", 1.f, &ac, 21, 0.f, LOOP,
                     &ac.model_data.upperBody, &ac.model_data.arms);
+
+      if (pl.running) {
+        PlayAnimation("Run", 1.f, &ac, 15, 1.f, LOOP);
+      }
+      if (pl.jumping) {
+        PlayAnimation("JumpStart", 0.5f, &ac, 25, 1.f, LOOP);
+        PlayAnimation("JumpEnd", 0.5f, &ac, 25, 0.f, LOOP);
+      }
+      if (pl.sprinting) {
+        PlayAnimation("SlideF", 1.f, &ac, 20, 0.f, LOOP);
+        PlayAnimation("SlideB", 1.f, &ac, 20, 0.f, LOOP);
+        PlayAnimation("SlideR", 1.f, &ac, 20, 0.f, LOOP);
+        PlayAnimation("SlideL", 1.f, &ac, 20, 0.f, LOOP);
+      }
+
       ac.init = false;
     }
 
@@ -360,7 +375,7 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
 
       } catch (std::exception& e) {
         // ???
-        //std::cout << e.what() << '\n';
+        // std::cout << e.what() << '\n';
       }
     }
 
@@ -391,7 +406,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
       auto view =
           registry->view<IDComponent, AnimationComponent, PlayerComponent>();
       for (auto entity : view) {
-        if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
+        if (view.get<IDComponent>(entity).id == event.kick.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           PlayAnimation("Kick", 4.f, &ac, 14, 1.f, PARTIAL_MUTE,
@@ -405,7 +420,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
       auto view =
           registry->view<IDComponent, AnimationComponent, PlayerComponent>();
       for (auto entity : view) {
-        if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
+        if (view.get<IDComponent>(entity).id == event.jump.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           pc.jumping = true;
@@ -422,7 +437,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
       auto view =
           registry->view<IDComponent, AnimationComponent, PlayerComponent>();
       for (auto entity : view) {
-        if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
+        if (view.get<IDComponent>(entity).id == event.land.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           pc.jumping = false;
@@ -438,7 +453,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
       auto view =
           registry->view<IDComponent, AnimationComponent, PlayerComponent>();
       for (auto entity : view) {
-        if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
+        if (view.get<IDComponent>(entity).id == event.run_start.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           pc.running = true;
@@ -453,7 +468,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
       auto view =
           registry->view<IDComponent, AnimationComponent, PlayerComponent>();
       for (auto entity : view) {
-        if (view.get<IDComponent>(entity).id == event.sprint_start.player_id) {
+        if (view.get<IDComponent>(entity).id == event.run_end.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           pc.running = false;

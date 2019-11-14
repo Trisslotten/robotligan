@@ -10,38 +10,38 @@
 //			DataFrame
 //##############################
 
-// Private---------------------------------------------------------------------
-
-// Public----------------------------------------------------------------------
-
 DataFrame::DataFrame() {}
 
 DataFrame::~DataFrame() {}
-
-// FrameType DataFrame::GetFrameType() const { return this->frame_type_; }
 
 //##############################
 //			PlayerFrame
 //##############################
 
-// Private---------------------------------------------------------------------
-
-// Public----------------------------------------------------------------------
-
 PlayerFrame::PlayerFrame() {}
 
 PlayerFrame::PlayerFrame(TransformComponent& in_transform_c,
-                         PlayerComponent& in_player_c) {
+                         PlayerComponent& in_player_c_,
+                         PhysicsComponent& in_phys_c) {
   //
   this->position_ = in_transform_c.position;
   this->rotation_ = in_transform_c.rotation;
-  // this->scale_ = in_transform_c.scale;
+  this->scale_ = in_transform_c.scale;
 
-  //
-  this->sprint_coeff_ = in_player_c.sprint_coeff;
-  this->sprinting_ = in_player_c.sprinting;
-  this->running_ = in_player_c.running;
-  this->jumping_ = in_player_c.jumping;
+  pc_sprinting_ = in_player_c_.sprinting;
+  pc_running_ = in_player_c_.running;
+  pc_jumping_ = in_player_c_.jumping;
+  pc_vel_dir_ = in_player_c_.vel_dir;
+  pc_look_dir_ = in_player_c_.look_dir;
+  pc_move_dir_ = in_player_c_.move_dir;
+
+
+  /*for (auto anim : in_anim_c.active_animations) {
+    active_animations_.push_back(anim);
+  }*/
+
+  // physic stuff
+  this->velocity_ = in_phys_c.velocity;
 }
 
 PlayerFrame::~PlayerFrame() {}
@@ -51,12 +51,16 @@ DataFrame* PlayerFrame::Clone() {
 
   ret_ptr->position_ = this->position_;
   ret_ptr->rotation_ = this->rotation_;
-  // ret_ptr->scale_ = this->scale_;
+  ret_ptr->scale_ = this->scale_;
 
-  ret_ptr->sprint_coeff_ = this->sprint_coeff_;
-  ret_ptr->sprinting_ = this->sprinting_;
-  ret_ptr->running_ = this->running_;
-  ret_ptr->jumping_ = this->jumping_;
+  ret_ptr->pc_sprinting_ = this->pc_sprinting_;
+  ret_ptr->pc_jumping_ = this->pc_jumping_;
+  ret_ptr->pc_running_ = this->pc_running_;
+  ret_ptr->pc_vel_dir_ = this->pc_vel_dir_;
+  ret_ptr->pc_look_dir_ = this->pc_look_dir_;
+  ret_ptr->pc_move_dir_ = this->pc_move_dir_;
+
+  ret_ptr->velocity_ = this->velocity_;
 
   return ret_ptr;
 }
@@ -86,13 +90,13 @@ bool PlayerFrame::ThresholdCheck(DataFrame& in_future_df) {
   }
 
   // ANIMATIONS
-  if (this->sprinting_ != future_pf.sprinting_) {
+  if (this->pc_sprinting_ != future_pf.pc_sprinting_) {
     return true;
   }
-  if (this->running_ != future_pf.running_) {
+  if (this->pc_running_ != future_pf.pc_running_) {
     return true;
   }
-  if (this->jumping_ != future_pf.jumping_) {
+  if (this->pc_jumping_ != future_pf.pc_jumping_) {
     return true;
   }
 
@@ -128,25 +132,26 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
     ret_frame->rotation_ =
         glm::slerp(this->rotation_, point_b.rotation_, percentage_a);
 
-    // SCALE : Can just be straight set as it never changes
-    // ret_frame->scale_ = this->scale_;
+    ret_frame->scale_ = this->scale_;
 
-    // SPRINT COEFFICIENT : (NTS: Should this even be interpolated? If no we do
-    // not even need to save it)
-    ret_frame->sprint_coeff_ =
-        this->sprint_coeff_ +
-        (point_b.sprint_coeff_ - this->sprint_coeff_) * percentage_a;
-
-    // PLAYER BOOLEANS : Set it dependnat on how far we are towards the next
+    // PLAYER COMPONENT : Set it dependnat on how far we are towards the next
     // point
     if (percentage_a < 0.5) {
-      ret_frame->sprinting_ = this->sprinting_;
-      ret_frame->running_ = this->running_;
-      ret_frame->jumping_ = this->jumping_;
+      ret_frame->velocity_ = this->velocity_;
+      ret_frame->pc_sprinting_ = this->pc_sprinting_;
+      ret_frame->pc_jumping_ = this->pc_jumping_;
+      ret_frame->pc_running_ = this->pc_running_;
+      ret_frame->pc_vel_dir_ = this->pc_vel_dir_;
+      ret_frame->pc_look_dir_ = this->pc_look_dir_;
+      ret_frame->pc_move_dir_ = this->pc_move_dir_;
     } else {
-      ret_frame->sprinting_ = point_b.sprinting_;
-      ret_frame->running_ = point_b.running_;
-      ret_frame->jumping_ = point_b.jumping_;
+      ret_frame->velocity_ = point_b.velocity_;
+      ret_frame->pc_sprinting_ = point_b.pc_sprinting_;
+      ret_frame->pc_jumping_ = point_b.pc_jumping_;
+      ret_frame->pc_running_ = point_b.pc_running_;
+      ret_frame->pc_vel_dir_ = point_b.pc_vel_dir_;
+      ret_frame->pc_look_dir_ = point_b.pc_look_dir_;
+      ret_frame->pc_move_dir_ = point_b.pc_move_dir_;
     }
 
     return ret_frame;
@@ -158,25 +163,24 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
 }
 
 void PlayerFrame::WriteBack(TransformComponent& in_transform_c,
-                            PlayerComponent& in_player_c) {
+                            PlayerComponent& in_player_c_,
+                            PhysicsComponent& in_phys_c) {
   in_transform_c.position = this->position_;
   in_transform_c.rotation = this->rotation_;
-  // in_transform_c.scale = this->scale_;
-  in_transform_c.scale = glm::vec3(0.1);
+  in_transform_c.scale = this->scale_;
 
-  in_player_c.sprint_coeff = this->sprint_coeff_;
-  in_player_c.sprinting = this->sprinting_;
-  in_player_c.running = this->running_;
-  in_player_c.jumping = this->jumping_;
+  in_player_c_.jumping = pc_jumping_;
+  in_player_c_.sprinting = pc_sprinting_;
+  in_player_c_.running = pc_running_;
+  in_player_c_.vel_dir = pc_vel_dir_;
+  in_player_c_.look_dir = pc_look_dir_;
+  in_player_c_.move_dir= pc_move_dir_;
+  in_phys_c.velocity = velocity_;
 }
 
 //##############################
 //			BallFrame
 //##############################
-
-// Private---------------------------------------------------------------------
-
-// Public----------------------------------------------------------------------
 
 BallFrame::BallFrame() {}
 
@@ -272,6 +276,10 @@ void BallFrame::WriteBack(TransformComponent& in_transform_c) {
   // in_transform_c.scale = this->scale_;
   in_transform_c.scale = glm::vec3(1.0);
 }
+
+//##############################
+//			PickUpFrame
+//##############################
 
 PickUpFrame::PickUpFrame() {
   position_ = glm::vec3(0.f);
@@ -370,6 +378,10 @@ void PickUpFrame::WriteBack(TransformComponent& in_transform_c) {
   in_transform_c.scale = glm::vec3(0.4f);
 }
 
+//##############################
+//			WallFrame
+//##############################
+
 WallFrame::WallFrame() {
   position_ = glm::vec3(0.f);
   rotation_ = glm::quat();
@@ -454,10 +466,6 @@ void WallFrame::WriteBack(TransformComponent& trans_c) {
 //			ShotFrame
 //##############################
 
-// Private---------------------------------------------------------------------
-
-// Public----------------------------------------------------------------------
-
 ShotFrame::ShotFrame() {}
 
 ShotFrame::ShotFrame(TransformComponent& in_transform_c) {
@@ -479,7 +487,23 @@ ShotFrame* ShotFrame::Clone() {
   return ret_ptr;
 }
 
-bool ShotFrame::ThresholdCheck(DataFrame& in_future_df) { return false; }
+bool ShotFrame::ThresholdCheck(DataFrame& in_future_df) {
+  // Cast to TeleportShotFrame
+  ShotFrame& future_sf = dynamic_cast<ShotFrame&>(in_future_df);
+
+  float threshold = 0.0f;
+
+  // POSITION
+  float pos_diff = glm::distance(this->position_, future_sf.position_);
+  threshold =
+      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_SHOT_POSITION");
+  if (pos_diff > threshold) {
+    // If we have moved over the threshold value away
+    return true;
+  }
+
+  return false;
+}
 
 DataFrame* ShotFrame::InterpolateForward(unsigned int in_dist_to_target,
                                          unsigned int in_dist_to_point_b,
@@ -532,10 +556,6 @@ void ShotFrame::WriteBack(TransformComponent& in_transform_c) {
 //			TeleportShotFrame
 //##############################
 
-// Private---------------------------------------------------------------------
-
-// Public----------------------------------------------------------------------
-
 TeleportShotFrame::TeleportShotFrame() {}
 
 TeleportShotFrame::TeleportShotFrame(TransformComponent& in_transform_c) {
@@ -553,6 +573,20 @@ TeleportShotFrame* TeleportShotFrame::Clone() {
 }
 
 bool TeleportShotFrame::ThresholdCheck(DataFrame& in_future_df) {
+  // Cast to TeleportShotFrame
+  TeleportShotFrame& future_tsf = dynamic_cast<TeleportShotFrame&>(in_future_df);
+
+  float threshold = 0.0f;
+
+  // POSITION
+  float pos_diff = glm::distance(this->position_, future_tsf.position_);
+  threshold =
+      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_TELEPORT_SHOT_POSITION");
+  if (pos_diff > threshold) {
+    // If we have moved over the threshold value away
+    return true;
+  }
+
   return false;
 }
 
@@ -596,12 +630,8 @@ void TeleportShotFrame::WriteBack(TransformComponent& in_transform_c) {
 }
 
 //##############################
-//			TeleportShotFrame
+//			MissileFrame
 //##############################
-
-// Private---------------------------------------------------------------------
-
-// Public----------------------------------------------------------------------
 
 MissileFrame::MissileFrame() {}
 
@@ -690,6 +720,10 @@ void MissileFrame::WriteBack(TransformComponent& in_transform_c) {
   in_transform_c.rotation = this->rotation_;
   in_transform_c.scale = glm::vec3(0.5f);
 }
+
+//##############################
+//			ForcePushFrame
+//##############################
 
 ForcePushFrame::ForcePushFrame() {
   position_ = glm::vec3(0.f);

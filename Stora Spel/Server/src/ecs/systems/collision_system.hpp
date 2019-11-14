@@ -534,6 +534,8 @@ void PlayerArenaCollision(entt::registry& registry) {
       arena_hitbox2 = view_mesh_arena.get<FailSafeArenaComponent>(arena);
 
       physics::IntersectData data = Intersect(arena_hitbox, player_hitbox, -physics_c.velocity);
+      if (data.collision == false)
+        data = Intersect(arena_hitbox2.arena, player_hitbox);
       if (data.collision) {
         player_hitbox.center += data.move_vector;
         if (data.normal.y > 0.25) {
@@ -822,7 +824,6 @@ void ProjectileArenaCollision(entt::registry& registry) {
       auto& id_c = view_projectile.get<IDComponent>(projectile);
 
       physics::IntersectData data = Intersect(arena_hitbox, proj_hitbox);
-
       if (data.collision == false) {
         data = Intersect(fail_safe_arena_hitbox.arena, proj_hitbox);
       }
@@ -859,7 +860,7 @@ void ProjectileArenaCollision(entt::registry& registry) {
           }
           case ProjectileID::TELEPORT_PROJECTILE: {
             // Teleport to collision site
-            TeleportToCollision(registry, proj_hitbox.center, proj_id.creator);
+            TeleportToCollision(registry, proj_hitbox.center + data.normal * 0.5f, proj_id.creator);
             DestroyEntity(registry, projectile);
             break;
           }
