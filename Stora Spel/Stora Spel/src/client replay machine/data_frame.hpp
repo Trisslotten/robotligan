@@ -4,9 +4,12 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include <ecs/components.hpp>
+#include <ecs/components/player_component.hpp>
 #include <shared/transform_component.hpp>
 #include <ecs/components.hpp>
 
+#include <glob/graphics.hpp>
 //---
 
 class DataFrame {
@@ -30,25 +33,24 @@ class PlayerFrame : public DataFrame {
   // Transform values
   glm::vec3 position_;
   glm::quat rotation_;
-  // glm::vec3 scale_;
-
-  // NTS:
-  // Scale for players has been hard-coded to be
-  // vec3(0.1) as they otherwise become really small
-  // since the transform_c.scale yields a vector containing
-  // 0.00000033 or something. We thusly don't save scale at
-  // all and save space
-  // this->scale_ = glm::vec3(0.1);
+  glm::vec3 scale_;
 
   // Player values (for animations)
-  float sprint_coeff_;
-  bool sprinting_;
-  bool running_;
-  bool jumping_;
+  bool pc_sprinting_ = false;
+  bool pc_running_ = false;
+  bool pc_jumping_ = false;
+
+  glm::vec3 pc_vel_dir_ = glm::vec3(1.f, 0.f, 0.f);
+  glm::vec3 pc_look_dir_ = glm::vec3(1.f, 0.f, 0.f);
+  glm::vec3 pc_move_dir_ = glm::vec3(1.f, 0.f, 0.f);
+
+  // physics stuff
+  glm::vec3 velocity_;
 
  public:
   PlayerFrame();
-  PlayerFrame(TransformComponent& in_transform_c, PlayerComponent& in_player_c);
+  PlayerFrame(TransformComponent& in_transform_c, PlayerComponent& in_player_c,
+              PhysicsComponent& in_phys_c);
   ~PlayerFrame();
 
   DataFrame* Clone();
@@ -58,7 +60,7 @@ class PlayerFrame : public DataFrame {
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
   void WriteBack(TransformComponent& in_transform_c,
-                 PlayerComponent& in_player_c);
+                 PlayerComponent& in_player_c, PhysicsComponent& in_phys_c);
 };
 
 //---

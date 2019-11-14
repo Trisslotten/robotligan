@@ -281,7 +281,7 @@ GLint TextureFromFile(std::string filename) {
 
 void Init() {
   camera = Camera(glm::vec3(25, 5, 0), glm::vec3(0, 3, 0), 90, 16.f / 9.f, 0.1f,
-                  200.f);
+                  500.f);
 
   // std::cout << "Max uniform size: " << MAX_VERTEX_UNIFORM_COMPONENTS_ARB <<
   // "\n";
@@ -481,6 +481,9 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
            const std::string filepath) {
   H result = 0;
 
+  std::string borg = filepath;
+  std::transform(borg.begin(), borg.end(), borg.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
   auto item = handles.find(filepath);
   if (item == handles.end()) {
     // std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";

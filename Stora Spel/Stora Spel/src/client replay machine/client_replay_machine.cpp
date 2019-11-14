@@ -1,4 +1,5 @@
 #include "client_replay_machine.hpp"
+#include "engine.hpp"
 
 // Private---------------------------------------------------------------------
 
@@ -81,11 +82,6 @@ bool ClientReplayMachine::SelectReplay(unsigned int in_index) {
   return true;
 }
 
-void ClientReplayMachine::ResetSelectedReplay() {
-  // Resets current replay to start
-  this->stored_replays_.at(this->selected_replay_index_)->SetReadFrameToStart();
-}
-
 bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
   // Returns true when replay is done
 
@@ -119,4 +115,10 @@ std::string ClientReplayMachine::GetSelectedReplayStringState() {
 
   return this->stored_replays_.at(this->selected_replay_index_)
       ->GetStateOfReplay();
+}
+
+void ClientReplayMachine::ReceiveGameEvent(GameEvent event) {
+  if (this->engine_->IsRecording()) {
+    primary_replay_->ReceiveGameEvent(event);
+  }
 }

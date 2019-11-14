@@ -55,7 +55,7 @@ void Engine::Init() {
       animation_system_);
   dispatcher.sink<GameEvent>().connect<&PlayState::ReceiveGameEvent>(
       play_state_);
-
+  
   SetKeybinds();
 
   scores_.reserve(2);
@@ -103,10 +103,14 @@ void Engine::Init() {
   // Initiate the Replay Machine
   unsigned int length_sec =
       (unsigned int)GlobalSettings::Access()->ValueOf("REPLAY_LENGTH_SECONDS");
-  unsigned int approximate_tickrate = 128;  // TODO: Replace with better
+  unsigned int approximate_tickrate = 64;  // TODO: Replace with better
                                             // approximation
   this->replay_machine_ =
       new ClientReplayMachine(length_sec, approximate_tickrate);
+  this->replay_machine_->SetEngine(this);
+
+  dispatcher.sink<GameEvent>().connect<&ClientReplayMachine::ReceiveGameEvent>(
+      *replay_machine_);
 }
 
 void Engine::Update(float dt) {
@@ -239,7 +243,7 @@ void Engine::UpdateNetwork() {
   for (auto const& [key, action] : keybinds_) {
     auto& presses = key_presses_[key];
     if (presses > 0) {
-      play_state_.AddAction(action);
+      //play_state_.AddAction(action);
       actions.set(action, true);
     }
   }
@@ -282,7 +286,7 @@ void Engine::UpdateNetwork() {
     to_send << play_state_.GetYaw();
     to_send << PacketBlockType::INPUT;
   } else {
-    play_state_.ClearActions();
+    //play_state_.ClearActions();
   }
   if (client_.IsConnected() && !to_send.IsEmpty()) {
     client_.Send(to_send);
@@ -391,6 +395,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       EntityID ball_id;
       int ability_id;
       int num_team_ids;
+      glm::vec3 arena_scale;
+      packet >> arena_scale;
       packet >> ability_id;
       packet >> num_players;
       player_ids.resize(num_players);
@@ -401,6 +407,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetEntityIDs(player_ids, my_id, ball_id);
       play_state_.SetMyPrimaryAbility(ability_id);
       play_state_.SetTeam(team);
+      play_state_.SetArenaScale(arena_scale);
       packet >> num_team_ids;
       for (int i = 0; i < num_team_ids; i++) {
         long client_id;

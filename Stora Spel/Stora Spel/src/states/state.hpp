@@ -249,7 +249,7 @@ class PlayState : public State {
   void Reset();
   void EndGame();
   void OverTime();
-  void CreateGoalParticles(float x);
+  void CreateGoalParticles(float x, entt::registry& registry);
 
   void OnServerFrame();
   void AddAction(int action) { actions_.push_back(action); }
@@ -269,6 +269,8 @@ class PlayState : public State {
   void CreateNewBallEntity(bool fake, EntityID id);
   void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
   void SetCountdownInProgress(bool val) { countdown_in_progress_ = val;  }
+  void SetArenaScale(glm::vec3 arena_scale) { arena_scale_ = arena_scale; }
+
   
   void FetchMapAndArena(entt::registry& in_registry);
 
@@ -314,7 +316,7 @@ class PlayState : public State {
   std::unordered_map<EntityID, glm::vec3> player_look_dirs_;
   std::unordered_map<EntityID, glm::vec3> player_move_dirs_;
   FrameState server_predicted_;
-  entt::entity my_entity_, arena_entity_;
+  entt::entity my_entity_, arena_entity_, map_visual_entity_;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
 
@@ -352,7 +354,7 @@ class PlayState : public State {
   glob::ModelHandle test_ball_;
   std::list<PlayerData> history_;
   FrameState predicted_state_;
-
+  glm::vec3 arena_scale_;
   std::vector<int> actions_;
   int frame_id = 0;
   float pitch_ = 0.0f;

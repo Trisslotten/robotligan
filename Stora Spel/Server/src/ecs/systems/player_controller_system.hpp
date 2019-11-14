@@ -117,22 +117,26 @@ void Update(entt::registry& registry, float dt) {
       }
 
       if (player_c.actions[PlayerAction::SPRINT]) {
-        if (!player_c.sprinting) {
+        if (!player_c.sprinting && player_c.energy_current > player_c.energy_min_sprint) {
+          player_c.sprinting = true;
+
           GameEvent sprint_event;
           sprint_event.type = GameEvent::SPRINT_START;
           sprint_event.sprint_start.player_id =
               registry.get<IDComponent>(entity).id;
           dispatcher.trigger(sprint_event);
         }
-        player_c.sprinting = true;
 
-        if (player_c.energy_current > player_c.cost_sprint * dt) {
+        if (player_c.sprinting &&
+            player_c.energy_current > player_c.cost_sprint * dt) {
           accum_velocity *= 2.f;
           player_c.energy_current -= player_c.cost_sprint * dt;
         }
-      } else if (!player_c.actions[PlayerAction::SPRINT] &&
-                 player_c.sprinting) {
+      }
+      if ((!player_c.actions[PlayerAction::SPRINT] ||
+           player_c.energy_current <= 0.1f) && player_c.sprinting) {
         player_c.sprinting = false;
+
         GameEvent sprint_event;
         sprint_event.type = GameEvent::SPRINT_END;
         sprint_event.sprint_end.player_id =

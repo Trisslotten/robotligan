@@ -57,9 +57,9 @@ class Engine {
   slob::SoundEngine& GetSoundEngine() { return sound_system_.GetSoundEngine(); }
   AnimationSystem& GetAnimationSystem() { return animation_system_; }
   entt::registry* GetCurrentRegistry() { return registry_current_; }
+  std::unordered_map<int, int> GetKeyBinds() { return keybinds_; };
 
   std::unordered_map<long, std::string> player_names_;
-
   void SetSecondaryAbility(AbilityID id) { second_ability_ = id; }
   AbilityID GetSecondaryAbility() { return second_ability_; }
   std::vector<unsigned int> GetTeamScores() { return scores_; }
@@ -90,6 +90,9 @@ class Engine {
   std::unordered_map<PlayerID, PlayerStatInfo> GetPlayerScores() {
     return player_scores_;
   }
+
+  bool IsRecording() { return recording_; }
+  bool IsReplaying() { return replaying_; }
  private:
   void SetKeybinds();
 
