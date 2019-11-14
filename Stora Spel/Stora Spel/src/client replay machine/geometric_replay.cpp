@@ -14,6 +14,7 @@
 #include <shared/transform_component.hpp>
 #include <util/asset_paths.hpp>
 #include <util/global_settings.hpp>
+#include <engine.hpp>
 #include "eventdispatcher.hpp"
 
 // Private---------------------------------------------------------------------
@@ -329,7 +330,6 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
         in_registry.assign<TransformComponent>(entity);
     PlayerComponent& player_c = in_registry.assign<PlayerComponent>(entity);
     PhysicsComponent& phys_c = in_registry.assign<PhysicsComponent>(entity);
-    
 
     // Create and add ModelHandle
     glob::ModelHandle mh_mech = glob::GetModel(kModelPathMech);
@@ -337,7 +337,12 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     model_c.handles.push_back(mh_mech);
     model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
 
-	AnimationComponent& anim_c = in_registry.assign<AnimationComponent>(entity, glob::GetAnimationData(mh_mech));
+    AnimationComponent& anim_c = in_registry.assign<AnimationComponent>(
+        entity, glob::GetAnimationData(mh_mech));
+
+	in_registry.assign<SoundComponent>(
+        entity, engine_->GetSoundEngine().CreatePlayer());
+
     pf_ptr->WriteBack(transform_c, player_c, phys_c);
   } else if (object_type == REPLAY_BALL) {
     BallFrame* bf_ptr = dynamic_cast<BallFrame*>(df_ptr);
@@ -493,6 +498,7 @@ GeometricReplay* GeometricReplay::Clone() {
   clone->current_frame_number_write_ = this->current_frame_number_write_;
   clone->current_frame_number_read_ = this->current_frame_number_read_;
   clone->captured_events_ = this->captured_events_;
+  clone->engine_ = this->engine_; 
 
   return clone;
 }

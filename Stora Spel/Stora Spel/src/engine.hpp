@@ -92,6 +92,7 @@ class Engine {
   }
 
   bool IsRecording() { return recording_; }
+  bool IsReplaying() { return replaying_; }
  private:
   void SetKeybinds();
 

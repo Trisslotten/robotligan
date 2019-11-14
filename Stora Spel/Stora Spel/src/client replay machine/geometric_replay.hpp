@@ -9,6 +9,8 @@
 
 #include "data_frame.hpp"
 
+class Engine;
+
 enum ReplayObjectType {
   REPLAY_PLAYER = 0,  // Start
   REPLAY_BALL,
@@ -94,7 +96,7 @@ class GeometricReplay {
   void CreateEntityFromChannel(unsigned int in_channel_index,
                                entt::registry& in_registry);
 
-  
+  Engine* engine_;
 
  protected:
   std::vector<FrameChannel> channels_;
@@ -133,6 +135,7 @@ class GeometricReplay {
   std::string GetStateOfReplay();
 
   void ReceiveGameEvent(GameEvent event);
+  void SetEngine(Engine* eng) { engine_ = eng; }
 };
 
 #endif  // !GEOMETRIC_REPLAY_HPP_
