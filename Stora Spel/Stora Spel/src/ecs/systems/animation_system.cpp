@@ -216,33 +216,33 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       if (ac.init) {
         PlayAnimation("Resting", 0.5f, &ac, 10, 1.f, LOOP);
 
-      PlayAnimation("LookUp", 0.5f, &ac, 21, 0.f, LOOP,
-                    &ac.model_data.upperBody, &ac.model_data.arms);
-      PlayAnimation("LookDown", 0.5f, &ac, 21, 0.f, LOOP,
-                    &ac.model_data.upperBody, &ac.model_data.arms);
-      PlayAnimation("LookLeft", 0.5f, &ac, 21, 0.f, LOOP,
-                    &ac.model_data.upperBody, &ac.model_data.arms);
-      PlayAnimation("LookRight", 0.5f, &ac, 21, 0.f, LOOP,
-                    &ac.model_data.upperBody, &ac.model_data.arms);
-      PlayAnimation("LookAhead", 1.f, &ac, 21, 0.f, LOOP,
-                    &ac.model_data.upperBody, &ac.model_data.arms);
+        PlayAnimation("LookUp", 0.5f, &ac, 21, 0.f, LOOP,
+                      &ac.model_data.upperBody, &ac.model_data.arms);
+        PlayAnimation("LookDown", 0.5f, &ac, 21, 0.f, LOOP,
+                      &ac.model_data.upperBody, &ac.model_data.arms);
+        PlayAnimation("LookLeft", 0.5f, &ac, 21, 0.f, LOOP,
+                      &ac.model_data.upperBody, &ac.model_data.arms);
+        PlayAnimation("LookRight", 0.5f, &ac, 21, 0.f, LOOP,
+                      &ac.model_data.upperBody, &ac.model_data.arms);
+        PlayAnimation("LookAhead", 1.f, &ac, 21, 0.f, LOOP,
+                      &ac.model_data.upperBody, &ac.model_data.arms);
 
-      if (pl.running) {
-        PlayAnimation("Run", 1.f, &ac, 15, 1.f, LOOP);
-      }
-      if (pl.jumping) {
-        PlayAnimation("JumpStart", 0.5f, &ac, 25, 1.f, LOOP);
-        PlayAnimation("JumpEnd", 0.5f, &ac, 25, 0.f, LOOP);
-      }
-      if (pl.sprinting) {
-        PlayAnimation("SlideF", 1.f, &ac, 20, 0.f, LOOP);
-        PlayAnimation("SlideB", 1.f, &ac, 20, 0.f, LOOP);
-        PlayAnimation("SlideR", 1.f, &ac, 20, 0.f, LOOP);
-        PlayAnimation("SlideL", 1.f, &ac, 20, 0.f, LOOP);
-      }
+        if (pl.running) {
+          PlayAnimation("Run", 1.f, &ac, 15, 1.f, LOOP);
+        }
+        if (pl.jumping) {
+          PlayAnimation("JumpStart", 0.5f, &ac, 25, 1.f, LOOP);
+          PlayAnimation("JumpEnd", 0.5f, &ac, 25, 0.f, LOOP);
+        }
+        if (pl.sprinting) {
+          PlayAnimation("SlideF", 1.f, &ac, 20, 0.f, LOOP);
+          PlayAnimation("SlideB", 1.f, &ac, 20, 0.f, LOOP);
+          PlayAnimation("SlideR", 1.f, &ac, 20, 0.f, LOOP);
+          PlayAnimation("SlideL", 1.f, &ac, 20, 0.f, LOOP);
+        }
 
-      ac.init = false;
-    }
+        ac.init = false;
+      }
 
       glm::vec3 LRlookDir =
           glm::normalize(pl.look_dir * glm::vec3(1.f, 0.f, 1.f));
@@ -370,35 +370,37 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
 
         startStrength = velCoeff;
 
-      try {
-        int js = GetActiveAnimationByName("JumpStart", &ac);
-        // std::cout << js << " : js\n";
-        if (js < 0 || js >= ac.active_animations.size()) {
-          std::cout << "Error: could not find animation JumpStart" << std::endl;
-        } else {
-          ac.active_animations.at(js)->strength_ = startStrength;
+        try {
+          int js = GetActiveAnimationByName("JumpStart", &ac);
+          // std::cout << js << " : js\n";
+          if (js < 0 || js >= ac.active_animations.size()) {
+            std::cout << "Error: could not find animation JumpStart"
+                      << std::endl;
+          } else {
+            ac.active_animations.at(js)->strength_ = startStrength;
+          }
+          // std::cout << startStrength << "\n";
+
+          endStrength = 1.f - velCoeff;
+
+          int es = GetActiveAnimationByName("JumpEnd", &ac);
+          // std::cout << es << " : es\n";
+          if (es < 0 || es >= ac.active_animations.size()) {
+            std::cout << "Error: could not find animation JumpEnd" << std::endl;
+          } else {
+            ac.active_animations.at(es)->strength_ = endStrength;
+          }
+
+        } catch (std::exception& e) {
+          // ???
+          // std::cout << e.what() << '\n';
         }
-        // std::cout << startStrength << "\n";
-
-        endStrength = 1.f - velCoeff;
-
-        int es = GetActiveAnimationByName("JumpEnd", &ac);
-        // std::cout << es << " : es\n";
-        if (es < 0 || es >= ac.active_animations.size()) {
-          std::cout << "Error: could not find animation JumpEnd" << std::endl;
-        } else {
-          ac.active_animations.at(es)->strength_ = endStrength;
-        }
-
-      } catch (std::exception& e) {
-        // ???
-        // std::cout << e.what() << '\n';
       }
-    }
 
-    // lookDirs
-    if (!pl.sprinting) {
-      glm::vec3 m_front = glm::normalize(glm::cross(LRlookDir, up));
+      // lookDirs
+      if (!pl.sprinting) {
+        glm::vec3 m_front = glm::normalize(glm::cross(LRlookDir, up));
+      }
     }
   }
 }

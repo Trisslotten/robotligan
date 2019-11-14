@@ -255,7 +255,7 @@ void PlayState::Update(float dt) {
       trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
 
       // FPS Model rotations
-      mc.rot_offset = orientation -= glm::quat(glm::vec3(0.f, yaw_, 0.f));
+      mc.rot_offset = orientation - glm::quat(glm::vec3(0.f, yaw_, 0.f));
 
       // rotate model offset as well, this does not want to work...
       /*glm::mat4 translateMat = glm::translate(glm::mat4(1.f), cam_c.offset);
@@ -1201,22 +1201,19 @@ void PlayState::CreatePlayerEntities() {
         glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
     glm::vec3 character_scale = glm::vec3(0.0033f);
 
-    // glob::ModelHandle player_model = glob::GetModel(kModelPathMech);
+    glob::ModelHandle player_model = glob::GetModel(kModelPathMech);
+    glob::ModelHandle FPS_model = glob::GetModel("Assets/Mech/FPS_body.fbx");
 
     registry_gameplay_.assign<IDComponent>(entity, entity_id);
     auto& pc = registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(0.f),
                                                   glm::quat(), character_scale);
 
-    auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
-    model_c.handles.push_back(player_model);
-    model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
-
-    registry_gameplay_.assign<AnimationComponent>(
-      entity, glob::GetAnimationData(player_model));
     registry_gameplay_.assign<PhysicsComponent>(entity);
     registry_gameplay_.assign<SoundComponent>(entity,
                                               sound_engine.CreatePlayer());
+
+	auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
 
     if (entity_id == my_id_) {
       glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
@@ -1237,12 +1234,7 @@ void PlayState::CreatePlayerEntities() {
           coeff_y_side * character_scale.y * 0.5f,  // Length of each plane
           coeff_z_side * character_scale.z * 0.7f   //
       );
-
-      glob::ModelHandle FPS_model = glob::GetModel("Assets/Mech/FPS_body.fbx");
-
-      auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
       model_c.handles.push_back(FPS_model);
-      model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
 
       registry_gameplay_.assign<AnimationComponent>(
           entity, glob::GetAnimationData(FPS_model));
@@ -1251,12 +1243,18 @@ void PlayState::CreatePlayerEntities() {
 
       my_entity_ = entity;
     } else {
-      auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
       model_c.handles.push_back(player_model);
-      model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
 
       registry_gameplay_.assign<AnimationComponent>(
           entity, glob::GetAnimationData(player_model));
+    }
+
+	model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
+
+    if (engine_->GetPlayerTeam(entity_id) == TEAM_BLUE) {
+      model_c.diffuse_index = 1;
+    } else {
+      model_c.diffuse_index = 0;
     }
   }
 }
