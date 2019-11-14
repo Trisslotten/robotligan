@@ -776,6 +776,7 @@ void DestroyParticleSystem(ParticleSystemHandle handle) {
   }
   int index = find_res->second;
   buffer_particle_systems[index].in_use = false;
+  buffer_particle_systems[index].system.Reset();
   particle_systems.erase(handle);
 }
 
@@ -1293,6 +1294,10 @@ void LoadWireframeMesh(ModelHandle model_h,
   }
 }
 
+void AddSpotlight(glm::vec3 position, glm::mat4 transform) {
+  shadows.AddSpotlight(position, transform);
+}
+
 void Render() {
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
 
@@ -1444,7 +1449,6 @@ void Render() {
       text3D.font->Draw3D(text3D_shader, text3D.pos, text3D.size, text3D.text,
                           text3D.color, text3D.rotation);
     }
-
 
     trail_shader.use();
     trail_shader.uniform("cam_transform", cam_transform);

@@ -10,23 +10,13 @@
 //			DataFrame
 //##############################
 
-// Private---------------------------------------------------------------------
-
-// Public----------------------------------------------------------------------
-
 DataFrame::DataFrame() {}
 
 DataFrame::~DataFrame() {}
 
-// FrameType DataFrame::GetFrameType() const { return this->frame_type_; }
-
 //##############################
 //			PlayerFrame
 //##############################
-
-// Private---------------------------------------------------------------------
-
-// Public----------------------------------------------------------------------
 
 PlayerFrame::PlayerFrame() {}
 
@@ -192,10 +182,6 @@ void PlayerFrame::WriteBack(TransformComponent& in_transform_c,
 //			BallFrame
 //##############################
 
-// Private---------------------------------------------------------------------
-
-// Public----------------------------------------------------------------------
-
 BallFrame::BallFrame() {}
 
 BallFrame::BallFrame(TransformComponent& in_transform_c) {
@@ -290,6 +276,10 @@ void BallFrame::WriteBack(TransformComponent& in_transform_c) {
   // in_transform_c.scale = this->scale_;
   in_transform_c.scale = glm::vec3(1.0);
 }
+
+//##############################
+//			PickUpFrame
+//##############################
 
 PickUpFrame::PickUpFrame() {
   position_ = glm::vec3(0.f);
@@ -388,6 +378,10 @@ void PickUpFrame::WriteBack(TransformComponent& in_transform_c) {
   in_transform_c.scale = glm::vec3(0.4f);
 }
 
+//##############################
+//			WallFrame
+//##############################
+
 WallFrame::WallFrame() {
   position_ = glm::vec3(0.f);
   rotation_ = glm::quat();
@@ -472,10 +466,6 @@ void WallFrame::WriteBack(TransformComponent& trans_c) {
 //			ShotFrame
 //##############################
 
-// Private---------------------------------------------------------------------
-
-// Public----------------------------------------------------------------------
-
 ShotFrame::ShotFrame() {}
 
 ShotFrame::ShotFrame(TransformComponent& in_transform_c) {
@@ -497,7 +487,23 @@ ShotFrame* ShotFrame::Clone() {
   return ret_ptr;
 }
 
-bool ShotFrame::ThresholdCheck(DataFrame& in_future_df) { return false; }
+bool ShotFrame::ThresholdCheck(DataFrame& in_future_df) {
+  // Cast to TeleportShotFrame
+  ShotFrame& future_sf = dynamic_cast<ShotFrame&>(in_future_df);
+
+  float threshold = 0.0f;
+
+  // POSITION
+  float pos_diff = glm::distance(this->position_, future_sf.position_);
+  threshold =
+      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_SHOT_POSITION");
+  if (pos_diff > threshold) {
+    // If we have moved over the threshold value away
+    return true;
+  }
+
+  return false;
+}
 
 DataFrame* ShotFrame::InterpolateForward(unsigned int in_dist_to_target,
                                          unsigned int in_dist_to_point_b,
@@ -550,10 +556,6 @@ void ShotFrame::WriteBack(TransformComponent& in_transform_c) {
 //			TeleportShotFrame
 //##############################
 
-// Private---------------------------------------------------------------------
-
-// Public----------------------------------------------------------------------
-
 TeleportShotFrame::TeleportShotFrame() {}
 
 TeleportShotFrame::TeleportShotFrame(TransformComponent& in_transform_c) {
@@ -571,6 +573,20 @@ TeleportShotFrame* TeleportShotFrame::Clone() {
 }
 
 bool TeleportShotFrame::ThresholdCheck(DataFrame& in_future_df) {
+  // Cast to TeleportShotFrame
+  TeleportShotFrame& future_tsf = dynamic_cast<TeleportShotFrame&>(in_future_df);
+
+  float threshold = 0.0f;
+
+  // POSITION
+  float pos_diff = glm::distance(this->position_, future_tsf.position_);
+  threshold =
+      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_TELEPORT_SHOT_POSITION");
+  if (pos_diff > threshold) {
+    // If we have moved over the threshold value away
+    return true;
+  }
+
   return false;
 }
 
@@ -614,12 +630,8 @@ void TeleportShotFrame::WriteBack(TransformComponent& in_transform_c) {
 }
 
 //##############################
-//			TeleportShotFrame
+//			MissileFrame
 //##############################
-
-// Private---------------------------------------------------------------------
-
-// Public----------------------------------------------------------------------
 
 MissileFrame::MissileFrame() {}
 
@@ -708,6 +720,10 @@ void MissileFrame::WriteBack(TransformComponent& in_transform_c) {
   in_transform_c.rotation = this->rotation_;
   in_transform_c.scale = glm::vec3(0.5f);
 }
+
+//##############################
+//			ForcePushFrame
+//##############################
 
 ForcePushFrame::ForcePushFrame() {
   position_ = glm::vec3(0.f);
