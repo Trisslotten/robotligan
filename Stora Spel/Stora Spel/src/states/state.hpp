@@ -283,6 +283,7 @@ class PlayState : public State {
   void CreateMapEntity();
   void CreateBallEntity();
   void CreateSpotlights();
+  void CreateJumbotron();
   void ParticleComponentDestroyed(entt::entity e, entt::registry& registry);
   void CreateInGameMenu();
   void AddPlayer();
@@ -299,6 +300,8 @@ class PlayState : public State {
   void DrawTopScores();
   void DrawTarget();
   void DrawQuickslots();
+  void DrawJumbotronText();
+
   FrameState SimulateMovement(std::vector<int>& action, FrameState& state,
                               float dt);
   void MovePlayer(float dt);

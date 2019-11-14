@@ -1427,6 +1427,15 @@ void Render() {
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glDepthFunc(GL_LESS);
 
+	// render text
+    glBindVertexArray(quad_vao);
+    text3D_shader.use();
+    text3D_shader.uniform("cam_transform", cam_transform);
+    for (auto &text3D : text3D_to_render) {
+      text3D.font->Draw3D(text3D_shader, text3D.pos, text3D.size, text3D.text,
+                          text3D.color, text3D.rotation);
+    }
+
     // TODO: Sort all transparent triangles
     // maybe sort internally in modell and then and externally
     glEnable(GL_BLEND);
@@ -1441,14 +1450,7 @@ void Render() {
     }
     glDisable(GL_BLEND);
 
-    // render text
-    glBindVertexArray(quad_vao);
-    text3D_shader.use();
-    text3D_shader.uniform("cam_transform", cam_transform);
-    for (auto &text3D : text3D_to_render) {
-      text3D.font->Draw3D(text3D_shader, text3D.pos, text3D.size, text3D.text,
-                          text3D.color, text3D.rotation);
-    }
+    
 
     trail_shader.use();
     trail_shader.uniform("cam_transform", cam_transform);

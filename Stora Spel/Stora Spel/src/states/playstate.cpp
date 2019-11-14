@@ -77,7 +77,8 @@ void PlayState::Startup() {
   test_ball_ = glob::GetTransparentModel("Assets/Ball_new/Ball_Sphere.fbx");
   glob::GetModel("assets/Pickup/Pickup.fbx");
 
-  registry_gameplay_.on_destroy<ParticleComponent>().connect<&PlayState::ParticleComponentDestroyed>(*this);
+  registry_gameplay_.on_destroy<ParticleComponent>()
+      .connect<&PlayState::ParticleComponentDestroyed>(*this);
 }
 
 void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
@@ -130,7 +131,7 @@ void PlayState::Init() {
 
   CreateInGameMenu();
   CreateInitialEntities();
-  CreateSpotlights();
+
   // TestParticles();
 
   engine_->GetChat()->SetPosition(
@@ -301,6 +302,7 @@ void PlayState::Update(float dt) {
   UpdateSwitchGoalTimer();
   DrawNameOverPlayer();
   DrawWallOutline();
+  DrawJumbotronText();
 
   // draw stamina bar
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
@@ -871,7 +873,6 @@ void PlayState::MovePlayer(float dt) {
 
   actions_.clear();
   for (auto const& [key, action] : engine_->GetKeyBinds()) {
-   
     if (Input::IsKeyDown(key)) {
       AddAction(action);
     }
@@ -1148,6 +1149,45 @@ void PlayState::DrawQuickslots() {
   }
 }
 
+void PlayState::DrawJumbotronText() {
+  glm::vec3 pos_base;
+  pos_base.x = GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEX");
+  pos_base.y =
+      GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEY") + 15.f;
+  pos_base.z = GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEZ");
+
+  pos_base *= arena_scale_;
+
+  float xrot = 1.f;
+  float zrot = 1.f;
+  for (int i = 0; i < 4; i++) {
+    glm::vec3 temp_pos =
+        glm::vec3(xrot * pos_base.x, pos_base.y, pos_base.z * zrot);
+
+    glm::vec3 dir = glm::normalize(glm::vec3(0, temp_pos.y, 0) - temp_pos);
+    temp_pos += dir * 30.f;
+
+    glm::quat rotation = glm::quatLookAtRH(dir, glm::vec3(0, 1, 0));
+    rotation *= glm::quat(glm::vec3(0.f, glm::radians(180.0f), 0.f));
+    glm::mat4 orient = glm::toMat4(rotation);
+
+	glm::vec4 color = glm::vec4(1.f,0.f,0.f,0.8f);
+    if (xrot == -1.f) {
+          color = glm::vec4(0.f,0.f,1.f,0.8f);
+	}
+
+    glob::Submit(font_test_, temp_pos, 20, "TEST", color,
+                 orient);
+
+    /* trans_c.rotation *= glm::quatLookAtRH(
+         glm::normalize(glm::vec3(0, trans_c.position.y, 0) - trans_c.position),
+         glm::vec3(0, 1, 0));
+     trans_c.Rotate(glm::vec3(0.f, glm::radians(180.f), 0.f));*/
+    std::swap(xrot, zrot);
+    zrot *= -1.f;
+  }
+}
+
 void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,
                                    glm::quat orientation) {
   transforms_[player_id] = std::make_pair(pos, orientation);
@@ -1171,6 +1211,8 @@ void PlayState::CreateInitialEntities() {
   CreateArenaEntity();
   CreateBallEntity();
   TestCreateLights();
+  CreateSpotlights();
+  CreateJumbotron();
 }
 
 void PlayState::CreatePlayerEntities() {
@@ -1390,7 +1432,39 @@ void PlayState::CreateSpotlights() {
   }
 }
 
-void PlayState::ParticleComponentDestroyed(entt::entity e, entt::registry& registry) {
+void PlayState::CreateJumbotron() {
+  glm::vec3 pos_base;
+  pos_base.x = GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEX");
+  pos_base.y = GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEY");
+  pos_base.z = GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEZ");
+
+  pos_base *= arena_scale_;
+
+  float xrot = 1.f;
+  float zrot = 1.f;
+  for (int i = 0; i < 4; i++) {
+    auto jumbo = registry_gameplay_.create();
+    ModelComponent& model_c = registry_gameplay_.assign<ModelComponent>(jumbo);
+    glob::ModelHandle jumbo_m_hndl =
+        glob::GetModel("assets/Jumbotron/Jumbotron.fbx");
+    model_c.handles.push_back(jumbo_m_hndl);
+    model_c.offset = glm::vec3(0, 0, -120.f * arena_scale_.z);
+    TransformComponent& trans_c =
+        registry_gameplay_.assign<TransformComponent>(jumbo);
+    trans_c.position =
+        glm::vec3(xrot * pos_base.x, pos_base.y, zrot * pos_base.z);
+    trans_c.scale = arena_scale_ * 2.0f;
+    trans_c.rotation *= glm::quatLookAtRH(
+        glm::normalize(glm::vec3(0, trans_c.position.y, 0) - trans_c.position),
+        glm::vec3(0, 1, 0));
+    trans_c.Rotate(glm::vec3(0.f, glm::radians(180.f), 0.f));
+    std::swap(xrot, zrot);
+    zrot *= -1.f;
+  }
+}
+
+void PlayState::ParticleComponentDestroyed(entt::entity e,
+                                           entt::registry& registry) {
   auto& pc = registry.get<ParticleComponent>(e);
   for (int i = 0; i < pc.handles.size(); ++i) {
     glob::DestroyParticleSystem(pc.handles[i]);
@@ -1873,7 +1947,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       }
 
       correct_registry->assign<ParticleComponent>(ent, handles, offsets,
-                                                   directions);
+                                                  directions);
       correct_registry->assign<TimerComponent>(ent, 1.f);
       break;
     }
@@ -1901,7 +1975,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       }
 
       correct_registry->assign<ParticleComponent>(ent, handles, offsets,
-                                                   directions);
+                                                  directions);
       correct_registry->assign<TimerComponent>(ent, 1.f);
       break;
     }
@@ -2006,7 +2080,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       glob::SetParticleSettings(handle, "dust.txt");
 
       correct_registry->assign<ParticleComponent>(entity, handles, offsets,
-                                                   directions);
+                                                  directions);
       correct_registry->assign<TimerComponent>(entity, 13.f);
       break;
     }
@@ -2086,7 +2160,8 @@ void PlayState::Reset() {
     }
   }
 
-  auto view_delete = registry_gameplay_.view<ParticleComponent, TimerComponent>();
+  auto view_delete =
+      registry_gameplay_.view<ParticleComponent, TimerComponent>();
   for (auto& entity : view_delete) {
     registry_gameplay_.destroy(entity);
   }
@@ -2165,8 +2240,8 @@ void PlayState::FetchMapAndArena(entt::registry& in_registry) {
       in_registry.assign<ModelComponent>(arena_floor);
   floor_model_c.handles.push_back(model_map);
   floor_model_c.handles.push_back(model_map_floor);
-  TransformComponent& trans_c = in_registry.assign<TransformComponent>(arena_floor, zero_vec, zero_vec,
-                                         arena_scale);
+  TransformComponent& trans_c = in_registry.assign<TransformComponent>(
+      arena_floor, zero_vec, zero_vec, arena_scale);
 
   if (goals_swapped_) {
     trans_c.rotation *= glm::quat(glm::vec3(0.f, glm::pi<float>(), 0.f));
