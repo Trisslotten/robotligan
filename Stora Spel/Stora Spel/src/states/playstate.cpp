@@ -859,6 +859,13 @@ void PlayState::MovePlayer(float dt) {
   new_frame.pitch = predicted_state_.pitch;
   new_frame.yaw = predicted_state_.yaw;
 
+  actions_.clear();
+  for (auto const& [key, action] : engine_->GetKeyBinds()) {
+   
+    if (Input::IsKeyDown(key)) {
+      AddAction(action);
+    }
+  }
   for (auto& a : actions_) {
     new_frame.actions.push_back(a);
   }

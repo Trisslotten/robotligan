@@ -243,7 +243,7 @@ void Engine::UpdateNetwork() {
   for (auto const& [key, action] : keybinds_) {
     auto& presses = key_presses_[key];
     if (presses > 0) {
-      play_state_.AddAction(action);
+      //play_state_.AddAction(action);
       actions.set(action, true);
     }
   }
@@ -286,7 +286,7 @@ void Engine::UpdateNetwork() {
     to_send << play_state_.GetYaw();
     to_send << PacketBlockType::INPUT;
   } else {
-    play_state_.ClearActions();
+    //play_state_.ClearActions();
   }
   if (client_.IsConnected() && !to_send.IsEmpty()) {
     client_.Send(to_send);
