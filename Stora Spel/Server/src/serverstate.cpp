@@ -679,7 +679,7 @@ void ServerPlayState::CreatePlayerEntity() {
       coeff_y_side * character_scale.y * 0.5f,  // Length of each plane
       coeff_z_side * character_scale.z * 0.7f    //
   );
-  glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
+  glm::vec3 camera_offset = glm::vec3(0.0f, 0.7f, 0.0f);
   registry.assign<CameraComponent>(entity, camera_offset);
 
   auto& player_component = registry.assign<PlayerComponent>(entity);

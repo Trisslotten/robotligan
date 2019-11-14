@@ -12,6 +12,7 @@
 #include "Chat.hpp"
 #include "eventdispatcher.hpp"
 #include "shared/shared.hpp"
+#include "ecs/components.hpp"
 
 class Engine;
 
@@ -281,6 +282,8 @@ class PlayState : public State {
   void CreateArenaEntity();
   void CreateMapEntity();
   void CreateBallEntity();
+  void CreateSpotlights();
+  void ParticleComponentDestroyed(entt::entity e, entt::registry& registry);
   void CreateInGameMenu();
   void AddPlayer();
   void TestCreateLights();
