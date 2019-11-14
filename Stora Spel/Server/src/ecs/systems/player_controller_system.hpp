@@ -117,7 +117,7 @@ void Update(entt::registry& registry, float dt) {
       }
 
       if (player_c.actions[PlayerAction::SPRINT]) {
-        if (!player_c.sprinting && player_c.energy_current > 20.0f) {
+        if (!player_c.sprinting && player_c.energy_current > player_c.energy_min_sprint) {
           player_c.sprinting = true;
 
           GameEvent sprint_event;
