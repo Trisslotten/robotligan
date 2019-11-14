@@ -21,6 +21,7 @@
     <ClCompile Include="src\client replay machine\client_replay_machine.cpp" />
     <ClCompile Include="src\client replay machine\geometric_replay.cpp" />
     <ClCompile Include="src\client replay machine\data_frame.cpp" />
+    <ClCompile Include="src\states\replay_state.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AbilityHandler\ability.hpp" />

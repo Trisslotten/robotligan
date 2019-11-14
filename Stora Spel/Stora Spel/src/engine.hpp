@@ -96,11 +96,11 @@ class Engine {
     return player_scores_;
   }
 
-  void SetReplayRegistry(entt::registry* reg) { registry_current_ = reg; }
+  //Replay stuff---
+  ClientReplayMachine* GetReplayMachinePtr() { return this->replay_machine_; }
+  bool IsRecording() const { return this->play_state_.IsRecording(); }
+  //Replay stuff---
 
-
-  bool IsRecording() { return recording_; }
-  bool IsReplaying() { return replaying_; }
  private:
   void SetKeybinds();
 
@@ -118,6 +118,7 @@ class Engine {
   MainMenuState main_menu_state_;
   LobbyState lobby_state_;
   PlayState play_state_;
+  ReplayState replay_state_;
   ConnectMenuState connect_menu_state_;
   SettingsState settings_state_;
 
@@ -167,12 +168,12 @@ class Engine {
   std::list<NetAPI::Common::Packet> packet_test;
   std::list<float> time_test;
 
-  //// Replay Variables ---
-  // bool recording_ = true;
+  // Replay Variables ---
+  //bool recording_ = true;
+  ClientReplayMachine* replay_machine_ = nullptr;
   // bool replaying_ = false;
   // entt::registry* registry_on_hold_ = nullptr;
   // entt::registry* registry_replay_ = nullptr;
-  // ClientReplayMachine* replay_machine_ = nullptr;
   //// Replay Variables ---
 };
 

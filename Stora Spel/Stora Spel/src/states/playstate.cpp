@@ -77,7 +77,8 @@ void PlayState::Startup() {
   test_ball_ = glob::GetTransparentModel("Assets/Ball_new/Ball_Sphere.fbx");
   glob::GetModel("assets/Pickup/Pickup.fbx");
 
-  registry_gameplay_.on_destroy<ParticleComponent>().connect<&PlayState::ParticleComponentDestroyed>(*this);
+  registry_gameplay_.on_destroy<ParticleComponent>()
+      .connect<&PlayState::ParticleComponentDestroyed>(*this);
 }
 
 void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
@@ -133,14 +134,6 @@ void PlayState::Init() {
   CreateSpotlights();
   // TestParticles();
 
-  // Initiate the Replay Machine
-  unsigned int length_sec =
-      (unsigned int)GlobalSettings::Access()->ValueOf("REPLAY_LENGTH_SECONDS");
-  unsigned int approximate_tickrate = 128;  // TODO: Replace with better
-                                            // approximation
-  replay_machine_ = new ClientReplayMachine(length_sec, approximate_tickrate);
-  replay_registry_ = new entt::registry;
-
   engine_->GetChat()->SetPosition(
       glm::vec2(30, glob::window::GetWindowDimensions().y - 30));
 
@@ -158,6 +151,9 @@ void PlayState::Init() {
   engine_->GetChat()->CloseChat();
   timer_ = 0.f;
   Reset();
+
+  //Replay
+  this->recording_ = true;
 }
 
 void PlayState::Update(float dt) {
@@ -400,8 +396,8 @@ void PlayState::Update(float dt) {
   }
 
   // Record replay
-  if (recording_) {
-    replay_machine_->RecordFrame(*(engine_->GetCurrentRegistry()));
+  if (this->recording_) {
+    this->engine_->GetReplayMachinePtr()->RecordFrame(this->registry_gameplay_);
   }
 
   if (game_has_ended_) {
@@ -409,7 +405,7 @@ void PlayState::Update(float dt) {
     pos /= 2;
     pos.y -= 160;
 
-    int game_end_timeout = replay_machine_->ReplayLength() + 5;
+    int game_end_timeout = 10;
     std::string end_countdown_text =
         std::to_string((int)(game_end_timeout - end_game_timer_.Elapsed()));
 
@@ -419,10 +415,7 @@ void PlayState::Update(float dt) {
     pos.x = (glob::window::GetWindowDimensions().x / 2) - (width / 2);
     glob::Submit(font_test_, pos + glm::vec2(0, -40), 48, return_to_lobby_test);
 
-    if (replay_machine_->NumberOfStoredReplays() > 0) {
-      StartReplayMode();
-    }
-    if (game_end_timeout - end_game_timer_.Elapsed() <= 5) {
+    if (game_end_timeout - end_game_timer_.Elapsed() <= 10) {
       engine_->DrawScoreboard();
       std::string best_team = "BLUE";
       glm::vec4 best_team_color = glm::vec4(0.13f, 0.13f, 1.f, 1.f);
@@ -441,12 +434,10 @@ void PlayState::Update(float dt) {
                    glm::vec4(0, 0, 0, 0.7f));
 
       glob::Submit(font_test_, pos, 48, winnin_team_text, best_team_color);
-
-    } else {
-      PlayReplay();
     }
+
     if (end_game_timer_.Elapsed() >= game_end_timeout) {
-      engine_->ChangeState(StateType::LOBBY);
+      engine_->ChangeState(StateType::REPLAY);
     }
   }
   if (primary_cd_ > 0) {
@@ -465,20 +456,15 @@ void PlayState::UpdateNetwork() {
   frame_id++;
   packet << frame_id;
   packet << PacketBlockType::FRAME_ID;
-
-  // TEMP: Start recording replay
-  // bool temp = Input::IsKeyPressed(GLFW_KEY_P);
-  // packet << temp;
-  // packet << PacketBlockType::TEST_REPLAY_KEYS;
 }
 
 void PlayState::Cleanup() {
   registry_gameplay_.reset();
   game_has_ended_ = false;
 
-  delete replay_registry_;
-  delete replay_machine_;
-  replay_counter_ = 0;
+
+  //Replay
+  this->recording_ = false;
 }
 
 void PlayState::ToggleInGameMenu() {
@@ -894,7 +880,6 @@ void PlayState::MovePlayer(float dt) {
 
   actions_.clear();
   for (auto const& [key, action] : engine_->GetKeyBinds()) {
-   
     if (Input::IsKeyDown(key)) {
       AddAction(action);
     }
@@ -1109,29 +1094,6 @@ void PlayState::Collision() {
 
 EntityID PlayState::ClientIDToEntityID(long client_id) {
   return engine_->GetPlayerScores()[client_id].enttity_id;
-}
-
-void PlayState::StartReplayMode() {
-  if (replaying_) {
-    return;
-  }
-
-  recording_ = false;
-  replaying_ = true;
-  replay_counter_ = replay_machine_->NumberOfStoredReplays() - 1;
-  replay_machine_->SelectReplay(replay_counter_);
-  engine_->SetReplayRegistry(replay_registry_);
-}
-
-void PlayState::PlayReplay() {
-  if (!replaying_) {
-    return;
-  }
-
-  if (replay_machine_->LoadFrame(*(replay_registry_))) {
-    replay_registry_->reset();
-    replay_machine_->SelectReplay(replay_counter_);
-  }
 }
 
 void PlayState::DrawTarget() {
@@ -1436,7 +1398,8 @@ void PlayState::CreateSpotlights() {
   }
 }
 
-void PlayState::ParticleComponentDestroyed(entt::entity e, entt::registry& registry) {
+void PlayState::ParticleComponentDestroyed(entt::entity e,
+                                           entt::registry& registry) {
   auto& pc = registry.get<ParticleComponent>(e);
   for (int i = 0; i < pc.handles.size(); ++i) {
     glob::DestroyParticleSystem(pc.handles[i]);
@@ -1793,13 +1756,13 @@ void PlayState::SetPlayerMoveDir(EntityID id, glm::vec3 move_dir) {
 
 void PlayState::ReceiveGameEvent(const GameEvent& e) {
   entt::registry* correct_registry = &registry_gameplay_;
-  if (engine_->IsReplaying()) {
-    correct_registry = engine_->GetCurrentRegistry();
-  }
   switch (e.type) {
     case GameEvent::GOAL: {
-      CreateGoalParticles(e.goal.x);
-      replay_machine_->StoreReplay();
+      CreateGoalParticles(e.goal.x, *correct_registry);
+
+      if (this->recording_) {
+        this->engine_->GetReplayMachinePtr()->StoreReplay();
+      }
       break;
     }
     case GameEvent::RESET: {
@@ -1920,7 +1883,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       }
 
       correct_registry->assign<ParticleComponent>(ent, handles, offsets,
-                                                   directions);
+                                                  directions);
       correct_registry->assign<TimerComponent>(ent, 1.f);
       break;
     }
@@ -1948,7 +1911,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       }
 
       correct_registry->assign<ParticleComponent>(ent, handles, offsets,
-                                                   directions);
+                                                  directions);
       correct_registry->assign<TimerComponent>(ent, 1.f);
       break;
     }
@@ -2053,7 +2016,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       glob::SetParticleSettings(handle, "dust.txt");
 
       correct_registry->assign<ParticleComponent>(entity, handles, offsets,
-                                                   directions);
+                                                  directions);
       correct_registry->assign<TimerComponent>(entity, 13.f);
       break;
     }
@@ -2133,7 +2096,8 @@ void PlayState::Reset() {
     }
   }
 
-  auto view_delete = registry_gameplay_.view<ParticleComponent, TimerComponent>();
+  auto view_delete =
+      registry_gameplay_.view<ParticleComponent, TimerComponent>();
   for (auto& entity : view_delete) {
     registry_gameplay_.destroy(entity);
   }
@@ -2172,6 +2136,8 @@ void PlayState::SetPitchYaw(float pitch, float yaw) {
   pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
 }
 
+
+//TODO: Check the position of this
 void PlayState::FetchMapAndArena(entt::registry& in_registry) {
   // Map
   entt::entity map = in_registry.create();
@@ -2212,8 +2178,8 @@ void PlayState::FetchMapAndArena(entt::registry& in_registry) {
       in_registry.assign<ModelComponent>(arena_floor);
   floor_model_c.handles.push_back(model_map);
   floor_model_c.handles.push_back(model_map_floor);
-  TransformComponent& trans_c = in_registry.assign<TransformComponent>(arena_floor, zero_vec, zero_vec,
-                                         arena_scale);
+  TransformComponent& trans_c = in_registry.assign<TransformComponent>(
+      arena_floor, zero_vec, zero_vec, arena_scale);
 
   if (goals_swapped_) {
     trans_c.rotation *= glm::quat(glm::vec3(0.f, glm::pi<float>(), 0.f));

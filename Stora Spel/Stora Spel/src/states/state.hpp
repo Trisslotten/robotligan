@@ -2,6 +2,7 @@
 #define STATE_HPP_
 
 #include <NetAPI\packet.hpp>
+#include <client replay machine/client_replay_machine.hpp>
 #include <ecs/components/button_component.hpp>
 #include <entt.hpp>
 #include <glm/glm.hpp>
@@ -10,10 +11,9 @@
 #include <playerdata.hpp>
 #include <util/timer.hpp>
 #include "Chat.hpp"
+#include "ecs/components.hpp"
 #include "eventdispatcher.hpp"
 #include "shared/shared.hpp"
-#include <client replay machine/client_replay_machine.hpp>
-#include "ecs/components.hpp"
 
 class Engine;
 
@@ -22,7 +22,9 @@ enum class StateType {
   CONNECT_MENU,
   LOBBY,
   PLAY,
+  REPLAY,
   SETTINGS,
+  NUM_OF_STATES
 };
 
 class State {
@@ -270,11 +272,15 @@ class PlayState : public State {
   void SetTeam(unsigned int team) { my_team_ = team; }
   void CreateNewBallEntity(bool fake, EntityID id);
   void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
-  void SetCountdownInProgress(bool val) { countdown_in_progress_ = val;  }
+  void SetCountdownInProgress(bool val) { countdown_in_progress_ = val; }
   void SetArenaScale(glm::vec3 arena_scale) { arena_scale_ = arena_scale; }
 
-  
   void FetchMapAndArena(entt::registry& in_registry);
+
+  // Replay stuff
+  bool IsRecording() const { return this->recording_; }
+  //void SetRecording(bool in_val) { this->recording_ = in_val; }
+  //
 
  private:
   ServerStateType server_state_;
@@ -369,16 +375,32 @@ class PlayState : public State {
 
   bool sprinting_ = false;
 
-  
-  ClientReplayMachine* replay_machine_ = nullptr;
-  bool recording_ = true;
+  // Replay stuff
+  bool recording_ = false;
+  // Replay stuff
+};
+
+class ReplayState : public State {
+ private:
+  entt::registry replay_registry_;
   bool replaying_ = false;
   unsigned int replay_counter_ = 0;
-  entt::registry* replay_registry_;
+
+ public:
+  void Startup() override;
+  void Init() override;
+  void Update(float dt) override;
+  void UpdateNetwork() override;
+  void Cleanup() override;
+
+  StateType Type() { return StateType::REPLAY; }
+
+  void StartRecording();
+  void AlertOnDestroy(EntityID in_id);
+
 
   void StartReplayMode();
   void PlayReplay();
-
 };
 
 #endif  // STATE_HPP_
