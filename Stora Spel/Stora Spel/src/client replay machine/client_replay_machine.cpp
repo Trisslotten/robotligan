@@ -18,6 +18,8 @@ ClientReplayMachine::ClientReplayMachine(unsigned int in_replay_length_sec,
 
   // ---
   this->selected_replay_index_ = 0;
+
+  //NTS: Engine uninitialized. Is that a problem?
 }
 
 ClientReplayMachine::~ClientReplayMachine() {
@@ -80,6 +82,11 @@ bool ClientReplayMachine::SelectReplay(unsigned int in_index) {
   this->ResetSelectedReplay();
 
   return true;
+}
+
+void ClientReplayMachine::ResetSelectedReplay() {
+  // Resets current replay to start
+  this->stored_replays_.at(this->selected_replay_index_)->SetReadFrameToStart();
 }
 
 bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
