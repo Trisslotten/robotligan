@@ -2131,6 +2131,6 @@ void PlayState::FetchMapAndArena(entt::registry& in_registry) {
   entt::entity camera = in_registry.create();
   in_registry.assign<CameraComponent>(camera, glm::vec3(0.f),
                                       glm::quat(glm::vec3(0.f)));
-  in_registry.assign<TransformComponent>(camera, glm::vec3(0.f, 26.f, 42.f), glm::quat(),
+  in_registry.assign<TransformComponent>(camera, glm::vec3(0.f, 13.f, 42.f), glm::quat(),
                                          glm::vec3(0.f));
 }
