@@ -107,6 +107,7 @@ class Engine {
   void SaveRecording();
   void BeginReplay();
   void PlayReplay();
+  void UpdateReplayCamera();
   // Replay Functions---
 
   NetAPI::Socket::Client client_;

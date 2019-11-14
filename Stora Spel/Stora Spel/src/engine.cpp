@@ -967,6 +967,10 @@ void Engine::PlayReplay() {
   }
 
   // Update replay camera
+  UpdateReplayCamera();
+}
+
+void Engine::UpdateReplayCamera() {
   entt::basic_view camera_view =
       this->registry_replay_->view<CameraComponent, TransformComponent>();
   entt::basic_view target_view =
@@ -974,8 +978,9 @@ void Engine::PlayReplay() {
 
   for (entt::entity target : target_view) {
     TargetComponent& target_c = registry_replay_->get<TargetComponent>(target);
-    TransformComponent& target_trans_c = registry_replay_->get<TransformComponent>(target);
-    
+    TransformComponent& target_trans_c =
+        registry_replay_->get<TransformComponent>(target);
+
     for (entt::entity camera : camera_view) {
       CameraComponent& cam_c = registry_replay_->get<CameraComponent>(camera);
       TransformComponent& cam_trans_c =
@@ -985,10 +990,10 @@ void Engine::PlayReplay() {
       glm::vec3 temp_dir =
           glm::normalize(target_trans_c.position - cam_trans_c.position);
 
-      
       auto quarter_turn = glm::quat(glm::vec3(0, glm::pi<float>() * 0.5f, 0));
 
-      cam_c.orientation = glm::quatLookAt(temp_dir, glm::vec3(0,1,0)) * quarter_turn;
+      cam_c.orientation =
+          glm::quatLookAt(temp_dir, glm::vec3(0, 1, 0)) * quarter_turn;
     }
   }
 }
