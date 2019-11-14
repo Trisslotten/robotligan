@@ -487,7 +487,23 @@ ShotFrame* ShotFrame::Clone() {
   return ret_ptr;
 }
 
-bool ShotFrame::ThresholdCheck(DataFrame& in_future_df) { return false; }
+bool ShotFrame::ThresholdCheck(DataFrame& in_future_df) {
+  // Cast to TeleportShotFrame
+  ShotFrame& future_sf = dynamic_cast<ShotFrame&>(in_future_df);
+
+  float threshold = 0.0f;
+
+  // POSITION
+  float pos_diff = glm::distance(this->position_, future_sf.position_);
+  threshold =
+      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_SHOT_POSITION");
+  if (pos_diff > threshold) {
+    // If we have moved over the threshold value away
+    return true;
+  }
+
+  return false;
+}
 
 DataFrame* ShotFrame::InterpolateForward(unsigned int in_dist_to_target,
                                          unsigned int in_dist_to_point_b,
@@ -557,6 +573,20 @@ TeleportShotFrame* TeleportShotFrame::Clone() {
 }
 
 bool TeleportShotFrame::ThresholdCheck(DataFrame& in_future_df) {
+  // Cast to TeleportShotFrame
+  TeleportShotFrame& future_tsf = dynamic_cast<TeleportShotFrame&>(in_future_df);
+
+  float threshold = 0.0f;
+
+  // POSITION
+  float pos_diff = glm::distance(this->position_, future_tsf.position_);
+  threshold =
+      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_TELEPORT_SHOT_POSITION");
+  if (pos_diff > threshold) {
+    // If we have moved over the threshold value away
+    return true;
+  }
+
   return false;
 }
 

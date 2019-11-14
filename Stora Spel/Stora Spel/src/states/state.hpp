@@ -282,6 +282,7 @@ class PlayState : public State {
   void CreateArenaEntity();
   void CreateMapEntity();
   void CreateBallEntity();
+  void CreateSpotlights();
   void ParticleComponentDestroyed(entt::entity e, entt::registry& registry);
   void CreateInGameMenu();
   void AddPlayer();
