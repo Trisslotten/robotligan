@@ -135,7 +135,8 @@ void PlayState::Init() {
   unsigned int approximate_tickrate = 128;  // TODO: Replace with better
                                             // approximation
   replay_machine_ = new ClientReplayMachine(length_sec, approximate_tickrate);
-  replay_registry_.reset();
+  replay_registry_ = new entt::registry;
+  replay_counter_ = 0;
 
   engine_->GetChat()->SetPosition(
       glm::vec2(30, glob::window::GetWindowDimensions().y - 30));
@@ -436,12 +437,10 @@ void PlayState::Update(float dt) {
     glob::Submit(font_test_, pos + glm::vec2(0, -40), 48, return_to_lobby_test);
 
     if (replay_machine_->NumberOfStoredReplays() > 0) {
-      recording_ = false;
-
-      if (replay_machine_->LoadFrame(replay_registry_)) {
-		  replay_registry_.reset();
-	  }
+      StartReplayMode();
     }
+
+    PlayReplay();
 
     if (end_game_timer_.Elapsed() >= 20.0f) {
       engine_->ChangeState(StateType::LOBBY);
@@ -473,6 +472,10 @@ void PlayState::UpdateNetwork() {
 void PlayState::Cleanup() {
   registry_gameplay_.reset();
   game_has_ended_ = false;
+
+  delete replay_registry_;
+  delete replay_machine_;
+  replay_counter_ = 0;
 }
 
 void PlayState::ToggleInGameMenu() {
@@ -1090,6 +1093,32 @@ void PlayState::Collision() {
 
 EntityID PlayState::ClientIDToEntityID(long client_id) {
   return engine_->GetPlayerScores()[client_id].enttity_id;
+}
+
+void PlayState::StartReplayMode() {
+  if (replaying_) {
+    return;
+  }
+
+  recording_ = false;
+  replaying_ = true;
+  replay_machine_->SelectReplay(replay_counter_);
+  engine_->SetReplayRegistry(replay_registry_);
+}
+
+void PlayState::PlayReplay() {
+  if (!replaying_) {
+    return;
+  }
+
+  if (replay_machine_->LoadFrame(*(replay_registry_))) {
+    replay_registry_->reset();
+    replay_counter_++;
+    if (!replay_machine_->SelectReplay(replay_counter_)) {
+      replay_counter_ = 0;
+      replaying_ = false;
+    }
+  }
 }
 
 void PlayState::DrawTarget() {

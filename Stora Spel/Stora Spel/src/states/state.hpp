@@ -368,7 +368,12 @@ class PlayState : public State {
   ClientReplayMachine* replay_machine_ = nullptr;
   bool recording_ = true;
   bool replaying_ = false;
-  entt::registry replay_registry_;
+  unsigned int replay_counter_ = 0;
+  entt::registry* replay_registry_;
+
+  void StartReplayMode();
+  void PlayReplay();
+
 };
 
 #endif  // STATE_HPP_

@@ -95,8 +95,9 @@ class Engine {
   std::unordered_map<PlayerID, PlayerStatInfo> GetPlayerScores() {
     return player_scores_;
   }
- /* ClientReplayMachine* GetReplayMachine() const { return replay_machine_;
-  }*/
+
+  void SetReplayRegistry(entt::registry* reg) { registry_current_ = reg; }
+
  private:
   void SetKeybinds();
 
@@ -164,11 +165,11 @@ class Engine {
   std::list<float> time_test;
 
   //// Replay Variables ---
-  //bool recording_ = true;
-  //bool replaying_ = false;
-  //entt::registry* registry_on_hold_ = nullptr;
-  //entt::registry* registry_replay_ = nullptr;
-  //ClientReplayMachine* replay_machine_ = nullptr;
+  // bool recording_ = true;
+  // bool replaying_ = false;
+  // entt::registry* registry_on_hold_ = nullptr;
+  // entt::registry* registry_replay_ = nullptr;
+  // ClientReplayMachine* replay_machine_ = nullptr;
   //// Replay Variables ---
 };
 
