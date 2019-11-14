@@ -860,7 +860,7 @@ void ProjectileArenaCollision(entt::registry& registry) {
           }
           case ProjectileID::TELEPORT_PROJECTILE: {
             // Teleport to collision site
-            TeleportToCollision(registry, proj_hitbox.center + data.normal * 0.5f, proj_id.creator);
+            TeleportToCollision(registry, proj_hitbox.center + data.normal * 1.0f + data.move_vector, proj_id.creator);
             DestroyEntity(registry, projectile);
             break;
           }
