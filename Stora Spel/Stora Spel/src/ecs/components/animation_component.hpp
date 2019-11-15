@@ -3,16 +3,17 @@
 #include "glob/Animation.hpp"
 #include "glob/graphics.hpp"
 #include "glob/joint.hpp"
+#include "glob/playableAnimation.hpp"
 
 struct priorityGroup {
-  std::vector<glob::Animation*> animations;
+  std::vector<glob::PlayableAnimation*> animations;
   char priority;
 };
 
 struct AnimationComponent {
   glob::animData model_data;
 
-  std::vector<glob::Animation*> active_animations;
+  std::vector<glob::PlayableAnimation*> active_animations;
 
   std::vector<glm::mat4> bone_transforms;
 
@@ -22,3 +23,14 @@ struct AnimationComponent {
 };
 
 #endif  // ANIMATION_COMPONENT_HPP_
+
+
+//alternative version
+/*
+std::vector<playableAnimation> active_animations;
+
+model data{
+	innehåller ett bibliotek avpekare till en modells animationer
+}
+
+*/

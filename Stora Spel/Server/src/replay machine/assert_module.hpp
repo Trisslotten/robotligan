@@ -1,7 +1,7 @@
 #ifndef ASSERT_MODULE_HPP_
 #define ASSERT_MODULE_HPP_
 
-#include "reg_pack.hpp"
+#include <shared/reg_pack.hpp>
 
 enum AssertMode {
   ASSERT_NOTHING,               //0

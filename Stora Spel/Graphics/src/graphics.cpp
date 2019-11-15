@@ -289,7 +289,7 @@ GLint TextureFromFile(std::string filename) {
 
 void Init() {
   camera = Camera(glm::vec3(25, 5, 0), glm::vec3(0, 3, 0), 90, 16.f / 9.f, 0.1f,
-                  200.f);
+                  500.f);
 
   // std::cout << "Max uniform size: " << MAX_VERTEX_UNIFORM_COMPONENTS_ARB <<
   // "\n";
@@ -491,6 +491,9 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
            const std::string filepath) {
   H result = 0;
 
+  std::string borg = filepath;
+  std::transform(borg.begin(), borg.end(), borg.begin(),
+                 [](unsigned char c) { return std::tolower(c); });
   auto item = handles.find(filepath);
   if (item == handles.end()) {
     // std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";
@@ -783,6 +786,7 @@ void DestroyParticleSystem(ParticleSystemHandle handle) {
   }
   int index = find_res->second;
   buffer_particle_systems[index].in_use = false;
+  buffer_particle_systems[index].system.Reset();
   particle_systems.erase(handle);
 }
 
@@ -884,14 +888,7 @@ animData GetAnimationData(ModelHandle handle) {
 
   // copy animations
   for (auto source : model->animations_) {
-    glob::Animation a;
-    a.name_ = source->name_;
-    a.duration_ = source->duration_;
-    a.current_frame_time_ = source->current_frame_time_;
-    a.tick_per_second_ = source->tick_per_second_;
-    a.channels_ = source->channels_;
-    a.armature_transform_ = source->armature_transform_;
-    data.animations.push_back(a);
+    data.animations.push_back(source);
   }
 
   data.globalInverseTransform = model->globalInverseTransform_;
@@ -1242,6 +1239,21 @@ void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale, float rotDegrees,
   e2D_items_to_render.push_back(to_render);
 }
 
+void Submit(E2DHandle e2D_h, glm::vec3 pos, glm::mat4 matrix) {
+  auto find_res = e2D_elements.find(e2D_h);
+  if (find_res == e2D_elements.end()) {
+    std::cout << "ERROR graphics.cpp: could not find submitted e2D item\n";
+    return;
+  }
+
+  E2DItem to_render;
+  to_render.e2D = &find_res->second;
+  to_render.pos = pos;
+  to_render.scale = 1.f;
+  to_render.rot = matrix;
+  e2D_items_to_render.push_back(to_render);
+}
+
 void SubmitTrail(const std::vector<glm::vec3> &pos_history, float width,
                  glm::vec4 color) {
   trails_to_render.push_back({pos_history, width, color});
@@ -1283,6 +1295,10 @@ void LoadWireframeMesh(ModelHandle model_h,
 
     wireframe_buffers[model_h] = b;
   }
+}
+
+void AddSpotlight(glm::vec3 position, glm::mat4 transform) {
+  shadows.AddSpotlight(position, transform);
 }
 
 void Render() {
@@ -1414,6 +1430,14 @@ void Render() {
       glBindTexture(GL_TEXTURE_2D, 0);
     }
 
+    // render particles
+    particle_shader.use();
+    particle_shader.uniform("cam_transform", cam_transform);
+    particle_shader.uniform("cam_pos", camera.GetPosition());
+    particle_shader.uniform("cam_up", camera.GetUpVector());
+    for (auto p : particles_to_render) {
+      buffer_particle_systems[p].system.Draw(particle_shader);
+    }
     // draw sky
     glDepthFunc(GL_LEQUAL);
     sky_shader.use();
@@ -1458,19 +1482,6 @@ void Render() {
     glDisable(GL_BLEND);
     glEnable(GL_CULL_FACE);
 
-    // render particles
-    particle_shader.use();
-    particle_shader.uniform("cam_transform", cam_transform);
-    particle_shader.uniform("cam_pos", camera.GetPosition());
-    particle_shader.uniform("cam_up", camera.GetUpVector());
-    for (auto p : particles_to_render) {
-      buffer_particle_systems[p].system.Draw(particle_shader);
-    }
-
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glBindVertexArray(trail_vao);
     trail_shader.use();
     trail_shader.uniform("cam_transform", cam_transform);
     trail_shader.uniform("cam_pos", camera.GetPosition());

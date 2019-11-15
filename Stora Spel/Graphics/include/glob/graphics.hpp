@@ -23,7 +23,7 @@ namespace glob {
 
 struct animData {
   std::vector<Joint> bones;
-  std::vector<Animation> animations;
+  std::vector<Animation*> animations;
   glm::mat4 globalInverseTransform;
   // groups
   bool humanoid = false;
@@ -129,6 +129,8 @@ EXPORT void Submit(GUIHandle gui_h, glm::vec2 pos, float scale,
 EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale,
                    float rotDegrees, glm::vec3 rotAxis);
 
+EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, glm::mat4 matrix);
+
 EXPORT void SubmitTrail(const std::vector<glm::vec3>& pos_history, float width, glm::vec4 color);
 
 EXPORT Camera& GetCamera();
@@ -145,6 +147,8 @@ EXPORT void SetInvisibleEffect(bool in_bool);
 EXPORT void SetBlackout(bool blackout);
 
 EXPORT void SetSky(const std::string& texture);
+
+EXPORT void AddSpotlight(glm::vec3 position, glm::mat4 transform);
 
 /*
  * Render all items submitted this frame

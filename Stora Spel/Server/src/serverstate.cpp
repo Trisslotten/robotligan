@@ -12,6 +12,7 @@
 #include "ecs/components.hpp"
 #include "ecs/components/match_timer_component.hpp"
 #include "gameserver.hpp"
+#include <glm/gtx/compatibility.hpp>
 
 #include <map>
 
@@ -150,11 +151,14 @@ void ServerPlayState::Init() {
     for (auto ids : clients_player_ids_) {
       to_send << ids.second;
     }
-
+    glm::vec3 arena_scale;
+    arena_scale.x = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
+    arena_scale.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
+    arena_scale.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
     int num_players = server.GetConnectedPlayers();
     to_send << num_players;
     to_send << client_abilities_[client_id];
-
+    to_send << arena_scale;
     to_send << PacketBlockType::GAME_START;
 
     auto pick_up_view =
@@ -173,6 +177,7 @@ void ServerPlayState::Init() {
 }
 
 void ServerPlayState::Update(float dt) {
+  WallAnimation();
   auto& registry = game_server_->GetRegistry();
   auto& server = game_server_->GetServer();
 
@@ -399,14 +404,20 @@ void ServerPlayState::HandleDataToSend() {
       if (goal_goal_c.switched_this_tick) {
         switch_goal_timer_.Restart();
       }
-      if (!sent_switch) {
-        to_send << switch_goal_time_;
-        to_send << (float)switch_goal_timer_.Elapsed();
-        to_send << PacketBlockType::SWITCH_GOALS;
-        sent_switch = true;
-
-        if (switch_goal_timer_.Elapsed() >= switch_goal_time_) {
+      if (switch_goal_timer_.Elapsed() <= switch_goal_time_) {
+        if (!sent_switch) {
+          to_send << switch_goal_time_;
+          to_send << (float)switch_goal_timer_.Elapsed();
+          to_send << PacketBlockType::SWITCH_GOALS;
+          sent_switch = true;
+        }
+      } else {
+        if (!sent_switch) {
           switch_goal_timer_.Pause();
+          to_send << switch_goal_time_;
+          to_send << (float)switch_goal_time_;
+          to_send << PacketBlockType::SWITCH_GOALS;
+          sent_switch = true;
         }
       }
     }
@@ -550,7 +561,11 @@ void ServerPlayState::CreateMapEntity() {
   auto& registry = game_server_->GetRegistry();
 
   auto entity = registry.create();
-  glm::vec3 arena_scale = glm::vec3(2.6f);
+  glm::vec3 arena_scale2;
+  arena_scale2.x = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
+  arena_scale2.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
+  arena_scale2.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
+  glm::vec3 arena_scale = glm::vec3(2.6f) * arena_scale2;
   // Prepare hard-coded values
   // Scale on the hitbox for the map
   float v1 = 6.8f * arena_scale.z;
@@ -656,15 +671,15 @@ void ServerPlayState::CreatePlayerEntity() {
   // Add a hitbox
   registry.assign<physics::OBB>(
       entity,
-      alter_scale * character_scale,            // Center
-      glm::vec3(1.f, 0.f, 0.f),                 //
-      glm::vec3(0.f, 1.f, 0.f),                 // Normals
-      glm::vec3(0.f, 0.f, 1.f),                 //
-      coeff_x_side * character_scale.x * 0.5f,  //
+      (alter_scale * character_scale),             // Center
+      glm::vec3(1.f, 0.f, 0.f),                  //
+      glm::vec3(0.f, 1.f, 0.f),                  // Normals
+      glm::vec3(0.f, 0.f, 1.f),                  //
+      coeff_x_side * character_scale.x * 0.4f,   //
       coeff_y_side * character_scale.y * 0.5f,  // Length of each plane
-      coeff_z_side * character_scale.z * 0.5f   //
+      coeff_z_side * character_scale.z * 0.7f    //
   );
-  glm::vec3 camera_offset = glm::vec3(0.38f, 0.62f, -0.06f);
+  glm::vec3 camera_offset = glm::vec3(0.0f, 0.7f, 0.0f);
   registry.assign<CameraComponent>(entity, camera_offset);
 
   auto& player_component = registry.assign<PlayerComponent>(entity);
@@ -716,13 +731,17 @@ void ServerPlayState::ResetEntities() {
 
   // Reset Players
   glm::vec3 player_pos[3];
+  glm::vec3 arena_scale;
+  arena_scale.x = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
+  arena_scale.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
+  arena_scale.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
   for (int i = 0; i < 3; ++i) {
     player_pos[i].x = GlobalSettings::Access()->ValueOf(
-        std::string("PLAYERPOSITION") + std::to_string(i) + "X");
+        std::string("PLAYERPOSITION") + std::to_string(i) + "X") * arena_scale.x;
     player_pos[i].y = GlobalSettings::Access()->ValueOf(
         std::string("PLAYERPOSITION") + std::to_string(i) + "Y");
     player_pos[i].z = GlobalSettings::Access()->ValueOf(
-        std::string("PLAYERPOSITION") + std::to_string(i) + "Z");
+        std::string("PLAYERPOSITION") + std::to_string(i) + "Z") * arena_scale.z;
   }
 
   unsigned int blue_counter = 0;
@@ -887,6 +906,21 @@ void ServerPlayState::EndGame() {
   game_server_->ChangeState(ServerStateType::LOBBY);
 }
 
+void ServerPlayState::WallAnimation() {
+  auto view_wall = game_server_->GetRegistry().view<TimerComponent, WallComponent, TransformComponent>();
+
+  for (auto wall : view_wall) {
+    auto& timer = view_wall.get<TimerComponent>(wall);
+    auto& trans = view_wall.get<TransformComponent>(wall);
+
+    float delta = 10 - timer.time_left;
+    if (delta > 1.f) delta = 1.f;
+    float y = glm::lerp(-9.3f, -1.f, delta);
+    
+    trans.position.y = y;
+  }
+}
+
 void ServerPlayState::ReceiveEvent(const EventInfo& e) {
   switch (e.event) {
     case Event::DESTROY_ENTITY: {
@@ -1026,24 +1060,28 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
 void ServerPlayState::CreateGoals() {
   auto& registry = game_server_->GetRegistry();
   // blue team's goal, place at red goal in world
+  glm::vec3 arena_scale;
+  arena_scale.x = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
+  arena_scale.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
+  arena_scale.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
   auto entity_blue = registry.create();
   registry.assign<physics::OBB>(entity_blue, glm::vec3(0.f, 0.f, 0.f),
                                 glm::vec3(1, 0, 0), glm::vec3(0, 1, 0),
-                                glm::vec3(0, 0, 1), 4.f, 4.f, 8.f);
+                                glm::vec3(0, 0, 1), 2.f * arena_scale.x, 2.f * arena_scale.y, 6.5f * arena_scale.z);
   registry.assign<TeamComponent>(entity_blue, TEAM_BLUE);
   registry.assign<GoalComponenet>(entity_blue);
   auto& trans_comp = registry.assign<TransformComponent>(entity_blue);
-  trans_comp.position = glm::vec3(-40.f, -3.9f, 0.f);
+  trans_comp.position = glm::vec3(-41.f * arena_scale.x, 2.0f * arena_scale.y, 0.f);
 
   // red team's goal, place at blue goal in world
   auto entity_red = registry.create();
   registry.assign<physics::OBB>(entity_red, glm::vec3(0.f, 0.f, 0.f),
                                 glm::vec3(1, 0, 0), glm::vec3(0, 1, 0),
-                                glm::vec3(0, 0, 1), 4.f, 4.f, 8.f);
+                                glm::vec3(0, 0, 1), 2.f * arena_scale.x, 2.f * arena_scale.y, 6.5f * arena_scale.z);
   registry.assign<TeamComponent>(entity_red, TEAM_RED);
   registry.assign<GoalComponenet>(entity_red);
   auto& trans_comp2 = registry.assign<TransformComponent>(entity_red);
-  trans_comp2.position = glm::vec3(40.f, -3.9f, 0.f);
+  trans_comp2.position = glm::vec3(41.f * arena_scale.x, 2.f * arena_scale.y, 0.f);
 }
 
 void ServerPlayState::Reconnect(int id) {
@@ -1087,12 +1125,15 @@ void ServerPlayState::Reconnect(int id) {
   for (auto ids : clients_player_ids_) {
     to_send << ids.second;
   }
-
+  glm::vec3 arena_scale;
+  arena_scale.x = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
+  arena_scale.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
+  arena_scale.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
   int num_players = server.GetConnectedPlayers();
   std::cout << "Num players : " << num_players << std::endl;
   to_send << num_players;
   to_send << client_abilities_[id];
-
+  to_send << arena_scale;
   to_send << PacketBlockType::GAME_START;
 
   auto pick_up_view =
@@ -1113,9 +1154,13 @@ void ServerPlayState::CreatePickupSpawners() {
 
   std::string config_str = "PICKUPPOSITION0";
   glm::vec3 pos;
-  pos.x = GlobalSettings::Access()->ValueOf(config_str + "X");
+  glm::vec3 arena_scale;
+  arena_scale.x = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
+  arena_scale.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
+  arena_scale.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
+  pos.x = GlobalSettings::Access()->ValueOf(config_str + "X") * arena_scale.x;
   pos.y = GlobalSettings::Access()->ValueOf(config_str + "Y");
-  pos.z = GlobalSettings::Access()->ValueOf(config_str + "Z");
+  pos.z = GlobalSettings::Access()->ValueOf(config_str + "Z") * arena_scale.z;
   positions.push_back(pos);
   pos.x *= -1;
   positions.push_back(pos);

@@ -159,7 +159,7 @@ void MainMenuState::CreateBackgroundEnitites() {
         robot, glob::GetAnimationData(model_robot));
 
     engine_->GetAnimationSystem().PlayAnimation(
-        "Emote1", 2.f, &animation_c, 10, 1.f,
+        "Emote2", 1.f, &animation_c, 10, 1.f,
         engine_->GetAnimationSystem().LOOP);
 
     robot = registry_mainmenu_.create();

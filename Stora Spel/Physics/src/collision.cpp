@@ -123,6 +123,8 @@ physics::IntersectData physics::Intersect(const physics::Sphere& s,
       }
     }
     data.normal = impact_normal;
+    if (glm::length(v) >= 0.00000001)
+		data.normal = -glm::normalize(v);
     data.move_vector = (s.radius - glm::length(retPt - s.center)) * data.normal;
   }
 
@@ -393,6 +395,7 @@ physics::IntersectData physics::Intersect(const MeshHitbox& m,
     glm::vec3 temp =
         glm::normalize(glm::cross(tri.p1 - tri.p0, tri.p2 - tri.p0));
     if (dist <= rsqrt) {
+    //if (glm::distance(closest_point, s.center) < s.radius) {
       if (fabs(temp.x) < 0.05f && fabs(temp.x) > 0.0) {
         temp.x = 0.f;
       }
@@ -406,6 +409,8 @@ physics::IntersectData physics::Intersect(const MeshHitbox& m,
       data.collision = true;
       data.normal = glm::normalize(data.normal);
       data.move_vector = (rsqrt - dist) * data.normal;
+      //data.move_vector =
+      //    (s.radius - glm::distance(closest_point, s.center)) * data.normal;
 
       return data;
     } /*else if (dist != 1000.f && glm::dot(temp, tri.p0 - s.center) > 0.f) {

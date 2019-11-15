@@ -12,6 +12,7 @@
 #include "Chat.hpp"
 #include "eventdispatcher.hpp"
 #include "shared/shared.hpp"
+#include "ecs/components.hpp"
 
 class Engine;
 
@@ -249,7 +250,7 @@ class PlayState : public State {
   void Reset();
   void EndGame();
   void OverTime();
-  void CreateGoalParticles(float x);
+  void CreateGoalParticles(float x, entt::registry& registry);
 
   void OnServerFrame();
   void AddAction(int action) { actions_.push_back(action); }
@@ -268,6 +269,11 @@ class PlayState : public State {
   void SetTeam(unsigned int team) { my_team_ = team; }
   void CreateNewBallEntity(bool fake, EntityID id);
   void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
+  void SetCountdownInProgress(bool val) { countdown_in_progress_ = val;  }
+  void SetArenaScale(glm::vec3 arena_scale) { arena_scale_ = arena_scale; }
+
+  
+  void FetchMapAndArena(entt::registry& in_registry);
 
  private:
   ServerStateType server_state_;
@@ -276,6 +282,8 @@ class PlayState : public State {
   void CreateArenaEntity();
   void CreateMapEntity();
   void CreateBallEntity();
+  void CreateSpotlights();
+  void ParticleComponentDestroyed(entt::entity e, entt::registry& registry);
   void CreateInGameMenu();
   void AddPlayer();
   void TestCreateLights();
@@ -286,6 +294,7 @@ class PlayState : public State {
   void UpdateSwitchGoalTimer();
 
   void DrawNameOverPlayer();
+  void DrawWallOutline();
 
   void DrawTopScores();
   void DrawTarget();
@@ -310,7 +319,7 @@ class PlayState : public State {
   std::unordered_map<EntityID, glm::vec3> player_look_dirs_;
   std::unordered_map<EntityID, glm::vec3> player_move_dirs_;
   FrameState server_predicted_;
-  entt::entity my_entity_, arena_entity_;
+  entt::entity my_entity_, arena_entity_, map_visual_entity_;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
 
@@ -321,7 +330,7 @@ class PlayState : public State {
 
   glob::Font2DHandle font_test_ = 0;
   glob::Font2DHandle font_scores_ = 0;
-  glob::E2DHandle e2D_test_, e2D_test2_, e2D_target_;
+  glob::E2DHandle e2D_test_, e2D_test2_, e2D_target_, e2D_outline_;
   glob::GUIHandle in_game_menu_gui_ = 0;
   glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
       gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_, gui_minimap_,
@@ -348,7 +357,7 @@ class PlayState : public State {
   glob::ModelHandle test_ball_;
   std::list<PlayerData> history_;
   FrameState predicted_state_;
-
+  glm::vec3 arena_scale_;
   std::vector<int> actions_;
   int frame_id = 0;
   float pitch_ = 0.0f;
@@ -356,6 +365,8 @@ class PlayState : public State {
 
   float timer_ = 0.0f;
   float primary_cd_ = 0.0f;
+
+  bool sprinting_ = false;
 };
 
 #endif  // STATE_HPP_
