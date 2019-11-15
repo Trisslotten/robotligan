@@ -1478,10 +1478,11 @@ void Render() {
       text3D.font->Draw3D(text3D_shader, text3D.pos, text3D.size, text3D.text,
                           text3D.color, text3D.rotation);
     }
-    glDepthFunc(GL_LESS);
-    glDisable(GL_BLEND);
-    glEnable(GL_CULL_FACE);
+    //glDisable(GL_BLEND);
+    //glEnable(GL_CULL_FACE);
 
+    glDepthFunc(GL_LESS);
+    glBindVertexArray(trail_vao);
     trail_shader.use();
     trail_shader.uniform("cam_transform", cam_transform);
     trail_shader.uniform("cam_pos", camera.GetPosition());
