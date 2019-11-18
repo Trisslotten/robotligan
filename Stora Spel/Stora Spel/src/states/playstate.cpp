@@ -12,8 +12,10 @@
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 
+#include <algorithm>
 #include <collision.hpp>
 #include <ecs\components\trail_component.hpp>
+#include <glm\gtx\extended_min_max.hpp>
 #include <physics.hpp>
 #include <shared/fail_safe_arena.hpp>
 #include <shared/physics_component.hpp>
@@ -295,8 +297,8 @@ void PlayState::Update(float dt) {
   // glm::vec3(0, 1, 0));
   // glob::Submit(e2D_test_, glm::vec3(-10.5f, 1.0f, 0.0f), 2, 90.0f,
   // glm::vec3(0, 1, 0));
-  glob::Submit(e2D_test2_, glm::vec3(0.0f, 3.0f, -28.0f) * arena_scale_, 7,
-               0.0f, glm::vec3(1));
+  // glob::Submit(e2D_test2_, glm::vec3(0.0f, 3.0f, -28.0f) * arena_scale_, 7,
+  //           0.0f, glm::vec3(1));
 
   UpdateGameplayTimer();
   UpdateSwitchGoalTimer();
@@ -742,12 +744,16 @@ void PlayState::DrawTopScores() {
   team_score_pos.x -= 145;
   team_score_pos.y -= 60;
   glob::Submit(gui_teamscore_, team_score_pos, 1, 100);
+  std::string blue_score_str = std::to_string(engine_->GetTeamScores()[1]);
+  std::string red_score_str = std::to_string(engine_->GetTeamScores()[0]);
 
-  glob::Submit(font_scores_, team_score_pos + glm::vec2(90, 55), 72,
-               std::to_string(engine_->GetTeamScores()[1]),
+  glm::vec2 blue_score_pos =
+      team_score_pos + glm::vec2(90, 55) - glm::vec2(12, 0)*(float)(blue_score_str.size()-1);
+  glm::vec2 red_score_pos = team_score_pos + glm::vec2(200, 55);
+
+  glob::Submit(font_scores_, blue_score_pos, 72, blue_score_str,
                glm::vec4(0, 0.26, 1, 1));
-  glob::Submit(font_scores_, team_score_pos + glm::vec2(217, 55), 72,
-               std::to_string(engine_->GetTeamScores()[0]),
+  glob::Submit(font_scores_, red_score_pos, 72, red_score_str,
                glm::vec4(1, 0, 0, 1));
 }
 
@@ -1085,6 +1091,21 @@ void PlayState::Collision() {
   }
 }
 
+unsigned long PlayState::GetBestPlayer() {
+  std::unordered_map<EntityID, PlayerStatInfo> p_scores =
+      engine_->GetPlayerScores();
+
+  unsigned long best_id = 0;
+  int best_points = -999;
+  for (auto stats : p_scores) {
+    if (stats.second.points > best_points) {
+      best_id = stats.first;
+      best_points = stats.second.points;
+    }
+  }
+  return best_id;
+}
+
 EntityID PlayState::ClientIDToEntityID(long client_id) {
   return engine_->GetPlayerScores()[client_id].enttity_id;
 }
@@ -1164,27 +1185,107 @@ void PlayState::DrawJumbotronText() {
     glm::vec3 temp_pos =
         glm::vec3(xrot * pos_base.x, pos_base.y, pos_base.z * zrot);
 
+    float goal_side_switch = goals_swapped_ ? xrot * -1 : xrot;
+
     glm::vec3 dir = glm::normalize(glm::vec3(0, temp_pos.y, 0) - temp_pos);
     temp_pos += dir * 30.f;
+    glm::vec3 right =
+        glm::normalize(glm::cross(dir, glm::vec3(0, 1, 0))) * -1.f;
+    temp_pos += right * 5.f;
 
     glm::quat rotation = glm::quatLookAtRH(dir, glm::vec3(0, 1, 0));
     rotation *= glm::quat(glm::vec3(0.f, glm::radians(180.0f), 0.f));
     glm::mat4 orient = glm::toMat4(rotation);
 
-	glm::vec4 color = glm::vec4(1.f,0.f,0.f,0.8f);
-    if (xrot == -1.f) {
-          color = glm::vec4(0.f,0.f,1.f,0.8f);
-	}
+    glm::vec4 color_red = glm::vec4(1.f, .2f, .2f, .8f);
+    glm::vec4 color_blue = glm::vec4(.2f, .2f, 1.f, .8f);
+    glm::vec4 color_white = glm::vec4(1.f, 1.f, 1.f, .8f);
 
-    glob::Submit(font_test_, temp_pos, 20, "TEST", color,
-                 orient);
+    glm::vec4 color = color_red;
+    if (goal_side_switch == -1.f) {
+      color = color_blue;
+    }
 
-    /* trans_c.rotation *= glm::quatLookAtRH(
-         glm::normalize(glm::vec3(0, trans_c.position.y, 0) - trans_c.position),
-         glm::vec3(0, 1, 0));
-     trans_c.Rotate(glm::vec3(0.f, glm::radians(180.f), 0.f));*/
+    float size = 20.0;
+    std::string text = "TEST";
+    switch (current_jumbo_effect_) {
+      case TEAM_SCORES: {
+        std::string team_score_red, team_score_blue;
+        team_score_red = std::to_string(engine_->GetTeamScores()[0]);
+        team_score_blue = std::to_string(engine_->GetTeamScores()[1]);
+
+        glm::vec3 red_pos = temp_pos + right * size * .8f;
+        glm::vec3 blue_pos =
+            temp_pos -
+            right * size * std::min(1.3f, (float)team_score_blue.size());
+
+        glob::Submit(font_test_, red_pos, size, team_score_red, color_red,
+                     orient);
+        glob::Submit(font_test_, temp_pos, size, "-", color_white, orient);
+        glob::Submit(font_test_, blue_pos, size, team_score_blue, color_blue,
+                     orient);
+        break;
+      }
+      case MATCH_TIME: {
+        int temp = 0;
+        if (!overtime_has_started_) {
+          temp = match_time_ - engine_->GetGameplayTimer();
+        } else {
+          temp = engine_->GetGameplayTimer() - match_time_;
+        }
+        // Gameplay timer
+        int sec = 0;
+        int min = 5;
+
+        min = temp / 60;
+        sec = temp % 60;
+
+        std::string min_str = std::to_string(min);
+        std::string sec_str = std::to_string(sec);
+        if (min < 10) min_str = "0" + min_str;
+        if (sec < 10) sec_str = "0" + sec_str;
+
+        text = min_str + ":" + sec_str;
+        if (overtime_has_started_) {
+          text = "OVERTIME";
+          size = 14;
+        }
+        temp_pos -= right * ((float)text.size() / 2);
+        glob::Submit(font_test_, temp_pos, size, text, color_white, orient);
+        break;
+      }
+      case BEST_PLAYER: {
+        temp_pos += right * 2.f;
+        unsigned long best_player_id = GetBestPlayer();
+        std::string best_name = engine_->player_names_[best_player_id];
+        text = "GO GO " + best_name + "!";
+        size = (5 / (float)text.size()) * size;
+        temp_pos -= right * ((float)text.size() / 2);
+        color = color_red;
+        if (engine_->GetPlayerScores()[best_player_id].team == TEAM_BLUE)
+          color = color_blue;
+        glob::Submit(font_test_, temp_pos, size, text, color, orient);
+        break;
+      }
+      case GOAL_SCORED: {
+        size = 14;
+        text = "GOOOAL!";
+        temp_pos -= right * ((float)text.size() / 2);
+        glob::Submit(font_test_, temp_pos, size, text, color_white, orient);
+        break;
+      }
+      default: {
+        glob::Submit(font_test_, temp_pos, size, text, color, orient);
+        break;
+      }
+    }
+
     std::swap(xrot, zrot);
     zrot *= -1.f;
+  }
+  if (jumbo_effect_timer_.Elapsed() > jumbo_effect_time_) {
+    current_jumbo_effect_ = (current_jumbo_effect_ + 1) % GOAL_SCORED;
+    jumbo_effect_timer_.Restart();
   }
 }
 
@@ -1827,6 +1928,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
   switch (e.type) {
     case GameEvent::GOAL: {
       CreateGoalParticles(e.goal.x, *correct_registry);
+      current_jumbo_effect_ = GOAL_SCORED;
+      jumbo_effect_timer_.Pause();
       break;
     }
     case GameEvent::RESET: {
@@ -2177,6 +2280,8 @@ void PlayState::Reset() {
   player_c.can_jump = false;
   server_predicted_.velocity = glm::vec3(0.0f);
   predicted_state_.velocity = glm::vec3(0.0f);
+  current_jumbo_effect_ = TEAM_SCORES;
+  jumbo_effect_timer_.Restart();
 }
 
 void PlayState::EndGame() {

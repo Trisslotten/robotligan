@@ -10,9 +10,9 @@
 #include <playerdata.hpp>
 #include <util/timer.hpp>
 #include "Chat.hpp"
+#include "ecs/components.hpp"
 #include "eventdispatcher.hpp"
 #include "shared/shared.hpp"
-#include "ecs/components.hpp"
 
 class Engine;
 
@@ -208,6 +208,8 @@ class SettingsState : public State {
 /////////////////////// PLAY ///////////////////////
 
 class PlayState : public State {
+  enum JumbotronEffect { TEAM_SCORES, MATCH_TIME, BEST_PLAYER, GOAL_SCORED, NUM_EFFECTS };
+
  public:
   void Startup() override;
   void Init() override;
@@ -269,10 +271,9 @@ class PlayState : public State {
   void SetTeam(unsigned int team) { my_team_ = team; }
   void CreateNewBallEntity(bool fake, EntityID id);
   void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
-  void SetCountdownInProgress(bool val) { countdown_in_progress_ = val;  }
+  void SetCountdownInProgress(bool val) { countdown_in_progress_ = val; }
   void SetArenaScale(glm::vec3 arena_scale) { arena_scale_ = arena_scale; }
 
-  
   void FetchMapAndArena(entt::registry& in_registry);
 
  private:
@@ -307,6 +308,8 @@ class PlayState : public State {
   void MovePlayer(float dt);
   void MoveBall(float dt);
   void Collision();
+  
+  unsigned long GetBestPlayer();
 
   EntityID ClientIDToEntityID(long client_id);
   ////////////////////////////////////////
@@ -370,6 +373,10 @@ class PlayState : public State {
   float primary_cd_ = 0.0f;
 
   bool sprinting_ = false;
+
+  int current_jumbo_effect_ = TEAM_SCORES;
+  Timer jumbo_effect_timer_;
+  float jumbo_effect_time_ = 5.0f;
 };
 
 #endif  // STATE_HPP_
