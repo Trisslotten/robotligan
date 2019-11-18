@@ -96,5 +96,5 @@ Example: '>MY_VALUE=13.37'
 Note: Assert mode 4.0 is so heavy it de-syncs itself
 
 //--Match options--//
->MATCH_TIME=30.0
+>MATCH_TIME=10.0
 >COUNTDOWN_TIME=5.0
