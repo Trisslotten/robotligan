@@ -86,6 +86,8 @@ void Engine::Init() {
   connect_menu_state_.SetEngine(this);
   play_state_.SetEngine(this);
   settings_state_.SetEngine(this);
+  replay_state_.SetEngine(this);
+
 
   main_menu_state_.Startup();
   settings_state_.Startup();

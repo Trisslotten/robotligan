@@ -30,7 +30,7 @@ void ReplayState::Update(float dt) {
   pos /= 2;
   pos.y -= 160;
 
-  int game_end_timeout = engine_->GetReplayMachinePtr()->ReplayLength();
+  int game_end_timeout = engine_->GetReplayMachinePtr()->ReplayLength() + 5;
 
   std::string end_countdown_text =
       std::to_string((int)(game_end_timeout - end_game_timer_.Elapsed()));
@@ -62,6 +62,10 @@ void ReplayState::Update(float dt) {
   glob::Submit(font_test_, pos, 48, winnin_team_text, best_team_color);
 
   //-------Draw scoreboard during highlight time--------------
+
+  if (end_game_timer_.Elapsed() > game_end_timeout) {
+    engine_->ChangeState(StateType::LOBBY);
+  }
 }
 
 void ReplayState::UpdateNetwork() {}
@@ -74,6 +78,8 @@ void ReplayState::Cleanup() {
   this->replaying_ = false;
   this->num_of_replays_ = 0;
   this->replay_counter_ = 0;
+
+  end_game_timer_.Pause();
 }
 
 void ReplayState::StartReplayMode() {
