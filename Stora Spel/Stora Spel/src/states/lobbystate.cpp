@@ -267,7 +267,7 @@ void LobbyState::CreateBackgroundEntities() {
     auto& model_c = registry_lobby_.assign<ModelComponent>(ball);
     model_c.handles.push_back(model_ball_sphere_p);
     model_c.handles.push_back(model_ball_projectors_p);
-    registry_lobby_.assign<TransformComponent>(ball, glm::vec3(0, -4, 0),
+    registry_lobby_.assign<TransformComponent>(ball, glm::vec3(0, 1, 0),
                                                zero_vec, glm::vec3(1.0f));
     registry_lobby_.assign<BallComponent>(ball);
   }
@@ -290,7 +290,7 @@ void LobbyState::CreateBackgroundEntities() {
     auto camera = registry_lobby_.create();
     auto& cam_c = registry_lobby_.assign<CameraComponent>(camera);
     auto& cam_trans = registry_lobby_.assign<TransformComponent>(camera);
-    cam_trans.position = glm::vec3(-10.f, 0.f, -3.f);
+    cam_trans.position = glm::vec3(-10.f, 5.f, -3.f);
     glm::vec3 dir = glm::vec3(0) - cam_trans.position;
     cam_c.orientation = glm::quat(glm::vec3(0.f, -0.3f, 0.f));
   }
