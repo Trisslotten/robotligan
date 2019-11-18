@@ -22,8 +22,8 @@ namespace glob {
 
 namespace window {
 
-unsigned int window_width = 1280;
-unsigned int window_height = 720;
+unsigned int window_width = 1600;
+unsigned int window_height = 800;
 bool fullscreen = false;
 
 void Create() {

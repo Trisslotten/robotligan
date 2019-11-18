@@ -410,6 +410,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetMyPrimaryAbility(ability_id);
       play_state_.SetTeam(team);
       play_state_.SetArenaScale(arena_scale);
+      replay_state_.SetArenaScale(arena_scale);
       packet >> num_team_ids;
       for (int i = 0; i < num_team_ids; i++) {
         long client_id;

@@ -323,41 +323,38 @@ void PlayState::Update(float dt) {
   }
 
   // --- dont display during replay ---
-  // TODO: Remove if-statement and just dont draw GUI in replay state when it's implemented
-  if (!engine_->IsReplaying()) {
-    // draw quickslots
-    DrawQuickslots();
+  // TODO: Remove if-statement and just dont draw GUI in replay state when it's
+  // implemented draw quickslots
+  DrawQuickslots();
 
-    // draw stamina bar
-    glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
-    glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
-    glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
+  // draw stamina bar
+  glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
+  glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
+  glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
 
-    // draw crosshair
-    glm::vec2 crosshair_pos = glob::window::GetWindowDimensions();
-    crosshair_pos /= 2;
-    glob::Submit(gui_crosshair_, crosshair_pos - glm::vec2(19, 20), 1.f);
+  // draw crosshair
+  glm::vec2 crosshair_pos = glob::window::GetWindowDimensions();
+  crosshair_pos /= 2;
+  glob::Submit(gui_crosshair_, crosshair_pos - glm::vec2(19, 20), 1.f);
 
-    // draw Minimap
-    glob::Submit(gui_minimap_,
-                 glm::vec2(glob::window::GetWindowDimensions().x - 250, 10),
-                 0.3);
-    // draw Minimap goals
-    if (!goals_swapped_) {
-      glob::Submit(gui_minimap_goal_red_,
-                   glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
-                   0.2);
-      glob::Submit(
-          gui_minimap_goal_blue_,
-          glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
-    } else {
-      glob::Submit(
-          gui_minimap_goal_red_,
-          glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
-      glob::Submit(gui_minimap_goal_blue_,
-                   glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
-                   0.2);
-    }
+  // draw Minimap
+  glob::Submit(gui_minimap_,
+               glm::vec2(glob::window::GetWindowDimensions().x - 250, 10), 0.3);
+  // draw Minimap goals
+  if (!goals_swapped_) {
+    glob::Submit(gui_minimap_goal_red_,
+                 glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
+                 0.2);
+    glob::Submit(
+        gui_minimap_goal_blue_,
+        glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
+  } else {
+    glob::Submit(
+        gui_minimap_goal_red_,
+        glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
+    glob::Submit(gui_minimap_goal_blue_,
+                 glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
+                 0.2);
 
     // Draw Player icons
     auto view_player =
@@ -434,7 +431,7 @@ void PlayState::Update(float dt) {
   if (primary_cd_ > 0) {
     primary_cd_ -= dt;
   }
-  
+
   DrawTopScores();
   DrawTarget();
 
@@ -1196,7 +1193,7 @@ void PlayState::CreatePlayerEntities() {
     registry_gameplay_.assign<SoundComponent>(entity,
                                               sound_engine.CreatePlayer());
 
-	auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
+    auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
 
     if (entity_id == my_id_) {
       glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
@@ -1232,7 +1229,7 @@ void PlayState::CreatePlayerEntities() {
           entity, glob::GetAnimationData(player_model));
     }
 
-	model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
+    model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
 
     if (engine_->GetPlayerTeam(entity_id) == TEAM_BLUE) {
       model_c.diffuse_index = 1;
@@ -2118,9 +2115,7 @@ void PlayState::Reset() {
   predicted_state_.velocity = glm::vec3(0.0f);
 }
 
-void PlayState::EndGame() {
-  game_has_ended_ = true;
-}
+void PlayState::EndGame() { game_has_ended_ = true; }
 
 void PlayState::OverTime() { overtime_has_started_ = true; }
 
@@ -2136,100 +2131,4 @@ void PlayState::SetPitchYaw(float pitch, float yaw) {
   yaw_ = yaw;
   constexpr float pi = glm::pi<float>();
   pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
-}
-
-// TODO: Check the position of this
-void PlayState::FetchMapAndArena(entt::registry& in_registry) {
-  // Map
-  entt::entity map = in_registry.create();
-  glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 map_scale = glm::vec3(2.6f) * arena_scale_;
-  glob::ModelHandle model_map_walls =
-      glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
-
-  ModelComponent& model_map_c = in_registry.assign<ModelComponent>(map);
-  model_map_c.handles.push_back(model_map_walls);
-
-  in_registry.assign<TransformComponent>(map, zero_vec, zero_vec, map_scale);
-
-  // Arena
-  entt::entity arena = in_registry.create();
-  glm::vec3 arena_scale = glm::vec3(1.0f) * arena_scale_;
-  glob::ModelHandle model_arena =
-      glob::GetModel("assets/Arena/Map_V3_ARENA.fbx");
-  glob::ModelHandle model_arena_banner =
-      glob::GetModel("assets/Arena/Map_V3_ARENA_SIGNS.fbx");
-  glob::ModelHandle model_map = glob::GetModel("assets/MapV3/Map_Walls.fbx");
-  glob::ModelHandle model_map_floor =
-      glob::GetModel("assets/MapV3/Map_Floor.fbx");
-  glob::ModelHandle model_map_projectors =
-      glob::GetModel("assets/MapV3/Map_Projectors.fbx");
-
-  // glob::GetModel(kModelPathMapSingular);
-  ModelComponent& model_arena_c = in_registry.assign<ModelComponent>(arena);
-  model_arena_c.handles.push_back(model_arena);
-  model_arena_c.handles.push_back(model_arena_banner);
-  model_arena_c.handles.push_back(model_map_projectors);
-
-  in_registry.assign<TransformComponent>(arena, zero_vec, zero_vec,
-                                         arena_scale);
-
-  entt::entity arena_floor = in_registry.create();
-  ModelComponent& floor_model_c =
-      in_registry.assign<ModelComponent>(arena_floor);
-  floor_model_c.handles.push_back(model_map);
-  floor_model_c.handles.push_back(model_map_floor);
-  TransformComponent& trans_c = in_registry.assign<TransformComponent>(
-      arena_floor, zero_vec, zero_vec, arena_scale);
-
-  if (goals_swapped_) {
-    trans_c.rotation *= glm::quat(glm::vec3(0.f, glm::pi<float>(), 0.f));
-  }
-
-  // Lights
-  entt::entity light = in_registry.create();
-  in_registry.assign<LightComponent>(light, glm::vec3(0.4f, 0.4f, 0.4f), 90.f,
-                                     0.2f);
-  in_registry.assign<TransformComponent>(
-      light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
-
-  glm::vec3 pos_base;
-  pos_base.x = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEX");
-  pos_base.y = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEY");
-  pos_base.z = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEZ");
-
-  // Spotlights
-  pos_base *= arena_scale_;
-
-  float xrot = 1.f;
-  float zrot = 1.f;
-  for (int i = 0; i < 4; i++) {
-    glm::vec3 temp_pos =
-        glm::vec3(xrot * pos_base.x, pos_base.y, zrot * pos_base.z);
-
-    // Add model entity for spotlight
-    auto entity = in_registry.create();
-    ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
-    glob::ModelHandle m_hndl = glob::GetModel("assets/Spotlight/Spotlight.fbx");
-    model_c.handles.push_back(m_hndl);
-    TransformComponent& trans_c =
-        in_registry.assign<TransformComponent>(entity);
-    trans_c.position = temp_pos;
-    // trans_c.rotation = glm::toQuat(
-    //  glm::lookAt(temp_pos, glm::vec3(0, -40.0, 0), glm::vec3(0, 1, 0)));
-    trans_c.rotation *= glm::quatLookAtRH(
-        glm::normalize(glm::vec3(0.f, -40.0f, 0.f) - temp_pos),
-        glm::vec3(0, 1, 0));
-    trans_c.Rotate(glm::vec3(0, glm::radians(90.f), 0));
-
-    std::swap(xrot, zrot);
-    zrot *= -1.f;
-  }
-
-  // Camera
-  entt::entity camera = in_registry.create();
-  in_registry.assign<CameraComponent>(camera, glm::vec3(0.f),
-                                      glm::quat(glm::vec3(0.f)));
-  in_registry.assign<TransformComponent>(camera, glm::vec3(0.f, 13.f, 42.f),
-                                         glm::quat(), glm::vec3(0.f));
 }
