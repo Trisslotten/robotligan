@@ -1430,14 +1430,6 @@ void Render() {
       glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-    // render particles
-    particle_shader.use();
-    particle_shader.uniform("cam_transform", cam_transform);
-    particle_shader.uniform("cam_pos", camera.GetPosition());
-    particle_shader.uniform("cam_up", camera.GetUpVector());
-    for (auto p : particles_to_render) {
-      buffer_particle_systems[p].system.Draw(particle_shader);
-    }
     // draw sky
     glDepthFunc(GL_LEQUAL);
     sky_shader.use();
@@ -1449,6 +1441,14 @@ void Render() {
     sky_shader.uniform("texture_sky", 0);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glDepthFunc(GL_LESS);
+    // render particles
+    particle_shader.use();
+    particle_shader.uniform("cam_transform", cam_transform);
+    particle_shader.uniform("cam_pos", camera.GetPosition());
+    particle_shader.uniform("cam_up", camera.GetUpVector());
+    for (auto p : particles_to_render) {
+      buffer_particle_systems[p].system.Draw(particle_shader);
+    }
 
     // TODO: Sort all transparent triangles
     // maybe sort internally in modell and then and externally
