@@ -5,9 +5,9 @@
 // Replay Stuff --------------------------------
 // Private:
 
+// Public:
 void ReplayState::Startup() {}
 
-// Public:
 void ReplayState::Init() {
   // Set this to be the current registry of engine
   this->engine_->SetCurrentRegistry(&this->replay_registry_);
