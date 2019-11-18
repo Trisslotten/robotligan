@@ -336,17 +336,12 @@ entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
                                         glm::vec3(0.f), false, 0.0f);
       registry.assign<TransformComponent>(
           cannonball,
-          glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),
+          glm::vec3(tc.position + tc.rotation * cc.offset),
           cc.orientation, glm::vec3(.3f, .3f, .3f));
-      registry.assign<physics::Sphere>(cannonball,
-                                       glm::vec3(tc.position + cc.offset), .3f);
+      registry.assign<physics::Sphere>(cannonball, glm::vec3(0.f), .3f);
       registry.assign<ProjectileComponent>(cannonball,
                                            ProjectileID::CANNON_BALL, id);
-      // registry.assign<ModelComponent>(cannonball,
-      //                                glob::GetModel("assets/Ball/Ball.fbx"));
-      // registry.assign<LightComponent>(cannonball, glm::vec3(1, 0, 1), 3.f,
-      // 0.f);
-      return cannonball;
+	  return cannonball;
     }
   }
 }
@@ -403,12 +398,10 @@ entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id) {
                                         glm::vec3(0.f), true, 0.0f);
       registry.assign<TransformComponent>(
           force_object,
-          glm::vec3(cc.GetLookDir() * 1.5f + tc.position + cc.offset),
+          glm::vec3(tc.position + tc.rotation * cc.offset),
           glm::vec3(0, 0, 0), glm::vec3(.5f, .5f, .5f));
-      registry.assign<physics::Sphere>(force_object,
-                                       glm::vec3(tc.position + cc.offset), .5f);
-      registry.assign<ProjectileComponent>(force_object,
-                                           ProjectileID::FORCE_PUSH_OBJECT, id);
+      registry.assign<physics::Sphere>(force_object, glm::vec3(0.f), .5f);
+      registry.assign<ProjectileComponent>(force_object, ProjectileID::FORCE_PUSH_OBJECT, id);
 
       // Save game event
       GameEvent force_push_cast_event;
@@ -450,10 +443,9 @@ void DoTeleport(entt::registry& registry, PlayerID id) {
                                         glm::vec3(0.f), false, 0.0f);
       registry.assign<TransformComponent>(
           teleport_projectile,
-          glm::vec3(tc.position + cc.offset),
+          glm::vec3(tc.position - cc.GetLookDir() * speed * 1.f/128.f),
           glm::vec3(0, 0, 0), glm::vec3(.3f, .3f, .3f));
-      registry.assign<physics::Sphere>(teleport_projectile,
-                                       glm::vec3(tc.position + cc.offset), .3f);
+      registry.assign<physics::Sphere>(teleport_projectile, glm::vec3(0.f), 1.f);
       registry.assign<ProjectileComponent>(
           teleport_projectile, ProjectileID::TELEPORT_PROJECTILE, pc.client_id);
 
@@ -546,7 +538,7 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
       auto& camera = view_players.get<CameraComponent>(entity);
 
       glm::vec3 position =
-          camera.GetLookDir() * 4.5f + trans_c.position + camera.offset;
+          camera.GetLookDir() * 4.5f + trans_c.position + trans_c.rotation * camera.offset;
       position.y = -9.3f;
 
       for (auto entity_goal : view_goals) {

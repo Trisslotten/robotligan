@@ -21,14 +21,9 @@ in vec3 local_pos;
 in vec3 local_normal;
 in vec3 v_normal;
 
-uniform sampler2D texture_normal;
-uniform float normal_map_scale;
-
-uniform sampler2D texture_metallic;
-uniform float metallic_map_scale;
-
 uniform sampler2D texture_roughness;
 uniform float roughness_map_scale;
+uniform int use_roughness;
 
 uniform vec3 cam_position;
 
@@ -58,7 +53,7 @@ float shadow(vec3 position, int index) {
 	}
 	float frag_depth = length(position - shadow_light_positions[index]);
 
-	vec2 depths = textureLod(shadow_maps[index], uv, 0).xy;
+	vec2 depths = texture(shadow_maps[index], uv).xy;
 	float E_x2 = depths.y;
 	float Ex_2 = depths.x*depths.x;
 	float variance = E_x2 - Ex_2;
@@ -117,7 +112,12 @@ struct Lighting {
 };
 
 Lighting shading(vec3 position, float metallic, vec3 normal) {
-	float roughness = triplanarRoughness();
+	float roughness = 0.;
+	if(use_roughness != 0)
+	{
+		roughness = triplanarRoughness();
+	}
+
 	vec3 view_dir = normalize(cam_position - position);
 
 	Lighting lighting;
@@ -127,16 +127,19 @@ Lighting shading(vec3 position, float metallic, vec3 normal) {
 
 	for(int l = 0; l < NR_OF_LIGHTS; l++){
 		vec3 pointToLight = light_pos[l] - position;
-		vec3 light_dir = normalize(pointToLight);
-		vec3 light_color = light_col[l];
-
-		float intensity = 1.f - clamp(length(pointToLight), 0, light_radius[l]) / light_radius[l];
-		float diffuse = (1-metallic)*calcDiffuse(position, normal, light_dir);
-		float specular = metallic * calcSpecular(position, normal, light_dir, view_dir, roughness);
-
-		lighting.diffuse += diffuse * intensity * light_color;
-		lighting.specular += specular * intensity * light_color;
+		float radius = light_radius[l];
 		lighting.ambient += (1-metallic) * light_amb[l];
+		if(length(pointToLight) <= radius) {
+			vec3 light_dir = normalize(pointToLight);
+			vec3 light_color = light_col[l];
+
+			float intensity = 1.f - clamp(length(pointToLight)/radius, 0., 1.);
+			float diffuse = (1-metallic)*calcDiffuse(position, normal, light_dir);
+			float specular = metallic * calcSpecular(position, normal, light_dir, view_dir, roughness);
+
+			lighting.diffuse += diffuse * intensity * light_color;
+			lighting.specular += specular * intensity * light_color;
+		}
 	}
 
 	for(int i = 0; i < num_shadows; i++) {
