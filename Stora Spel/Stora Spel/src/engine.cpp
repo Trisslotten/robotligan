@@ -94,6 +94,8 @@ void Engine::Init() {
 
   play_state_.Startup();
 
+  replay_state_.Startup();
+
   main_menu_state_.Init();
   current_state_ = &main_menu_state_;
   wanted_state_type_ = StateType::MAIN_MENU;

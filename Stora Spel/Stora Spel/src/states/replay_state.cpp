@@ -67,8 +67,6 @@ void ReplayState::Update(float dt) {
   //-------Draw scoreboard during highlight time--------------
 }
 
-void ReplayState::Update(float dt) {}
-
 void ReplayState::UpdateNetwork() {}
 
 void ReplayState::Cleanup() {
