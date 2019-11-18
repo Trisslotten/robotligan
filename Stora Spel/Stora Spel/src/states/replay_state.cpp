@@ -17,15 +17,12 @@ void ReplayState::Init() {
   // Set this to be the current registry of engine
   this->engine_->SetCurrentRegistry(&this->replay_registry_);
 
-  // WIP: Fix with other stuff here
+  StartReplayMode();
 }
 
 void ReplayState::Update(float dt) {
   // Highlight loop logic
-
-
-
-
+  PlayReplay();
   //-------Draw scoreboard during highlight time--------------
   engine_->DrawScoreboard();
 
@@ -67,8 +64,6 @@ void ReplayState::Update(float dt) {
   //-------Draw scoreboard during highlight time--------------
 }
 
-void ReplayState::Update(float dt) {}
-
 void ReplayState::UpdateNetwork() {}
 
 void ReplayState::Cleanup() {
@@ -86,17 +81,13 @@ void ReplayState::StartReplayMode() {
   if (replaying_) {
     return;
   }
-
-  // Clear replay register
-  this->replay_registry_.reset();
-
   // Set replaying to true
   this->replaying_ = true;
 
   // Get number of replays
   ClientReplayMachine* engine_rpm = this->engine_->GetReplayMachinePtr();
   this->num_of_replays_ = engine_rpm->NumberOfStoredReplays();
-  this->replay_counter_ = 0;
+  this->replay_counter_ = num_of_replays_ - 1; // Cheat row
   engine_rpm->SelectReplay(this->replay_counter_);
 }
 
@@ -105,9 +96,7 @@ void ReplayState::PlayReplay() {
     return;
   }
 
-  ClientReplayMachine* engine_rpm = this->engine_->GetReplayMachinePtr();
-
-  if (engine_rpm->LoadFrame(this->replay_registry_)) {
+  if (engine_->GetReplayMachinePtr()->LoadFrame(this->replay_registry_)) {
     // Once replay is done playing, clear the registry
     this->replay_registry_.reset();
 
