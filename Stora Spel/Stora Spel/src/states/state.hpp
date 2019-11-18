@@ -279,7 +279,7 @@ class PlayState : public State {
 
   // Replay stuff
   bool IsRecording() const { return this->recording_; }
-  //void SetRecording(bool in_val) { this->recording_ = in_val; }
+  // void SetRecording(bool in_val) { this->recording_ = in_val; }
   //
 
  private:
@@ -355,7 +355,6 @@ class PlayState : public State {
   // For switch goal
   bool countdown_in_progress_ = false;
 
-  Timer end_game_timer_;
   bool game_has_ended_ = false;
   bool overtime_has_started_ = false;
   bool goals_swapped_ = false;
@@ -389,6 +388,10 @@ class ReplayState : public State {
   unsigned int num_of_replays_ = 0;
   unsigned int replay_counter_ = 0;
 
+  Timer end_game_timer_;
+
+  glob::Font2DHandle font_test_ = 0;
+
  public:
   void Startup() override;
   void Init() override;
@@ -401,9 +404,10 @@ class ReplayState : public State {
   void StartRecording();
   void AlertOnDestroy(EntityID in_id);
 
-
   void StartReplayMode();
   void PlayReplay();
+
+  void EndGame() { end_game_timer_.Restart(); }
 };
 
 #endif  // STATE_HPP_

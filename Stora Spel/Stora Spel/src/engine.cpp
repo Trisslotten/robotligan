@@ -108,6 +108,7 @@ void Engine::Init() {
                                             // approximation
   this->replay_machine_ =
       new ClientReplayMachine(length_sec, approximate_tickrate);
+  replay_machine_->SetEngine(this);
 
   dispatcher.sink<GameEvent>().connect<&ClientReplayMachine::ReceiveGameEvent>(
       *replay_machine_);
@@ -681,7 +682,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::GAME_END: {
       // std::cout << "PACKET: GAME_END\n";
       play_state_.EndGame();
-      previous_state_ = StateType::LOBBY; //TODO: swap to prev state
+      replay_state_.EndGame();
+      previous_state_ = StateType::LOBBY;
       // ChangeState(StateType::LOBBY);
       break;
     }
