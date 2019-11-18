@@ -382,7 +382,10 @@ class PlayState : public State {
 class ReplayState : public State {
  private:
   entt::registry replay_registry_;
+  
   bool replaying_ = false;
+  
+  unsigned int num_of_replays_ = 0;
   unsigned int replay_counter_ = 0;
 
   Timer end_game_timer_;

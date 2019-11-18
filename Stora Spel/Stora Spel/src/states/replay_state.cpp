@@ -67,6 +67,7 @@ void ReplayState::Update(float dt) {
 }
 
 void ReplayState::StartReplayMode() {
+  // Do not start if already replaying
   if (replaying_) {
     return;
   }
@@ -74,10 +75,14 @@ void ReplayState::StartReplayMode() {
   // Clear replay register
   this->replay_registry_.reset();
 
-  // WIP: WORKING HERE
-  /*replaying_ = true;
-  replay_counter_ = replay_machine_->NumberOfStoredReplays() - 1;
-  replay_machine_->SelectReplay(replay_counter_);*/
+  // Set replaying to true
+  this->replaying_ = true;
+
+  // Get number of replays
+  ClientReplayMachine* engine_rpm = this->engine_->GetReplayMachinePtr();
+  this->num_of_replays_ = engine_rpm->NumberOfStoredReplays();
+  this->replay_counter_ = 0;
+  engine_rpm->SelectReplay(this->replay_counter_);
 }
 
 void ReplayState::PlayReplay() {
