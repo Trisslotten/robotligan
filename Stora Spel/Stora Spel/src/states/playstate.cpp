@@ -56,9 +56,9 @@ void PlayState::Startup() {
   gui_minimap_goal_blue_ =
       glob::GetGUIItem("assets/GUI_elements/goal_blue_icon.png");
   gui_minimap_player_red_ =
-      glob::GetGUIItem("assets/GUI_elements/player_iconv2_red.png");
+      glob::GetGUIItem("assets/GUI_elements/player_red_icon.png");
   gui_minimap_player_blue_ =
-      glob::GetGUIItem("assets/GUI_elements/player_iconv2_blue.png");
+      glob::GetGUIItem("assets/GUI_elements/player_blue_icon.png");
   gui_minimap_ball_ = glob::GetGUIItem("assets/GUI_elements/Ball_Icon.png");
   gui_crosshair_ = glob::GetGUIItem("assets/GUI_elements/Crosshair_V1.png");
 
@@ -345,6 +345,7 @@ void PlayState::Update(float dt) {
     for (auto entity : view_client) {
       IDComponent& id_c = registry_gameplay_.get<IDComponent>(entity);
 
+      // IF RED TEAM
       if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
         if (!goals_swapped_) {
           glob::Submit(
@@ -387,14 +388,15 @@ void PlayState::Update(float dt) {
           if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
             glob::Submit(gui_minimap_player_red_,
                          glm::vec2(minimap_pos_x, minimap_pos_y),
-                         0.1);  // TODO: CALC REAL POS
+                         0.2f);  // TODO: CALC REAL POS
           } else {
             glob::Submit(gui_minimap_player_blue_,
                          glm::vec2(minimap_pos_x, minimap_pos_y),
-                         0.1);  // TODO: CALC REAL POS
+                         0.2f);  // TODO: CALC REAL POS
           }
         }
       } else {
+        // IF BLUE TEAM
         if (!goals_swapped_) {
           glob::Submit(
               gui_minimap_goal_red_,
@@ -436,11 +438,11 @@ void PlayState::Update(float dt) {
           if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
             glob::Submit(gui_minimap_player_red_,
                          glm::vec2(minimap_pos_x, minimap_pos_y),
-                         0.1);  // TODO: CALC REAL POS
+                         0.2f);  // TODO: CALC REAL POS
           } else {
             glob::Submit(gui_minimap_player_blue_,
                          glm::vec2(minimap_pos_x, minimap_pos_y),
-                         0.1);  // TODO: CALC REAL POS
+                         0.2f);  // TODO: CALC REAL POS
           }
         }
       }
