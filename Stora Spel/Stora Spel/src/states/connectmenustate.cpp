@@ -194,8 +194,8 @@ void ConnectMenuState::CreateBackground() {
   {
     auto robot = registry_connect_menu_.create();
     auto& trans_c = registry_connect_menu_.assign<TransformComponent>(
-        robot, glm::vec3(36.f, 0, -8.f),
-        glm::vec3(0.f, glm::radians(-135.0f), 0.f), glm::vec3(0.015f));
+        robot, glm::vec3(30.f, 0.2, -2.1f),
+        glm::vec3(0.f, glm::radians(-135.0f), 0.f), glm::vec3(0.0033f));
     glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
     auto& model_c = registry_connect_menu_.assign<ModelComponent>(robot);
     model_c.handles.push_back(model_robot);
@@ -211,8 +211,8 @@ void ConnectMenuState::CreateBackground() {
   {
     auto robot = registry_connect_menu_.create();
     auto& trans_c = registry_connect_menu_.assign<TransformComponent>(
-        robot, glm::vec3(36.f, 0.f, 10.f),
-        glm::vec3(0.f, glm::radians(120.0f), 0.f), glm::vec3(0.0033f));
+        robot, glm::vec3(30.f, 0.2, 2.1f),
+        glm::vec3(0.f, glm::radians(135.0f), 0.f), glm::vec3(0.0033f));
     glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
 
     auto& model_c = registry_connect_menu_.assign<ModelComponent>(robot);
@@ -231,7 +231,7 @@ void ConnectMenuState::CreateBackground() {
   auto camera = registry_connect_menu_.create();
   auto& cam_c = registry_connect_menu_.assign<CameraComponent>(camera);
   auto& cam_trans = registry_connect_menu_.assign<TransformComponent>(camera);
-  cam_trans.position = glm::vec3(28.f, 2.f, 0.f);
+  cam_trans.position = glm::vec3(28.f, 1.5f, 0.f);
   glm::vec3 dir = glm::vec3(0) - cam_trans.position;
   cam_c.orientation = glm::quat(glm::vec3(0.f, 0.f, 0.f));
 }
