@@ -5,12 +5,28 @@
 // Replay Stuff --------------------------------
 // Private:
 
+void ReplayState::Startup() {}
+
 // Public:
 void ReplayState::Init() {
   // Set this to be the current registry of engine
   this->engine_->SetCurrentRegistry(&this->replay_registry_);
 
   // WIP: Fix with other stuff here
+}
+
+void ReplayState::Update(float dt) {}
+
+void ReplayState::UpdateNetwork() {}
+
+void ReplayState::Cleanup() {
+  // Clear registry
+  this->replay_registry_.reset();
+
+  // Reset all variables
+  this->replaying_ = false;
+  this->num_of_replays_ = 0;
+  this->replay_counter_ = 0;
 }
 
 void ReplayState::StartReplayMode() {
