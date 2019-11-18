@@ -32,9 +32,12 @@ void RenderSystem(entt::registry& registry) {
     if (registry.has<AnimationComponent>(model) == false) {
       auto& t = view_model.get<TransformComponent>(model);
       auto& m = view_model.get<ModelComponent>(model);
-      glob::Submit(m.handles,
-                   glm::translate(t.position) * glm::toMat4(t.rotation) *
-                       glm::translate(-m.offset) * glm::scale(t.scale), m.material_index);
+
+      if (!m.invisible) {
+        glob::Submit(m.handles,
+          glm::translate(t.position) * glm::toMat4(t.rotation) *
+          glm::translate(-m.offset) * glm::scale(t.scale), m.diffuse_index);
+      }
     }
   }
 
@@ -45,11 +48,13 @@ void RenderSystem(entt::registry& registry) {
     auto& m = animated_models.get<ModelComponent>(model);
     auto& a = animated_models.get<AnimationComponent>(model);
 
-    glob::SubmitBAM(m.handles,
-                    glm::translate(t.position) *
-                        glm::toMat4(t.rotation + m.rot_offset) *
-                        glm::translate(-m.offset) * glm::scale(t.scale),
-                    a.bone_transforms, m.material_index);
+    if (!m.invisible) {
+      glob::SubmitBAM(m.handles,
+        glm::translate(t.position) *
+        glm::toMat4(t.rotation + m.rot_offset) *
+        glm::translate(-m.offset) * glm::scale(t.scale),
+        a.bone_transforms, m.diffuse_index);
+    }
   }
 
   // submit particles
@@ -73,16 +78,18 @@ void RenderSystem(entt::registry& registry) {
     // glm::mat4_cast(glm::quat(transform.rotation));
     glm::vec3 pos = transform.position;
     glm::vec3 dir = glm::quat(transform.rotation) * glm::vec3(1.f, 0.f, 0.f);
-    glob::SubmitLightSource(pos, light.color, light.radius, light.ambient);
+    if (!light.blackout) {
+      glob::SubmitLightSource(pos, light.color, light.radius, light.ambient);
+    }
   }
 
   // Render wireframes
-  auto view_wireframe_obb = registry.view<physics::OBB, TransformComponent>();
-  auto view_wireframe_sphere = registry.view<physics::Sphere>();
-  auto view_wireframe_arena = registry.view<physics::Arena>();
-  auto view_wireframe_mesh =
-      registry.view<physics::MeshHitbox, ModelComponent>();
   if (GlobalSettings::Access()->ValueOf("RENDER_WIREFRAME") == 1.0f) {
+    auto view_wireframe_obb = registry.view<physics::OBB, TransformComponent>();
+    auto view_wireframe_sphere = registry.view<physics::Sphere>();
+    auto view_wireframe_arena = registry.view<physics::Arena>();
+    auto view_wireframe_mesh =
+        registry.view<physics::MeshHitbox, ModelComponent>();
     for (auto& w : view_wireframe_obb) {
       auto& obb = view_wireframe_obb.get<physics::OBB>(w);
       auto& transform = view_wireframe_obb.get<TransformComponent>(w);
@@ -96,13 +103,13 @@ void RenderSystem(entt::registry& registry) {
       glob::SubmitCube(glm::translate(sphere.center) *
                        glm::scale(glm::vec3(sphere.radius)));
     }
-    for (auto& w : view_wireframe_arena) {
-      auto& arena = view_wireframe_arena.get(w);
-      glob::SubmitCube(
-          glm::scale(glm::vec3(arena.xmax - arena.xmin, arena.ymax - arena.ymin,
-                               arena.zmax - arena.zmin) *
-                     0.5f));
-    }
+    //for (auto& w : view_wireframe_arena) {
+    //  auto& arena = view_wireframe_arena.get(w);
+    //  glob::SubmitCube(
+    //      glm::scale(glm::vec3(arena.xmax - arena.xmin, arena.ymax - arena.ymin,
+    //                           arena.zmax - arena.zmin) *
+    //                 0.5f));
+    //}
   }
 
   auto view_buttons = registry.view<ButtonComponent, TransformComponent>();
@@ -114,8 +121,11 @@ void RenderSystem(entt::registry& registry) {
     glm::vec2 button_pos = glm::vec2(trans_c.position.x, trans_c.position.y);
 
     if (button_c.visible) {
+      glob::Submit(button_c.f_handle, button_pos + glm::vec2(1, -1),
+                   button_c.font_size, button_c.text, glm::vec4(0, 0, 0, 1));
       glob::Submit(button_c.f_handle, button_pos, button_c.font_size,
                    button_c.text, button_c.text_current_color);
+      
       if (button_c.gui_handle_current) {
         glob::Submit(button_c.gui_handle_current, button_pos, 1.f);
 
@@ -162,7 +172,7 @@ void RenderSystem(entt::registry& registry) {
   auto view_trails = registry.view<TrailComponent>();
   for (auto entity : view_trails) {
     auto& trail_c = view_trails.get(entity);
-    glob::SubmitTrail(trail_c.position_history, trail_c.width, trail_c.color);
+    glob::SubmitTrail(trail_c.positions, trail_c.width, trail_c.color);
   }
 }
 #endif  // RENDER_SYSTEM_HPP_

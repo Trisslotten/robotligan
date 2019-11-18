@@ -4,6 +4,7 @@
 #include "..//ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
+#include <util/asset_paths.hpp>
 
 struct ReadyButtonComponent {};
 
@@ -96,9 +97,9 @@ void LobbyState::SendMyName() {
   packet << PacketBlockType::MY_NAME;
 }
 
-
 void LobbyState::Startup() {
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+  ws_ = glob::window::GetWindowDimensions();
 }
 
 void LobbyState::Init() {
@@ -149,8 +150,6 @@ void LobbyState::Update(float dt) {
     } else {
       glob::Submit(font_test_, bottom_pos, 28, "Match is currently in session");
     }
-
-	
 
     // auto game_clients = engine_->GetPlayingPlayers();
 
@@ -219,7 +218,7 @@ void LobbyState::CreateBackgroundEntities() {
     auto arena = registry_lobby_.create();
     glm::vec3 arena_scale = glm::vec3(4.0f);
     glob::ModelHandle model_arena =
-        glob::GetModel("assets/Map/Map_unified_TMP.fbx");
+        glob::GetModel(kModelPathMapUnified);
     auto& model_c = registry_lobby_.assign<ModelComponent>(arena);
     model_c.handles.push_back(model_arena);
     registry_lobby_.assign<TransformComponent>(arena, zero_vec, zero_vec,
@@ -247,7 +246,7 @@ void LobbyState::CreateBackgroundEntities() {
     auto robot = registry_lobby_.create();
     auto& trans = registry_lobby_.assign<TransformComponent>(
         robot, zero_vec, glm::vec3(0.f, 180.f, 0.f), glm::vec3(0.01f));
-    glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
+    glob::ModelHandle model_robot = glob::GetModel(kModelPathMech);
     auto& model_c = registry_lobby_.assign<ModelComponent>(robot);
     model_c.handles.push_back(model_robot);
     // registry_lobby_.assign<AnimationComponent>(robot,
@@ -268,7 +267,6 @@ void LobbyState::CreateBackgroundEntities() {
 
 void LobbyState::CreateGUIElements() {
   ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
-  ability_blacklist.push_back((int)AbilityID::INVISIBILITY);
   team_select_back_ =
       glob::GetGUIItem("Assets/GUI_elements/lobby_team_no_names.png");
   font_team_names_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
@@ -299,16 +297,21 @@ void LobbyState::CreateGUIElements() {
   }
   ability_tooltips_.resize(num_abilites);
   ability_tooltips_[1] = "BUILD WALL: construct a wall on the field.";
-  ability_tooltips_[2] = "FAKE BALL: Spawn a number of fake balls around the ball.";
-  ability_tooltips_[3] = "FORCE PUSH: Throw an explosive projectile that pushes opponents back.";
+  ability_tooltips_[2] =
+      "FAKE BALL: Spawn a number of fake balls around the ball.";
+  ability_tooltips_[3] =
+      "FORCE PUSH: Throw an explosive projectile that pushes opponents back.";
   ability_tooltips_[4] = "GRAVITY: Lower the gravity of the arena.";
-  ability_tooltips_[5] = "HOMING BALL: Kick the ball and guide it with your aim.";
-  ability_tooltips_[6] = "INVISIBILITY: Turn invisible for a short amount of time.";
+  ability_tooltips_[5] =
+      "HOMING BALL: Kick the ball and guide it with your aim.";
+  ability_tooltips_[6] =
+      "INVISIBILITY: Turn invisible for a short amount of time.";
   ability_tooltips_[7] = "MISSILE: Shoot a guided missile at your target.";
-  ability_tooltips_[8] = "SUPER STRIKE: Kick the ball with an insane amount of force.";
+  ability_tooltips_[8] =
+      "SUPER STRIKE: Kick the ball with an insane amount of force.";
   ability_tooltips_[9] = "SWITCH GOALS: Flip both teams goals around.";
-  ability_tooltips_[10] = "TELEPORT: Fire a projectile that teleports you to the point of impact.";
-
+  ability_tooltips_[10] =
+      "TELEPORT: Fire a projectile that teleports you to the point of impact.";
 
   // auto button_join_red = registry_lobby_.create();
   ButtonComponent* button_c = GenerateButtonEntity(
@@ -380,11 +383,19 @@ void LobbyState::CreateGUIElements() {
   button_comp.gui_handle_current = ready_back_normal_;
   button_comp.gui_handle_hover = ready_back_hover_;
   button_comp.gui_handle_icon = ready_empty_icon_;
-  button_comp.bounds = glm::vec2(50, 50);
+  button_comp.click_offset = glm::vec2(-150, 0);
+  button_comp.bounds = glm::vec2(200, 50);
   button_comp.button_func = [&] {
     if (engine_->GetServerState() == ServerStateType::LOBBY) {
       ReadyButtonFunc();
     }
+  };
+  ButtonComponent* b_c = GenerateButtonEntity(
+      registry_lobby_, "DISCONNECT",
+      glm::vec2(glob::window::GetWindowDimensions().x - 330, 65), font_test_);
+  b_c->button_func = [&]() {
+    engine_->GetClient().Disconnect();
+    engine_->ChangeState(StateType::MAIN_MENU);
   };
 }
 void LobbyState::DrawTeamSelect() {

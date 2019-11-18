@@ -11,6 +11,8 @@ glob::Shadows::Shadows() {
   size_ = 512;
   blurred_level_ = 0;
   internal_format_ = GL_RG32F;
+
+  num_maps_used_ = 2;
 }
 
 void glob::Shadows::Init(Blur& blur) {
@@ -75,17 +77,18 @@ void glob::Shadows::Init(Blur& blur) {
 void glob::Shadows::RenderToMaps(
     std::function<void(ShaderProgram&)> draw_function,
     std::function<void(ShaderProgram&)> anim_draw_function, Blur& blur) {
-  float xrot = 1.f;
-  float zrot = 1.f;
-  num_maps_used_ = 4;
-  for (int i = 0; i < num_maps_used_; i++) {
-    positions_[i] = glm::vec3(xrot * 40.0, 20.0, zrot * 20.0);
-    transforms_[i] =
-        glm::perspective(glm::radians(70.f), 1.f, 0.1f, 100.f) *
-        glm::lookAt(positions_[i], glm::vec3(0, -40.0, 0), glm::vec3(0, 1, 0));
+  if (!set_manually_) {
+    float xrot = 1.f;
+    float zrot = 1.f;
+    for (int i = 0; i < max_maps_; i++) {
+      positions_[i] = glm::vec3(xrot * 40.0, 20.0, zrot * 20.0);
+      transforms_[i] = glm::perspective(glm::radians(70.f), 1.f, 0.1f, 100.f) *
+                       glm::lookAt(positions_[i], glm::vec3(0, -40.0, 0),
+                                   glm::vec3(0, 1, 0));
 
-    std::swap(xrot, zrot);
-    zrot *= -1.f;
+      std::swap(xrot, zrot);
+      zrot *= -1.f;
+    }
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
@@ -129,4 +132,16 @@ void glob::Shadows::SetUniforms(ShaderProgram& shader) {
   shader.uniformv("shadow_light_positions", num_maps_used_, positions_);
   shader.uniformv("shadow_transforms", num_maps_used_, transforms_);
   shader.uniformv("shadow_maps", num_maps_used_, start_slots_);
+}
+
+void glob::Shadows::AddSpotlight(glm::vec3 position, glm::mat4 transform) {
+  if (!set_manually_) {
+    num_maps_used_ = 0;
+  }
+  if (num_maps_used_ < max_maps_) {
+    positions_[num_maps_used_] = position;
+    transforms_[num_maps_used_] = transform;
+    num_maps_used_++;
+  }
+  set_manually_ = true;
 }

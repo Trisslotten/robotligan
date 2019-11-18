@@ -3,10 +3,14 @@
 #include <iostream>
 #include <sstream>
 
-#include <Model\modelconfig.hpp>
 #include <glm/ext.hpp>
 #include <lodepng.hpp>
-#include "../usegl.hpp"
+#include <textureslots.hpp>
+#include "Model/modelconfig.hpp"
+#include "material/material.hpp"
+#include "usegl.hpp"
+
+#include <glob/AssimpToGLMConverter.hpp>
 
 namespace glob {
 
@@ -59,7 +63,6 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   }
 
   // Process faces / indices
-
   for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
     aiFace temp_faces = mesh->mFaces[i];
     for (GLuint y = 0; y < temp_faces.mNumIndices; y++) {
@@ -70,36 +73,64 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
   std::string config_path = filepath_.substr(0, filepath_.find_last_of('.'));
   config_path += ".mcfg";
   ModelConfig config{config_path};
-  if(config.isLoaded()) {
-    auto num_mats = config.GetInt("num_materials");
-    if(num_mats) {
-      num_materials_ = *num_mats;
+  if (config.isLoaded()) {
+    auto num_diff = config.GetInt("num_diffuse_textures");
+    if (num_diff) {
+      num_diffuse_textures_ = *num_diff;
     }
+
+    std::unordered_map<materials::Type, std::string> wanted_textures;
+    auto normal_map = config.GetWord("normal_map");
+    if (normal_map) {
+      wanted_textures[materials::NORMAL] = *normal_map;
+    }
+    auto normal_map_scale = config.GetFloat("normal_map_scale");
+    if (normal_map_scale) {
+      normal_map_scale_ = *normal_map_scale;
+    }
+
+    auto metallic_map = config.GetWord("metallic_map");
+    if (metallic_map) {
+      wanted_textures[materials::METALLIC] = *metallic_map;
+    }
+    auto metallic_map_scale = config.GetFloat("metallic_map_scale");
+    if (metallic_map_scale) {
+      metallic_map_scale_ = *metallic_map_scale;
+    }
+
+    auto roughness_map = config.GetWord("roughness_map");
+    if (roughness_map) {
+      wanted_textures[materials::ROUGHNESS] = *roughness_map;
+    }
+    auto roughness_map_scale = config.GetFloat("roughness_map_scale");
+    if (roughness_map_scale) {
+      roughness_map_scale_ = *roughness_map_scale;
+    }
+
+    material_ = materials::Get(wanted_textures);
   }
 
   // std::cout << "glob::kModelUseGL: " << glob::kModelUseGL << "\n";
   if (glob::kModelUseGL) {
     // Process materials
-
     if (mesh->mMaterialIndex >= 0) {
       aiMaterial* temp_material = scene->mMaterials[mesh->mMaterialIndex];
       std::vector<Texture> diffuse_maps =
           LoadMaterielTextures(temp_material, aiTextureType_DIFFUSE,
-                               "texture_diffuse"  // Make sure this in glsl
+                               "texture_diffuse", TEXTURE_SLOT_DIFFUSE
+
           );
       textures.insert(textures.end(), diffuse_maps.begin(), diffuse_maps.end());
 
       std::vector<Texture> specular_maps =
           LoadMaterielTextures(temp_material, aiTextureType_SPECULAR,
-                               "texture_specular"  // Make sure this in glsl
-          );
+                               "texture_specular", TEXTURE_SLOT_SPECULAR);
       textures.insert(textures.end(), specular_maps.begin(),
                       specular_maps.end());
 
       std::vector<Texture> emissive_maps =
           LoadMaterielTextures(temp_material, aiTextureType_EMISSIVE,
-                               "texture_emissive"  // Make sure this in glsl
-          );
+                               "texture_emissive", TEXTURE_SLOT_EMISSIVE);
       textures.insert(textures.end(), emissive_maps.begin(),
                       emissive_maps.end());
     }
@@ -112,7 +143,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
       Joint* j = new Joint();
       j->id = i;
       j->name = mesh->mBones[i]->mName.data;
-      j->offset = ConvertToGLM(mesh->mBones[i]->mOffsetMatrix);
+      j->offset = AssToGLM::ConvertToGLM4x4(mesh->mBones[i]->mOffsetMatrix);
       bones_.push_back(j);
 
       // set vec4 arrays for weight and bone index (influencing bone)
@@ -203,7 +234,8 @@ void Model::LoadModel(std::string path) {
     return;
   }
 
-  globalInverseTransform_ = ConvertToGLM(scene->mRootNode->mTransformation);
+  globalInverseTransform_ =
+      AssToGLM::ConvertToGLM4x4(scene->mRootNode->mTransformation);
   globalInverseTransform_ = glm::inverse(globalInverseTransform_);
 
   directory_ = path.substr(0, path.find_last_of('/'));
@@ -262,7 +294,6 @@ void Model::LoadModel(std::string path) {
         for (auto j : bones_) {
           if (j->name == jointName) {
             id = j->id;
-            anim->armature_transform_.push_back(glm::mat4(1.f));
           }
         }
         channel.boneID = id;
@@ -299,7 +330,7 @@ Joint* Model::MakeArmature(aiNode* node) {
   bool knownBone = false;
   for (auto& b : bones_) {
     if (node->mName.data == b->name) {  // node is known bone
-      b->transform = ConvertToGLM(node->mTransformation);
+      b->transform = AssToGLM::ConvertToGLM4x4(node->mTransformation);
       knownBone = true;
       for (int n = 0; n < node->mNumChildren; n++) {
         for (auto PCB : bones_) {
@@ -318,7 +349,7 @@ Joint* Model::MakeArmature(aiNode* node) {
     Joint* j = new Joint;
     j->name = "Armature";
     j->offset = glm::mat4(0.f);
-    j->transform = glm::rotate(ConvertToGLM(node->mTransformation),
+    j->transform = glm::rotate(AssToGLM::ConvertToGLM4x4(node->mTransformation),
                                3.1416f / 2.f, glm::vec3(1.f, 0.f, 0.f));
     bool knownChildren = false;
     for (int n = 0; n < node->mNumChildren; n++) {
@@ -359,7 +390,8 @@ void Model::ProcessNode(aiNode* node, const aiScene* scene) {
 
 std::vector<Texture> Model::LoadMaterielTextures(aiMaterial* material,
                                                  aiTextureType type,
-                                                 std::string type_name) {
+                                                 std::string type_name,
+                                                 int tex_slot) {
   std::vector<Texture> texture;
 
   for (unsigned int i = 0; i < material->GetTextureCount(type); i++) {
@@ -381,6 +413,7 @@ std::vector<Texture> Model::LoadMaterielTextures(aiMaterial* material,
           TextureFromFile(ai_string.C_Str(), directory_, type);
       temp_texture.type = type_name;
       temp_texture.path = ai_string;
+      temp_texture.slot = tex_slot;
       texture.push_back(temp_texture);
       texture_loaded_.push_back(temp_texture);
     }
@@ -404,7 +437,11 @@ Model::~Model() {
 void Model::LoadFromFile(const std::string& path) { LoadModel(path); }
 
 void Model::Draw(ShaderProgram& shader) {
-  shader.uniform("num_materials", num_materials_);
+  material_.Bind(shader);
+  shader.uniform("normal_map_scale", normal_map_scale_);
+  shader.uniform("metallic_map_scale", metallic_map_scale_);
+  shader.uniform("roughness_map_scale", roughness_map_scale_);
+  shader.uniform("num_diffuse_textures", num_diffuse_textures_);
   for (unsigned int i = 0; i < mesh_.size(); i++) {
     mesh_[i].Draw(shader);
   }

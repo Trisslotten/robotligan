@@ -12,6 +12,7 @@
 #include "Chat.hpp"
 #include "eventdispatcher.hpp"
 #include "shared/shared.hpp"
+#include "ecs/components.hpp"
 
 class Engine;
 
@@ -100,6 +101,7 @@ class LobbyState : public State {
   void SetMyId(int client_id) { my_id_ = client_id; }
 
  private:
+  glm::vec2 ws_;
   entt::registry registry_lobby_;
   void CreateBackgroundEntities();
   void CreateGUIElements();
@@ -147,6 +149,7 @@ class ConnectMenuState : public State {
   void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
+  void CreateBackground();
   StateType Type() { return StateType::CONNECT_MENU; }
 
  private:
@@ -166,11 +169,14 @@ class ConnectMenuState : public State {
   };
   int frames_ = 0;
   bool connection_success_ = true;
-  std::string last_msg_ = "Failed to connect: Timeout";
+  std::string last_msg_ = "Status: Failed to connect, Timeout";
+  glob::GUIHandle bg_ = 0;
+  glm::vec4 color_ = glm::vec4(1, 1, 1, 1);
   std::string ip_ = "localhost";
   std::string port_ = "1337";
   glob::Font2DHandle font_test_ = 0;
   entt::registry registry_connect_menu_;
+  int prv_ = -1;
 };
 
 /////////////////////// SETTINGS ///////////////////
@@ -193,7 +199,10 @@ class SettingsState : public State {
   float setting_volume_ = 100.f;
   float setting_mouse_sens_ = 1.0f;
 
+  glm::vec2 ws_;
   std::string setting_username_ = "fel";
+  bool applied_ = false;
+  std::chrono::time_point<std::chrono::high_resolution_clock> time_;
 };
 
 /////////////////////// PLAY ///////////////////////
@@ -223,10 +232,10 @@ class PlayState : public State {
 
   void CreateWall(EntityID id, glm::vec3 position, glm::quat rotation);
   void CreatePickUp(EntityID id, glm::vec3 position);
-  void CreateCannonBall(EntityID id);
-  void CreateTeleportProjectile(EntityID id);
-  void CreateForcePushObject(EntityID id);
-  void CreateMissileObject(EntityID id);
+  void CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori);
+  void CreateTeleportProjectile(EntityID id, glm::vec3 pos, glm::quat ori);
+  void CreateForcePushObject(EntityID id, glm::vec3 pos, glm::quat ori);
+  void CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori);
   void DestroyEntity(EntityID id);
   void SwitchGoals();
   void SetMyPrimaryAbility(int id) { my_primary_ability_id = id; }
@@ -240,7 +249,8 @@ class PlayState : public State {
   void ReceiveGameEvent(const GameEvent& e);
   void Reset();
   void EndGame();
-  void TestParticles();
+  void OverTime();
+  void CreateGoalParticles(float x, entt::registry& registry);
 
   void OnServerFrame();
   void AddAction(int action) { actions_.push_back(action); }
@@ -256,18 +266,26 @@ class PlayState : public State {
 
   float GetPitch() { return pitch_; }
   float GetYaw() { return yaw_; }
-  void SetTeam(unsigned int team) {my_team_ = team;}
+  void SetTeam(unsigned int team) { my_team_ = team; }
   void CreateNewBallEntity(bool fake, EntityID id);
   void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
+  void SetCountdownInProgress(bool val) { countdown_in_progress_ = val;  }
+  void SetArenaScale(glm::vec3 arena_scale) { arena_scale_ = arena_scale; }
+
+  
+  void FetchMapAndArena(entt::registry& in_registry);
 
  private:
   ServerStateType server_state_;
   void CreateInitialEntities();
   void CreatePlayerEntities();
   void CreateArenaEntity();
+  void CreateMapEntity();
   void CreateBallEntity();
+  void CreateSpotlights();
+  void ParticleComponentDestroyed(entt::entity e, entt::registry& registry);
   void CreateInGameMenu();
-
+  void AddPlayer();
   void TestCreateLights();
 
   void ToggleInGameMenu();
@@ -276,6 +294,7 @@ class PlayState : public State {
   void UpdateSwitchGoalTimer();
 
   void DrawNameOverPlayer();
+  void DrawWallOutline();
 
   void DrawTopScores();
   void DrawTarget();
@@ -300,7 +319,7 @@ class PlayState : public State {
   std::unordered_map<EntityID, glm::vec3> player_look_dirs_;
   std::unordered_map<EntityID, glm::vec3> player_move_dirs_;
   FrameState server_predicted_;
-  entt::entity my_entity_, arena_entity_;
+  entt::entity my_entity_, arena_entity_, map_visual_entity_;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
 
@@ -311,12 +330,12 @@ class PlayState : public State {
 
   glob::Font2DHandle font_test_ = 0;
   glob::Font2DHandle font_scores_ = 0;
-  glob::E2DHandle e2D_test_, e2D_test2_, e2D_target_;
+  glob::E2DHandle e2D_test_, e2D_test2_, e2D_target_, e2D_outline_;
   glob::GUIHandle in_game_menu_gui_ = 0;
   glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
       gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_, gui_minimap_,
       gui_minimap_goal_red_, gui_minimap_goal_blue_, gui_minimap_player_red_,
-      gui_minimap_player_blue_, gui_minimap_ball_;
+      gui_minimap_player_blue_, gui_minimap_ball_, gui_crosshair_;
 
   std::vector<glob::GUIHandle> ability_handles_;
 
@@ -331,20 +350,23 @@ class PlayState : public State {
 
   Timer end_game_timer_;
   bool game_has_ended_ = false;
+  bool overtime_has_started_ = false;
   bool goals_swapped_ = false;
   EntityID my_target_ = -1;
 
   glob::ModelHandle test_ball_;
   std::list<PlayerData> history_;
   FrameState predicted_state_;
-
+  glm::vec3 arena_scale_;
   std::vector<int> actions_;
   int frame_id = 0;
   float pitch_ = 0.0f;
   float yaw_ = 0.0f;
-  
+
   float timer_ = 0.0f;
   float primary_cd_ = 0.0f;
+
+  bool sprinting_ = false;
 };
 
 #endif  // STATE_HPP_

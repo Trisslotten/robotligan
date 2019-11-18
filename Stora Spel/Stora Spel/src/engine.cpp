@@ -6,12 +6,14 @@
 #include <glob/graphics.hpp>
 #include <iostream>
 
+#include <ecs\systems\trail_system.hpp>
 #include <glob\window.hpp>
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "ecs/systems/animation_system.hpp"
 #include "ecs/systems/gui_system.hpp"
 #include "ecs/systems/input_system.hpp"
+#include "ecs/systems/lifetime_system.hpp"
 #include "ecs/systems/particle_system.hpp"
 #include "ecs/systems/render_system.hpp"
 #include "ecs/systems/sound_system.hpp"
@@ -22,11 +24,17 @@
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
-#include <ecs\systems\trail_system.hpp>
 
 Engine::Engine() {}
 
-Engine::~Engine() {}
+Engine::~Engine() {
+  if (this->replay_machine_ != nullptr) {
+    delete this->replay_machine_;
+  }
+  if (this->registry_replay_ != nullptr) {
+    delete this->registry_replay_;
+  }
+}
 
 void Engine::Init() {
   glob::Init();
@@ -91,6 +99,19 @@ void Engine::Init() {
   wanted_state_type_ = StateType::MAIN_MENU;
 
   UpdateSettingsValues();
+  chat_.SetFont(font_test2_);
+
+  // Initiate the Replay Machine
+  unsigned int length_sec =
+      (unsigned int)GlobalSettings::Access()->ValueOf("REPLAY_LENGTH_SECONDS");
+  unsigned int approximate_tickrate = 64;  // TODO: Replace with better
+                                           // approximation
+  this->replay_machine_ =
+      new ClientReplayMachine(length_sec, approximate_tickrate);
+  this->replay_machine_->SetEngine(this);
+
+  dispatcher.sink<GameEvent>().connect<&ClientReplayMachine::ReceiveGameEvent>(
+      *replay_machine_);
 }
 
 void Engine::Update(float dt) {
@@ -134,8 +155,35 @@ void Engine::Update(float dt) {
     if (Input::IsKeyPressed(GLFW_KEY_L)) {
       new_team_ = TEAM_RED;
     }
+
+    // Replay stuff
+    if (Input::IsKeyPressed(GLFW_KEY_I)) {
+      if (!this->recording_) {
+        this->BeginRecording();
+      } else {
+        this->StopRecording();
+      }
+    }
+    if (Input::IsKeyPressed(GLFW_KEY_O)) {
+      this->SaveRecording();
+      std::cout << this->replay_machine_->GetSelectedReplayStringTree() << "\n";
+    }
+    if (Input::IsKeyPressed(GLFW_KEY_P)) {
+      this->BeginReplay();
+    }
+    // Replay stuff
   }
 
+  // Check if we are in play state
+  if (this->current_state_->Type() == StateType::PLAY) {
+    // Once we are check if we are recording
+    // or if we are replaying
+    if (this->recording_) {
+      this->replay_machine_->RecordFrame(*(this->registry_current_));
+    } else if (this->replaying_) {
+      this->PlayReplay();
+    }
+  }
   current_state_->Update(dt);
 
   UpdateSystems(dt);
@@ -174,6 +222,17 @@ void Engine::Update(float dt) {
     current_state_->Init();
   }
 
+  if (Input::IsKeyPressed(GLFW_KEY_F7)) {
+    glob::SetSSAO(true);
+  }
+  if (Input::IsKeyPressed(GLFW_KEY_F8)) {
+    glob::SetSSAO(false);
+  }
+
+  if (Input::IsKeyPressed(GLFW_KEY_F5)) {
+    glob::ReloadShaders();
+  }
+
   Input::Reset();
 }
 
@@ -185,7 +244,7 @@ void Engine::UpdateNetwork() {
   for (auto const& [key, action] : keybinds_) {
     auto& presses = key_presses_[key];
     if (presses > 0) {
-      play_state_.AddAction(action);
+      // play_state_.AddAction(action);
       actions.set(action, true);
     }
   }
@@ -228,7 +287,7 @@ void Engine::UpdateNetwork() {
     to_send << play_state_.GetYaw();
     to_send << PacketBlockType::INPUT;
   } else {
-    play_state_.ClearActions();
+    // play_state_.ClearActions();
   }
   if (client_.IsConnected() && !to_send.IsEmpty()) {
     client_.Send(to_send);
@@ -306,7 +365,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::PLAYER_LOOK_DIR: {
       int num_dirs = -1;
       packet >> num_dirs;
-      for(int i =0 ; i < num_dirs; i++) {
+      for (int i = 0; i < num_dirs; i++) {
         EntityID id = 0;
         glm::vec3 look_dir;
         packet >> id;
@@ -318,7 +377,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::PLAYER_MOVE_DIR: {
       int num_dirs = -1;
       packet >> num_dirs;
-      for(int i =0 ; i < num_dirs; i++) {
+      for (int i = 0; i < num_dirs; i++) {
         EntityID id = 0;
         glm::vec3 move_dir;
         packet >> id;
@@ -337,6 +396,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       EntityID ball_id;
       int ability_id;
       int num_team_ids;
+      glm::vec3 arena_scale;
+      packet >> arena_scale;
       packet >> ability_id;
       packet >> num_players;
       player_ids.resize(num_players);
@@ -347,6 +408,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetEntityIDs(player_ids, my_id, ball_id);
       play_state_.SetMyPrimaryAbility(ability_id);
       play_state_.SetTeam(team);
+      play_state_.SetArenaScale(arena_scale);
       packet >> num_team_ids;
       for (int i = 0; i < num_team_ids; i++) {
         long client_id;
@@ -425,9 +487,6 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       unsigned int score, team;
       packet >> score;
       packet >> team;
-      if (scores_[team] != score) {
-        play_state_.TestParticles();
-      }
       scores_[team] = score;
       break;
     }
@@ -464,7 +523,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     */
     case PacketBlockType::SWITCH_GOALS: {
       // std::cout << "PACKET: SWITCH_GOALS\n";
-      packet >> switch_goal_timer_sec_;
+      packet >> switch_goal_timer_;
       packet >> switch_goal_time_;
       break;
     }
@@ -572,24 +631,28 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::CREATE_PROJECTILE: {
       ProjectileID p_id;
       EntityID e_id;
+      glm::vec3 pos;
+      glm::quat ori;
+      packet >> ori;
+      packet >> pos;
       packet >> p_id;
       packet >> e_id;
 
       switch (p_id) {
         case ProjectileID::CANNON_BALL: {
-          play_state_.CreateCannonBall(e_id);
+          play_state_.CreateCannonBall(e_id, pos, ori);
           break;
         }
         case ProjectileID::TELEPORT_PROJECTILE: {
-          play_state_.CreateTeleportProjectile(e_id);
+          play_state_.CreateTeleportProjectile(e_id, pos, ori);
           break;
         }
         case ProjectileID::FORCE_PUSH_OBJECT: {
-          play_state_.CreateForcePushObject(e_id);
+          play_state_.CreateForcePushObject(e_id, pos, ori);
           break;
         }
         case ProjectileID::MISSILE_OBJECT: {
-          play_state_.CreateMissileObject(e_id);
+          play_state_.CreateMissileObject(e_id, pos, ori);
           // TODO: Dont trigger this event on the client like this. Fix so that
           // event is sent/received AFTER the create_projectile packet on server
           // instead Note: Sometimes this plays on player entity rather than the
@@ -606,7 +669,18 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::DESTROY_ENTITIES: {
       EntityID id;
       packet >> id;
+
+      // If we are recording notify replay machine
+      // before entity is gone
+      if (this->recording_) {
+        this->replay_machine_->NotifyDestroyedObject(
+            id, *(this->registry_current_));
+      }
+
+      // Remove the entity
       play_state_.DestroyEntity(id);
+
+      // Contemplate life
       break;
     }
     case PacketBlockType::GAME_END: {
@@ -614,6 +688,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.EndGame();
       previous_state_ = StateType::LOBBY;
       // ChangeState(StateType::LOBBY);
+      break;
+    }
+    case PacketBlockType::GAME_OVERTIME: {
+      play_state_.OverTime();
       break;
     }
     case PacketBlockType::YOUR_TARGET: {
@@ -654,10 +732,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
   }
 }
 
-void Engine::Render() {
-  //
-  glob::Render();
-}
+void Engine::Render() { glob::Render(); }
 
 void Engine::SetCurrentRegistry(entt::registry* registry) {
   this->registry_current_ = registry;
@@ -673,12 +748,11 @@ void Engine::UpdateChat(float dt) {
         } else {
           chat_.SetSendMessage(true);
           message_ = chat_.GetCurrentMessage();
-          if (current_state_ == &play_state_)
-			chat_.CloseChat();
+          if (current_state_ == &play_state_) chat_.CloseChat();
         }
       }
       chat_.Update(dt);
-      chat_.SubmitText(font_test2_);
+      chat_.SubmitText();
       if (chat_.IsTakingChatInput() == true &&
           chat_.GetCurrentMessage().size() == 0)
         glob::Submit(font_test2_, chat_.GetPosition() + glm::vec2(0, -20.f * 5),
@@ -709,6 +783,7 @@ void Engine::UpdateSystems(float dt) {
   ParticleSystem(*registry_current_, dt);
   animation_system_.UpdateAnimations(*registry_current_, dt);
   trailsystem::Update(*registry_current_, dt);
+  lifetime::Update(*registry_current_, dt);
   RenderSystem(*registry_current_);
 }
 
@@ -811,8 +886,116 @@ int Engine::GetGameplayTimer() const { return gameplay_timer_sec_; }
 
 int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }
 
-int Engine::GetSwitchGoalCountdownTimer() const {
-  return switch_goal_timer_sec_;
-}
+float Engine::GetSwitchGoalCountdownTimer() const { return switch_goal_timer_; }
 
 int Engine::GetSwitchGoalTime() const { return switch_goal_time_; }
+
+// Replay Functions ---
+void Engine::BeginRecording() {
+  std::cout << "<Begining to record>" << std::endl;
+
+  // If we are currently not replaying,
+  // start recording
+  if (!this->replaying_) {
+    this->recording_ = true;
+  }
+}
+
+void Engine::StopRecording() {
+  std::cout << "<Stopped recording>" << std::endl;
+  // Stop recordng
+  this->recording_ = false;
+}
+
+void Engine::SaveRecording() {
+  std::cout << "<Saved replay>" << std::endl;
+
+  // Tell the ReplayMachine to save what currently lies in its buffer
+  this->replay_machine_->StoreReplay();
+
+  // NTS: Currently always selects the latest replay
+  // as per the following code
+  this->replay_machine_->SelectReplay(
+      this->replay_machine_->NumberOfStoredReplays() - 1);
+}
+
+void Engine::BeginReplay() {
+  std::cout << "<Starting replay>" << std::endl;
+
+  // Stop recording
+  this->StopRecording();
+
+  // Swap to the registry of the replay machine
+  // if we are not already replaying
+  if (!this->replaying_) {
+    this->registry_on_hold_ = this->registry_current_;
+    this->registry_replay_ = new entt::registry;
+    this->play_state_.FetchMapAndArena(*(this->registry_replay_));
+    this->registry_current_ = this->registry_replay_;
+
+    this->replaying_ = true;
+  }
+}
+
+void Engine::PlayReplay() {
+  // If we aren't replaying, return
+  if (!this->replaying_) {
+    return;
+  }
+
+  std::cout << "<Replaying>" << std::endl;
+  // std::cout << this->replay_machine_->GetSelectedReplayStringState()
+  //          << std::endl;
+
+  // Send in registry to get the next frame from the replay machine
+  if (this->replay_machine_->LoadFrame(*(this->registry_current_))) {
+    // If the recording is not playing
+    //	- Either it has ended
+    //	- Or it doesn't exist
+    // Swap back registries
+    this->registry_current_ = this->registry_on_hold_;
+    delete this->registry_replay_;
+    this->registry_replay_ = nullptr;
+    this->registry_on_hold_ = nullptr;
+
+    this->replaying_ = false;
+
+    this->replay_machine_->ResetSelectedReplay();
+
+    std::cout << "<Replay finished>" << std::endl;
+    return;
+  }
+
+  // Update replay camera
+  UpdateReplayCamera();
+}
+
+void Engine::UpdateReplayCamera() {
+  entt::basic_view camera_view =
+      this->registry_replay_->view<CameraComponent, TransformComponent>();
+  entt::basic_view target_view =
+      this->registry_replay_->view<TargetComponent, TransformComponent>();
+
+  for (entt::entity target : target_view) {
+    TargetComponent& target_c = registry_replay_->get<TargetComponent>(target);
+    TransformComponent& target_trans_c =
+        registry_replay_->get<TransformComponent>(target);
+
+    for (entt::entity camera : camera_view) {
+      CameraComponent& cam_c = registry_replay_->get<CameraComponent>(camera);
+      TransformComponent& cam_trans_c =
+          registry_replay_->get<TransformComponent>(camera);
+
+      // Create vector from camera to target
+      glm::vec3 temp_dir =
+          glm::normalize(target_trans_c.position - cam_trans_c.position);
+
+      auto quarter_turn = glm::quat(glm::vec3(0, glm::pi<float>() * 0.5f, 0));
+
+      cam_c.orientation =
+          glm::quatLookAt(temp_dir, glm::vec3(0, 1, 0)) * quarter_turn;
+    }
+  }
+}
+
+// Replay Functions ---

@@ -268,10 +268,6 @@ void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
   shader.uniform("size", size);
 
   double offset_accum = 0;
-  glDisable(GL_CULL_FACE);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glDepthFunc(GL_ALWAYS);
   for (int i = 0; i < len; i++) {
     unsigned char cur = *(unsigned char*)(chars + i);
 
@@ -295,9 +291,6 @@ void glob::Font2D::Draw(ShaderProgram& shader, glm::vec2 pos, unsigned int size,
     // std::cout << offset_accum << "\n";
   }
   // std::cout << "\n";
-  glDepthFunc(GL_LESS);
-  glDisable(GL_BLEND);
-  glEnable(GL_CULL_FACE);
 
   glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -322,11 +315,11 @@ void glob::Font2D::Draw3D(ShaderProgram& shader, glm::vec3 center, float size,
                           std::string text, glm::vec4 color,
                           glm::mat4 rotation) {
   const char* chars = text.c_str();
-  unsigned int len = text.length();
+  unsigned int len = (unsigned int)text.length();
 
   //////////////////////////////////
   // for backwards compatibility
-  size *= 16. / 28.;
+  size *= 16.f / 28.f;
   //////////////////////////////////
 
   glActiveTexture(GL_TEXTURE0);
@@ -339,13 +332,9 @@ void glob::Font2D::Draw3D(ShaderProgram& shader, glm::vec3 center, float size,
 
   shader.uniform("rotation", rotation);
   glm::vec3 dir = glm::vec3(1.f, 0.f, 0.f);
-  glDisable(GL_CULL_FACE);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glDepthFunc(GL_LEQUAL);
 
   double total_accum = 0.0;
-  for (int i = 0; i < len; i++) {
+  for (unsigned int i = 0; i < len; i++) {
     unsigned char cur = *(unsigned char*)(chars + i);
 
     total_accum += 2.f*GetAdvance(cur, size);
@@ -353,7 +342,7 @@ void glob::Font2D::Draw3D(ShaderProgram& shader, glm::vec3 center, float size,
   }
   total_accum = total_accum - (total_accum / len);
   double offset_accum = -total_accum / 2.0;
-  for (int i = 0; i < len; i++) {
+  for (unsigned int i = 0; i < len; i++) {
     unsigned char cur = *(unsigned char*)(chars + i);
 
     // FT_Load_Char(face, (FT_ULong)cur, FT_LOAD_RENDER);
@@ -374,9 +363,6 @@ void glob::Font2D::Draw3D(ShaderProgram& shader, glm::vec3 center, float size,
     // std::cout << offset_accum << "\n";
   }
   // std::cout << "\n";
-  glDepthFunc(GL_LESS);
-  glDisable(GL_BLEND);
-  glEnable(GL_CULL_FACE);
 
   glBindTexture(GL_TEXTURE_2D, 0);
 }

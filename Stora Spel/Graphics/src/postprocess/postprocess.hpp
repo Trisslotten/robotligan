@@ -21,12 +21,14 @@ public:
   
   void BindColorTex(GLuint slot);
   void BindEmissionTex(GLuint slot);
+  void BindDepthTex(GLuint slot);
 
 private:
 GLuint framebuffer_ = 0;
 GLuint renderbuffer_ = 0;
 GLuint draw_color_texture_ = 0;
 GLuint draw_emission_texture_ = 0;
+GLuint draw_depth_texture_ = 0;
 
 GLuint blurred_emission_texture = 0;
 

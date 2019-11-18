@@ -15,6 +15,8 @@ struct PlayerComponent {  // Server side
   // "Stamina"
   float energy_max = GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_MAX");
   float energy_current = GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_MAX");
+  float energy_min_sprint =
+      GlobalSettings::Access()->ValueOf("PLAYER_ENERGY_MIN_SPRINT");
   float cost_jump = GlobalSettings::Access()->ValueOf("PLAYER_COST_JUMP");
   float cost_sprint = GlobalSettings::Access()->ValueOf("PLAYER_COST_SPRINT");
   float energy_regen_tick =
@@ -44,7 +46,10 @@ struct PlayerComponent {  // Server side
   // States
   bool sprinting = false;
   bool running = false;
+  bool invisible = false;
+  float invisibility_remaining = 0.0f;
 
+  bool can_jump = false;
   // Comparasion Operators
   bool operator==(const PlayerComponent& rhs) {
     return (this->client_id == rhs.client_id) &&

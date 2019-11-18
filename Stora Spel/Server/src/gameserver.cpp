@@ -21,6 +21,7 @@
 #include "ecs/systems/physics_system.hpp"
 #include "ecs/systems/player_controller_system.hpp"
 #include "ecs/systems/target_system.hpp"
+#include "ecs/systems/pickup_spawner_system.hpp"
 
 namespace {}  // namespace
 
@@ -59,6 +60,8 @@ void GameServer::Init(double in_update_rate) {
       GlobalSettings::Access()->ValueOf("ABILITY_SWITCH_GOALS_COOLDOWN");
   ability_cooldowns_[AbilityID::TELEPORT] =
       GlobalSettings::Access()->ValueOf("ABILITY_TELEPORT_COOLDOWN");
+  ability_cooldowns_[AbilityID::BLACKOUT] =
+      GlobalSettings::Access()->ValueOf("ABILITY_BLACKOUT_COOLDOWN");
 
   ability_controller::ability_cooldowns = ability_cooldowns_;
 
@@ -67,19 +70,23 @@ void GameServer::Init(double in_update_rate) {
 
 void GameServer::Update(float dt) {
   server_.Update();
-
   packets_.clear();
   for (auto& [client_id, client_data] : server_.GetClients()) {
     packets_[client_id] = NetAPI::Common::Packet();
   }
-
   for (auto client_data : server_.GetNewlyConnected()) {
     lobby_state_.SetClientIsReady(client_data->ID, false);
     play_state_.SetClientReceiveUpdates(client_data->ID, false);
     lobby_state_.HandleNewClientTeam(client_data->ID);
     NetAPI::Common::Packet p;
     ServerStateType state;
+    std::cout << "Client Connected \n";
     if (this->current_state_type_ == ServerStateType::PLAY) {
+      if (client_data->reconnected == true) {
+        play_state_.SetReconnect(client_data->ID);
+        client_data->reconnected = false;
+        std::cout << "Added RECONNECTED player" << std::endl;
+      }
       NetAPI::Common::Packet to_send;
       for (auto client_team : lobby_state_.client_teams_) {
         std::string name = GetClientNames()[client_team.first];
@@ -124,16 +131,14 @@ void GameServer::Update(float dt) {
         HandlePacketBlock(packet, block_type, id);
       }
     }
-    client_data->packets.clear();
+    server_.ClearPackets(client_data);
   }
   DoOncePerSecond();
-
+  current_state_->Update(dt);
+  current_state_->HandleDataToSend();
   //---------------------------------------------
   //--------------UPDATE GAME LOGIC--------------
   //---------------------------------------------
-  current_state_->Update(dt);
-  current_state_->HandleDataToSend();
-
   UpdateSystems(dt);
 
   HandleStateChange();
@@ -218,9 +223,8 @@ void GameServer::HandleStateChange() {
     NetAPI::Common::Packet p;
     p << this->current_state_type_ << PacketBlockType::SERVER_STATE;
     server_.Send(p);
-    
-    if (went_from_play_to_lobby)
-      client_names_.clear();
+
+    if (went_from_play_to_lobby) client_names_.clear();
   }
 }
 
@@ -249,13 +253,6 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       break;
     }
 
-    case PacketBlockType::TEST_REPLAY_KEYS: {
-      // If P is pressed, record 10 seconds
-      bool start_replay;
-      packet >> start_replay;
-      if (start_replay) play_state_.StartRecording(10);
-      break;
-    }
     case PacketBlockType::MESSAGE: {
       size_t strsize = 0;
       packet >> strsize;
@@ -278,7 +275,7 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       }
       if (!found_name) {
         message.message_from = lobby_state_.client_teams_[client_id];
-	  }
+      }
 
       messages.push_back(message);
       break;
@@ -378,6 +375,7 @@ void GameServer::UpdateSystems(float dt) {
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);
   lifetime::Update(registry_, dt);
+  pickup_spawner_system::Update(registry_, dt);
 
   if (!play_state_.IsResetting()) goal_system::Update(registry_);
 

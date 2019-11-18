@@ -1,7 +1,7 @@
 #include "collision.hpp"
 
-#include <glm/glm.hpp>
 #include <cmath>
+#include <glm/glm.hpp>
 #include <iostream>
 #include <vector>
 
@@ -24,7 +24,7 @@ Corners GetCorners(const physics::OBB& obb) {
   normals[0] = obb.normals[0] * obb.extents[0];
   normals[1] = obb.normals[1] * obb.extents[1];
   normals[2] = obb.normals[2] * obb.extents[2];
-  
+
   Corners c = {};
   c.corners[0] = obb.center + (normals[0] + normals[1] + normals[2]);
   c.corners[1] = obb.center + (-normals[0] + normals[1] + normals[2]);
@@ -47,6 +47,24 @@ void SatTest(const glm::vec3& axis, const Corners& c, float* min, float* max) {
     if (dot_val < *min) *min = dot_val;
     if (dot_val > *max) *max = dot_val;
   }
+}
+
+void SatTest(const glm::vec3& axis, const Triangle& tri, float* min,
+             float* max) {
+  *min = 10000000.f;   // infinity
+  *max = -10000000.f;  // -infinity
+
+  float dot_val = glm::dot(axis, tri.p0);
+  if (dot_val < *min) *min = dot_val;
+  if (dot_val > *max) *max = dot_val;
+
+  dot_val = glm::dot(axis, tri.p1);
+  if (dot_val < *min) *min = dot_val;
+  if (dot_val > *max) *max = dot_val;
+
+  dot_val = glm::dot(axis, tri.p2);
+  if (dot_val < *min) *min = dot_val;
+  if (dot_val > *max) *max = dot_val;
 }
 
 bool IsBetween(float val, float lower, float upper) {
@@ -102,9 +120,11 @@ physics::IntersectData physics::Intersect(const physics::Sphere& s,
       if (temp < gap) {
         gap = temp;
         impact_normal = temp_normal;
-      } 
+      }
     }
     data.normal = impact_normal;
+    if (glm::length(v) >= 0.00000001)
+		data.normal = -glm::normalize(v);
     data.move_vector = (s.radius - glm::length(retPt - s.center)) * data.normal;
   }
 
@@ -197,7 +217,7 @@ physics::IntersectData physics::Intersect(const physics::Arena& a,
   }
 
   if (data.collision) {
-    data.normal = glm::normalize(n); 
+    data.normal = glm::normalize(n);
   }
 
   return data;
@@ -210,164 +230,158 @@ physics::IntersectData physics::Intersect(const physics::Arena& a,
   glm::vec3 move = {};
 
   for (int i = 0; i < 8; ++i) {
-    if (a.xmax - c.corners[i].x < move.x)
-      move.x = a.xmax - c.corners[i].x;
-    if (a.xmin - c.corners[i].x > move.x)
-      move.x = a.xmin - c.corners[i].x;
-    if (a.ymax - c.corners[i].y < move.y)
-      move.y = a.ymax - c.corners[i].y;
-    if (a.ymin - c.corners[i].y > move.y)
-      move.y = a.ymin - c.corners[i].y;
-    if (a.zmax - c.corners[i].z < move.z)
-      move.z = a.zmax - c.corners[i].z;
-    if (a.zmin - c.corners[i].z > move.z)
-      move.z = a.zmin - c.corners[i].z;
+    if (a.xmax - c.corners[i].x < move.x) move.x = a.xmax - c.corners[i].x;
+    if (a.xmin - c.corners[i].x > move.x) move.x = a.xmin - c.corners[i].x;
+    if (a.ymax - c.corners[i].y < move.y) move.y = a.ymax - c.corners[i].y;
+    if (a.ymin - c.corners[i].y > move.y) move.y = a.ymin - c.corners[i].y;
+    if (a.zmax - c.corners[i].z < move.z) move.z = a.zmax - c.corners[i].z;
+    if (a.zmin - c.corners[i].z > move.z) move.z = a.zmin - c.corners[i].z;
   }
 
   data.move_vector = move;
   data.normal = glm::vec3(0.f);
   data.collision = move.x || move.y || move.z;
   return data;
- }
+}
 
 // https://www.geometrictools.com/Documentation/DistancePoint3Triangle3.pdf
 float ComputeSquaredDistance(const glm::vec3& center, const Triangle& tri,
-  glm::vec3* closest_point) {
-   glm::vec3 edges[3] = {tri.p1 - tri.p0, tri.p2 - tri.p0, tri.p2 - tri.p1};
+                             glm::vec3* closest_point) {
+  glm::vec3 edges[3] = {tri.p1 - tri.p0, tri.p2 - tri.p0, tri.p2 - tri.p1};
 
-   glm::vec3 D = tri.p0 - center;
-   float a = glm::dot(edges[0], edges[0]);
-   float b = glm::dot(edges[0], edges[1]);
-   float c = glm::dot(edges[1], edges[1]);
-   float d = glm::dot(edges[0], D);
-   float e = glm::dot(edges[1], D);
-   float f = glm::dot(D, D);
-   //float sigma = a * c - b * b;
-   //if (sigma < 0) sigma = -sigma;
+  glm::vec3 D = tri.p0 - center;
+  float a = glm::dot(edges[0], edges[0]);
+  float b = glm::dot(edges[0], edges[1]);
+  float c = glm::dot(edges[1], edges[1]);
+  float d = glm::dot(edges[0], D);
+  float e = glm::dot(edges[1], D);
+  float f = glm::dot(D, D);
+  // float sigma = a * c - b * b;
+  // if (sigma < 0) sigma = -sigma;
 
-   float s = b * e - c * d;
-   float t = b * d - a * e;
-   float det = a * c - b * b;
-   if (det < 0) det = -det;
+  float s = b * e - c * d;
+  float t = b * d - a * e;
+  float det = a * c - b * b;
+  if (det < 0) det = -det;
 
-   if (s + t <= det) {
-     if (s < 0) {
-       if (t < 0) {
-         // region 4
-         return 1000.f;
-         if (d < 0) {
-           t = 0;
-           if (-d >= a)
-             s = 1;
-           else
-             s = -d / a;
-         } else {
-           s = 0;
-           if (e >= 0)
-             t = 0;
-           else if (-e >= c)
-             t = 1;
-           else
-             t = -e / c;
-         }
-       } else {
-         // region 3
-         return 1000.f;
-         s = 0;
-         if (e >= 0)
-           t = 0;
-         else if (-e >= c)
-           t = 1;
-         else
-           t = -e / c;
-       }
-     } else if (t < 0) {
-       // region 5
-       return 1000.f;
-       t = 0;
-       if (d >= 0)
-         s = 0;
-       else if (-d >= a)
-         s = 1;
-       else
-         s = -d / a;
-     } else {
-       // region 0
-       s /= det;
-       t /= det;
-     }
-   } else {
-     if (s < 0) {
-       //region 2
-       return 1000.f;
-       float temp0 = b + d;
-       float temp1 = c + e;
-       if (temp1 > temp0) {
-         float numer = temp1 - temp0;
-         float denom = a - 2 * b + c;
-         if (numer >= denom)
-           s = 1;
-         else
-           s = numer / denom;
+  if (s + t <= det) {
+    if (s < 0) {
+      if (t < 0) {
+        // region 4
+        return 1000.f;
+        if (d < 0) {
+          t = 0;
+          if (-d >= a)
+            s = 1;
+          else
+            s = -d / a;
+        } else {
+          s = 0;
+          if (e >= 0)
+            t = 0;
+          else if (-e >= c)
+            t = 1;
+          else
+            t = -e / c;
+        }
+      } else {
+        // region 3
+        return 1000.f;
+        s = 0;
+        if (e >= 0)
+          t = 0;
+        else if (-e >= c)
+          t = 1;
+        else
+          t = -e / c;
+      }
+    } else if (t < 0) {
+      // region 5
+      return 1000.f;
+      t = 0;
+      if (d >= 0)
+        s = 0;
+      else if (-d >= a)
+        s = 1;
+      else
+        s = -d / a;
+    } else {
+      // region 0
+      s /= det;
+      t /= det;
+    }
+  } else {
+    if (s < 0) {
+      // region 2
+      return 1000.f;
+      float temp0 = b + d;
+      float temp1 = c + e;
+      if (temp1 > temp0) {
+        float numer = temp1 - temp0;
+        float denom = a - 2 * b + c;
+        if (numer >= denom)
+          s = 1;
+        else
+          s = numer / denom;
 
-         t = 1 - s;
-       } else {
-         s = 0;
-         if (temp1 <= 0)
-           t = 1;
-         else if (e >= 0)
-           t = 0;
-         else
-           t = -e / c;
-       }
-     } else if (t < 0) {
-       // region 6
-       return 1000.f;
-       float temp0 = b + e;
-       float temp1 = a + d;
-       if (temp1 > temp0) {
-         float numer = temp1 - temp0;
-         float denom = a - 2 * b + c;
-         if (numer >= denom)
-           t = 1;
-         else
-           t = numer / denom;
+        t = 1 - s;
+      } else {
+        s = 0;
+        if (temp1 <= 0)
+          t = 1;
+        else if (e >= 0)
+          t = 0;
+        else
+          t = -e / c;
+      }
+    } else if (t < 0) {
+      // region 6
+      return 1000.f;
+      float temp0 = b + e;
+      float temp1 = a + d;
+      if (temp1 > temp0) {
+        float numer = temp1 - temp0;
+        float denom = a - 2 * b + c;
+        if (numer >= denom)
+          t = 1;
+        else
+          t = numer / denom;
 
-         s = 1 - t;
-       } else {
-         t = 0;
-         if (temp1 <= 0)
-           s = 1;
-         else if (d >= 0)
-           s = 0;
-         else
-           s = -d / a;
-       }
-     } else {
-       // region 1
-       return 1000.f;
-       float numer = (c + e) - (b + d);
-       if (numer <= 0.f) {
-         s = 0;
-       } else {
-         float denom = a - 2 * b + c;
-         if (numer >= denom) {
-           s = 1;
-         } else {
-           s = numer / denom;
-         }
-       }
+        s = 1 - t;
+      } else {
+        t = 0;
+        if (temp1 <= 0)
+          s = 1;
+        else if (d >= 0)
+          s = 0;
+        else
+          s = -d / a;
+      }
+    } else {
+      // region 1
+      return 1000.f;
+      float numer = (c + e) - (b + d);
+      if (numer <= 0.f) {
+        s = 0;
+      } else {
+        float denom = a - 2 * b + c;
+        if (numer >= denom) {
+          s = 1;
+        } else {
+          s = numer / denom;
+        }
+      }
 
-       t = 1 - s;
-     }
-   }
+      t = 1 - s;
+    }
+  }
 
-   *closest_point = tri.p0 + s * edges[0] + t * edges[1];
-   return a * s * s + 2 * b * s * t + c * t * t + 2 * d * s + 2 * e * t + f;
- }
+  *closest_point = tri.p0 + s * edges[0] + t * edges[1];
+  return a * s * s + 2 * b * s * t + c * t * t + 2 * d * s + 2 * e * t + f;
+}
 
 physics::IntersectData physics::Intersect(const MeshHitbox& m,
-                                           const Sphere& s) {
+                                          const Sphere& s) {
   IntersectData data;
   data.normal = glm::vec3(0.f);
   data.collision = false;
@@ -378,8 +392,10 @@ physics::IntersectData physics::Intersect(const MeshHitbox& m,
                  m.pos[m.indices[i + 2]]};
     float dist = ComputeSquaredDistance(s.center, tri, &closest_point);
 
-    glm::vec3 temp = glm::normalize(glm::cross(tri.p1 - tri.p0, tri.p2 - tri.p0));
+    glm::vec3 temp =
+        glm::normalize(glm::cross(tri.p1 - tri.p0, tri.p2 - tri.p0));
     if (dist <= rsqrt) {
+    //if (glm::distance(closest_point, s.center) < s.radius) {
       if (fabs(temp.x) < 0.05f && fabs(temp.x) > 0.0) {
         temp.x = 0.f;
       }
@@ -393,6 +409,8 @@ physics::IntersectData physics::Intersect(const MeshHitbox& m,
       data.collision = true;
       data.normal = glm::normalize(data.normal);
       data.move_vector = (rsqrt - dist) * data.normal;
+      //data.move_vector =
+      //    (s.radius - glm::distance(closest_point, s.center)) * data.normal;
 
       return data;
     } /*else if (dist != 1000.f && glm::dot(temp, tri.p0 - s.center) > 0.f) {
@@ -404,7 +422,78 @@ physics::IntersectData physics::Intersect(const MeshHitbox& m,
     }*/
   }
 
-  //data.normal = glm::normalize(data.normal);
+  // data.normal = glm::normalize(data.normal);
 
+  return data;
+}
+
+physics::IntersectData physics::Intersect(const physics::MeshHitbox& m,
+                                          const physics::OBB& o,
+                                          const glm::vec3& vel) {
+  IntersectData data;
+  data.normal = glm::vec3(0.f);
+  data.collision = false;
+  float mini1, mini2, maxi1, maxi2;
+  std::vector<glm::vec3> L;
+  L.reserve(13);
+
+  Corners c1 = GetCorners(o);
+  float minimum = 1000.0f;
+  glm::vec3 Normal;
+  for (size_t i = 0; i < m.indices.size(); i += 3) {
+    Triangle tri{m.pos[m.indices[i]], m.pos[m.indices[i + 1]],
+                 m.pos[m.indices[i + 2]]};
+
+    glm::vec3 E[3];
+    E[0] = tri.p1 - tri.p0;
+    E[1] = tri.p2 - tri.p0;
+    E[2] = E[1] - E[0];
+    glm::vec3 D = tri.p0 - o.center;
+    glm::vec3 N = glm::cross(E[0], E[1]);
+    L.push_back(N);
+
+    for (int k = 0; k < 3; ++k) {
+      L.push_back(o.normals[k]);
+      for (int j = 0; j < 3; ++j) {
+        L.push_back(glm::cross(o.normals[k], E[j]));
+      }
+    }
+
+    bool collision = true;
+    for (int k = 0; k < L.size(); ++k) {
+      float min1, max1, min2, max2;
+      SatTest(L[k], c1, &min1, &max1);
+      SatTest(L[k], tri, &min2, &max2);
+
+      if (!Overlaps(min1, max1, min2, max2)) {
+        collision = false;
+        break;
+      }
+      if (k == 0) {
+        mini1 = min1;
+        mini2 = min2;
+        maxi1 = max1;
+        maxi2 = max2;
+      }
+    }
+    if (collision == true && glm::dot(N, vel) >= 0) {  // do stuff
+      float min_dist = 1000.0f;
+      data.collision = true;
+      if (glm::length(L[0]) > 0.f) {
+        if ((maxi2 - mini1) / glm::length(L[0]) < min_dist) {
+          min_dist = (maxi2 - mini1) / glm::length(L[0]);
+          data.normal = L[0];
+        }
+        if ((maxi1 - mini2) / glm::length(L[0]) < min_dist) {
+          min_dist = (maxi1 - mini2) / glm::length(L[0]);
+          data.normal = -L[0];
+        }
+      }
+      data.normal = glm::normalize(data.normal);
+      data.move_vector = min_dist * data.normal;
+      return data;
+    }
+    L.clear();
+  }
   return data;
 }

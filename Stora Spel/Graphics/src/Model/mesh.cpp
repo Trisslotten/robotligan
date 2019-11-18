@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include "../usegl.hpp"
+#include <textureslots.hpp>
 
 namespace glob {
 
@@ -89,10 +90,13 @@ Mesh::Mesh(const std::vector<Vertex>& vertices,
 Mesh::~Mesh() {}
 
 void Mesh::Draw(ShaderProgram& shader) {
-  for (int i = 0; i < textures_.size(); i++) {
-    glActiveTexture(GL_TEXTURE0 + i);
-    glBindTexture(GL_TEXTURE_2D, textures_[i].id_texture);
-    shader.uniform(textures_[i].type, i);
+  for (auto& texture : textures_) {
+    glActiveTexture(GL_TEXTURE0 + texture.slot);
+    glBindTexture(GL_TEXTURE_2D, texture.id_texture);
+    if(texture.slot == TEXTURE_SLOT_EMISSIVE) {
+      shader.uniform("use_emissive", 1);
+    }
+    shader.uniform(texture.type, texture.slot);
   }
 
   // Draw mesh

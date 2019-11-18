@@ -4,18 +4,17 @@
 #include <NetAPI/packet.hpp>
 #include <NetAPI/socket/server.hpp>
 #include <NetAPI/socket/tcpclient.hpp>
-#include <glob/window.hpp>
-#include <iostream>
-
-#include <GLFW/glfw3.h>  //NTS: This one must be included after certain other things
-#include "util/meminfo.hpp"
-#include "util/timer.hpp"
-
-#include "engine.hpp"
-
 #include <bitset>
 #include <chrono>
+#include <glob/window.hpp>
+#include <iostream>
 #include <thread>
+
+#include <GLFW/glfw3.h>  //NTS: This one must be included after certain other things
+#include "engine.hpp"
+#include "util/debugoverlay.hpp"
+#include "util/meminfo.hpp"
+#include "util/timer.hpp"
 
 entt::dispatcher menu_dispatcher{};
 entt::dispatcher dispatcher{};
@@ -40,20 +39,27 @@ int main(unsigned argc, char** argv) {
 
   Timer debug_timer;
 
+  DebubOverlay debug_overlay;
+  debug_overlay.Init();
+
   Timer frame_timer;
   float dt = 1.f / 60.f;
   while (!glob::window::ShouldClose()) {
+    debug_overlay.BeforeEngineUpdate();
     engine.Update(dt);
+    debug_overlay.AfterEngineUpdate();
 
     while (net_update_accum >= net_update_time) {
+      debug_overlay.BeforeNetworkUpdate();
       engine.UpdateNetwork();
+      debug_overlay.AfterNetworkUpdate();
 
       num_net_updates++;
       net_update_accum -= net_update_time;
     }
 
     
-    if (debug_timer.Elapsed() > 5.0) {
+    if (debug_timer.Elapsed() > 1.0) {
       double elapsed = debug_timer.Restart();
       std::cout << "DEBUG:    net update rate = " << num_net_updates / elapsed
                 << " U/s\n       render update rate = "
@@ -63,6 +69,8 @@ int main(unsigned argc, char** argv) {
     }
     
 
+    debug_overlay.Update();
+
     engine.Render();
     glob::window::Update();
 
@@ -70,7 +78,7 @@ int main(unsigned argc, char** argv) {
 
     dt = frame_timer.Restart();
     double frame_time = net_update_timer.Restart();
-    net_update_accum += glm::min(frame_time, net_update_time * 4);
+    net_update_accum += frame_time;
   }
 
   glob::window::Cleanup();

@@ -8,6 +8,7 @@
 
 void SettingsState::Startup() {
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+  ws_ = glob::window::GetWindowDimensions();
 }
 
 void SettingsState::Init() {
@@ -38,6 +39,32 @@ void SettingsState::Update(float dt) {
                "INPUT");
 
   if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
+    MenuEvent click_event;
+    click_event.type = MenuEvent::CLICK;
+    menu_dispatcher.trigger(click_event);
+    engine_->ChangeState(engine_->GetPreviousStateType());
+  } else if (Input::IsKeyPressed(GLFW_KEY_ENTER)) {
+    MenuEvent click_event;
+    click_event.type = MenuEvent::CLICK;
+    menu_dispatcher.trigger(click_event);
+    SaveSettings();
+  }
+  if (applied_) {
+    auto now = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float> time_passed = now - time_;
+    auto pos = glm::vec2(ws_.x / 2.f - ws_.x * 0.005, ws_.y / 2.8);
+    auto passed = (unsigned)(std::floorf(time_passed.count()));
+    std::string dots;
+    for (auto i = 0; i < passed; i++) {
+      dots += ".";
+    }
+    std::string text = "Saved";
+    glob::Submit(font_test_, pos, 45, std::string("Saved") + dots,
+                 glm::vec4(0, 1, 1, 1));
+    if (passed > 3) applied_ = false;
+  }
+  if (Input::IsKeyPressed(GLFW_KEY_ENTER)) {
+    SaveSettings();
     engine_->ChangeState(engine_->GetPreviousStateType());
   }
 }
@@ -58,6 +85,13 @@ void SettingsState::CreateSettingsMenu() {
   b_c = GenerateButtonEntity(registry_settings_, "APPLY", glm::vec2(60, 100),
                              font_test_);
   b_c->button_func = [=]() { SaveSettings(); };
+  // OK (APPLY + BACK) BUTTON
+  b_c = GenerateButtonEntity(registry_settings_, "SAVE", glm::vec2(60, 150),
+                             font_test_);
+  b_c->button_func = [=]() {
+    SaveSettings();
+    engine_->ChangeState(engine_->GetPreviousStateType());
+  };
 
   glm::vec2 graphics_start_pos =
       glm::vec2(35, glob::window::GetWindowDimensions().y - 175);
@@ -134,6 +168,8 @@ void SettingsState::SaveSettings() {
   GlobalSettings::Access()->WriteValue("INPUT_MOUSE_SENS", setting_mouse_sens_);
   GlobalSettings::Access()->StringWriteValue("USERNAME", setting_username_);
 
-  //printf("Username saved: %s \n", setting_username_.c_str());
+  // printf("Username saved: %s \n", setting_username_.c_str());
   engine_->UpdateSettingsValues();
+  applied_ = true;
+  time_ = std::chrono::high_resolution_clock::now();
 }

@@ -3,8 +3,8 @@
 
 #include <bitset>
 
-#include "bit_pack.hpp"
-#include "reg_pack.hpp"
+#include <shared/bit_pack.hpp>
+#include <shared/reg_pack.hpp>
 
 struct PlayerIO {
   std::bitset<10> key_bitset;

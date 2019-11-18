@@ -37,8 +37,8 @@ void MainMenuState::Update(float dt) {
     auto ws = glob::window::GetWindowDimensions();
     float scale = 0.8f;
     glm::vec2 pos;
-    pos.x = ws.x/2.f - scale*1280.f/2.f;
-    pos.y = ws.y - scale*313 - 100;
+    pos.x = ws.x / 2.f - scale * 1280.f / 2.f;
+    pos.y = ws.y - scale * 313 - 100;
     glob::Submit(loggo_image_, pos, scale);
   }
 }
@@ -80,7 +80,7 @@ void MainMenuState::CreateMainMenu() {
 void MainMenuState::CreateInformationMenu() {
   // BACK BUTTON in Information - go back to main menu
   ButtonComponent* b_c = GenerateButtonEntity(registry_information_, "BACK",
-                                              glm::vec2(100, 140), font_test_);
+                                              glm::vec2(60, 50), font_test_);
   b_c->button_func = [&]() {
     engine_->SetCurrentRegistry(&registry_mainmenu_);
   };
@@ -88,29 +88,57 @@ void MainMenuState::CreateInformationMenu() {
 
 void MainMenuState::CreateBackgroundEnitites() {
   // add the lights to scene
+
   auto light_test = registry_mainmenu_.create();  // Get from engine
   registry_mainmenu_.assign<LightComponent>(light_test, glm::vec3(0.05f), 30.f,
                                             0.2f);
   registry_mainmenu_.assign<TransformComponent>(
       light_test, glm::vec3(0.f, 16.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
+
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
   auto light_test2 = registry_mainmenu_.create();  // Get from engine
   registry_mainmenu_.assign<LightComponent>(
-      light_test2, glm::vec3(0.f, 0.f, 1.0f), 50.f, 0.2f);
+      light_test2, glm::vec3(1.f, 1.f, 1.0f), 50.f, 0.2f);
   registry_mainmenu_.assign<TransformComponent>(
-      light_test2, glm::vec3(48.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      light_test2, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
-
   {
     // ladda in och skapa entity för bana
     auto arena = registry_mainmenu_.create();
-    glm::vec3 arena_scale = glm::vec3(4.0f);
+    glm::vec3 arena_scale = glm::vec3(1.0f);
+
     glob::ModelHandle model_arena =
-        glob::GetModel("assets/Map/Map_unified_TMP.fbx");
+        glob::GetModel("assets/Arena/Map_V3_ARENA.fbx");
+    glob::ModelHandle model_arena_banner =
+        glob::GetModel("assets/Arena/Map_V3_ARENA_SIGNS.fbx");
+    glob::ModelHandle model_map = glob::GetModel("assets/MapV3/Map_Walls.fbx");
+    glob::ModelHandle model_map_floor =
+        glob::GetModel("assets/MapV3/Map_Floor.fbx");
+    glob::ModelHandle model_map_projectors =
+        glob::GetModel("assets/MapV3/Map_Projectors.fbx");
+
     auto& model_c = registry_mainmenu_.assign<ModelComponent>(arena);
     model_c.handles.push_back(model_arena);
+    model_c.handles.push_back(model_arena_banner);
+    model_c.handles.push_back(model_map);
+    model_c.handles.push_back(model_map_floor);
+    model_c.handles.push_back(model_map_projectors);
+
+    registry_mainmenu_.assign<TransformComponent>(arena, zero_vec, zero_vec,
+                                                  arena_scale);
+  }
+  {
+    glm::vec3 zero_vec = glm::vec3(0.0f);
+    glm::vec3 arena_scale = glm::vec3(2.6f);
+    auto arena = registry_mainmenu_.create();
+    glob::ModelHandle model_map_walls =
+        glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
+
+    auto& model_c = registry_mainmenu_.assign<ModelComponent>(arena);
+    model_c.handles.push_back(model_map_walls);
+
     registry_mainmenu_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                   arena_scale);
   }
@@ -120,7 +148,7 @@ void MainMenuState::CreateBackgroundEnitites() {
     // ladda in och skapa entity för robotar
     auto robot = registry_mainmenu_.create();
     auto& trans_c = registry_mainmenu_.assign<TransformComponent>(
-        robot, glm::vec3(36.f, -11.2f, -8.f),
+        robot, glm::vec3(22, 0, -8.f),
         glm::vec3(0.f, glm::radians(-135.0f), 0.f), glm::vec3(0.0033f));
     glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
     auto& model_c = registry_mainmenu_.assign<ModelComponent>(robot);
@@ -131,12 +159,12 @@ void MainMenuState::CreateBackgroundEnitites() {
         robot, glob::GetAnimationData(model_robot));
 
     engine_->GetAnimationSystem().PlayAnimation(
-        "Emote1", 2.f, &animation_c, 10, 1.f,
+        "Emote2", 1.f, &animation_c, 10, 1.f,
         engine_->GetAnimationSystem().LOOP);
 
     robot = registry_mainmenu_.create();
     auto& trans_c2 = registry_mainmenu_.assign<TransformComponent>(
-        robot, glm::vec3(36.f, -11.2f, 0.f),
+        robot, glm::vec3(22, 0, 0.f),
         glm::vec3(0.f, glm::radians(180.0f), 0.f), glm::vec3(0.0033f));
     auto& model_c2 = registry_mainmenu_.assign<ModelComponent>(robot);
     model_c2.handles.push_back(model_robot);
@@ -151,7 +179,7 @@ void MainMenuState::CreateBackgroundEnitites() {
     // ladda in och skapa entity för robotar
     robot = registry_mainmenu_.create();
     auto& trans_c3 = registry_mainmenu_.assign<TransformComponent>(
-        robot, glm::vec3(36.f, -11.2f, 8.f),
+        robot, glm::vec3(22.f, 0, 8.f),
         glm::vec3(0.f, glm::radians(135.0f), 0.f), glm::vec3(0.0033f));
     auto& model_c3 = registry_mainmenu_.assign<ModelComponent>(robot);
     model_c3.handles.push_back(model_robot);
@@ -169,8 +197,8 @@ void MainMenuState::CreateBackgroundEnitites() {
     auto camera = registry_mainmenu_.create();
     auto& cam_c = registry_mainmenu_.assign<CameraComponent>(camera);
     auto& cam_trans = registry_mainmenu_.assign<TransformComponent>(camera);
-    cam_trans.position = glm::vec3(28.f, -8.f, 0.f);
+    cam_trans.position = glm::vec3(15.f, 3.f, 0.f);
     glm::vec3 dir = glm::vec3(0) - cam_trans.position;
-    cam_c.orientation = glm::quat(glm::vec3(0.f, 0.f, 0.f));
+    cam_c.orientation = glm::quat(glm::vec3(0.f, 0.f, 0.f*glm::radians(-86.f)));
   }
 }
