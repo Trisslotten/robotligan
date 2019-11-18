@@ -15,6 +15,7 @@ out vec3 v_normal;
 uniform mat4 cam_transform;
 uniform mat4 model_transform;
 uniform mat4 bone_transform[64];
+uniform mat3 normal_transform;
 
 //uniform int NR_OF_BONES;
 

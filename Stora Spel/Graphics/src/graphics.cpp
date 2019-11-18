@@ -130,21 +130,29 @@ std::vector<E2DItem> e2D_items_to_render;
 std::vector<TrailItem> trails_to_render;
 
 void SetDefaultMaterials(ShaderProgram &shader) {
+  /*
   glActiveTexture(GL_TEXTURE0 + TEXTURE_SLOT_EMISSIVE);
   glBindTexture(GL_TEXTURE_2D, black_texture);
-  shader.uniform("texture_emissive", TEXTURE_SLOT_EMISSIVE);
-
   glActiveTexture(GL_TEXTURE0 + TEXTURE_SLOT_NORMAL);
   glBindTexture(GL_TEXTURE_2D, default_normal_texture);
-  shader.uniform("texture_normal", TEXTURE_SLOT_NORMAL);
-
   glActiveTexture(GL_TEXTURE0 + TEXTURE_SLOT_METALLIC);
   glBindTexture(GL_TEXTURE_2D, black_texture);
-  shader.uniform("texture_metallic", TEXTURE_SLOT_METALLIC);
-
   glActiveTexture(GL_TEXTURE0 + TEXTURE_SLOT_ROUGHNESS);
   glBindTexture(GL_TEXTURE_2D, black_texture);
+  */
+  shader.uniform("use_emissive", 0);
+  shader.uniform("use_normal_map", 0);
+  shader.uniform("use_metallic", 0);
+  shader.uniform("use_roughness", 0);
+  /*
+  shader.uniform("texture_emissive", TEXTURE_SLOT_EMISSIVE);
+  shader.uniform("texture_normal", TEXTURE_SLOT_NORMAL);
+  shader.uniform("texture_metallic", TEXTURE_SLOT_METALLIC);
   shader.uniform("texture_roughness", TEXTURE_SLOT_ROUGHNESS);
+  */
+}
+glm::mat3 calcNormalTransform(glm::mat4 model_transform) {
+  return glm::transpose(glm::inverse(glm::mat3(model_transform)));
 }
 
 void DrawFullscreenQuad() {
@@ -472,6 +480,8 @@ void Init() {
   buffer_particle_systems.reserve(10);
 
   SetSky("assets/texture/nightsky.png");
+
+  //glEnable(GL_RASTERIZER_DISCARD);
 }
 
 // H=Handle, A=Asset
@@ -1157,7 +1167,7 @@ void SetBlackout(bool blackout) {
   if (blackout) {
     shadows.SetNumUsed(0);
   } else {
-    shadows.SetNumUsed(4);
+    shadows.SetNumUsed(2);
   }
 }
 
@@ -1327,14 +1337,17 @@ void Render() {
   auto anim_draw_function = [&](ShaderProgram &shader) {
     for (auto &BARI : bone_animated_items_to_render) {
       shader.uniform("model_transform", BARI.transform);
+      shader.uniformv("bone_transform", BARI.bone_transforms.size(),
+                      BARI.bone_transforms.data());
+      /*
       int numBones = 0;
       for (auto &bone : BARI.bone_transforms) {
         shader.uniform("bone_transform[" + std::to_string(numBones) + "]",
                        bone);
         numBones++;
       }
-      // animated_model_shader.uniform("NR_OF_BONES",
-      // (int)BARI.bone_transforms.size());
+      */
+      // shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
       BARI.model->Draw(animated_model_shader);
     }
   };
@@ -1367,6 +1380,8 @@ void Render() {
     for (auto &render_item : normal_items) {
       SetDefaultMaterials(model_shader);
       model_shader.uniform("model_transform", render_item.transform);
+      model_shader.uniform("normal_transform",
+                           calcNormalTransform(render_item.transform));
       render_item.model->Draw(model_shader);
     }
 
@@ -1375,12 +1390,21 @@ void Render() {
     for (auto &BARI : bone_animated_items_to_render) {
       animated_model_shader.uniform("diffuse_index", BARI.material_index);
       animated_model_shader.uniform("model_transform", BARI.transform);
+      animated_model_shader.uniformv("bone_transform",
+                                     BARI.bone_transforms.size(),
+                                     BARI.bone_transforms.data());
+      animated_model_shader.uniform("normal_transform",
+                                    calcNormalTransform(BARI.transform));
+      /*
       int numBones = 0;
       for (auto &bone : BARI.bone_transforms) {
         animated_model_shader.uniform(
             "bone_transform[" + std::to_string(numBones) + "]", bone);
         numBones++;
       }
+      */
+      // animated_model_shader.uniform("NR_OF_BONES",
+      // (int)BARI.bone_transforms.size());
       SetDefaultMaterials(animated_model_shader);
       BARI.model->Draw(animated_model_shader);
     }
@@ -1393,11 +1417,17 @@ void Render() {
     // render gui elements
     glBindVertexArray(quad_vao);
     // render 2D elements
-    e2D_shader.use();
-    e2D_shader.uniform("cam_transform", cam_transform);
-    for (auto &e2D_item : e2D_items_to_render) {
-      e2D_item.e2D->DrawInWorld(e2D_shader, e2D_item.pos, e2D_item.scale,
-                                e2D_item.rot);
+    if (!e2D_items_to_render.empty()) {
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      e2D_shader.use();
+      e2D_shader.uniform("cam_transform", cam_transform);
+      for (auto &e2D_item : e2D_items_to_render) {
+        e2D_item.e2D->DrawInWorld(e2D_shader, e2D_item.pos, e2D_item.scale,
+                                  e2D_item.rot);
+      }
+      glDisable(GL_BLEND);
+      glBindTexture(GL_TEXTURE_2D, 0);
     }
 
     // render particles
@@ -1409,14 +1439,14 @@ void Render() {
       buffer_particle_systems[p].system.Draw(particle_shader);
     }
     // draw sky
+    glDepthFunc(GL_LEQUAL);
     sky_shader.use();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, sky_texture);
     glm::mat4 view = glm::mat3(camera.GetViewMatrix());
     sky_shader.uniform("view", view);
     sky_shader.uniform("projection", camera.GetProjectionMatrix());
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, sky_texture);
     sky_shader.uniform("texture_sky", 0);
-    glDepthFunc(GL_LEQUAL);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glDepthFunc(GL_LESS);
 
@@ -1429,12 +1459,18 @@ void Render() {
       for (auto &render_item : render_items) {
         SetDefaultMaterials(model_shader);
         model_shader.uniform("model_transform", render_item.transform);
+        model_shader.uniform("normal_transform",
+                           calcNormalTransform(render_item.transform));
         render_item.model->Draw(model_shader);
       }
     }
     glDisable(GL_BLEND);
 
     // render text
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthFunc(GL_LEQUAL);
     glBindVertexArray(quad_vao);
     text3D_shader.use();
     text3D_shader.uniform("cam_transform", cam_transform);
@@ -1442,14 +1478,14 @@ void Render() {
       text3D.font->Draw3D(text3D_shader, text3D.pos, text3D.size, text3D.text,
                           text3D.color, text3D.rotation);
     }
+    //glDisable(GL_BLEND);
+    //glEnable(GL_CULL_FACE);
 
+    glDepthFunc(GL_LESS);
+    glBindVertexArray(trail_vao);
     trail_shader.use();
     trail_shader.uniform("cam_transform", cam_transform);
     trail_shader.uniform("cam_pos", camera.GetPosition());
-    glBindVertexArray(trail_vao);
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     for (auto &trail_item : trails_to_render) {
       trail_shader.uniform("width", trail_item.width);
       trail_shader.uniform("color", trail_item.color);
@@ -1466,43 +1502,35 @@ void Render() {
   post_process.AfterDraw(blur);
 
   if (use_ao) {
-    ssao.BindFrameBuffer();
-    ssao_shader.use();
-    post_process.BindDepthTex(0);
-    ssao_shader.uniform("texture_depth", 0);
-    post_process.BindNormalTex(1);
-    ssao_shader.uniform("texture_normals", 1);
-    ssao.BindNoiseTexture(2);
-    ssao_shader.uniform("texture_noise", 2);
-    post_process.BindPositionTex(3);
-    ssao_shader.uniform("texture_position", 3);
-    ssao_shader.uniformv("samples", (GLuint)ssao.GetKernel().size(),
-                         ssao.GetKernel().data());
-    ssao_shader.uniform("projection", cam_transform);
-    ssao_shader.uniform("inv_projection", inverse(cam_transform));
-    ssao_shader.uniform("screen_dims", window::GetWindowDimensions());
-
-    DrawFullscreenQuad();  // do ssao pass same way we do final color pass
-    ssao.Finish(blur);
+    ssao.Process(post_process, blur, camera);
   }
 
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glViewport(0, 0, ws.x, ws.y);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
   fullscreen_shader.use();
-  fullscreen_shader.uniform("is_invisible", is_invisible);
   post_process.BindColorTex(0);
-  fullscreen_shader.uniform("texture_color", 0);
   post_process.BindEmissionTex(1);
-  fullscreen_shader.uniform("texture_emission", 1);
   ssao.BindSsaoTexture(2);
+  fullscreen_shader.uniform("is_invisible", is_invisible);
+  fullscreen_shader.uniform("texture_color", 0);
+  fullscreen_shader.uniform("texture_emission", 1);
   fullscreen_shader.uniform("texture_ssao", 2);
   fullscreen_shader.uniform("use_ao", use_ao);
   DrawFullscreenQuad();
 
   glBindVertexArray(quad_vao);
+  glDisable(GL_CULL_FACE);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glDepthFunc(GL_ALWAYS);
   gui_shader.use();
   for (auto &gui_item : gui_items_to_render) {
     gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale,
                                gui_item.scale_x, gui_item.opacity);
   }
+  // glBindTexture(GL_TEXTURE_2D, 0);
 
   text_shader.use();
   for (auto &text_item : text_to_render) {
@@ -1510,6 +1538,9 @@ void Render() {
                          text_item.text, text_item.color, text_item.visible,
                          text_item.equal_spacing, text_item.spacing);
   }
+  glDepthFunc(GL_LESS);
+  glDisable(GL_BLEND);
+  glEnable(GL_CULL_FACE);
 
   trails_to_render.clear();
   lights_to_render.clear();
