@@ -1307,7 +1307,7 @@ void PlayState::CreateArenaEntity() {
 void PlayState::CreateMapEntity() {
   auto arena = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 arena_scale = glm::vec3(2.6f) * arena_scale_;
+  glm::vec3 arena_scale = glm::vec3(1.f) * arena_scale_;
   glob::ModelHandle model_hitbox =
       glob::GetModel("assets/MapV3/Map_Hitbox.fbx");
   glob::ModelHandle model_map_walls =

@@ -36,7 +36,7 @@ void RenderSystem(entt::registry& registry) {
       if (!m.invisible) {
         glob::Submit(m.handles,
           glm::translate(t.position) * glm::toMat4(t.rotation) *
-          glm::translate(-m.offset) * glm::scale(t.scale), m.diffuse_index);
+          glm::translate(-m.offset) * glm::scale(t.scale*0.01f), m.diffuse_index);
       }
     }
   }
@@ -53,7 +53,7 @@ void RenderSystem(entt::registry& registry) {
         glm::translate(t.position) *
         glm::toMat4(t.rotation + m.rot_offset) *
         glm::translate(-m.offset) * glm::scale(t.scale),
-        a.bone_transforms, m.diffuse_index);
+        a.bone_transforms, m.diffuse_index);  
     }
   }
 
