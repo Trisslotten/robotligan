@@ -22,16 +22,6 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, glm::mat4 transform)
   std::vector<glm::vec4> weights;
   std::vector<glm::ivec4> boneIndex;
 
-  for(int i = 0; i < 4; i++) 
-  {
-    for(int j = 0; j < 4; j++) 
-    {
-      std::cout << transform[i][j] << ", ";
-    }
-    std::cout << "\n";
-  }
-  std::cout << "\n";
-
   // Process the mesh
   for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
     // create weight objects
