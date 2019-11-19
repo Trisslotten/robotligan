@@ -297,7 +297,7 @@ void LobbyState::CreateBackgroundEntities() {
 }
 
 void LobbyState::CreateGUIElements() {
-  //ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
+  ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
   team_select_back_ =
       glob::GetGUIItem("Assets/GUI_elements/lobby_team_no_names.png");
   font_team_names_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
