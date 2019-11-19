@@ -60,7 +60,7 @@ void PlayState::Startup() {
   gui_minimap_player_blue_ =
       glob::GetGUIItem("assets/GUI_elements/player_iconv2_blue.png");
   gui_minimap_ball_ = glob::GetGUIItem("assets/GUI_elements/Ball_Icon.png");
-  gui_crosshair_ = glob::GetGUIItem("assets/GUI_elements/Crosshair_V1.png");
+  gui_crosshair_ = glob::GetGUIItem("assets/GUI_elements/Crosshair_V2.png");
 
   int num_abilities = (int)AbilityID::NUM_OF_ABILITY_IDS;
   ability_handles_.resize(num_abilities);
@@ -254,11 +254,14 @@ void PlayState::Update(float dt) {
       glm::quat orientation =
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
-      cam_c.orientation = orientation;
-      trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
 
-      // FPS Model rotations
-      mc.rot_offset = orientation - glm::quat(glm::vec3(0.f, yaw_, 0.f));
+	  if (!show_in_game_menu_buttons_) {
+        cam_c.orientation = orientation;
+        trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
+        // FPS Model rotations
+        mc.rot_offset = orientation - glm::quat(glm::vec3(0.f, yaw_, 0.f));
+	  }
+      
 
       // rotate model offset as well, this does not want to work...
       /*glm::mat4 translateMat = glm::translate(glm::mat4(1.f), cam_c.offset);
@@ -320,7 +323,8 @@ void PlayState::Update(float dt) {
   }
 
   // --- dont display during replay ---
-  // TODO: Remove if-statement and just dont draw GUI in replay state when it's implemented
+  // TODO: Remove if-statement and just dont draw GUI in replay state when it's
+  // implemented
   if (!engine_->IsReplaying()) {
     // draw quickslots
     DrawQuickslots();
@@ -333,7 +337,7 @@ void PlayState::Update(float dt) {
     // draw crosshair
     glm::vec2 crosshair_pos = glob::window::GetWindowDimensions();
     crosshair_pos /= 2;
-    glob::Submit(gui_crosshair_, crosshair_pos - glm::vec2(19, 20), 1.f);
+    glob::Submit(gui_crosshair_, crosshair_pos - glm::vec2(12, 12), 1.f);
 
     // draw Minimap
     glob::Submit(gui_minimap_,
@@ -459,7 +463,7 @@ void PlayState::Update(float dt) {
       engine_->ChangeState(StateType::LOBBY);
     }
   }
-  
+
   DrawTopScores();
   DrawTarget();
 
@@ -1265,6 +1269,7 @@ void PlayState::CreatePlayerEntities() {
                                                  glm::quat(glm::vec3(0.f)));
      
       model_c.handles.push_back(FPS_model);
+      model_c.cast_shadow = false;
 
       registry_gameplay_.assign<AnimationComponent>(
           entity, glob::GetAnimationData(FPS_model));
@@ -1279,7 +1284,7 @@ void PlayState::CreatePlayerEntities() {
           entity, glob::GetAnimationData(player_model));
     }
 
-	model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
+    model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
 
     if (engine_->GetPlayerTeam(entity_id) == TEAM_BLUE) {
       model_c.diffuse_index = 1;
@@ -1308,6 +1313,7 @@ void PlayState::CreateArenaEntity() {
   model_c.handles.push_back(model_arena);
   model_c.handles.push_back(model_arena_banner);
   model_c.handles.push_back(model_map_projectors);
+  model_c.cast_shadow = false;
 
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                 arena_scale);
@@ -1448,7 +1454,8 @@ void PlayState::CreateSpotlights() {
   }
 }
 
-void PlayState::ParticleComponentDestroyed(entt::entity e, entt::registry& registry) {
+void PlayState::ParticleComponentDestroyed(entt::entity e,
+                                           entt::registry& registry) {
   auto& pc = registry.get<ParticleComponent>(e);
   for (int i = 0; i < pc.handles.size(); ++i) {
     glob::DestroyParticleSystem(pc.handles[i]);
@@ -1579,7 +1586,7 @@ void PlayState::AddPlayer() {
                                               sound_engine.CreatePlayer());
 
     if (entity_id == my_id_) {
-      glm::vec3 camera_offset = glm::vec3(0.5f, 0.7f, 0.f);
+      glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
                                                  glm::quat(glm::vec3(0.f)));
       character_scale = glm::vec3(0.1f);
@@ -2224,8 +2231,8 @@ void PlayState::FetchMapAndArena(entt::registry& in_registry) {
       in_registry.assign<ModelComponent>(arena_floor);
   floor_model_c.handles.push_back(model_map);
   floor_model_c.handles.push_back(model_map_floor);
-  TransformComponent& trans_c = in_registry.assign<TransformComponent>(arena_floor, zero_vec, zero_vec,
-                                         arena_scale);
+  TransformComponent& trans_c = in_registry.assign<TransformComponent>(
+      arena_floor, zero_vec, zero_vec, arena_scale);
 
   if (goals_swapped_) {
     trans_c.rotation *= glm::quat(glm::vec3(0.f, glm::pi<float>(), 0.f));
