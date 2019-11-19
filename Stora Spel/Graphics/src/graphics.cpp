@@ -483,7 +483,7 @@ void Init() {
 
   SetSky("assets/texture/nightsky.png");
 
-  //glEnable(GL_RASTERIZER_DISCARD);
+  // glEnable(GL_RASTERIZER_DISCARD);
 }
 
 // H=Handle, A=Asset
@@ -1005,16 +1005,16 @@ void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
 }
 
 void SubmitBAM(const std::vector<ModelHandle> &handles, glm::mat4 transform,
-               std::vector<glm::mat4> bone_transforms,
-               int material_index) {  // Submit Bone Animated Mesh
+               std::vector<glm::mat4> bone_transforms, int material_index,
+               bool cast_shadow) {  // Submit Bone Animated Mesh
   for (auto handle : handles) {
-    SubmitBAM(handle, transform, bone_transforms, material_index);
+    SubmitBAM(handle, transform, bone_transforms, material_index, cast_shadow);
   }
 }
 
 void SubmitBAM(ModelHandle model_h, glm::mat4 transform,
-               std::vector<glm::mat4> bone_transforms,
-               int material_index) {  // Submit Bone Animated Mesh
+               std::vector<glm::mat4> bone_transforms, int material_index,
+               bool cast_shadow) {  // Submit Bone Animated Mesh
   BoneAnimatedRenderItem BARI;
 
   auto find_res = models.find(model_h);
@@ -1033,22 +1033,25 @@ void SubmitBAM(ModelHandle model_h, glm::mat4 transform,
   BARI.numBones = BARI.bone_transforms.size();
 
   BARI.material_index = material_index;
+  BARI.cast_shadow = cast_shadow;
 
   bone_animated_items_to_render.push_back(BARI);
 }
 
-void Submit(ModelHandle model_h, glm::vec3 pos, int material_index) {
+void Submit(ModelHandle model_h, glm::vec3 pos, int material_index,
+            bool cast_shadow) {
   glm::mat4 transform = glm::translate(pos);
-  Submit(model_h, transform, material_index);
+  Submit(model_h, transform, material_index, cast_shadow);
 }
 
 void Submit(const std::vector<ModelHandle> &handles, glm::mat4 transform,
-            int material_index) {
+            int material_index, bool cast_shadow) {
   for (auto handle : handles) {
-    Submit(handle, transform, material_index);
+    Submit(handle, transform, material_index, cast_shadow);
   }
 }
-void Submit(ModelHandle model_h, glm::mat4 transform, int material_index) {
+void Submit(ModelHandle model_h, glm::mat4 transform, int material_index,
+            bool cast_shadow) {
   auto find_res = models.find(model_h);
   if (find_res == models.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted model\n";
@@ -1063,6 +1066,7 @@ void Submit(ModelHandle model_h, glm::mat4 transform, int material_index) {
   to_render.model = &find_res->second;
   to_render.transform = transform * pre_rotation;
   to_render.material_index = material_index;
+  to_render.cast_shadow = cast_shadow;
 
   items_to_render.push_back(to_render);
 }
@@ -1333,25 +1337,29 @@ void Render() {
 
   auto draw_function = [&](ShaderProgram &shader) {
     for (auto &render_item : items_to_render) {
-      shader.uniform("model_transform", render_item.transform);
-      render_item.model->Draw(shader);
+      if (render_item.cast_shadow) {
+        shader.uniform("model_transform", render_item.transform);
+        render_item.model->Draw(shader);
+      }
     }
   };
   auto anim_draw_function = [&](ShaderProgram &shader) {
     for (auto &BARI : bone_animated_items_to_render) {
-      shader.uniform("model_transform", BARI.transform);
-      shader.uniformv("bone_transform", BARI.bone_transforms.size(),
-                      BARI.bone_transforms.data());
-      /*
-      int numBones = 0;
-      for (auto &bone : BARI.bone_transforms) {
-        shader.uniform("bone_transform[" + std::to_string(numBones) + "]",
-                       bone);
-        numBones++;
+      if (BARI.cast_shadow) {
+        shader.uniform("model_transform", BARI.transform);
+        shader.uniformv("bone_transform", BARI.bone_transforms.size(),
+                        BARI.bone_transforms.data());
+        /*
+        int numBones = 0;
+        for (auto &bone : BARI.bone_transforms) {
+          shader.uniform("bone_transform[" + std::to_string(numBones) + "]",
+                         bone);
+          numBones++;
+        }
+        */
+        // shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
+        BARI.model->Draw(animated_model_shader);
       }
-      */
-      // shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
-      BARI.model->Draw(animated_model_shader);
     }
   };
   shadows.RenderToMaps(draw_function, anim_draw_function, blur);
@@ -1464,7 +1472,7 @@ void Render() {
         SetDefaultMaterials(model_shader);
         model_shader.uniform("model_transform", render_item.transform);
         model_shader.uniform("normal_transform",
-                           calcNormalTransform(render_item.transform));
+                             calcNormalTransform(render_item.transform));
         render_item.model->Draw(model_shader);
       }
     }
@@ -1482,8 +1490,8 @@ void Render() {
       text3D.font->Draw3D(text3D_shader, text3D.pos, text3D.size, text3D.text,
                           text3D.color, text3D.rotation);
     }
-    //glDisable(GL_BLEND);
-    //glEnable(GL_CULL_FACE);
+    // glDisable(GL_BLEND);
+    // glEnable(GL_CULL_FACE);
 
     glDepthFunc(GL_LESS);
     glBindVertexArray(trail_vao);
