@@ -445,7 +445,7 @@ void DoTeleport(entt::registry& registry, PlayerID id) {
           teleport_projectile,
           glm::vec3(tc.position - cc.GetLookDir() * speed * 1.f/128.f),
           glm::vec3(0, 0, 0), glm::vec3(.3f, .3f, .3f));
-      registry.assign<physics::Sphere>(teleport_projectile, glm::vec3(0.f), 1.f);
+      registry.assign<physics::Sphere>(teleport_projectile, glm::vec3(0.f), 0.5f);
       registry.assign<ProjectileComponent>(
           teleport_projectile, ProjectileID::TELEPORT_PROJECTILE, pc.client_id);
 
