@@ -38,6 +38,7 @@ void CreateFakeBalls(entt::registry& registry, EntityID id);
 bool BuildWall(entt::registry& registry, PlayerID id);
 bool DoInvisibility(entt::registry& registry, PlayerID id);
 bool DoBlackout(entt::registry& registry);
+void CreateBlackHole(entt::registry& registry, PlayerID id);
 
 std::unordered_map<AbilityID, float> ability_cooldowns;
 
@@ -207,6 +208,9 @@ bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
     case AbilityID::BLACKOUT:
       return DoBlackout(registry);
       break;
+    case AbilityID::BLACKHOLE:
+      return true;
+      break;
     default:
       return false;
       break;
@@ -335,13 +339,12 @@ entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
                                         glm::vec3(cc.GetLookDir() * speed),
                                         glm::vec3(0.f), false, 0.0f);
       registry.assign<TransformComponent>(
-          cannonball,
-          glm::vec3(tc.position + tc.rotation * cc.offset),
+          cannonball, glm::vec3(tc.position + tc.rotation * cc.offset),
           cc.orientation, glm::vec3(.3f, .3f, .3f));
       registry.assign<physics::Sphere>(cannonball, glm::vec3(0.f), .3f);
       registry.assign<ProjectileComponent>(cannonball,
                                            ProjectileID::CANNON_BALL, id);
-	  return cannonball;
+      return cannonball;
     }
   }
 }
@@ -397,11 +400,11 @@ entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id) {
       registry.assign<PhysicsComponent>(force_object, cc.GetLookDir() * speed,
                                         glm::vec3(0.f), true, 0.0f);
       registry.assign<TransformComponent>(
-          force_object,
-          glm::vec3(tc.position + tc.rotation * cc.offset),
+          force_object, glm::vec3(tc.position + tc.rotation * cc.offset),
           glm::vec3(0, 0, 0), glm::vec3(.5f, .5f, .5f));
       registry.assign<physics::Sphere>(force_object, glm::vec3(0.f), .5f);
-      registry.assign<ProjectileComponent>(force_object, ProjectileID::FORCE_PUSH_OBJECT, id);
+      registry.assign<ProjectileComponent>(force_object,
+                                           ProjectileID::FORCE_PUSH_OBJECT, id);
 
       // Save game event
       GameEvent force_push_cast_event;
@@ -443,9 +446,10 @@ void DoTeleport(entt::registry& registry, PlayerID id) {
                                         glm::vec3(0.f), false, 0.0f);
       registry.assign<TransformComponent>(
           teleport_projectile,
-          glm::vec3(tc.position - cc.GetLookDir() * speed * 1.f/128.f),
+          glm::vec3(tc.position - cc.GetLookDir() * speed * 1.f / 128.f),
           glm::vec3(0, 0, 0), glm::vec3(.3f, .3f, .3f));
-      registry.assign<physics::Sphere>(teleport_projectile, glm::vec3(0.f), 1.f);
+      registry.assign<physics::Sphere>(teleport_projectile, glm::vec3(0.f),
+                                       1.f);
       registry.assign<ProjectileComponent>(
           teleport_projectile, ProjectileID::TELEPORT_PROJECTILE, pc.client_id);
 
@@ -537,16 +541,19 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
       auto& trans_c = view_players.get<TransformComponent>(entity);
       auto& camera = view_players.get<CameraComponent>(entity);
 
-      glm::vec3 position =
-          camera.GetLookDir() * 4.5f + trans_c.position + trans_c.rotation * camera.offset;
+      glm::vec3 position = camera.GetLookDir() * 4.5f + trans_c.position +
+                           trans_c.rotation * camera.offset;
       position.y = -9.3f;
 
       for (auto entity_goal : view_goals) {
         auto& goal_transform = view_goals.get<TransformComponent>(entity_goal);
         float arena_scale;
         arena_scale = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
-    
-        if (glm::distance(glm::vec2(position.x,position.z), glm::vec2(goal_transform.position.x, goal_transform.position.z)) < 20.f * arena_scale) {
+
+        if (glm::distance(glm::vec2(position.x, position.z),
+                          glm::vec2(goal_transform.position.x,
+                                    goal_transform.position.z)) <
+            20.f * arena_scale) {
           return false;
         }
       }
@@ -697,6 +704,10 @@ void CreateFakeBalls(entt::registry& registry, EntityID id) {
   ge.fake_ball_created.ball_id = ball_id;
   ge.type = GameEvent::FAKE_BALL_CREATED;
   dispatcher.trigger(ge);
+}
+
+void CreateBlackHole(entt::registry& registry, PlayerID id) {
+
 }
 
 };  // namespace ability_controller

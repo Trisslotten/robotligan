@@ -106,6 +106,7 @@ enum class AbilityID {
   SWITCH_GOALS,
   TELEPORT,
   BLACKOUT,
+  BLACKHOLE,
   // Fill with more abilities and passive boosts
   NUM_OF_ABILITY_IDS
 };
