@@ -55,6 +55,8 @@ void PlayState::Startup() {
       glob::GetGUIItem("assets/GUI_elements/goal_red_icon.png");
   gui_minimap_goal_blue_ =
       glob::GetGUIItem("assets/GUI_elements/goal_blue_icon.png");
+  gui_minimap_player_me_ =
+      glob::GetGUIItem("assets/GUI_elements/player_me_icon.png");
   gui_minimap_player_red_ =
       glob::GetGUIItem("assets/GUI_elements/player_red_icon.png");
   gui_minimap_player_blue_ =
@@ -336,156 +338,8 @@ void PlayState::Update(float dt) {
     crosshair_pos /= 2;
     glob::Submit(gui_crosshair_, crosshair_pos - glm::vec2(19, 20), 1.f);
 
-    // draw Minimap
-    glob::Submit(gui_minimap_,
-                 glm::vec2(glob::window::GetWindowDimensions().x - 250, 10),
-                 0.3);
-    // draw Minimap goals based on team
-    auto view_client = registry_gameplay_.view<CameraComponent, IDComponent>();
-    for (auto entity : view_client) {
-      IDComponent& id_c = registry_gameplay_.get<IDComponent>(entity);
-
-      // IF RED TEAM
-      if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
-        if (!goals_swapped_) {
-          glob::Submit(
-              gui_minimap_goal_red_,
-              glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
-              0.2);
-          glob::Submit(
-              gui_minimap_goal_blue_,
-              glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2),
-              0.2);
-        } else {
-          glob::Submit(
-              gui_minimap_goal_red_,
-              glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2),
-              0.2);
-          glob::Submit(
-              gui_minimap_goal_blue_,
-              glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
-              0.2);
-        }
-        // Draw Player icons from red perspective
-        auto view_player =
-            registry_gameplay_
-                .view<TransformComponent, PlayerComponent, IDComponent>();
-        for (auto entity : view_player) {
-          auto& trans_c = view_player.get<TransformComponent>(entity);
-          auto& id_c = view_player.get<IDComponent>(entity);
-          auto& player_c = view_player.get<PlayerComponent>(entity);
-
-          // Normalize and project player pos to screen space (Z in world space
-          // is X in screen space and vice versa)
-          float norm_pos_x = trans_c.position.z / (21.5f * arena_scale_.z);
-          float norm_pos_y = trans_c.position.x / (40.6f * arena_scale_.x);
-          float minimap_pos_x = (norm_pos_x * 120.f) +
-                                glob::window::GetWindowDimensions().x - 130.f -
-                                17.1f;
-          float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 17.1f;
-
-          // Draw the right color icons
-          if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
-            glob::Submit(gui_minimap_player_red_,
-                         glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f,
-                         1.f, std::atan2(player_c.look_dir.z, player_c.look_dir.x));  // TODO: CALC REAL POS
-          } else {
-            glob::Submit(gui_minimap_player_blue_,
-                         glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
-                std::atan2(player_c.look_dir.z,
-                           player_c.look_dir.x));  // TODO: CALC REAL POS
-          }
-        }
-        // Draw Ball icon from red perspective
-        auto view_ball =
-            registry_gameplay_.view<TransformComponent, BallComponent>();
-        for (auto entity : view_ball) {
-          auto& trans_c = view_ball.get<TransformComponent>(entity);
-
-          // Normalize and project player pos to screen space (Z in world space
-          // is X in screen space and vice versa)
-          float norm_pos_x = trans_c.position.z / (28.1f * arena_scale_.z);
-          float norm_pos_y = trans_c.position.x / (40.6f * arena_scale_.x);
-          float minimap_pos_x = (norm_pos_x * 120.f) +
-                                glob::window::GetWindowDimensions().x - 130.f -
-                                20.7f;
-          float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 20.7f;
-
-          glob::Submit(gui_minimap_ball_,
-                       glm::vec2(minimap_pos_x, minimap_pos_y), 0.2);
-        }
-      } else {
-        // IF BLUE TEAM
-        if (!goals_swapped_) {
-          glob::Submit(
-              gui_minimap_goal_red_,
-              glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2),
-              0.2);
-          glob::Submit(
-              gui_minimap_goal_blue_,
-              glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
-              0.2);
-        } else {
-          glob::Submit(
-              gui_minimap_goal_red_,
-              glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
-              0.2);
-          glob::Submit(
-              gui_minimap_goal_blue_,
-              glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2),
-              0.2);
-        }
-        // Draw Player icons from blue perspective
-        auto view_player =
-            registry_gameplay_
-                .view<TransformComponent, PlayerComponent, IDComponent>();
-        for (auto entity : view_player) {
-          auto& trans_c = view_player.get<TransformComponent>(entity);
-          auto& id_c = view_player.get<IDComponent>(entity);
-          auto& player_c = view_player.get<PlayerComponent>(entity);
-
-          // Normalize and project player pos to screen space (Z in world space
-          // is X in screen space and vice versa)
-          float norm_pos_x = trans_c.position.z / (21.5f * arena_scale_.z);
-          float norm_pos_y = trans_c.position.x / (40.6f * arena_scale_.x);
-          float minimap_pos_x = (-norm_pos_x * 120.f) +
-                                glob::window::GetWindowDimensions().x - 130.f -
-                                17.1f;
-          float minimap_pos_y = (-norm_pos_y * 190.f) + 190.f - 17.1f;
-
-          // Draw the right color icons
-          if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
-            glob::Submit(gui_minimap_player_red_,
-                         glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
-                std::atan2(player_c.look_dir.z,
-                           player_c.look_dir.x) + pi);  // TODO: CALC REAL POS
-          } else {
-            glob::Submit(gui_minimap_player_blue_,
-                         glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
-                std::atan2(player_c.look_dir.z,
-                           player_c.look_dir.x) + pi);  // TODO: CALC REAL POS
-          }
-        }
-        // Draw Ball icon from blue perspective
-        auto view_ball =
-            registry_gameplay_.view<TransformComponent, BallComponent>();
-        for (auto entity : view_ball) {
-          auto& trans_c = view_ball.get<TransformComponent>(entity);
-
-          // Normalize and project player pos to screen space (Z in world space
-          // is X in screen space and vice versa)
-          float norm_pos_x = trans_c.position.z / (28.1f * arena_scale_.z);
-          float norm_pos_y = trans_c.position.x / (40.6f * arena_scale_.x);
-          float minimap_pos_x = (-norm_pos_x * 120.f) +
-                                glob::window::GetWindowDimensions().x - 130.f -
-                                20.7f;
-          float minimap_pos_y = (-norm_pos_y * 190.f) + 190.f - 20.7f;
-
-          glob::Submit(gui_minimap_ball_,
-                       glm::vec2(minimap_pos_x, minimap_pos_y), 0.2);
-        }
-      }
-    }
+    // draw mini map
+    DrawMiniMap();
 
     if (overtime_has_started_) {
       glm::vec2 pos = glob::window::GetWindowDimensions();
@@ -1252,6 +1106,160 @@ void PlayState::DrawQuickslots() {
     glob::Submit(font_test_, glm::vec2(45 - jump_left, 89), 72, cd_string,
                  glm::vec4(0, 0, 0, 0.7f));
     glob::Submit(font_test_, glm::vec2(46 - jump_left, 90), 72, cd_string);
+  }
+}
+
+void PlayState::DrawMiniMap() {
+  // draw Minimap
+  glob::Submit(gui_minimap_,
+               glm::vec2(glob::window::GetWindowDimensions().x - 250, 10), 0.3);
+
+  // draw Minimap icons based on team
+  // IF RED TEAM
+  if (my_team_ == TEAM_RED) {
+    if (!goals_swapped_) {
+      glob::Submit(gui_minimap_goal_red_,
+                   glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
+                   0.2);
+      glob::Submit(
+          gui_minimap_goal_blue_,
+          glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
+    } else {
+      glob::Submit(
+          gui_minimap_goal_red_,
+          glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
+      glob::Submit(gui_minimap_goal_blue_,
+                   glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
+                   0.2);
+    }
+    // Draw Player icons from red perspective
+    auto view_player =
+        registry_gameplay_
+            .view<TransformComponent, PlayerComponent, IDComponent>();
+    for (auto entity : view_player) {
+      auto& trans_c = view_player.get<TransformComponent>(entity);
+      auto& id_c = view_player.get<IDComponent>(entity);
+      auto& player_c = view_player.get<PlayerComponent>(entity);
+
+      // Normalize and project player pos to screen space (Z in world space
+      // is X in screen space and vice versa)
+      float norm_pos_x = trans_c.position.z / (21.5f * arena_scale_.z);
+      float norm_pos_y = trans_c.position.x / (40.6f * arena_scale_.x);
+      float minimap_pos_x = (norm_pos_x * 120.f) +
+                            glob::window::GetWindowDimensions().x - 130.f -
+                            17.1f;
+      float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 17.1f;
+
+      // Draw the right color icons
+      if (id_c.id == my_id_) {
+        glob::Submit(gui_minimap_player_me_,
+                     glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
+                     std::atan2(player_c.look_dir.z,
+                                player_c.look_dir.x));  // TODO: CALC REAL POS
+      } else if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
+        glob::Submit(gui_minimap_player_red_,
+                     glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
+                     std::atan2(player_c.look_dir.z,
+                                player_c.look_dir.x));  // TODO: CALC REAL POS
+      } else {
+        glob::Submit(gui_minimap_player_blue_,
+                     glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
+                     std::atan2(player_c.look_dir.z,
+                                player_c.look_dir.x));  // TODO: CALC REAL POS
+      }
+    }
+    // Draw Ball icon from red perspective
+    auto view_ball =
+        registry_gameplay_.view<TransformComponent, BallComponent>();
+    for (auto entity : view_ball) {
+      auto& trans_c = view_ball.get<TransformComponent>(entity);
+
+      // Normalize and project player pos to screen space (Z in world space
+      // is X in screen space and vice versa)
+      float norm_pos_x = trans_c.position.z / (28.1f * arena_scale_.z);
+      float norm_pos_y = trans_c.position.x / (40.6f * arena_scale_.x);
+      float minimap_pos_x = (norm_pos_x * 120.f) +
+                            glob::window::GetWindowDimensions().x - 130.f -
+                            20.7f;
+      float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 20.7f;
+
+      glob::Submit(gui_minimap_ball_, glm::vec2(minimap_pos_x, minimap_pos_y),
+                   0.2);
+    }
+  } else {
+    // IF BLUE TEAM
+    if (!goals_swapped_) {
+      glob::Submit(
+          gui_minimap_goal_red_,
+          glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
+      glob::Submit(gui_minimap_goal_blue_,
+                   glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
+                   0.2);
+    } else {
+      glob::Submit(gui_minimap_goal_red_,
+                   glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 10),
+                   0.2);
+      glob::Submit(
+          gui_minimap_goal_blue_,
+          glm::vec2(glob::window::GetWindowDimensions().x - 159.2, 367.2), 0.2);
+    }
+    // Draw Player icons from blue perspective
+    auto view_player =
+        registry_gameplay_
+            .view<TransformComponent, PlayerComponent, IDComponent>();
+    for (auto entity : view_player) {
+      auto& trans_c = view_player.get<TransformComponent>(entity);
+      auto& id_c = view_player.get<IDComponent>(entity);
+      auto& player_c = view_player.get<PlayerComponent>(entity);
+
+      // Normalize and project player pos to screen space (Z in world space
+      // is X in screen space and vice versa)
+      float norm_pos_x = trans_c.position.z / (21.5f * arena_scale_.z);
+      float norm_pos_y = trans_c.position.x / (40.6f * arena_scale_.x);
+      float minimap_pos_x = (-norm_pos_x * 120.f) +
+                            glob::window::GetWindowDimensions().x - 130.f -
+                            17.1f;
+      float minimap_pos_y = (-norm_pos_y * 190.f) + 190.f - 17.1f;
+
+      // Draw the right color icons
+      if (id_c.id == my_id_) {
+        glob::Submit(gui_minimap_player_me_,
+                     glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
+                     std::atan2(player_c.look_dir.z,
+                                player_c.look_dir.x) +
+                         pi);  // TODO: CALC REAL POS
+      } else if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
+        glob::Submit(gui_minimap_player_red_,
+                     glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
+                     std::atan2(player_c.look_dir.z,
+                                player_c.look_dir.x) +
+                         pi);  // TODO: CALC REAL POS
+      } else {
+        glob::Submit(gui_minimap_player_blue_,
+                     glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
+                     std::atan2(player_c.look_dir.z,
+                                player_c.look_dir.x) +
+                         pi);  // TODO: CALC REAL POS
+      }
+    }
+    // Draw Ball icon from blue perspective
+    auto view_ball =
+        registry_gameplay_.view<TransformComponent, BallComponent>();
+    for (auto entity : view_ball) {
+      auto& trans_c = view_ball.get<TransformComponent>(entity);
+
+      // Normalize and project player pos to screen space (Z in world space
+      // is X in screen space and vice versa)
+      float norm_pos_x = trans_c.position.z / (28.1f * arena_scale_.z);
+      float norm_pos_y = trans_c.position.x / (40.6f * arena_scale_.x);
+      float minimap_pos_x = (-norm_pos_x * 120.f) +
+                            glob::window::GetWindowDimensions().x - 130.f -
+                            20.7f;
+      float minimap_pos_y = (-norm_pos_y * 190.f) + 190.f - 20.7f;
+
+      glob::Submit(gui_minimap_ball_, glm::vec2(minimap_pos_x, minimap_pos_y),
+                   0.2);
+    }
   }
 }
 
