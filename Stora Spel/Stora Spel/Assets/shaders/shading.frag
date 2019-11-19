@@ -21,14 +21,9 @@ in vec3 local_pos;
 in vec3 local_normal;
 in vec3 v_normal;
 
-uniform sampler2D texture_normal;
-uniform float normal_map_scale;
-
-uniform sampler2D texture_metallic;
-uniform float metallic_map_scale;
-
 uniform sampler2D texture_roughness;
 uniform float roughness_map_scale;
+uniform int use_roughness;
 
 uniform vec3 cam_position;
 
@@ -53,12 +48,9 @@ float shadow(vec3 position, int index) {
 	shadow_space /= shadow_space.w;
 
 	vec2 uv = (shadow_space.xy+1.)*0.5;
-	if(uv.x < 0. || uv.x > 1. || uv.y < 0. || uv.y > 1.) {
-		return 1.0;
-	}
 	float frag_depth = length(position - shadow_light_positions[index]);
 
-	vec2 depths = textureLod(shadow_maps[index], uv, 0).xy;
+	vec2 depths = texture(shadow_maps[index], uv).xy;
 	float E_x2 = depths.y;
 	float Ex_2 = depths.x*depths.x;
 	float variance = E_x2 - Ex_2;
@@ -116,8 +108,13 @@ struct Lighting {
 	vec3 ambient;
 };
 
-Lighting shading(vec3 position, float metallic, vec3 normal) {
-	float roughness = triplanarRoughness();
+Lighting shading(vec3 position, vec3 normal) {
+	float roughness = 0.;
+	if(use_roughness != 0)
+	{
+		roughness = triplanarRoughness();
+	}
+
 	vec3 view_dir = normalize(cam_position - position);
 
 	Lighting lighting;
@@ -127,24 +124,28 @@ Lighting shading(vec3 position, float metallic, vec3 normal) {
 
 	for(int l = 0; l < NR_OF_LIGHTS; l++){
 		vec3 pointToLight = light_pos[l] - position;
-		vec3 light_dir = normalize(pointToLight);
-		vec3 light_color = light_col[l];
+		float radius = light_radius[l];
+		lighting.ambient += light_amb[l];
+		if(length(pointToLight) <= radius) {
+			vec3 light_dir = normalize(pointToLight);
+			vec3 light_color = light_col[l];
 
-		float intensity = 1.f - clamp(length(pointToLight), 0, light_radius[l]) / light_radius[l];
-		float diffuse = (1-metallic)*calcDiffuse(position, normal, light_dir);
-		float specular = metallic * calcSpecular(position, normal, light_dir, view_dir, roughness);
+			float intensity = 1.f - clamp(length(pointToLight)/radius, 0., 1.);
+			float diffuse = calcDiffuse(position, normal, light_dir);
+			float specular = calcSpecular(position, normal, light_dir, view_dir, roughness);
 
-		lighting.diffuse += diffuse * intensity * light_color;
-		lighting.specular += specular * intensity * light_color;
-		lighting.ambient += (1-metallic) * light_amb[l];
+			lighting.diffuse += diffuse * intensity * light_color;
+			lighting.specular += specular * intensity * light_color;
+		}
 	}
 
 	for(int i = 0; i < num_shadows; i++) {
 		vec4 shadow_space = v_shadow_spaces[i];
 		shadow_space.xyz /= shadow_space.w;
 
-		vec3 ld = normalize(shadow_light_positions[i] - position);
-		if(shadow_space.w > 0) {
+		vec2 uv = (shadow_space.xy+1.)*0.5;
+		if(shadow_space.w > 0 && !(uv.x < 0. || uv.x > 1. || uv.y < 0. || uv.y > 1.)) {
+			vec3 ld = normalize(shadow_light_positions[i] - position);
 			vec3 light_color = vec3(0.23);
 
 			vec2 q = abs(shadow_space.xy) - vec2(0.5);
@@ -153,8 +154,8 @@ Lighting shading(vec3 position, float metallic, vec3 normal) {
 
 			mask *= shadow(position, i);
 
-			float diffuse = (1-metallic)*calcDiffuse(position, normal, ld);
-			float specular = metallic * calcSpecular(position, normal, ld, view_dir, roughness);
+			float diffuse = calcDiffuse(position, normal, ld);
+			float specular = calcSpecular(position, normal, ld, view_dir, roughness);
 
 			light_color *= mask;
 

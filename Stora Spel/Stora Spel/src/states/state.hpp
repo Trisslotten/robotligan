@@ -301,6 +301,7 @@ class PlayState : public State {
   void DrawTopScores();
   void DrawTarget();
   void DrawQuickslots();
+  void DrawMiniMap();
   void DrawJumbotronText();
 
   FrameState SimulateMovement(std::vector<int>& action, FrameState& state,
@@ -340,8 +341,9 @@ class PlayState : public State {
   glob::GUIHandle in_game_menu_gui_ = 0;
   glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
       gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_, gui_minimap_,
-      gui_minimap_goal_red_, gui_minimap_goal_blue_, gui_minimap_player_red_,
-      gui_minimap_player_blue_, gui_minimap_ball_, gui_crosshair_;
+      gui_minimap_goal_red_, gui_minimap_goal_blue_, gui_minimap_player_me_,
+      gui_minimap_player_red_, gui_minimap_player_blue_, gui_minimap_ball_,
+      gui_crosshair_;
 
   std::vector<glob::GUIHandle> ability_handles_;
 

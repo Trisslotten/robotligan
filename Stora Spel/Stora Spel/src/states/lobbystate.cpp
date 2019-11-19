@@ -1,10 +1,10 @@
 #include "state.hpp"
 
 #include <glob/window.hpp>
+#include <util/asset_paths.hpp>
 #include "..//ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
-#include <util/asset_paths.hpp>
 
 struct ReadyButtonComponent {};
 
@@ -213,14 +213,45 @@ void LobbyState::CreateBackgroundEntities() {
       light_test, glm::vec3(12.f, -16.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
   glm::vec3 zero_vec = glm::vec3(0.0f);
+  glm::vec3 arena_scale = glm::vec3(2.0f);
   {
     // ladda in och skapa entity för bana
     auto arena = registry_lobby_.create();
-    glm::vec3 arena_scale = glm::vec3(4.0f);
+    glm::vec3 zero_vec = glm::vec3(0.0f);
     glob::ModelHandle model_arena =
-        glob::GetModel(kModelPathMapUnified);
+        glob::GetModel("assets/Arena/Map_V3_ARENA.fbx");
+    glob::ModelHandle model_arena_banner =
+        glob::GetModel("assets/Arena/Map_V3_ARENA_SIGNS.fbx");
+    glob::ModelHandle model_map = glob::GetModel("assets/MapV3/Map_Walls.fbx");
+    glob::ModelHandle model_map_floor =
+        glob::GetModel("assets/MapV3/Map_Floor.fbx");
+    glob::ModelHandle model_map_projectors =
+        glob::GetModel("assets/MapV3/Map_Projectors.fbx");
+
+    // glob::GetModel(kModelPathMapSingular);
     auto& model_c = registry_lobby_.assign<ModelComponent>(arena);
     model_c.handles.push_back(model_arena);
+    model_c.handles.push_back(model_arena_banner);
+    model_c.handles.push_back(model_map_projectors);
+
+    registry_lobby_.assign<TransformComponent>(arena, zero_vec, zero_vec,
+                                               arena_scale);
+
+    arena = registry_lobby_.create();
+    auto& model_c2 = registry_lobby_.assign<ModelComponent>(arena);
+    model_c2.handles.push_back(model_map);
+    model_c2.handles.push_back(model_map_floor);
+    registry_lobby_.assign<TransformComponent>(arena, zero_vec, zero_vec,
+                                               arena_scale);
+  }
+
+  {
+    auto arena = registry_lobby_.create();
+    glob::ModelHandle model_map_walls =
+        glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
+
+    auto& model_c = registry_lobby_.assign<ModelComponent>(arena);
+    model_c.handles.push_back(model_map_walls);
     registry_lobby_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                arena_scale);
   }
@@ -236,7 +267,7 @@ void LobbyState::CreateBackgroundEntities() {
     auto& model_c = registry_lobby_.assign<ModelComponent>(ball);
     model_c.handles.push_back(model_ball_sphere_p);
     model_c.handles.push_back(model_ball_projectors_p);
-    registry_lobby_.assign<TransformComponent>(ball, glm::vec3(0, -4, 0),
+    registry_lobby_.assign<TransformComponent>(ball, glm::vec3(0, 1, 0),
                                                zero_vec, glm::vec3(1.0f));
     registry_lobby_.assign<BallComponent>(ball);
   }
@@ -259,7 +290,7 @@ void LobbyState::CreateBackgroundEntities() {
     auto camera = registry_lobby_.create();
     auto& cam_c = registry_lobby_.assign<CameraComponent>(camera);
     auto& cam_trans = registry_lobby_.assign<TransformComponent>(camera);
-    cam_trans.position = glm::vec3(-10.f, 0.f, -3.f);
+    cam_trans.position = glm::vec3(-10.f, 5.f, -3.f);
     glm::vec3 dir = glm::vec3(0) - cam_trans.position;
     cam_c.orientation = glm::quat(glm::vec3(0.f, -0.3f, 0.f));
   }

@@ -39,19 +39,21 @@ Material Materials::GetMaterial(
     std::unordered_map<materials::Type, std::string> wanted_textures) {
   Material result;
   for (auto& [type, path] : wanted_textures) {
-    //std::cout << "Loading material texture: " << path << "\n";
+    std::cout << "Loading material texture: " << path << "\n";
     switch (type) {
       case materials::NORMAL:
         result.AddTexture(type, GetNormalMap(path), TEXTURE_SLOT_NORMAL,
-                          "texture_normal");
+                          "texture_normal", "use_normal_map");
         break;
       case materials::METALLIC:
         result.AddTexture(type, GetSingleChannelMap(path),
-                          TEXTURE_SLOT_METALLIC, "texture_metallic");
+                          TEXTURE_SLOT_METALLIC, "texture_metallic",
+                          "use_metallic");
         break;
       case materials::ROUGHNESS:
         result.AddTexture(type, GetSingleChannelMap(path),
-                          TEXTURE_SLOT_ROUGHNESS, "texture_roughness");
+                          TEXTURE_SLOT_ROUGHNESS, "texture_roughness",
+                          "use_roughness");
         break;
     }
   }
@@ -140,8 +142,9 @@ Material glob::materials::Get(
 }
 
 void Material::AddTexture(materials::Type type, GLuint id, int slot,
-                          const std::string& uniform_name) {
-  textures_[type] = {id, slot, uniform_name};
+                          const std::string& uniform_name,
+                          const std::string& use_name) {
+  textures_[type] = {id, slot, uniform_name, use_name};
 }
 
 void Material::Bind(ShaderProgram& shader) {
@@ -149,6 +152,11 @@ void Material::Bind(ShaderProgram& shader) {
     if (texture.id != 0) {
       glActiveTexture(GL_TEXTURE0 + texture.slot);
       glBindTexture(GL_TEXTURE_2D, texture.id);
+    }
+  }
+  for (auto& [type, texture] : textures_) {
+    if (texture.id != 0) {
+      shader.uniform(texture.use_name, 1);
       shader.uniform(texture.uniform_name, texture.slot);
     }
   }

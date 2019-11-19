@@ -16,6 +16,8 @@ struct PlayerComponent {  // Client side
   bool jumping = false;
   float jump_force = 0.f;
 
+  bool localPlayer = false;
+
   glm::vec3 vel_dir = glm::vec3(1.f, 0.f, 0.f);
   glm::vec3 look_dir = glm::vec3(1.f, 0.f, 0.f);
   glm::vec3 move_dir = glm::vec3(1.f, 0.f, 0.f);

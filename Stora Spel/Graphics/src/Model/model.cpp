@@ -10,9 +10,11 @@
 #include "material/material.hpp"
 #include "usegl.hpp"
 
+#include <glob/AssimpToGLMConverter.hpp>
+
 namespace glob {
 
-Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
+Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, glm::mat4 transform) {
   std::vector<Vertex> vertex;
   std::vector<GLuint> indices;
   std::vector<Texture> textures;
@@ -105,6 +107,11 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
       roughness_map_scale_ = *roughness_map_scale;
     }
 
+    auto is_glass = config.GetBool("is_glass");
+    if (is_glass) {
+      is_glass_ = *is_glass;
+    }
+
     material_ = materials::Get(wanted_textures);
   }
 
@@ -141,7 +148,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
       Joint* j = new Joint();
       j->id = i;
       j->name = mesh->mBones[i]->mName.data;
-      j->offset = ConvertToGLM(mesh->mBones[i]->mOffsetMatrix);
+      j->offset = AssToGLM::ConvertToGLM4x4(mesh->mBones[i]->mOffsetMatrix);
       bones_.push_back(j);
 
       // set vec4 arrays for weight and bone index (influencing bone)
@@ -168,7 +175,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
     return Mesh(vertex, indices, textures, weights, boneIndex);
   }
 
-  return Mesh(vertex, indices, textures);
+  return Mesh(vertex, indices, textures, transform);
 }
 
 GLint Model::TextureFromFile(const char* path, std::string directory,
@@ -232,7 +239,8 @@ void Model::LoadModel(std::string path) {
     return;
   }
 
-  globalInverseTransform_ = ConvertToGLM(scene->mRootNode->mTransformation);
+  globalInverseTransform_ =
+      AssToGLM::ConvertToGLM4x4(scene->mRootNode->mTransformation);
   globalInverseTransform_ = glm::inverse(globalInverseTransform_);
 
   directory_ = path.substr(0, path.find_last_of('/'));
@@ -291,7 +299,6 @@ void Model::LoadModel(std::string path) {
         for (auto j : bones_) {
           if (j->name == jointName) {
             id = j->id;
-            anim->armature_transform_.push_back(glm::mat4(1.f));
           }
         }
         channel.boneID = id;
@@ -328,7 +335,7 @@ Joint* Model::MakeArmature(aiNode* node) {
   bool knownBone = false;
   for (auto& b : bones_) {
     if (node->mName.data == b->name) {  // node is known bone
-      b->transform = ConvertToGLM(node->mTransformation);
+      b->transform = AssToGLM::ConvertToGLM4x4(node->mTransformation);
       knownBone = true;
       for (int n = 0; n < node->mNumChildren; n++) {
         for (auto PCB : bones_) {
@@ -347,7 +354,7 @@ Joint* Model::MakeArmature(aiNode* node) {
     Joint* j = new Joint;
     j->name = "Armature";
     j->offset = glm::mat4(0.f);
-    j->transform = glm::rotate(ConvertToGLM(node->mTransformation),
+    j->transform = glm::rotate(AssToGLM::ConvertToGLM4x4(node->mTransformation),
                                3.1416f / 2.f, glm::vec3(1.f, 0.f, 0.f));
     bool knownChildren = false;
     for (int n = 0; n < node->mNumChildren; n++) {
@@ -374,15 +381,16 @@ Joint* Model::MakeArmature(aiNode* node) {
 }
 
 // TODO: check if node transform fixes up-vector from blender export
-void Model::ProcessNode(aiNode* node, const aiScene* scene) {
+void Model::ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parent_transform) {
+  glm::mat4 transform = parent_transform * AssToGLM::ConvertToGLM4x4(node->mTransformation);
   // Process all the nodes meshes
   for (unsigned int i = 0; i < node->mNumMeshes; i++) {
     aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-    mesh_.push_back(ProcessMesh(mesh, scene));
+    mesh_.push_back(ProcessMesh(mesh, scene, transform));
   }
   // Then process nodes children
   for (unsigned int i = 0; i < node->mNumChildren; i++) {
-    ProcessNode(node->mChildren[i], scene);
+    ProcessNode(node->mChildren[i], scene, transform);
   }
 }
 
@@ -440,6 +448,7 @@ void Model::Draw(ShaderProgram& shader) {
   shader.uniform("metallic_map_scale", metallic_map_scale_);
   shader.uniform("roughness_map_scale", roughness_map_scale_);
   shader.uniform("num_diffuse_textures", num_diffuse_textures_);
+  shader.uniform("is_glass", is_glass_ ? 1 : 0);
   for (unsigned int i = 0; i < mesh_.size(); i++) {
     mesh_[i].Draw(shader);
   }

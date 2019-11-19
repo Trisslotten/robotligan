@@ -24,7 +24,6 @@ class AnimationSystem {
   glm::vec3 left = glm::vec3(0.f, 0.f, 1.f);
 
   float time_ = 0;
-
   std::string slide_anims_[4] = {"SlideF", "SlideB", "SlideR", "SlideL"};
   std::string look_anims_[4] = {"LookUp", "LookDown", "LookRight", "LookLeft"};
 
@@ -32,10 +31,6 @@ class AnimationSystem {
 
  public:
   void Init(Engine* engine);
-
-  glm::mat3 ConvertToGLM3x3(aiMatrix3x3 aiMat);
-
-  enum ANIM_MODES { LOOP, MUTE_ALL, PARTIAL_MUTE };
 
   void GetDefaultPose(glm::mat4 parent, glob::Joint* bone,
                       std::vector<glob::Joint>* armature,
@@ -65,7 +60,12 @@ class AnimationSystem {
 
   void UpdateAnimations(entt::registry& registry, float dt);
 
+  glm::vec3 InterpolateVector(float time, std::vector<aiVectorKey>* keys);
+  glm::mat4 InterpolateQuat(float time, std::vector<aiQuatKey>* keys);
+
   void Reset(entt::registry& registry);
+
+    enum ANIM_MODES { LOOP, MUTE_ALL, PARTIAL_MUTE };
 };
 
 #endif  // ANIMATION_SYSTEM_HPP_

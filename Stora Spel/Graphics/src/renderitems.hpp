@@ -14,10 +14,11 @@ namespace glob {
 
 
 struct RenderItem {
-  Model *model;
+  Model *model = nullptr;
   glm::mat4 transform;
 
-  int material_index;
+  int material_index = 0;
+  bool cast_shadow = true;
 };
 
 struct GUIItem {
@@ -26,6 +27,7 @@ struct GUIItem {
   float scale;
   float scale_x;
   float opacity;
+  float rot;
 };
 
 struct E2DItem {
@@ -43,6 +45,7 @@ struct BoneAnimatedRenderItem {
   int numBones;
 
   int material_index = 0;
+  bool cast_shadow = true;
 };
 
 struct TextItem {

@@ -20,7 +20,7 @@ enum Type {
 
 class Material {
  public:
-  void AddTexture(materials::Type type, GLuint id, int slot, const std::string& uniform_name);
+  void AddTexture(materials::Type type, GLuint id, int slot, const std::string& uniform_name,const std::string& use_name);
   void Bind(ShaderProgram& shader);
 
  private:
@@ -28,6 +28,7 @@ class Material {
     GLuint id = 0;
     int slot = 0;
     std::string uniform_name;
+    std::string use_name;
   };
   std::unordered_map<materials::Type, Texture> textures_;
 };

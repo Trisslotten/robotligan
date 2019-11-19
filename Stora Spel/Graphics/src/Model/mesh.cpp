@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include "../usegl.hpp"
+#include <textureslots.hpp>
 
 namespace glob {
 
@@ -58,10 +59,11 @@ void Mesh::SetupMesh(bool weighted) {
 
 Mesh::Mesh(const std::vector<Vertex>& vertices,
            const std::vector<GLuint>& indices,
-           const std::vector<Texture>& textures) {
+           const std::vector<Texture>& textures, glm::mat4 transform) {
   vertices_ = vertices;
   indices_ = indices;
   textures_ = textures;
+  transform_ = transform;
 
   if (glob::kModelUseGL) {
     SetupMesh(weighted_);
@@ -92,6 +94,10 @@ void Mesh::Draw(ShaderProgram& shader) {
   for (auto& texture : textures_) {
     glActiveTexture(GL_TEXTURE0 + texture.slot);
     glBindTexture(GL_TEXTURE_2D, texture.id_texture);
+    if(texture.slot == TEXTURE_SLOT_EMISSIVE) {
+      shader.uniform("use_emissive", 1);
+    }
+    shader.uniform("mesh_transform", transform_);
     shader.uniform(texture.type, texture.slot);
   }
 
