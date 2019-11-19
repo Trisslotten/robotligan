@@ -28,6 +28,10 @@ uniform sampler2D texture_metallic;
 uniform float metallic_map_scale;
 uniform int use_metallic;
 
+uniform int is_glass;
+
+uniform float blackout;
+
 struct Lighting {
 	vec3 specular;
 	vec3 diffuse;
@@ -35,7 +39,7 @@ struct Lighting {
 };
 
 // from file "shading.frag"
-Lighting shading(vec3 position, float metallic, vec3 normal);
+Lighting shading(vec3 position, vec3 normal);
 vec3 dither();
 
 float triplanarMetallic() {
@@ -165,14 +169,27 @@ void main() {
 	// calculate diffuse texture coords
 	vec2 tex = calcTexCoords();
 
-	Lighting lighting = shading(frag_pos, metallic, normal);
+	vec3 view_dir = normalize(cam_position - frag_pos);
+
+	vec3 cube_map = (1.-0.9*blackout)*fakeCubeMap(reflect(view_dir, normal));
+
+	float reflective = metallic;
+	if(is_glass != 0)
+	{
+		reflective = 0.75;
+	}
+
+	Lighting lighting = shading(frag_pos, normal);
 	//	lighting.ambient = vec3(0.1);
 	//	lighting.diffuse = vec3(0);
 	//	lighting.specular = vec3(0);
-	vec3 shading = vec3(0);
-	shading += lighting.ambient;
-	shading += lighting.diffuse;
-	shading += lighting.specular;
+	vec3 diffuse_shading = vec3(0);
+	diffuse_shading += (1-metallic) * lighting.ambient;
+	diffuse_shading += (1-reflective) * lighting.diffuse;
+
+	vec3 reflective_shading = vec3(0);
+	reflective_shading += reflective * lighting.specular;
+	reflective_shading += 1.0*reflective * cube_map;
 
 	vec4 surface_color = texture(texture_diffuse, tex);
 	float alpha = surface_color.a;
@@ -186,18 +203,14 @@ void main() {
 	surface_color.rgb = mix(surface_color.rgb, iron_color, metallic*(1.-emission_strength));
 	
 	vec3 emission = emission_strength * surface_color.rgb;
-
-	vec3 spec_emission = 1.*lighting.specular * surface_color.rgb;
-	emission += spec_emission * (1.-emission_strength);
-
-	vec3 view_dir = normalize(cam_position - frag_pos);
+	emission += 2.0*reflective * lighting.specular * (1.-emission_strength);
 
 	vec3 color = surface_color.rgb;
-	color *= mix(shading, vec3(1), emission_strength);
-	if(use_metallic != 0)
-	{
-		color += fakeCubeMap(reflect(view_dir, normal)) * metallic*(1-emission_strength);
-	}
+	color *= mix(diffuse_shading, vec3(1), emission_strength);
+	color *= alpha;
+	color += mix(reflective_shading, vec3(0), emission_strength);
+	
+
 	color += dither();
 	//float gamma = 2.2;
 	//color = pow(color, vec3(gamma));
@@ -205,6 +218,6 @@ void main() {
 	//float alpha = 1.0;
 	//vec3 emission = vec3(1); 
 	out_color = vec4(color, alpha);
-	out_emission = vec4(emission, 1);
+	out_emission = vec4(emission/2.0, 1);
 	out_depth = vec4(gl_FragCoord.z,0,0,0);
 }

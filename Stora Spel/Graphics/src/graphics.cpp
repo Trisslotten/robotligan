@@ -68,6 +68,8 @@ PostProcess post_process;
 Blur blur;
 Shadows shadows;
 
+bool blackout = false;
+
 GLint is_invisible = 0;
 float num_frames = 0;
 
@@ -494,13 +496,13 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
   std::string borg = filepath;
   std::transform(borg.begin(), borg.end(), borg.begin(),
                  [](unsigned char c) { return std::tolower(c); });
-  auto item = handles.find(filepath);
+  auto item = handles.find(borg);
   if (item == handles.end()) {
     // std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";
     A &asset = assets[guid];
-    asset.LoadFromFile(filepath);
+    asset.LoadFromFile(borg);
     if (asset.IsLoaded()) {
-      handles[filepath] = guid;
+      handles[borg] = guid;
       result = guid;
       guid++;
     } else {
@@ -1163,8 +1165,9 @@ void SetSSAO(bool val) { use_ao = val; }
 
 void SetInvisibleEffect(bool in_bool) { is_invisible = (GLint)in_bool; }
 
-void SetBlackout(bool blackout) {
-  if (blackout) {
+void SetBlackout(bool _blackout) {
+  blackout = _blackout;
+  if (_blackout) {
     shadows.SetNumUsed(0);
   } else {
     shadows.SetNumUsed(2);
@@ -1370,6 +1373,7 @@ void Render() {
     shader->uniform("cam_transform", cam_transform);
     shader->uniform("cam_position", camera.GetPosition());
     shadows.SetUniforms(*shader);
+    shader->uniform("blackout", blackout ? 1.f : 0.f);
   }
 
   auto ws = glob::window::GetWindowDimensions();
@@ -1453,7 +1457,7 @@ void Render() {
     // TODO: Sort all transparent triangles
     // maybe sort internally in modell and then and externally
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     model_shader.use();
     for (auto &[dist, render_items] : transparent_items) {
       for (auto &render_item : render_items) {

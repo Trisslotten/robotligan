@@ -34,7 +34,7 @@ void main() {
 	vec4 emission = texture(texture_emission, v_uv, 1);
 	float ao = texture(texture_ssao, v_uv).r;
 	if(use_ao) color*=ao;
-	color += emission.rgb*0.9;
+	color += 2.*emission.rgb;
 	
 	if (is_invisible == 1) {
 		vec3 effect = vec3(noise(gl_FragCoord.xy/100.0));

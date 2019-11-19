@@ -277,6 +277,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Assets\MapV3\Map_EnergyWall.mcfg" />
     <None Include="Assets\Map\Map_singular_TMP.mcfg" />
     <None Include="Assets\Mech\Mech.mcfg" />
     <None Include="Assets\Pickup\Pickup.mcfg" />

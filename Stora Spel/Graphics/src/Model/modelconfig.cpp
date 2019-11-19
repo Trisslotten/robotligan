@@ -106,6 +106,12 @@ ModelConfig::ModelConfig(const std::string& config_path) {
       words_[key] = value;
     } else if (type == "f") {
       floats_[key] = std::stof(value);
+    } else if (type == "b") {
+      if(value == "true"){
+        bools_[key] = true;
+      } else if(value == "false") {
+        bools_[key] = false;
+      }
     } else {
       std::cout << "WARNING: Unknown type '" << type << "' in model config: '"
                 << config_path << "'\n";
@@ -123,4 +129,8 @@ std::optional<std::string> ModelConfig::GetWord(const std::string& name) {
 
 std::optional<float> ModelConfig::GetFloat(const std::string& name) {
   return GetItem(floats_, name);
+}
+
+std::optional<bool> ModelConfig::GetBool(const std::string& name) {
+  return GetItem(bools_, name);
 }

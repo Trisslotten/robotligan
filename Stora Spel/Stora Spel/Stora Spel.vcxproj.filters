@@ -142,6 +142,7 @@
     <None Include="Assets\shaders\sky.vert" />
     <None Include="Assets\shaders\sky.frag" />
     <None Include="Assets\shaders\ssao.comp" />
+    <None Include="Assets\MapV3\Map_EnergyWall.mcfg" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />
