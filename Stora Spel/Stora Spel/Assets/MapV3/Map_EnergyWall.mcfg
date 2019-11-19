@@ -1,0 +1,6 @@
+
+
+w normal_map assets/materials/Scratched_painted_metal_01_1K_Normal.png
+f normal_map_scale 7.5
+
+b is_glass true

@@ -56,7 +56,7 @@ void Engine::Init() {
       animation_system_);
   dispatcher.sink<GameEvent>().connect<&PlayState::ReceiveGameEvent>(
       play_state_);
-  
+
   SetKeybinds();
 
   scores_.reserve(2);
@@ -105,7 +105,7 @@ void Engine::Init() {
   unsigned int length_sec =
       (unsigned int)GlobalSettings::Access()->ValueOf("REPLAY_LENGTH_SECONDS");
   unsigned int approximate_tickrate = 64;  // TODO: Replace with better
-                                            // approximation
+                                           // approximation
   this->replay_machine_ =
       new ClientReplayMachine(length_sec, approximate_tickrate);
   this->replay_machine_->SetEngine(this);
@@ -244,7 +244,7 @@ void Engine::UpdateNetwork() {
   for (auto const& [key, action] : keybinds_) {
     auto& presses = key_presses_[key];
     if (presses > 0) {
-      //play_state_.AddAction(action);
+      // play_state_.AddAction(action);
       actions.set(action, true);
     }
   }
@@ -287,7 +287,7 @@ void Engine::UpdateNetwork() {
     to_send << play_state_.GetYaw();
     to_send << PacketBlockType::INPUT;
   } else {
-    //play_state_.ClearActions();
+    // play_state_.ClearActions();
   }
   if (client_.IsConnected() && !to_send.IsEmpty()) {
     client_.Send(to_send);
@@ -671,16 +671,16 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> id;
 
       // If we are recording notify replay machine
-	  //before entity is gone
+      // before entity is gone
       if (this->recording_) {
         this->replay_machine_->NotifyDestroyedObject(
             id, *(this->registry_current_));
       }
 
-	  // Remove the entity
+      // Remove the entity
       play_state_.DestroyEntity(id);
 
-	  //Contemplate life
+      // Contemplate life
       break;
     }
     case PacketBlockType::GAME_END: {
@@ -963,6 +963,38 @@ void Engine::PlayReplay() {
     this->replay_machine_->ResetSelectedReplay();
 
     std::cout << "<Replay finished>" << std::endl;
+    return;
+  }
+
+  // Update replay camera
+  UpdateReplayCamera();
+}
+
+void Engine::UpdateReplayCamera() {
+  entt::basic_view camera_view =
+      this->registry_replay_->view<CameraComponent, TransformComponent>();
+  entt::basic_view target_view =
+      this->registry_replay_->view<TargetComponent, TransformComponent>();
+
+  for (entt::entity target : target_view) {
+    TargetComponent& target_c = registry_replay_->get<TargetComponent>(target);
+    TransformComponent& target_trans_c =
+        registry_replay_->get<TransformComponent>(target);
+
+    for (entt::entity camera : camera_view) {
+      CameraComponent& cam_c = registry_replay_->get<CameraComponent>(camera);
+      TransformComponent& cam_trans_c =
+          registry_replay_->get<TransformComponent>(camera);
+
+      // Create vector from camera to target
+      glm::vec3 temp_dir =
+          glm::normalize(target_trans_c.position - cam_trans_c.position);
+
+      auto quarter_turn = glm::quat(glm::vec3(0, glm::pi<float>() * 0.5f, 0));
+
+      cam_c.orientation =
+          glm::quatLookAt(temp_dir, glm::vec3(0, 1, 0)) * quarter_turn;
+    }
   }
 }
 

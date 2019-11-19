@@ -107,6 +107,11 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
       roughness_map_scale_ = *roughness_map_scale;
     }
 
+    auto is_glass = config.GetBool("is_glass");
+    if (is_glass) {
+      is_glass_ = *is_glass;
+    }
+
     material_ = materials::Get(wanted_textures);
   }
 
@@ -442,6 +447,7 @@ void Model::Draw(ShaderProgram& shader) {
   shader.uniform("metallic_map_scale", metallic_map_scale_);
   shader.uniform("roughness_map_scale", roughness_map_scale_);
   shader.uniform("num_diffuse_textures", num_diffuse_textures_);
+  shader.uniform("is_glass", is_glass_ ? 1 : 0);
   for (unsigned int i = 0; i < mesh_.size(); i++) {
     mesh_[i].Draw(shader);
   }
