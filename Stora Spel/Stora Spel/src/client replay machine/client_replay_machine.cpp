@@ -110,6 +110,10 @@ bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
 
   // NTS: Remember to save replays to file before deleting them
   if (load_result) {
+    GlobalSettings::Access()->WriteError(
+        "Remaining Replays", std::to_string(this->stored_replays_.size()) + "\n",
+        this->stored_replays_.at(0)->GetGeometricReplaySummary());
+
     this->stored_replays_.erase(this->stored_replays_.begin());
   }
 

@@ -63,6 +63,25 @@ class GeometricReplay {
     std::vector<ChannelEntry> entries;
     unsigned int index_a = 0;
     unsigned int index_b = 0;
+
+	//TEMP
+	unsigned int num = 0; 
+
+    void operator=(FrameChannel const& rhs) {
+      this->object_type = rhs.object_type;
+      this->object_id = rhs.object_id;
+
+      for (unsigned int i = 0; i < rhs.entries.size(); i++) {
+        ChannelEntry temp_ce = rhs.entries.at(i);
+        this->entries.push_back(temp_ce);
+      }
+
+	  this->index_a = rhs.index_a;
+      this->index_b = rhs.index_b;
+	
+	  // TEMP
+	  this->num = rhs.num;
+	}
   };
 
   struct CapturedGameEvent {
@@ -104,6 +123,9 @@ class GeometricReplay {
   unsigned int current_frame_number_write_ = 0;
   unsigned int current_frame_number_read_ = 0;
 
+  //TEMP
+  unsigned int next_num = 0;
+
   GeometricReplay();
 
  public:
@@ -129,6 +151,7 @@ class GeometricReplay {
 
   std::string GetGeometricReplayTree();
   std::string GetStateOfReplay();
+  std::string GetGeometricReplaySummary();
 
   void ReceiveGameEvent(GameEvent event);
   void SetEngine(Engine* eng) { engine_ = eng; }

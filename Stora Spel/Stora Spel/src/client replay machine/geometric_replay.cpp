@@ -7,6 +7,7 @@
 #include <ecs/components/ball_component.hpp>
 #include <ecs/components/model_component.hpp>
 #include <ecs/components/player_component.hpp>
+#include <engine.hpp>
 #include <entt.hpp>
 #include <glob/graphics.hpp>
 #include <map>
@@ -14,7 +15,6 @@
 #include <shared/transform_component.hpp>
 #include <util/asset_paths.hpp>
 #include <util/global_settings.hpp>
-#include <engine.hpp>
 #include "eventdispatcher.hpp"
 
 // Private---------------------------------------------------------------------
@@ -349,7 +349,7 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     AnimationComponent& anim_c = in_registry.assign<AnimationComponent>(
         entity, glob::GetAnimationData(mh_mech));
 
-	in_registry.assign<SoundComponent>(
+    in_registry.assign<SoundComponent>(
         entity, engine_->GetSoundEngine().CreatePlayer());
 
     pf_ptr->WriteBack(transform_c, player_c, phys_c);
@@ -486,6 +486,7 @@ GeometricReplay::GeometricReplay() {
   this->threshhold_age_ = 0;
   this->current_frame_number_write_ = 0;
   this->current_frame_number_read_ = 0;
+  this->engine_ = nullptr;
 }
 
 // Public----------------------------------------------------------------------
@@ -493,9 +494,9 @@ GeometricReplay::GeometricReplay() {
 GeometricReplay::GeometricReplay(unsigned int in_replay_length_sec,
                                  unsigned int in_frames_per_sec) {
   this->threshhold_age_ = in_replay_length_sec * in_frames_per_sec;
-
   this->current_frame_number_write_ = 0;
   this->current_frame_number_read_ = 0;
+  this->engine_ = nullptr;
 }
 
 GeometricReplay::~GeometricReplay() {}
@@ -503,13 +504,22 @@ GeometricReplay::~GeometricReplay() {}
 GeometricReplay* GeometricReplay::Clone() {
   GeometricReplay* clone = new GeometricReplay();
 
-  clone->channels_ = std::vector<FrameChannel>(this->channels_);
+  // clone->channels_ = std::vector<FrameChannel>(this->channels_);
   // NTS: According to the internet the above should produce a deep copy
+  // Fock it
+  for (unsigned int i = 0; i < this->channels_.size(); i++) {
+    FrameChannel temp_fc = this->channels_.at(i);
+    clone->channels_.push_back(temp_fc);
+  }
+
   clone->threshhold_age_ = this->threshhold_age_;
   clone->current_frame_number_write_ = this->current_frame_number_write_;
   clone->current_frame_number_read_ = this->current_frame_number_read_;
   clone->captured_events_ = this->captured_events_;
-  clone->engine_ = this->engine_; 
+  clone->engine_ = this->engine_;
+
+  // TEMP
+  clone->next_num = this->next_num;
 
   return clone;
 }
@@ -555,6 +565,10 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
       temp_fc.object_type = this->IdentifyEntity(entity, in_registry);
       temp_fc.object_id = id_c.id;
       temp_fc.entries.push_back(temp_ce);
+
+      // TEMP
+      temp_fc.num = next_num;
+      next_num++;
 
       this->channels_.push_back(temp_fc);
     }
@@ -646,7 +660,7 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
     while (captured_events_[next_index_to_read_].frame_number ==
            current_frame_number_read_) {
       dispatcher.trigger(captured_events_[next_index_to_read_].event);
-      //printf("Triggered event of type: %i \n",
+      // printf("Triggered event of type: %i \n",
       //       captured_events_[next_index_to_read_].event.type);
       next_index_to_read_++;
     }
@@ -794,6 +808,63 @@ std::string GeometricReplay::GetStateOfReplay() {
   ret_str += std::to_string(start_frame);
   ret_str += "  [" + std::to_string(this->current_frame_number_read_) + "]  ";
   ret_str += std::to_string(this->current_frame_number_write_);
+
+  return ret_str;
+}
+
+std::string GeometricReplay::GetGeometricReplaySummary() {
+  std::string ret_str = "";
+
+  // Number of Channels
+  ret_str += "\tNumber of Channels: " + std::to_string(this->channels_.size()) +
+             "\n\t---\n";
+
+  // Oldest and newest frame in entire geometric replay
+  unsigned int oldest_entry_frame_number =
+      this->channels_.at(0).entries.at(0).frame_number;
+  unsigned int newest_entry_frame_number =
+      this->channels_.at(0).entries.back().frame_number;
+  for (unsigned int i = 1; i < this->channels_.size(); i++) {
+    // lower number = older
+    unsigned int a = this->channels_.at(i).entries.at(0).frame_number;
+    if (oldest_entry_frame_number < a) {
+      oldest_entry_frame_number = a;
+    }
+    // higher number = younger
+    unsigned int b = this->channels_.at(i).entries.back().frame_number;
+    if (newest_entry_frame_number < b) {
+      newest_entry_frame_number = b;
+    }
+  }
+  ret_str += "\tOldest Entry [" + std::to_string(oldest_entry_frame_number) +
+             "] age: " +
+             std::to_string(this->current_frame_number_write_ -
+                            oldest_entry_frame_number) +
+             "\n";
+  ret_str += "\tNewest Entry [" + std::to_string(newest_entry_frame_number) +
+             "] age: " +
+             std::to_string(this->current_frame_number_write_ -
+                            newest_entry_frame_number) +
+             "\n\t---\n";
+
+  // Span
+  ret_str += "\tThreshold: " + std::to_string(this->threshhold_age_) +
+             "\t(should hold about " +
+             std::to_string(
+                 GlobalSettings::Access()->ValueOf("REPLAY_LENGTH_SECONDS")) +
+             " seconds)\n";
+  ret_str +=
+      "\tReplay age span: " +
+      std::to_string(newest_entry_frame_number - oldest_entry_frame_number) +
+      "\n";
+
+  // Frame channel numbers
+  ret_str += "\tFrame channels in replay:\n";
+  for (unsigned int i = 0; i < this->channels_.size(); i++) {
+    ret_str += "\t\t#" + std::to_string(this->channels_.at(i).num) +
+               " - EntId:" + std::to_string(this->channels_.at(i).object_id) +
+               "\n";
+  }
 
   return ret_str;
 }
