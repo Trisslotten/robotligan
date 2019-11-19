@@ -27,6 +27,7 @@ struct GUIItem {
   float scale;
   float scale_x;
   float opacity;
+  float rot;
 };
 
 struct E2DItem {

@@ -131,7 +131,7 @@ EXPORT void Submit(Font2DHandle font_h, glm::vec3 pos, float size,
                    glm::mat4 rot = glm::mat4(1.0f));
 
 EXPORT void Submit(GUIHandle gui_h, glm::vec2 pos, float scale,
-                   float scale_x = 100.0f, float opacity = 1.0f);
+                   float scale_x = 100.0f, float opacity = 1.0f, float rot = 0.0f);
 EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale,
                    float rotDegrees, glm::vec3 rotAxis);
 

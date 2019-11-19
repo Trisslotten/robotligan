@@ -1214,7 +1214,7 @@ void ReloadShaders() {
 }
 
 void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x,
-            float opacity) {
+            float opacity, float rot) {
   auto find_res = gui_elements.find(gui_h);
   if (find_res == gui_elements.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted gui element\n";
@@ -1227,6 +1227,7 @@ void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x,
   to_render.scale = scale;
   to_render.scale_x = scale_x;
   to_render.opacity = opacity;
+  to_render.rot = rot;
   gui_items_to_render.push_back(to_render);
 }
 
@@ -1540,7 +1541,7 @@ void Render() {
   gui_shader.use();
   for (auto &gui_item : gui_items_to_render) {
     gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale,
-                               gui_item.scale_x, gui_item.opacity);
+                               gui_item.scale_x, gui_item.opacity, gui_item.rot);
   }
   // glBindTexture(GL_TEXTURE_2D, 0);
 
