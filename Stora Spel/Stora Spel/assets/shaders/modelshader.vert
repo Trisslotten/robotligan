@@ -23,7 +23,7 @@ void main() {
 	mat4 transform = model_transform * mesh_transform;
 	frag_pos = (transform * vec4(pos, 1.0)).xyz;
 	v_tex = tex;
-	v_normal = normalize(transpose(inverse(mat3(transform))) * normal);;
+	v_normal = normalize(transpose(inverse(mat3(transform))) * normal);
 
 	
 	local_pos = pos;
