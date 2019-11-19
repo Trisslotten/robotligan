@@ -970,7 +970,7 @@ void PlayState::Collision() {
       registry_gameplay_.get<physics::MeshHitbox>(arena_entity_);
   auto& arena_hitbox2 =
       registry_gameplay_.get<FailSafeArenaComponent>(arena_entity_);
-  //collision with arena
+  // collision with arena
   physics::IntersectData data =
       Intersect(arena_hitbox, my_obb, -my_phys_c.velocity);
   if (data.collision) {
@@ -1028,7 +1028,7 @@ void PlayState::Collision() {
       server_predicted_.velocity.y = 0.f;
     }
   }
-  //collision with player
+  // collision with player
   auto view_player =
       registry_gameplay_.view<PlayerComponent, physics::OBB, IDComponent>();
   for (auto player : view_player) {
@@ -1042,9 +1042,9 @@ void PlayState::Collision() {
           my_phys_c.velocity.y = 0.0f;
           predicted_state_.velocity.y = 0.f;
           server_predicted_.velocity.y = 0.f;
-		}
-	  }
-	}
+        }
+      }
+    }
   }
   // update positions
   auto view_sphere =
@@ -1177,18 +1177,15 @@ void PlayState::DrawMiniMap() {
       if (id_c.id == my_id_) {
         glob::Submit(gui_minimap_player_me_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
-                     std::atan2(player_c.look_dir.z,
-                                player_c.look_dir.x));
+                     std::atan2(player_c.look_dir.z, player_c.look_dir.x));
       } else if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
         glob::Submit(gui_minimap_player_red_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
-                     std::atan2(player_c.look_dir.z,
-                                player_c.look_dir.x));
+                     std::atan2(player_c.look_dir.z, player_c.look_dir.x));
       } else {
         glob::Submit(gui_minimap_player_blue_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
-                     std::atan2(player_c.look_dir.z,
-                                player_c.look_dir.x));
+                     std::atan2(player_c.look_dir.z, player_c.look_dir.x));
       }
     }
     // Draw Ball icon from red perspective
@@ -1249,21 +1246,15 @@ void PlayState::DrawMiniMap() {
       if (id_c.id == my_id_) {
         glob::Submit(gui_minimap_player_me_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
-                     std::atan2(player_c.look_dir.z,
-                                player_c.look_dir.x) +
-                         pi);
+                     std::atan2(player_c.look_dir.z, player_c.look_dir.x) + pi);
       } else if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
         glob::Submit(gui_minimap_player_red_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
-                     std::atan2(player_c.look_dir.z,
-                                player_c.look_dir.x) +
-                         pi);
+                     std::atan2(player_c.look_dir.z, player_c.look_dir.x) + pi);
       } else {
         glob::Submit(gui_minimap_player_blue_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
-                     std::atan2(player_c.look_dir.z,
-                                player_c.look_dir.x) +
-                         pi);
+                     std::atan2(player_c.look_dir.z, player_c.look_dir.x) + pi);
       }
     }
     // Draw Ball icon from blue perspective
@@ -1339,25 +1330,27 @@ void PlayState::CreatePlayerEntities() {
 
     auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
 
+    character_scale = glm::vec3(0.1f);
+    float coeff_x_side = (11.223f - (-0.205f));
+    float coeff_y_side = (8.159f - (-10.316f));
+    float coeff_z_side = (10.206f - (-1.196f));
+
+    registry_gameplay_.assign<physics::OBB>(
+        entity,
+        alter_scale * character_scale,            // Center
+        glm::vec3(1.f, 0.f, 0.f),                 //
+        glm::vec3(0.f, 1.f, 0.f),                 // Normals
+        glm::vec3(0.f, 0.f, 1.f),                 //
+        coeff_x_side * character_scale.x * 0.4f,  //
+        coeff_y_side * character_scale.y * 0.5f,  // Length of each plane
+        coeff_z_side * character_scale.z * 0.7f   //
+    );
+
     if (entity_id == my_id_) {
       glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
                                                  glm::quat(glm::vec3(0.f)));
-      character_scale = glm::vec3(0.1f);
-      float coeff_x_side = (11.223f - (-0.205f));
-      float coeff_y_side = (8.159f - (-10.316f));
-      float coeff_z_side = (10.206f - (-1.196f));
 
-      registry_gameplay_.assign<physics::OBB>(
-          entity,
-          alter_scale * character_scale,            // Center
-          glm::vec3(1.f, 0.f, 0.f),                 //
-          glm::vec3(0.f, 1.f, 0.f),                 // Normals
-          glm::vec3(0.f, 0.f, 1.f),                 //
-          coeff_x_side * character_scale.x * 0.4f,  //
-          coeff_y_side * character_scale.y * 0.5f,  // Length of each plane
-          coeff_z_side * character_scale.z * 0.7f   //
-      );
       model_c.handles.push_back(FPS_model);
       model_c.cast_shadow = false;
 
