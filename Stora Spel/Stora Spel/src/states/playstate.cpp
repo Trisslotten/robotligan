@@ -13,6 +13,7 @@
 #include "shared/transform_component.hpp"
 
 #include <collision.hpp>
+#include <ecs\components\skylight_component.hpp>
 #include <ecs\components\trail_component.hpp>
 #include <physics.hpp>
 #include <shared/fail_safe_arena.hpp>
@@ -1309,19 +1310,27 @@ void PlayState::CreateArenaEntity() {
     int x = 1;
     int y = 1;
     for (int i = 0; i < 4; i++) {
-      auto entity = registry_gameplay_.create();
-      auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
-      model_c.handles.push_back(batman_light);
+      {
+        auto entity = registry_gameplay_.create();
+        auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
+        model_c.handles.push_back(batman_light);
 
-      glm::vec3 pos = glm::vec3(-80 * x, 0, 80 * y);
+        glm::vec3 pos = glm::vec3(-50 * x, 0, 85 * y);
+        registry_gameplay_.assign<TransformComponent>(entity, pos, glm::vec3(),
+                                                      glm::vec3(150, 1, 5));
+        registry_gameplay_.assign<SkyLightComponent>(entity);
+      }
+      {
+        auto entity = registry_gameplay_.create();
+        auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
+        model_c.handles.push_back(batman_light);
 
-      glm::quat rotation =
-          glm::quatLookAt(glm::normalize(-pos), glm::vec3(0, 1, 0)) *
-          glm::quat(glm::vec3(0, 3.1415 / 2., 0)) *
-                    glm::quat(glm::vec3(0, 0, -3.1415 / 2));
+        glm::vec3 pos = glm::vec3(-95 * x, 0, 50 * y);
+        registry_gameplay_.assign<TransformComponent>(entity, pos, glm::vec3(),
+                                                      glm::vec3(150, 1, 5));
+        registry_gameplay_.assign<SkyLightComponent>(entity);
+      }
 
-      registry_gameplay_.assign<TransformComponent>(entity, pos, rotation,
-                                                    glm::vec3(150, 1, 5));
       std::swap(x, y);
       y *= -1;
     }
