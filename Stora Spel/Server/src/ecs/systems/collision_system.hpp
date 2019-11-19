@@ -208,14 +208,6 @@ void HandleBallCollisions(entt::registry& registry, const CollisionList& list,
     if (object.tag ==
         PLAYER) {  // the only object colliding with the ball is a player
       PlayerBallCollision(registry, object, list.entity, arena);
-
-      // save game event
-      if (registry.has<IDComponent>(list.entity)) {
-        GameEvent nudge_event;
-        nudge_event.type = GameEvent::NUDGE;
-        nudge_event.nudge.ball_id = registry.get<IDComponent>(list.entity).id;
-        dispatcher.trigger(nudge_event);
-      }
     } else if (object.tag ==
                ARENA) {  // the only object colliding with the ball is the arena
       BallArenaCollision(registry, object, list.entity);
@@ -235,7 +227,7 @@ void HandleBallCollisions(entt::registry& registry, const CollisionList& list,
         health.health -= 10;
       }
     }
-  } else {
+  } else if (list.collision_list.size() > 1) {
     HandleMultiBallCollision(registry, list, arena);
   }
   auto& ball_ball_c = registry.get<BallComponent>(list.entity);
@@ -293,7 +285,7 @@ void PlayerBallCollision(entt::registry& registry,
   auto& ball_physics = registry.get<PhysicsComponent>(ball);
   auto& ball_hitbox = registry.get<physics::Sphere>(ball);
   auto& ball_ball = registry.get<BallComponent>(ball);
-
+  
   auto& player_physics = registry.get<PhysicsComponent>(object.entity);
   unsigned int player_team = TEAM_RED;
   if (registry.has<TeamComponent>(object.entity)) {
@@ -316,6 +308,16 @@ void PlayerBallCollision(entt::registry& registry,
     if (ball_ball.is_super_striked) {
       player_physics.velocity = ball_physics.velocity * 0.5f;
       player_physics.is_airborne = true;
+    }
+  }
+
+  if (ball_physics.velocity.y >= 0 || ball_physics.velocity.y < -1.f/128*9.82*6.f) {
+    // save game event
+    if (registry.has<IDComponent>(ball)) {
+      GameEvent nudge_event;
+      nudge_event.type = GameEvent::NUDGE;
+      nudge_event.nudge.ball_id = registry.get<IDComponent>(ball).id;
+      dispatcher.trigger(nudge_event);
     }
   }
 
@@ -357,39 +359,6 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
 
   bool bounced = false;
 
-  // if (object.normal.x) {
-  //  glm::vec3 temp_normal =
-  //      glm::normalize(glm::vec3(object.normal.x, 0.f, 0.f));
-  //  float dot_val = glm::dot(ball_physics.velocity, temp_normal);
-  //  if (dot_val < 0.f) {
-  //    ball_physics.velocity =
-  //      ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
-  //    bounced = true;
-  //  }
-  //}
-  //
-  // if (object.normal.y) {
-  //  glm::vec3 temp_normal =
-  //      glm::normalize(glm::vec3(0.f, object.normal.y, 0.f));
-  //  float dot_val = glm::dot(ball_physics.velocity, temp_normal);
-  //  if (dot_val < 0.f) {
-  //    ball_physics.velocity =
-  //      ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
-  //    bounced = true;
-  //  }
-  //}
-  //
-  // if (object.normal.z) {
-  //  glm::vec3 temp_normal =
-  //      glm::normalize(glm::vec3(0.f, 0.f, object.normal.z));
-  //  float dot_val = glm::dot(ball_physics.velocity, temp_normal);
-  //  if (dot_val < 0.f) {
-  //    ball_physics.velocity =
-  //      ball_physics.velocity - temp_normal * dot_val * 0.8f * 2.f;
-  //    bounced = true;
-  //  }
-  //}
-
   float dot_val = glm::dot(object.normal, ball_physics.velocity);
   if (dot_val < 0.f) {
     ball_physics.velocity =
@@ -407,6 +376,7 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
       ball_physics.velocity.y = 0.f;
       ball_physics.is_airborne = false;
       ball_c.rotation = glm::quat();
+      bounced = false;
     }
   }
 
