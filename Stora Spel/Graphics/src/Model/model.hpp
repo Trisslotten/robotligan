@@ -43,12 +43,13 @@ class Model {
   bool use_gl_ = true;
   bool is_emissive_ = false;
   bool is_transparent_ = false;
+  bool is_glass_ = false;
 
   int num_diffuse_textures_ = 1;
 
   Material material_;
   float normal_map_scale_ = 1.f;
-  float metallic_map_scale_= 1.f;
+  float metallic_map_scale_ = 1.f;
   float roughness_map_scale_ = 1.f;
 
  public:
@@ -74,6 +75,7 @@ class Model {
   bool IsEmissive() { return is_emissive_; }
   void SetTransparent(bool is_transparent) { is_transparent_ = is_transparent; }
   bool IsTransparent() { return is_transparent_; }
+  bool IsGlass() { return is_glass_; }
 };
 
 }  // namespace glob

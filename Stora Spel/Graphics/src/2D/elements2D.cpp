@@ -65,18 +65,7 @@ void glob::Elements2D::DrawOnScreen(ShaderProgram& shader, glm::vec2 pos,
   shader.uniform("texture_dims", glm::vec2(texture_width_, texture_height_));
   shader.uniform("gui_element_texture", 0);
 
-  glDisable(GL_CULL_FACE);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glDepthFunc(GL_ALWAYS);
-
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-  glDepthFunc(GL_LESS);
-  glDisable(GL_BLEND);
-  glEnable(GL_CULL_FACE);
-
-  glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void glob::Elements2D::DrawInWorld(ShaderProgram& shader, glm::vec3 pos,
@@ -90,12 +79,5 @@ void glob::Elements2D::DrawInWorld(ShaderProgram& shader, glm::vec3 pos,
   shader.uniform("texture_dims", glm::vec2(texture_width_, texture_height_));
   shader.uniform("gui_element_texture", 0);
 
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-  glDisable(GL_BLEND);
-
-  glBindTexture(GL_TEXTURE_2D, 0);
 }

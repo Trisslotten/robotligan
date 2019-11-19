@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include "../usegl.hpp"
+#include <textureslots.hpp>
 
 namespace glob {
 
@@ -92,6 +93,9 @@ void Mesh::Draw(ShaderProgram& shader) {
   for (auto& texture : textures_) {
     glActiveTexture(GL_TEXTURE0 + texture.slot);
     glBindTexture(GL_TEXTURE_2D, texture.id_texture);
+    if(texture.slot == TEXTURE_SLOT_EMISSIVE) {
+      shader.uniform("use_emissive", 1);
+    }
     shader.uniform(texture.type, texture.slot);
   }
 

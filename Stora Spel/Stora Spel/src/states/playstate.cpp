@@ -62,7 +62,7 @@ void PlayState::Startup() {
   gui_minimap_player_blue_ =
       glob::GetGUIItem("assets/GUI_elements/player_blue_icon.png");
   gui_minimap_ball_ = glob::GetGUIItem("assets/GUI_elements/BALL_V3.png");
-  gui_crosshair_ = glob::GetGUIItem("assets/GUI_elements/Crosshair_V1.png");
+  gui_crosshair_ = glob::GetGUIItem("assets/GUI_elements/Crosshair_V2.png");
 
   int num_abilities = (int)AbilityID::NUM_OF_ABILITY_IDS;
   ability_handles_.resize(num_abilities);
@@ -256,11 +256,14 @@ void PlayState::Update(float dt) {
       glm::quat orientation =
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
-      cam_c.orientation = orientation;
-      trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
 
-      // FPS Model rotations
-      mc.rot_offset = orientation - glm::quat(glm::vec3(0.f, yaw_, 0.f));
+	  if (!show_in_game_menu_buttons_) {
+        cam_c.orientation = orientation;
+        trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
+        // FPS Model rotations
+        mc.rot_offset = orientation - glm::quat(glm::vec3(0.f, yaw_, 0.f));
+	  }
+      
 
       // rotate model offset as well, this does not want to work...
       /*glm::mat4 translateMat = glm::translate(glm::mat4(1.f), cam_c.offset);
@@ -336,7 +339,7 @@ void PlayState::Update(float dt) {
     // draw crosshair
     glm::vec2 crosshair_pos = glob::window::GetWindowDimensions();
     crosshair_pos /= 2;
-    glob::Submit(gui_crosshair_, crosshair_pos - glm::vec2(19, 20), 1.f);
+    glob::Submit(gui_crosshair_, crosshair_pos - glm::vec2(12, 12), 1.f);
 
     // draw mini map
     DrawMiniMap();
@@ -1335,6 +1338,7 @@ void PlayState::CreatePlayerEntities() {
           coeff_z_side * character_scale.z * 0.7f   //
       );
       model_c.handles.push_back(FPS_model);
+      model_c.cast_shadow = false;
 
       registry_gameplay_.assign<AnimationComponent>(
           entity, glob::GetAnimationData(FPS_model));
@@ -1378,6 +1382,7 @@ void PlayState::CreateArenaEntity() {
   model_c.handles.push_back(model_arena);
   model_c.handles.push_back(model_arena_banner);
   model_c.handles.push_back(model_map_projectors);
+  model_c.cast_shadow = false;
 
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                 arena_scale);
@@ -1402,9 +1407,9 @@ void PlayState::CreateMapEntity() {
 
   auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
   model_c.handles.push_back(model_map_walls);
-
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                 arena_scale);
+
   // Prepare hard-coded values
   // Scale on the hitbox for the map
   float v1 = 6.8f * arena_scale.z;
@@ -1650,7 +1655,7 @@ void PlayState::AddPlayer() {
                                               sound_engine.CreatePlayer());
 
     if (entity_id == my_id_) {
-      glm::vec3 camera_offset = glm::vec3(0.5f, 0.7f, 0.f);
+      glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
                                                  glm::quat(glm::vec3(0.f)));
       character_scale = glm::vec3(0.1f);
