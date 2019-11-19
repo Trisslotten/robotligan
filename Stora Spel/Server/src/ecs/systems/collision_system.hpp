@@ -990,13 +990,17 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
       GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_RADIUS");
   glm::vec3 dir = entity_pos - force_push.center;
   float length = glm::length(dir);
+  std::cout << "FORCEPUSH Length: " << length; 
   if (length < force_push.radius) {
     physics_c.is_airborne = true;
     float force =
         GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_STRENGTH");
+    dir = glm::normalize(dir);
     physics_c.velocity =
         dir * force * (force_push.radius - length) / force_push.radius;
+    std::cout << " Velocity: " << physics_c.velocity;
   }
+  std::cout << std::endl;
 }
 
 void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
