@@ -1059,8 +1059,8 @@ void Submit(ModelHandle model_h, glm::mat4 transform, int material_index,
   }
 
   const glm::mat4 pre_rotation =
-      glm::rotate(glm::pi<float>() / 2.f, glm::vec3(0, 1, 0)) *
-      glm::rotate(-glm::pi<float>() / 2.f, glm::vec3(1, 0, 0));
+      glm::rotate(glm::pi<float>() / 2.f, glm::vec3(0, 1, 0));// *
+      //glm::rotate(-glm::pi<float>() / 2.f, glm::vec3(1, 0, 0));
 
   RenderItem to_render;
   to_render.model = &find_res->second;

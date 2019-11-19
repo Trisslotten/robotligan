@@ -1426,10 +1426,11 @@ void PlayState::CreateMapEntity() {
   glob::ModelHandle model_map_walls =
       glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
 
+  glm::vec3 map_wall_scale = glm::vec3(1) * arena_scale_;
   auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
   model_c.handles.push_back(model_map_walls);
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
-                                                arena_scale);
+                                                map_wall_scale);
 
   // Prepare hard-coded values
   // Scale on the hitbox for the map

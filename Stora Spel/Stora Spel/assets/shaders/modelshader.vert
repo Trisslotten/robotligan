@@ -13,15 +13,18 @@ out vec3 v_normal;
 
 uniform mat4 cam_transform;
 uniform mat4 model_transform;
+uniform mat4 mesh_transform;
 uniform mat3 normal_transform;
 
 // shading.vert
 void handleShading(vec3 position);
 
 void main() {
-	frag_pos = (model_transform * vec4(pos, 1.0)).xyz;
+	mat4 transform = model_transform * mesh_transform;
+	frag_pos = (transform * vec4(pos, 1.0)).xyz;
 	v_tex = tex;
-	v_normal = normalize(normal_transform*normal);
+	v_normal = normalize(transpose(inverse(mat3(transform))) * normal);
+
 	
 	local_pos = pos;
 	local_normal = normal;
