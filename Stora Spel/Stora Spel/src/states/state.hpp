@@ -208,6 +208,8 @@ class SettingsState : public State {
 /////////////////////// PLAY ///////////////////////
 
 class PlayState : public State {
+  enum JumbotronEffect { TEAM_SCORES, MATCH_TIME, BEST_PLAYER, GOAL_SCORED, NUM_EFFECTS };
+
  public:
   void Startup() override;
   void Init() override;
@@ -282,6 +284,7 @@ class PlayState : public State {
   void CreateMapEntity();
   void CreateBallEntity();
   void CreateSpotlights();
+  void CreateJumbotron();
   void ParticleComponentDestroyed(entt::entity e, entt::registry& registry);
   void CreateInGameMenu();
   void AddPlayer();
@@ -299,11 +302,15 @@ class PlayState : public State {
   void DrawTarget();
   void DrawQuickslots();
   void DrawMiniMap();
+  void DrawJumbotronText();
+
   FrameState SimulateMovement(std::vector<int>& action, FrameState& state,
                               float dt);
   void MovePlayer(float dt);
   void MoveBall(float dt);
   void Collision();
+  
+  unsigned long GetBestPlayer();
 
   EntityID ClientIDToEntityID(long client_id);
   ////////////////////////////////////////
@@ -368,6 +375,10 @@ class PlayState : public State {
   float primary_cd_ = 0.0f;
 
   bool sprinting_ = false;
+
+  int current_jumbo_effect_ = TEAM_SCORES;
+  Timer jumbo_effect_timer_;
+  float jumbo_effect_time_ = 5.0f;
 };
 
 #endif  // STATE_HPP_
