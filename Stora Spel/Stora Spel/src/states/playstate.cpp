@@ -255,13 +255,12 @@ void PlayState::Update(float dt) {
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
 
-	  if (!show_in_game_menu_buttons_) {
+      if (!show_in_game_menu_buttons_) {
         cam_c.orientation = orientation;
         trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
         // FPS Model rotations
         mc.rot_offset = orientation - glm::quat(glm::vec3(0.f, yaw_, 0.f));
-	  }
-      
+      }
 
       // rotate model offset as well, this does not want to work...
       /*glm::mat4 translateMat = glm::translate(glm::mat4(1.f), cam_c.offset);
@@ -323,7 +322,8 @@ void PlayState::Update(float dt) {
   }
 
   // --- dont display during replay ---
-  // TODO: Remove if-statement and just dont draw GUI in replay state when it's implemented
+  // TODO: Remove if-statement and just dont draw GUI in replay state when it's
+  // implemented
   if (!engine_->IsReplaying()) {
     // draw quickslots
     DrawQuickslots();
@@ -462,11 +462,21 @@ void PlayState::Update(float dt) {
       engine_->ChangeState(StateType::LOBBY);
     }
   }
-  
+
   DrawTopScores();
   DrawTarget();
+  DrawStunTimer();
 
   glob::Submit(test_ball_, glm::mat4());
+
+  if (stun_timer_.Elapsed() >= my_stun_time_) {
+    im_stunned_ = false;
+    if (registry_gameplay_.has<ModelComponent>(my_entity_)) {
+      registry_gameplay_.get<ModelComponent>(my_entity_).emission_strength =
+          1.0f;
+    }
+    stun_timer_.Pause();
+  }
 }
 
 void PlayState::UpdateNetwork() {
@@ -1176,6 +1186,17 @@ void PlayState::DrawQuickslots() {
   }
 }
 
+void PlayState::DrawStunTimer() {
+  if (im_stunned_ && stun_timer_.Elapsed() > 0.2f) {
+    float strength = stun_timer_.Elapsed() / my_stun_time_;
+
+    if (registry_gameplay_.has<ModelComponent>(my_entity_)) {
+      registry_gameplay_.get<ModelComponent>(my_entity_).emission_strength =
+          strength;
+    }
+  }
+}
+
 void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,
                                    glm::quat orientation) {
   transforms_[player_id] = std::make_pair(pos, orientation);
@@ -1226,7 +1247,7 @@ void PlayState::CreatePlayerEntities() {
     registry_gameplay_.assign<SoundComponent>(entity,
                                               sound_engine.CreatePlayer());
 
-	auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
+    auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
 
     if (entity_id == my_id_) {
       glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
@@ -1262,7 +1283,7 @@ void PlayState::CreatePlayerEntities() {
           entity, glob::GetAnimationData(player_model));
     }
 
-	model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
+    model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
 
     if (engine_->GetPlayerTeam(entity_id) == TEAM_BLUE) {
       model_c.diffuse_index = 1;
@@ -1431,7 +1452,8 @@ void PlayState::CreateSpotlights() {
   }
 }
 
-void PlayState::ParticleComponentDestroyed(entt::entity e, entt::registry& registry) {
+void PlayState::ParticleComponentDestroyed(entt::entity e,
+                                           entt::registry& registry) {
   auto& pc = registry.get<ParticleComponent>(e);
   for (int i = 0; i < pc.handles.size(); ++i) {
     glob::DestroyParticleSystem(pc.handles[i]);
@@ -2114,6 +2136,18 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       sprinting_ = false;
       break;
     }
+    case GameEvent::PLAYER_STUNNED: {
+      if (my_id_ == e.player_stunned.player_id) {
+        im_stunned_ = true;
+        my_stun_time_ = e.player_stunned.stun_time;
+        stun_timer_.Restart();
+        if (registry_gameplay_.has<ModelComponent>(my_entity_)) {
+          registry_gameplay_.get<ModelComponent>(my_entity_).emission_strength =
+              0.0f;
+        }
+      }
+      break;
+    }
   }
 }
 
@@ -2207,8 +2241,8 @@ void PlayState::FetchMapAndArena(entt::registry& in_registry) {
       in_registry.assign<ModelComponent>(arena_floor);
   floor_model_c.handles.push_back(model_map);
   floor_model_c.handles.push_back(model_map_floor);
-  TransformComponent& trans_c = in_registry.assign<TransformComponent>(arena_floor, zero_vec, zero_vec,
-                                         arena_scale);
+  TransformComponent& trans_c = in_registry.assign<TransformComponent>(
+      arena_floor, zero_vec, zero_vec, arena_scale);
 
   if (goals_swapped_) {
     trans_c.rotation *= glm::quat(glm::vec3(0.f, glm::pi<float>(), 0.f));

@@ -788,6 +788,7 @@ void ServerPlayState::ResetEntities() {
     player_component.pitch = 0.f;
     player_component.yaw = orientation_value;
     player_component.can_jump = false;
+    player_component.stunned = false;
     physics_component.velocity = glm::vec3(0.0f);
     physics_component.is_airborne = true;
 

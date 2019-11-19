@@ -44,7 +44,7 @@ void Update(entt::registry& registry, float dt) {
     cam_c.orientation = glm::normalize(cam_c.orientation);
     trans_c.SetRotation(glm::vec3(0, player_c.yaw, 0));
 
-    if (player_c.actions[PlayerAction::SHOOT]) {
+    if (player_c.actions[PlayerAction::SHOOT] && !player_c.stunned) {
       GameEvent shoot_event;
       shoot_event.type = GameEvent::SHOOT;
       shoot_event.shoot.player_id = registry.get<IDComponent>(entity).id;
@@ -80,7 +80,8 @@ void Update(entt::registry& registry, float dt) {
     glm::vec3 up(0, 1, 0);
     glm::vec3 right = glm::normalize(glm::cross(frwd, up));
 
-    if (true) {  // abs(accum_velocity.length()) < player_c.walkspeed * 4) {
+    if (!player_c.stunned) {  // abs(accum_velocity.length()) <
+                              // player_c.walkspeed * 4) {
       if (player_c.actions[PlayerAction::WALK_FORWARD] ||
           player_c.actions[PlayerAction::WALK_BACKWARD] ||
           player_c.actions[PlayerAction::WALK_RIGHT] ||
@@ -117,7 +118,8 @@ void Update(entt::registry& registry, float dt) {
       }
 
       if (player_c.actions[PlayerAction::SPRINT]) {
-        if (!player_c.sprinting && player_c.energy_current > player_c.energy_min_sprint) {
+        if (!player_c.sprinting &&
+            player_c.energy_current > player_c.energy_min_sprint) {
           player_c.sprinting = true;
 
           GameEvent sprint_event;
@@ -134,7 +136,8 @@ void Update(entt::registry& registry, float dt) {
         }
       }
       if ((!player_c.actions[PlayerAction::SPRINT] ||
-           player_c.energy_current <= 0.1f) && player_c.sprinting) {
+           player_c.energy_current <= 0.1f) &&
+          player_c.sprinting) {
         player_c.sprinting = false;
 
         GameEvent sprint_event;
@@ -186,21 +189,24 @@ void Update(entt::registry& registry, float dt) {
     // if (cur_move_speed > 0.f) {
     // movement "floatiness", lower value = less floaty
     float t = 0.0005f;
-    physics_c.velocity.x =
-        glm::mix(physics_c.velocity.x, final_velocity.x, 1.f - glm::pow(t, dt));
-    physics_c.velocity.z =
-        glm::mix(physics_c.velocity.z, final_velocity.z, 1.f - glm::pow(t, dt));
-    //}
-    physics_c.velocity.y = final_velocity.y;
+    if (!player_c.stunned || (player_c.stunned && !physics_c.is_airborne)) {
+      physics_c.velocity.x = glm::mix(physics_c.velocity.x, final_velocity.x,
+                                      1.f - glm::pow(t, dt));
+      physics_c.velocity.z = glm::mix(physics_c.velocity.z, final_velocity.z,
+                                      1.f - glm::pow(t, dt));
+
+      physics_c.velocity.y = final_velocity.y;
+    }
 
     // physics stuff, absolute atm, may need to change. Other
     // systems may affect velocity. velocity of player object.
 
     // Ability buttons
-    if (player_c.actions[PlayerAction::ABILITY_PRIMARY]) {
+    if (player_c.actions[PlayerAction::ABILITY_PRIMARY] && !player_c.stunned) {
       ability_c.use_primary = true;
     }
-    if (player_c.actions[PlayerAction::ABILITY_SECONDARY]) {
+    if (player_c.actions[PlayerAction::ABILITY_SECONDARY] &&
+        !player_c.stunned) {
       ability_c.use_secondary = true;
     }
 
@@ -211,7 +217,8 @@ void Update(entt::registry& registry, float dt) {
 
     // kick ball
     if (player_c.actions[PlayerAction::KICK] &&
-        player_c.kick_timer.Elapsed() > player_c.kick_cooldown) {
+        player_c.kick_timer.Elapsed() > player_c.kick_cooldown &&
+        !player_c.stunned) {
       player_c.kick_timer.Restart();
       GameEvent kick_event;
       kick_event.type = GameEvent::KICK;
@@ -295,6 +302,10 @@ void Update(entt::registry& registry, float dt) {
     */
     // cam_c.cam->SetPosition(trans_c.position + glm::rotate(cam_c.offset,
     // glm::angle(trans_c.rotation), glm::vec3(0.0f, 1.0f, 0.0f)));
+    if (player_c.stunned &&
+        player_c.stun_timer.Elapsed() >= player_c.stun_time) {
+      player_c.stunned = false;
+    }
   };
 }
 

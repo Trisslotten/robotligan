@@ -15,6 +15,8 @@ struct ModelComponent {
   
   glm::vec3 offset = glm::vec3(0.f);
   glm::quat rot_offset = glm::quat();
+
+  float emission_strength = 1.0f;
 };
 
 #endif  // MODEL_COMPONENT_HPP_

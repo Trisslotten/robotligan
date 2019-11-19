@@ -50,6 +50,9 @@ struct PlayerComponent {  // Server side
   float invisibility_remaining = 0.0f;
 
   bool can_jump = false;
+  bool stunned = false;
+  Timer stun_timer;
+  float stun_time = 2.0f;
   // Comparasion Operators
   bool operator==(const PlayerComponent& rhs) {
     return (this->client_id == rhs.client_id) &&
@@ -67,7 +70,8 @@ struct PlayerComponent {  // Server side
            (this->kick_force == rhs.kick_force) &&
            (this->actions == rhs.actions) && (this->yaw == rhs.yaw) &&
            (this->pitch == rhs.pitch) && (this->target == rhs.target) &&
-           (this->sprinting == rhs.sprinting) && (this->running == rhs.running);
+           (this->sprinting == rhs.sprinting) &&
+           (this->running == rhs.running) && (this->stunned = rhs.stunned);
   }
 
   bool operator!=(const PlayerComponent& rhs) { return !((*this) == rhs); }

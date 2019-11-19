@@ -10,9 +10,9 @@
 #include <playerdata.hpp>
 #include <util/timer.hpp>
 #include "Chat.hpp"
+#include "ecs/components.hpp"
 #include "eventdispatcher.hpp"
 #include "shared/shared.hpp"
-#include "ecs/components.hpp"
 
 class Engine;
 
@@ -269,10 +269,9 @@ class PlayState : public State {
   void SetTeam(unsigned int team) { my_team_ = team; }
   void CreateNewBallEntity(bool fake, EntityID id);
   void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
-  void SetCountdownInProgress(bool val) { countdown_in_progress_ = val;  }
+  void SetCountdownInProgress(bool val) { countdown_in_progress_ = val; }
   void SetArenaScale(glm::vec3 arena_scale) { arena_scale_ = arena_scale; }
 
-  
   void FetchMapAndArena(entt::registry& in_registry);
 
  private:
@@ -299,6 +298,8 @@ class PlayState : public State {
   void DrawTopScores();
   void DrawTarget();
   void DrawQuickslots();
+  void DrawStunTimer();
+
   FrameState SimulateMovement(std::vector<int>& action, FrameState& state,
                               float dt);
   void MovePlayer(float dt);
@@ -367,6 +368,10 @@ class PlayState : public State {
   float primary_cd_ = 0.0f;
 
   bool sprinting_ = false;
+
+  bool im_stunned_ = false;
+  Timer stun_timer_;
+  float my_stun_time_;
 };
 
 #endif  // STATE_HPP_

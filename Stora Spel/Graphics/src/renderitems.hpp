@@ -16,6 +16,7 @@ namespace glob {
 struct RenderItem {
   Model *model;
   glm::mat4 transform;
+  float emission_strength;
 
   int material_index;
 };
@@ -41,6 +42,7 @@ struct BoneAnimatedRenderItem {
   std::vector<glm::mat4>
       bone_transforms;  // may be a performance bottleneck, pointer instead?
   int numBones;
+  float emission_strength;
 
   int material_index = 0;
 };

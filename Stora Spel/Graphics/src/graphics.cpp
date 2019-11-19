@@ -1006,15 +1006,15 @@ void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
 
 void SubmitBAM(const std::vector<ModelHandle> &handles, glm::mat4 transform,
                std::vector<glm::mat4> bone_transforms,
-               int material_index) {  // Submit Bone Animated Mesh
+               int material_index, float emissive_strength) {  // Submit Bone Animated Mesh
   for (auto handle : handles) {
-    SubmitBAM(handle, transform, bone_transforms, material_index);
+    SubmitBAM(handle, transform, bone_transforms, material_index, emissive_strength);
   }
 }
 
 void SubmitBAM(ModelHandle model_h, glm::mat4 transform,
-               std::vector<glm::mat4> bone_transforms,
-               int material_index) {  // Submit Bone Animated Mesh
+               std::vector<glm::mat4> bone_transforms, int material_index,
+               float emissive_strength) {  // Submit Bone Animated Mesh
   BoneAnimatedRenderItem BARI;
 
   auto find_res = models.find(model_h);
@@ -1033,22 +1033,25 @@ void SubmitBAM(ModelHandle model_h, glm::mat4 transform,
   BARI.numBones = BARI.bone_transforms.size();
 
   BARI.material_index = material_index;
+  BARI.emission_strength = emissive_strength;
 
   bone_animated_items_to_render.push_back(BARI);
 }
 
-void Submit(ModelHandle model_h, glm::vec3 pos, int material_index) {
+void Submit(ModelHandle model_h, glm::vec3 pos, int material_index,
+            float emissive_strength) {
   glm::mat4 transform = glm::translate(pos);
-  Submit(model_h, transform, material_index);
+  Submit(model_h, transform, material_index, emissive_strength);
 }
 
 void Submit(const std::vector<ModelHandle> &handles, glm::mat4 transform,
-            int material_index) {
+            int material_index, float emissive_strength) {
   for (auto handle : handles) {
-    Submit(handle, transform, material_index);
+    Submit(handle, transform, material_index, emissive_strength);
   }
 }
-void Submit(ModelHandle model_h, glm::mat4 transform, int material_index) {
+void Submit(ModelHandle model_h, glm::mat4 transform, int material_index,
+            float emissive_strength) {
   auto find_res = models.find(model_h);
   if (find_res == models.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted model\n";
@@ -1063,6 +1066,7 @@ void Submit(ModelHandle model_h, glm::mat4 transform, int material_index) {
   to_render.model = &find_res->second;
   to_render.transform = transform * pre_rotation;
   to_render.material_index = material_index;
+  to_render.emission_strength = emissive_strength;
 
   items_to_render.push_back(to_render);
 }
@@ -1386,6 +1390,8 @@ void Render() {
       model_shader.uniform("model_transform", render_item.transform);
       model_shader.uniform("normal_transform",
                            calcNormalTransform(render_item.transform));
+      model_shader.uniform("dynamic_em_strength",
+                           render_item.emission_strength);
       render_item.model->Draw(model_shader);
     }
 
@@ -1399,6 +1405,8 @@ void Render() {
                                      BARI.bone_transforms.data());
       animated_model_shader.uniform("normal_transform",
                                     calcNormalTransform(BARI.transform));
+      animated_model_shader.uniform("dynamic_em_strength",
+                           BARI.emission_strength);
       /*
       int numBones = 0;
       for (auto &bone : BARI.bone_transforms) {
