@@ -110,3 +110,8 @@ void GlobalSettings::WriteMapToConsole() {
   std::cout << "NUMBER OF SETTINGS: " << this->settings_map_.size() << "\n";
   return;
 }
+
+void GlobalSettings::UpdateFromMemory(std::string key, float var)
+{
+	settings_map_[key] = var;
+}

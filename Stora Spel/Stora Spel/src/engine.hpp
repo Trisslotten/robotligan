@@ -122,6 +122,7 @@ class Engine {
   PlayState play_state_;
   ConnectMenuState connect_menu_state_;
   SettingsState settings_state_;
+  CreateServerState create_server_state_;
 
   // Registry
   entt::registry* registry_current_;

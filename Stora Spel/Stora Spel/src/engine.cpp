@@ -86,12 +86,13 @@ void Engine::Init() {
   connect_menu_state_.SetEngine(this);
   play_state_.SetEngine(this);
   settings_state_.SetEngine(this);
+  create_server_state_.SetEngine(this);
 
   main_menu_state_.Startup();
   settings_state_.Startup();
   connect_menu_state_.Startup();
   lobby_state_.Startup();
-
+  create_server_state_.Startup();
   play_state_.Startup();
 
   main_menu_state_.Init();
@@ -198,6 +199,9 @@ void Engine::Update(float dt) {
         current_state_ = &main_menu_state_;
         // std::cout << "CHANGE STATE: MAIN_MENU\n";
         break;
+	  case StateType::CREATE_SERVER:
+		  current_state_ = &create_server_state_;
+		  break;
       case StateType::CONNECT_MENU:
         current_state_ = &connect_menu_state_;
         // std::cout << "CHANGE STATE: CONNECT_MENU\n";

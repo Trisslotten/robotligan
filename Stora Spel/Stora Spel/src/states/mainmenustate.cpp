@@ -56,23 +56,30 @@ void MainMenuState::CreateMainMenu() {
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
 
   // PLAY BUTTON - change registry to registry_gameplay_
-  ButtonComponent* b_c = GenerateButtonEntity(registry_mainmenu_, "PLAY",
-                                              glm::vec2(100, 260), font_test_);
+  ButtonComponent* b_c = GenerateButtonEntity(registry_mainmenu_, "JOIN SERVER",
+                                              glm::vec2(100, 290), font_test_);
   b_c->button_func = [&]() { engine_->ChangeState(StateType::CONNECT_MENU); };
+
+  // Create Server
+  b_c = GenerateButtonEntity(registry_mainmenu_, "CREATE SERVER",
+	  glm::vec2(100, 230), font_test_);
+  b_c->button_func = [&]() {
+	  engine_->ChangeState(StateType::CREATE_SERVER);
+  };
 
   // SETTINGS BUTTON - change registry to registry_settings_
   b_c = GenerateButtonEntity(registry_mainmenu_, "SETTINGS",
-                             glm::vec2(100, 200), font_test_);
+                             glm::vec2(100, 170), font_test_);
   b_c->button_func = [&]() { engine_->ChangeState(StateType::SETTINGS); };
 
   b_c = GenerateButtonEntity(registry_mainmenu_, "INFORMATION",
-                             glm::vec2(100, 140), font_test_);
+                             glm::vec2(100, 110), font_test_);
   b_c->button_func = [&]() {
     engine_->SetCurrentRegistry(&registry_information_);
   };
 
   // EXIT BUTTON - close the game
-  b_c = GenerateButtonEntity(registry_mainmenu_, "EXIT", glm::vec2(100, 80),
+  b_c = GenerateButtonEntity(registry_mainmenu_, "EXIT", glm::vec2(100, 50),
                              font_test_);
   b_c->button_func = [&]() { exit(0); };
 }
