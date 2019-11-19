@@ -1158,17 +1158,17 @@ void PlayState::DrawMiniMap() {
         glob::Submit(gui_minimap_player_me_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
                      std::atan2(player_c.look_dir.z,
-                                player_c.look_dir.x));  // TODO: CALC REAL POS
+                                player_c.look_dir.x));
       } else if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
         glob::Submit(gui_minimap_player_red_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
                      std::atan2(player_c.look_dir.z,
-                                player_c.look_dir.x));  // TODO: CALC REAL POS
+                                player_c.look_dir.x));
       } else {
         glob::Submit(gui_minimap_player_blue_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
                      std::atan2(player_c.look_dir.z,
-                                player_c.look_dir.x));  // TODO: CALC REAL POS
+                                player_c.look_dir.x));
       }
     }
     // Draw Ball icon from red perspective
@@ -1231,19 +1231,19 @@ void PlayState::DrawMiniMap() {
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
                      std::atan2(player_c.look_dir.z,
                                 player_c.look_dir.x) +
-                         pi);  // TODO: CALC REAL POS
+                         pi);
       } else if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
         glob::Submit(gui_minimap_player_red_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
                      std::atan2(player_c.look_dir.z,
                                 player_c.look_dir.x) +
-                         pi);  // TODO: CALC REAL POS
+                         pi);
       } else {
         glob::Submit(gui_minimap_player_blue_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
                      std::atan2(player_c.look_dir.z,
                                 player_c.look_dir.x) +
-                         pi);  // TODO: CALC REAL POS
+                         pi);
       }
     }
     // Draw Ball icon from blue perspective
