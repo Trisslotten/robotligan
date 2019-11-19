@@ -257,13 +257,12 @@ void PlayState::Update(float dt) {
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
 
-	  if (!show_in_game_menu_buttons_) {
+      if (!show_in_game_menu_buttons_) {
         cam_c.orientation = orientation;
         trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
         // FPS Model rotations
         mc.rot_offset = orientation - glm::quat(glm::vec3(0.f, yaw_, 0.f));
-	  }
-      
+      }
 
       // rotate model offset as well, this does not want to work...
       /*glm::mat4 translateMat = glm::translate(glm::mat4(1.f), cam_c.offset);
@@ -1153,7 +1152,8 @@ void PlayState::DrawMiniMap() {
                             17.1f;
       float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 17.1f;
 
-      // Draw the right color icons
+      // Draw the right color for player icons in the right positions from a red
+      // player's perspective
       if (id_c.id == my_id_) {
         glob::Submit(gui_minimap_player_me_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
@@ -1224,7 +1224,8 @@ void PlayState::DrawMiniMap() {
                             17.1f;
       float minimap_pos_y = (-norm_pos_y * 190.f) + 190.f - 17.1f;
 
-      // Draw the right color icons
+      // Draw the right color for player icons in the right positions from a
+      // blue player's perspective
       if (id_c.id == my_id_) {
         glob::Submit(gui_minimap_player_me_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
