@@ -749,7 +749,7 @@ void PlayState::DrawTopScores() {
 
   glm::vec2 blue_score_pos =
       team_score_pos + glm::vec2(90, 55) - glm::vec2(12, 0)*(float)(blue_score_str.size()-1);
-  glm::vec2 red_score_pos = team_score_pos + glm::vec2(200, 55);
+  glm::vec2 red_score_pos = team_score_pos + glm::vec2(205, 55);
 
   glob::Submit(font_scores_, blue_score_pos, 72, blue_score_str,
                glm::vec4(0, 0.26, 1, 1));
