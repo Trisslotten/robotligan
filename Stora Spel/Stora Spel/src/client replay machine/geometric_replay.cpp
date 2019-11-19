@@ -862,7 +862,8 @@ std::string GeometricReplay::GetGeometricReplaySummary() {
   ret_str += "\tFrame channels in replay:\n";
   for (unsigned int i = 0; i < this->channels_.size(); i++) {
     ret_str += "\t\t#" + std::to_string(this->channels_.at(i).num) +
-               " - EntId:" + std::to_string(this->channels_.at(i).object_id) +
+        " - EntId:" + std::to_string(this->channels_.at(i).object_id) +
+        " - ChannelType: " + std::to_string(this->channels_.at(i).object_type) +
                "\n";
   }
 

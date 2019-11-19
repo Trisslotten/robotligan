@@ -389,12 +389,11 @@ class ReplayState : public State {
   Timer end_game_timer_;
 
   glob::Font2DHandle font_test_ = 0;
-
   glm::vec3 arena_scale_ = glm::vec3(0.f);
-
   bool goals_swapped_ = false;
 
   void FetchMapAndArena();
+  void UpdateCamera();
 
  public:
   void Startup() override;
@@ -403,17 +402,15 @@ class ReplayState : public State {
   void UpdateNetwork() override;
   void Cleanup() override;
 
-  StateType Type() { return StateType::REPLAY; }
-
   void StartRecording();
   void AlertOnDestroy(EntityID in_id);
 
   void StartReplayMode();
   void PlayReplay();
 
+  StateType Type() { return StateType::REPLAY; }
   void EndGame() { end_game_timer_.Restart(); }
   void SetArenaScale(glm::vec3 in_scale) { arena_scale_ = in_scale; }
-  void UpdateCamera();
 };
 
 #endif  // STATE_HPP_

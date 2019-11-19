@@ -169,12 +169,8 @@ class Engine {
   std::list<float> time_test;
 
   // Replay Variables ---
-  //bool recording_ = true;
   ClientReplayMachine* replay_machine_ = nullptr;
-  // bool replaying_ = false;
-  // entt::registry* registry_on_hold_ = nullptr;
-  // entt::registry* registry_replay_ = nullptr;
-  //// Replay Variables ---
+  // Replay Variables ---
 };
 
 #endif  // ENGINE_HPP_

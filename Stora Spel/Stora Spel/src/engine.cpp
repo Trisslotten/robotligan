@@ -31,9 +31,6 @@ Engine::~Engine() {
   if (this->replay_machine_ != nullptr) {
     delete this->replay_machine_;
   }
-  /*if (this->registry_replay_ != nullptr) {
-    delete this->registry_replay_;
-  }*/
 }
 
 void Engine::Init() {
@@ -161,24 +158,6 @@ void Engine::Update(float dt) {
     if (Input::IsKeyPressed(GLFW_KEY_L)) {
       new_team_ = TEAM_RED;
     }
-
-    // Replay stuff
-    // if (Input::IsKeyPressed(GLFW_KEY_I)) {
-    //  if (!this->recording_) {
-    //    this->BeginRecording();
-    //  } else {
-    //    this->StopRecording();
-    //  }
-    //}
-    // if (Input::IsKeyPressed(GLFW_KEY_O)) {
-    //  this->SaveRecording();
-    //  std::cout << this->replay_machine_->GetSelectedReplayStringTree() <<
-    //  "\n";
-    //}
-    // if (Input::IsKeyPressed(GLFW_KEY_P)) {
-    //  this->BeginReplay();
-    //}
-    //// Replay stuff
   }
 
   // Update current state
@@ -583,6 +562,13 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
             registry_current_->view<PickUpComponent, IDComponent>();
         for (auto entity : pick_up_view) {
           if (id == pick_up_view.get<IDComponent>(entity).id) {
+
+			// Notify replay machine before entity is gone
+            if (this->IsRecording()) {
+              this->replay_machine_->NotifyDestroyedObject(
+                  id, *(this->registry_current_));
+            }
+
             registry_current_->destroy(entity);
             break;
           }
@@ -891,82 +877,3 @@ int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }
 float Engine::GetSwitchGoalCountdownTimer() const { return switch_goal_timer_; }
 
 int Engine::GetSwitchGoalTime() const { return switch_goal_time_; }
-
-//// Replay Functions ---
-// void Engine::BeginRecording() {
-//  std::cout << "<Begining to record>" << std::endl;
-//
-//  // If we are currently not replaying,
-//  // start recording
-//  if (!this->replaying_) {
-//    this->recording_ = true;
-//  }
-//}
-//
-// void Engine::StopRecording() {
-//  std::cout << "<Stopped recording>" << std::endl;
-//  // Stop recordng
-//  this->recording_ = false;
-//}
-//
-// void Engine::SaveRecording() {
-//  std::cout << "<Saved replay>" << std::endl;
-//
-//  // Tell the ReplayMachine to save what currently lies in its buffer
-//  this->replay_machine_->StoreReplay();
-//
-//  // NTS: Currently always selects the latest replay
-//  // as per the following code
-//  this->replay_machine_->SelectReplay(
-//      this->replay_machine_->NumberOfStoredReplays() - 1);
-//}
-//
-// void Engine::BeginReplay() {
-//  std::cout << "<Starting replay>" << std::endl;
-//
-//  // Stop recording
-//  this->StopRecording();
-//
-//  // Swap to the registry of the replay machine
-//  // if we are not already replaying
-//  if (!this->replaying_) {
-//    this->registry_on_hold_ = this->registry_current_;
-//    this->registry_replay_ = new entt::registry;
-//    this->play_state_
-//        .FetchMapAndArena(*(this->registry_replay_));
-//    this->registry_current_ = this->registry_replay_;
-//
-//    this->replaying_ = true;
-//  }
-//}
-//
-// void Engine::PlayReplay() {
-//  // If we aren't replaying, return
-//  if (!this->replaying_) {
-//    return;
-//  }
-//
-//  std::cout << "<Replaying>" << std::endl;
-//  // std::cout << this->replay_machine_->GetSelectedReplayStringState()
-//  //          << std::endl;
-//
-//  // Send in registry to get the next frame from the replay machine
-//  if (this->replay_machine_->LoadFrame(*(this->registry_current_))) {
-//    // If the recording is not playing
-//    //	- Either it has ended
-//    //	- Or it doesn't exist
-//    // Swap back registries
-//    this->registry_current_ = this->registry_on_hold_;
-//    delete this->registry_replay_;
-//    this->registry_replay_ = nullptr;
-//    this->registry_on_hold_ = nullptr;
-//
-//    this->replaying_ = false;
-//
-//    this->replay_machine_->ResetSelectedReplay();
-//
-//    std::cout << "<Replay finished>" << std::endl;
-//  }
-//}
-
-// Replay Functions ---

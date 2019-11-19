@@ -43,10 +43,6 @@ class ClientReplayMachine {
     primary_replay_->SetEngine(eng);
   }
   void ReceiveGameEvent(GameEvent event);
-
-  // std::vector<GeometricReplay*> GetStoredReplays() const {
-  //  return stored_replays_;
-  //}
 };
 
 #endif  // !CLIENT_REPLAY_MACHINE_HPP_
