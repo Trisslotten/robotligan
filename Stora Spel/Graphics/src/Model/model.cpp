@@ -14,7 +14,7 @@
 
 namespace glob {
 
-Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
+Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, glm::mat4 transform) {
   std::vector<Vertex> vertex;
   std::vector<GLuint> indices;
   std::vector<Texture> textures;
@@ -175,7 +175,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
     return Mesh(vertex, indices, textures, weights, boneIndex);
   }
 
-  return Mesh(vertex, indices, textures);
+  return Mesh(vertex, indices, textures, transform);
 }
 
 GLint Model::TextureFromFile(const char* path, std::string directory,
@@ -381,15 +381,16 @@ Joint* Model::MakeArmature(aiNode* node) {
 }
 
 // TODO: check if node transform fixes up-vector from blender export
-void Model::ProcessNode(aiNode* node, const aiScene* scene) {
+void Model::ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parent_transform) {
+  glm::mat4 transform = parent_transform * AssToGLM::ConvertToGLM4x4(node->mTransformation);
   // Process all the nodes meshes
   for (unsigned int i = 0; i < node->mNumMeshes; i++) {
     aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-    mesh_.push_back(ProcessMesh(mesh, scene));
+    mesh_.push_back(ProcessMesh(mesh, scene, transform));
   }
   // Then process nodes children
   for (unsigned int i = 0; i < node->mNumChildren; i++) {
-    ProcessNode(node->mChildren[i], scene);
+    ProcessNode(node->mChildren[i], scene, transform);
   }
 }
 
