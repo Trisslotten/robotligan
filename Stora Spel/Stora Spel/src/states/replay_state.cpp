@@ -30,7 +30,7 @@ void ReplayState::Update(float dt) {
   pos.y -= 160;
 
   int game_end_timeout =
-      engine_->GetReplayMachinePtr()->ReplayLength() * num_of_replays_;
+      (engine_->GetReplayMachinePtr()->ReplayLength() * num_of_replays_) + 20;
 
   std::string end_countdown_text =
       std::to_string((int)(game_end_timeout - end_game_timer_.Elapsed()));
@@ -92,8 +92,8 @@ void ReplayState::StartReplayMode() {
   // Get number of replays
   this->num_of_replays_ =
       engine_->GetReplayMachinePtr()->NumberOfStoredReplays();
-  this->replay_counter_ = num_of_replays_ ;  // Cheat row
-  engine_->GetReplayMachinePtr()->SelectReplay(this->replay_counter_);
+  // this->replay_counter_ = 0 /*num_of_replays_ - 1*/;  // Cheat row
+  // engine_->GetReplayMachinePtr()->SelectReplay(this->replay_counter_);
 
   FetchMapAndArena();
 }
@@ -103,14 +103,19 @@ void ReplayState::PlayReplay() {
     return;
   }
 
-  std::cout << "Replay counter: " << replay_counter_ << std::endl;
-
   if (engine_->GetReplayMachinePtr()->LoadFrame(this->replay_registry_)) {
     // Once replay is done playing, clear the registry
     this->replay_registry_.reset();
+    // replay_counter_++;
 
-    // And stop replaying
-    this->replaying_ = false;
+    // if (!engine_->GetReplayMachinePtr()->SelectReplay(replay_counter_)) {
+    if (this->engine_->GetReplayMachinePtr()->IsEmpty()) {
+      // And stop replaying
+      this->replaying_ = false;
+    } else {
+      // NTS: Remove else to see arena at end?
+      FetchMapAndArena();
+    }
   }
 
   UpdateCamera();

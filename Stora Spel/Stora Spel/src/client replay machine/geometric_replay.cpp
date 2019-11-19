@@ -646,8 +646,8 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
     while (captured_events_[next_index_to_read_].frame_number ==
            current_frame_number_read_) {
       dispatcher.trigger(captured_events_[next_index_to_read_].event);
-      printf("Triggered event of type: %i \n",
-             captured_events_[next_index_to_read_].event.type);
+      //printf("Triggered event of type: %i \n",
+      //       captured_events_[next_index_to_read_].event.type);
       next_index_to_read_++;
     }
   }

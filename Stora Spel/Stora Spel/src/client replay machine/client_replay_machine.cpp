@@ -19,7 +19,7 @@ ClientReplayMachine::ClientReplayMachine(unsigned int in_replay_length_sec,
   // ---
   this->selected_replay_index_ = 0;
 
-  //NTS: Engine uninitialized. Is that a problem?
+  // NTS: Engine uninitialized. Is that a problem?
 }
 
 ClientReplayMachine::~ClientReplayMachine() {
@@ -81,6 +81,9 @@ bool ClientReplayMachine::SelectReplay(unsigned int in_index) {
   // Set its read to the start
   this->ResetSelectedReplay();
 
+  GlobalSettings::Access()->WriteError(
+      "", "Selected", std::to_string(this->selected_replay_index_));
+
   return true;
 }
 
@@ -100,8 +103,15 @@ bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
   // Otherwise read a frame into the registry
   // LoadFrame() returns true if the read index has
   // caught up with the write index
-  bool load_result = this->stored_replays_.at(this->selected_replay_index_)
-                         ->LoadFrame(in_registry);
+  // bool load_result = this->stored_replays_.at(this->selected_replay_index_)
+  //                       ->LoadFrame(in_registry);
+
+  bool load_result = this->stored_replays_.at(0)->LoadFrame(in_registry);
+
+  // NTS: Remember to save replays to file before deleting them
+  if (load_result) {
+    this->stored_replays_.erase(this->stored_replays_.begin());
+  }
 
   return load_result;
 }

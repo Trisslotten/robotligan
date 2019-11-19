@@ -152,8 +152,8 @@ void PlayState::Init() {
   timer_ = 0.f;
   Reset();
 
-  // Replay
-  this->recording_ = true;
+  //// Replay
+  //this->recording_ = true;
 }
 
 void PlayState::Update(float dt) {
@@ -513,6 +513,9 @@ void PlayState::UpdateGameplayTimer() {
   if (count > 0) {
     glob::Submit(font_test_, countdown_pos, 500, std::to_string(count),
                  glm::vec4(1));
+
+  } else if (!recording_) {
+	recording_ = true;
   }
 }
 

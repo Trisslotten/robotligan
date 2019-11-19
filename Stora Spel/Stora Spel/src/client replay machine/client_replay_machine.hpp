@@ -27,13 +27,13 @@ class ClientReplayMachine {
 
   void StoreReplay();
   unsigned int NumberOfStoredReplays() const;
-  unsigned int ReplayLength() const { return replay_length_sec_;
-  }
+  unsigned int ReplayLength() const { return replay_length_sec_; }
   int CurrentlySelectedReplay() const;
   bool SelectReplay(unsigned int in_index);
   void ResetSelectedReplay();
 
   bool LoadFrame(entt::registry& in_registry);
+  bool IsEmpty() { return stored_replays_.empty(); }
 
   std::string GetSelectedReplayStringTree();
   std::string GetSelectedReplayStringState();
@@ -43,7 +43,10 @@ class ClientReplayMachine {
     primary_replay_->SetEngine(eng);
   }
   void ReceiveGameEvent(GameEvent event);
-  
+
+  // std::vector<GeometricReplay*> GetStoredReplays() const {
+  //  return stored_replays_;
+  //}
 };
 
 #endif  // !CLIENT_REPLAY_MACHINE_HPP_
