@@ -403,6 +403,16 @@ void PlayState::Update(float dt) {
   DrawTarget();
 
   glob::Submit(test_ball_, glm::mat4());
+
+  auto view_players = registry_gameplay_.view<PlayerComponent, IDComponent>();
+  for (auto player : view_players) {
+    EntityID id = registry_gameplay_.get<IDComponent>(player).id;
+    auto& player_c = registry_gameplay_.get<PlayerComponent>(player);
+    if (id == my_id_) {
+      player_c.can_smash = can_smash;
+      break;
+    }
+  }
 }
 
 void PlayState::UpdateNetwork() {
@@ -709,7 +719,8 @@ void PlayState::DrawTopScores() {
   std::string red_score_str = std::to_string(engine_->GetTeamScores()[0]);
 
   glm::vec2 blue_score_pos =
-      team_score_pos + glm::vec2(90, 55) - glm::vec2(12, 0)*(float)(blue_score_str.size()-1);
+      team_score_pos + glm::vec2(90, 55) -
+      glm::vec2(12, 0) * (float)(blue_score_str.size() - 1);
   glm::vec2 red_score_pos = team_score_pos + glm::vec2(205, 55);
 
   glob::Submit(font_scores_, blue_score_pos, 72, blue_score_str,
