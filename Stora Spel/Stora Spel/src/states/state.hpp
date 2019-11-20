@@ -107,7 +107,8 @@ class LobbyState : public State {
   void CreateGUIElements();
   void DrawTeamSelect();
   void DrawAbilitySelect();
-  glob::GUIHandle team_select_back_;
+  glob::GUIHandle red_team_select_back_;
+  glob::GUIHandle blue_team_select_back_;
   glob::GUIHandle ability_select_back_;
   glob::GUIHandle ability_back_normal_;
   glob::GUIHandle ability_back_hover_;
