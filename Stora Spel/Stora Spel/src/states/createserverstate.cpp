@@ -239,10 +239,21 @@ void CreateServerState::CreateServer() {
 		  &si,    // Pointer to STARTUPINFO structure
 		  &pi)) 
 	  {
-
+		  std::cout << "Failed to start server " << std::endl;
+		  return;
 	  }
 	  else {
-		  //Successfully created process.
+		  auto client = engine_->GetClient();
+		  client.Connect(ip_.c_str(), std::stoi(port_.c_str()));
+		  if (!client.IsConnected())
+		  {
+			  std::cout << "Failed to connect to server" << std::endl;
+			  return;
+		  }
+		  else
+		  {
+			  engine_->ChangeState(StateType::LOBBY);
+		  }
 	  }
     }
   }
