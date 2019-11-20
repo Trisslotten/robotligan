@@ -709,7 +709,8 @@ void PlayState::DrawTopScores() {
   std::string red_score_str = std::to_string(engine_->GetTeamScores()[0]);
 
   glm::vec2 blue_score_pos =
-      team_score_pos + glm::vec2(90, 55) - glm::vec2(12, 0)*(float)(blue_score_str.size()-1);
+      team_score_pos + glm::vec2(90, 55) -
+      glm::vec2(12, 0) * (float)(blue_score_str.size() - 1);
   glm::vec2 red_score_pos = team_score_pos + glm::vec2(205, 55);
 
   glob::Submit(font_scores_, blue_score_pos, 72, blue_score_str,
@@ -2009,6 +2010,25 @@ void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
                                                  ProjectileID::MISSILE_OBJECT);
   registry_gameplay_.assign<TrailComponent>(missile_object, 0.2f,
                                             glm::vec4(1.0f, 0.6f, 0.2f, 1.0f));
+}
+
+void PlayState::CreateMineObject(EntityID owner_id, EntityID mine_id,
+                                 glm::vec3 pos) {
+  auto& sound_engine = engine_->GetSoundEngine();
+
+  entt::entity mine_object = registry_gameplay_.create();
+  glob::ModelHandle model_mine =
+      glob::GetModel(kModelPathPickup);  // Switch to mine model
+
+  ModelComponent& model_c =
+      registry_gameplay_.assign<ModelComponent>(mine_object);
+  model_c.handles.push_back(model_mine);
+  registry_gameplay_.assign<IDComponent>(mine_object, mine_id);
+  registry_gameplay_.assign<TransformComponent>(mine_object, pos);
+  registry_gameplay_.assign<MineComponent>(mine_object, owner_id);
+  registry_gameplay_.assign<SoundComponent>(mine_object,
+                                            sound_engine.CreatePlayer());
+  registry_gameplay_.assign<TimerComponent>(mine_object, 30.f);
 }
 
 void PlayState::DestroyEntity(EntityID id) {

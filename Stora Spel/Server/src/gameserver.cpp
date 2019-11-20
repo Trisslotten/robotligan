@@ -62,6 +62,8 @@ void GameServer::Init(double in_update_rate) {
       GlobalSettings::Access()->ValueOf("ABILITY_TELEPORT_COOLDOWN");
   ability_cooldowns_[AbilityID::BLACKOUT] =
       GlobalSettings::Access()->ValueOf("ABILITY_BLACKOUT_COOLDOWN");
+  ability_cooldowns_[AbilityID::MINE] =
+      GlobalSettings::Access()->ValueOf("ABILITY_MINE_COOLDOWN");
 
   ability_controller::ability_cooldowns = ability_cooldowns_;
 

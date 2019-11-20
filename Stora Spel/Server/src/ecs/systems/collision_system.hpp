@@ -915,6 +915,24 @@ void PickUpPlayerCollision(entt::registry& registry) {
   return;
 }
 
+void MinePlayerCollision(entt::registry& registry) {
+  auto mine_view = registry.view<MineComponent, TransformComponent>();
+  auto player_view = registry.view<PlayerComponent, TransformComponent, PhysicsComponent>();
+
+  for (auto mine : mine_view) {
+    auto& mine_tc = mine_view.get<TransformComponent>(mine);
+    for (auto player : player_view) {
+      auto& player_tc = player_view.get<TransformComponent>(player);
+      auto& player_pc = player_view.get<PhysicsComponent>(player);
+
+      if (glm::distance(mine_tc.position, player_tc.position) <=
+          GlobalSettings::Access()->ValueOf("ABILITY_MINE_TRIGGER_RADIUS")) {
+
+      }
+    }
+  }
+}
+
 void BallCollision(PhysicsComponent* ball, glm::vec3 normal) {
   float dot_val = glm::dot(ball->velocity, normal);
   if (dot_val < 0.f)

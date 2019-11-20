@@ -371,6 +371,18 @@ void ServerPlayState::HandleDataToSend() {
       to_send << PacketBlockType::CREATE_WALL;
     }
 
+    for (auto entity : created_mines_) {
+      auto& t_c = registry.get<TransformComponent>(entity);
+      auto& id_c = registry.get<IDComponent>(entity);
+      auto& mine_c = registry.get<MineComponent>(entity);
+      // send owner id as well
+
+      to_send << t_c.position;
+      to_send << id_c.id;
+      to_send << mine_c.owner_id;
+      to_send << PacketBlockType::CREATE_MINE;
+    }
+
     for (auto entity : created_pick_ups_) {
       auto& t = registry.get<TransformComponent>(entity);
       auto& id = registry.get<IDComponent>(entity);
@@ -467,6 +479,7 @@ void ServerPlayState::HandleDataToSend() {
     to_send << PacketBlockType::FRAME_ID;
   }
   created_projectiles_.clear();
+  created_mines_.clear();
   destroy_entities_.clear();
 
   auto pick_up_events = registry.view<PickUpEvent>();
@@ -1011,11 +1024,16 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       projectile.ori = trans_c.rotation;
       created_projectiles_.push_back(projectile);
 
-      // Save game event
-      GameEvent missile_fire_event;
-      missile_fire_event.type = GameEvent::MISSILE_FIRE;
-      missile_fire_event.missile_fire.projectile_id = projectile.entity_id;
-      dispatcher.trigger(missile_fire_event);
+      break;
+    }
+    case Event::CREATE_MINE: {
+      auto& registry = game_server_->GetRegistry();
+
+      EntityID id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, id);
+      registry.assign<TimerComponent>(e.entity, 30.f);
+
+      created_mines_.push_back(e.entity);
 
       break;
     }

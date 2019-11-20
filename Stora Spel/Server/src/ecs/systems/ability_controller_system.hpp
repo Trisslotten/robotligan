@@ -38,6 +38,7 @@ void CreateFakeBalls(entt::registry& registry, EntityID id);
 bool BuildWall(entt::registry& registry, PlayerID id);
 bool DoInvisibility(entt::registry& registry, PlayerID id);
 bool DoBlackout(entt::registry& registry);
+bool PlaceMine(entt::registry& registry, PlayerID id);
 
 std::unordered_map<AbilityID, float> ability_cooldowns;
 
@@ -206,6 +207,9 @@ bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
       break;
     case AbilityID::BLACKOUT:
       return DoBlackout(registry);
+      break;
+    case AbilityID::MINE:
+      return PlaceMine(registry, player_id);
       break;
     default:
       return false;
@@ -613,6 +617,30 @@ bool DoBlackout(entt::registry& registry) {
   dispatcher.trigger<GameEvent>(event);
 
   return true;
+}
+
+bool PlaceMine(entt::registry& registry, PlayerID id) {
+  auto view_controller =
+      registry.view<CameraComponent, PlayerComponent, TransformComponent, IDComponent>();
+  for (auto entity : view_controller) {
+    TransformComponent& tc = view_controller.get<TransformComponent>(entity);
+    IDComponent& idc = view_controller.get<IDComponent>(entity);
+
+    if (pc.client_id == id) {
+      entt::entity mine = registry.create();
+
+      registry.assign<TransformComponent>(mine, tc.position);
+      registry.assign<MineComponent>(mine, idc.id);
+      
+      EventInfo e;
+      e.event = Event::CREATE_MINE;
+      e.entity = mine;
+      dispatcher.enqueue<EventInfo>(e);
+
+      return true;
+    }
+  }
+  return false;
 }
 
 void CreateFakeBalls(entt::registry& registry, EntityID id) {

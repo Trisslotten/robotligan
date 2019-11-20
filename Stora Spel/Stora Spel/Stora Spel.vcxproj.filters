@@ -106,6 +106,7 @@
     <ClInclude Include="src\util\debugoverlay.hpp" />
     <ClInclude Include="src\ecs\components\skylight_component.hpp" />
     <ClInclude Include="src\ecs\systems\skylight_system.hpp" />
+    <ClInclude Include="shared\shared\mine_component.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

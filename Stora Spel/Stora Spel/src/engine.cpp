@@ -654,10 +654,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         }
         case ProjectileID::MISSILE_OBJECT: {
           play_state_.CreateMissileObject(e_id, pos, ori);
-          // TODO: Dont trigger this event on the client like this. Fix so that
-          // event is sent/received AFTER the create_projectile packet on server
-          // instead Note: Sometimes this plays on player entity rather than the
-          // missile entity [???]
+          
+          // Save game event
           GameEvent missile_event;
           missile_event.type = GameEvent::MISSILE_FIRE;
           missile_event.missile_fire.projectile_id = e_id;
@@ -717,6 +715,23 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       EntityID id;
       packet >> id;
       play_state_.CreateNewBallEntity(true, id);
+      break;
+    }
+    case PacketBlockType::CREATE_MINE: {
+      EntityID owner_id;
+      EntityID mine_id;
+      glm::vec3 pos;
+      packet >> owner_id;
+      packet >> mine_id;
+      packet >> pos;
+      play_state_.CreateMineObject(owner_id, mine_id, pos);
+
+      // Save game event
+      GameEvent mine_place_event;
+      mine_place_event.type = GameEvent::MINE_PLACE;
+      mine_place_event.mine_place.player_id = mine_id;
+      dispatcher.trigger(mine_place_event);
+
       break;
     }
     case PacketBlockType::TO_CLIENT_NAME: {
