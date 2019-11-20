@@ -204,6 +204,8 @@ bool is_number(const std::string& s) {
 	Krashar applikationen som spawnar den nya Processen, därmed skapar WSA10053 
 	Applikationen fortsätter dock existera, men GL contexten försvinner?
 	Lyckas connecta typ?
+
+	Funkar utan att krasha, men servern får inte rätt 
 */
 void CreateServerState::CreateServer() {
   if (is_number(port_) && !port_.empty()) {
@@ -222,13 +224,15 @@ void CreateServerState::CreateServer() {
 	  memcpy(path.data(), ownPth, MAX_PATH + 1);
 	  //memcpy(path.data(), ownPth, strlen(ownPth));
 	  //path += "server.exe";
+	  std::string p;
 	  if (path.find_last_of('\\') != std::string::npos)
 	  {
 		  size_t index = path.find_last_of('\\');
-		  path = path.substr(0, index);
-		  path += "\\server.exe";
+		  p = path = path.substr(0, index + 1);
+		  path += "server.exe";
 	  }
 	  std::cout << path << std::endl;
+	  std::cout << p << std::endl;
 	  
       ZeroMemory(&si, sizeof(si));
       si.cb = sizeof(si);
@@ -238,9 +242,9 @@ void CreateServerState::CreateServer() {
 		  NULL,   // Process handle not inheritable
 		  NULL,   // Thread handle not inheritable
 		  FALSE,  // Set handle inheritance to FALSE
-		  CREATE_NEW_CONSOLE,      // No creation flags
+		  DETACHED_PROCESS,      // No creation flags
 		  NULL,   // Use parent's environment block
-		  NULL,   // Use parent's starting directory
+		  (char*)p.c_str(),   // Use parent's starting directory
 		  &si,    // Pointer to STARTUPINFO structure
 		  &pi)) 
 	  {
