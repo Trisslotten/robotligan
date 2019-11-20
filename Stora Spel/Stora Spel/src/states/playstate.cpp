@@ -1187,7 +1187,7 @@ void PlayState::DrawQuickslots() {
 }
 
 void PlayState::DrawStunTimer() {
-  if (im_stunned_ && stun_timer_.Elapsed() > 0.2f) {
+  if (im_stunned_ && stun_timer_.Elapsed() > 0.5f) {
     float strength = stun_timer_.Elapsed() / my_stun_time_;
 
     if (registry_gameplay_.has<ModelComponent>(my_entity_)) {
