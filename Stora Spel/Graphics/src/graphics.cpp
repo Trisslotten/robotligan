@@ -19,10 +19,11 @@
 #include "2D/elements2D.hpp"
 #include "Font/Font2D.hpp"
 #include "Model/model.hpp"
+#include "Model/rope.hpp"
 #include "Particles/particle_settings.hpp"
 #include "glob/camera.hpp"
 #include "glob/window.hpp"
-#include "material\material.hpp"
+#include "material/material.hpp"
 #include "particles/particle_system.hpp"
 #include "postprocess/blur.hpp"
 #include "postprocess/postprocess.hpp"
@@ -67,6 +68,7 @@ GLuint sky_texture = 0;
 PostProcess post_process;
 Blur blur;
 Shadows shadows;
+Rope rope;
 
 bool blackout = false;
 
@@ -478,6 +480,7 @@ void Init() {
   post_process.Init(blur);
   shadows.Init(blur);
   ssao.Init(blur);
+  rope.Init();
 
   buffer_particle_systems.reserve(10);
 
@@ -1421,6 +1424,8 @@ void Render() {
       SetDefaultMaterials(animated_model_shader);
       BARI.model->Draw(animated_model_shader);
     }
+
+    rope.TestDraw(camera);
 
     // render wireframe cubes
     for (auto &m : cubes) DrawCube(m);
