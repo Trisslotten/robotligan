@@ -709,7 +709,8 @@ void PlayState::DrawTopScores() {
   std::string red_score_str = std::to_string(engine_->GetTeamScores()[0]);
 
   glm::vec2 blue_score_pos =
-      team_score_pos + glm::vec2(90, 55) - glm::vec2(12, 0)*(float)(blue_score_str.size()-1);
+      team_score_pos + glm::vec2(90, 55) -
+      glm::vec2(12, 0) * (float)(blue_score_str.size() - 1);
   glm::vec2 red_score_pos = team_score_pos + glm::vec2(205, 55);
 
   glob::Submit(font_scores_, blue_score_pos, 72, blue_score_str,
@@ -2240,8 +2241,6 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       std::vector<glm::vec3> offsets;
       std::vector<glm::vec3> directions;
 
-      
-
       glob::SetParticleSettings(handle, "missile_impact.txt");
 
       auto registry = engine_->GetCurrentRegistry();
@@ -2421,6 +2420,20 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
                   particle_entity, in_handles, in_offsets, in_directions);
           correct_registry->assign<TimerComponent>(particle_entity, 4.f);
 
+          
+
+          break;
+        }
+      }
+
+      auto view_balls = registry->view<IDComponent, TransformComponent, BallComponent>();
+      for (auto ball : view_balls) {
+        auto& id_c = view_balls.get<IDComponent>(ball);
+        if(id_c.id == e.super_kick.ball_id){
+          auto& trans_c = view_balls.get<TransformComponent>(ball);
+          
+          // for other people
+          glob::CreateShockwave(trans_c.position, 0.6f, 40.f);
           break;
         }
       }
