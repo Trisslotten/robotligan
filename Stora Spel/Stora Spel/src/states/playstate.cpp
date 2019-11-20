@@ -2433,8 +2433,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         if (id_c.id == e.super_kick.ball_id) {
           auto& trans_c = view_balls.get<TransformComponent>(ball);
 
-          // for other people
+          // TODO: maybe smaller shockwave if is player_id == my_id_
           glob::CreateShockwave(trans_c.position, 0.6f, 40.f);
+
           break;
         }
       }
