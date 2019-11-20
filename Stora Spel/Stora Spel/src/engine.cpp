@@ -729,7 +729,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       // Save game event
       GameEvent mine_place_event;
       mine_place_event.type = GameEvent::MINE_PLACE;
-      mine_place_event.mine_place.player_id = mine_id;
+      mine_place_event.mine_place.entity_id = mine_id;
       dispatcher.trigger(mine_place_event);
 
       break;

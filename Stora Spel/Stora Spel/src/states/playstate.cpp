@@ -2443,14 +2443,14 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       // Tiny dirt particle effect
       auto registry = engine_->GetCurrentRegistry();
       auto view_controller =
-          registry->view<IDComponent, PlayerComponent, TransformComponent>();
+          registry->view<IDComponent, MineComponent, TransformComponent>();
       for (auto entity : view_controller) {
         IDComponent& id_c = view_controller.get<IDComponent>(entity);
-        PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
-        TransformComponent& t_c =
+        MineComponent& mine_c = view_controller.get<MineComponent>(entity);
+        TransformComponent& trans_c =
             view_controller.get<TransformComponent>(entity);
 
-        if (id_c.id == e.mine_place.player_id) {
+        if (id_c.id == e.mine_place.entity_id) {
           // Particles
           entt::entity particle_entity = correct_registry->create();
           glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
@@ -2458,8 +2458,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           std::vector<glm::vec3> in_offsets;
           std::vector<glm::vec3> in_directions;
           glob::SetParticleSettings(handle, "superkick.txt");
-          glob::SetParticleDirection(handle, t_c.Forward());
-          glob::SetEmitPosition(handle, t_c.position);
+          glob::SetParticleDirection(handle, trans_c.Forward());
+          glob::SetEmitPosition(handle, trans_c.position);
           in_handles.push_back(handle);
           ParticleComponent& par_c =
               correct_registry->assign<ParticleComponent>(

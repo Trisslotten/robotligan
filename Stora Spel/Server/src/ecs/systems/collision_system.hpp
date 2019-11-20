@@ -940,8 +940,6 @@ void MinePlayerCollision(entt::registry& registry) {
     auto& mine_tc = mine_view.get<TransformComponent>(mine);
     auto& mine_idc = mine_view.get<IDComponent>(mine);
 
-    std::cout << "collision_system.hpp: mine found! " << mine_idc.id << std::endl;
-
     for (auto player : player_view) {
       auto& p_tc = player_view.get<TransformComponent>(player);
       auto& p_pc = player_view.get<PhysicsComponent>(player);
