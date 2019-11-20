@@ -16,7 +16,7 @@ namespace NetAPI {
 namespace Socket {
 class EXPORT Server {
  public:
-  bool Setup(unsigned short port);
+  bool Setup(unsigned short port, unsigned short maxplayers = 6);
   bool Update();
   void SendToAll(const char* data, size_t len);
   void SendToAll(NetAPI::Common::Packet& p);
@@ -47,6 +47,7 @@ class EXPORT Server {
   short connected_players_ = 0;
   short game_players_ = 0;
   long current_client_guid_ = 0;
+  unsigned short max_players_ = 6;
 };
 
 }  // namespace Socket

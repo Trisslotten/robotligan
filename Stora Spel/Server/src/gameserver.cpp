@@ -1,5 +1,4 @@
 #include "gameserver.hpp"
-
 #include <algorithm>
 #include <bitset>
 #include <glob/graphics.hpp>
@@ -22,12 +21,12 @@
 #include "ecs/systems/player_controller_system.hpp"
 #include "ecs/systems/target_system.hpp"
 #include "ecs/systems/pickup_spawner_system.hpp"
-
+#include "util/settings.hpp"
 namespace {}  // namespace
 
 GameServer::~GameServer() {}
 
-void GameServer::Init(double in_update_rate) {
+void GameServer::Init(double in_update_rate, std::unordered_map<std::string, std::string> &args) {
   glob::SetModelUseGL(false);
 
   server_.Setup(1337);
@@ -37,7 +36,7 @@ void GameServer::Init(double in_update_rate) {
   lobby_state_.Init();
   current_state_ = &lobby_state_;
   srand(time(NULL));
-  pings_.resize(NetAPI::Common::kMaxPlayers);
+  pings_.resize(kMaxPlayers);
 
   // very annoying thing
   ability_cooldowns_[AbilityID::BUILD_WALL] =
@@ -406,7 +405,7 @@ void GameServer::DoOncePerSecond() {
   NetAPI::Common::Packet p;
   p.GetHeader()->receiver = NetAPI::Socket::EVERYONE;
   auto& data = server_.GetClients();
-  pings_.resize(NetAPI::Common::kMaxPlayers);
+  pings_.resize(kMaxPlayers);
   for (auto cli : data) {
     pings_[cli.first] = cli.second->ping_sum;
   }

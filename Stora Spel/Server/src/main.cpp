@@ -10,6 +10,12 @@
 entt::dispatcher dispatcher{};
 
 int main(unsigned argc, char** argv) {
+
+
+  std::unordered_map<std::string, std::string> arguments;
+  if (argc >= 1) {
+    //Parse arguments
+  }
   std::cout << "DEBUG: Starting Server" << std::endl;
 
   Timer timer;
@@ -22,7 +28,7 @@ int main(unsigned argc, char** argv) {
   GameServer server;
   dispatcher.sink<EventInfo>().connect<&GameServer::ReceiveEvent>(server);
   dispatcher.sink<GameEvent>().connect<&GameServer::ReceiveGameEvent>(server);
-  server.Init(update_rate);
+  server.Init(update_rate, arguments);
   dispatcher.sink<EventInfo>().connect<&ServerPlayState::ReceiveEvent>(
       *server.GetPlayState());
   int num_frames = 0;

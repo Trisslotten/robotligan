@@ -189,6 +189,7 @@
     <ClInclude Include="src\replay machine\deterministic_replay.hpp" />
     <ClInclude Include="src\util\event.hpp" />
     <ClInclude Include="src\util\global_settings.hpp" />
+    <ClInclude Include="src\util\settings.hpp" />
     <ClInclude Include="src\util\timer.hpp" />
     <ClInclude Include="src\serverstate.hpp" />
   </ItemGroup>

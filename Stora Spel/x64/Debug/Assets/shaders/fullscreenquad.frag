@@ -6,6 +6,10 @@ in vec2 v_uv;
 
 uniform sampler2D texture_color;
 uniform sampler2D texture_emission;
+uniform sampler2D texture_ssao;
+
+uniform bool use_ao;
+
 uniform int is_invisible;
 
 // https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
@@ -28,7 +32,9 @@ void main() {
 	vec3 color = texture(texture_color, v_uv).rgb;
 
 	vec4 emission = texture(texture_emission, v_uv, 1);
-	color += emission.rgb*0.9;
+	float ao = texture(texture_ssao, v_uv).r;
+	if(use_ao) color*=ao;
+	color += 2.*emission.rgb;
 	
 	if (is_invisible == 1) {
 		vec3 effect = vec3(noise(gl_FragCoord.xy/100.0));
@@ -36,5 +42,7 @@ void main() {
 		color = mix(color, effect, smoothstep(0.35,0.85, length(v_uv-0.5)));
 	}
 
+	//color = texture(texture_ssao, v_uv).rrr;
 	out_color = vec4(color, 1);
+	//if(use_ao) out_color = vec4(vec3(ao),1);
 }
