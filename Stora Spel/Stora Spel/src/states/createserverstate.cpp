@@ -200,6 +200,11 @@ bool is_number(const std::string& s) {
                          return !std::isdigit(c);
                        }) == s.end();
 }
+/*
+	Krashar applikationen som spawnar den nya Processen, därmed skapar WSA10053 
+	Applikationen fortsätter dock existera, men GL contexten försvinner?
+	Lyckas connecta typ?
+*/
 void CreateServerState::CreateServer() {
   if (is_number(port_) && !port_.empty()) {
     std::string arg = ip_ + " " + port_;
@@ -243,7 +248,7 @@ void CreateServerState::CreateServer() {
 		  return;
 	  }
 	  else {
-		  auto client = engine_->GetClient();
+		  auto &client = engine_->GetClient();
 		  client.Connect(ip_.c_str(), std::stoi(port_.c_str()));
 		  if (!client.IsConnected())
 		  {
