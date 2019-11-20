@@ -381,5 +381,9 @@ public:
 private:
 	glob::Font2DHandle font_test_ = 0;
 	entt::registry registry_create_server_;
+	glob::GUIHandle bg_ = 0;
+	std::string ip_ = "";
+	std::string port_ = "1337";
+	void CreateServer();
 };
 #endif  // STATE_HPP_

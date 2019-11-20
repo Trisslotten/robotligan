@@ -8,30 +8,48 @@
 
 void CreateServerState::Startup()
 {
+	auto windowsize = glob::window::GetWindowDimensions();
 	glob::window::SetMouseLocked(false);
 	font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
-	ButtonComponent* b_c = GenerateButtonEntity(registry_create_server_, "BACK",
-		glm::vec2(70, 50), font_test_);
-	b_c->button_func = [&]() {
-		engine_->ChangeState(StateType::MAIN_MENU);
-	};
-	
-	auto light_test = registry_create_server_.create();  // Get from engine
-	registry_create_server_.assign<LightComponent>(light_test, glm::vec3(0.05f),
-		30.f, 0.2f);
-	registry_create_server_.assign<TransformComponent>(
-		light_test, glm::vec3(0.f, 16.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
-		glm::vec3(1.f));
-	glm::vec3 zero_vec = glm::vec3(0.0f);
-
-	auto light_test2 = registry_create_server_.create();  // Get from engine
-	registry_create_server_.assign<LightComponent>(
-		light_test2, glm::vec3(0.f, 0.f, 1.0f), 50.f, 0.2f);
-	registry_create_server_.assign<TransformComponent>(
-		light_test2, glm::vec3(48.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
-		glm::vec3(1.f));
-	glm::vec3 arena_scale = glm::vec3(2.0f);
+	//Buttons
 	{
+		double text_width = glob::GetWidthOfText(font_test_, "START", 45);
+		auto buttonpos = glm::vec2((windowsize.x / 2.f - text_width - 30),
+			windowsize.y * 0.5f - 150);
+		ButtonComponent* b_c = GenerateButtonEntity(registry_create_server_, "BACK",
+			glm::vec2(70, 50), font_test_);
+		b_c->button_func = [&]() {
+			engine_->ChangeState(StateType::MAIN_MENU);
+		};
+		b_c = GenerateButtonEntity(registry_create_server_, "START",
+			buttonpos, font_test_);
+		b_c->button_func = [&]() {
+			CreateServer();
+		};
+	}
+
+
+
+
+	//3D stuff
+	{
+		
+		auto light_test = registry_create_server_.create();  // Get from engine
+		registry_create_server_.assign<LightComponent>(light_test, glm::vec3(0.05f),
+			30.f, 0.2f);
+		registry_create_server_.assign<TransformComponent>(
+			light_test, glm::vec3(0.f, 16.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+			glm::vec3(1.f));
+		glm::vec3 zero_vec = glm::vec3(0.0f);
+
+		auto light_test2 = registry_create_server_.create();  // Get from engine
+		registry_create_server_.assign<LightComponent>(
+			light_test2, glm::vec3(0.f, 0.f, 1.0f), 50.f, 0.2f);
+		registry_create_server_.assign<TransformComponent>(
+			light_test2, glm::vec3(48.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+			glm::vec3(1.f));
+		glm::vec3 arena_scale = glm::vec3(2.0f);
+		{
 		// ladda in och skapa entity för bana
 		auto arena = registry_create_server_.create();
 		glm::vec3 zero_vec = glm::vec3(0.0f);
@@ -60,75 +78,95 @@ void CreateServerState::Startup()
 		model_c2.handles.push_back(model_map_floor);
 		registry_create_server_.assign<TransformComponent>(arena, zero_vec, zero_vec,
 			arena_scale);
+		}
+		{
+			auto arena = registry_create_server_.create();
+			glob::ModelHandle model_map_walls =
+				glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
+
+			auto& model_c = registry_create_server_.assign<ModelComponent>(arena);
+			model_c.handles.push_back(model_map_walls);
+			registry_create_server_.assign<TransformComponent>(arena, zero_vec, zero_vec,
+				arena_scale);
+		}
+		{
+			auto robot = registry_create_server_.create();
+			auto& trans_c = registry_create_server_.assign<TransformComponent>(
+				robot, glm::vec3(31.f, 0.2, 2.5f),
+				glm::vec3(0.f, glm::radians(135.0f), 0.f), glm::vec3(0.0033f));
+			glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
+			auto& model_c = registry_create_server_.assign<ModelComponent>(robot);
+			model_c.handles.push_back(model_robot);
+			// Animation
+			auto& animation_c = registry_create_server_.assign<AnimationComponent>(
+				robot, glob::GetAnimationData(model_robot));
+
+			engine_->GetAnimationSystem().PlayAnimation(
+				"Kneel", 1.0, &animation_c, 10, 1.f,
+				engine_->GetAnimationSystem().LOOP);
+		}
+		{
+			auto robot = registry_create_server_.create();
+			auto& trans_c = registry_create_server_.assign<TransformComponent>(
+				robot, glm::vec3(32.5f, 0.2, 3.0f),
+				glm::vec3(0.f, glm::radians(135.0f), 0.f), glm::vec3(0.0033f));
+			glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
+			auto& model_c = registry_create_server_.assign<ModelComponent>(robot);
+			model_c.handles.push_back(model_robot);
+			// Animation
+			auto& animation_c = registry_create_server_.assign<AnimationComponent>(
+				robot, glob::GetAnimationData(model_robot));
+
+			engine_->GetAnimationSystem().PlayAnimation(
+				"Emote2", 1.0, &animation_c, 10, 1.f,
+				engine_->GetAnimationSystem().LOOP);
+		}
+		{
+			auto robot = registry_create_server_.create();
+			auto& trans_c = registry_create_server_.assign<TransformComponent>(
+				robot, glm::vec3(30.f, 0.2, 2.1f),
+				glm::vec3(0.f, glm::radians(135.0f), 0.f), glm::vec3(0.0033f));
+			glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
+
+			auto& model_c = registry_create_server_.assign<ModelComponent>(robot);
+			model_c.diffuse_index = 1;
+			model_c.handles.push_back(model_robot);
+
+			// Animation
+			auto& animation_c = registry_create_server_.assign<AnimationComponent>(
+				robot, glob::GetAnimationData(model_robot));
+
+			engine_->GetAnimationSystem().PlayAnimation(
+				"Kneel", 0.7f, &animation_c, 10, 1.f,
+				engine_->GetAnimationSystem().LOOP);
+		}
+
+		auto camera = registry_create_server_.create();
+		auto& cam_c = registry_create_server_.assign<CameraComponent>(camera);
+		auto& cam_trans = registry_create_server_.assign<TransformComponent>(camera);
+		cam_trans.position = glm::vec3(28.f, 2.0f, 0.f);
+		glm::vec3 dir = glm::vec3(0) - cam_trans.position;
+		cam_c.orientation = glm::quat(glm::vec3(0.f, 0.f, 0.f));
 	}
+	//2D stuff
 	{
-		auto arena = registry_create_server_.create();
-		glob::ModelHandle model_map_walls =
-			glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
-
-		auto& model_c = registry_create_server_.assign<ModelComponent>(arena);
-		model_c.handles.push_back(model_map_walls);
-		registry_create_server_.assign<TransformComponent>(arena, zero_vec, zero_vec,
-			arena_scale);
+	  bg_ = glob::GetGUIItem("Assets/GUI_elements/connect-23.png");
 	}
+	//Input fields
 	{
-		auto robot = registry_create_server_.create();
-		auto& trans_c = registry_create_server_.assign<TransformComponent>(
-			robot, glm::vec3(31.f, 0.2, 2.5f),
-			glm::vec3(0.f, glm::radians(135.0f), 0.f), glm::vec3(0.0033f));
-		glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
-		auto& model_c = registry_create_server_.assign<ModelComponent>(robot);
-		model_c.handles.push_back(model_robot);
-		// Animation
-		auto& animation_c = registry_create_server_.assign<AnimationComponent>(
-			robot, glob::GetAnimationData(model_robot));
+		ip_ = "localhost";
 
-		engine_->GetAnimationSystem().PlayAnimation(
-			"Kneel", 1.0, &animation_c, 10, 1.f,
-			engine_->GetAnimationSystem().LOOP);
+		double text_width = glob::GetWidthOfText(font_test_, port_, 45);
+		auto portpos = glm::vec2((windowsize.x / 2.f - text_width * 2.7),
+			windowsize.y * 0.5f + 50);
+		auto ip = registry_create_server_.create();
+		auto& ip_field = registry_create_server_.assign<InputComponent>(ip);
+		ip_field.pos = portpos;
+		ip_field.input_name = "PORT";
+		ip_field.font_size = 45;
+		ip_field.text = port_;
+		ip_field.linked_value = &port_;
 	}
-	{
-		auto robot = registry_create_server_.create();
-		auto& trans_c = registry_create_server_.assign<TransformComponent>(
-			robot, glm::vec3(32.5f, 0.2, 3.0f),
-			glm::vec3(0.f, glm::radians(135.0f), 0.f), glm::vec3(0.0033f));
-		glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
-		auto& model_c = registry_create_server_.assign<ModelComponent>(robot);
-		model_c.handles.push_back(model_robot);
-		// Animation
-		auto& animation_c = registry_create_server_.assign<AnimationComponent>(
-			robot, glob::GetAnimationData(model_robot));
-
-		engine_->GetAnimationSystem().PlayAnimation(
-			"Emote2", 1.0, &animation_c, 10, 1.f,
-			engine_->GetAnimationSystem().LOOP);
-	}
-	{
-		auto robot = registry_create_server_.create();
-		auto& trans_c = registry_create_server_.assign<TransformComponent>(
-			robot, glm::vec3(30.f, 0.2, 2.1f),
-			glm::vec3(0.f, glm::radians(135.0f), 0.f), glm::vec3(0.0033f));
-		glob::ModelHandle model_robot = glob::GetModel("assets/Mech/Mech.fbx");
-
-		auto& model_c = registry_create_server_.assign<ModelComponent>(robot);
-		model_c.diffuse_index = 1;
-		model_c.handles.push_back(model_robot);
-
-		// Animation
-		auto& animation_c = registry_create_server_.assign<AnimationComponent>(
-			robot, glob::GetAnimationData(model_robot));
-
-		engine_->GetAnimationSystem().PlayAnimation(
-			"Kneel", 0.7f, &animation_c, 10, 1.f,
-			engine_->GetAnimationSystem().LOOP);
-	}
-
-	auto camera = registry_create_server_.create();
-	auto& cam_c = registry_create_server_.assign<CameraComponent>(camera);
-	auto& cam_trans = registry_create_server_.assign<TransformComponent>(camera);
-	cam_trans.position = glm::vec3(28.f, 2.0f, 0.f);
-	glm::vec3 dir = glm::vec3(0) - cam_trans.position;
-	cam_c.orientation = glm::quat(glm::vec3(0.f, 0.f, 0.f));
 }
 
 void CreateServerState::Init()
@@ -153,6 +191,16 @@ void CreateServerState::Update(float dt)
 		menu_dispatcher.trigger(click_event);
 		engine_->ChangeState(StateType::MAIN_MENU);
 	}
+	double text_width = glob::GetWidthOfText(font_test_, "IP: " + ip_, 45);
+
+	auto gamepos = glm::vec2((windowsize.x / 2.f - text_width),
+		windowsize.y * 0.5f + 130);
+	auto bgpos = glm::vec2((windowsize.x / 2.f - (561.f / 2.f)),
+		windowsize.y / 2.f - 408.f / 2.f);
+	glob::Submit(bg_, bgpos, 1.0);
+	glob::Submit(font_test_, gamepos, 45, "IP: " + ip_, glm::vec4(1, 1, 1, 1));
+
+
 }
 
 void CreateServerState::UpdateNetwork()
@@ -161,4 +209,9 @@ void CreateServerState::UpdateNetwork()
 
 void CreateServerState::Cleanup()
 {
+}
+
+void CreateServerState::CreateServer()
+{
+
 }
