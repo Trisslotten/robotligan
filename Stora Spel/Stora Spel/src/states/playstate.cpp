@@ -1562,7 +1562,7 @@ void PlayState::CreateArenaEntity() {
 
         glm::vec3 pos = glm::vec3(-50 * x, 0, 85 * y);
         registry_gameplay_.assign<TransformComponent>(entity, pos, glm::vec3(),
-                                                      glm::vec3(150, 1, 5));
+                                                      glm::vec3(1, 250, 10));
         registry_gameplay_.assign<SkyLightComponent>(entity);
       }
       {
@@ -1572,7 +1572,7 @@ void PlayState::CreateArenaEntity() {
 
         glm::vec3 pos = glm::vec3(-95 * x, 0, 50 * y);
         registry_gameplay_.assign<TransformComponent>(entity, pos, glm::vec3(),
-                                                      glm::vec3(150, 1, 5));
+                                                      glm::vec3(1, 250, 10));
         registry_gameplay_.assign<SkyLightComponent>(entity);
       }
 

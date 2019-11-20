@@ -56,6 +56,8 @@ class Mesh {
   void Draw(ShaderProgram& shader);
 
   MeshData GetMeshData();
+
+  glm::mat4 GetTransform() { return transform_; }
 };
 
 }  // namespace glob

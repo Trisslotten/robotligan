@@ -458,8 +458,10 @@ float Model::MaxDistance(glm::mat4 transform, glm::vec3 point) {
   float result = 0.f;
   for (int i = 0; i < mesh_.size(); i++) {
     MeshData temp = mesh_[i].GetMeshData();
+    glm::mat4 mesh_trans = mesh_[i].GetTransform();
+    glm::mat4 curr_transform = transform * mesh_trans;
     for (auto pos : temp.pos) {
-      glm::vec3 transformed = transform * glm::vec4(pos, 1);
+      glm::vec3 transformed = curr_transform * glm::vec4(pos, 1);
       int len = length(point - transformed);
       if (len > result) {
         result = len;
