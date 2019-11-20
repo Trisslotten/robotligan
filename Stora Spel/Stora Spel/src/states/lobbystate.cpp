@@ -57,6 +57,7 @@ entt::entity LobbyState::GetAbilityButton(std::string find_string) {
   }
   return (entt::entity)NULL;
 }
+
 void LobbyState::SelectAbilityHandler(int id) {
   my_selected_ability_ = id;
   auto view_buttons = registry_lobby_.view<ButtonComponent>();
@@ -83,12 +84,14 @@ void LobbyState::SelectAbilityHandler(int id) {
   packet << id;
   packet << PacketBlockType::LOBBY_SELECT_ABILITY;
 }
+
 bool LobbyState::IsAbilityBlackListed(int id) {
   for (auto b_ab : ability_blacklist) {
     if (b_ab == id) return true;
   }
   return false;
 }
+
 void LobbyState::SendMyName() {
   auto& packet = engine_->GetPacket();
   std::string name = GlobalSettings::Access()->StringValueOf("USERNAME");
@@ -130,7 +133,8 @@ void LobbyState::Update(float dt) {
   DrawAbilitySelect();
 
   // draw ready string
-  glm::vec2 pos = glm::vec2(glob::window::GetWindowDimensions().x - 330, 120);
+  glm::vec2 pos =
+      glm::vec2(glob::window::GetWindowDimensions().x - 330, 120);  // Change
   glob::Submit(font_test_, pos, 72, "Ready: ");
 
   bool everyone_ready = true;
@@ -163,7 +167,7 @@ void LobbyState::Update(float dt) {
             }
     }*/
   }
-  glob::Submit(chatbox_back_, glm::vec2(10, 24), 1.0f);
+  glob::Submit(chatbox_back_, glm::vec2(10, 24), 1.0f);  // Change
 }
 
 void LobbyState::UpdateNetwork() {}
@@ -297,12 +301,12 @@ void LobbyState::CreateBackgroundEntities() {
 }
 
 void LobbyState::CreateGUIElements() {
-  //ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
+  // ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
   team_select_back_ =
       glob::GetGUIItem("Assets/GUI_elements/lobby_team_no_names.png");
   font_team_names_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
   ability_select_back_ =
-      glob::GetGUIItem("Assets/GUI_elements/ability_select_back.png");
+      glob::GetGUIItem("Assets/GUI_elements/ability_select_back_long.png");
   ability_back_normal_ = glob::GetGUIItem(
       "Assets/GUI_elements/ability_icons/ability_back_normal.png");
   ability_back_selected_ = glob::GetGUIItem(
@@ -347,7 +351,7 @@ void LobbyState::CreateGUIElements() {
   // auto button_join_red = registry_lobby_.create();
   ButtonComponent* button_c = GenerateButtonEntity(
       registry_lobby_, "JOIN",
-      glob::window::GetWindowDimensions() - glm::vec2(320, 20),
+      glob::window::GetWindowDimensions() - glm::vec2(320, 20),  // Change
       font_team_names_, true, 22);
   button_c->text_current_color = glm::vec4(1, 1, 1, 1);
   button_c->text_normal_color = glm::vec4(1, 1, 1, 1);
@@ -368,11 +372,11 @@ void LobbyState::CreateGUIElements() {
 
   // ability buttons
   glm::vec2 ability_buttons_pos =
-      glm::vec2(30, glob::window::GetWindowDimensions().y - 150);
-  int xoffset = 100;
-  int yoffset = -100;
+      glm::vec2(290, glob::window::GetWindowDimensions().y - 228);  // Change - DONE
+  int xoffset = 132;
+  int yoffset = 0;
 
-  int columns = 4;
+  int columns = num_abilites;
 
   int c = 0;
   for (int i = 1; i < num_abilites; i++) {
@@ -408,7 +412,8 @@ void LobbyState::CreateGUIElements() {
   button_comp.font_size = 0;  // menu_settings::font_size;
   button_comp.f_handle = font_test_;
   registry_lobby_.assign<TransformComponent>(
-      button, glm::vec3(glob::window::GetWindowDimensions().x - 200, 82, 0));
+      button,
+      glm::vec3(glob::window::GetWindowDimensions().x - 200, 82, 0));  // Change
   button_comp.visible = true;
   button_comp.gui_handle_normal = ready_back_normal_;
   button_comp.gui_handle_current = ready_back_normal_;
@@ -423,13 +428,15 @@ void LobbyState::CreateGUIElements() {
   };
   ButtonComponent* b_c = GenerateButtonEntity(
       registry_lobby_, "DISCONNECT",
-      glm::vec2(glob::window::GetWindowDimensions().x - 330, 65), font_test_);
+      glm::vec2(glob::window::GetWindowDimensions().x - 330, 65),
+      font_test_);  // Change
   b_c->button_func = [&]() {
     engine_->GetClient().Disconnect();
     engine_->ChangeState(StateType::MAIN_MENU);
   };
 }
-void LobbyState::DrawTeamSelect() {
+
+void LobbyState::DrawTeamSelect() {  // Change
   glm::vec2 team_select_box_pos =
       glob::window::GetWindowDimensions() - glm::vec2(390, 450);
   // glob::window::Relative720(glm::vec2(900, 270));
@@ -460,8 +467,9 @@ void LobbyState::DrawTeamSelect() {
   }
 }
 
-void LobbyState::DrawAbilitySelect() {
+void LobbyState::DrawAbilitySelect() {  // Change - DONE
   glm::vec2 ability_select_pos =
-      glm::vec2(5, glob::window::GetWindowDimensions().y - 485);
+      glm::vec2(glob::window::GetWindowDimensions().x - 1720,
+                glob::window::GetWindowDimensions().y - 255);
   glob::Submit(ability_select_back_, ability_select_pos, 1.0f);
 }
