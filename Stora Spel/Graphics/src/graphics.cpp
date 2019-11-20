@@ -1059,8 +1059,8 @@ void Submit(ModelHandle model_h, glm::mat4 transform, int material_index,
   }
 
   const glm::mat4 pre_rotation =
-      glm::rotate(glm::pi<float>() / 2.f, glm::vec3(0, 1, 0));// *
-      //glm::rotate(-glm::pi<float>() / 2.f, glm::vec3(1, 0, 0));
+      glm::rotate(glm::pi<float>() / 2.f, glm::vec3(0, 1, 0));  // *
+  // glm::rotate(-glm::pi<float>() / 2.f, glm::vec3(1, 0, 0));
 
   RenderItem to_render;
   to_render.model = &find_res->second;
@@ -1463,7 +1463,7 @@ void Render() {
       buffer_particle_systems[p].system.Draw(particle_shader);
     }
 
-	// render text
+    // render text
     glBindVertexArray(quad_vao);
     text3D_shader.use();
     text3D_shader.uniform("cam_transform", cam_transform);
@@ -1472,8 +1472,6 @@ void Render() {
                           text3D.color, text3D.rotation);
     }
 
-    // TODO: Sort all transparent triangles
-    // maybe sort internally in modell and then and externally
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     model_shader.use();
@@ -1486,11 +1484,8 @@ void Render() {
         render_item.model->Draw(model_shader);
       }
     }
-    glDisable(GL_BLEND);
 
-    
-
-    glDepthFunc(GL_LESS);
+    // TODO: maybe sort trail with other transparent
     glBindVertexArray(trail_vao);
     trail_shader.use();
     trail_shader.uniform("cam_transform", cam_transform);
@@ -1537,7 +1532,8 @@ void Render() {
   gui_shader.use();
   for (auto &gui_item : gui_items_to_render) {
     gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale,
-                               gui_item.scale_x, gui_item.opacity, gui_item.rot);
+                               gui_item.scale_x, gui_item.opacity,
+                               gui_item.rot);
   }
   // glBindTexture(GL_TEXTURE_2D, 0);
 
