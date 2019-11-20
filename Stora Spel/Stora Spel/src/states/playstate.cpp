@@ -2224,6 +2224,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
         if (id_c.id == e.force_push_impact.projectile_id) {
           glob::SetEmitPosition(handle, trans_c.position);
+
+          glob::CreateShockwave(trans_c.position, 0.5f, 30.f);
           break;
         }
       }
@@ -2420,23 +2422,24 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
                   particle_entity, in_handles, in_offsets, in_directions);
           correct_registry->assign<TimerComponent>(particle_entity, 4.f);
 
-          
-
           break;
         }
       }
 
-      auto view_balls = registry->view<IDComponent, TransformComponent, BallComponent>();
+      auto view_balls =
+          registry->view<IDComponent, TransformComponent, BallComponent>();
       for (auto ball : view_balls) {
         auto& id_c = view_balls.get<IDComponent>(ball);
-        if(id_c.id == e.super_kick.ball_id){
+        if (id_c.id == e.super_kick.ball_id) {
           auto& trans_c = view_balls.get<TransformComponent>(ball);
-          
+
           // for other people
           glob::CreateShockwave(trans_c.position, 0.6f, 40.f);
           break;
         }
       }
+
+      break;
     }
     case GameEvent::SPRINT_START: {
       sprinting_ = true;
@@ -2444,6 +2447,24 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
     }
     case GameEvent::SPRINT_END: {
       sprinting_ = false;
+      break;
+    }
+    case GameEvent::LAND: {
+      if (e.land.player_id != my_id_) {
+        auto registry = engine_->GetCurrentRegistry();
+        auto view_controller =
+            registry->view<IDComponent, TransformComponent>();
+        for (auto entity : view_controller) {
+          IDComponent& id_c = view_controller.get<IDComponent>(entity);
+          TransformComponent& t_c =
+              view_controller.get<TransformComponent>(entity);
+
+          if (id_c.id == e.land.player_id) {
+            glob::CreateShockwave(t_c.position, 0.2, 3.f);
+            break;
+          }
+        }
+      }
       break;
     }
   }

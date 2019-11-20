@@ -64,7 +64,7 @@ void main() {
 		shockwave *= smoothstep((radius-2.)*thickness_ratio, radius-2.0,length(pos - gl_FragCoord.xy));
 		shockwave *= 1.-shockwave_time_ratios[i];
 		vec2 disp_dir = normalize(gl_FragCoord.xy-pos);
-		uv += 0.03*disp_dir*shockwave;
+		uv += 0.02*disp_dir*shockwave;
 	}
 	vec3 color = calcColor(uv);
 
