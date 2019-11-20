@@ -35,14 +35,14 @@ class ClientReplayMachine {
   bool LoadFrame(entt::registry& in_registry);
   bool IsEmpty() { return stored_replays_.empty(); }
 
-  std::string GetSelectedReplayStringTree();
-  std::string GetSelectedReplayStringState();
-
   void SetEngine(Engine* eng) {
     engine_ = eng;
     primary_replay_->SetEngine(eng);
   }
   void ReceiveGameEvent(GameEvent event);
+
+  std::string GetSelectedReplayStringTree();
+  std::string GetSelectedReplayStringState();
 };
 
 #endif  // !CLIENT_REPLAY_MACHINE_HPP_

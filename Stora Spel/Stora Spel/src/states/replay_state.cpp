@@ -148,8 +148,8 @@ void ReplayState::Init() {
 }
 
 void ReplayState::Update(float dt) {
-  // Highlight loop logic
-  PlayReplay();
+  // Highlight loop logic : NTS: Moved to network update
+  //PlayReplay();
   //-------Draw scoreboard during highlight time--------------
   engine_->DrawScoreboard();
 
@@ -197,6 +197,7 @@ void ReplayState::Update(float dt) {
 
 void ReplayState::UpdateNetwork() {
   //
+  this->PlayReplay();
 }
 
 void ReplayState::Cleanup() {

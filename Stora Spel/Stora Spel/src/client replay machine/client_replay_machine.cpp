@@ -112,13 +112,19 @@ bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
   if (load_result) {
     GlobalSettings::Access()->WriteError(
         "Remaining Replays",
-        std::to_string(this->stored_replays_.size()) + "\n",
+        std::to_string(this->stored_replays_.size()-1) + "\n",
         this->stored_replays_.at(0)->GetGeometricReplaySummary());
 
     this->stored_replays_.erase(this->stored_replays_.begin());
   }
 
   return load_result;
+}
+
+void ClientReplayMachine::ReceiveGameEvent(GameEvent event) {
+  if (this->engine_->IsRecording()) {
+    primary_replay_->ReceiveGameEvent(event);
+  }
 }
 
 std::string ClientReplayMachine::GetSelectedReplayStringTree() {
@@ -137,10 +143,4 @@ std::string ClientReplayMachine::GetSelectedReplayStringState() {
 
   return this->stored_replays_.at(this->selected_replay_index_)
       ->GetStateOfReplay();
-}
-
-void ClientReplayMachine::ReceiveGameEvent(GameEvent event) {
-  if (this->engine_->IsRecording()) {
-    primary_replay_->ReceiveGameEvent(event);
-  }
 }

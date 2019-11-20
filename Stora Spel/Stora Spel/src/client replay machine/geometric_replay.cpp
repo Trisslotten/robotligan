@@ -472,11 +472,62 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
   }
 }
 
-void GeometricReplay::ReceiveGameEvent(GameEvent event) {
-  CapturedGameEvent cge;
-  cge.event = event;
-  cge.frame_number = current_frame_number_write_;
-  captured_events_.push_back(cge);
+void GeometricReplay::CreateChannelForEntity(entt::entity& in_entity,
+                                             IDComponent& in_id_c,
+                                             entt::registry& in_registry) {
+  // Entry
+  ChannelEntry temp_ce;
+  this->FillChannelEntry(temp_ce, in_entity, in_registry);
+
+  // Channel
+  FrameChannel temp_fc;
+  temp_fc.object_type = this->IdentifyEntity(in_entity, in_registry);
+  temp_fc.object_id = in_id_c.id;
+  temp_fc.entries.push_back(temp_ce);
+
+  // TEMP
+  temp_fc.num = next_num;
+  next_num++;
+
+  this->channels_.push_back(temp_fc);
+}
+
+void GeometricReplay::FrameChannelCleanUp() {
+  // Check the first entry in each channel
+  // Its age can be calculated by checking the current number of
+  // frames passed and comparing it to the frame it was saved on
+  // We do not want to record the entire match (due to memory consumption)
+  // so therefore:
+  //	1. Check if there are more than one entry in channel
+  //	2. If so, check if second entry is over age threshold
+  //	3. If so, remove first entry in channel (3.2) OR remove entire
+  //	channel if the second entry marks an ending entry* (3.1)
+  //
+  // *When an object disappears from the game world (and thus the replay)
+  // register that as an "ending entry".
+  for (unsigned int i = 0; i < this->channels_.size(); i++) {
+    if (this->channels_.at(i).entries.size() > 1) {  //(1.)
+      unsigned int age = this->current_frame_number_write_ -
+                         this->channels_.at(i).entries.at(1).frame_number;
+      if (age > this->threshhold_age_) {                         //(2.)
+        if (this->channels_.at(i).entries.at(1).ending_entry) {  //(3.1)
+          this->channels_.erase(this->channels_.begin() + i);
+          i--;
+
+          GlobalSettings::Access()->WriteError(
+              "Deleting Channel", "(Num|Id|Obj)",
+              std::to_string(this->channels_.at(i).num) + "|" +
+                  std::to_string(this->channels_.at(i).object_id) + "|" +
+                  std::to_string(this->channels_.at(i).object_type));
+        } else {  //(3.2)
+          this->channels_.at(i).entries.erase(
+              this->channels_.at(i).entries.begin());
+          // GlobalSettings::Access()->WriteError("", "", "Removing First
+          // Entry");
+        }
+      }
+    }
+  }
 }
 
 // Protected-------------------------------------------------------------------
@@ -556,51 +607,12 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
     // If after looping through an object still hasn't been found
     // it should be added to its own channel
     if (id_unfound) {
-      // Entry
-      ChannelEntry temp_ce;
-      this->FillChannelEntry(temp_ce, entity, in_registry);
-
-      // Channel
-      FrameChannel temp_fc;
-      temp_fc.object_type = this->IdentifyEntity(entity, in_registry);
-      temp_fc.object_id = id_c.id;
-      temp_fc.entries.push_back(temp_ce);
-
-      // TEMP
-      temp_fc.num = next_num;
-      next_num++;
-
-      this->channels_.push_back(temp_fc);
+      this->CreateChannelForEntity(entity, id_c, in_registry);
     }
   }
 
-  // Check the first entry in each channel
-  // Its age can be calculated by checking the current number of
-  // frames passed and comparing it to the frame it was saved on
-  // We do not want to record the entire match (due to memory consumption)
-  // so therefore:
-  //	1. Check if there are more than one entry in channel
-  //	2. If so, check if second entry is over age threshold
-  //	3. If so, remove first entry in channel (3.2) OR remove entire
-  //	channel if the second entry marks an ending entry* (3.1)
-  //
-  // *When an object disappears from the game world (and thus the replay)
-  // register that as an "ending entry".
-  for (unsigned int i = 0; i < this->channels_.size(); i++) {
-    if (this->channels_.at(i).entries.size() > 1) {  //(1.)
-      unsigned int age = this->current_frame_number_write_ -
-                         this->channels_.at(i).entries.at(1).frame_number;
-      if (age > this->threshhold_age_) {                         //(2.)
-        if (this->channels_.at(i).entries.at(1).ending_entry) {  //(3.1)
-          this->channels_.erase(this->channels_.begin() + i);
-          i--;
-        } else {  //(3.2)
-          this->channels_.at(i).entries.erase(
-              this->channels_.at(i).entries.begin());
-        }
-      }
-    }
-  }
+  // Clear old and unnecessary data
+  this->FrameChannelCleanUp();
 
   // After having saved a frame, increment
   this->current_frame_number_write_++;
@@ -752,6 +764,13 @@ void GeometricReplay::ChannelCatchUp() {
   }
 }
 
+void GeometricReplay::ReceiveGameEvent(GameEvent event) {
+  CapturedGameEvent cge;
+  cge.event = event;
+  cge.frame_number = current_frame_number_write_;
+  captured_events_.push_back(cge);
+}
+
 std::string GeometricReplay::GetGeometricReplayTree() {
   std::string ret_str = "Geometric Replay Tree\n";
   ret_str += "\tThreshold age: " + std::to_string(this->threshhold_age_) + "\n";
@@ -861,10 +880,11 @@ std::string GeometricReplay::GetGeometricReplaySummary() {
   // Frame channel numbers
   ret_str += "\tFrame channels in replay:\n";
   for (unsigned int i = 0; i < this->channels_.size(); i++) {
-    ret_str += "\t\t#" + std::to_string(this->channels_.at(i).num) +
+    ret_str +=
+        "\t\t#" + std::to_string(this->channels_.at(i).num) +
         " - EntId:" + std::to_string(this->channels_.at(i).object_id) +
         " - ChannelType: " + std::to_string(this->channels_.at(i).object_type) +
-               "\n";
+        "\n";
   }
 
   return ret_str;

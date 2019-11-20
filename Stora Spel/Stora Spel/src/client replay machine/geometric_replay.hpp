@@ -64,8 +64,8 @@ class GeometricReplay {
     unsigned int index_a = 0;
     unsigned int index_b = 0;
 
-	//TEMP
-	unsigned int num = 0; 
+    // TEMP
+    unsigned int num = 0;
 
     void operator=(FrameChannel const& rhs) {
       this->object_type = rhs.object_type;
@@ -76,12 +76,12 @@ class GeometricReplay {
         this->entries.push_back(temp_ce);
       }
 
-	  this->index_a = rhs.index_a;
+      this->index_a = rhs.index_a;
       this->index_b = rhs.index_b;
-	
-	  // TEMP
-	  this->num = rhs.num;
-	}
+
+      // TEMP
+      this->num = rhs.num;
+    }
   };
 
   struct CapturedGameEvent {
@@ -89,9 +89,11 @@ class GeometricReplay {
     unsigned int frame_number;
   };
 
+  Engine* engine_;
   std::vector<CapturedGameEvent> captured_events_;
   unsigned int next_index_to_read_ = 0;
 
+  //---
   ReplayObjectType IdentifyEntity(entt::entity& in_entity,
                                   entt::registry& in_registry);
 
@@ -115,7 +117,9 @@ class GeometricReplay {
   void CreateEntityFromChannel(unsigned int in_channel_index,
                                entt::registry& in_registry);
 
-  Engine* engine_;
+  void CreateChannelForEntity(entt::entity& in_entity, IDComponent& in_id_c,
+                              entt::registry& in_registry);
+  void FrameChannelCleanUp();
 
  protected:
   std::vector<FrameChannel> channels_;
@@ -123,7 +127,7 @@ class GeometricReplay {
   unsigned int current_frame_number_write_ = 0;
   unsigned int current_frame_number_read_ = 0;
 
-  //TEMP
+  // TEMP
   unsigned int next_num = 0;
 
   GeometricReplay();
@@ -149,12 +153,12 @@ class GeometricReplay {
 
   void ChannelCatchUp();
 
+  void ReceiveGameEvent(GameEvent event);
+  void SetEngine(Engine* eng) { engine_ = eng; }
+
   std::string GetGeometricReplayTree();
   std::string GetStateOfReplay();
   std::string GetGeometricReplaySummary();
-
-  void ReceiveGameEvent(GameEvent event);
-  void SetEngine(Engine* eng) { engine_ = eng; }
 };
 
 #endif  // !GEOMETRIC_REPLAY_HPP_

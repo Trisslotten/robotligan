@@ -153,7 +153,7 @@ void PlayState::Init() {
   Reset();
 
   //// Replay
-  //this->recording_ = true;
+  // this->recording_ = true;
 }
 
 void PlayState::Update(float dt) {
@@ -420,10 +420,10 @@ void PlayState::Update(float dt) {
   }
   // --- dont display during replay ---
 
-  // Record replay
-  if (this->recording_) {
-    this->engine_->GetReplayMachinePtr()->RecordFrame(this->registry_gameplay_);
-  }
+  // Record replay : NTS: Moved to network update function
+  // if (this->recording_) {
+  //  this->engine_->GetReplayMachinePtr()->RecordFrame(this->registry_gameplay_);
+  //}
 
   if (game_has_ended_) {
     engine_->ChangeState(StateType::REPLAY);
@@ -444,6 +444,11 @@ void PlayState::UpdateNetwork() {
   frame_id++;
   packet << frame_id;
   packet << PacketBlockType::FRAME_ID;
+
+  // Record replay
+  if (this->recording_) {
+    this->engine_->GetReplayMachinePtr()->RecordFrame(this->registry_gameplay_);
+  }
 }
 
 void PlayState::Cleanup() {
@@ -515,7 +520,7 @@ void PlayState::UpdateGameplayTimer() {
                  glm::vec4(1));
 
   } else if (!recording_) {
-	recording_ = true;
+    recording_ = true;
   }
 }
 
