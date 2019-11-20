@@ -718,13 +718,13 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::CREATE_MINE: {
-      EntityID owner_id;
+      unsigned int owner_team;
       EntityID mine_id;
       glm::vec3 pos;
-      packet >> owner_id;
+      packet >> owner_team;
       packet >> mine_id;
       packet >> pos;
-      play_state_.CreateMineObject(owner_id, mine_id, pos);
+      play_state_.CreateMineObject(owner_team, mine_id, pos);
 
       // Save game event
       GameEvent mine_place_event;

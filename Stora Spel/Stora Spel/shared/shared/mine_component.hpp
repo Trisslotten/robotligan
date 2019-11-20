@@ -1,10 +1,10 @@
 #ifndef MINE_COMPONENT_HPP_
 #define MINE_COMPONENT_HPP_
 
-typedef int EntityID;
+#include <entt.hpp>
 
 struct MineComponent {
-  EntityID owner_id;
+  unsigned int owner_team = TEAM_BLUE;
 };
 
 #endif  // MINE_COMPONENT_HPP_

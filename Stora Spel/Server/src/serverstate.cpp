@@ -375,11 +375,10 @@ void ServerPlayState::HandleDataToSend() {
       auto& t_c = registry.get<TransformComponent>(entity);
       auto& id_c = registry.get<IDComponent>(entity);
       auto& mine_c = registry.get<MineComponent>(entity);
-      // send owner id as well
 
       to_send << t_c.position;
       to_send << id_c.id;
-      to_send << mine_c.owner_id;
+      to_send << mine_c.owner_team;
       to_send << PacketBlockType::CREATE_MINE;
     }
 
@@ -1031,7 +1030,6 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
 
       EntityID id = GetNextEntityGuid();
       registry.assign<IDComponent>(e.entity, id);
-      registry.assign<TimerComponent>(e.entity, 30.f);
 
       created_mines_.push_back(e.entity);
 

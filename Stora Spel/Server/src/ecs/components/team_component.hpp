@@ -3,8 +3,6 @@
 
 #include <entt.hpp>
 
-
-
 struct TeamComponent {
   unsigned int team = TEAM_BLUE;
 };

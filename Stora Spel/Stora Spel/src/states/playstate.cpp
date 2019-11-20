@@ -2012,7 +2012,7 @@ void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
                                             glm::vec4(1.0f, 0.6f, 0.2f, 1.0f));
 }
 
-void PlayState::CreateMineObject(EntityID owner_id, EntityID mine_id,
+void PlayState::CreateMineObject(unsigned int owner_team, EntityID mine_id,
                                  glm::vec3 pos) {
   auto& sound_engine = engine_->GetSoundEngine();
 
@@ -2025,7 +2025,7 @@ void PlayState::CreateMineObject(EntityID owner_id, EntityID mine_id,
   model_c.handles.push_back(model_mine);
   registry_gameplay_.assign<IDComponent>(mine_object, mine_id);
   registry_gameplay_.assign<TransformComponent>(mine_object, pos);
-  registry_gameplay_.assign<MineComponent>(mine_object, owner_id);
+  registry_gameplay_.assign<MineComponent>(mine_object, owner_team);
   registry_gameplay_.assign<SoundComponent>(mine_object,
                                             sound_engine.CreatePlayer());
   registry_gameplay_.assign<TimerComponent>(mine_object, 30.f);
@@ -2438,6 +2438,70 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           break;
         }
       }
+    }
+    case GameEvent::MINE_PLACE: {
+      // Tiny dirt particle effect
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, TransformComponent>();
+      for (auto entity : view_controller) {
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+        PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
+        TransformComponent& t_c =
+            view_controller.get<TransformComponent>(entity);
+
+        if (id_c.id == e.mine_place.player_id) {
+          // Particles
+          entt::entity particle_entity = correct_registry->create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+          glob::SetParticleSettings(handle, "superkick.txt");
+          glob::SetParticleDirection(handle, t_c.Forward());
+          glob::SetEmitPosition(handle, t_c.position);
+          in_handles.push_back(handle);
+          ParticleComponent& par_c =
+              correct_registry->assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
+          correct_registry->assign<TimerComponent>(particle_entity, 4.f);
+
+          break;
+        }
+      }
+      break;
+    }
+    case GameEvent::MINE_TRIGGER: {
+      // Mine trigger particle effect
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller =
+          registry->view<IDComponent, PlayerComponent, TransformComponent>();
+      for (auto entity : view_controller) {
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+        PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
+        TransformComponent& t_c =
+            view_controller.get<TransformComponent>(entity);
+
+        if (id_c.id == e.mine_trigger.player_id) {
+          // Particles
+          entt::entity particle_entity = correct_registry->create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+          glob::SetParticleSettings(handle, "superkick.txt");
+          glob::SetParticleDirection(handle, t_c.Forward());
+          glob::SetEmitPosition(handle, t_c.position);
+          in_handles.push_back(handle);
+          ParticleComponent& par_c =
+              correct_registry->assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
+          correct_registry->assign<TimerComponent>(particle_entity, 4.f);
+
+          break;
+        }
+      }
+      break;
     }
     case GameEvent::SPRINT_START: {
       sprinting_ = true;

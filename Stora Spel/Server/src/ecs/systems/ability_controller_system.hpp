@@ -621,17 +621,20 @@ bool DoBlackout(entt::registry& registry) {
 
 bool PlaceMine(entt::registry& registry, PlayerID id) {
   auto view_controller =
-      registry.view<CameraComponent, PlayerComponent, TransformComponent, IDComponent>();
+      registry.view<CameraComponent, PlayerComponent, TransformComponent, TeamComponent>();
   for (auto entity : view_controller) {
-    TransformComponent& tc = view_controller.get<TransformComponent>(entity);
-    IDComponent& idc = view_controller.get<IDComponent>(entity);
+    PlayerComponent& p_c =
+        view_controller.get<PlayerComponent>(entity);
+    TransformComponent& t_c = view_controller.get<TransformComponent>(entity);
+    TeamComponent& team_c = view_controller.get<TeamComponent>(entity);
 
-    if (pc.client_id == id) {
+    if (p_c.client_id == id) {
       entt::entity mine = registry.create();
 
-      registry.assign<TransformComponent>(mine, tc.position);
-      registry.assign<MineComponent>(mine, idc.id);
-      
+      registry.assign<TransformComponent>(mine, t_c.position);
+      registry.assign<MineComponent>(mine, team_c.team);
+      registry.assign<TimerComponent>(mine, 30.f);
+
       EventInfo e;
       e.event = Event::CREATE_MINE;
       e.entity = mine;
