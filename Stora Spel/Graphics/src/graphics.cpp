@@ -26,6 +26,7 @@
 #include "particles/particle_system.hpp"
 #include "postprocess/blur.hpp"
 #include "postprocess/postprocess.hpp"
+#include "postprocess/shockwaves.hpp"
 #include "postprocess/ssao.hpp"
 #include "renderitems.hpp"
 #include "shader.hpp"
@@ -67,6 +68,7 @@ GLuint sky_texture = 0;
 PostProcess post_process;
 Blur blur;
 Shadows shadows;
+Shockwaves shockwaves;
 
 bool blackout = false;
 
@@ -1267,6 +1269,10 @@ void SubmitTrail(const std::vector<glm::vec3> &pos_history, float width,
   trails_to_render.push_back({pos_history, width, color});
 }
 
+void CreateShockwave(glm::vec3 position, float duration, float size) {
+  shockwaves.Create(position, duration, size);
+}
+
 void SubmitCube(glm::mat4 t) { cubes.push_back(t); }
 
 void SubmitWireframeMesh(ModelHandle model_h) {
@@ -1513,6 +1519,8 @@ void Render() {
   glViewport(0, 0, ws.x, ws.y);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  shockwaves.Update(camera);
+
   fullscreen_shader.use();
   post_process.BindColorTex(0);
   post_process.BindEmissionTex(1);
@@ -1522,6 +1530,8 @@ void Render() {
   fullscreen_shader.uniform("texture_emission", 1);
   fullscreen_shader.uniform("texture_ssao", 2);
   fullscreen_shader.uniform("use_ao", use_ao);
+  fullscreen_shader.uniform("resolution", ws);
+  shockwaves.SetUniforms(fullscreen_shader);
   DrawFullscreenQuad();
 
   glBindVertexArray(quad_vao);

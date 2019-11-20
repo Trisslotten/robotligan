@@ -1573,6 +1573,7 @@ void PlayState::CreateArenaEntity() {
         glm::vec3 pos = glm::vec3(-95 * x, 0, 50 * y);
         registry_gameplay_.assign<TransformComponent>(entity, pos, glm::vec3(),
                                                       glm::vec3(1, 250, 10));
+
         registry_gameplay_.assign<SkyLightComponent>(entity);
       }
 
@@ -2239,6 +2240,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       std::vector<glm::vec3> offsets;
       std::vector<glm::vec3> directions;
 
+      
+
       glob::SetParticleSettings(handle, "missile_impact.txt");
 
       auto registry = engine_->GetCurrentRegistry();
@@ -2250,6 +2253,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
         if (id_c.id == e.force_push_impact.projectile_id) {
           glob::SetEmitPosition(handle, trans_c.position);
+
+          glob::CreateShockwave(trans_c.position, 0.60f, 40.f);
+
           break;
         }
       }
