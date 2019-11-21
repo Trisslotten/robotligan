@@ -15,16 +15,17 @@
 #include "collision.hpp"
 #include "ecs/components.hpp"
 #include "ecs/components/pick_up_event.hpp"
-#include "shared/projectile_component.hpp"
 #include "ecs/systems/missile_system.hpp"
 #include "shared/fail_safe_arena.hpp"
 #include "shared/id_component.hpp"
+#include "shared/projectile_component.hpp"
 #include "shared/transform_component.hpp"
 
 void DestroyEntity(entt::registry& registry, entt::entity entity);
 void ApplyForcePush(entt::registry& registry, glm::vec3 pos);
 void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
-                            PhysicsComponent& physics_c);
+                            PhysicsComponent& physics_c,
+                            entt::registry& registry, entt::entity& entity);
 void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
                          long player_id);
 void EndHomingBall(entt::registry& registry, entt::entity& in_ball);
@@ -56,7 +57,7 @@ void PlayerBallCollision(entt::registry& registry,
 void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
                         entt::entity ball);
 void BallWallCollision(entt::registry& registry, const CollisionObject& object,
-                        entt::entity ball);
+                       entt::entity ball);
 void BallBallCollision(entt::registry& registry);
 void PlayerPlayerCollision(entt::registry& registry);
 void PlayerProjectileCollision(entt::registry& registry);
@@ -124,8 +125,9 @@ void UpdateCollisions(entt::registry& registry) {
     // Collision between ball and wall
     for (auto wall : view_wall) {
       auto& wall_hitbox = view_wall.get<physics::OBB>(wall);
-      
-      if (glm::dot(ball_physics.velocity, ball_hitbox.center - wall_hitbox.center) < 0.f) {
+
+      if (glm::dot(ball_physics.velocity,
+                   ball_hitbox.center - wall_hitbox.center) < 0.f) {
         glm::vec3 step = ball_physics.velocity * 1.0f / 64.f;
         ball_hitbox.center -= step;
         step *= 0.1;
@@ -174,7 +176,6 @@ void UpdateCollisions(entt::registry& registry) {
     ball_counter++;
   }
 
-  
   // check player collision
   // collision with arena and projectiles
   ProjectileArenaCollision(registry);
@@ -195,7 +196,6 @@ void UpdateCollisions(entt::registry& registry) {
   }
   BallBallCollision(registry);
 
- 
   // NEEDS TO BE CALLED LAST
   UpdateTransform(registry);
 
@@ -256,7 +256,7 @@ void HandleMultiBallCollision(entt::registry& registry,
       // ball_physics.velocity = glm::vec3(0.f);
       BallCollision(&ball_physics, obj.normal);
 
-      //break;
+      // break;
     } else if (obj.tag == WALL) {
       ball_hitbox.center += obj.move_vector;
       BallCollision(&ball_physics, obj.normal);
@@ -291,7 +291,7 @@ void PlayerBallCollision(entt::registry& registry,
   auto& ball_physics = registry.get<PhysicsComponent>(ball);
   auto& ball_hitbox = registry.get<physics::Sphere>(ball);
   auto& ball_ball = registry.get<BallComponent>(ball);
-  
+
   auto& player_physics = registry.get<PhysicsComponent>(object.entity);
   unsigned int player_team = TEAM_RED;
   if (registry.has<TeamComponent>(object.entity)) {
@@ -307,8 +307,7 @@ void PlayerBallCollision(entt::registry& registry,
   float player_speed = glm::length(player_physics.velocity);
   if (ball_speed < player_speed) {
     ball_physics.velocity =
-        object.normal *
-        (glm::dot(player_physics.velocity, object.normal));
+        object.normal * (glm::dot(player_physics.velocity, object.normal));
 
   } else {
     BallCollision(&ball_physics, object.normal);  // player_physics.velocity);
@@ -318,7 +317,8 @@ void PlayerBallCollision(entt::registry& registry,
     }
   }
 
-  if (ball_physics.velocity.y >= 0 || ball_physics.velocity.y < -1.f/128*9.82*6.f) {
+  if (ball_physics.velocity.y >= 0 ||
+      ball_physics.velocity.y < -1.f / 128 * 9.82 * 6.f) {
     // save game event
     if (registry.has<IDComponent>(ball)) {
       GameEvent nudge_event;
@@ -433,7 +433,7 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
 }
 
 void BallWallCollision(entt::registry& registry, const CollisionObject& object,
-                        entt::entity ball) {
+                       entt::entity ball) {
   auto& ball_physics = registry.get<PhysicsComponent>(ball);
   auto& ball_hitbox = registry.get<physics::Sphere>(ball);
   auto& ball_c = registry.get<BallComponent>(ball);
@@ -447,7 +447,6 @@ void BallWallCollision(entt::registry& registry, const CollisionObject& object,
     ball_physics.velocity =
         ball_physics.velocity - object.normal * dot_val * 0.8f * 2.f;
     bounced = true;
-
   }
   if (object.normal.y > 0.5f) {
     ball_physics.is_airborne = true;
@@ -489,7 +488,8 @@ void BallWallCollision(entt::registry& registry, const CollisionObject& object,
 
 void PlayerArenaCollision(entt::registry& registry) {
   auto view_player = registry.view<physics::OBB, PhysicsComponent>();
-  auto view_mesh_arena = registry.view<physics::MeshHitbox, FailSafeArenaComponent>();
+  auto view_mesh_arena =
+      registry.view<physics::MeshHitbox, FailSafeArenaComponent>();
   for (auto player : view_player) {
     auto& player_hitbox = view_player.get<physics::OBB>(player);
     auto& physics_c = view_player.get<PhysicsComponent>(player);
@@ -498,7 +498,8 @@ void PlayerArenaCollision(entt::registry& registry) {
       auto& arena_hitbox = view_mesh_arena.get<physics::MeshHitbox>(arena);
       arena_hitbox2 = view_mesh_arena.get<FailSafeArenaComponent>(arena);
 
-      physics::IntersectData data = Intersect(arena_hitbox, player_hitbox, -physics_c.velocity);
+      physics::IntersectData data =
+          Intersect(arena_hitbox, player_hitbox, -physics_c.velocity);
       if (data.collision == false)
         data = Intersect(arena_hitbox2.arena, player_hitbox);
       if (data.collision) {
@@ -521,12 +522,13 @@ void PlayerArenaCollision(entt::registry& registry) {
     }
     if (player_hitbox.center.x > arena_hitbox2.arena.xmax - 0.9f) {
       player_hitbox.center.x = arena_hitbox2.arena.xmax - 0.9f;
-    } else if (player_hitbox.center.x < arena_hitbox2.arena.xmin +0.9f) {
+    } else if (player_hitbox.center.x < arena_hitbox2.arena.xmin + 0.9f) {
       player_hitbox.center.x = arena_hitbox2.arena.xmin + 0.9f;
     }
 
     if (player_hitbox.center.y - player_hitbox.extents[1] <=
-            arena_hitbox2.arena.ymin && physics_c.velocity.y < 0) {
+            arena_hitbox2.arena.ymin &&
+        physics_c.velocity.y < 0) {
       physics_c.velocity.y = 0.0f;
       player_hitbox.center.y =
           arena_hitbox2.arena.ymin + player_hitbox.extents[1];
@@ -537,7 +539,8 @@ void PlayerArenaCollision(entt::registry& registry) {
 }
 
 void PlayerWallCollision(entt::registry& registry) {
-  auto view_player = registry.view<physics::OBB, PhysicsComponent, PlayerComponent>();
+  auto view_player =
+      registry.view<physics::OBB, PhysicsComponent, PlayerComponent>();
   auto view_wall = registry.view<physics::OBB, WallComponent>();
 
   for (auto player : view_player) {
@@ -713,7 +716,8 @@ void PlayerPlayerCollision(entt::registry& registry) {
 
 void PlayerProjectileCollision(entt::registry& registry) {
   auto view_player =
-      registry.view<physics::OBB, PhysicsComponent, IDComponent, PlayerComponent>();
+      registry
+          .view<physics::OBB, PhysicsComponent, IDComponent, PlayerComponent>();
   auto view_projectile = registry.view<physics::Sphere, ProjectileComponent>();
 
   for (auto player : view_player) {
@@ -823,8 +827,9 @@ void ProjectileArenaCollision(entt::registry& registry) {
       registry.view<physics::Sphere, ProjectileComponent, IDComponent>();
 
   for (auto arena : view_arena) {
-    auto& arena_hitbox = view_arena.get < physics::MeshHitbox>(arena);
-    auto& fail_safe_arena_hitbox = view_arena.get<FailSafeArenaComponent>(arena);
+    auto& arena_hitbox = view_arena.get<physics::MeshHitbox>(arena);
+    auto& fail_safe_arena_hitbox =
+        view_arena.get<FailSafeArenaComponent>(arena);
     for (auto projectile : view_projectile) {
       auto& proj_hitbox = view_projectile.get<physics::Sphere>(projectile);
       auto& proj_id = view_projectile.get<ProjectileComponent>(projectile);
@@ -867,7 +872,10 @@ void ProjectileArenaCollision(entt::registry& registry) {
           }
           case ProjectileID::TELEPORT_PROJECTILE: {
             // Teleport to collision site
-            TeleportToCollision(registry, proj_hitbox.center + data.normal * 1.0f + data.move_vector, proj_id.creator);
+            TeleportToCollision(
+                registry,
+                proj_hitbox.center + data.normal * 1.0f + data.move_vector,
+                proj_id.creator);
             DestroyEntity(registry, projectile);
             break;
           }
@@ -982,7 +990,8 @@ void ApplyForcePush(entt::registry& registry, glm::vec3 pos) {
   for (auto ball : balls) {
     auto& hitbox = balls.get<physics::Sphere>(ball);
     auto& physics_c = balls.get<PhysicsComponent>(ball);
-    ApplyForcePushOnEntity(force_push.center, hitbox.center, physics_c);
+    ApplyForcePushOnEntity(force_push.center, hitbox.center, physics_c,
+                           registry, ball);
   }
 
   auto players =
@@ -991,12 +1000,15 @@ void ApplyForcePush(entt::registry& registry, glm::vec3 pos) {
   for (auto player : players) {
     auto& hitbox = players.get<physics::OBB>(player);
     auto& physics_c = players.get<PhysicsComponent>(player);
-    ApplyForcePushOnEntity(force_push.center, hitbox.center, physics_c);
+    auto& player_c = players.get<PlayerComponent>(player);
+    ApplyForcePushOnEntity(force_push.center, hitbox.center, physics_c,
+                           registry, player);
   }
 }
 
 void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
-                            PhysicsComponent& physics_c) {
+                            PhysicsComponent& physics_c,
+                            entt::registry& registry, entt::entity& entity) {
   physics::Sphere force_push;
   force_push.center = explosion_pos;
   force_push.radius =
@@ -1011,6 +1023,17 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
     dir = glm::normalize(dir);
     physics_c.velocity =
         dir * force * (force_push.radius - length) / force_push.radius;
+    if (registry.has<PlayerComponent>(entity)) {
+      auto& player_c = registry.get<PlayerComponent>(entity);
+      player_c.stunned = true;
+      player_c.stun_timer.Restart();
+      GameEvent ge;
+      ge.type = GameEvent::PLAYER_STUNNED;
+      if (registry.has<IDComponent>(entity))
+        ge.player_stunned.player_id = registry.get<IDComponent>(entity).id;
+      ge.player_stunned.stun_time = player_c.stun_time;
+      dispatcher.trigger(ge);
+	}
     std::cout << " Velocity: " << physics_c.velocity;
   }
   std::cout << std::endl;
