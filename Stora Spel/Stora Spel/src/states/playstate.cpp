@@ -1640,7 +1640,7 @@ void PlayState::CreateAudienceEntities() {
     auto& animation_c = registry_gameplay_.assign<AnimationComponent>(
         audience, glob::GetAnimationData(model_audience));
     engine_->GetAnimationSystem().PlayAnimation(
-        "WaveRowsDown", 1.f, &animation_c, 10, 1.f,
+        "WaveRowsUp", 1.f, &animation_c, 10, 1.f,
         engine_->GetAnimationSystem().LOOP);
 
     Audiences.push_back(audience);
