@@ -64,7 +64,9 @@ class Engine {
   AbilityID GetSecondaryAbility() { return second_ability_; }
   std::vector<unsigned int> GetTeamScores() { return scores_; }
   std::vector<int>* GetPlayingPlayers();
-  void SetPlayingPlayers(std::unordered_map<int, LobbyPlayer> plyrs) { playing_players_ = plyrs; }
+  void SetPlayingPlayers(std::unordered_map<int, LobbyPlayer> plyrs) {
+    playing_players_ = plyrs;
+  }
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
   float GetSwitchGoalCountdownTimer() const;
@@ -85,7 +87,10 @@ class Engine {
   StateType GetPreviousStateType() { return previous_state_; }
   ServerStateType GetServerState() { return server_state_; }
   void SetServerState(ServerStateType state) { server_state_ = state; }
-  void ReInit() { play_state_.Cleanup(); play_state_.Init();}
+  void ReInit() {
+    play_state_.Cleanup();
+    play_state_.Init();
+  }
 
   std::unordered_map<PlayerID, PlayerStatInfo> GetPlayerScores() {
     return player_scores_;
@@ -93,6 +98,7 @@ class Engine {
 
   bool IsRecording() { return recording_; }
   bool IsReplaying() { return replaying_; }
+
  private:
   void SetKeybinds();
 
@@ -102,7 +108,7 @@ class Engine {
 
   // Replay Functions---
   void BeginRecording();
-  //void DoRecording();
+  // void DoRecording();
   void StopRecording();
   void SaveRecording();
   void BeginReplay();

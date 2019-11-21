@@ -192,6 +192,7 @@
     <ClInclude Include="src\util\settings.hpp" />
     <ClInclude Include="src\util\timer.hpp" />
     <ClInclude Include="src\serverstate.hpp" />
+    <ClInclude Include="src\util\winadpihelpers.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\replay machine\replay_machine.cpp" />

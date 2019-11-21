@@ -23,15 +23,18 @@
 #include "ecs/systems/target_system.hpp"
 #include "ecs/systems/pickup_spawner_system.hpp"
 #include "util/settings.hpp"
+#include "util/winadpihelpers.hpp"
 namespace {}  // namespace
 
 GameServer::~GameServer() {}
 
-void GameServer::Init(double in_update_rate, std::unordered_map<std::string, std::string> &args) {
+void GameServer::Init(double in_update_rate,
+                      std::unordered_map<std::string, std::string>& args) {
   glob::SetModelUseGL(false);
 
   server_.Setup(std::stoi(args["PORT"]), std::stoi(args["MPLAYERS"]));
-  std::cout << "Filesystem: Working dir = " << std::filesystem::path() << std::endl;
+  std::cout << "Filesystem: Working dir = " << std::filesystem::path()
+            << std::endl;
 
   lobby_state_.SetGameServer(this);
   play_state_.SetGameServer(this);

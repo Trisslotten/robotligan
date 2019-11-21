@@ -147,29 +147,30 @@ void CreateServerState::Startup() {
   // Input fields
   {
     ip_ = "localhost";
-	auto s = helper::ws::GetBestNIC();
-	ip_ = helper::ws::GetIPByIndex(s);
+    auto s = helper::ws::GetBestNIC();
+    ip_ = helper::ws::GetIPByIndex(s);
     double text_width = glob::GetWidthOfText(font_test_, port_, 45);
     auto portpos = glm::vec2((windowsize.x / 2.f - text_width * 2.7),
                              windowsize.y * 0.5f + 50);
     auto port = registry_create_server_.create();
     auto& port_field = registry_create_server_.assign<InputComponent>(port);
-	port_field.pos = portpos;
-	port_field.input_name = "PORT";
-	port_field.font_size = 45;
-	port_field.text = port_;
-	port_field.linked_value = &port_;
+    port_field.pos = portpos;
+    port_field.input_name = "PORT";
+    port_field.font_size = 45;
+    port_field.text = port_;
+    port_field.linked_value = &port_;
 
-	text_width = glob::GetWidthOfText(font_test_, max_players_, 45);
-	auto playerspos = glm::vec2((windowsize.x / 2.f - text_width * 9.10f),
-		windowsize.y * 0.5f);
-	auto maxplayers = registry_create_server_.create();
-	auto& players_field = registry_create_server_.assign<InputComponent>(maxplayers);
-	players_field.pos = playerspos;
-	players_field.input_name = "MAX PLAYERS";
-	players_field.font_size = 45;
-	players_field.text = max_players_;
-	players_field.linked_value = &max_players_;
+    text_width = glob::GetWidthOfText(font_test_, max_players_, 45);
+    auto playerspos = glm::vec2((windowsize.x / 2.f - text_width * 9.10f),
+                                windowsize.y * 0.5f);
+    auto maxplayers = registry_create_server_.create();
+    auto& players_field =
+        registry_create_server_.assign<InputComponent>(maxplayers);
+    players_field.pos = playerspos;
+    players_field.input_name = "MAX PLAYERS";
+    players_field.font_size = 45;
+    players_field.text = max_players_;
+    players_field.linked_value = &max_players_;
   }
 }
 
@@ -211,69 +212,68 @@ bool is_number(const std::string& s) {
                        }) == s.end();
 }
 /*
-
-	Funkar utan att krasha, men servern får inte rätt
-	Working directory
+	Reee
 */
+std::string workingdir() {
+  char buf[MAX_PATH + 1];
+  GetCurrentDirectoryA(MAX_PATH, buf);
+  return std::string(buf) + '\\';
+}
 void CreateServerState::CreateServer() {
-  if (is_number(port_) && !port_.empty() && !max_players_.empty() && is_number(max_players_)) {
+  if (is_number(port_) && !port_.empty() && !max_players_.empty() &&
+      is_number(max_players_)) {
     std::string arg = ip_ + " " + port_ + " " + max_players_;
     char* arg2 = (char*)arg.c_str();
     char ownPth[MAX_PATH + 1];
     HMODULE hModule = GetModuleHandle(NULL);
     if (hModule != NULL) {
-	  
       GetModuleFileName(hModule, ownPth, (sizeof(ownPth)));
-	  STARTUPINFO si;
+      STARTUPINFO si;
       PROCESS_INFORMATION pi;
-	  
-	  std::string path;
-	  path.resize(300);
-	  memcpy(path.data(), ownPth, MAX_PATH + 1);
-	  //memcpy(path.data(), ownPth, strlen(ownPth));
-	  //path += "server.exe";
-	  std::string p;
-	  if (path.find_last_of('\\') != std::string::npos)
-	  {
-		  size_t index = path.find_last_of('\\');
-		  p = path = path.substr(0, index + 1);
-		  path += "server.exe";
-	  }
-	  std::cout << path << std::endl;
-	  std::cout << p << std::endl;
-	  helper::ps::KillProcess("server.exe");
-	  helper::ps::KillProcess("Server.exe");
+
+      std::string path;
+      path.resize(300);
+      memcpy(path.data(), ownPth, MAX_PATH + 1);
+      // memcpy(path.data(), ownPth, strlen(ownPth));
+      // path += "server.exe";
+      std::string p;
+      if (path.find_last_of('\\') != std::string::npos) {
+        size_t index = path.find_last_of('\\');
+        p = path = path.substr(0, index + 1);
+        path += "server.exe";
+      }
+      std::cout << path << std::endl;
+      std::cout << p << std::endl;
+      helper::ps::KillProcess("server.exe");
+      helper::ps::KillProcess("Server.exe");
       ZeroMemory(&si, sizeof(si));
       si.cb = sizeof(si);
 
       ZeroMemory(&pi, sizeof(pi));
-	  if (!CreateProcess(path.c_str(),   // Filename
-		  arg2,   // args
-		  NULL,   // Process handle not inheritable
-		  NULL,   // Thread handle not inheritable
-		  FALSE,  // Set handle inheritance to FALSE
-		  CREATE_NEW_CONSOLE,      // Create own process 
-		  NULL,   // Use parent's environment block
-		  (char*)p.c_str(),   // Working dir.. Not working (huehue)
-		  &si,    // Pointer to STARTUPINFO structure
-		  &pi)) 
-	  {
-		  std::cout << "Failed to start server " << std::endl;
-		  return;
-	  }
-	  else {
-		  auto &client = engine_->GetClient();
-		  client.Connect(ip_.c_str(), std::stoi(port_.c_str()));
-		  if (!client.IsConnected())
-		  {
-			  std::cout << "Failed to connect to server" << std::endl;
-			  return;
-		  }
-		  else
-		  {
-			  engine_->ChangeState(StateType::LOBBY);
-		  }
-	  }
+      if (!CreateProcess(
+              path.c_str(),      // Filename
+              arg2,              // args
+              NULL,              // Process handle not inheritable
+              NULL,              // Thread handle not inheritable
+              FALSE,             // Set handle inheritance to FALSE
+              DETACHED_PROCESS,  // Create own process
+              NULL,              // Use parent's environment block
+              (char*)p.c_str(),  // Working dir.. Not working (huehue)
+              &si,               // Pointer to STARTUPINFO structure
+              &pi)) {
+        std::cout << "Failed to start server " << std::endl;
+        return;
+      } else {
+        started_ = true;
+        auto& client = engine_->GetClient();
+        client.Connect(ip_.c_str(), std::stoi(port_.c_str()));
+        if (!client.IsConnected()) {
+          std::cout << "Failed to connect to server" << std::endl;
+          return;
+        } else {
+          engine_->ChangeState(StateType::LOBBY);
+        }
+      }
     }
   }
 }

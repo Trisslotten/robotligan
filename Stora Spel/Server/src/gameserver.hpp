@@ -21,7 +21,8 @@
 class GameServer {
  public:
   ~GameServer();
-  void Init(double in_update_rate, std::unordered_map<std::string, std::string> &args);
+  void Init(double in_update_rate,
+            std::unordered_map<std::string, std::string>& args);
   void Update(float dt);
   void HandlePacketsToSend();
   void HandleStateChange();

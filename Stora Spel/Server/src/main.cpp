@@ -7,24 +7,24 @@
 #include "util/timer.hpp"
 #include "serverstate.hpp"
 
-
 entt::dispatcher dispatcher{};
-
+std::string workingdir() {
+  char buf[MAX_PATH + 1];
+  GetCurrentDirectoryA(MAX_PATH, buf);
+  return std::string(buf) + '\\';
+}
 int main(unsigned argc, char** argv) {
-
-
+  std::cout << "Workingdir: " << workingdir() << std::endl;
   std::unordered_map<std::string, std::string> arguments;
   std::cout << "Num server arguments: " << argc << std::endl;
   if (argc > 1) {
-	  //IP - PORT
-	  arguments["IP"] = argv[0];
-	  arguments["PORT"] = argv[1];
-	  arguments["MPLAYERS"] = argv[2];
-  }
-  else
-  {
-	  arguments["PORT"] = std::to_string(1337);
-	  arguments["MPLAYERS"] = "6";
+    // IP - PORT
+    arguments["IP"] = argv[0];
+    arguments["PORT"] = argv[1];
+    arguments["MPLAYERS"] = argv[2];
+  } else {
+    arguments["PORT"] = std::to_string(1337);
+    arguments["MPLAYERS"] = "6";
   }
   std::cout << "DEBUG: Starting Server" << std::endl;
 

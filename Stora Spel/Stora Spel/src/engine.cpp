@@ -25,6 +25,7 @@
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
 #include <ecs\systems\skylight_system.hpp>
+#include "util/winadpihelpers.hpp"
 
 Engine::Engine() {}
 
@@ -34,6 +35,10 @@ Engine::~Engine() {
   }
   if (this->registry_replay_ != nullptr) {
     delete this->registry_replay_;
+  }
+  if (create_server_state_.started_) {
+    helper::ps::KillProcess("Server.exe");
+    helper::ps::KillProcess("server.exe");
   }
 }
 
@@ -200,9 +205,9 @@ void Engine::Update(float dt) {
         current_state_ = &main_menu_state_;
         // std::cout << "CHANGE STATE: MAIN_MENU\n";
         break;
-	  case StateType::CREATE_SERVER:
-		  current_state_ = &create_server_state_;
-		  break;
+      case StateType::CREATE_SERVER:
+        current_state_ = &create_server_state_;
+        break;
       case StateType::CONNECT_MENU:
         current_state_ = &connect_menu_state_;
         // std::cout << "CHANGE STATE: CONNECT_MENU\n";
@@ -738,7 +743,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       bool smash = false;
       packet >> smash;
       play_state_.SetCanSmash(smash);
-	}
+    }
   }
 }
 

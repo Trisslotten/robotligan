@@ -7,6 +7,8 @@
 #include <string.h>
 #include <winbase.h>
 #include <windows.h>
+
+#include <string>
 namespace helper {
 namespace misc {
 /*
