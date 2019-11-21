@@ -83,6 +83,7 @@ void SoundSystem::Init(Engine* engine) {
       sound_engine_.GetSound("assets/sound/mine_trigger.mp3");
 
   sound_pickup_spawned_ = sound_engine_.GetSound("assets/sound/pickup.wav");
+  sound_player_stunned_ = sound_engine_.GetSound("assets/sound/stunned.mp3");
 
   ability_sounds_[AbilityID::GRAVITY_CHANGE] =
       sound_engine_.GetSound("assets/sound/gravitydrop.wav");
@@ -435,6 +436,17 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
 
       if (id_c.id == event.mine_trigger.entity_id) {
         sound_c.sound_player->Play(sound_ability_mine_trigger_, 0, 2.0f);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::PLAYER_STUNNED) {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.player_stunned.player_id) {
+        sound_c.sound_player->Play(sound_player_stunned_);
         break;
       }
     }

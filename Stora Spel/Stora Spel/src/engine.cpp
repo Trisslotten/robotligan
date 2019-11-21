@@ -745,6 +745,11 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       player_names_[client_id] = name;
       break;
     }
+    case PacketBlockType::YOU_CAN_SMASH: {
+      bool smash = false;
+      packet >> smash;
+      play_state_.SetCanSmash(smash);
+	}
   }
 }
 

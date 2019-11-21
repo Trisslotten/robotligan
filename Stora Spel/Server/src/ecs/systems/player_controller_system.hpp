@@ -30,6 +30,8 @@ void Update(entt::registry& registry, float dt) {
     AbilityComponent& ability_c = view_controller.get<AbilityComponent>(entity);
     IDComponent& id_c = view_controller.get<IDComponent>(entity);
 
+    player_c.ready_to_smash = false;
+
     unsigned int player_team = TEAM_RED;
     if (registry.has<TeamComponent>(entity)) {
       player_team = registry.get<TeamComponent>(entity).team;
@@ -44,7 +46,7 @@ void Update(entt::registry& registry, float dt) {
     cam_c.orientation = glm::normalize(cam_c.orientation);
     trans_c.SetRotation(glm::vec3(0, player_c.yaw, 0));
 
-    if (player_c.actions[PlayerAction::SHOOT]) {
+    if (player_c.actions[PlayerAction::SHOOT] && !player_c.stunned) {
       GameEvent shoot_event;
       shoot_event.type = GameEvent::SHOOT;
       shoot_event.shoot.player_id = registry.get<IDComponent>(entity).id;
@@ -80,7 +82,8 @@ void Update(entt::registry& registry, float dt) {
     glm::vec3 up(0, 1, 0);
     glm::vec3 right = glm::normalize(glm::cross(frwd, up));
 
-    if (true) {  // abs(accum_velocity.length()) < player_c.walkspeed * 4) {
+    if (!player_c.stunned) {  // abs(accum_velocity.length()) <
+                              // player_c.walkspeed * 4) {
       if (player_c.actions[PlayerAction::WALK_FORWARD] ||
           player_c.actions[PlayerAction::WALK_BACKWARD] ||
           player_c.actions[PlayerAction::WALK_RIGHT] ||
@@ -117,7 +120,8 @@ void Update(entt::registry& registry, float dt) {
       }
 
       if (player_c.actions[PlayerAction::SPRINT]) {
-        if (!player_c.sprinting && player_c.energy_current > player_c.energy_min_sprint) {
+        if (!player_c.sprinting &&
+            player_c.energy_current > player_c.energy_min_sprint) {
           player_c.sprinting = true;
 
           GameEvent sprint_event;
@@ -134,7 +138,8 @@ void Update(entt::registry& registry, float dt) {
         }
       }
       if ((!player_c.actions[PlayerAction::SPRINT] ||
-           player_c.energy_current <= 0.1f) && player_c.sprinting) {
+           player_c.energy_current <= 0.1f) &&
+          player_c.sprinting) {
         player_c.sprinting = false;
 
         GameEvent sprint_event;
@@ -176,7 +181,7 @@ void Update(entt::registry& registry, float dt) {
       }
     }
 
-	if (!player_c.actions[PlayerAction::SPRINT]) {
+    if (!player_c.actions[PlayerAction::SPRINT]) {
       player_c.energy_current =
           std::min((player_c.energy_current + player_c.energy_regen_tick * dt),
                    player_c.energy_max);
@@ -188,21 +193,24 @@ void Update(entt::registry& registry, float dt) {
     // if (cur_move_speed > 0.f) {
     // movement "floatiness", lower value = less floaty
     float t = 0.0005f;
-    physics_c.velocity.x =
-        glm::mix(physics_c.velocity.x, final_velocity.x, 1.f - glm::pow(t, dt));
-    physics_c.velocity.z =
-        glm::mix(physics_c.velocity.z, final_velocity.z, 1.f - glm::pow(t, dt));
-    //}
-    physics_c.velocity.y = final_velocity.y;
+    if (!player_c.stunned || (player_c.stunned && !physics_c.is_airborne)) {
+      physics_c.velocity.x = glm::mix(physics_c.velocity.x, final_velocity.x,
+                                      1.f - glm::pow(t, dt));
+      physics_c.velocity.z = glm::mix(physics_c.velocity.z, final_velocity.z,
+                                      1.f - glm::pow(t, dt));
+
+      physics_c.velocity.y = final_velocity.y;
+    }
 
     // physics stuff, absolute atm, may need to change. Other
     // systems may affect velocity. velocity of player object.
 
     // Ability buttons
-    if (player_c.actions[PlayerAction::ABILITY_PRIMARY]) {
+    if (player_c.actions[PlayerAction::ABILITY_PRIMARY] && !player_c.stunned) {
       ability_c.use_primary = true;
     }
-    if (player_c.actions[PlayerAction::ABILITY_SECONDARY]) {
+    if (player_c.actions[PlayerAction::ABILITY_SECONDARY] &&
+        !player_c.stunned) {
       ability_c.use_secondary = true;
     }
 
@@ -212,33 +220,40 @@ void Update(entt::registry& registry, float dt) {
     // std::cout << "stam: " << player_c.energy_current << "\n";
 
     // kick ball
+
+    glm::vec3 kick_dir =
+        cam_c.GetLookDir() + glm::vec3(0, player_c.kick_pitch, 0);
+
+	bool kicked = false;
     if (player_c.actions[PlayerAction::KICK] &&
-        player_c.kick_timer.Elapsed() > player_c.kick_cooldown) {
+        player_c.kick_timer.Elapsed() > player_c.kick_cooldown &&
+        !player_c.stunned) {
       player_c.kick_timer.Restart();
       GameEvent kick_event;
       kick_event.type = GameEvent::KICK;
       kick_event.kick.player_id = id_c.id;
       dispatcher.trigger(kick_event);
+      kicked = true;
+    }
 
-      glm::vec3 kick_dir =
-          cam_c.GetLookDir() + glm::vec3(0, player_c.kick_pitch, 0);
+    auto view_balls =
+        registry.view<BallComponent, PhysicsComponent, TransformComponent>();
+    for (auto entity : view_balls) {
+      auto& ball_physics_c = view_balls.get<PhysicsComponent>(entity);
+      auto& ball_trans_c = view_balls.get<TransformComponent>(entity);
+      auto& ball_c = view_balls.get<BallComponent>(entity);
 
-      auto view_balls =
-          registry.view<BallComponent, PhysicsComponent, TransformComponent>();
+      glm::vec3 player_ball_vec = ball_trans_c.position - trans_c.position;
+      glm::vec3 player_ball_dir = glm::normalize(player_ball_vec);
+      glm::vec3 player_look_dir = cam_c.GetLookDir();
+      float dist = length(player_ball_vec);
+      float dot = glm::dot(player_look_dir, player_ball_dir);
+      if (dist < player_c.kick_reach &&
+          dot > player_c.kick_fov) {  // if player is close enough to ball
+                                      // and looking at it
+        player_c.ready_to_smash = true;
 
-      for (auto entity : view_balls) {
-        auto& ball_physics_c = view_balls.get<PhysicsComponent>(entity);
-        auto& ball_trans_c = view_balls.get<TransformComponent>(entity);
-        auto& ball_c = view_balls.get<BallComponent>(entity);
-
-        glm::vec3 player_ball_vec = ball_trans_c.position - trans_c.position;
-        glm::vec3 player_ball_dir = glm::normalize(player_ball_vec);
-        glm::vec3 player_look_dir = cam_c.GetLookDir();
-        float dist = length(player_ball_vec);
-        float dot = glm::dot(player_look_dir, player_ball_dir);
-        if (dist < player_c.kick_reach &&
-            dot > player_c.kick_fov) {  // if player is close enough to ball and
-                                        // looking at it
+        if (kicked) {
           // perform kick
           kick_dir = glm::normalize(kick_dir);
           ball_physics_c.velocity = kick_dir * player_c.kick_force;
@@ -261,21 +276,23 @@ void Update(entt::registry& registry, float dt) {
           }
         }
       }
+    }
 
-      auto view_others =
-          registry
-              .view<PlayerComponent, TransformComponent, PhysicsComponent>();
-      for (auto other : view_others) {
-        auto& other_phys_c = view_others.get<PhysicsComponent>(other);
-        auto& other_trans_c = view_others.get<TransformComponent>(other);
-        auto& other_player_c = view_others.get<PlayerComponent>(other);
+    auto view_others =
+        registry.view<PlayerComponent, TransformComponent, PhysicsComponent>();
+    for (auto other : view_others) {
+      auto& other_phys_c = view_others.get<PhysicsComponent>(other);
+      auto& other_trans_c = view_others.get<TransformComponent>(other);
+      auto& other_player_c = view_others.get<PlayerComponent>(other);
 
-        glm::vec3 player_other_vec = other_trans_c.position - trans_c.position;
-        glm::vec3 player_other_dir = glm::normalize(player_other_vec);
-        glm::vec3 player_look_dir = cam_c.GetLookDir();
-        float dist = length(player_other_vec);
-        float dot = glm::dot(player_look_dir, player_other_dir);
-        if (dist < player_c.kick_reach && dot > player_c.kick_fov) {
+      glm::vec3 player_other_vec = other_trans_c.position - trans_c.position;
+      glm::vec3 player_other_dir = glm::normalize(player_other_vec);
+      glm::vec3 player_look_dir = cam_c.GetLookDir();
+      float dist = length(player_other_vec);
+      float dot = glm::dot(player_look_dir, player_other_dir);
+      if (dist < player_c.kick_reach && dot > player_c.kick_fov) {
+        player_c.ready_to_smash = true;
+        if (kicked) {
           // perform kick
           other_phys_c.velocity += kick_dir * player_c.kick_others_force;
           other_phys_c.is_airborne = true;
@@ -297,6 +314,10 @@ void Update(entt::registry& registry, float dt) {
     */
     // cam_c.cam->SetPosition(trans_c.position + glm::rotate(cam_c.offset,
     // glm::angle(trans_c.rotation), glm::vec3(0.0f, 1.0f, 0.0f)));
+    if (player_c.stunned &&
+        player_c.stun_timer.Elapsed() >= player_c.stun_time) {
+      player_c.stunned = false;
+    }
   };
 }
 

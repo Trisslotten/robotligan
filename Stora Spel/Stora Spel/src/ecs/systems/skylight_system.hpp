@@ -24,7 +24,7 @@ void Update(entt::registry& registry) {
     float sign = glm::sign(trans_c.position.z) * glm::sign(trans_c.position.x);
     glm::quat wiggle(glm::vec3(0.2f*sign*glm::sin(time), 0, 0));
 
-    trans_c.rotation = look_at_rot * wiggle * base_rot;
+    trans_c.rotation = look_at_rot * wiggle;
   }
 }
 

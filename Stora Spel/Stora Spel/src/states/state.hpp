@@ -107,7 +107,8 @@ class LobbyState : public State {
   void CreateGUIElements();
   void DrawTeamSelect();
   void DrawAbilitySelect();
-  glob::GUIHandle team_select_back_;
+  glob::GUIHandle red_team_select_back_;
+  glob::GUIHandle blue_team_select_back_;
   glob::GUIHandle ability_select_back_;
   glob::GUIHandle ability_back_normal_;
   glob::GUIHandle ability_back_hover_;
@@ -283,12 +284,14 @@ class PlayState : public State {
   void SetArenaScale(glm::vec3 arena_scale) { arena_scale_ = arena_scale; }
 
   void FetchMapAndArena(entt::registry& in_registry);
+  void SetCanSmash(bool val) { can_smash_ = val; }
 
  private:
   ServerStateType server_state_;
   void CreateInitialEntities();
   void CreatePlayerEntities();
   void CreateArenaEntity();
+  void CreateAudienceEntities();
   void CreateMapEntity();
   void CreateBallEntity();
   void CreateSpotlights();
@@ -309,6 +312,8 @@ class PlayState : public State {
   void DrawTopScores();
   void DrawTarget();
   void DrawQuickslots();
+  void DrawStunTimer();
+
   void DrawMiniMap();
   void DrawJumbotronText();
 
@@ -335,6 +340,8 @@ class PlayState : public State {
   std::unordered_map<EntityID, glm::vec3> player_move_dirs_;
   FrameState server_predicted_;
   entt::entity my_entity_, arena_entity_, map_visual_entity_;
+
+  std::vector<entt::entity> Audiences;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
 
@@ -387,6 +394,12 @@ class PlayState : public State {
   int current_jumbo_effect_ = TEAM_SCORES;
   Timer jumbo_effect_timer_;
   float jumbo_effect_time_ = 5.0f;
+
+  bool can_smash_ = false;
+
+  bool im_stunned_ = false;
+  Timer stun_timer_;
+  float my_stun_time_;
 };
 
 #endif  // STATE_HPP_

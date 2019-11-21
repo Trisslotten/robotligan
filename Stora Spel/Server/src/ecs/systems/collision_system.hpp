@@ -24,7 +24,8 @@
 void DestroyEntity(entt::registry& registry, entt::entity entity);
 void ApplyForcePush(entt::registry& registry, glm::vec3 pos);
 void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
-                            PhysicsComponent& physics_c);
+                            PhysicsComponent& physics_c,
+                            entt::registry& registry, entt::entity& entity);
 void ApplyMineStun(PhysicsComponent& physics_c);
 void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
                          long player_id);
@@ -1034,7 +1035,8 @@ void ApplyForcePush(entt::registry& registry, glm::vec3 pos) {
   for (auto ball : balls) {
     auto& hitbox = balls.get<physics::Sphere>(ball);
     auto& physics_c = balls.get<PhysicsComponent>(ball);
-    ApplyForcePushOnEntity(force_push.center, hitbox.center, physics_c);
+    ApplyForcePushOnEntity(force_push.center, hitbox.center, physics_c,
+                           registry, ball);
   }
 
   auto players =
@@ -1043,12 +1045,15 @@ void ApplyForcePush(entt::registry& registry, glm::vec3 pos) {
   for (auto player : players) {
     auto& hitbox = players.get<physics::OBB>(player);
     auto& physics_c = players.get<PhysicsComponent>(player);
-    ApplyForcePushOnEntity(force_push.center, hitbox.center, physics_c);
+    auto& player_c = players.get<PlayerComponent>(player);
+    ApplyForcePushOnEntity(force_push.center, hitbox.center, physics_c,
+                           registry, player);
   }
 }
 
 void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
-                            PhysicsComponent& physics_c) {
+                            PhysicsComponent& physics_c,
+                            entt::registry& registry, entt::entity& entity) {
   physics::Sphere force_push;
   force_push.center = explosion_pos;
   force_push.radius =
@@ -1063,6 +1068,17 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
     dir = glm::normalize(dir);
     physics_c.velocity =
         dir * force * (force_push.radius - length) / force_push.radius;
+    if (registry.has<PlayerComponent>(entity)) {
+      auto& player_c = registry.get<PlayerComponent>(entity);
+      player_c.stunned = true;
+      player_c.stun_timer.Restart();
+      GameEvent ge;
+      ge.type = GameEvent::PLAYER_STUNNED;
+      if (registry.has<IDComponent>(entity))
+        ge.player_stunned.player_id = registry.get<IDComponent>(entity).id;
+      ge.player_stunned.stun_time = player_c.stun_time;
+      dispatcher.trigger(ge);
+	}
     std::cout << " Velocity: " << physics_c.velocity;
   }
   std::cout << std::endl;

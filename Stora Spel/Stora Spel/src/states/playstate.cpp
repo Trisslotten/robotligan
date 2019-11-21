@@ -401,8 +401,28 @@ void PlayState::Update(float dt) {
 
   DrawTopScores();
   DrawTarget();
+  DrawStunTimer();
 
   glob::Submit(test_ball_, glm::mat4());
+
+  auto view_players = registry_gameplay_.view<PlayerComponent, IDComponent>();
+  for (auto player : view_players) {
+    EntityID id = registry_gameplay_.get<IDComponent>(player).id;
+    auto& player_c = registry_gameplay_.get<PlayerComponent>(player);
+    if (id == my_id_) {
+      player_c.can_smash = can_smash_;
+      break;
+    }
+  }
+
+  if (stun_timer_.Elapsed() >= my_stun_time_) {
+    im_stunned_ = false;
+    if (registry_gameplay_.has<ModelComponent>(my_entity_)) {
+      registry_gameplay_.get<ModelComponent>(my_entity_).emission_strength =
+          1.0f;
+    }
+    stun_timer_.Pause();
+  }
 }
 
 void PlayState::UpdateNetwork() {
@@ -1417,6 +1437,17 @@ void PlayState::DrawMiniMap() {
   }
 }
 
+void PlayState::DrawStunTimer() {
+  if (im_stunned_ && stun_timer_.Elapsed() > 0.5f) {
+    float strength = stun_timer_.Elapsed() / my_stun_time_;
+
+    if (registry_gameplay_.has<ModelComponent>(my_entity_)) {
+      registry_gameplay_.get<ModelComponent>(my_entity_).emission_strength =
+          strength;
+    }
+  }
+}
+
 void PlayState::SetEntityTransform(EntityID player_id, glm::vec3 pos,
                                    glm::quat orientation) {
   transforms_[player_id] = std::make_pair(pos, orientation);
@@ -1438,6 +1469,7 @@ void PlayState::CreateInitialEntities() {
   CreatePlayerEntities();
   CreateMapEntity();
   CreateArenaEntity();
+  CreateAudienceEntities();
   CreateBallEntity();
   TestCreateLights();
   CreateSpotlights();
@@ -1563,7 +1595,7 @@ void PlayState::CreateArenaEntity() {
 
         glm::vec3 pos = glm::vec3(-50 * x, 0, 85 * y);
         registry_gameplay_.assign<TransformComponent>(entity, pos, glm::vec3(),
-                                                      glm::vec3(150, 1, 5));
+                                                      glm::vec3(1, 250, 10));
         registry_gameplay_.assign<SkyLightComponent>(entity);
       }
       {
@@ -1573,13 +1605,40 @@ void PlayState::CreateArenaEntity() {
 
         glm::vec3 pos = glm::vec3(-95 * x, 0, 50 * y);
         registry_gameplay_.assign<TransformComponent>(entity, pos, glm::vec3(),
-                                                      glm::vec3(150, 1, 5));
+                                                      glm::vec3(1, 250, 10));
+
         registry_gameplay_.assign<SkyLightComponent>(entity);
       }
 
       std::swap(x, y);
       y *= -1;
     }
+  }
+}
+
+void PlayState::CreateAudienceEntities() {
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+
+  glob::ModelHandle model_audience =
+      glob::GetModel("assets/Arena/Audience.fbx");
+
+  for (int i = 0; i < 4; i++) {
+    auto audience = registry_gameplay_.create();
+
+    auto& audience_mc = registry_gameplay_.assign<ModelComponent>(audience);
+    audience_mc.handles.push_back(model_audience);
+
+    registry_gameplay_.assign<TransformComponent>(
+        audience, zero_vec, glm::vec3(0.f, (pi / 2.f) * i, 0.f),
+        glm::vec3(0.02f, 0.02f, 0.02f));
+
+    auto& animation_c = registry_gameplay_.assign<AnimationComponent>(
+        audience, glob::GetAnimationData(model_audience));
+    engine_->GetAnimationSystem().PlayAnimation(
+        "WaveRowsUp", 1.f, &animation_c, 10, 1.f,
+        engine_->GetAnimationSystem().LOOP);
+
+    Audiences.push_back(audience);
   }
 }
 
@@ -2242,6 +2301,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
         if (id_c.id == e.force_push_impact.projectile_id) {
           glob::SetEmitPosition(handle, trans_c.position);
+
+          glob::CreateShockwave(trans_c.position, 0.5f, 30.f);
           break;
         }
       }
@@ -2270,6 +2331,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
         if (id_c.id == e.missile_impact.projectile_id) {
           glob::SetEmitPosition(handle, trans_c.position);
+
+          glob::CreateShockwave(trans_c.position, 0.60f, 40.f);
 
           break;
         }
@@ -2439,6 +2502,22 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           break;
         }
       }
+
+      auto view_balls =
+          registry->view<IDComponent, TransformComponent, BallComponent>();
+      for (auto ball : view_balls) {
+        auto& id_c = view_balls.get<IDComponent>(ball);
+        if (id_c.id == e.super_kick.ball_id) {
+          auto& trans_c = view_balls.get<TransformComponent>(ball);
+
+          // TODO: maybe smaller shockwave if is player_id == my_id_
+          glob::CreateShockwave(trans_c.position, 0.6f, 40.f);
+
+          break;
+        }
+      }
+
+      break;
     }
     case GameEvent::MINE_PLACE: {
       // Tiny dirt particle effect
@@ -2518,6 +2597,36 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
     }
     case GameEvent::SPRINT_END: {
       sprinting_ = false;
+      break;
+    }
+    case GameEvent::LAND: {
+      if (e.land.player_id != my_id_) {
+        auto registry = engine_->GetCurrentRegistry();
+        auto view_controller =
+            registry->view<IDComponent, TransformComponent>();
+        for (auto entity : view_controller) {
+          IDComponent& id_c = view_controller.get<IDComponent>(entity);
+          TransformComponent& t_c =
+              view_controller.get<TransformComponent>(entity);
+
+          if (id_c.id == e.land.player_id) {
+            glob::CreateShockwave(t_c.position, 0.2, 3.f);
+            break;
+          }
+        }
+      }
+      break;
+    }
+    case GameEvent::PLAYER_STUNNED: {
+      if (my_id_ == e.player_stunned.player_id) {
+        im_stunned_ = true;
+        my_stun_time_ = e.player_stunned.stun_time;
+        stun_timer_.Restart();
+        if (registry_gameplay_.has<ModelComponent>(my_entity_)) {
+          registry_gameplay_.get<ModelComponent>(my_entity_).emission_strength =
+              0.0f;
+        }
+      }
       break;
     }
   }
