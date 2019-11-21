@@ -26,7 +26,7 @@ void ApplyForcePush(entt::registry& registry, glm::vec3 pos);
 void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
                             PhysicsComponent& physics_c,
                             entt::registry& registry, entt::entity& entity);
-void ApplyMineStun(PhysicsComponent& physics_c);
+void ApplyMineStun(entt::registry& registry, PhysicsComponent& physics_c, PlayerComponent& player_c, IDComponent& id_c);
 void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
                          long player_id);
 void EndHomingBall(entt::registry& registry, entt::entity& in_ball);
@@ -942,6 +942,7 @@ void MinePlayerCollision(entt::registry& registry) {
     auto& mine_idc = mine_view.get<IDComponent>(mine);
 
     for (auto player : player_view) {
+      auto& p_c = player_view.get<PlayerComponent>(player);
       auto& p_tc = player_view.get<TransformComponent>(player);
       auto& p_pc = player_view.get<PhysicsComponent>(player);
       auto& p_teamc = player_view.get<TeamComponent>(player);
@@ -951,9 +952,9 @@ void MinePlayerCollision(entt::registry& registry) {
       if (glm::length(mine_tc.position - p_tc.position) <=
               GlobalSettings::Access()->ValueOf(
                   "ABILITY_MINE_TRIGGER_RADIUS") &&
-          mine_c.owner_team != p_teamc.team) {
+          mine_c.owner_team == p_teamc.team) {
 
-        ApplyMineStun(p_pc);
+        ApplyMineStun(registry, p_pc, p_c, p_idc);
 
         // Save game event
         GameEvent mine_trigger_event;
@@ -1084,8 +1085,19 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
   std::cout << std::endl;
 }
 
-void ApplyMineStun(PhysicsComponent& physics_c) {
+void ApplyMineStun(entt::registry& registry, PhysicsComponent& physics_c, PlayerComponent& player_c, IDComponent& id_c) {
+  // Push
   physics_c.velocity += glm::vec3(0.f, 5.f, 0.f);
+
+  // Stun
+  player_c.stunned = true;
+  player_c.stun_timer.Restart();
+
+  GameEvent ge;
+  ge.type = GameEvent::PLAYER_STUNNED;
+  ge.player_stunned.player_id = id_c.id;
+  ge.player_stunned.stun_time = player_c.stun_time;
+  dispatcher.trigger(ge);
 }
 
 void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
