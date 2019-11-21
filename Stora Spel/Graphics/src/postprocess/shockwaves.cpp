@@ -11,9 +11,9 @@ void Shockwaves::Create(glm::vec3 position, float duration, float size) {
 }
 
 void Shockwaves::Update(Camera camera) {
-  uniform_positions.clear();
-  uniform_time_ratios.clear();
-  uniform_radii.clear();
+  uniform_positions_.clear();
+  uniform_time_ratios_.clear();
+  uniform_radii_.clear();
 
   for (int i = 0; i < shockwaves_.size(); i++) {
     Shockwave& curr = shockwaves_[i];
@@ -37,9 +37,9 @@ void Shockwaves::Update(Camera camera) {
       if(clip.w > 0) {
         auto ws = glob::window::GetWindowDimensions();
 
-        uniform_positions.push_back(ndc * 0.5f + 0.5f);
-        uniform_time_ratios.push_back(time_ratio);
-        uniform_radii.push_back(ndc_radius * ws.x);
+        uniform_positions_.push_back(ndc * 0.5f + 0.5f);
+        uniform_time_ratios_.push_back(time_ratio);
+        uniform_radii_.push_back(ndc_radius * ws.x);
       }
     } else {
       shockwaves_.erase(shockwaves_.begin() + i);
@@ -50,12 +50,12 @@ void Shockwaves::Update(Camera camera) {
 
 void Shockwaves::SetUniforms(ShaderProgram& shader) {
   const int max_shockwaves = 8;
-  int count = glm::min(max_shockwaves, (int)uniform_positions.size());
+  int count = glm::min(max_shockwaves, (int)uniform_positions_.size());
 
   shader.uniform("shockwave_count", count);
-  shader.uniformv("shockwave_positions", count, uniform_positions.data());
-  shader.uniformv("shockwave_time_ratios", count, uniform_time_ratios.data());
-  shader.uniformv("shockwave_radii", count, uniform_radii.data());
+  shader.uniformv("shockwave_positions", count, uniform_positions_.data());
+  shader.uniformv("shockwave_time_ratios", count, uniform_time_ratios_.data());
+  shader.uniformv("shockwave_radii", count, uniform_radii_.data());
   
 }
 

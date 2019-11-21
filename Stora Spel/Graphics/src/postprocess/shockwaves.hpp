@@ -27,9 +27,9 @@ class Shockwaves {
   };
   std::vector<Shockwave> shockwaves_;
 
-  std::vector<glm::vec3> uniform_positions;
-  std::vector<float> uniform_time_ratios;
-  std::vector<float> uniform_radii;
+  std::vector<glm::vec3> uniform_positions_;
+  std::vector<float> uniform_time_ratios_;
+  std::vector<float> uniform_radii_;
 };
 
 }  // namespace glob
