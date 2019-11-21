@@ -38,13 +38,15 @@ class Mesh {
   std::vector<glm::vec4> weights_;
   std::vector<glm::ivec4> bone_index_;
 
+  glm::mat4 transform_;
+
   bool weighted_ = false;
 
   void SetupMesh(bool weighted);
 
  public:
   Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices,
-       const std::vector<Texture>& textures);
+       const std::vector<Texture>& textures, glm::mat4 transform);
   Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices,
        const std::vector<Texture>& textures,
        const std::vector<glm::vec4> weights,
@@ -54,6 +56,8 @@ class Mesh {
   void Draw(ShaderProgram& shader);
 
   MeshData GetMeshData();
+
+  glm::mat4 GetTransform() { return transform_; }
 };
 
 }  // namespace glob

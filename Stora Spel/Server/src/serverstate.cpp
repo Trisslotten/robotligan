@@ -5,6 +5,7 @@
 
 #include <collision.hpp>
 #include <ecs\components\pick_up_event.hpp>
+#include <glm/gtx/compatibility.hpp>
 #include <glob\graphics.hpp>
 #include <physics.hpp>
 #include <shared\id_component.hpp>
@@ -12,7 +13,6 @@
 #include "ecs/components.hpp"
 #include "ecs/components/match_timer_component.hpp"
 #include "gameserver.hpp"
-#include <glm/gtx/compatibility.hpp>
 
 #include <map>
 
@@ -574,13 +574,11 @@ void ServerPlayState::CreateMapEntity() {
   float v4 = 5.723f * arena_scale.y;
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
-  glob::ModelHandle model_map =
-      glob::GetModel("assets/MapV3/Map_Hitbox.fbx");
+  glob::ModelHandle model_map = glob::GetModel("assets/MapV3/Map_Hitbox.fbx");
 
   // Add components for an arena
   // registry_.assign<ModelComponent>(entity, model_arena);
-  registry.assign<TransformComponent>(entity, zero_vec,
-                                      zero_vec, arena_scale);
+  registry.assign<TransformComponent>(entity, zero_vec, zero_vec, arena_scale);
 
   // Add a hitbox
   registry.assign<physics::Arena>(entity, -v2, v2, -v3, v4, -v1, v1);
@@ -671,13 +669,13 @@ void ServerPlayState::CreatePlayerEntity() {
   // Add a hitbox
   registry.assign<physics::OBB>(
       entity,
-      (alter_scale * character_scale),             // Center
-      glm::vec3(1.f, 0.f, 0.f),                  //
-      glm::vec3(0.f, 1.f, 0.f),                  // Normals
-      glm::vec3(0.f, 0.f, 1.f),                  //
-      coeff_x_side * character_scale.x * 0.4f,   //
+      (alter_scale * character_scale),          // Center
+      glm::vec3(1.f, 0.f, 0.f),                 //
+      glm::vec3(0.f, 1.f, 0.f),                 // Normals
+      glm::vec3(0.f, 0.f, 1.f),                 //
+      coeff_x_side * character_scale.x * 0.4f,  //
       coeff_y_side * character_scale.y * 0.5f,  // Length of each plane
-      coeff_z_side * character_scale.z * 0.7f    //
+      coeff_z_side * character_scale.z * 0.7f   //
   );
   glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
   registry.assign<CameraComponent>(entity, camera_offset);
@@ -736,12 +734,16 @@ void ServerPlayState::ResetEntities() {
   arena_scale.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
   arena_scale.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
   for (int i = 0; i < 3; ++i) {
-    player_pos[i].x = GlobalSettings::Access()->ValueOf(
-        std::string("PLAYERPOSITION") + std::to_string(i) + "X") * arena_scale.x;
+    player_pos[i].x =
+        GlobalSettings::Access()->ValueOf(std::string("PLAYERPOSITION") +
+                                          std::to_string(i) + "X") *
+        arena_scale.x;
     player_pos[i].y = GlobalSettings::Access()->ValueOf(
         std::string("PLAYERPOSITION") + std::to_string(i) + "Y");
-    player_pos[i].z = GlobalSettings::Access()->ValueOf(
-        std::string("PLAYERPOSITION") + std::to_string(i) + "Z") * arena_scale.z;
+    player_pos[i].z =
+        GlobalSettings::Access()->ValueOf(std::string("PLAYERPOSITION") +
+                                          std::to_string(i) + "Z") *
+        arena_scale.z;
   }
 
   unsigned int blue_counter = 0;
@@ -761,6 +763,35 @@ void ServerPlayState::ResetEntities() {
       }
     }
   }
+  if (switched_goals) {
+    auto view_goal =
+        registry.view<TransformComponent, GoalComponenet, TeamComponent>();
+    GoalComponenet* first_goal_comp = nullptr;
+    GoalComponenet* second_goal_comp = nullptr;
+    bool got_first = false;
+    for (auto goal : view_goal) {
+      TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
+      GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
+
+      if (goal_team_c.team == TEAM_RED) {
+        goal_team_c.team = TEAM_BLUE;
+      } else {
+        goal_team_c.team = TEAM_RED;
+      }
+      if (!got_first) {
+        first_goal_comp = &goal_goal_c;
+        got_first = true;
+      } else {
+        second_goal_comp = &goal_goal_c;
+      }
+    }
+    if (first_goal_comp != nullptr && second_goal_comp != nullptr) {
+      unsigned int first_goals = first_goal_comp->goals;
+      first_goal_comp->goals = second_goal_comp->goals;
+      second_goal_comp->goals = first_goals;
+    }
+  }
+  switched_goals = false;
 
   auto player_view = registry.view<PlayerComponent, PhysicsComponent,
                                    TransformComponent, CameraComponent>();
@@ -877,7 +908,6 @@ EntityID ServerPlayState::CreatePickUpComponents(glm::vec3 pos) {
   // glm::vec3 pos = glm::vec3(30 * float(rand()) / RAND_MAX - 15.f, -8.5f,
   //                        30 * float(rand()) / RAND_MAX - 15.f);
 
-
   auto entity = CreateIDEntity();
   registry.assign<TransformComponent>(entity, pos, glm::vec3(0.f),
                                       glm::vec3(1.f));
@@ -907,7 +937,9 @@ void ServerPlayState::EndGame() {
 }
 
 void ServerPlayState::WallAnimation() {
-  auto view_wall = game_server_->GetRegistry().view<TimerComponent, WallComponent, TransformComponent>();
+  auto view_wall =
+      game_server_->GetRegistry()
+          .view<TimerComponent, WallComponent, TransformComponent>();
 
   for (auto wall : view_wall) {
     auto& timer = view_wall.get<TimerComponent>(wall);
@@ -916,7 +948,7 @@ void ServerPlayState::WallAnimation() {
     float delta = 10 - timer.time_left;
     if (delta > 1.f) delta = 1.f;
     float y = glm::lerp(-9.3f, -1.f, delta);
-    
+
     trans.position.y = y;
   }
 }
@@ -1067,21 +1099,25 @@ void ServerPlayState::CreateGoals() {
   auto entity_blue = registry.create();
   registry.assign<physics::OBB>(entity_blue, glm::vec3(0.f, 0.f, 0.f),
                                 glm::vec3(1, 0, 0), glm::vec3(0, 1, 0),
-                                glm::vec3(0, 0, 1), 2.f * arena_scale.x, 2.f * arena_scale.y, 6.5f * arena_scale.z);
+                                glm::vec3(0, 0, 1), 2.f * arena_scale.x,
+                                2.f * arena_scale.y, 6.5f * arena_scale.z);
   registry.assign<TeamComponent>(entity_blue, TEAM_BLUE);
   registry.assign<GoalComponenet>(entity_blue);
   auto& trans_comp = registry.assign<TransformComponent>(entity_blue);
-  trans_comp.position = glm::vec3(-41.f * arena_scale.x, 2.0f * arena_scale.y, 0.f);
+  trans_comp.position =
+      glm::vec3(-41.f * arena_scale.x, 2.0f * arena_scale.y, 0.f);
 
   // red team's goal, place at blue goal in world
   auto entity_red = registry.create();
   registry.assign<physics::OBB>(entity_red, glm::vec3(0.f, 0.f, 0.f),
                                 glm::vec3(1, 0, 0), glm::vec3(0, 1, 0),
-                                glm::vec3(0, 0, 1), 2.f * arena_scale.x, 2.f * arena_scale.y, 6.5f * arena_scale.z);
+                                glm::vec3(0, 0, 1), 2.f * arena_scale.x,
+                                2.f * arena_scale.y, 6.5f * arena_scale.z);
   registry.assign<TeamComponent>(entity_red, TEAM_RED);
   registry.assign<GoalComponenet>(entity_red);
   auto& trans_comp2 = registry.assign<TransformComponent>(entity_red);
-  trans_comp2.position = glm::vec3(41.f * arena_scale.x, 2.f * arena_scale.y, 0.f);
+  trans_comp2.position =
+      glm::vec3(41.f * arena_scale.x, 2.f * arena_scale.y, 0.f);
 }
 
 void ServerPlayState::Reconnect(int id) {
