@@ -51,6 +51,7 @@ private:
   slob::SoundHandle sound_pickup_spawned_;
   slob::SoundHandle sound_black_hole_active;
   slob::SoundHandle sound_black_hole_destroy;
+  slob::SoundHandle sound_player_stunned_;
 
   Engine* engine_;
 };

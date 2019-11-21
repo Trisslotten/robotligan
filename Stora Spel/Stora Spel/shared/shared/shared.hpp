@@ -88,6 +88,7 @@ enum : int16_t {
   PLAYER_LOOK_DIR,
   PLAYER_MOVE_DIR,
   TO_CLIENT_NAME,
+  YOU_CAN_SMASH,
   NUM_BLOCK_TYPES,
 };
 
@@ -156,6 +157,7 @@ struct GameEvent {
 	BLACK_HOLE_CREATED,
 	BLACK_HOLE_ACTIVATED,
 	BLACK_HOLE_DESTROYED,
+	PLAYER_STUNNED,
     NUM_EVENTS
   } type;
   union {
@@ -222,6 +224,7 @@ struct GameEvent {
     // Ability Super Kick
     struct {
       EntityID player_id;
+      EntityID ball_id;
     } super_kick;
 
     // Ability Homing Ball
@@ -340,6 +343,10 @@ struct GameEvent {
 	struct {
       EntityID black_hole_id;
 	} destroy_black_hole;
+    struct {
+      EntityID player_id;
+      float stun_time;
+    } player_stunned;
   };
 };
 

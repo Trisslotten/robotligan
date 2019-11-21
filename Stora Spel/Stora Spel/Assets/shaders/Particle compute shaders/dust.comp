@@ -78,7 +78,7 @@ void main()
 		}
 		positions[gid] += velocities[gid] * dt;
 		positions[gid].y = clamp(positions[gid].y, 0.3, 24.0);
-		if (positions[gid].y < 0.6)
+		if (positions[gid].y < 0.6 && times[gid] < 2.0)
 			times[gid] = 0.0;
 	} else if (gid >= min_i && gid < max_i) {
 		float random = randnorm(gid);

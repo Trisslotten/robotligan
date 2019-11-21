@@ -465,7 +465,18 @@ void ServerPlayState::HandleDataToSend() {
 
     to_send << player_frame_id_[client_id];
     to_send << PacketBlockType::FRAME_ID;
+
+    auto view_players = registry.view<PlayerComponent>();
+    for (auto player : view_players) {
+      auto& player_c = registry.get<PlayerComponent>(player);
+      if (client_id == player_c.client_id) {
+        to_send << player_c.ready_to_smash;
+        to_send << PacketBlockType::YOU_CAN_SMASH;
+        break;
+      }
+    }
   }
+
   created_projectiles_.clear();
   destroy_entities_.clear();
 
@@ -819,6 +830,7 @@ void ServerPlayState::ResetEntities() {
     player_component.pitch = 0.f;
     player_component.yaw = orientation_value;
     player_component.can_jump = false;
+    player_component.stunned = false;
     physics_component.velocity = glm::vec3(0.0f);
     physics_component.is_airborne = true;
 

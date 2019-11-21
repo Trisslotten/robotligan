@@ -12,8 +12,11 @@
 #include "shared/id_component.hpp"
 #include "shared/transform_component.hpp"
 
+#include <algorithm>
 #include <collision.hpp>
+#include <ecs\components\skylight_component.hpp>
 #include <ecs\components\trail_component.hpp>
+#include <glm\gtx\extended_min_max.hpp>
 #include <physics.hpp>
 #include <shared/fail_safe_arena.hpp>
 #include <shared/physics_component.hpp>
@@ -133,7 +136,7 @@ void PlayState::Init() {
 
   CreateInGameMenu();
   CreateInitialEntities();
-  CreateSpotlights();
+
   // TestParticles();
 
   engine_->GetChat()->SetPosition(
@@ -312,13 +315,11 @@ void PlayState::Update(float dt) {
     glob::Submit(in_game_menu_gui_, in_game_menu_pos, 1.0f);
   }
 
-  glob::Submit(e2D_test2_, glm::vec3(0.0f, 3.0f, -28.0f) * arena_scale_, 7,
-               0.0f, glm::vec3(1));
-
   UpdateGameplayTimer();
   UpdateSwitchGoalTimer();
   DrawNameOverPlayer();
   DrawWallOutline();
+  DrawJumbotronText();
   if (primary_cd_ > 0) {
     primary_cd_ -= dt;
   }
@@ -400,8 +401,28 @@ void PlayState::Update(float dt) {
 
   DrawTopScores();
   DrawTarget();
+  DrawStunTimer();
 
   glob::Submit(test_ball_, glm::mat4());
+
+  auto view_players = registry_gameplay_.view<PlayerComponent, IDComponent>();
+  for (auto player : view_players) {
+    EntityID id = registry_gameplay_.get<IDComponent>(player).id;
+    auto& player_c = registry_gameplay_.get<PlayerComponent>(player);
+    if (id == my_id_) {
+      player_c.can_smash = can_smash_;
+      break;
+    }
+  }
+
+  if (stun_timer_.Elapsed() >= my_stun_time_) {
+    im_stunned_ = false;
+    if (registry_gameplay_.has<ModelComponent>(my_entity_)) {
+      registry_gameplay_.get<ModelComponent>(my_entity_).emission_strength =
+          1.0f;
+    }
+    stun_timer_.Pause();
+  }
 }
 
 void PlayState::UpdateNetwork() {
@@ -704,12 +725,17 @@ void PlayState::DrawTopScores() {
   team_score_pos.x -= 145;
   team_score_pos.y -= 60;
   glob::Submit(gui_teamscore_, team_score_pos, 1, 100);
+  std::string blue_score_str = std::to_string(engine_->GetTeamScores()[1]);
+  std::string red_score_str = std::to_string(engine_->GetTeamScores()[0]);
 
-  glob::Submit(font_scores_, team_score_pos + glm::vec2(90, 55), 72,
-               std::to_string(engine_->GetTeamScores()[1]),
+  glm::vec2 blue_score_pos =
+      team_score_pos + glm::vec2(90, 55) -
+      glm::vec2(12, 0) * (float)(blue_score_str.size() - 1);
+  glm::vec2 red_score_pos = team_score_pos + glm::vec2(205, 55);
+
+  glob::Submit(font_scores_, blue_score_pos, 72, blue_score_str,
                glm::vec4(0, 0.26, 1, 1));
-  glob::Submit(font_scores_, team_score_pos + glm::vec2(217, 55), 72,
-               std::to_string(engine_->GetTeamScores()[0]),
+  glob::Submit(font_scores_, red_score_pos, 72, red_score_str,
                glm::vec4(1, 0, 0, 1));
 }
 
@@ -1066,6 +1092,21 @@ void PlayState::Collision() {
   }
 }
 
+unsigned long PlayState::GetBestPlayer() {
+  std::unordered_map<EntityID, PlayerStatInfo> p_scores =
+      engine_->GetPlayerScores();
+
+  unsigned long best_id = 0;
+  int best_points = -999;
+  for (auto stats : p_scores) {
+    if (stats.second.points > best_points) {
+      best_id = stats.first;
+      best_points = stats.second.points;
+    }
+  }
+  return best_id;
+}
+
 EntityID PlayState::ClientIDToEntityID(long client_id) {
   return engine_->GetPlayerScores()[client_id].enttity_id;
 }
@@ -1127,6 +1168,125 @@ void PlayState::DrawQuickslots() {
     glob::Submit(font_test_, glm::vec2(45 - jump_left, 89), 72, cd_string,
                  glm::vec4(0, 0, 0, 0.7f));
     glob::Submit(font_test_, glm::vec2(46 - jump_left, 90), 72, cd_string);
+  }
+}
+
+void PlayState::DrawJumbotronText() {
+  glm::vec3 pos_base;
+  pos_base.x = GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEX");
+  pos_base.y =
+      GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEY") + 15.f;
+  pos_base.z = GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEZ");
+
+  pos_base *= arena_scale_;
+
+  float xrot = 1.f;
+  float zrot = 1.f;
+  for (int i = 0; i < 4; i++) {
+    glm::vec3 temp_pos =
+        glm::vec3(xrot * pos_base.x, pos_base.y, pos_base.z * zrot);
+
+    float goal_side_switch = goals_swapped_ ? xrot * -1 : xrot;
+
+    glm::vec3 dir = glm::normalize(glm::vec3(0, temp_pos.y, 0) - temp_pos);
+    temp_pos += dir * 30.f;
+    glm::vec3 right =
+        glm::normalize(glm::cross(dir, glm::vec3(0, 1, 0))) * -1.f;
+    temp_pos += right * 5.f;
+
+    glm::quat rotation = glm::quatLookAtRH(dir, glm::vec3(0, 1, 0));
+    rotation *= glm::quat(glm::vec3(0.f, glm::radians(180.0f), 0.f));
+    glm::mat4 orient = glm::toMat4(rotation);
+
+    glm::vec4 color_red = glm::vec4(1.f, .2f, .2f, .8f);
+    glm::vec4 color_blue = glm::vec4(.2f, .2f, 1.f, .8f);
+    glm::vec4 color_white = glm::vec4(1.f, 1.f, 1.f, .8f);
+
+    glm::vec4 color = color_red;
+    if (goal_side_switch == -1.f) {
+      color = color_blue;
+    }
+
+    float size = 20.0;
+    std::string text = "TEST";
+    switch (current_jumbo_effect_) {
+      case TEAM_SCORES: {
+        std::string team_score_red, team_score_blue;
+        team_score_red = std::to_string(engine_->GetTeamScores()[0]);
+        team_score_blue = std::to_string(engine_->GetTeamScores()[1]);
+
+        glm::vec3 red_pos = temp_pos + right * size * .8f;
+        glm::vec3 blue_pos =
+            temp_pos -
+            right * size * std::min(1.3f, (float)team_score_blue.size());
+
+        glob::Submit(font_test_, red_pos, size, team_score_red, color_red,
+                     orient);
+        glob::Submit(font_test_, temp_pos, size, "-", color_white, orient);
+        glob::Submit(font_test_, blue_pos, size, team_score_blue, color_blue,
+                     orient);
+        break;
+      }
+      case MATCH_TIME: {
+        int temp = 0;
+        if (!overtime_has_started_) {
+          temp = match_time_ - engine_->GetGameplayTimer();
+        } else {
+          temp = engine_->GetGameplayTimer() - match_time_;
+        }
+        // Gameplay timer
+        int sec = 0;
+        int min = 5;
+
+        min = temp / 60;
+        sec = temp % 60;
+
+        std::string min_str = std::to_string(min);
+        std::string sec_str = std::to_string(sec);
+        if (min < 10) min_str = "0" + min_str;
+        if (sec < 10) sec_str = "0" + sec_str;
+
+        text = min_str + ":" + sec_str;
+        if (overtime_has_started_) {
+          text = "OVERTIME";
+          size = 14;
+        }
+        temp_pos -= right * ((float)text.size() / 2);
+        glob::Submit(font_test_, temp_pos, size, text, color_white, orient);
+        break;
+      }
+      case BEST_PLAYER: {
+        temp_pos += right * 2.f;
+        unsigned long best_player_id = GetBestPlayer();
+        std::string best_name = engine_->player_names_[best_player_id];
+        text = "GO GO " + best_name + "!";
+        size = (5 / (float)text.size()) * size;
+        temp_pos -= right * ((float)text.size() / 2);
+        color = color_red;
+        if (engine_->GetPlayerScores()[best_player_id].team == TEAM_BLUE)
+          color = color_blue;
+        glob::Submit(font_test_, temp_pos, size, text, color, orient);
+        break;
+      }
+      case GOAL_SCORED: {
+        size = 14;
+        text = "GOOOAL!";
+        temp_pos -= right * ((float)text.size() / 2);
+        glob::Submit(font_test_, temp_pos, size, text, color_white, orient);
+        break;
+      }
+      default: {
+        glob::Submit(font_test_, temp_pos, size, text, color, orient);
+        break;
+      }
+    }
+
+    std::swap(xrot, zrot);
+    zrot *= -1.f;
+  }
+  if (jumbo_effect_timer_.Elapsed() > jumbo_effect_time_) {
+    current_jumbo_effect_ = (current_jumbo_effect_ + 1) % GOAL_SCORED;
+    jumbo_effect_timer_.Restart();
   }
 }
 
@@ -1262,6 +1422,8 @@ void PlayState::DrawMiniMap() {
     for (auto entity : view_ball) {
       auto& trans_c = view_ball.get<TransformComponent>(entity);
 
+
+
       // Normalize and project player pos to screen space (Z in world space
       // is X in screen space and vice versa)
       float norm_pos_x = trans_c.position.z / (28.1f * arena_scale_.z);
@@ -1273,6 +1435,17 @@ void PlayState::DrawMiniMap() {
 
       glob::Submit(gui_minimap_ball_, glm::vec2(minimap_pos_x, minimap_pos_y),
                    0.2);
+    }
+  }
+}
+
+void PlayState::DrawStunTimer() {
+  if (im_stunned_ && stun_timer_.Elapsed() > 0.5f) {
+    float strength = stun_timer_.Elapsed() / my_stun_time_;
+
+    if (registry_gameplay_.has<ModelComponent>(my_entity_)) {
+      registry_gameplay_.get<ModelComponent>(my_entity_).emission_strength =
+          strength;
     }
   }
 }
@@ -1298,8 +1471,11 @@ void PlayState::CreateInitialEntities() {
   CreatePlayerEntities();
   CreateMapEntity();
   CreateArenaEntity();
+  CreateAudienceEntities();
   CreateBallEntity();
   TestCreateLights();
+  CreateSpotlights();
+  CreateJumbotron();
 }
 
 void PlayState::CreatePlayerEntities() {
@@ -1328,6 +1504,7 @@ void PlayState::CreatePlayerEntities() {
                                               sound_engine.CreatePlayer());
 
     auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
+
     character_scale = glm::vec3(0.1f);
     float coeff_x_side = (11.223f - (-0.205f));
     float coeff_y_side = (8.159f - (-10.316f));
@@ -1406,6 +1583,65 @@ void PlayState::CreateArenaEntity() {
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                 arena_scale);
   map_visual_entity_ = arena;
+
+  {
+    glob::ModelHandle batman_light =
+        glob::GetTransparentModel("assets/batman_light/batman_light.fbx");
+    int x = 1;
+    int y = 1;
+    for (int i = 0; i < 4; i++) {
+      {
+        auto entity = registry_gameplay_.create();
+        auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
+        model_c.handles.push_back(batman_light);
+
+        glm::vec3 pos = glm::vec3(-50 * x, 0, 85 * y);
+        registry_gameplay_.assign<TransformComponent>(entity, pos, glm::vec3(),
+                                                      glm::vec3(1, 250, 10));
+        registry_gameplay_.assign<SkyLightComponent>(entity);
+      }
+      {
+        auto entity = registry_gameplay_.create();
+        auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
+        model_c.handles.push_back(batman_light);
+
+        glm::vec3 pos = glm::vec3(-95 * x, 0, 50 * y);
+        registry_gameplay_.assign<TransformComponent>(entity, pos, glm::vec3(),
+                                                      glm::vec3(1, 250, 10));
+
+        registry_gameplay_.assign<SkyLightComponent>(entity);
+      }
+
+      std::swap(x, y);
+      y *= -1;
+    }
+  }
+}
+
+void PlayState::CreateAudienceEntities() {
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+
+  glob::ModelHandle model_audience =
+      glob::GetModel("assets/Arena/Audience.fbx");
+
+  for (int i = 0; i < 4; i++) {
+    auto audience = registry_gameplay_.create();
+
+    auto& audience_mc = registry_gameplay_.assign<ModelComponent>(audience);
+    audience_mc.handles.push_back(model_audience);
+
+    registry_gameplay_.assign<TransformComponent>(
+        audience, zero_vec, glm::vec3(0.f, (pi / 2.f) * i, 0.f),
+        glm::vec3(0.02f, 0.02f, 0.02f));
+
+    auto& animation_c = registry_gameplay_.assign<AnimationComponent>(
+        audience, glob::GetAnimationData(model_audience));
+    engine_->GetAnimationSystem().PlayAnimation(
+        "WaveRowsDown", 1.f, &animation_c, 10, 1.f,
+        engine_->GetAnimationSystem().LOOP);
+
+    Audiences.push_back(audience);
+  }
 }
 
 void PlayState::CreateMapEntity() {
@@ -1531,6 +1767,37 @@ void PlayState::CreateSpotlights() {
     // add the spotlight to glob::Shadow object in glob
     glob::AddSpotlight(temp_pos, temp_trans);
 
+    std::swap(xrot, zrot);
+    zrot *= -1.f;
+  }
+}
+
+void PlayState::CreateJumbotron() {
+  glm::vec3 pos_base;
+  pos_base.x = GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEX");
+  pos_base.y = GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEY");
+  pos_base.z = GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEZ");
+
+  pos_base *= arena_scale_;
+
+  float xrot = 1.f;
+  float zrot = 1.f;
+  for (int i = 0; i < 4; i++) {
+    auto jumbo = registry_gameplay_.create();
+    ModelComponent& model_c = registry_gameplay_.assign<ModelComponent>(jumbo);
+    glob::ModelHandle jumbo_m_hndl =
+        glob::GetModel("assets/Jumbotron/Jumbotron.fbx");
+    model_c.handles.push_back(jumbo_m_hndl);
+    model_c.offset = glm::vec3(0, 0, -120.f * arena_scale_.z);
+    TransformComponent& trans_c =
+        registry_gameplay_.assign<TransformComponent>(jumbo);
+    trans_c.position =
+        glm::vec3(xrot * pos_base.x, pos_base.y, zrot * pos_base.z);
+    trans_c.scale = arena_scale_ * 2.0f;
+    trans_c.rotation *= glm::quatLookAtRH(
+        glm::normalize(glm::vec3(0, trans_c.position.y, 0) - trans_c.position),
+        glm::vec3(0, 1, 0));
+    trans_c.Rotate(glm::vec3(0.f, glm::radians(180.f), 0.f));
     std::swap(xrot, zrot);
     zrot *= -1.f;
   }
@@ -1929,6 +2196,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
   switch (e.type) {
     case GameEvent::GOAL: {
       CreateGoalParticles(e.goal.x, *correct_registry);
+      current_jumbo_effect_ = GOAL_SCORED;
+      jumbo_effect_timer_.Pause();
       break;
     }
     case GameEvent::RESET: {
@@ -2044,6 +2313,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
         if (id_c.id == e.force_push_impact.projectile_id) {
           glob::SetEmitPosition(handle, trans_c.position);
+
+          glob::CreateShockwave(trans_c.position, 0.5f, 30.f);
           break;
         }
       }
@@ -2072,6 +2343,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
         if (id_c.id == e.force_push_impact.projectile_id) {
           glob::SetEmitPosition(handle, trans_c.position);
+
+          glob::CreateShockwave(trans_c.position, 0.60f, 40.f);
+
           break;
         }
       }
@@ -2254,13 +2528,59 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           break;
         }
       }
-	}
+
+      auto view_balls =
+          registry->view<IDComponent, TransformComponent, BallComponent>();
+      for (auto ball : view_balls) {
+        auto& id_c = view_balls.get<IDComponent>(ball);
+        if (id_c.id == e.super_kick.ball_id) {
+          auto& trans_c = view_balls.get<TransformComponent>(ball);
+
+          // TODO: maybe smaller shockwave if is player_id == my_id_
+          glob::CreateShockwave(trans_c.position, 0.6f, 40.f);
+
+          break;
+        }
+      }
+
+      break;
+    }
     case GameEvent::SPRINT_START: {
       sprinting_ = true;
       break;
     }
     case GameEvent::SPRINT_END: {
       sprinting_ = false;
+      break;
+    }
+    case GameEvent::LAND: {
+      if (e.land.player_id != my_id_) {
+        auto registry = engine_->GetCurrentRegistry();
+        auto view_controller =
+            registry->view<IDComponent, TransformComponent>();
+        for (auto entity : view_controller) {
+          IDComponent& id_c = view_controller.get<IDComponent>(entity);
+          TransformComponent& t_c =
+              view_controller.get<TransformComponent>(entity);
+
+          if (id_c.id == e.land.player_id) {
+            glob::CreateShockwave(t_c.position, 0.2, 3.f);
+            break;
+          }
+        }
+      }
+      break;
+    }
+    case GameEvent::PLAYER_STUNNED: {
+      if (my_id_ == e.player_stunned.player_id) {
+        im_stunned_ = true;
+        my_stun_time_ = e.player_stunned.stun_time;
+        stun_timer_.Restart();
+        if (registry_gameplay_.has<ModelComponent>(my_entity_)) {
+          registry_gameplay_.get<ModelComponent>(my_entity_).emission_strength =
+              0.0f;
+        }
+      }
       break;
     }
   }
@@ -2296,6 +2616,8 @@ void PlayState::Reset() {
   player_c.can_jump = false;
   server_predicted_.velocity = glm::vec3(0.0f);
   predicted_state_.velocity = glm::vec3(0.0f);
+  current_jumbo_effect_ = TEAM_SCORES;
+  jumbo_effect_timer_.Restart();
 }
 
 void PlayState::EndGame() {

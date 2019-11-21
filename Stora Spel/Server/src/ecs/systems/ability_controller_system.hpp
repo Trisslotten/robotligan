@@ -315,6 +315,13 @@ bool DoSuperStrike(entt::registry& registry) {
           super_kick_event.type = GameEvent::SUPER_KICK;
           super_kick_event.super_kick.player_id =
               registry.get<IDComponent>(player_entity).id;
+
+          if (registry.has<IDComponent>(ball_entity)) {
+            super_kick_event.super_kick.ball_id = registry.get<IDComponent>(ball_entity).id;
+          } else {
+            super_kick_event.super_kick.ball_id = -1;
+          }
+
           dispatcher.trigger(super_kick_event);
         }
         return true;
@@ -449,7 +456,7 @@ void DoTeleport(entt::registry& registry, PlayerID id) {
           glm::vec3(tc.position - cc.GetLookDir() * speed * 1.f / 128.f),
           glm::vec3(0, 0, 0), glm::vec3(.3f, .3f, .3f));
       registry.assign<physics::Sphere>(teleport_projectile, glm::vec3(0.f),
-                                       1.f);
+                                       0.5f);
       registry.assign<ProjectileComponent>(
           teleport_projectile, ProjectileID::TELEPORT_PROJECTILE, pc.client_id);
 
