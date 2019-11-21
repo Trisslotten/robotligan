@@ -5,6 +5,7 @@ layout(location = 0) out vec4 out_color;
 uniform sampler2D texture_diffuse;
 
 in vec2 v_uv;
+in vec3 v_normal;
 
 void main() {
 	vec3 color = texture(texture_diffuse, v_uv).rgb;
