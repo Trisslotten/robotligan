@@ -255,13 +255,12 @@ void PlayState::Update(float dt) {
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
 
-	  if (!show_in_game_menu_buttons_) {
+      if (!show_in_game_menu_buttons_) {
         cam_c.orientation = orientation;
         trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
         // FPS Model rotations
         mc.rot_offset = orientation - glm::quat(glm::vec3(0.f, yaw_, 0.f));
-	  }
-      
+      }
 
       // rotate model offset as well, this does not want to work...
       /*glm::mat4 translateMat = glm::translate(glm::mat4(1.f), cam_c.offset);
@@ -323,7 +322,8 @@ void PlayState::Update(float dt) {
   }
 
   // --- dont display during replay ---
-  // TODO: Remove if-statement and just dont draw GUI in replay state when it's implemented
+  // TODO: Remove if-statement and just dont draw GUI in replay state when it's
+  // implemented
   if (!engine_->IsReplaying()) {
     // draw quickslots
     DrawQuickslots();
@@ -462,7 +462,7 @@ void PlayState::Update(float dt) {
       engine_->ChangeState(StateType::LOBBY);
     }
   }
-  
+
   DrawTopScores();
   DrawTarget();
 
@@ -1197,6 +1197,7 @@ void PlayState::CreateInitialEntities() {
   CreatePlayerEntities();
   CreateMapEntity();
   CreateArenaEntity();
+  CreateAudienceEntities();
   CreateBallEntity();
   TestCreateLights();
 }
@@ -1226,7 +1227,7 @@ void PlayState::CreatePlayerEntities() {
     registry_gameplay_.assign<SoundComponent>(entity,
                                               sound_engine.CreatePlayer());
 
-	auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
+    auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
 
     if (entity_id == my_id_) {
       glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
@@ -1262,7 +1263,7 @@ void PlayState::CreatePlayerEntities() {
           entity, glob::GetAnimationData(player_model));
     }
 
-	model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
+    model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
 
     if (engine_->GetPlayerTeam(entity_id) == TEAM_BLUE) {
       model_c.diffuse_index = 1;
@@ -1304,6 +1305,30 @@ void PlayState::CreateArenaEntity() {
   map_visual_entity_ = arena;
 }
 
+void PlayState::CreateAudienceEntities() {
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+
+  glob::ModelHandle model_audience =
+      glob::GetModel("assets/Arena/Audience.fbx");
+
+  for (int i = 0; i < 4; i++) {
+    auto audience = registry_gameplay_.create();
+
+    auto& audience_mc = registry_gameplay_.assign<ModelComponent>(audience);
+    audience_mc.handles.push_back(model_audience);
+
+    registry_gameplay_.assign<TransformComponent>(
+        audience, zero_vec, glm::vec3(0.f, (pi / 2.f) * i, 0.f),
+        glm::vec3(0.02f, 0.02f, 0.02f));
+
+    auto& animation_c = registry_gameplay_.assign<AnimationComponent>(
+        audience, glob::GetAnimationData(model_audience));
+    engine_->GetAnimationSystem().PlayAnimation(
+        "WaveRowsUp", 1.f, &animation_c, 10, 1.f,
+        engine_->GetAnimationSystem().LOOP);
+  }
+}
+
 void PlayState::CreateMapEntity() {
   auto arena = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
@@ -1313,8 +1338,8 @@ void PlayState::CreateMapEntity() {
   glob::ModelHandle model_map_walls =
       glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
 
-  auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
-  model_c.handles.push_back(model_map_walls);
+  // auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
+  // model_c.handles.push_back(model_map_walls);
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                 arena_scale);
 
@@ -1431,7 +1456,8 @@ void PlayState::CreateSpotlights() {
   }
 }
 
-void PlayState::ParticleComponentDestroyed(entt::entity e, entt::registry& registry) {
+void PlayState::ParticleComponentDestroyed(entt::entity e,
+                                           entt::registry& registry) {
   auto& pc = registry.get<ParticleComponent>(e);
   for (int i = 0; i < pc.handles.size(); ++i) {
     glob::DestroyParticleSystem(pc.handles[i]);
@@ -2207,8 +2233,8 @@ void PlayState::FetchMapAndArena(entt::registry& in_registry) {
       in_registry.assign<ModelComponent>(arena_floor);
   floor_model_c.handles.push_back(model_map);
   floor_model_c.handles.push_back(model_map_floor);
-  TransformComponent& trans_c = in_registry.assign<TransformComponent>(arena_floor, zero_vec, zero_vec,
-                                         arena_scale);
+  TransformComponent& trans_c = in_registry.assign<TransformComponent>(
+      arena_floor, zero_vec, zero_vec, arena_scale);
 
   if (goals_swapped_) {
     trans_c.rotation *= glm::quat(glm::vec3(0.f, glm::pi<float>(), 0.f));

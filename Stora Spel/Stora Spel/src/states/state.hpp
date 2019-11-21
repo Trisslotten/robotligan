@@ -236,6 +236,7 @@ class PlayState : public State {
   void CreateTeleportProjectile(EntityID id, glm::vec3 pos, glm::quat ori);
   void CreateForcePushObject(EntityID id, glm::vec3 pos, glm::quat ori);
   void CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori);
+
   void DestroyEntity(EntityID id);
   void SwitchGoals();
   void SetMyPrimaryAbility(int id) { my_primary_ability_id = id; }
@@ -280,6 +281,7 @@ class PlayState : public State {
   void CreateInitialEntities();
   void CreatePlayerEntities();
   void CreateArenaEntity();
+  void CreateAudienceEntities();
   void CreateMapEntity();
   void CreateBallEntity();
   void CreateSpotlights();
@@ -320,6 +322,8 @@ class PlayState : public State {
   std::unordered_map<EntityID, glm::vec3> player_move_dirs_;
   FrameState server_predicted_;
   entt::entity my_entity_, arena_entity_, map_visual_entity_;
+
+  std::vector<EntityID> Audiences;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
 
