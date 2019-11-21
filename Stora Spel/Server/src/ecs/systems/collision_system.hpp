@@ -952,7 +952,7 @@ void MinePlayerCollision(entt::registry& registry) {
       if (glm::length(mine_tc.position - p_tc.position) <=
               GlobalSettings::Access()->ValueOf(
                   "ABILITY_MINE_TRIGGER_RADIUS") &&
-          mine_c.owner_team == p_teamc.team) {
+          mine_c.owner_team != p_teamc.team) {
 
         ApplyMineStun(registry, p_pc, p_c, p_idc);
 
