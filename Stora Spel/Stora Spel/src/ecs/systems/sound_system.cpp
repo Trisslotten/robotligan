@@ -77,8 +77,8 @@ void SoundSystem::Init(Engine* engine) {
     sound_engine_.GetSound("assets/sound/poof.mp3");
   sound_ability_invisibility_end_ = sound_engine_.GetSound("assets/sound/invis_end.mp3");
   sound_ability_blackout_end_ = sound_engine_.GetSound("assets/sound/blackout_end.mp3");
-
   sound_pickup_spawned_ = sound_engine_.GetSound("assets/sound/pickup.wav");
+  sound_player_stunned_ = sound_engine_.GetSound("assets/sound/stunned.mp3");
 
   ability_sounds_[AbilityID::GRAVITY_CHANGE] =
       sound_engine_.GetSound("assets/sound/gravitydrop.wav");
@@ -400,9 +400,20 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
-      if (id_c.id == event.super_kick.player_id) {
+      if (id_c.id == event.pickup_spawned.pickup_id) {
         sound_c.sound_player->Play(sound_pickup_spawned_, 0,
                                    1.0f);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::PLAYER_STUNNED) {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.player_stunned.player_id) {
+        sound_c.sound_player->Play(sound_player_stunned_);
         break;
       }
     }
