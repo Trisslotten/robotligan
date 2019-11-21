@@ -72,8 +72,8 @@ struct PlayerComponent {  // Server side
            (this->actions == rhs.actions) && (this->yaw == rhs.yaw) &&
            (this->pitch == rhs.pitch) && (this->target == rhs.target) &&
            (this->sprinting == rhs.sprinting) &&
-           (this->running == rhs.running) && (this->stunned = rhs.stunned);
-		&& (this->ready_to_smash == rhs.ready_to_smash);
+           (this->running == rhs.running) && (this->stunned = rhs.stunned) &&
+           (this->ready_to_smash == rhs.ready_to_smash);
   }
 
   bool operator!=(const PlayerComponent& rhs) { return !((*this) == rhs); }

@@ -414,7 +414,6 @@ void PlayState::Update(float dt) {
       break;
     }
   }
-}
 
   if (stun_timer_.Elapsed() >= my_stun_time_) {
     im_stunned_ = false;
