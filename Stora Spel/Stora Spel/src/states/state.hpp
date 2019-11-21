@@ -19,6 +19,7 @@ class Engine;
 enum class StateType {
   MAIN_MENU,
   CONNECT_MENU,
+  CREATE_SERVER,
   LOBBY,
   PLAY,
   SETTINGS,
@@ -402,4 +403,23 @@ class PlayState : public State {
   float my_stun_time_;
 };
 
+class CreateServerState : public State {
+ public:
+  void Startup() override;
+  void Init() override;
+  void Update(float dt) override;
+  void UpdateNetwork() override;
+  void Cleanup() override;
+  StateType Type() { return StateType::CREATE_SERVER; }
+  bool started_ = false;
+
+ private:
+  glob::Font2DHandle font_test_ = 0;
+  entt::registry registry_create_server_;
+  glob::GUIHandle bg_ = 0;
+  std::string ip_ = "";
+  std::string port_ = "1337";
+  std::string max_players_ = "6";
+  void CreateServer();
+};
 #endif  // STATE_HPP_

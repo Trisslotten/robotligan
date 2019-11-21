@@ -19,11 +19,19 @@ void main()	{
 
 	// xy zw
 	vec4 d = vec4(t.xy, -t.xy);
+	//const ivec2 d = ivec2(1,-1);
 
 	vec4 bl = textureLod(read_tex, uv + t.zz + kernel * d.zw, level);
 	vec4 br = textureLod(read_tex, uv + t.xz + kernel * d.xw, level);
 	vec4 tl = textureLod(read_tex, uv + t.zy + kernel * d.zy, level);
 	vec4 tr = textureLod(read_tex, uv + t.xy + kernel * d.xy, level);
+
+	/*
+	vec4 bl = textureLodOffset(read_tex, uv + t.zz, level, kernel * d.yy);
+	vec4 br = textureLodOffset(read_tex, uv + t.xz, level, kernel * d.xy);
+	vec4 tl = textureLodOffset(read_tex, uv + t.zy, level, kernel * d.yx);
+	vec4 tr = textureLodOffset(read_tex, uv + t.xy, level, kernel * d.xx);
+	*/
 
 	vec4 blurred = 0.25 * (bl + br + tl + tr);
 

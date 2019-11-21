@@ -101,7 +101,7 @@ void NetAPI::Socket::Server::ListenForClients() {
       connection_client_->reconnected = true;
       client_data_[find_res->second] = connection_client_;
       std::cout << "DEBUG: Found existing client, overwriting\n";
-    } else if (game_players_ < NetAPI::Common::kMaxPlayers) {
+    } else if (game_players_ < max_players_) {
       std::cout << "DEBUG: adding new client\n";
 
       connection_client_->ID = current_client_guid_;
@@ -164,11 +164,12 @@ unsigned short getHashedID(char* addr, unsigned short port) {
   }
   return retval;
 }
-bool NetAPI::Socket::Server::Setup(unsigned short port) {
+bool NetAPI::Socket::Server::Setup(unsigned short port, unsigned short maxplayers) {
   if (listener_.Bind(port)) {
     setup_ = true;
   }
-  client_data_.reserve(Common::kMaxPlayers);
+  client_data_.reserve(maxplayers);
+  max_players_ = maxplayers;
   return setup_;
 }
 
