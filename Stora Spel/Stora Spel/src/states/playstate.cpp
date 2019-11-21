@@ -115,7 +115,40 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
 
   registry.assign<ParticleComponent>(e, handles, offsets, directions);
   registry.assign<TimerComponent>(e, 5.f);
-  // std::cout << handles.size() << " particle systems" << std::endl;
+
+
+  e = registry_gameplay_.create();
+  registry_gameplay_.assign<TimerComponent>(e, 2.0f);
+  std::vector<glm::vec4> colors = {glm::vec4(1.f, 1.f, 0.f, 1.f),
+                                   glm::vec4(1.f, 0.f, 0.f, 1.f),
+                                   glm::vec4(0.f, 1.f, 0.f, 1.f)};
+  glm::vec3 position = glm::vec3(x * 1.1f, 0.f, 0.f);
+  float spawn = .8f;
+  float timer = 0.8f;
+
+  registry_gameplay_.assign<FireworksComponent>(e, colors, position, spawn,
+                                                timer);
+
+  e = registry_gameplay_.create();
+  registry_gameplay_.assign<TimerComponent>(e, 2.0f);
+  position = glm::vec3(x * -1.1f, 0.f, 0.f);
+
+  registry_gameplay_.assign<FireworksComponent>(e, colors, position, spawn,
+                                                timer);
+
+  e = registry_gameplay_.create();
+  registry_gameplay_.assign<TimerComponent>(e, 2.0f);
+  position = glm::vec3(0.f, 0.f, 50.f);
+
+  registry_gameplay_.assign<FireworksComponent>(e, colors, position, spawn,
+                                                timer);
+
+  e = registry_gameplay_.create();
+  registry_gameplay_.assign<TimerComponent>(e, 2.0f);
+  position = glm::vec3(0.f, 0.f, -50.f);
+
+  registry_gameplay_.assign<FireworksComponent>(e, colors, position, spawn,
+                                                timer);
 }
 
 void PlayState::Init() {
@@ -154,31 +187,6 @@ void PlayState::Init() {
 }
 
 void PlayState::Update(float dt) {
-  static float timer = 0.f;
-  timer += dt;
-  if (timer > 7.f) {
-    timer = 0.f;
-    auto e = registry_gameplay_.create();
-    auto handle = glob::CreateParticleSystem();
-
-    std::vector handles = {handle};
-    std::vector<glm::vec3> offsets = {glm::vec3(0.f)};
-    std::vector<glm::vec3> directions = {glm::vec3(0.f)};
-
-    glob::SetParticleSettings(handle, "firework.txt");
-    glob::SetEmitPosition(handle, glm::vec3(0.f, 2.f, 0.f));
-
-    registry_gameplay_.assign<ParticleComponent>(e, handles, offsets,
-                                                 directions);
-    registry_gameplay_.assign<TimerComponent>(e, 7.f);
-    registry_gameplay_.assign<int>(e, 11);
-    registry_gameplay_.assign<TransformComponent>(e, glm::vec3(0.f));
-    //auto& t = registry_gameplay_.assign<TrailComponent>(e);
-    //t.color = glm::vec4(1.0f);
-    //t.width = 0.5f;
-    //t.length = 10.f;
-  }
-
   auto& cli = engine_->GetClient();
   if (!cli.IsConnected()) {
     cli.Disconnect();

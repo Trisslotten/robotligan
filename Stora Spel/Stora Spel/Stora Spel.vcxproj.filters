@@ -104,6 +104,8 @@
     <ClInclude Include="src\ecs\systems\lifetime_system.hpp" />
     <ClInclude Include="src\ecs\components\target_component.hpp" />
     <ClInclude Include="src\util\debugoverlay.hpp" />
+    <ClInclude Include="src\ecs\components\fireworks_component.hpp" />
+    <ClInclude Include="src\ecs\systems\fireworks_system.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

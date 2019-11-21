@@ -49,33 +49,18 @@ void main()
 {
 	uint gid = gl_GlobalInvocationID.x;
 	if (gid < 1000 && times[gid] > 0.f) {
-		// beginning face
+		// white trail / rocket
 		if (times[gid] > 4.0) {
 			positions[gid] += velocities[gid] * dt;
 		} else {
-			if (gid % 50 == 0 || true) {
-				//velocities[gid] *= 0.99 * (1-0);
-				float ratio = times[gid] / time;
-				float vel = length(velocities[gid]);
-				float curve = gid%50;
-				curve = curve / 50;
-				if (curve < 0.5)
-					curve = 0;
-
-				if (times[gid] < 2.0)
-					velocities[gid].y -= 20.82 * 0.5 * dt;
-				float factor = (vel - velocity_delta * dt) / vel;
-				//velocities[gid] *= factor;
-				positions[gid] += velocities[gid] * dt;
-				if (times[gid] < 2)
-					colors[gid].a -= dt * 0.5;
-			} else {
-				uint rest = gid % 50;
-				//positions[gid] = positions[gid-rest] - velocities[gid-rest] * (rest/50.0 * 0.8 + 0.2);
-				colors[gid].a -= dt * 0.25;
-			}
-			sizes[gid] -= size_delta * dt;
+			if (times[gid] < 2.0)
+				velocities[gid].y -= 20.82 * 0.5 * dt;
+			
+			positions[gid] += velocities[gid] * dt;
+			if (times[gid] < 2)
+				colors[gid].a -= dt * 0.5;
 		}
+
 		times[gid] -= dt;
 		if (gid < 10 && times[gid] < 4)
 			times[gid] = 0.0;
@@ -86,54 +71,34 @@ void main()
 			uint rest = gid % 10;
 			times[gid] = time;
 			colors[gid] = vec4(1.0, 1.0, 1.0, 1.0);
-			velocities[gid] = vec4(0, 50.0, 0, 0);
+			velocities[gid] = vec4(dir, 0);
 			positions[gid] = vec4(emit_pos, 0) + velocities[gid] * rest / 10.0 * 0.05;
 			sizes[gid] = size;
 		} else {
-			if (gid > 0) {
-				sizes[gid] = size;
-				uint rest = gid % 50;
-				uint same_gid = gid - rest;
-				float random = rand(same_gid);
-				float random1 = rand(same_gid*2);
-				float random2 = rand(same_gid*3);
-				float normal_factor = random * (1-dir_strength) + dir_strength;
-				vec3 random_dir = normalize(vec3(random * 2 - 1, random1 * 2 - 1, random2 * 2 - 1));
-				random_dir -= random_dir * dot(dir, random_dir);
-				random_dir = normalize(random_dir);
+			sizes[gid] = size;
+			uint rest = gid % 50;
+			uint same_gid = gid - rest;
+			float random = rand(same_gid);
+			float random1 = rand(same_gid*2);
+			float random2 = rand(same_gid*3);
+			float normal_factor = random * (1-dir_strength) + dir_strength;
+			vec3 random_dir = normalize(vec3(random * 2 - 1, random1 * 2 - 1, random2 * 2 - 1));
+			//random_dir -= random_dir * dot(dir, random_dir);
+			random_dir = normalize(random_dir);
 
-				random_dir = dir * normal_factor + random_dir * sqrt(1-normal_factor*normal_factor);
-				random_dir += vec3(rand(gid), rand(gid*2), rand(gid*3)) * 0.02;
-				random_dir = normalize(random_dir);
-				//velocities[gid] = vec4(random_dir * (rest / 50.0 * (max_speed-min_speed) + min_speed), 0);
-				velocities[gid] = vec4(random_dir * max_speed, 0);
-				colors[gid] = vec4(0,0,1,1);
-			} else {
-				sizes[gid] = size;
-				float random = rand(gid);
-				float random1 = rand(gid*2);
-				float random2 = rand(gid*3);
-				float normal_factor = random * (1-dir_strength) + dir_strength;
-				vec3 random_dir = normalize(vec3(random * 2 - 1, random1 * 2 - 1, random2 * 2 - 1));
-				random_dir -= random_dir * dot(dir, random_dir);
-				random_dir = normalize(random_dir);
+			//random_dir = dir * normal_factor + random_dir * sqrt(1-normal_factor*normal_factor);
+			//random_dir += vec3(rand(gid), rand(gid*2), rand(gid*3)) * 0.02;
+			//random_dir = normalize(random_dir);
 
-				random_dir = dir * normal_factor + random_dir * sqrt(1-normal_factor*normal_factor);
-				random_dir = normalize(random_dir);
-				velocities[gid] = vec4(random_dir * ((rand(random * random1)*0.2+0.8) * (max_speed-min_speed) + min_speed), 0);
-				colors[gid] = color[0];
-			}
+			velocities[gid] = vec4(random_dir * max_speed, 0);
+			colors[gid] = color[0];
 
 			times[gid] = -1.0;
 		}
 	} else if (gid < 1000 && times[gid] < 0.f && times[0] < 4.f) {
 		uint rest = gid % 50;
 		float ratio = rest / 50.0 * 0.5;
-		if (gid % 50 == 0 || true) {
-			times[gid] = 2.0 + 0.5 - ratio;
-
-		} else {
-		}
+		times[gid] = 2.0 + 0.5 - ratio;
 		positions[gid] = positions[0] + velocities[gid] * ratio * 1.0;
 	}
 }
