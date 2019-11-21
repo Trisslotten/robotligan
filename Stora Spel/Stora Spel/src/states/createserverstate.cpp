@@ -1,15 +1,13 @@
+
 #include <glob/window.hpp>
 #include <GLFW/glfw3.h>
-
 #include "../ecs/components.hpp"
 #include "../ecs/systems/animation_system.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
 #include "state.hpp"
-
+#include "../util/winadpihelpers.hpp"
 void CreateServerState::Startup() {
-  // https://docs.microsoft.com/en-us/windows/win32/api/iphlpapi/nf-iphlpapi-getbestinterface?redirectedfrom=MSDN
-  // https://docs.microsoft.com/en-us/windows/win32/api/iphlpapi/nf-iphlpapi-getadaptersaddresses
   auto windowsize = glob::window::GetWindowDimensions();
   glob::window::SetMouseLocked(false);
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
@@ -149,7 +147,8 @@ void CreateServerState::Startup() {
   // Input fields
   {
     ip_ = "localhost";
-
+	auto s = helper::ws::GetBestNIC();
+	ip_ = helper::ws::GetIPByIndex(s);
     double text_width = glob::GetWidthOfText(font_test_, port_, 45);
     auto portpos = glm::vec2((windowsize.x / 2.f - text_width * 2.7),
                              windowsize.y * 0.5f + 50);
@@ -201,11 +200,9 @@ bool is_number(const std::string& s) {
                        }) == s.end();
 }
 /*
-	Krashar applikationen som spawnar den nya Processen, därmed skapar WSA10053 
-	Applikationen fortsätter dock existera, men GL contexten försvinner?
-	Lyckas connecta typ?
 
-	Funkar utan att krasha, men servern får inte rätt 
+	Funkar utan att krasha, men servern får inte rätt
+	Working directory
 */
 void CreateServerState::CreateServer() {
   if (is_number(port_) && !port_.empty()) {
@@ -233,18 +230,19 @@ void CreateServerState::CreateServer() {
 	  }
 	  std::cout << path << std::endl;
 	  std::cout << p << std::endl;
-	  
+	  helper::ps::KillProcess("server.exe");
       ZeroMemory(&si, sizeof(si));
       si.cb = sizeof(si);
+	  
       ZeroMemory(&pi, sizeof(pi));
-	  if (!CreateProcess(path.c_str(),   // No module name (use command line)
-		  arg2,   // Command line
+	  if (!CreateProcess(path.c_str(),   // Filename
+		  arg2,   // args
 		  NULL,   // Process handle not inheritable
 		  NULL,   // Thread handle not inheritable
 		  FALSE,  // Set handle inheritance to FALSE
-		  DETACHED_PROCESS,      // No creation flags
+		  CREATE_NEW_CONSOLE,      // Create own process 
 		  NULL,   // Use parent's environment block
-		  (char*)p.c_str(),   // Use parent's starting directory
+		  (char*)p.c_str(),   // Working dir.. Not working (huehue)
 		  &si,    // Pointer to STARTUPINFO structure
 		  &pi)) 
 	  {

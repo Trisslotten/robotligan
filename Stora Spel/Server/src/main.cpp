@@ -1,5 +1,6 @@
 #define NOMINMAX
 #include <iostream>
+#include <sstream>
 
 #include "util/event.hpp"
 #include "gameserver.hpp"
@@ -13,8 +14,20 @@ int main(unsigned argc, char** argv) {
 
 
   std::unordered_map<std::string, std::string> arguments;
+  std::cout << "Num server arguments: " << argc << std::endl;
   if (argc >= 1) {
-    //Parse arguments
+	  //IP - PORT
+	  std::string arg = argv[1];
+	  std::istringstream stream(arg);
+	  std::string ip;
+	  std::string port;
+	  stream >> ip >> port;
+	  arguments["IP"] = ip;
+	  arguments["PORT"] = port;
+  }
+  else
+  {
+	  arguments["PORT"] = std::to_string(1337);
   }
   std::cout << "DEBUG: Starting Server" << std::endl;
 

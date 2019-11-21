@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 #include <shared/shared.hpp>
 #include <vector>
+#include <unordered_map>
 #include "serverstate.hpp"
 
 #include "replay machine/replay_machine.hpp"

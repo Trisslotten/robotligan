@@ -4,6 +4,7 @@
 #include <glob/graphics.hpp>
 #include <iostream>
 #include <numeric>
+#include <filesystem>
 
 #include "shared/id_component.hpp"
 #include "shared/pick_up_component.hpp"
@@ -29,7 +30,8 @@ GameServer::~GameServer() {}
 void GameServer::Init(double in_update_rate, std::unordered_map<std::string, std::string> &args) {
   glob::SetModelUseGL(false);
 
-  server_.Setup(1337);
+  server_.Setup(std::stoi(args["PORT"]));
+  std::cout << "Filesystem: Working dir = " << std::filesystem::path() << std::endl;
 
   lobby_state_.SetGameServer(this);
   play_state_.SetGameServer(this);
