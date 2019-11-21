@@ -32,6 +32,8 @@ uniform int is_glass;
 
 uniform float blackout;
 
+uniform float dynamic_em_strength;
+
 struct Lighting {
 	vec3 specular;
 	vec3 diffuse;
@@ -155,6 +157,13 @@ vec2 calcTexCoords()
 const vec3 iron_color = vec3(0.8862745098039216, 0.8862745098039216, 0.82352941176);
 
 void main() {
+	vec2 tex = calcTexCoords();
+	vec4 surface_color = texture(texture_diffuse, tex);
+
+	if(surface_color.a < 1.f / 255.f){
+		discard;
+	}
+
 	float metallic = 0.;
 	if(use_metallic != 0) 
 	{
@@ -167,16 +176,17 @@ void main() {
 		normal = triplanarNormal();
 	}
 	// calculate diffuse texture coords
-	vec2 tex = calcTexCoords();
 
 	vec3 view_dir = normalize(cam_position - frag_pos);
 
 	vec3 cube_map = (1.-0.9*blackout)*fakeCubeMap(reflect(view_dir, normal));
 
+	float emission_alpha = 1.0;
 	float reflective = metallic;
 	if(is_glass != 0)
 	{
 		reflective = 0.75;
+		emission_alpha = 0;
 	}
 
 	Lighting lighting = shading(frag_pos, normal);
@@ -191,18 +201,17 @@ void main() {
 	reflective_shading += reflective * lighting.specular;
 	reflective_shading += 1.0*reflective * cube_map;
 
-	vec4 surface_color = texture(texture_diffuse, tex);
 	float alpha = surface_color.a;
 
 	float emission_strength = 0.0;
 	if(use_emissive != 0)
 	{
-		emission_strength = texture(texture_emissive, v_tex).r;
+		emission_strength = texture(texture_emissive, v_tex).r * dynamic_em_strength;
 	}
 
 	surface_color.rgb = mix(surface_color.rgb, iron_color, metallic*(1.-emission_strength));
 	
-	vec3 emission = emission_strength * surface_color.rgb;
+	vec3 emission = 1.2*emission_strength * surface_color.rgb;
 	emission += 2.0*reflective * lighting.specular * (1.-emission_strength);
 
 	vec3 color = surface_color.rgb;
@@ -218,6 +227,6 @@ void main() {
 	//float alpha = 1.0;
 	//vec3 emission = vec3(1); 
 	out_color = vec4(color, alpha);
-	out_emission = vec4(emission/2.0, 1);
+	out_emission = vec4(emission/2.0, emission_alpha);
 	out_depth = vec4(gl_FragCoord.z,0,0,0);
 }

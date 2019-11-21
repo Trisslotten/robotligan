@@ -10,9 +10,9 @@
 #include <playerdata.hpp>
 #include <util/timer.hpp>
 #include "Chat.hpp"
+#include "ecs/components.hpp"
 #include "eventdispatcher.hpp"
 #include "shared/shared.hpp"
-#include "ecs/components.hpp"
 
 class Engine;
 
@@ -108,7 +108,8 @@ class LobbyState : public State {
   void CreateGUIElements();
   void DrawTeamSelect();
   void DrawAbilitySelect();
-  glob::GUIHandle team_select_back_;
+  glob::GUIHandle red_team_select_back_;
+  glob::GUIHandle blue_team_select_back_;
   glob::GUIHandle ability_select_back_;
   glob::GUIHandle ability_back_normal_;
   glob::GUIHandle ability_back_hover_;
@@ -209,6 +210,8 @@ class SettingsState : public State {
 /////////////////////// PLAY ///////////////////////
 
 class PlayState : public State {
+  enum JumbotronEffect { TEAM_SCORES, MATCH_TIME, BEST_PLAYER, GOAL_SCORED, NUM_EFFECTS };
+
  public:
   void Startup() override;
   void Init() override;
@@ -237,6 +240,7 @@ class PlayState : public State {
   void CreateTeleportProjectile(EntityID id, glm::vec3 pos, glm::quat ori);
   void CreateForcePushObject(EntityID id, glm::vec3 pos, glm::quat ori);
   void CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori);
+
   void DestroyEntity(EntityID id);
   void SwitchGoals();
   void SetMyPrimaryAbility(int id) { my_primary_ability_id = id; }
@@ -270,20 +274,22 @@ class PlayState : public State {
   void SetTeam(unsigned int team) { my_team_ = team; }
   void CreateNewBallEntity(bool fake, EntityID id);
   void SetTeam(EntityID id, unsigned int team) { teams_[id] = team; }
-  void SetCountdownInProgress(bool val) { countdown_in_progress_ = val;  }
+  void SetCountdownInProgress(bool val) { countdown_in_progress_ = val; }
   void SetArenaScale(glm::vec3 arena_scale) { arena_scale_ = arena_scale; }
 
-  
   void FetchMapAndArena(entt::registry& in_registry);
+  void SetCanSmash(bool val) { can_smash_ = val; }
 
  private:
   ServerStateType server_state_;
   void CreateInitialEntities();
   void CreatePlayerEntities();
   void CreateArenaEntity();
+  void CreateAudienceEntities();
   void CreateMapEntity();
   void CreateBallEntity();
   void CreateSpotlights();
+  void CreateJumbotron();
   void ParticleComponentDestroyed(entt::entity e, entt::registry& registry);
   void CreateInGameMenu();
   void AddPlayer();
@@ -300,11 +306,18 @@ class PlayState : public State {
   void DrawTopScores();
   void DrawTarget();
   void DrawQuickslots();
+  void DrawStunTimer();
+
+  void DrawMiniMap();
+  void DrawJumbotronText();
+
   FrameState SimulateMovement(std::vector<int>& action, FrameState& state,
                               float dt);
   void MovePlayer(float dt);
   void MoveBall(float dt);
   void Collision();
+  
+  unsigned long GetBestPlayer();
 
   EntityID ClientIDToEntityID(long client_id);
   ////////////////////////////////////////
@@ -322,6 +335,8 @@ class PlayState : public State {
   FrameState server_predicted_;
   entt::entity my_entity_, arena_entity_, map_visual_entity_;
 
+  std::vector<entt::entity> Audiences;
+
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
 
   std::unordered_map<EntityID, unsigned int> teams_;
@@ -335,8 +350,9 @@ class PlayState : public State {
   glob::GUIHandle in_game_menu_gui_ = 0;
   glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
       gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_, gui_minimap_,
-      gui_minimap_goal_red_, gui_minimap_goal_blue_, gui_minimap_player_red_,
-      gui_minimap_player_blue_, gui_minimap_ball_, gui_crosshair_;
+      gui_minimap_goal_red_, gui_minimap_goal_blue_, gui_minimap_player_me_,
+      gui_minimap_player_red_, gui_minimap_player_blue_, gui_minimap_ball_,
+      gui_crosshair_;
 
   std::vector<glob::GUIHandle> ability_handles_;
 
@@ -368,6 +384,16 @@ class PlayState : public State {
   float primary_cd_ = 0.0f;
 
   bool sprinting_ = false;
+
+  int current_jumbo_effect_ = TEAM_SCORES;
+  Timer jumbo_effect_timer_;
+  float jumbo_effect_time_ = 5.0f;
+
+  bool can_smash_ = false;
+
+  bool im_stunned_ = false;
+  Timer stun_timer_;
+  float my_stun_time_;
 };
 
 class CreateServerState : public State {

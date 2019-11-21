@@ -26,6 +26,7 @@
 #include "particles/particle_system.hpp"
 #include "postprocess/blur.hpp"
 #include "postprocess/postprocess.hpp"
+#include "postprocess/shockwaves.hpp"
 #include "postprocess/ssao.hpp"
 #include "renderitems.hpp"
 #include "shader.hpp"
@@ -67,6 +68,7 @@ GLuint sky_texture = 0;
 PostProcess post_process;
 Blur blur;
 Shadows shadows;
+Shockwaves shockwaves;
 
 bool blackout = false;
 
@@ -483,7 +485,7 @@ void Init() {
 
   SetSky("assets/texture/nightsky.png");
 
-  //glEnable(GL_RASTERIZER_DISCARD);
+  // glEnable(GL_RASTERIZER_DISCARD);
 }
 
 // H=Handle, A=Asset
@@ -1005,16 +1007,19 @@ void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
 }
 
 void SubmitBAM(const std::vector<ModelHandle> &handles, glm::mat4 transform,
-               std::vector<glm::mat4> bone_transforms,
-               int material_index) {  // Submit Bone Animated Mesh
+               std::vector<glm::mat4> bone_transforms, int material_index,
+               bool cast_shadow,
+               float emissive_strength) {  // Submit Bone Animated Mesh
   for (auto handle : handles) {
-    SubmitBAM(handle, transform, bone_transforms, material_index);
+    SubmitBAM(handle, transform, bone_transforms, material_index, cast_shadow,
+              emissive_strength);
   }
 }
 
 void SubmitBAM(ModelHandle model_h, glm::mat4 transform,
-               std::vector<glm::mat4> bone_transforms,
-               int material_index) {  // Submit Bone Animated Mesh
+               std::vector<glm::mat4> bone_transforms, int material_index,
+               bool cast_shadow,
+               float emissive_strength) {  // Submit Bone Animated Mesh
   BoneAnimatedRenderItem BARI;
 
   auto find_res = models.find(model_h);
@@ -1033,22 +1038,26 @@ void SubmitBAM(ModelHandle model_h, glm::mat4 transform,
   BARI.numBones = BARI.bone_transforms.size();
 
   BARI.material_index = material_index;
+  BARI.emission_strength = emissive_strength;
+  BARI.cast_shadow = cast_shadow;
 
   bone_animated_items_to_render.push_back(BARI);
 }
 
-void Submit(ModelHandle model_h, glm::vec3 pos, int material_index) {
+void Submit(ModelHandle model_h, glm::vec3 pos, int material_index,
+            bool cast_shadow, float emissive_strength) {
   glm::mat4 transform = glm::translate(pos);
-  Submit(model_h, transform, material_index);
+  Submit(model_h, transform, material_index, cast_shadow, emissive_strength);
 }
 
 void Submit(const std::vector<ModelHandle> &handles, glm::mat4 transform,
-            int material_index) {
+            int material_index, bool cast_shadow, float emissive_strength) {
   for (auto handle : handles) {
-    Submit(handle, transform, material_index);
+    Submit(handle, transform, material_index, cast_shadow, emissive_strength);
   }
 }
-void Submit(ModelHandle model_h, glm::mat4 transform, int material_index) {
+void Submit(ModelHandle model_h, glm::mat4 transform, int material_index,
+            bool cast_shadow, float emissive_strength) {
   auto find_res = models.find(model_h);
   if (find_res == models.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted model\n";
@@ -1056,13 +1065,15 @@ void Submit(ModelHandle model_h, glm::mat4 transform, int material_index) {
   }
 
   const glm::mat4 pre_rotation =
-      glm::rotate(glm::pi<float>() / 2.f, glm::vec3(0, 1, 0)) *
-      glm::rotate(-glm::pi<float>() / 2.f, glm::vec3(1, 0, 0));
+      glm::rotate(glm::pi<float>() / 2.f, glm::vec3(0, 1, 0));  // *
+  // glm::rotate(-glm::pi<float>() / 2.f, glm::vec3(1, 0, 0));
 
   RenderItem to_render;
   to_render.model = &find_res->second;
   to_render.transform = transform * pre_rotation;
   to_render.material_index = material_index;
+  to_render.emission_strength = emissive_strength;
+  to_render.cast_shadow = cast_shadow;
 
   items_to_render.push_back(to_render);
 }
@@ -1210,7 +1221,7 @@ void ReloadShaders() {
 }
 
 void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x,
-            float opacity) {
+            float opacity, float rot) {
   auto find_res = gui_elements.find(gui_h);
   if (find_res == gui_elements.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted gui element\n";
@@ -1223,6 +1234,7 @@ void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x,
   to_render.scale = scale;
   to_render.scale_x = scale_x;
   to_render.opacity = opacity;
+  to_render.rot = rot;
   gui_items_to_render.push_back(to_render);
 }
 
@@ -1260,6 +1272,10 @@ void Submit(E2DHandle e2D_h, glm::vec3 pos, glm::mat4 matrix) {
 void SubmitTrail(const std::vector<glm::vec3> &pos_history, float width,
                  glm::vec4 color) {
   trails_to_render.push_back({pos_history, width, color});
+}
+
+void CreateShockwave(glm::vec3 position, float duration, float size) {
+  shockwaves.Create(position, duration, size);
 }
 
 void SubmitCube(glm::mat4 t) { cubes.push_back(t); }
@@ -1333,25 +1349,29 @@ void Render() {
 
   auto draw_function = [&](ShaderProgram &shader) {
     for (auto &render_item : items_to_render) {
-      shader.uniform("model_transform", render_item.transform);
-      render_item.model->Draw(shader);
+      if (render_item.cast_shadow) {
+        shader.uniform("model_transform", render_item.transform);
+        render_item.model->Draw(shader);
+      }
     }
   };
   auto anim_draw_function = [&](ShaderProgram &shader) {
     for (auto &BARI : bone_animated_items_to_render) {
-      shader.uniform("model_transform", BARI.transform);
-      shader.uniformv("bone_transform", BARI.bone_transforms.size(),
-                      BARI.bone_transforms.data());
-      /*
-      int numBones = 0;
-      for (auto &bone : BARI.bone_transforms) {
-        shader.uniform("bone_transform[" + std::to_string(numBones) + "]",
-                       bone);
-        numBones++;
+      if (BARI.cast_shadow) {
+        shader.uniform("model_transform", BARI.transform);
+        shader.uniformv("bone_transform", BARI.bone_transforms.size(),
+                        BARI.bone_transforms.data());
+        /*
+        int numBones = 0;
+        for (auto &bone : BARI.bone_transforms) {
+          shader.uniform("bone_transform[" + std::to_string(numBones) + "]",
+                         bone);
+          numBones++;
+        }
+        */
+        // shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
+        BARI.model->Draw(animated_model_shader);
       }
-      */
-      // shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
-      BARI.model->Draw(animated_model_shader);
     }
   };
   shadows.RenderToMaps(draw_function, anim_draw_function, blur);
@@ -1386,6 +1406,8 @@ void Render() {
       model_shader.uniform("model_transform", render_item.transform);
       model_shader.uniform("normal_transform",
                            calcNormalTransform(render_item.transform));
+      model_shader.uniform("dynamic_em_strength",
+                           render_item.emission_strength);
       render_item.model->Draw(model_shader);
     }
 
@@ -1399,6 +1421,8 @@ void Render() {
                                      BARI.bone_transforms.data());
       animated_model_shader.uniform("normal_transform",
                                     calcNormalTransform(BARI.transform));
+      animated_model_shader.uniform("dynamic_em_strength",
+                                    BARI.emission_strength);
       /*
       int numBones = 0;
       for (auto &bone : BARI.bone_transforms) {
@@ -1454,8 +1478,15 @@ void Render() {
       buffer_particle_systems[p].system.Draw(particle_shader);
     }
 
-    // TODO: Sort all transparent triangles
-    // maybe sort internally in modell and then and externally
+    // render text
+    glBindVertexArray(quad_vao);
+    text3D_shader.use();
+    text3D_shader.uniform("cam_transform", cam_transform);
+    for (auto &text3D : text3D_to_render) {
+      text3D.font->Draw3D(text3D_shader, text3D.pos, text3D.size, text3D.text,
+                          text3D.color, text3D.rotation);
+    }
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     model_shader.use();
@@ -1464,28 +1495,12 @@ void Render() {
         SetDefaultMaterials(model_shader);
         model_shader.uniform("model_transform", render_item.transform);
         model_shader.uniform("normal_transform",
-                           calcNormalTransform(render_item.transform));
+                             calcNormalTransform(render_item.transform));
         render_item.model->Draw(model_shader);
       }
     }
-    glDisable(GL_BLEND);
 
-    // render text
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDepthFunc(GL_LEQUAL);
-    glBindVertexArray(quad_vao);
-    text3D_shader.use();
-    text3D_shader.uniform("cam_transform", cam_transform);
-    for (auto &text3D : text3D_to_render) {
-      text3D.font->Draw3D(text3D_shader, text3D.pos, text3D.size, text3D.text,
-                          text3D.color, text3D.rotation);
-    }
-    //glDisable(GL_BLEND);
-    //glEnable(GL_CULL_FACE);
-
-    glDepthFunc(GL_LESS);
+    // TODO: maybe sort trail with other transparent
     glBindVertexArray(trail_vao);
     trail_shader.use();
     trail_shader.uniform("cam_transform", cam_transform);
@@ -1513,6 +1528,8 @@ void Render() {
   glViewport(0, 0, ws.x, ws.y);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  shockwaves.Update(camera);
+
   fullscreen_shader.use();
   post_process.BindColorTex(0);
   post_process.BindEmissionTex(1);
@@ -1522,6 +1539,8 @@ void Render() {
   fullscreen_shader.uniform("texture_emission", 1);
   fullscreen_shader.uniform("texture_ssao", 2);
   fullscreen_shader.uniform("use_ao", use_ao);
+  fullscreen_shader.uniform("resolution", ws);
+  shockwaves.SetUniforms(fullscreen_shader);
   DrawFullscreenQuad();
 
   glBindVertexArray(quad_vao);
@@ -1532,7 +1551,8 @@ void Render() {
   gui_shader.use();
   for (auto &gui_item : gui_items_to_render) {
     gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale,
-                               gui_item.scale_x, gui_item.opacity);
+                               gui_item.scale_x, gui_item.opacity,
+                               gui_item.rot);
   }
   // glBindTexture(GL_TEXTURE_2D, 0);
 

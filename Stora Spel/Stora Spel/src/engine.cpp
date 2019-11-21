@@ -24,6 +24,7 @@
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
+#include <ecs\systems\skylight_system.hpp>
 
 Engine::Engine() {}
 
@@ -733,6 +734,11 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       player_names_[client_id] = name;
       break;
     }
+    case PacketBlockType::YOU_CAN_SMASH: {
+      bool smash = false;
+      packet >> smash;
+      play_state_.SetCanSmash(smash);
+	}
   }
 }
 
@@ -787,6 +793,7 @@ void Engine::UpdateSystems(float dt) {
   ParticleSystem(*registry_current_, dt);
   animation_system_.UpdateAnimations(*registry_current_, dt);
   trailsystem::Update(*registry_current_, dt);
+  skylight_system::Update(*registry_current_);
   lifetime::Update(*registry_current_, dt);
   RenderSystem(*registry_current_);
 }

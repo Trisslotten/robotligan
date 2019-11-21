@@ -59,10 +59,11 @@ void Mesh::SetupMesh(bool weighted) {
 
 Mesh::Mesh(const std::vector<Vertex>& vertices,
            const std::vector<GLuint>& indices,
-           const std::vector<Texture>& textures) {
+           const std::vector<Texture>& textures, glm::mat4 transform) {
   vertices_ = vertices;
   indices_ = indices;
   textures_ = textures;
+  transform_ = transform;
 
   if (glob::kModelUseGL) {
     SetupMesh(weighted_);
@@ -96,6 +97,7 @@ void Mesh::Draw(ShaderProgram& shader) {
     if(texture.slot == TEXTURE_SLOT_EMISSIVE) {
       shader.uniform("use_emissive", 1);
     }
+    shader.uniform("mesh_transform", transform_);
     shader.uniform(texture.type, texture.slot);
   }
 
