@@ -14,8 +14,8 @@ float median(float r, float g, float b) {
 }
 
 void main() {
-	//vec2 msdfUnit = pxRange/vec2(textureSize(msdf, 0));
-	vec2 msdfUnit = pxRange/vec2(200, 200);
+	vec2 msdfUnit = 10./vec2(textureSize(msdf, 0));
+	//vec2 msdfUnit = pxRange/vec2(200, 200);
 	vec2 vv_tex = v_tex;
 	vv_tex.y = 1 - v_tex.y;
 	vec3 samplep = texture(msdf, vv_tex).rgb;
