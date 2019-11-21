@@ -9,43 +9,31 @@
 namespace glob {
 
 void Rope::Init() {
-  constexpr float two_pi = 2.f * glm::pi<float>();
-
   constexpr int length_res = 20;
   constexpr int cylinder_res = 50;
-  constexpr int num_indices = (length_res - 1) * cylinder_res * 6;
+  constexpr int num_indices = (length_res - 1) * (cylinder_res + 1) * 6;
 
   static_assert(num_indices < (int)USHRT_MAX,
-                "Rope resolution too big. Change indices to unsigned int or "
+                "Rope mesh resolution too big. Change indices to unsigned int or "
                 "make rope smaller resolution");
 
-  std::vector<glm::vec4> vertices;
+  std::vector<glm::vec2> vertices;
   std::vector<unsigned short> indices;
 
   for (int i = 0; i < length_res; i++) {
     float x = float(i) / length_res;
-
-    for (int j = 0; j < cylinder_res; j++) {
+    for (int j = 0; j <= cylinder_res; j++) {
       float ratio = float(j) / cylinder_res;
-      float a = two_pi * float(j) / cylinder_res;
-
-      vertices.push_back(
-          glm::vec4(x, 0.5f * glm::cos(a), 0.5f * glm::sin(a), ratio));
+      vertices.emplace_back(x, ratio);
     }
   }
 
   for (int i = 0; i < length_res - 1; i++) {
     for (int j = 0; j < cylinder_res; j++) {
-      int bl, br, tl, tr;
-      bl = (j + 0) + (i + 0) * cylinder_res;
-      tl = (j + 0) + (i + 1) * cylinder_res;
-      if (j < cylinder_res - 1) {
-        br = (j + 1) + (i + 0) * cylinder_res;
-        tr = (j + 1) + (i + 1) * cylinder_res;
-      } else {
-        br = 0 + (i + 0) * cylinder_res;
-        tr = 0 + (i + 1) * cylinder_res;
-      }
+      int bl = (j + 0) + (i + 0) * (cylinder_res+1);
+      int tl = (j + 0) + (i + 1) * (cylinder_res+1);
+      int br = (j + 1) + (i + 0) * (cylinder_res+1);
+      int tr = (j + 1) + (i + 1) * (cylinder_res+1);
       indices.push_back(tl);
       indices.push_back(bl);
       indices.push_back(br);
@@ -63,7 +51,7 @@ void Rope::Init() {
 
   glBindVertexArray(vao_);
   glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec4),
+  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec2),
                vertices.data(), GL_STATIC_DRAW);
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
@@ -71,7 +59,7 @@ void Rope::Init() {
                indices.data(), GL_STATIC_DRAW);
 
   glEnableVertexAttribArray(0);
-  glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(glm::vec4),
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec2),
                         (GLvoid*)0);
   glBindVertexArray(0);
 
