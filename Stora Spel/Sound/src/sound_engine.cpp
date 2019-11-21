@@ -107,7 +107,7 @@ void SoundEngine::Init() {
   FMOD_VECTOR listener_up{0.0f, 1.0f, 0.0f};
   FMOD_VECTOR listener_vel{0.0f, 0.0f, 0.0f};
 
-  impl_->system->set3DSettings(1.0f, 1.0f, 0.5f);
+  impl_->system->set3DSettings(1.0f, 1.0f, 1.0f);
   impl_->system->set3DListenerAttributes(0, &listener_pos, &listener_vel,
                                          &listener_forward, &listener_up);
 }
@@ -128,6 +128,7 @@ void SoundEngine::SetListenerAttributes(glm::vec3 pos, glm::quat orientation,
                                         glm::vec3 vel) {
   glm::vec3 forward = orientation * glm::vec3(-1, 0, 0);
   glm::vec3 up = orientation * glm::vec3(0, 1, 0);
+
   impl_->system->set3DListenerAttributes(
       0, (FMOD_VECTOR*)&pos, (FMOD_VECTOR*)&vel, (FMOD_VECTOR*)&forward,
       (FMOD_VECTOR*)&up);

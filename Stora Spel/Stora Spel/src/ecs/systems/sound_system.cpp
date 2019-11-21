@@ -22,15 +22,19 @@ void SoundSystem::Update(entt::registry& registry) {
 
   // Set 3D space attributes for sounds coming from each object/player on the
   // field
-  auto sound_view =
-      registry.view<TransformComponent, SoundComponent, PhysicsComponent>();
+  auto sound_view = registry.view<TransformComponent, SoundComponent>();
   for (auto sound_entity : sound_view) {
     TransformComponent& trans_c =
         sound_view.get<TransformComponent>(sound_entity);
     SoundComponent& sound_c = sound_view.get<SoundComponent>(sound_entity);
-    PhysicsComponent& phys_c = sound_view.get<PhysicsComponent>(sound_entity);
+    glm::vec3 vel = glm::vec3(0.f);
 
-    sound_c.sound_player->Set3DAttributes(trans_c.position, phys_c.velocity);
+    if (registry.has<PhysicsComponent>(sound_entity)) {
+      PhysicsComponent& phys_c = registry.get<PhysicsComponent>(sound_entity);
+      vel = phys_c.velocity;
+    }
+
+    sound_c.sound_player->Set3DAttributes(trans_c.position, vel);
   }
   // Play footstep sounds from each player on the field
   auto player_view =
@@ -370,7 +374,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.invisibility_cast.player_id) {
-        sound_c.sound_player->Play(ability_sounds_[AbilityID::INVISIBILITY], 0, 0.5f);
+        sound_c.sound_player->Play(ability_sounds_[AbilityID::INVISIBILITY], 0,
+                                   0.5f);
         break;
       }
     }
@@ -414,8 +419,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
     }
   }
   if (event.type == GameEvent::MINE_PLACE) {
-    auto view =
-        registry->view<IDComponent, MineComponent, SoundComponent>();
+    auto view = registry->view<IDComponent, MineComponent, SoundComponent>();
     for (auto entity : view) {
       IDComponent& id_c = view.get<IDComponent>(entity);
       MineComponent& mine_c = view.get<MineComponent>(entity);
@@ -453,20 +457,20 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
   }
 }
 
-  void SoundSystem::ReceiveMenuEvent(const MenuEvent& event) {
-    auto registry = engine_->GetCurrentRegistry();
+void SoundSystem::ReceiveMenuEvent(const MenuEvent& event) {
+  auto registry = engine_->GetCurrentRegistry();
 
-    // Listen for GameEvents and play associated sounds
-    switch (event.type) {
-      case MenuEvent::HOVER: {
-        // Play hover sound
-        sound_engine_.GetPlayer()->Play(button_hover_);
-        break;
-      }
-      case MenuEvent::CLICK: {
-        // Play click sound
-        sound_engine_.GetPlayer()->Play(button_click_);
-        break;
-      }
+  // Listen for GameEvents and play associated sounds
+  switch (event.type) {
+    case MenuEvent::HOVER: {
+      // Play hover sound
+      sound_engine_.GetPlayer()->Play(button_hover_);
+      break;
+    }
+    case MenuEvent::CLICK: {
+      // Play click sound
+      sound_engine_.GetPlayer()->Play(button_click_);
+      break;
     }
   }
+}
