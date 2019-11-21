@@ -295,6 +295,7 @@
     <None Include="assets\shaders\modelshader.vert" />
     <None Include="Assets\shaders\Particle compute shaders\dust.comp" />
     <None Include="Assets\shaders\particle.geom" />
+    <None Include="Assets\shaders\rope.vert" />
     <None Include="Assets\shaders\shading.frag" />
     <None Include="Assets\shaders\fullscreenquad.frag" />
     <None Include="Assets\shaders\fullscreenquad.vert" />
@@ -311,6 +312,7 @@
     <None Include="Assets\shaders\text3Dshader.vert" />
     <None Include="Assets\shaders\trail.frag" />
     <None Include="Assets\shaders\trail.vert" />
+    <None Include="Assets\shaders\rope.frag" />
     <None Include="Assets\shaders\wireframe.frag" />
     <None Include="shaders\testshader.frag" />
     <None Include="shaders\testshader.vert" />

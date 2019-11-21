@@ -1565,12 +1565,15 @@ void PlayState::CreateArenaEntity() {
       glob::GetModel("assets/MapV3/Map_Floor.fbx");
   glob::ModelHandle model_map_projectors =
       glob::GetModel("assets/MapV3/Map_Projectors.fbx");
+  glob::ModelHandle model_map_misc1 =
+      glob::GetModel("assets/Arena_misc/ArenaMisc1.fbx");
 
   // glob::GetModel(kModelPathMapSingular);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
   model_c.handles.push_back(model_arena);
   model_c.handles.push_back(model_arena_banner);
   model_c.handles.push_back(model_map_projectors);
+  model_c.handles.push_back(model_map_misc1);
   model_c.cast_shadow = false;
 
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
@@ -1753,7 +1756,7 @@ void PlayState::CreateSpotlights() {
     auto entity = registry_gameplay_.create();
     ModelComponent& model_c = registry_gameplay_.assign<ModelComponent>(entity);
     glob::ModelHandle m_hndl = glob::GetModel("assets/Spotlight/Spotlight.fbx");
-    model_c.handles.push_back(m_hndl);
+    //model_c.handles.push_back(m_hndl);
     TransformComponent& trans_c =
         registry_gameplay_.assign<TransformComponent>(entity);
     trans_c.position = temp_pos;
