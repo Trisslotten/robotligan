@@ -303,6 +303,8 @@ class PlayState : public State {
   void DrawTopScores();
   void DrawTarget();
   void DrawQuickslots();
+  void DrawStunTimer();
+
   void DrawMiniMap();
   void DrawJumbotronText();
 
@@ -383,6 +385,10 @@ class PlayState : public State {
   int current_jumbo_effect_ = TEAM_SCORES;
   Timer jumbo_effect_timer_;
   float jumbo_effect_time_ = 5.0f;
+
+  bool im_stunned_ = false;
+  Timer stun_timer_;
+  float my_stun_time_;
 };
 
 #endif  // STATE_HPP_
