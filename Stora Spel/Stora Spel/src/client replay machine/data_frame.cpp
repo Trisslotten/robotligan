@@ -812,18 +812,37 @@ void ForcePushFrame::WriteBack(TransformComponent& trans_c) {
 
 MineFrame::MineFrame() { position_ = glm::vec3(0.f); }
 
-MineFrame::MineFrame(TransformComponent& trans_c) {}
+MineFrame::MineFrame(TransformComponent& trans_c) {
+  position_ = trans_c.position;
+}
 
 MineFrame::~MineFrame() {}
 
-DataFrame* MineFrame::Clone() { return nullptr; }
+DataFrame* MineFrame::Clone() {
+  MineFrame* mine_return = new MineFrame();
+
+  mine_return->position_ = position_;
+
+  return mine_return;
+}
 
 DataFrame* MineFrame::InterpolateForward(unsigned int in_dist_to_target,
                                          unsigned int in_dist_to_point_b,
                                          DataFrame& in_point_b) {
-  return nullptr;
+  // INTERPOLATED FRAME
+  MineFrame* ret_frame = new MineFrame();
+
+  // "INTERPOLATION" :D
+
+  // POSITION
+  ret_frame->position_ = this->position_;
+
+  return ret_frame;
 }
 
 bool MineFrame::ThresholdCheck(DataFrame& in_future_df) { return false; }
 
-void MineFrame::WriteBack(TransformComponent& trans_c) {}
+void MineFrame::WriteBack(TransformComponent& trans_c) {
+  trans_c.position = position_;
+  trans_c.scale = glm::vec3(1.0f);
+}

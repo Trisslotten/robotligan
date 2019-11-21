@@ -7,6 +7,7 @@
 #include <ecs/components/ball_component.hpp>
 #include <ecs/components/model_component.hpp>
 #include <ecs/components/player_component.hpp>
+#include <engine.hpp>
 #include <entt.hpp>
 #include <glob/graphics.hpp>
 #include <map>
@@ -14,7 +15,6 @@
 #include <shared/transform_component.hpp>
 #include <util/asset_paths.hpp>
 #include <util/global_settings.hpp>
-#include <engine.hpp>
 #include "eventdispatcher.hpp"
 
 // Private---------------------------------------------------------------------
@@ -46,6 +46,8 @@ ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
     } else if (proj_c.projectile_id == ProjectileID::FORCE_PUSH_OBJECT) {
       return ReplayObjectType::REPLAY_FORCE_PUSH;
     }
+  } else if (in_registry.has<MineComponent>(in_entity)) {
+    return ReplayObjectType::REPLAY_MINE;
   }
 
   // If entity couldn't be identified, return number of types
@@ -123,6 +125,10 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
     ret_ptr = new ForcePushFrame(trans_c);
+  } else if (object_type == REPLAY_MINE) {
+    TransformComponent& trans_c =
+        in_registry.get<TransformComponent>(in_entity);
+    ret_ptr = new MineFrame(trans_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unidentified entity");
@@ -303,6 +309,14 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
         in_registry.get<TransformComponent>(in_entity);
     // Transfer
     fp_c_ptr->WriteBack(trans_c);
+  } else if (in_type == REPLAY_MINE) {
+    // Cast
+    MineFrame* mf_c_ptr = dynamic_cast<MineFrame*>(in_df_ptr);
+    // Get
+    TransformComponent& trans_c =
+        in_registry.get<TransformComponent>(in_entity);
+    // Transfer
+    mf_c_ptr->WriteBack(trans_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -349,7 +363,7 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     AnimationComponent& anim_c = in_registry.assign<AnimationComponent>(
         entity, glob::GetAnimationData(mh_mech));
 
-	in_registry.assign<SoundComponent>(
+    in_registry.assign<SoundComponent>(
         entity, engine_->GetSoundEngine().CreatePlayer());
 
     pf_ptr->WriteBack(transform_c, player_c, phys_c);
@@ -466,6 +480,20 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     // - Add the relevant ModelHandle:s to entity
     model_c.handles.push_back(force_push_model);
+  } else if (object_type == REPLAY_MINE) {
+    // -Cast DataFrame to correct type
+    MineFrame* mf_c_ptr = dynamic_cast<MineFrame*>(df_ptr);
+    in_registry.assign<IDComponent>(entity,
+                                    channels_.at(in_channel_index).object_id);
+    // - Assign the relevant components to entity
+    TransformComponent& trans_c =
+        in_registry.assign<TransformComponent>(entity);
+    mf_c_ptr->WriteBack(trans_c);
+    // - Assign a model component to thew entity
+    glob::ModelHandle mine_model = glob::GetModel(kModelPathMine);
+    ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    // - Add the relevant ModelHandle:s to entity
+    model_c.handles.push_back(mine_model);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -509,7 +537,7 @@ GeometricReplay* GeometricReplay::Clone() {
   clone->current_frame_number_write_ = this->current_frame_number_write_;
   clone->current_frame_number_read_ = this->current_frame_number_read_;
   clone->captured_events_ = this->captured_events_;
-  clone->engine_ = this->engine_; 
+  clone->engine_ = this->engine_;
 
   return clone;
 }

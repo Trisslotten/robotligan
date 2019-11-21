@@ -2018,7 +2018,7 @@ void PlayState::CreateMineObject(unsigned int owner_team, EntityID mine_id,
 
   entt::entity mine_object = registry_gameplay_.create();
   glob::ModelHandle model_mine =
-      glob::GetModel(kModelPathPickup);  // Switch to mine model
+      glob::GetModel(kModelPathMine);  // Switch to mine model
 
   ModelComponent& model_c =
       registry_gameplay_.assign<ModelComponent>(mine_object);
