@@ -473,7 +473,7 @@ void ServerPlayState::HandleDataToSend() {
         to_send << player_c.ready_to_smash;
         to_send << PacketBlockType::YOU_CAN_SMASH;
         break;
-	  }
+      }
     }
   }
 

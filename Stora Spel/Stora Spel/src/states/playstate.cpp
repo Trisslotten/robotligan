@@ -409,7 +409,7 @@ void PlayState::Update(float dt) {
     EntityID id = registry_gameplay_.get<IDComponent>(player).id;
     auto& player_c = registry_gameplay_.get<PlayerComponent>(player);
     if (id == my_id_) {
-      player_c.can_smash = can_smash;
+      player_c.can_smash = can_smash_;
       break;
     }
   }
