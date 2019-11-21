@@ -155,6 +155,13 @@ vec2 calcTexCoords()
 const vec3 iron_color = vec3(0.8862745098039216, 0.8862745098039216, 0.82352941176);
 
 void main() {
+	vec2 tex = calcTexCoords();
+	vec4 surface_color = texture(texture_diffuse, tex);
+
+	if(surface_color.a < 1.f / 255.f){
+		discard;
+	}
+
 	float metallic = 0.;
 	if(use_metallic != 0) 
 	{
@@ -167,7 +174,6 @@ void main() {
 		normal = triplanarNormal();
 	}
 	// calculate diffuse texture coords
-	vec2 tex = calcTexCoords();
 
 	vec3 view_dir = normalize(cam_position - frag_pos);
 
@@ -193,7 +199,6 @@ void main() {
 	reflective_shading += reflective * lighting.specular;
 	reflective_shading += 1.0*reflective * cube_map;
 
-	vec4 surface_color = texture(texture_diffuse, tex);
 	float alpha = surface_color.a;
 
 	float emission_strength = 0.0;
