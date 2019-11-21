@@ -147,7 +147,7 @@ void LobbyState::Update(float dt) {
   }
   if (everyone_ready) {  // Change
     glm::vec2 bottom_pos =
-        glm::vec2((glob::window::GetWindowDimensions().x / 2) - 235, 30);
+        glm::vec2((glob::window::GetWindowDimensions().x / 2) - 150, 100);
 
     if (engine_->GetServerState() == ServerStateType::LOBBY) {
       glob::Submit(font_test_, bottom_pos, 28,
@@ -356,7 +356,7 @@ void LobbyState::CreateGUIElements() {
   ButtonComponent* button_c = GenerateButtonEntity(
       registry_lobby_, "JOIN RED",
       (glm::vec2(
-          glob::window::GetWindowDimensions().x / 2 - 560,
+          glob::window::GetWindowDimensions().x / 2 - 570,
           glob::window::GetWindowDimensions().y - 300)),  // Change - DONE
       font_team_names_, true, 72);
   button_c->text_current_color = glm::vec4(1.f, 0.3f, 0.3f, 1.f);
@@ -369,7 +369,7 @@ void LobbyState::CreateGUIElements() {
   button_c = GenerateButtonEntity(
       registry_lobby_, "JOIN BLUE",
       (glm::vec2(
-          glob::window::GetWindowDimensions().x / 2 + 400,
+          glob::window::GetWindowDimensions().x / 2 + 380,
           glob::window::GetWindowDimensions().y - 300)),  // Change - DONE
       font_team_names_, true, 72);
   button_c->text_current_color = glm::vec4(.3f, .3f, 1.f, 1.f);
@@ -443,13 +443,13 @@ void LobbyState::CreateGUIElements() {
   };
 }
 
-void LobbyState::DrawTeamSelect() {  // Change
+void LobbyState::DrawTeamSelect() {  // Change -- DONE
   glm::vec2 red_team_select_back_pos =
-      glm::vec2(glob::window::GetWindowDimensions().x / 2 - 600,
+      glm::vec2(glob::window::GetWindowDimensions().x / 2 - 673,
                 glob::window::GetWindowDimensions().y - 750);
 
   glm::vec2 blue_team_select_back_pos =
-      glm::vec2(glob::window::GetWindowDimensions().x / 2 + 360,
+      glm::vec2(glob::window::GetWindowDimensions().x / 2 + 287,
                 glob::window::GetWindowDimensions().y - 750);
 
   glm::vec2 offset = glm::vec2(10, 360);
