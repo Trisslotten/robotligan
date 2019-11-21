@@ -292,6 +292,7 @@
     <None Include="assets\shaders\modelshader.frag" />
     <None Include="assets\shaders\modelshader.vert" />
     <None Include="Assets\shaders\Particle compute shaders\dust.comp" />
+    <None Include="Assets\shaders\Particle compute shaders\firework.comp" />
     <None Include="Assets\shaders\particle.geom" />
     <None Include="Assets\shaders\shading.frag" />
     <None Include="Assets\shaders\fullscreenquad.frag" />

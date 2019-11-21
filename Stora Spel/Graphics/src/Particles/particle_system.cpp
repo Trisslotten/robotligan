@@ -311,6 +311,7 @@ namespace glob {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     shader.uniform("image", 0);
+    shader.uniform("emissive", settings_.emissive);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, settings_.texture);
     glBindVertexArray(vertex_array_object_);

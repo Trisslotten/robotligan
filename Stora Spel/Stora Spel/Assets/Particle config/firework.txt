@@ -1,0 +1,12 @@
+
+>color= 0 1 0 1
+>velocity= 5
+>min_velocity= 1
+>spawn_rate=3
+>time= 5
+>size= 0.3
+>emissive= 1
+>burst= 1
+>burst_particles= 1000
+>number_of_bursts= 1
+>shader= firework

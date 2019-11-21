@@ -154,6 +154,31 @@ void PlayState::Init() {
 }
 
 void PlayState::Update(float dt) {
+  static float timer = 0.f;
+  timer += dt;
+  if (timer > 7.f) {
+    timer = 0.f;
+    auto e = registry_gameplay_.create();
+    auto handle = glob::CreateParticleSystem();
+
+    std::vector handles = {handle};
+    std::vector<glm::vec3> offsets = {glm::vec3(0.f)};
+    std::vector<glm::vec3> directions = {glm::vec3(0.f)};
+
+    glob::SetParticleSettings(handle, "firework.txt");
+    glob::SetEmitPosition(handle, glm::vec3(0.f, 2.f, 0.f));
+
+    registry_gameplay_.assign<ParticleComponent>(e, handles, offsets,
+                                                 directions);
+    registry_gameplay_.assign<TimerComponent>(e, 7.f);
+    registry_gameplay_.assign<int>(e, 11);
+    registry_gameplay_.assign<TransformComponent>(e, glm::vec3(0.f));
+    //auto& t = registry_gameplay_.assign<TrailComponent>(e);
+    //t.color = glm::vec4(1.0f);
+    //t.width = 0.5f;
+    //t.length = 10.f;
+  }
+
   auto& cli = engine_->GetClient();
   if (!cli.IsConnected()) {
     cli.Disconnect();
@@ -255,13 +280,12 @@ void PlayState::Update(float dt) {
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
 
-	  if (!show_in_game_menu_buttons_) {
+      if (!show_in_game_menu_buttons_) {
         cam_c.orientation = orientation;
         trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
         // FPS Model rotations
         mc.rot_offset = orientation - glm::quat(glm::vec3(0.f, yaw_, 0.f));
-	  }
-      
+      }
 
       // rotate model offset as well, this does not want to work...
       /*glm::mat4 translateMat = glm::translate(glm::mat4(1.f), cam_c.offset);
