@@ -2586,6 +2586,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
               particle_entity_2, in_handles, in_offsets, in_directions);
           correct_registry->assign<TimerComponent>(particle_entity_2, 4.f);
 
+          // Shockwave
+          glob::CreateShockwave(trans_c.position, 0.60f, 20.f);
+
           break;
         }
       }

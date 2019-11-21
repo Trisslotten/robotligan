@@ -1072,6 +1072,7 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
     if (registry.has<PlayerComponent>(entity)) {
       auto& player_c = registry.get<PlayerComponent>(entity);
       player_c.stunned = true;
+      player_c.stun_time = 2.0f;
       player_c.stun_timer.Restart();
       GameEvent ge;
       ge.type = GameEvent::PLAYER_STUNNED;
@@ -1087,10 +1088,11 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
 
 void ApplyMineStun(entt::registry& registry, PhysicsComponent& physics_c, PlayerComponent& player_c, IDComponent& id_c) {
   // Push
-  physics_c.velocity += glm::vec3(0.f, 5.f, 0.f);
+  physics_c.velocity = glm::vec3(0.f, 10.f, 0.f);
 
   // Stun
   player_c.stunned = true;
+  player_c.stun_time = 5.0f;
   player_c.stun_timer.Restart();
 
   GameEvent ge;
