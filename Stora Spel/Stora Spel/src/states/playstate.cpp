@@ -1563,6 +1563,14 @@ void PlayState::CreateArenaEntity() {
       glob::GetModel("assets/MapV3/Map_Floor.fbx");
   glob::ModelHandle model_map_projectors =
       glob::GetModel("assets/MapV3/Map_Projectors.fbx");
+  glob::ModelHandle model_map_misc_laken =
+      glob::GetModel("assets/Arena_misc/ArenaMiscLaken.fbx");
+  glob::ModelHandle model_map_misc_spectre =
+      glob::GetModel("assets/Arena_misc/ArenaMiscSpectre.fbx");
+  glob::ModelHandle model_map_misc_starfighter =
+      glob::GetModel("assets/Arena_misc/ArenaMiscStarfighter.fbx");
+  glob::ModelHandle model_map_misc_mig =
+      glob::GetModel("assets/Arena_misc/ArenaMiscMig.fbx");
   glob::ModelHandle model_map_misc1 =
       glob::GetModel("assets/Arena_misc/ArenaMisc1.fbx");
 
@@ -1572,6 +1580,10 @@ void PlayState::CreateArenaEntity() {
   model_c.handles.push_back(model_arena_banner);
   model_c.handles.push_back(model_map_projectors);
   model_c.handles.push_back(model_map_misc1);
+  model_c.handles.push_back(model_map_misc_laken);
+  model_c.handles.push_back(model_map_misc_spectre);
+  model_c.handles.push_back(model_map_misc_starfighter);
+  model_c.handles.push_back(model_map_misc_mig);
   model_c.cast_shadow = false;
 
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
