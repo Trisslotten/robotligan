@@ -405,6 +405,16 @@ void PlayState::Update(float dt) {
 
   glob::Submit(test_ball_, glm::mat4());
 
+  auto view_players = registry_gameplay_.view<PlayerComponent, IDComponent>();
+  for (auto player : view_players) {
+    EntityID id = registry_gameplay_.get<IDComponent>(player).id;
+    auto& player_c = registry_gameplay_.get<PlayerComponent>(player);
+    if (id == my_id_) {
+      player_c.can_smash = can_smash_;
+      break;
+    }
+  }
+
   if (stun_timer_.Elapsed() >= my_stun_time_) {
     im_stunned_ = false;
     if (registry_gameplay_.has<ModelComponent>(my_entity_)) {

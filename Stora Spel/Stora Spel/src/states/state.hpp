@@ -276,6 +276,7 @@ class PlayState : public State {
   void SetArenaScale(glm::vec3 arena_scale) { arena_scale_ = arena_scale; }
 
   void FetchMapAndArena(entt::registry& in_registry);
+  void SetCanSmash(bool val) { can_smash_ = val; }
 
  private:
   ServerStateType server_state_;
@@ -385,6 +386,8 @@ class PlayState : public State {
   int current_jumbo_effect_ = TEAM_SCORES;
   Timer jumbo_effect_timer_;
   float jumbo_effect_time_ = 5.0f;
+
+  bool can_smash_ = false;
 
   bool im_stunned_ = false;
   Timer stun_timer_;
