@@ -175,10 +175,12 @@ void main() {
 
 	vec3 cube_map = (1.-0.9*blackout)*fakeCubeMap(reflect(view_dir, normal));
 
+	float emission_alpha = 1.0;
 	float reflective = metallic;
 	if(is_glass != 0)
 	{
 		reflective = 0.75;
+		emission_alpha = 0;
 	}
 
 	Lighting lighting = shading(frag_pos, normal);
@@ -204,7 +206,7 @@ void main() {
 
 	surface_color.rgb = mix(surface_color.rgb, iron_color, metallic*(1.-emission_strength));
 	
-	vec3 emission = emission_strength * surface_color.rgb;
+	vec3 emission = 1.2*emission_strength * surface_color.rgb;
 	emission += 2.0*reflective * lighting.specular * (1.-emission_strength);
 
 	vec3 color = surface_color.rgb;
@@ -220,6 +222,6 @@ void main() {
 	//float alpha = 1.0;
 	//vec3 emission = vec3(1); 
 	out_color = vec4(color, alpha);
-	out_emission = vec4(emission/2.0, 1);
+	out_emission = vec4(emission/2.0, emission_alpha);
 	out_depth = vec4(gl_FragCoord.z,0,0,0);
 }

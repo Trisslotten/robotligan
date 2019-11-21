@@ -208,6 +208,8 @@ class SettingsState : public State {
 /////////////////////// PLAY ///////////////////////
 
 class PlayState : public State {
+  enum JumbotronEffect { TEAM_SCORES, MATCH_TIME, BEST_PLAYER, GOAL_SCORED, NUM_EFFECTS };
+
  public:
   void Startup() override;
   void Init() override;
@@ -282,6 +284,7 @@ class PlayState : public State {
   void CreateMapEntity();
   void CreateBallEntity();
   void CreateSpotlights();
+  void CreateJumbotron();
   void ParticleComponentDestroyed(entt::entity e, entt::registry& registry);
   void CreateInGameMenu();
   void AddPlayer();
@@ -300,11 +303,16 @@ class PlayState : public State {
   void DrawQuickslots();
   void DrawStunTimer();
 
+  void DrawMiniMap();
+  void DrawJumbotronText();
+
   FrameState SimulateMovement(std::vector<int>& action, FrameState& state,
                               float dt);
   void MovePlayer(float dt);
   void MoveBall(float dt);
   void Collision();
+  
+  unsigned long GetBestPlayer();
 
   EntityID ClientIDToEntityID(long client_id);
   ////////////////////////////////////////
@@ -335,8 +343,9 @@ class PlayState : public State {
   glob::GUIHandle in_game_menu_gui_ = 0;
   glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
       gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_, gui_minimap_,
-      gui_minimap_goal_red_, gui_minimap_goal_blue_, gui_minimap_player_red_,
-      gui_minimap_player_blue_, gui_minimap_ball_, gui_crosshair_;
+      gui_minimap_goal_red_, gui_minimap_goal_blue_, gui_minimap_player_me_,
+      gui_minimap_player_red_, gui_minimap_player_blue_, gui_minimap_ball_,
+      gui_crosshair_;
 
   std::vector<glob::GUIHandle> ability_handles_;
 
@@ -368,6 +377,10 @@ class PlayState : public State {
   float primary_cd_ = 0.0f;
 
   bool sprinting_ = false;
+
+  int current_jumbo_effect_ = TEAM_SCORES;
+  Timer jumbo_effect_timer_;
+  float jumbo_effect_time_ = 5.0f;
 
   bool im_stunned_ = false;
   Timer stun_timer_;

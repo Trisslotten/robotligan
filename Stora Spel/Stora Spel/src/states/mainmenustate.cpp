@@ -107,7 +107,7 @@ void MainMenuState::CreateBackgroundEnitites() {
   {
     // ladda in och skapa entity för bana
     auto arena = registry_mainmenu_.create();
-    glm::vec3 arena_scale = glm::vec3(1.0f);
+    glm::vec3 arena_scale = glm::vec3(2.0f);
 
     glob::ModelHandle model_arena =
         glob::GetModel("assets/Arena/Map_V3_ARENA.fbx");
@@ -125,19 +125,21 @@ void MainMenuState::CreateBackgroundEnitites() {
     model_c.handles.push_back(model_map);
     model_c.handles.push_back(model_map_floor);
     model_c.handles.push_back(model_map_projectors);
+    //model_c.cast_shadow = false;
 
     registry_mainmenu_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                   arena_scale);
   }
   {
     glm::vec3 zero_vec = glm::vec3(0.0f);
-    glm::vec3 arena_scale = glm::vec3(2.6f);
+    glm::vec3 arena_scale = glm::vec3(1.f);
     auto arena = registry_mainmenu_.create();
     glob::ModelHandle model_map_walls =
         glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
 
     auto& model_c = registry_mainmenu_.assign<ModelComponent>(arena);
     model_c.handles.push_back(model_map_walls);
+    model_c.cast_shadow = false;
 
     registry_mainmenu_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                   arena_scale);

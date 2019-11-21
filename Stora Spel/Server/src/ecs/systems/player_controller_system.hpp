@@ -179,9 +179,11 @@ void Update(entt::registry& registry, float dt) {
       }
     }
 
-    player_c.energy_current =
-        std::min((player_c.energy_current + player_c.energy_regen_tick * dt),
-                 player_c.energy_max);
+	if (!player_c.actions[PlayerAction::SPRINT]) {
+      player_c.energy_current =
+          std::min((player_c.energy_current + player_c.energy_regen_tick * dt),
+                   player_c.energy_max);
+    }
 
     // slowdown
     glm::vec3 sidemov = glm::vec3(final_velocity.x, 0, final_velocity.z);
