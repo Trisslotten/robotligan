@@ -88,6 +88,7 @@ enum : int16_t {
   PLAYER_LOOK_DIR,
   PLAYER_MOVE_DIR,
   TO_CLIENT_NAME,
+  YOU_CAN_SMASH,
   NUM_BLOCK_TYPES,
 };
 
@@ -152,6 +153,7 @@ struct GameEvent {
     PRIMARY_USED,
     SECONDARY_USED,
     PICKUP_SPAWNED,
+	PLAYER_STUNNED,
     NUM_EVENTS
   } type;
   union {
@@ -325,6 +327,10 @@ struct GameEvent {
     struct {
       EntityID pickup_id;
     } pickup_spawned;
+    struct {
+      EntityID player_id;
+      float stun_time;
+    } player_stunned;
   };
 };
 

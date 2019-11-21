@@ -32,6 +32,8 @@ uniform int is_glass;
 
 uniform float blackout;
 
+uniform float dynamic_em_strength;
+
 struct Lighting {
 	vec3 specular;
 	vec3 diffuse;
@@ -204,7 +206,7 @@ void main() {
 	float emission_strength = 0.0;
 	if(use_emissive != 0)
 	{
-		emission_strength = texture(texture_emissive, v_tex).r;
+		emission_strength = texture(texture_emissive, v_tex).r * dynamic_em_strength;
 	}
 
 	surface_color.rgb = mix(surface_color.rgb, iron_color, metallic*(1.-emission_strength));

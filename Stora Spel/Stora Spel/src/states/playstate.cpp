@@ -401,8 +401,28 @@ void PlayState::Update(float dt) {
 
   DrawTopScores();
   DrawTarget();
+  DrawStunTimer();
 
   glob::Submit(test_ball_, glm::mat4());
+
+  auto view_players = registry_gameplay_.view<PlayerComponent, IDComponent>();
+  for (auto player : view_players) {
+    EntityID id = registry_gameplay_.get<IDComponent>(player).id;
+    auto& player_c = registry_gameplay_.get<PlayerComponent>(player);
+    if (id == my_id_) {
+      player_c.can_smash = can_smash_;
+      break;
+    }
+  }
+
+  if (stun_timer_.Elapsed() >= my_stun_time_) {
+    im_stunned_ = false;
+    if (registry_gameplay_.has<ModelComponent>(my_entity_)) {
+      registry_gameplay_.get<ModelComponent>(my_entity_).emission_strength =
+          1.0f;
+    }
+    stun_timer_.Pause();
+  }
 }
 
 void PlayState::UpdateNetwork() {
@@ -1402,6 +1422,8 @@ void PlayState::DrawMiniMap() {
     for (auto entity : view_ball) {
       auto& trans_c = view_ball.get<TransformComponent>(entity);
 
+
+
       // Normalize and project player pos to screen space (Z in world space
       // is X in screen space and vice versa)
       float norm_pos_x = trans_c.position.z / (28.1f * arena_scale_.z);
@@ -1413,6 +1435,17 @@ void PlayState::DrawMiniMap() {
 
       glob::Submit(gui_minimap_ball_, glm::vec2(minimap_pos_x, minimap_pos_y),
                    0.2);
+    }
+  }
+}
+
+void PlayState::DrawStunTimer() {
+  if (im_stunned_ && stun_timer_.Elapsed() > 0.5f) {
+    float strength = stun_timer_.Elapsed() / my_stun_time_;
+
+    if (registry_gameplay_.has<ModelComponent>(my_entity_)) {
+      registry_gameplay_.get<ModelComponent>(my_entity_).emission_strength =
+          strength;
     }
   }
 }
@@ -2491,6 +2524,18 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
             glob::CreateShockwave(t_c.position, 0.2, 3.f);
             break;
           }
+        }
+      }
+      break;
+    }
+    case GameEvent::PLAYER_STUNNED: {
+      if (my_id_ == e.player_stunned.player_id) {
+        im_stunned_ = true;
+        my_stun_time_ = e.player_stunned.stun_time;
+        stun_timer_.Restart();
+        if (registry_gameplay_.has<ModelComponent>(my_entity_)) {
+          registry_gameplay_.get<ModelComponent>(my_entity_).emission_strength =
+              0.0f;
         }
       }
       break;

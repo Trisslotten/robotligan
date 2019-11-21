@@ -49,6 +49,7 @@ private:
   slob::SoundHandle sound_ability_invisibility_end_;
   slob::SoundHandle sound_ability_blackout_end_;
   slob::SoundHandle sound_pickup_spawned_;
+  slob::SoundHandle sound_player_stunned_;
 
   Engine* engine_;
 };
