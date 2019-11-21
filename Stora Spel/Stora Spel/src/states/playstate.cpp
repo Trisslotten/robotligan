@@ -2457,7 +2457,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           std::vector<glob::ParticleSystemHandle> in_handles;
           std::vector<glm::vec3> in_offsets;
           std::vector<glm::vec3> in_directions;
-          glob::SetParticleSettings(handle, "superkick.txt");
+          glob::SetParticleSettings(handle, "dirt.txt");
           glob::SetParticleDirection(handle, trans_c.Forward());
           glob::SetEmitPosition(handle, trans_c.position);
           in_handles.push_back(handle);

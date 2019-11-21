@@ -1,0 +1,13 @@
+>time= 2
+>radius= 0
+>size= 0.08
+>dir_val= 0
+>velocity= 25
+>color= 0.47 0.29 0.14 0.7
+>direction= 1 1 1
+>spawn_rate= 
+>burst= 1
+>burst_particles= 250
+>number_of_bursts= 2
+>texture= dust
+>spawn_rate=300
