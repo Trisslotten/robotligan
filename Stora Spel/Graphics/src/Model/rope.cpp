@@ -9,8 +9,11 @@
 
 namespace glob {
 
+using IndexType = unsigned short;
+#define INDEX_TYPE GL_UNSIGNED_SHORT
+
 void Rope::Init() {
-  constexpr int length_res = 20;
+  constexpr int length_res = 2;
   constexpr int cylinder_res = 50;
   constexpr int num_indices = (length_res - 1) * (cylinder_res + 1) * 6;
 
@@ -20,10 +23,10 @@ void Rope::Init() {
       "make rope smaller resolution");
 
   std::vector<glm::vec2> vertices;
-  std::vector<unsigned short> indices;
+  std::vector<IndexType> indices;
 
   for (int i = 0; i < length_res; i++) {
-    float x = float(i) / length_res;
+    float x = float(i) / (length_res - 1);
     for (int j = 0; j <= cylinder_res; j++) {
       float ratio = float(j) / cylinder_res;
       vertices.emplace_back(x, ratio);
@@ -57,7 +60,7 @@ void Rope::Init() {
                vertices.data(), GL_STATIC_DRAW);
 
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo_);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned short),
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(IndexType),
                indices.data(), GL_STATIC_DRAW);
 
   glEnableVertexAttribArray(0);
@@ -90,22 +93,19 @@ void Rope::Init() {
   glGenerateMipmap(GL_TEXTURE_2D);
 }
 
-void Rope::TestDraw(Camera camera) {
-  static float time = 0;
-  time += 1.f/60.f;
-
-  glm::vec3 start_pos = glm::vec3(0);
-  glm::vec3 end_pos = glm::vec3(3*glm::sin(time), 5, 3*glm::cos(time));
-
+void Rope::Draw(glm::mat4 cam_transform) {
   glBindVertexArray(vao_);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, texture_diffuse_);
   shader_.use();
-  shader_.uniform("cam_transform", camera.GetViewPerspectiveMatrix());
+  shader_.uniform("cam_transform", cam_transform);
   shader_.uniform("texture_diffuse", 0);
-  shader_.uniform("start_pos", start_pos);
-  shader_.uniform("end_pos", end_pos);
-  glDrawElements(GL_TRIANGLES, num_indices_, GL_UNSIGNED_SHORT, 0);
+  for (auto& submitted : submitted_) {
+    shader_.uniform("start_pos", submitted.start);
+    shader_.uniform("end_pos", submitted.end);
+    glDrawElements(GL_TRIANGLES, num_indices_, INDEX_TYPE, 0);
+  }
+  submitted_.clear();
 }
 
 }  // namespace glob

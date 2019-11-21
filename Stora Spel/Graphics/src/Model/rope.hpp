@@ -12,9 +12,19 @@ class Rope {
  public:
   void Init();
 
-  void TestDraw(Camera camera);
+  void Submit(glm::vec3 start, glm::vec3 end) {
+    submitted_.push_back({start, end});
+  }
+
+  void Draw(glm::mat4 cam_transform);
 
  private:
+  struct Submitted {
+    glm::vec3 start, end;
+  };
+
+  std::vector<Submitted> submitted_;
+
   ShaderProgram shader_;
   int num_indices_ = 0;
 

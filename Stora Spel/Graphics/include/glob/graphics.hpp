@@ -140,6 +140,8 @@ EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, glm::mat4 matrix);
 EXPORT void SubmitTrail(const std::vector<glm::vec3>& pos_history, float width,
                         glm::vec4 color);
 
+EXPORT void SubmitRope(glm::vec3 start, glm::vec3 end);
+
 EXPORT Camera& GetCamera();
 EXPORT void SetCamera(Camera camera);
 

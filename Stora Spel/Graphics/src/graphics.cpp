@@ -1270,6 +1270,10 @@ void SubmitTrail(const std::vector<glm::vec3> &pos_history, float width,
   trails_to_render.push_back({pos_history, width, color});
 }
 
+void SubmitRope(glm::vec3 start, glm::vec3 end) {
+  rope.Submit(start, end);
+}
+
 void SubmitCube(glm::mat4 t) { cubes.push_back(t); }
 
 void SubmitWireframeMesh(ModelHandle model_h) {
@@ -1424,8 +1428,8 @@ void Render() {
       SetDefaultMaterials(animated_model_shader);
       BARI.model->Draw(animated_model_shader);
     }
+    rope.Draw(cam_transform);
 
-    rope.TestDraw(camera);
 
     // render wireframe cubes
     for (auto &m : cubes) DrawCube(m);
