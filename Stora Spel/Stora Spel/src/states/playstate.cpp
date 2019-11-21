@@ -1422,8 +1422,6 @@ void PlayState::DrawMiniMap() {
     for (auto entity : view_ball) {
       auto& trans_c = view_ball.get<TransformComponent>(entity);
 
-
-
       // Normalize and project player pos to screen space (Z in world space
       // is X in screen space and vice versa)
       float norm_pos_x = trans_c.position.z / (28.1f * arena_scale_.z);
@@ -2076,6 +2074,25 @@ void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
                                             glm::vec4(1.0f, 0.6f, 0.2f, 1.0f));
 }
 
+void PlayState::CreateMineObject(unsigned int owner_team, EntityID mine_id,
+                                 glm::vec3 pos) {
+  auto& sound_engine = engine_->GetSoundEngine();
+
+  entt::entity mine_object = registry_gameplay_.create();
+  glob::ModelHandle model_mine =
+      glob::GetModel(kModelPathMine);  // Switch to mine model
+
+  ModelComponent& model_c =
+      registry_gameplay_.assign<ModelComponent>(mine_object);
+  model_c.handles.push_back(model_mine);
+  registry_gameplay_.assign<IDComponent>(mine_object, mine_id);
+  registry_gameplay_.assign<TransformComponent>(mine_object, pos);
+  registry_gameplay_.assign<MineComponent>(mine_object, owner_team);
+  registry_gameplay_.assign<SoundComponent>(mine_object,
+                                            sound_engine.CreatePlayer());
+  registry_gameplay_.assign<TimerComponent>(mine_object, 30.f);
+}
+
 void PlayState::DestroyEntity(EntityID id) {
   auto id_view = registry_gameplay_.view<IDComponent>();
 
@@ -2315,7 +2332,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         auto& id_c = view_controller.get<IDComponent>(proj_ent);
         auto& trans_c = view_controller.get<TransformComponent>(proj_ent);
 
-        if (id_c.id == e.force_push_impact.projectile_id) {
+        if (id_c.id == e.missile_impact.projectile_id) {
           glob::SetEmitPosition(handle, trans_c.position);
 
           glob::CreateShockwave(trans_c.position, 0.60f, 40.f);
@@ -2503,6 +2520,81 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         }
       }
 
+      break;
+    }
+    case GameEvent::MINE_PLACE: {
+      // Tiny dirt particle effect
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller =
+          registry->view<IDComponent, MineComponent, TransformComponent>();
+      for (auto entity : view_controller) {
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+        MineComponent& mine_c = view_controller.get<MineComponent>(entity);
+        TransformComponent& trans_c =
+            view_controller.get<TransformComponent>(entity);
+
+        if (id_c.id == e.mine_place.entity_id) {
+          // Particles
+          entt::entity particle_entity = correct_registry->create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+          glob::SetParticleSettings(handle, "dirt.txt");
+          glob::SetEmitPosition(handle, trans_c.position);
+          in_handles.push_back(handle);
+          ParticleComponent& par_c =
+              correct_registry->assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
+          correct_registry->assign<TimerComponent>(particle_entity, 4.f);
+
+          break;
+        }
+      }
+      break;
+    }
+    case GameEvent::MINE_TRIGGER: {
+      // Tiny dirt particle effect
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller =
+          registry->view<IDComponent, MineComponent, TransformComponent>();
+      for (auto entity : view_controller) {
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+        MineComponent& mine_c = view_controller.get<MineComponent>(entity);
+        TransformComponent& trans_c =
+            view_controller.get<TransformComponent>(entity);
+
+        if (id_c.id == e.mine_trigger.entity_id) {
+          // Explosion
+          entt::entity particle_entity = correct_registry->create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+          glob::SetParticleSettings(handle, "mine_trigger.txt");
+          glob::SetEmitPosition(handle, trans_c.position);
+          in_handles.push_back(handle);
+          ParticleComponent& par_c =
+              correct_registry->assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
+          correct_registry->assign<TimerComponent>(particle_entity, 4.f);
+
+          // Dirt
+          entt::entity particle_entity_2 = correct_registry->create();
+          glob::ParticleSystemHandle handle_2 = glob::CreateParticleSystem();
+          glob::SetParticleSettings(handle_2, "dirt.txt");
+          glob::SetEmitPosition(handle_2, trans_c.position);
+          in_handles.push_back(handle_2);
+          par_c = correct_registry->assign<ParticleComponent>(
+              particle_entity_2, in_handles, in_offsets, in_directions);
+          correct_registry->assign<TimerComponent>(particle_entity_2, 4.f);
+
+          // Shockwave
+          glob::CreateShockwave(trans_c.position, 0.60f, 20.f);
+
+          break;
+        }
+      }
       break;
     }
     case GameEvent::SPRINT_START: {

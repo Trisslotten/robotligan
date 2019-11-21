@@ -35,7 +35,6 @@ PlayerFrame::PlayerFrame(TransformComponent& in_transform_c,
   pc_look_dir_ = in_player_c_.look_dir;
   pc_move_dir_ = in_player_c_.move_dir;
 
-
   /*for (auto anim : in_anim_c.active_animations) {
     active_animations_.push_back(anim);
   }*/
@@ -174,7 +173,7 @@ void PlayerFrame::WriteBack(TransformComponent& in_transform_c,
   in_player_c_.running = pc_running_;
   in_player_c_.vel_dir = pc_vel_dir_;
   in_player_c_.look_dir = pc_look_dir_;
-  in_player_c_.move_dir= pc_move_dir_;
+  in_player_c_.move_dir = pc_move_dir_;
   in_phys_c.velocity = velocity_;
 }
 
@@ -574,14 +573,15 @@ TeleportShotFrame* TeleportShotFrame::Clone() {
 
 bool TeleportShotFrame::ThresholdCheck(DataFrame& in_future_df) {
   // Cast to TeleportShotFrame
-  TeleportShotFrame& future_tsf = dynamic_cast<TeleportShotFrame&>(in_future_df);
+  TeleportShotFrame& future_tsf =
+      dynamic_cast<TeleportShotFrame&>(in_future_df);
 
   float threshold = 0.0f;
 
   // POSITION
   float pos_diff = glm::distance(this->position_, future_tsf.position_);
-  threshold =
-      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_TELEPORT_SHOT_POSITION");
+  threshold = GlobalSettings::Access()->ValueOf(
+      "REPLAY_THRESHOLD_TELEPORT_SHOT_POSITION");
   if (pos_diff > threshold) {
     // If we have moved over the threshold value away
     return true;
@@ -804,4 +804,45 @@ void ForcePushFrame::WriteBack(TransformComponent& trans_c) {
   trans_c.position = position_;
   trans_c.rotation = rotation_;
   trans_c.scale = glm::vec3(0.5f);
+}
+
+//##############################
+//			MineFrame
+//##############################
+
+MineFrame::MineFrame() { position_ = glm::vec3(0.f); }
+
+MineFrame::MineFrame(TransformComponent& trans_c) {
+  position_ = trans_c.position;
+}
+
+MineFrame::~MineFrame() {}
+
+DataFrame* MineFrame::Clone() {
+  MineFrame* mine_return = new MineFrame();
+
+  mine_return->position_ = position_;
+
+  return mine_return;
+}
+
+DataFrame* MineFrame::InterpolateForward(unsigned int in_dist_to_target,
+                                         unsigned int in_dist_to_point_b,
+                                         DataFrame& in_point_b) {
+  // INTERPOLATED FRAME
+  MineFrame* ret_frame = new MineFrame();
+
+  // "INTERPOLATION" :D
+
+  // POSITION
+  ret_frame->position_ = this->position_;
+
+  return ret_frame;
+}
+
+bool MineFrame::ThresholdCheck(DataFrame& in_future_df) { return false; }
+
+void MineFrame::WriteBack(TransformComponent& trans_c) {
+  trans_c.position = position_;
+  trans_c.scale = glm::vec3(1.0f);
 }

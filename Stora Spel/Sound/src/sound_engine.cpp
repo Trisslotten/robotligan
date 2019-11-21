@@ -107,7 +107,7 @@ void SoundEngine::Init() {
   FMOD_VECTOR listener_up{0.0f, 1.0f, 0.0f};
   FMOD_VECTOR listener_vel{0.0f, 0.0f, 0.0f};
 
-  impl_->system->set3DSettings(1.f, 1.0f, 1.0f);
+  impl_->system->set3DSettings(1.0f, 1.0f, 0.5f);
   impl_->system->set3DListenerAttributes(0, &listener_pos, &listener_vel,
                                          &listener_forward, &listener_up);
 }

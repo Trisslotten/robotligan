@@ -26,6 +26,7 @@ void ApplyForcePush(entt::registry& registry, glm::vec3 pos);
 void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
                             PhysicsComponent& physics_c,
                             entt::registry& registry, entt::entity& entity);
+void ApplyMineStun(entt::registry& registry, PhysicsComponent& physics_c, PlayerComponent& player_c, IDComponent& id_c);
 void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
                          long player_id);
 void EndHomingBall(entt::registry& registry, entt::entity& in_ball);
@@ -66,6 +67,7 @@ void PlayerWallCollision(entt::registry& registry);
 void ProjectileBallCollision(entt::registry& registry, entt::entity ball);
 void ProjectileArenaCollision(entt::registry& registry);
 void PickUpPlayerCollision(entt::registry& registry);
+void MinePlayerCollision(entt::registry& registry);
 void BallCollision(PhysicsComponent* ball, glm::vec3 normal);
 void SetJumpToFalse(entt::registry& reg);
 void UpdateSphere(entt::registry& registry);
@@ -176,9 +178,10 @@ void UpdateCollisions(entt::registry& registry) {
     ball_counter++;
   }
 
-  // check player collision
   // collision with arena and projectiles
   ProjectileArenaCollision(registry);
+
+  // check player collision
   // Collision between player and projectile
   PlayerProjectileCollision(registry);
   // Collision between player and player
@@ -187,8 +190,10 @@ void UpdateCollisions(entt::registry& registry) {
   PlayerArenaCollision(registry);
   // Collision between Player and Wall
   PlayerWallCollision(registry);
-  // Collision between player and pic-up
+  // Collision between player and pick-up
   PickUpPlayerCollision(registry);
+  // Collision between player and mine
+  MinePlayerCollision(registry);
 
   // HANDLE BALL COLLISIONS
   for (int i = 0; i < ball_collisions.size(); ++i) {
@@ -352,7 +357,7 @@ void PlayerBallCollision(entt::registry& registry,
               registry.get<IDComponent>(object.entity).id;
           dispatcher.trigger(land_event);
         }
-        
+
         player_physics.velocity.y = 0.f;
       }
 
@@ -507,14 +512,15 @@ void PlayerArenaCollision(entt::registry& registry) {
         if (data.normal.y > 0.25 && physics_c.velocity.y < 0) {
           auto& player_c = registry.get<PlayerComponent>(player);
           // save game event
-          if (registry.has<IDComponent>(player) && physics_c.velocity.y < -1.0f) {
+          if (registry.has<IDComponent>(player) &&
+              physics_c.velocity.y < -1.0f) {
             GameEvent land_event;
             land_event.type = GameEvent::LAND;
             land_event.land.player_id = registry.get<IDComponent>(player).id;
             dispatcher.trigger(land_event);
           }
           physics_c.velocity.y = 0.f;
-			    player_c.can_jump = true;
+          player_c.can_jump = true;
         } else if (data.move_vector.y < 0.0f) {
           physics_c.velocity.y = 0.f;
         }
@@ -554,7 +560,9 @@ void PlayerWallCollision(entt::registry& registry) {
         auto& physics = view_player.get<PhysicsComponent>(player);
         player_hitbox.center -= data.move_vector;
 
-        if (registry.has<IDComponent>(player) && player_hitbox.center.y > wall_hitbox.center.y + wall_hitbox.extents[1]) {
+        if (registry.has<IDComponent>(player) &&
+            player_hitbox.center.y >
+                wall_hitbox.center.y + wall_hitbox.extents[1]) {
           if (physics.velocity.y < -0.3f) {
             // save game event
             GameEvent land_event;
@@ -570,8 +578,8 @@ void PlayerWallCollision(entt::registry& registry) {
         if (data.normal.y < -0.5f) {
           physics.velocity.y = 0.f;
         }
-        //auto& health = registry.get<HealthComponent>(wall);
-        //health.health -= 1;
+        // auto& health = registry.get<HealthComponent>(wall);
+        // health.health -= 1;
       }
     }
   }
@@ -638,7 +646,8 @@ void BallBallCollision(entt::registry& registry) {
 }
 
 void PlayerPlayerCollision(entt::registry& registry) {
-  auto view_player = registry.view<physics::OBB, PhysicsComponent, PlayerComponent>();
+  auto view_player =
+      registry.view<physics::OBB, PhysicsComponent, PlayerComponent>();
 
   for (auto it = view_player.begin(); it != view_player.end(); ++it) {
     auto player1 = *it;
@@ -690,8 +699,7 @@ void PlayerPlayerCollision(entt::registry& registry) {
               physics_c2.velocity.y < -1.f) {
             GameEvent land_event;
             land_event.type = GameEvent::LAND;
-            land_event.land.player_id =
-                registry.get<IDComponent>(player2).id;
+            land_event.land.player_id = registry.get<IDComponent>(player2).id;
             dispatcher.trigger(land_event);
           }
         } else if (glm::dot(glm::vec3(0.f, 1.f, 0.f), data.normal) > 0.f) {
@@ -699,13 +707,12 @@ void PlayerPlayerCollision(entt::registry& registry) {
           auto& player_c = view_player.get<PlayerComponent>(player1);
           player_c.can_jump = true;
 
-           // save game event
+          // save game event
           if (registry.has<IDComponent>(player1) &&
               physics_c1.velocity.y < -1.f) {
             GameEvent land_event;
             land_event.type = GameEvent::LAND;
-            land_event.land.player_id =
-                registry.get<IDComponent>(player1).id;
+            land_event.land.player_id = registry.get<IDComponent>(player1).id;
             dispatcher.trigger(land_event);
           }
         }
@@ -923,6 +930,45 @@ void PickUpPlayerCollision(entt::registry& registry) {
   return;
 }
 
+void MinePlayerCollision(entt::registry& registry) {
+  auto mine_view = registry.view<MineComponent, TransformComponent, IDComponent>();
+  auto player_view =
+      registry.view<PlayerComponent, TransformComponent, PhysicsComponent,
+                    TeamComponent, IDComponent>();
+ 
+  for (auto mine : mine_view) {
+    auto& mine_c = mine_view.get<MineComponent>(mine);
+    auto& mine_tc = mine_view.get<TransformComponent>(mine);
+    auto& mine_idc = mine_view.get<IDComponent>(mine);
+
+    for (auto player : player_view) {
+      auto& p_c = player_view.get<PlayerComponent>(player);
+      auto& p_tc = player_view.get<TransformComponent>(player);
+      auto& p_pc = player_view.get<PhysicsComponent>(player);
+      auto& p_teamc = player_view.get<TeamComponent>(player);
+      auto& p_idc = player_view.get<IDComponent>(player);
+
+      // TODO: Only trigger from collision with player from opposing team
+      if (glm::length(mine_tc.position - p_tc.position) <=
+              GlobalSettings::Access()->ValueOf(
+                  "ABILITY_MINE_TRIGGER_RADIUS") &&
+          mine_c.owner_team == p_teamc.team) {
+
+        ApplyMineStun(registry, p_pc, p_c, p_idc);
+
+        // Save game event
+        GameEvent mine_trigger_event;
+        mine_trigger_event.type = GameEvent::MINE_TRIGGER;
+        mine_trigger_event.mine_trigger.entity_id = mine_idc.id;
+        mine_trigger_event.mine_trigger.player_id = p_idc.id;
+        dispatcher.trigger(mine_trigger_event);
+
+        DestroyEntity(registry, mine);
+      }
+    }
+  }
+}
+
 void BallCollision(PhysicsComponent* ball, glm::vec3 normal) {
   float dot_val = glm::dot(ball->velocity, normal);
   if (dot_val < 0.f)
@@ -1015,7 +1061,7 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
       GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_RADIUS");
   glm::vec3 dir = entity_pos - force_push.center;
   float length = glm::length(dir);
-  std::cout << "FORCEPUSH Length: " << length; 
+  std::cout << "FORCEPUSH Length: " << length;
   if (length < force_push.radius) {
     physics_c.is_airborne = true;
     float force =
@@ -1026,6 +1072,7 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
     if (registry.has<PlayerComponent>(entity)) {
       auto& player_c = registry.get<PlayerComponent>(entity);
       player_c.stunned = true;
+      player_c.stun_time = 2.0f;
       player_c.stun_timer.Restart();
       GameEvent ge;
       ge.type = GameEvent::PLAYER_STUNNED;
@@ -1037,6 +1084,22 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
     std::cout << " Velocity: " << physics_c.velocity;
   }
   std::cout << std::endl;
+}
+
+void ApplyMineStun(entt::registry& registry, PhysicsComponent& physics_c, PlayerComponent& player_c, IDComponent& id_c) {
+  // Push
+  physics_c.velocity = glm::vec3(0.f, 10.f, 0.f);
+
+  // Stun
+  player_c.stunned = true;
+  player_c.stun_time = 5.0f;
+  player_c.stun_timer.Restart();
+
+  GameEvent ge;
+  ge.type = GameEvent::PLAYER_STUNNED;
+  ge.player_stunned.player_id = id_c.id;
+  ge.player_stunned.stun_time = player_c.stun_time;
+  dispatcher.trigger(ge);
 }
 
 void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,

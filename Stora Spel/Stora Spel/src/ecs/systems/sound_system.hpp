@@ -50,6 +50,7 @@ private:
   slob::SoundHandle sound_ability_blackout_end_;
   slob::SoundHandle sound_pickup_spawned_;
   slob::SoundHandle sound_player_stunned_;
+  slob::SoundHandle sound_ability_mine_trigger_;
 
   Engine* engine_;
 };

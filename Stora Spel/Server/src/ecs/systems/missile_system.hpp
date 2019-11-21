@@ -66,6 +66,7 @@ void Update(entt::registry& registry, float dt) {
         player_phys_c.velocity += dir * 50.f;
         player_phys_c.is_airborne = true;
         player_player_c.stunned = true;
+        player_player_c.stun_time = 2.0f;
         player_player_c.stun_timer.Restart();
         GameEvent ge;
         ge.type = GameEvent::PLAYER_STUNNED;

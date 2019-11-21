@@ -209,7 +209,13 @@ class SettingsState : public State {
 /////////////////////// PLAY ///////////////////////
 
 class PlayState : public State {
-  enum JumbotronEffect { TEAM_SCORES, MATCH_TIME, BEST_PLAYER, GOAL_SCORED, NUM_EFFECTS };
+  enum JumbotronEffect {
+    TEAM_SCORES,
+    MATCH_TIME,
+    BEST_PLAYER,
+    GOAL_SCORED,
+    NUM_EFFECTS
+  };
 
  public:
   void Startup() override;
@@ -239,7 +245,8 @@ class PlayState : public State {
   void CreateTeleportProjectile(EntityID id, glm::vec3 pos, glm::quat ori);
   void CreateForcePushObject(EntityID id, glm::vec3 pos, glm::quat ori);
   void CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori);
-
+  void CreateMineObject(unsigned int owner_team, EntityID mine_id,
+                        glm::vec3 pos);
   void DestroyEntity(EntityID id);
   void SwitchGoals();
   void SetMyPrimaryAbility(int id) { my_primary_ability_id = id; }
@@ -315,7 +322,7 @@ class PlayState : public State {
   void MovePlayer(float dt);
   void MoveBall(float dt);
   void Collision();
-  
+
   unsigned long GetBestPlayer();
 
   EntityID ClientIDToEntityID(long client_id);
