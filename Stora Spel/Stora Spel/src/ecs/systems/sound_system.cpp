@@ -74,9 +74,13 @@ void SoundSystem::Init(Engine* engine) {
   sound_ability_force_push_impact_ =
       sound_engine_.GetSound("assets/sound/forcepush.mp3");
   sound_ability_fake_ball_poof_ =
-    sound_engine_.GetSound("assets/sound/poof.mp3");
-  sound_ability_invisibility_end_ = sound_engine_.GetSound("assets/sound/invis_end.mp3");
-  sound_ability_blackout_end_ = sound_engine_.GetSound("assets/sound/blackout_end.mp3");
+      sound_engine_.GetSound("assets/sound/poof.mp3");
+  sound_ability_invisibility_end_ =
+      sound_engine_.GetSound("assets/sound/invis_end.mp3");
+  sound_ability_blackout_end_ =
+      sound_engine_.GetSound("assets/sound/blackout_end.mp3");
+  sound_ability_mine_trigger_ =
+      sound_engine_.GetSound("assets/sound/mine_trigger.mp3");
 
   sound_pickup_spawned_ = sound_engine_.GetSound("assets/sound/pickup.wav");
 
@@ -97,9 +101,11 @@ void SoundSystem::Init(Engine* engine) {
   ability_sounds_[AbilityID::FAKE_BALL] =
       sound_engine_.GetSound("assets/sound/fake_ball.wav");
   ability_sounds_[AbilityID::INVISIBILITY] =
-    sound_engine_.GetSound("assets/sound/invis_pop.mp3");
+      sound_engine_.GetSound("assets/sound/invis_pop.mp3");
   ability_sounds_[AbilityID::BLACKOUT] =
       sound_engine_.GetSound("assets/sound/blackout_start.mp3");
+  ability_sounds_[AbilityID::MINE] =
+      sound_engine_.GetSound("assets/sound/place_mine.mp3");
 }
 
 void SoundSystem::PlayAmbientSound(entt::registry& registry) {
@@ -300,7 +306,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.force_push_impact.projectile_id) {
-        sound_c.sound_player->Play(sound_ability_force_push_impact_, 0, 1.5f);
+        sound_c.sound_player->Play(sound_ability_force_push_impact_, 0, 2.5f);
         break;
       }
     }
@@ -363,7 +369,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.invisibility_cast.player_id) {
-        sound_c.sound_player->Play(ability_sounds_[AbilityID::INVISIBILITY]);
+        sound_c.sound_player->Play(ability_sounds_[AbilityID::INVISIBILITY], 0, 0.5f);
         break;
       }
     }
@@ -374,7 +380,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.invisibility_end.player_id) {
-        sound_c.sound_player->Play(sound_ability_invisibility_end_);
+        sound_c.sound_player->Play(sound_ability_invisibility_end_, 0, 0.5f);
         break;
       }
     }
@@ -383,7 +389,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
     auto view = registry->view<CameraComponent, SoundComponent>();
     for (auto entity : view) {
       auto& sound_c = view.get<SoundComponent>(entity);
-      sound_c.sound_player->Play(ability_sounds_[AbilityID::BLACKOUT]);
+      sound_c.sound_player->Play(ability_sounds_[AbilityID::BLACKOUT], 0, 0.7);
       break;
     }
   }
@@ -401,28 +407,54 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.super_kick.player_id) {
-        sound_c.sound_player->Play(sound_pickup_spawned_, 0,
-                                   1.0f);
+        sound_c.sound_player->Play(sound_pickup_spawned_, 0, 1.0f);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::MINE_PLACE) {
+    auto view =
+        registry->view<IDComponent, MineComponent, SoundComponent>();
+    for (auto entity : view) {
+      IDComponent& id_c = view.get<IDComponent>(entity);
+      MineComponent& mine_c = view.get<MineComponent>(entity);
+      SoundComponent& sound_c = view.get<SoundComponent>(entity);
+
+      if (id_c.id == event.mine_place.entity_id) {
+        sound_c.sound_player->Play(ability_sounds_[AbilityID::MINE]);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::MINE_TRIGGER) {
+    auto view = registry->view<IDComponent, MineComponent, SoundComponent>();
+    for (auto entity : view) {
+      IDComponent& id_c = view.get<IDComponent>(entity);
+      MineComponent& mine_c = view.get<MineComponent>(entity);
+      SoundComponent& sound_c = view.get<SoundComponent>(entity);
+
+      if (id_c.id == event.mine_trigger.entity_id) {
+        sound_c.sound_player->Play(sound_ability_mine_trigger_, 0, 2.0f);
         break;
       }
     }
   }
 }
 
-void SoundSystem::ReceiveMenuEvent(const MenuEvent& event) {
-  auto registry = engine_->GetCurrentRegistry();
+  void SoundSystem::ReceiveMenuEvent(const MenuEvent& event) {
+    auto registry = engine_->GetCurrentRegistry();
 
-  // Listen for GameEvents and play associated sounds
-  switch (event.type) {
-    case MenuEvent::HOVER: {
-      // Play hover sound
-      sound_engine_.GetPlayer()->Play(button_hover_);
-      break;
-    }
-    case MenuEvent::CLICK: {
-      // Play click sound
-      sound_engine_.GetPlayer()->Play(button_click_);
-      break;
+    // Listen for GameEvents and play associated sounds
+    switch (event.type) {
+      case MenuEvent::HOVER: {
+        // Play hover sound
+        sound_engine_.GetPlayer()->Play(button_hover_);
+        break;
+      }
+      case MenuEvent::CLICK: {
+        // Play click sound
+        sound_engine_.GetPlayer()->Play(button_click_);
+        break;
+      }
     }
   }
-}

@@ -292,6 +292,7 @@ struct GameEvent {
 
     // Ability Mine Trigger
     struct {
+      EntityID entity_id;
       EntityID player_id;
     } mine_trigger;
 

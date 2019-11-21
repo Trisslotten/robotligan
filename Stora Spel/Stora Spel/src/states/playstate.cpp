@@ -2268,8 +2268,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         auto& id_c = view_controller.get<IDComponent>(proj_ent);
         auto& trans_c = view_controller.get<TransformComponent>(proj_ent);
 
-        if (id_c.id == e.force_push_impact.projectile_id) {
+        if (id_c.id == e.missile_impact.projectile_id) {
           glob::SetEmitPosition(handle, trans_c.position);
+
           break;
         }
       }
@@ -2458,7 +2459,6 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           std::vector<glm::vec3> in_offsets;
           std::vector<glm::vec3> in_directions;
           glob::SetParticleSettings(handle, "dirt.txt");
-          glob::SetParticleDirection(handle, trans_c.Forward());
           glob::SetEmitPosition(handle, trans_c.position);
           in_handles.push_back(handle);
           ParticleComponent& par_c =
@@ -2472,31 +2472,40 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       break;
     }
     case GameEvent::MINE_TRIGGER: {
-      // Mine trigger particle effect
+      // Tiny dirt particle effect
       auto registry = engine_->GetCurrentRegistry();
       auto view_controller =
-          registry->view<IDComponent, PlayerComponent, TransformComponent>();
+          registry->view<IDComponent, MineComponent, TransformComponent>();
       for (auto entity : view_controller) {
         IDComponent& id_c = view_controller.get<IDComponent>(entity);
-        PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
-        TransformComponent& t_c =
+        MineComponent& mine_c = view_controller.get<MineComponent>(entity);
+        TransformComponent& trans_c =
             view_controller.get<TransformComponent>(entity);
 
-        if (id_c.id == e.mine_trigger.player_id) {
-          // Particles
+        if (id_c.id == e.mine_trigger.entity_id) {
+          // Explosion
           entt::entity particle_entity = correct_registry->create();
           glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
           std::vector<glob::ParticleSystemHandle> in_handles;
           std::vector<glm::vec3> in_offsets;
           std::vector<glm::vec3> in_directions;
-          glob::SetParticleSettings(handle, "superkick.txt");
-          glob::SetParticleDirection(handle, t_c.Forward());
-          glob::SetEmitPosition(handle, t_c.position);
+          glob::SetParticleSettings(handle, "mine_trigger.txt");
+          glob::SetEmitPosition(handle, trans_c.position);
           in_handles.push_back(handle);
           ParticleComponent& par_c =
               correct_registry->assign<ParticleComponent>(
                   particle_entity, in_handles, in_offsets, in_directions);
           correct_registry->assign<TimerComponent>(particle_entity, 4.f);
+
+          // Dirt
+          entt::entity particle_entity_2 = correct_registry->create();
+          glob::ParticleSystemHandle handle_2 = glob::CreateParticleSystem();
+          glob::SetParticleSettings(handle_2, "dirt.txt");
+          glob::SetEmitPosition(handle_2, trans_c.position);
+          in_handles.push_back(handle_2);
+          par_c = correct_registry->assign<ParticleComponent>(
+              particle_entity_2, in_handles, in_offsets, in_directions);
+          correct_registry->assign<TimerComponent>(particle_entity_2, 4.f);
 
           break;
         }

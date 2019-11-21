@@ -950,13 +950,14 @@ void MinePlayerCollision(entt::registry& registry) {
       if (glm::length(mine_tc.position - p_tc.position) <=
               GlobalSettings::Access()->ValueOf(
                   "ABILITY_MINE_TRIGGER_RADIUS") &&
-          mine_c.owner_team != p_teamc.team) {
+          mine_c.owner_team == p_teamc.team) {
 
         ApplyMineStun(p_pc);
 
         // Save game event
         GameEvent mine_trigger_event;
         mine_trigger_event.type = GameEvent::MINE_TRIGGER;
+        mine_trigger_event.mine_trigger.entity_id = mine_idc.id;
         mine_trigger_event.mine_trigger.player_id = p_idc.id;
         dispatcher.trigger(mine_trigger_event);
 
