@@ -202,6 +202,7 @@
     <ClInclude Include="src\Particles\particle_system.hpp" />
     <ClInclude Include="src\postprocess\blur.hpp" />
     <ClInclude Include="src\postprocess\postprocess.hpp" />
+    <ClInclude Include="src\postprocess\shockwaves.hpp" />
     <ClInclude Include="src\renderitems.hpp" />
     <ClInclude Include="src\postprocess\ssao.hpp" />
     <ClInclude Include="src\shadows\shadows.hpp" />
@@ -227,6 +228,7 @@
     <ClCompile Include="src\postprocess\blur.cpp" />
     <ClCompile Include="src\Particles\particle_system.cpp" />
     <ClCompile Include="src\postprocess\postprocess.cpp" />
+    <ClCompile Include="src\postprocess\shockwaves.cpp" />
     <ClCompile Include="src\postprocess\ssao.cpp" />
     <ClCompile Include="src\shadows\shadows.cpp" />
     <ClCompile Include="src\tinyxml2.cpp" />
