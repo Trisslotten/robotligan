@@ -663,6 +663,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
           dispatcher.trigger(missile_event);
           break;
         }
+        case ProjectileID::BLACK_HOLE: {
+          play_state_.CreateBlackHoleObject(e_id, pos, ori);
+          break;
+		}
       }
       break;
     }

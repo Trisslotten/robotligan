@@ -969,7 +969,7 @@ void PlayState::Collision() {
       registry_gameplay_.get<physics::MeshHitbox>(arena_entity_);
   auto& arena_hitbox2 =
       registry_gameplay_.get<FailSafeArenaComponent>(arena_entity_);
-  //collision with arena
+  // collision with arena
   physics::IntersectData data =
       Intersect(arena_hitbox, my_obb, -my_phys_c.velocity);
   if (data.collision) {
@@ -1027,7 +1027,7 @@ void PlayState::Collision() {
       server_predicted_.velocity.y = 0.f;
     }
   }
-  //collision with player
+  // collision with player
   auto view_player =
       registry_gameplay_.view<PlayerComponent, physics::OBB, IDComponent>();
   for (auto player : view_player) {
@@ -1041,9 +1041,9 @@ void PlayState::Collision() {
           my_phys_c.velocity.y = 0.0f;
           predicted_state_.velocity.y = 0.f;
           server_predicted_.velocity.y = 0.f;
-		}
-	  }
-	}
+        }
+      }
+    }
   }
   // update positions
   auto view_sphere =
@@ -1176,18 +1176,15 @@ void PlayState::DrawMiniMap() {
       if (id_c.id == my_id_) {
         glob::Submit(gui_minimap_player_me_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
-                     std::atan2(player_c.look_dir.z,
-                                player_c.look_dir.x));
+                     std::atan2(player_c.look_dir.z, player_c.look_dir.x));
       } else if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
         glob::Submit(gui_minimap_player_red_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
-                     std::atan2(player_c.look_dir.z,
-                                player_c.look_dir.x));
+                     std::atan2(player_c.look_dir.z, player_c.look_dir.x));
       } else {
         glob::Submit(gui_minimap_player_blue_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
-                     std::atan2(player_c.look_dir.z,
-                                player_c.look_dir.x));
+                     std::atan2(player_c.look_dir.z, player_c.look_dir.x));
       }
     }
     // Draw Ball icon from red perspective
@@ -1248,21 +1245,15 @@ void PlayState::DrawMiniMap() {
       if (id_c.id == my_id_) {
         glob::Submit(gui_minimap_player_me_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
-                     std::atan2(player_c.look_dir.z,
-                                player_c.look_dir.x) +
-                         pi);
+                     std::atan2(player_c.look_dir.z, player_c.look_dir.x) + pi);
       } else if (engine_->GetPlayerTeam(id_c.id) == TEAM_RED) {
         glob::Submit(gui_minimap_player_red_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
-                     std::atan2(player_c.look_dir.z,
-                                player_c.look_dir.x) +
-                         pi);
+                     std::atan2(player_c.look_dir.z, player_c.look_dir.x) + pi);
       } else {
         glob::Submit(gui_minimap_player_blue_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
-                     std::atan2(player_c.look_dir.z,
-                                player_c.look_dir.x) +
-                         pi);
+                     std::atan2(player_c.look_dir.z, player_c.look_dir.x) + pi);
       }
     }
     // Draw Ball icon from blue perspective
@@ -1336,7 +1327,7 @@ void PlayState::CreatePlayerEntities() {
     registry_gameplay_.assign<SoundComponent>(entity,
                                               sound_engine.CreatePlayer());
 
-	auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
+    auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
     character_scale = glm::vec3(0.1f);
     float coeff_x_side = (11.223f - (-0.205f));
     float coeff_y_side = (8.159f - (-10.316f));
@@ -1357,7 +1348,7 @@ void PlayState::CreatePlayerEntities() {
       glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
                                                  glm::quat(glm::vec3(0.f)));
-     
+
       model_c.handles.push_back(FPS_model);
       model_c.cast_shadow = false;
 
@@ -1815,6 +1806,35 @@ void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
                                             glm::vec4(1.0f, 0.6f, 0.2f, 1.0f));
 }
 
+void PlayState::CreateBlackHoleObject(EntityID id, glm::vec3 pos,
+                                      glm::quat ori) {
+  std::cout << "created black hole\n";
+  auto& sound_engine = engine_->GetSoundEngine();
+
+  auto black_hole = registry_gameplay_.create();
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glob::ModelHandle model_ball = glob::GetModel(kModelPathBall);
+  //"assets/Ball/force_push_ball.fbx"	TODO: Swap path to this one
+  auto& model_c = registry_gameplay_.assign<ModelComponent>(black_hole);
+  model_c.handles.push_back(model_ball);
+
+  registry_gameplay_.assign<TransformComponent>(black_hole, pos, ori,
+                                                glm::vec3(0.3f));
+  registry_gameplay_.assign<IDComponent>(black_hole, id);
+  registry_gameplay_.assign<SoundComponent>(black_hole,
+                                           sound_engine.CreatePlayer());
+  registry_gameplay_.assign<PhysicsComponent>(black_hole);
+  registry_gameplay_.assign<ProjectileComponent>(black_hole,
+                                                 ProjectileID::BLACK_HOLE);
+
+  // Save game event
+  GameEvent black_hole_create_event;
+  black_hole_create_event.type = GameEvent::BLACK_HOLE_CREATED;
+  black_hole_create_event.create_black_hole.black_hole_id =
+     id;
+  dispatcher.trigger(black_hole_create_event);
+}
+
 void PlayState::DestroyEntity(EntityID id) {
   auto id_view = registry_gameplay_.view<IDComponent>();
 
@@ -2221,6 +2241,20 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         }
       }
     }
+    case GameEvent::BLACK_HOLE_ACTIVATED: {
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller = registry->view<IDComponent, TransformComponent>();
+
+      for (auto proj_ent : view_controller) {
+        auto& id_c = view_controller.get<IDComponent>(proj_ent);
+        auto& trans_c = view_controller.get<TransformComponent>(proj_ent);
+
+        if (id_c.id == e.activate_black_hole.black_hole_id) {
+          trans_c.scale = glm::vec3(1.5f);
+          break;
+        }
+      }
+	}
     case GameEvent::SPRINT_START: {
       sprinting_ = true;
       break;

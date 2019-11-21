@@ -49,6 +49,8 @@ private:
   slob::SoundHandle sound_ability_invisibility_end_;
   slob::SoundHandle sound_ability_blackout_end_;
   slob::SoundHandle sound_pickup_spawned_;
+  slob::SoundHandle sound_black_hole_active;
+  slob::SoundHandle sound_black_hole_destroy;
 
   Engine* engine_;
 };
