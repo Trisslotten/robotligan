@@ -1006,17 +1006,17 @@ void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
 
 void SubmitBAM(const std::vector<ModelHandle> &handles, glm::mat4 transform,
                std::vector<glm::mat4> bone_transforms, int material_index,
-               bool cast_shadow, float
-                   emissive_strength) {  // Submit Bone Animated Mesh
+               bool cast_shadow,
+               float emissive_strength) {  // Submit Bone Animated Mesh
   for (auto handle : handles) {
-    SubmitBAM(handle, transform, bone_transforms, material_index,
-              bool cast_shadow, emissive_strength);
+    SubmitBAM(handle, transform, bone_transforms, material_index, cast_shadow,
+              emissive_strength);
   }
 }
 
 void SubmitBAM(ModelHandle model_h, glm::mat4 transform,
-    std::vector<glm::mat4> bone_transforms, int material_index,
-    bool cast_shadow,
+               std::vector<glm::mat4> bone_transforms, int material_index,
+               bool cast_shadow,
                float emissive_strength) {  // Submit Bone Animated Mesh
   BoneAnimatedRenderItem BARI;
 
@@ -1043,23 +1043,19 @@ void SubmitBAM(ModelHandle model_h, glm::mat4 transform,
 }
 
 void Submit(ModelHandle model_h, glm::vec3 pos, int material_index,
-            bool cast_shadow,
-            float emissive_strength) {
+            bool cast_shadow, float emissive_strength) {
   glm::mat4 transform = glm::translate(pos);
-  Submit(model_h, transform, material_index,
-         cast_shadow, emissive_strength);
+  Submit(model_h, transform, material_index, cast_shadow, emissive_strength);
 }
 
 void Submit(const std::vector<ModelHandle> &handles, glm::mat4 transform,
             int material_index, bool cast_shadow, float emissive_strength) {
   for (auto handle : handles) {
-    Submit(handle, transform, material_index,
-           cast_shadow, emissive_strength);
+    Submit(handle, transform, material_index, cast_shadow, emissive_strength);
   }
 }
 void Submit(ModelHandle model_h, glm::mat4 transform, int material_index,
-            bool cast_shadow,
-            float emissive_strength) {
+            bool cast_shadow, float emissive_strength) {
   auto find_res = models.find(model_h);
   if (find_res == models.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted model\n";
@@ -1420,7 +1416,7 @@ void Render() {
       animated_model_shader.uniform("normal_transform",
                                     calcNormalTransform(BARI.transform));
       animated_model_shader.uniform("dynamic_em_strength",
-                           BARI.emission_strength);
+                                    BARI.emission_strength);
       /*
       int numBones = 0;
       for (auto &bone : BARI.bone_transforms) {

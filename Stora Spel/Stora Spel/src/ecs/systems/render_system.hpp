@@ -36,7 +36,7 @@ void RenderSystem(entt::registry& registry) {
       if (!m.invisible) {
         glob::Submit(m.handles,
           glm::translate(t.position) * glm::toMat4(t.rotation) *
-          glm::translate(-m.offset) * glm::scale(t.scale), m.diffuse_index, m.cast_shadow, m.emission_strength);
+          glm::translate(-m.offset) * glm::scale(t.scale*0.01f), m.diffuse_index, m.cast_shadow, m.emission_strength);
       }
     }
   }
