@@ -15,19 +15,16 @@ int main(unsigned argc, char** argv) {
 
   std::unordered_map<std::string, std::string> arguments;
   std::cout << "Num server arguments: " << argc << std::endl;
-  if (argc >= 1) {
+  if (argc > 1) {
 	  //IP - PORT
-	  std::string arg = argv[1];
-	  std::istringstream stream(arg);
-	  std::string ip;
-	  std::string port;
-	  stream >> ip >> port;
-	  arguments["IP"] = ip;
-	  arguments["PORT"] = port;
+	  arguments["IP"] = argv[0];
+	  arguments["PORT"] = argv[1];
+	  arguments["MPLAYERS"] = argv[2];
   }
   else
   {
 	  arguments["PORT"] = std::to_string(1337);
+	  arguments["MPLAYERS"] = "6";
   }
   std::cout << "DEBUG: Starting Server" << std::endl;
 

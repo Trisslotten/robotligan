@@ -384,6 +384,7 @@ private:
 	glob::GUIHandle bg_ = 0;
 	std::string ip_ = "";
 	std::string port_ = "1337";
+	std::string max_players_ = "6";
 	void CreateServer();
 };
 #endif  // STATE_HPP_

@@ -152,13 +152,24 @@ void CreateServerState::Startup() {
     double text_width = glob::GetWidthOfText(font_test_, port_, 45);
     auto portpos = glm::vec2((windowsize.x / 2.f - text_width * 2.7),
                              windowsize.y * 0.5f + 50);
-    auto ip = registry_create_server_.create();
-    auto& ip_field = registry_create_server_.assign<InputComponent>(ip);
-    ip_field.pos = portpos;
-    ip_field.input_name = "PORT";
-    ip_field.font_size = 45;
-    ip_field.text = port_;
-    ip_field.linked_value = &port_;
+    auto port = registry_create_server_.create();
+    auto& port_field = registry_create_server_.assign<InputComponent>(port);
+	port_field.pos = portpos;
+	port_field.input_name = "PORT";
+	port_field.font_size = 45;
+	port_field.text = port_;
+	port_field.linked_value = &port_;
+
+	text_width = glob::GetWidthOfText(font_test_, max_players_, 45);
+	auto playerspos = glm::vec2((windowsize.x / 2.f - text_width * 9.10f),
+		windowsize.y * 0.5f);
+	auto maxplayers = registry_create_server_.create();
+	auto& players_field = registry_create_server_.assign<InputComponent>(maxplayers);
+	players_field.pos = playerspos;
+	players_field.input_name = "MAX PLAYERS";
+	players_field.font_size = 45;
+	players_field.text = max_players_;
+	players_field.linked_value = &max_players_;
   }
 }
 
@@ -205,8 +216,8 @@ bool is_number(const std::string& s) {
 	Working directory
 */
 void CreateServerState::CreateServer() {
-  if (is_number(port_) && !port_.empty()) {
-    std::string arg = ip_ + " " + port_;
+  if (is_number(port_) && !port_.empty() && !max_players_.empty() && is_number(max_players_)) {
+    std::string arg = ip_ + " " + port_ + " " + max_players_;
     char* arg2 = (char*)arg.c_str();
     char ownPth[MAX_PATH + 1];
     HMODULE hModule = GetModuleHandle(NULL);
@@ -231,9 +242,10 @@ void CreateServerState::CreateServer() {
 	  std::cout << path << std::endl;
 	  std::cout << p << std::endl;
 	  helper::ps::KillProcess("server.exe");
+	  helper::ps::KillProcess("Server.exe");
       ZeroMemory(&si, sizeof(si));
       si.cb = sizeof(si);
-	  
+
       ZeroMemory(&pi, sizeof(pi));
 	  if (!CreateProcess(path.c_str(),   // Filename
 		  arg2,   // args

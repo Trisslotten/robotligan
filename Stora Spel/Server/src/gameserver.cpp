@@ -30,7 +30,7 @@ GameServer::~GameServer() {}
 void GameServer::Init(double in_update_rate, std::unordered_map<std::string, std::string> &args) {
   glob::SetModelUseGL(false);
 
-  server_.Setup(std::stoi(args["PORT"]));
+  server_.Setup(std::stoi(args["PORT"]), std::stoi(args["MPLAYERS"]));
   std::cout << "Filesystem: Working dir = " << std::filesystem::path() << std::endl;
 
   lobby_state_.SetGameServer(this);
@@ -38,7 +38,7 @@ void GameServer::Init(double in_update_rate, std::unordered_map<std::string, std
   lobby_state_.Init();
   current_state_ = &lobby_state_;
   srand(time(NULL));
-  pings_.resize(kMaxPlayers);
+  pings_.resize(std::stoi(args["MPLAYERS"]));
 
   // very annoying thing
   ability_cooldowns_[AbilityID::BUILD_WALL] =
