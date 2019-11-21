@@ -25,6 +25,7 @@
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
 #include <ecs\systems\skylight_system.hpp>
+#include "util/winadpihelpers.hpp"
 
 Engine::Engine() {}
 
@@ -34,6 +35,10 @@ Engine::~Engine() {
   }
   if (this->registry_replay_ != nullptr) {
     delete this->registry_replay_;
+  }
+  if (create_server_state_.started_) {
+    helper::ps::KillProcess("Server.exe");
+    helper::ps::KillProcess("server.exe");
   }
 }
 
@@ -87,12 +92,13 @@ void Engine::Init() {
   connect_menu_state_.SetEngine(this);
   play_state_.SetEngine(this);
   settings_state_.SetEngine(this);
+  create_server_state_.SetEngine(this);
 
   main_menu_state_.Startup();
   settings_state_.Startup();
   connect_menu_state_.Startup();
   lobby_state_.Startup();
-
+  create_server_state_.Startup();
   play_state_.Startup();
 
   main_menu_state_.Init();
@@ -198,6 +204,9 @@ void Engine::Update(float dt) {
       case StateType::MAIN_MENU:
         current_state_ = &main_menu_state_;
         // std::cout << "CHANGE STATE: MAIN_MENU\n";
+        break;
+      case StateType::CREATE_SERVER:
+        current_state_ = &create_server_state_;
         break;
       case StateType::CONNECT_MENU:
         current_state_ = &connect_menu_state_;
@@ -654,10 +663,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         }
         case ProjectileID::MISSILE_OBJECT: {
           play_state_.CreateMissileObject(e_id, pos, ori);
-          // TODO: Dont trigger this event on the client like this. Fix so that
-          // event is sent/received AFTER the create_projectile packet on server
-          // instead Note: Sometimes this plays on player entity rather than the
-          // missile entity [???]
+          
+          // Save game event
           GameEvent missile_event;
           missile_event.type = GameEvent::MISSILE_FIRE;
           missile_event.missile_fire.projectile_id = e_id;
@@ -719,6 +726,23 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.CreateNewBallEntity(true, id);
       break;
     }
+    case PacketBlockType::CREATE_MINE: {
+      unsigned int owner_team;
+      EntityID mine_id;
+      glm::vec3 pos;
+      packet >> owner_team;
+      packet >> mine_id;
+      packet >> pos;
+      play_state_.CreateMineObject(owner_team, mine_id, pos);
+
+      // Save game event
+      GameEvent mine_place_event;
+      mine_place_event.type = GameEvent::MINE_PLACE;
+      mine_place_event.mine_place.entity_id = mine_id;
+      dispatcher.trigger(mine_place_event);
+
+      break;
+    }
     case PacketBlockType::TO_CLIENT_NAME: {
       long client_id;
       size_t name_size = 0;
@@ -734,7 +758,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       bool smash = false;
       packet >> smash;
       play_state_.SetCanSmash(smash);
-	}
+    }
   }
 }
 

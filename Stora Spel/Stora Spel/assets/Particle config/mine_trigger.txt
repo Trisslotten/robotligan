@@ -1,0 +1,10 @@
+>size= 1
+>end_size= 0
+>velocity= 5
+>end_velocity= 0
+>color= 1 1 0 1
+>end_color= 1 0 0 1
+>time= 0.8
+>burst= 1
+>burst_particles=50
+>number_of_bursts= 1

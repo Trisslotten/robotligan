@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 #include <shared/shared.hpp>
 #include <vector>
+#include <unordered_map>
 #include "serverstate.hpp"
 
 #include "replay machine/replay_machine.hpp"
@@ -20,7 +21,8 @@
 class GameServer {
  public:
   ~GameServer();
-  void Init(double in_update_rate);
+  void Init(double in_update_rate,
+            std::unordered_map<std::string, std::string>& args);
   void Update(float dt);
   void HandlePacketsToSend();
   void HandleStateChange();

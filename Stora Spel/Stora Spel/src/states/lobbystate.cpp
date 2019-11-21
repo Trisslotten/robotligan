@@ -356,8 +356,8 @@ void LobbyState::CreateGUIElements() {
   ButtonComponent* button_c = GenerateButtonEntity(
       registry_lobby_, "JOIN RED",
       (glm::vec2(
-          glob::window::GetWindowDimensions().x / 2 - 570,
-          glob::window::GetWindowDimensions().y - 300)),
+          glob::window::GetWindowDimensions().x / 2 - 405,
+          glob::window::GetWindowDimensions().y - 200)),
       font_team_names_, true, 72);
   button_c->text_current_color = glm::vec4(1.f, 0.3f, 0.3f, 1.f);
   button_c->text_normal_color = glm::vec4(1.f, 0.3f, 0.3f, 1.f);
@@ -369,8 +369,8 @@ void LobbyState::CreateGUIElements() {
   button_c = GenerateButtonEntity(
       registry_lobby_, "JOIN BLUE",
       (glm::vec2(
-          glob::window::GetWindowDimensions().x / 2 + 380,
-          glob::window::GetWindowDimensions().y - 300)),
+          glob::window::GetWindowDimensions().x / 2 + 155,
+          glob::window::GetWindowDimensions().y - 200)),
       font_team_names_, true, 72);
   button_c->text_current_color = glm::vec4(.3f, .3f, 1.f, 1.f);
   button_c->text_normal_color = glm::vec4(.3f, .3f, 1.f, 1.f);
@@ -380,8 +380,8 @@ void LobbyState::CreateGUIElements() {
 
   // ability buttons
   glm::vec2 ability_buttons_pos = glm::vec2(
-      250, glob::window::GetWindowDimensions().y - 230);
-  int xoffset = 132;
+      130, glob::window::GetWindowDimensions().y - 145);
+  int xoffset = 97;
   int yoffset = 0;
 
   int columns = num_abilites;
@@ -445,17 +445,17 @@ void LobbyState::CreateGUIElements() {
 
 void LobbyState::DrawTeamSelect() {
   glm::vec2 red_team_select_back_pos =
-      glm::vec2(glob::window::GetWindowDimensions().x / 2 - 673,
-                glob::window::GetWindowDimensions().y - 750);
+      glm::vec2(glob::window::GetWindowDimensions().x / 2 - 448,
+                glob::window::GetWindowDimensions().y - 500);
 
   glm::vec2 blue_team_select_back_pos =
-      glm::vec2(glob::window::GetWindowDimensions().x / 2 + 287,
-                glob::window::GetWindowDimensions().y - 750);
+      glm::vec2(glob::window::GetWindowDimensions().x / 2 + 128,
+                glob::window::GetWindowDimensions().y - 500);
 
-  glm::vec2 offset = glm::vec2(10, 360);
+  glm::vec2 offset = glm::vec2(10, 238);
 
-  glob::Submit(red_team_select_back_, red_team_select_back_pos, 1.f);
-  glob::Submit(blue_team_select_back_, blue_team_select_back_pos, 1.f);
+  glob::Submit(red_team_select_back_, red_team_select_back_pos, 0.66f);
+  glob::Submit(blue_team_select_back_, blue_team_select_back_pos, 0.66f);
 
   glm::vec2 team_blue_start = blue_team_select_back_pos + offset;
   // glob::window::Relative720(glm::vec2(930, 460));
@@ -484,7 +484,7 @@ void LobbyState::DrawTeamSelect() {
 
 void LobbyState::DrawAbilitySelect() {
   glm::vec2 ability_select_pos =
-      glm::vec2(glob::window::GetWindowDimensions().x - 1760,
-                glob::window::GetWindowDimensions().y - 255);
-  glob::Submit(ability_select_back_, ability_select_pos, 1.0f);
+      glm::vec2(glob::window::GetWindowDimensions().x - 1168,
+                glob::window::GetWindowDimensions().y - 160);
+  glob::Submit(ability_select_back_, ability_select_pos, 0.66f);
 }
