@@ -219,6 +219,7 @@ struct GameEvent {
     // Ability Super Kick
     struct {
       EntityID player_id;
+      EntityID ball_id;
     } super_kick;
 
     // Ability Homing Ball

@@ -145,6 +145,8 @@ EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, glm::mat4 matrix);
 EXPORT void SubmitTrail(const std::vector<glm::vec3>& pos_history, float width,
                         glm::vec4 color);
 
+EXPORT void CreateShockwave(glm::vec3 position, float duration, float size);
+
 EXPORT Camera& GetCamera();
 EXPORT void SetCamera(Camera camera);
 
@@ -161,6 +163,7 @@ EXPORT void SetBlackout(bool blackout);
 EXPORT void SetSky(const std::string& texture);
 
 EXPORT void AddSpotlight(glm::vec3 position, glm::mat4 transform);
+
 
 /*
  * Render all items submitted this frame
