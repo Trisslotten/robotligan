@@ -21,10 +21,10 @@ void NetAPI::Socket::Server::Receive() {
       std::cout << "DEBUG: removing client, lstrecvlen="
                 << c.second->client.GetRaw()->GetLastRecvLen()
                 << ", isConnected=" << c.second->client.IsConnected() << "\n";
-	  c.second->client.SetDisconnected(true);
+      c.second->client.SetDisconnected(true);
       c.second->client.Disconnect();
       c.second->is_active = false;
-      //connected_players_--;
+      // connected_players_--;
       continue;
     }
     if (c.second && c.second->client.IsConnected()) {
@@ -108,9 +108,9 @@ void NetAPI::Socket::Server::ListenForClients() {
       connection_client_->ID = current_client_guid_;
       ids_[address] = current_client_guid_;
       client_data_[current_client_guid_] = connection_client_;
-	  
+
       connected_players_++;
-	  game_players_++;
+      game_players_++;
       current_client_guid_++;
       accepted = true;
     } else {
@@ -165,12 +165,15 @@ unsigned short getHashedID(char* addr, unsigned short port) {
   }
   return retval;
 }
-bool NetAPI::Socket::Server::Setup(unsigned short port, unsigned short maxplayers) {
-  if (listener_.Bind(port)) {
-    setup_ = true;
+bool NetAPI::Socket::Server::Setup(unsigned short port,
+                                   unsigned short maxplayers) {
+  if (!setup_) {
+    if (listener_.Bind(port)) {
+      setup_ = true;
+    }
+    client_data_.reserve(maxplayers);
+    max_players_ = maxplayers;
   }
-  client_data_.reserve(maxplayers);
-  max_players_ = maxplayers;
   return setup_;
 }
 

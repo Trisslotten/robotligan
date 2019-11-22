@@ -33,7 +33,6 @@ void GameServer::Init(double in_update_rate,
   glob::SetModelUseGL(false);
 
   server_.Setup(std::stoi(args["PORT"]), std::stoi(args["MPLAYERS"]));
-  server_.Setup(std::stoi(args["PORT"]), 0);
   std::cout << "Filesystem: Working dir = " << std::filesystem::path()
             << std::endl;
 
