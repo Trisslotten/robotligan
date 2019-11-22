@@ -200,6 +200,7 @@
     <ClInclude Include="src\Model\modelconfig.hpp" />
     <ClInclude Include="src\Particles\particle_settings.hpp" />
     <ClInclude Include="src\Particles\particle_system.hpp" />
+    <ClInclude Include="src\postprocess\blackholes.hpp" />
     <ClInclude Include="src\postprocess\blur.hpp" />
     <ClInclude Include="src\postprocess\postprocess.hpp" />
     <ClInclude Include="src\postprocess\shockwaves.hpp" />
@@ -225,6 +226,7 @@
     <ClCompile Include="src\graphics.cpp" />
     <ClCompile Include="src\material\material.cpp" />
     <ClCompile Include="src\Model\modelconfig.cpp" />
+    <ClCompile Include="src\postprocess\blackholes.cpp" />
     <ClCompile Include="src\postprocess\blur.cpp" />
     <ClCompile Include="src\Particles\particle_system.cpp" />
     <ClCompile Include="src\postprocess\postprocess.cpp" />
