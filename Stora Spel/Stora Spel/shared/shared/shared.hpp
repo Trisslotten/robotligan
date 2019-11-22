@@ -82,6 +82,7 @@ enum : int16_t {
   SERVER_CAN_JOIN,
   CREATE_BALL,
   CREATE_FAKE_BALL,
+  CREATE_MINE,
   SERVER_STATE,
   MY_NAME,
   HWID,
@@ -108,6 +109,7 @@ enum class AbilityID {
   TELEPORT,
   BLACKOUT,
   BLACKHOLE,
+  MINE,
   // Fill with more abilities and passive boosts
   NUM_OF_ABILITY_IDS
 };
@@ -146,6 +148,8 @@ struct GameEvent {
     BLACKOUT_CAST,
     BLACKOUT_TRIGGER,
     BLACKOUT_END,
+    MINE_PLACE,
+    MINE_TRIGGER,
     SPRINT_START,
     SPRINT_END,
     RUN_START,
@@ -287,6 +291,17 @@ struct GameEvent {
     // Ability Blackout End
     struct {
     } blackout_end;
+
+    // Ability Mine Place
+    struct {
+      EntityID entity_id;
+    } mine_place;
+
+    // Ability Mine Trigger
+    struct {
+      EntityID entity_id;
+      EntityID player_id;
+    } mine_trigger;
 
     // Player Sprint start
     struct {

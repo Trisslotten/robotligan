@@ -120,7 +120,39 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
 
   registry.assign<ParticleComponent>(e, handles, offsets, directions);
   registry.assign<TimerComponent>(e, 5.f);
-  // std::cout << handles.size() << " particle systems" << std::endl;
+
+  e = registry_gameplay_.create();
+  registry_gameplay_.assign<TimerComponent>(e, 2.0f);
+  std::vector<glm::vec4> colors = {glm::vec4(1.f, 1.f, 0.f, 1.f),
+                                   glm::vec4(1.f, 0.f, 0.f, 1.f),
+                                   glm::vec4(0.f, 1.f, 0.f, 1.f)};
+  glm::vec3 position = glm::vec3(x * 1.1f, 0.f, 0.f);
+  float spawn = .8f;
+  float timer = 0.8f;
+
+  registry_gameplay_.assign<FireworksComponent>(e, colors, position, spawn,
+                                                timer);
+
+  e = registry_gameplay_.create();
+  registry_gameplay_.assign<TimerComponent>(e, 2.0f);
+  position = glm::vec3(x * -1.1f, 0.f, 0.f);
+
+  registry_gameplay_.assign<FireworksComponent>(e, colors, position, spawn,
+                                                timer);
+
+  e = registry_gameplay_.create();
+  registry_gameplay_.assign<TimerComponent>(e, 2.0f);
+  position = glm::vec3(0.f, 0.f, 50.f);
+
+  registry_gameplay_.assign<FireworksComponent>(e, colors, position, spawn,
+                                                timer);
+
+  e = registry_gameplay_.create();
+  registry_gameplay_.assign<TimerComponent>(e, 2.0f);
+  position = glm::vec3(0.f, 0.f, -50.f);
+
+  registry_gameplay_.assign<FireworksComponent>(e, colors, position, spawn,
+                                                timer);
 }
 
 void PlayState::Init() {
@@ -1562,12 +1594,27 @@ void PlayState::CreateArenaEntity() {
       glob::GetModel("assets/MapV3/Map_Floor.fbx");
   glob::ModelHandle model_map_projectors =
       glob::GetModel("assets/MapV3/Map_Projectors.fbx");
+  glob::ModelHandle model_map_misc_laken =
+      glob::GetModel("assets/Arena_misc/ArenaMiscLaken.fbx");
+  glob::ModelHandle model_map_misc_spectre =
+      glob::GetModel("assets/Arena_misc/ArenaMiscSpectre.fbx");
+  glob::ModelHandle model_map_misc_starfighter =
+      glob::GetModel("assets/Arena_misc/ArenaMiscStarfighter.fbx");
+  glob::ModelHandle model_map_misc_mig =
+      glob::GetModel("assets/Arena_misc/ArenaMiscMig.fbx");
+  glob::ModelHandle model_map_misc1 =
+      glob::GetModel("assets/Arena_misc/ArenaMisc1.fbx");
 
   // glob::GetModel(kModelPathMapSingular);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
   model_c.handles.push_back(model_arena);
   model_c.handles.push_back(model_arena_banner);
   model_c.handles.push_back(model_map_projectors);
+  model_c.handles.push_back(model_map_misc1);
+  model_c.handles.push_back(model_map_misc_laken);
+  model_c.handles.push_back(model_map_misc_spectre);
+  model_c.handles.push_back(model_map_misc_starfighter);
+  model_c.handles.push_back(model_map_misc_mig);
   model_c.cast_shadow = false;
 
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
@@ -1634,7 +1681,7 @@ void PlayState::CreateAudienceEntities() {
     auto& animation_c = registry_gameplay_.assign<AnimationComponent>(
         audience, glob::GetAnimationData(model_audience));
     engine_->GetAnimationSystem().PlayAnimation(
-        "WaveRowsDown", 1.f, &animation_c, 10, 1.f,
+        "WaveRowsUp", 1.f, &animation_c, 10, 1.f,
         engine_->GetAnimationSystem().LOOP);
 
     Audiences.push_back(audience);
@@ -1750,7 +1797,7 @@ void PlayState::CreateSpotlights() {
     auto entity = registry_gameplay_.create();
     ModelComponent& model_c = registry_gameplay_.assign<ModelComponent>(entity);
     glob::ModelHandle m_hndl = glob::GetModel("assets/Spotlight/Spotlight.fbx");
-    model_c.handles.push_back(m_hndl);
+    // model_c.handles.push_back(m_hndl);
     TransformComponent& trans_c =
         registry_gameplay_.assign<TransformComponent>(entity);
     trans_c.position = temp_pos;
@@ -2099,6 +2146,27 @@ void PlayState::CreateBlackHoleObject(EntityID id, glm::vec3 pos,
   dispatcher.trigger(black_hole_create_event);
 }
 
+void PlayState::CreateMineObject(unsigned int owner_team, EntityID mine_id,
+                                 glm::vec3 pos) {
+  auto& sound_engine = engine_->GetSoundEngine();
+
+  entt::entity mine_object = registry_gameplay_.create();
+  glob::ModelHandle model_mine =
+      glob::GetModel(kModelPathMine);  // Switch to mine model
+
+  if (owner_team == my_team_) {
+    ModelComponent& model_c =
+        registry_gameplay_.assign<ModelComponent>(mine_object);
+    model_c.handles.push_back(model_mine);
+  }
+  registry_gameplay_.assign<IDComponent>(mine_object, mine_id);
+  registry_gameplay_.assign<TransformComponent>(mine_object, pos);
+  registry_gameplay_.assign<MineComponent>(mine_object, owner_team);
+  registry_gameplay_.assign<SoundComponent>(mine_object,
+                                            sound_engine.CreatePlayer());
+  registry_gameplay_.assign<TimerComponent>(mine_object, 30.f);
+}
+
 void PlayState::DestroyEntity(EntityID id) {
   auto id_view = registry_gameplay_.view<IDComponent>();
 
@@ -2338,7 +2406,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         auto& id_c = view_controller.get<IDComponent>(proj_ent);
         auto& trans_c = view_controller.get<TransformComponent>(proj_ent);
 
-        if (id_c.id == e.force_push_impact.projectile_id) {
+        if (id_c.id == e.missile_impact.projectile_id) {
           glob::SetEmitPosition(handle, trans_c.position);
 
           glob::CreateShockwave(trans_c.position, 0.60f, 40.f);
@@ -2524,6 +2592,82 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           break;
         }
       }
+
+      break;
+    }
+    case GameEvent::MINE_PLACE: {
+      // Tiny dirt particle effect
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller =
+          registry->view<IDComponent, MineComponent, TransformComponent>();
+      for (auto entity : view_controller) {
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+        MineComponent& mine_c = view_controller.get<MineComponent>(entity);
+        TransformComponent& trans_c =
+            view_controller.get<TransformComponent>(entity);
+
+        if (id_c.id == e.mine_place.entity_id) {
+          // Particles
+          entt::entity particle_entity = correct_registry->create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+          glob::SetParticleSettings(handle, "dirt.txt");
+          glob::SetEmitPosition(handle, trans_c.position);
+          in_handles.push_back(handle);
+          ParticleComponent& par_c =
+              correct_registry->assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
+          correct_registry->assign<TimerComponent>(particle_entity, 4.f);
+
+          break;
+        }
+      }
+      break;
+    }
+    case GameEvent::MINE_TRIGGER: {
+      // Tiny dirt particle effect
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller =
+          registry->view<IDComponent, MineComponent, TransformComponent>();
+      for (auto entity : view_controller) {
+        IDComponent& id_c = view_controller.get<IDComponent>(entity);
+        MineComponent& mine_c = view_controller.get<MineComponent>(entity);
+        TransformComponent& trans_c =
+            view_controller.get<TransformComponent>(entity);
+
+        if (id_c.id == e.mine_trigger.entity_id) {
+          // Explosion
+          entt::entity particle_entity = correct_registry->create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+          glob::SetParticleSettings(handle, "mine_trigger.txt");
+          glob::SetEmitPosition(handle, trans_c.position);
+          in_handles.push_back(handle);
+          ParticleComponent& par_c =
+              correct_registry->assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
+          correct_registry->assign<TimerComponent>(particle_entity, 4.f);
+
+          // Dirt
+          entt::entity particle_entity_2 = correct_registry->create();
+          glob::ParticleSystemHandle handle_2 = glob::CreateParticleSystem();
+          glob::SetParticleSettings(handle_2, "dirt.txt");
+          glob::SetEmitPosition(handle_2, trans_c.position);
+          in_handles.push_back(handle_2);
+          par_c = correct_registry->assign<ParticleComponent>(
+              particle_entity_2, in_handles, in_offsets, in_directions);
+          correct_registry->assign<TimerComponent>(particle_entity_2, 4.f);
+
+          // Shockwave
+          glob::CreateShockwave(trans_c.position, 0.60f, 20.f);
+          break;
+        }
+      }
+      break;
     }
     case GameEvent::BLACK_HOLE_ACTIVATED: {
       auto registry = engine_->GetCurrentRegistry();
@@ -2541,7 +2685,6 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         }
       }
 
-      break;
     }
     case GameEvent::SPRINT_START: {
       sprinting_ = true;

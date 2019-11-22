@@ -53,7 +53,7 @@ struct PlayerComponent {  // Server side
   bool ready_to_smash = false;
   bool stunned = false;
   Timer stun_timer;
-  float stun_time = 2.0f;
+  float stun_time = 0.0f;
   // Comparasion Operators
   bool operator==(const PlayerComponent& rhs) {
     return (this->client_id == rhs.client_id) &&
