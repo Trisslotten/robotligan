@@ -54,7 +54,7 @@ void main()
 		sizes[gid] -= size_delta * dt;
 		times[gid] -= dt;
 
-		if (dot(positions[gid].xyz - emit_pos, velocities[gid]) > 0)
+		if (dot(positions[gid].xyz - emit_pos, velocities[gid].xyz) > 0)
 			positions[gid].xyz = emit_pos;
 	} else if (gid >= min_i && gid < max_i) {
 		float random = rand(gid);
@@ -73,6 +73,6 @@ void main()
 		sizes[gid] = size;
 		positions[gid] = vec4(emit_pos + random_dir * 25, 0);
 
-		velocities[gid] = vec4(-random_dir * (random * max_speed), 0);
+		velocities[gid] = vec4(-random_dir * ((rand(gid * 12.867)*0.5+0.5) * max_speed), 0);
 	}
 }
