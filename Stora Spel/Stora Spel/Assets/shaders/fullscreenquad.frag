@@ -14,11 +14,17 @@ uniform int is_invisible;
 uniform vec2 resolution;
 
 #define MAX_SHOCKWAVES 8
-
 uniform int shockwave_count;
 uniform vec3 shockwave_positions[MAX_SHOCKWAVES];
 uniform float shockwave_time_ratios[MAX_SHOCKWAVES];
 uniform float shockwave_radii[MAX_SHOCKWAVES];
+
+
+#define MAX_BLACK_HOLES 8
+uniform int blackhole_count;
+uniform vec3 blackhole_positions[MAX_BLACK_HOLES];
+uniform float blackhole_strengths[MAX_BLACK_HOLES];
+uniform float blackhole_radii[MAX_BLACK_HOLES];
 
 // https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83
 float rand(vec2 n) { 
@@ -53,9 +59,18 @@ vec3 calcColor(vec2 uv) {
 }
 
 void main() {
-	
 	vec2 uv = v_uv;
-
+	
+	for(int i = 0; i < blackhole_count; i++) {
+		vec2 pos = blackhole_positions[i].xy * resolution;
+		float radius = blackhole_radii[i];
+		vec2 vec = gl_FragCoord.xy-pos;
+		float dist = length(vec);
+		vec2 disp_dir = normalize(gl_FragCoord.xy-pos);
+		float strength = clamp(dist / radius, 0., 1.);
+		strength = pow(strength-1, 2);
+		uv += 0.3*disp_dir * strength * blackhole_strengths[i];
+	}
 	for(int i = 0; i < shockwave_count; i++) {
 		vec2 pos = shockwave_positions[i].xy * resolution;
 		float thickness_ratio = 0.5;

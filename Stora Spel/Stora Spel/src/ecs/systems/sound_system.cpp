@@ -78,7 +78,13 @@ void SoundSystem::Init(Engine* engine) {
   sound_ability_force_push_impact_ =
       sound_engine_.GetSound("assets/sound/forcepush.mp3");
   sound_ability_fake_ball_poof_ =
-      sound_engine_.GetSound("assets/sound/poof.mp3");
+    sound_engine_.GetSound("assets/sound/poof.mp3");
+  sound_ability_invisibility_end_ = sound_engine_.GetSound("assets/sound/invis_end.mp3");
+  sound_ability_blackout_end_ = sound_engine_.GetSound("assets/sound/blackout_end.mp3");
+  sound_black_hole_active =
+      sound_engine_.GetSound("assets/sound/active_black_hole.mp3");
+  sound_black_hole_destroy =
+      sound_engine_.GetSound("assets/sound/destroy_black_hole.mp3");
   sound_ability_invisibility_end_ =
       sound_engine_.GetSound("assets/sound/invis_end.mp3");
   sound_ability_blackout_end_ =
@@ -110,6 +116,8 @@ void SoundSystem::Init(Engine* engine) {
       sound_engine_.GetSound("assets/sound/invis_pop.mp3");
   ability_sounds_[AbilityID::BLACKOUT] =
       sound_engine_.GetSound("assets/sound/blackout_start.mp3");
+  ability_sounds_[AbilityID::BLACKHOLE] =
+      sound_engine_.GetSound("assets/sound/shoot_black_hole.mp3");
   ability_sounds_[AbilityID::MINE] =
       sound_engine_.GetSound("assets/sound/place_mine.mp3");
 }
@@ -441,6 +449,44 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
 
       if (id_c.id == event.mine_trigger.entity_id) {
         sound_c.sound_player->Play(sound_ability_mine_trigger_, 0, 2.0f);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::BLACK_HOLE_CREATED) {
+    auto view = registry->view<IDComponent, SoundComponent>();
+        std::cout << "playing black hole sound\n";
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.create_black_hole.black_hole_id) {
+        sound_c.sound_player->Play(ability_sounds_[AbilityID::BLACKHOLE], 0,
+                                   5.0f);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::BLACK_HOLE_ACTIVATED) {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.create_black_hole.black_hole_id) {
+        sound_c.sound_player->Stop(ability_sounds_[AbilityID::BLACKHOLE]);
+        sound_c.sound_player->Play(sound_black_hole_active, 0,
+                                   5.0f);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::BLACK_HOLE_DESTROYED) {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.create_black_hole.black_hole_id) {
+        sound_c.sound_player->Stop(sound_black_hole_active);
+        sound_c.sound_player->Play(sound_black_hole_destroy, 0, 5.0f);
         break;
       }
     }
