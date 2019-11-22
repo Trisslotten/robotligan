@@ -120,7 +120,40 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
 
   registry.assign<ParticleComponent>(e, handles, offsets, directions);
   registry.assign<TimerComponent>(e, 5.f);
-  // std::cout << handles.size() << " particle systems" << std::endl;
+
+
+  e = registry_gameplay_.create();
+  registry_gameplay_.assign<TimerComponent>(e, 2.0f);
+  std::vector<glm::vec4> colors = {glm::vec4(1.f, 1.f, 0.f, 1.f),
+                                   glm::vec4(1.f, 0.f, 0.f, 1.f),
+                                   glm::vec4(0.f, 1.f, 0.f, 1.f)};
+  glm::vec3 position = glm::vec3(x * 1.1f, 0.f, 0.f);
+  float spawn = .8f;
+  float timer = 0.8f;
+
+  registry_gameplay_.assign<FireworksComponent>(e, colors, position, spawn,
+                                                timer);
+
+  e = registry_gameplay_.create();
+  registry_gameplay_.assign<TimerComponent>(e, 2.0f);
+  position = glm::vec3(x * -1.1f, 0.f, 0.f);
+
+  registry_gameplay_.assign<FireworksComponent>(e, colors, position, spawn,
+                                                timer);
+
+  e = registry_gameplay_.create();
+  registry_gameplay_.assign<TimerComponent>(e, 2.0f);
+  position = glm::vec3(0.f, 0.f, 50.f);
+
+  registry_gameplay_.assign<FireworksComponent>(e, colors, position, spawn,
+                                                timer);
+
+  e = registry_gameplay_.create();
+  registry_gameplay_.assign<TimerComponent>(e, 2.0f);
+  position = glm::vec3(0.f, 0.f, -50.f);
+
+  registry_gameplay_.assign<FireworksComponent>(e, colors, position, spawn,
+                                                timer);
 }
 
 void PlayState::Init() {

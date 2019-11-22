@@ -51,6 +51,7 @@ private:
   slob::SoundHandle sound_pickup_spawned_;
   slob::SoundHandle sound_player_stunned_;
   slob::SoundHandle sound_ability_mine_trigger_;
+  slob::SoundHandle sound_fireworks_;
 
   Engine* engine_;
 };

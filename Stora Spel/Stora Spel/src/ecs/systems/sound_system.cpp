@@ -88,6 +88,7 @@ void SoundSystem::Init(Engine* engine) {
 
   sound_pickup_spawned_ = sound_engine_.GetSound("assets/sound/pickup.wav");
   sound_player_stunned_ = sound_engine_.GetSound("assets/sound/stunned.mp3");
+  sound_fireworks_ = sound_engine_.GetSound("assets/sound/fireworks.mp3");
 
   ability_sounds_[AbilityID::GRAVITY_CHANGE] =
       sound_engine_.GetSound("assets/sound/gravitydrop.wav");

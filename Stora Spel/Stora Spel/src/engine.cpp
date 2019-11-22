@@ -11,6 +11,7 @@
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "ecs/systems/animation_system.hpp"
+#include "ecs/systems/fireworks_system.hpp"
 #include "ecs/systems/gui_system.hpp"
 #include "ecs/systems/input_system.hpp"
 #include "ecs/systems/lifetime_system.hpp"
@@ -810,6 +811,7 @@ void Engine::UpdateSystems(float dt) {
 
   gui_system::Update(*registry_current_);
   input_system::Update(*registry_current_);
+  fireworks::Update(*registry_current_, GetSoundEngine(), dt);
   ParticleSystem(*registry_current_, dt);
   animation_system_.UpdateAnimations(*registry_current_, dt);
   trailsystem::Update(*registry_current_, dt);
