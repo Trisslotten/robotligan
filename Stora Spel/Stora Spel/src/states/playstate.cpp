@@ -2663,7 +2663,10 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
           // Shockwave
           glob::CreateShockwave(trans_c.position, 0.60f, 20.f);
+          break;
+        }
       }
+      break;
     }
     case GameEvent::BLACK_HOLE_ACTIVATED: {
       auto registry = engine_->GetCurrentRegistry();
@@ -2680,10 +2683,6 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         }
       }
 
-          break;
-        }
-      }
-      break;
     }
     case GameEvent::SPRINT_START: {
       sprinting_ = true;
