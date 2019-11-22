@@ -146,6 +146,7 @@ EXPORT void SubmitTrail(const std::vector<glm::vec3>& pos_history, float width,
                         glm::vec4 color);
 
 EXPORT void CreateShockwave(glm::vec3 position, float duration, float size);
+EXPORT void CreateBlackHole(glm::vec3 position);
 
 EXPORT Camera& GetCamera();
 EXPORT void SetCamera(Camera camera);

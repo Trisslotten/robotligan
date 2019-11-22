@@ -1282,6 +1282,10 @@ void CreateShockwave(glm::vec3 position, float duration, float size) {
   shockwaves.Create(position, duration, size);
 }
 
+void CreateBlackHole(glm::vec3 position) {
+  blackholes.Create(position);
+}
+
 void SubmitCube(glm::mat4 t) { cubes.push_back(t); }
 
 void SubmitWireframeMesh(ModelHandle model_h) {

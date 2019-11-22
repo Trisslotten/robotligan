@@ -14,7 +14,7 @@ class BlackHoles {
  public:
   void Create(glm::vec3 position);
 
-  void Update(Camera camera);
+ void Update(Camera camera);
 
   void SetUniforms(ShaderProgram& shader);
 
@@ -29,6 +29,7 @@ class BlackHoles {
 
   std::vector<glm::vec3> uniform_positions_;
   std::vector<float> uniform_radii_;
+  std::vector<float> uniform_strengths_;
 };
 
 }  // namespace glob

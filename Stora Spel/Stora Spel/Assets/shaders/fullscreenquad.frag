@@ -17,6 +17,7 @@ uniform vec2 resolution;
 uniform int shockwave_count;
 uniform vec3 shockwave_positions[MAX_SHOCKWAVES];
 uniform float shockwave_time_ratios[MAX_SHOCKWAVES];
+uniform float blackhole_strengths[MAX_SHOCKWAVES];
 uniform float shockwave_radii[MAX_SHOCKWAVES];
 
 
@@ -68,8 +69,7 @@ void main() {
 		vec2 disp_dir = normalize(gl_FragCoord.xy-pos);
 		float strength = clamp(dist / radius, 0., 1.);
 		strength = pow(strength-1, 2);
-		//strength *= pow(smoothstep(1, 0, strength), 1);
-		uv += 0.3*disp_dir * strength;
+		uv += 0.3*disp_dir * strength * blackhole_strengths[i];
 	}
 	for(int i = 0; i < shockwave_count; i++) {
 		vec2 pos = shockwave_positions[i].xy * resolution;

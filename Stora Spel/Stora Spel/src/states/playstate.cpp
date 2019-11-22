@@ -2091,6 +2091,7 @@ void PlayState::CreateBlackHoleObject(EntityID id, glm::vec3 pos,
   registry_gameplay_.assign<ProjectileComponent>(black_hole,
                                                  ProjectileID::BLACK_HOLE);
 
+  
   // Save game event
   GameEvent black_hole_create_event;
   black_hole_create_event.type = GameEvent::BLACK_HOLE_CREATED;
@@ -2534,7 +2535,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
         if (id_c.id == e.activate_black_hole.black_hole_id) {
           trans_c.scale = glm::vec3(1.5f);
-          glob::CreateShockwave(trans_c.position, 5.0f, 20.f);
+          //glob::CreateShockwave(trans_c.position, 5.0f, 20.f);
+          glob::CreateBlackHole(trans_c.position);
           break;
         }
       }
