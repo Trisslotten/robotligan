@@ -39,6 +39,7 @@ bool BuildWall(entt::registry& registry, PlayerID id);
 bool DoInvisibility(entt::registry& registry, PlayerID id);
 bool DoBlackout(entt::registry& registry);
 bool PlaceMine(entt::registry& registry, PlayerID id);
+void DoFishing(entt::registry& registry, long creator);
 
 std::unordered_map<AbilityID, float> ability_cooldowns;
 
@@ -211,6 +212,9 @@ bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
     case AbilityID::MINE:
       return PlaceMine(registry, player_id);
       break;
+    case AbilityID::FISHINGING_POLE:
+      DoFishing(registry, player_id);
+      return true;
     default:
       return false;
       break;
@@ -317,7 +321,8 @@ bool DoSuperStrike(entt::registry& registry) {
               registry.get<IDComponent>(player_entity).id;
 
           if (registry.has<IDComponent>(ball_entity)) {
-            super_kick_event.super_kick.ball_id = registry.get<IDComponent>(ball_entity).id;
+            super_kick_event.super_kick.ball_id =
+                registry.get<IDComponent>(ball_entity).id;
           } else {
             super_kick_event.super_kick.ball_id = -1;
           }
@@ -630,11 +635,10 @@ bool DoBlackout(entt::registry& registry) {
 }
 
 bool PlaceMine(entt::registry& registry, PlayerID id) {
-  auto view_controller =
-      registry.view<CameraComponent, PlayerComponent, TransformComponent, TeamComponent>();
+  auto view_controller = registry.view<CameraComponent, PlayerComponent,
+                                       TransformComponent, TeamComponent>();
   for (auto entity : view_controller) {
-    PlayerComponent& p_c =
-        view_controller.get<PlayerComponent>(entity);
+    PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
     TransformComponent& t_c = view_controller.get<TransformComponent>(entity);
     TeamComponent& team_c = view_controller.get<TeamComponent>(entity);
 
@@ -732,12 +736,46 @@ void CreateFakeBalls(entt::registry& registry, EntityID id) {
     EventInfo e;
     e.event = Event::CREATE_FAKE_BALL;
     e.entity = fake_ball;
-    dispatcher.enqueue<EventInfo>(e);
+    dispatcher.trigger<EventInfo>(e);
   }
   GameEvent ge;
   ge.fake_ball_created.ball_id = ball_id;
   ge.type = GameEvent::FAKE_BALL_CREATED;
   dispatcher.trigger(ge);
+}
+
+void DoFishing(entt::registry& registry, long creator) {
+  auto view_controller =
+      registry.view<CameraComponent, PlayerComponent, TransformComponent, IDComponent>();
+  for (auto entity : view_controller) {
+    CameraComponent& cc = view_controller.get<CameraComponent>(entity);
+    PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
+    TransformComponent& tc = view_controller.get<TransformComponent>(entity);
+    IDComponent& idc = view_controller.get<IDComponent>(entity);
+
+    if (pc.client_id == creator) {
+      float speed = pc.rocket_speed;
+      auto hook = registry.create();
+      registry.assign<PhysicsComponent>(hook,
+                                        glm::vec3(cc.GetLookDir() * speed),
+                                        glm::vec3(0.f), false, 0.0f);
+      registry.assign<TransformComponent>(
+          hook, glm::vec3(tc.position + tc.rotation * cc.offset),
+          cc.orientation, glm::vec3(.3f, .3f, .3f));
+      registry.assign<physics::Sphere>(hook, glm::vec3(0.f), .3f);
+      registry.assign<ProjectileComponent>(hook, ProjectileID::FISHING_HOOK,
+                                           creator);
+      HookComponent& hook_c = registry.assign<HookComponent>(hook);
+      hook_c.owner = idc.id;
+
+	  EventInfo e;
+      e.event = Event::CREATE_HOOK;
+      e.entity = hook;
+      e.owner_id = idc.id;
+      dispatcher.enqueue<EventInfo>(e);
+	  break;
+    }
+  }
 }
 
 };  // namespace ability_controller

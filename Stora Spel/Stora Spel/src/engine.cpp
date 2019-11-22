@@ -672,6 +672,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
           dispatcher.trigger(missile_event);
           break;
         }
+        case ProjectileID::FISHING_HOOK: {
+          EntityID owner;
+          packet >> owner;
+          play_state_.CreateFishermanAndHook(e_id, pos, ori, owner);
+          break;
+        }
       }
       break;
     }

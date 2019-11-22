@@ -218,6 +218,11 @@ class PlayState : public State {
     NUM_EFFECTS
   };
 
+  struct Fishermans {
+    EntityID hook_id;
+    EntityID owner_id;
+  };
+
  public:
   void Startup() override;
   void Init() override;
@@ -246,6 +251,7 @@ class PlayState : public State {
   void CreateTeleportProjectile(EntityID id, glm::vec3 pos, glm::quat ori);
   void CreateForcePushObject(EntityID id, glm::vec3 pos, glm::quat ori);
   void CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori);
+  void CreateFishermanAndHook(EntityID id, glm::vec3 pos, glm::quat ori, EntityID owner_id);
   void CreateMineObject(unsigned int owner_team, EntityID mine_id,
                         glm::vec3 pos);
   void DestroyEntity(EntityID id);
@@ -309,6 +315,7 @@ class PlayState : public State {
 
   void DrawNameOverPlayer();
   void DrawWallOutline();
+  void DrawFishingLines();
 
   void DrawTopScores();
   void DrawTarget();
@@ -401,6 +408,8 @@ class PlayState : public State {
   bool im_stunned_ = false;
   Timer stun_timer_;
   float my_stun_time_;
+
+  std::vector<Fishermans> fishers_;
 };
 
 class CreateServerState : public State {

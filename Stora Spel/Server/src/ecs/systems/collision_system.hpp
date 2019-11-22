@@ -26,7 +26,8 @@ void ApplyForcePush(entt::registry& registry, glm::vec3 pos);
 void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
                             PhysicsComponent& physics_c,
                             entt::registry& registry, entt::entity& entity);
-void ApplyMineStun(entt::registry& registry, PhysicsComponent& physics_c, PlayerComponent& player_c, IDComponent& id_c);
+void ApplyMineStun(entt::registry& registry, PhysicsComponent& physics_c,
+                   PlayerComponent& player_c, IDComponent& id_c);
 void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
                          long player_id);
 void EndHomingBall(entt::registry& registry, entt::entity& in_ball);
@@ -769,6 +770,7 @@ void ProjectileBallCollision(entt::registry& registry, entt::entity ball) {
   auto& ball_hitbox = registry.get<physics::Sphere>(ball);
   auto& ball_c = registry.get<BallComponent>(ball);
   auto& ball_physics = registry.get<PhysicsComponent>(ball);
+  auto& ball_id = registry.get<IDComponent>(ball);
 
   for (auto projectile : view_projectile) {
     auto& proj_hitbox = view_projectile.get<physics::Sphere>(projectile);
@@ -818,6 +820,20 @@ void ProjectileBallCollision(entt::registry& registry, entt::entity ball) {
           dispatcher.trigger(force_push_impact_event);
 
           DestroyEntity(registry, projectile);
+          break;
+        }
+        case ProjectileID::FISHING_HOOK: {
+          if (registry.has<HookComponent>(projectile)) {
+            HookComponent& hook_c = registry.get<HookComponent>(projectile);
+            hook_c.attached = true;
+            hook_c.hooked_entity = ball_id.id;
+            hook_c.hook_m = PULL_OBJECT;
+
+
+			// remove projectile component, fishing system will handle position.
+            registry.remove<ProjectileComponent>(projectile);
+          }
+
           break;
         }
       }
@@ -886,6 +902,20 @@ void ProjectileArenaCollision(entt::registry& registry) {
             DestroyEntity(registry, projectile);
             break;
           }
+          case ProjectileID::FISHING_HOOK: {
+            PhysicsComponent& phys_c =
+                registry.get<PhysicsComponent>(projectile);
+            HookComponent& hook_c = registry.get<HookComponent>(projectile);
+            hook_c.attached = true;
+            hook_c.hook_m = PULL_PLAYER;
+            phys_c.acceleration = glm::vec3(0);
+            phys_c.velocity = glm::vec3(0);
+
+			//remove projectile component
+            registry.remove<ProjectileComponent>(projectile);
+
+            break;
+          }
         }
       }
     }
@@ -931,11 +961,12 @@ void PickUpPlayerCollision(entt::registry& registry) {
 }
 
 void MinePlayerCollision(entt::registry& registry) {
-  auto mine_view = registry.view<MineComponent, TransformComponent, IDComponent>();
+  auto mine_view =
+      registry.view<MineComponent, TransformComponent, IDComponent>();
   auto player_view =
       registry.view<PlayerComponent, TransformComponent, PhysicsComponent,
                     TeamComponent, IDComponent>();
- 
+
   for (auto mine : mine_view) {
     auto& mine_c = mine_view.get<MineComponent>(mine);
     auto& mine_tc = mine_view.get<TransformComponent>(mine);
@@ -953,7 +984,6 @@ void MinePlayerCollision(entt::registry& registry) {
               GlobalSettings::Access()->ValueOf(
                   "ABILITY_MINE_TRIGGER_RADIUS") &&
           mine_c.owner_team != p_teamc.team) {
-
         ApplyMineStun(registry, p_pc, p_c, p_idc);
 
         // Save game event
@@ -1080,13 +1110,14 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
         ge.player_stunned.player_id = registry.get<IDComponent>(entity).id;
       ge.player_stunned.stun_time = player_c.stun_time;
       dispatcher.trigger(ge);
-	}
+    }
     std::cout << " Velocity: " << physics_c.velocity;
   }
   std::cout << std::endl;
 }
 
-void ApplyMineStun(entt::registry& registry, PhysicsComponent& physics_c, PlayerComponent& player_c, IDComponent& id_c) {
+void ApplyMineStun(entt::registry& registry, PhysicsComponent& physics_c,
+                   PlayerComponent& player_c, IDComponent& id_c) {
   // Push
   physics_c.velocity = glm::vec3(0.f, 10.f, 0.f);
 

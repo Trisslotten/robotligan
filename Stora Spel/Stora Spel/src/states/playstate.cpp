@@ -434,6 +434,7 @@ void PlayState::Update(float dt) {
   DrawTopScores();
   DrawTarget();
   DrawStunTimer();
+  DrawFishingLines();
 
   glob::Submit(test_ball_, glm::mat4());
 
@@ -634,6 +635,35 @@ void PlayState::DrawWallOutline() {
     // glob::SubmitCube(glm::translate(pos) *
     //                 glm::toMat4(trans.rotation) *
     //    glm::scale(glm::vec3(1, 0.f, 5)));
+  }
+}
+
+void PlayState::DrawFishingLines() {
+  for (auto fisher : fishers_) {
+    glm::vec3 hook_pos, player_pos;
+
+    bool found_hook = false;
+    bool found_player = false;
+
+    auto view_transforms =
+        registry_gameplay_.view<TransformComponent, IDComponent>();
+    for (auto transform : view_transforms) {
+      EntityID id = registry_gameplay_.get<IDComponent>(transform).id;
+      glm::vec3 pos =
+          registry_gameplay_.get<TransformComponent>(transform).position;
+      if (id == fisher.hook_id) {
+        found_hook = true;
+        hook_pos = pos;
+      }
+      if (id == fisher.owner_id) {
+        found_player = true;
+        player_pos = pos;
+      }
+      if (found_hook && found_player) {
+        glob::SubmitRope(player_pos, hook_pos);
+        break;
+      }
+    }
   }
 }
 
@@ -2116,6 +2146,29 @@ void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
                                                  ProjectileID::MISSILE_OBJECT);
   registry_gameplay_.assign<TrailComponent>(missile_object, 0.2f,
                                             glm::vec4(1.0f, 0.6f, 0.2f, 1.0f));
+}
+
+void PlayState::CreateFishermanAndHook(EntityID id, glm::vec3 pos,
+                                       glm::quat ori, EntityID owner_id) {
+  auto& sound_engine = engine_->GetSoundEngine();
+
+  auto missile_object = registry_gameplay_.create();
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glob::ModelHandle model_missile = glob::GetModel(kModelPathRocket);
+  auto& model_c = registry_gameplay_.assign<ModelComponent>(missile_object);
+  model_c.handles.push_back(model_missile);
+  registry_gameplay_.assign<TransformComponent>(missile_object, pos, ori,
+                                                glm::vec3(0.5f));
+  registry_gameplay_.assign<IDComponent>(missile_object, id);
+  registry_gameplay_.assign<SoundComponent>(missile_object,
+                                            sound_engine.CreatePlayer());
+  registry_gameplay_.assign<ProjectileComponent>(missile_object,
+                                                 ProjectileID::FISHING_HOOK);
+
+  Fishermans fm;
+  fm.hook_id = id;
+  fm.owner_id = owner_id;
+  fishers_.push_back(fm);
 }
 
 void PlayState::CreateMineObject(unsigned int owner_team, EntityID mine_id,

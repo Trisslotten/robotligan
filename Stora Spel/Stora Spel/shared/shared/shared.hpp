@@ -109,6 +109,7 @@ enum class AbilityID {
   TELEPORT,
   BLACKOUT,
   MINE,
+  FISHINGING_POLE,
   // Fill with more abilities and passive boosts
   NUM_OF_ABILITY_IDS
 };
@@ -158,6 +159,7 @@ struct GameEvent {
     SECONDARY_USED,
     PICKUP_SPAWNED,
 	PLAYER_STUNNED,
+	CREATE_FISHING_HOOK,
     NUM_EVENTS
   } type;
   union {
@@ -354,6 +356,7 @@ enum class ProjectileID {
   TELEPORT_PROJECTILE,
   FORCE_PUSH_OBJECT,
   MISSILE_OBJECT,
+  FISHING_HOOK,
   NUM_PROJECTILE_IDS
 };
 
@@ -362,5 +365,6 @@ struct Projectile {
   ProjectileID projectile_id;
   glm::vec3 pos;
   glm::quat ori;
+  EntityID owner_id;
 };
 #endif  // SHARED_HPP_

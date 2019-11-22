@@ -304,7 +304,8 @@ void LobbyState::CreateBackgroundEntities() {
 }
 
 void LobbyState::CreateGUIElements() {
-  // ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
+  ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
+  ability_blacklist.push_back((int)AbilityID::BLACKOUT);
   red_team_select_back_ = glob::GetGUIItem("Assets/GUI_elements/red_team.png");
   blue_team_select_back_ =
       glob::GetGUIItem("Assets/GUI_elements/blue_team.png");

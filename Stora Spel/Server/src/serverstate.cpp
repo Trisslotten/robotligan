@@ -455,6 +455,8 @@ void ServerPlayState::HandleDataToSend() {
 
     // send created projectiles
     for (auto projectiles : created_projectiles_) {
+      if (projectiles.projectile_id == ProjectileID::FISHING_HOOK)
+        to_send << projectiles.owner_id;
       to_send << projectiles.entity_id;
       to_send << projectiles.projectile_id;
       to_send << projectiles.pos;
@@ -1035,6 +1037,19 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       projectile.ori = trans_c.rotation;
       created_projectiles_.push_back(projectile);
 
+      break;
+    }
+    case Event::CREATE_HOOK: {
+      auto& registry = game_server_->GetRegistry();
+      Projectile projectile;
+      projectile.entity_id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, projectile.entity_id);
+      projectile.projectile_id = ProjectileID::FISHING_HOOK;
+      auto& trans_c = registry.get<TransformComponent>(e.entity);
+      projectile.pos = trans_c.position;
+      projectile.ori = trans_c.rotation;
+      projectile.owner_id = e.owner_id;
+      created_projectiles_.push_back(projectile);
       break;
     }
     case Event::CREATE_MINE: {
