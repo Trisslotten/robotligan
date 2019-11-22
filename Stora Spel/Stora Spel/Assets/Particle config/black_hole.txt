@@ -1,0 +1,11 @@
+
+>color= 1 1 1 0.4
+>velocity= 10
+>time= 5
+>size= 0.1
+>emissive= 0
+>burst= 1
+>burst_particles= 1000
+>number_of_bursts=1
+>shader= black_hole
+>texture=dust
