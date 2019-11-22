@@ -608,7 +608,7 @@ void PlayState::DrawWallOutline() {
     auto& camera = registry_gameplay_.get<CameraComponent>(my_entity_);
 
     glm::vec3 pos = camera.GetLookDir() * 4.5f + trans.position + camera.offset;
-    pos.y = 0.05f;
+    pos.y = 0.15f;
 
     if (glm::distance(
             glm::vec2(pos.x, pos.z),
