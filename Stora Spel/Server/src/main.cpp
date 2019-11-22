@@ -7,6 +7,7 @@
 #include "util/timer.hpp"
 #include "serverstate.hpp"
 #include "util/global_settings.hpp"
+#include "util/winadpihelpers.hpp"
 
 entt::dispatcher dispatcher{};
 std::string workingdir() {
@@ -19,6 +20,7 @@ int main(unsigned argc, char** argv) {
   std::unordered_map<std::string, std::string> arguments;
   std::cout << "Num server arguments: " << argc << std::endl;
   GlobalSettings::Access()->UpdateValuesFromFile();
+
   if (argc > 1) {
     // IP - PORT
     arguments["IP"] = argv[0];
