@@ -26,6 +26,11 @@ int main(unsigned argc, char** argv) {
     arguments["MPLAYERS"] = argv[2];
   } else {
     arguments["PORT"] = std::to_string(1337);
+	float port = GlobalSettings::Access()->ValueOf("PORT");
+	if (port > 0 && port < 65565)
+	{
+		arguments["PORT"] = std::to_string((int)port);
+	}
     arguments["MPLAYERS"] = "6";
 	float mplayers = GlobalSettings::Access()->ValueOf("MAX_PLAYERS");
 	if (mplayers > 0)

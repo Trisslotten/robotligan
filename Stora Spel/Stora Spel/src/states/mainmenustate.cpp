@@ -79,9 +79,10 @@ void MainMenuState::CreateMainMenu() {
   };
 
   // EXIT BUTTON - close the game
+  //Exit() is bad, does not call destructors
   b_c = GenerateButtonEntity(registry_mainmenu_, "EXIT", glm::vec2(100, 50),
                              font_test_);
-  b_c->button_func = [&]() { exit(0); };
+  b_c->button_func = [&]() { engine_->should_quit = true; };
 }
 
 void MainMenuState::CreateInformationMenu() {

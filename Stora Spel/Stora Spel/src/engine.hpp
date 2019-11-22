@@ -15,7 +15,6 @@
 #include "ecs/systems/sound_system.hpp"
 #include "shared/shared.hpp"
 #include "states/state.hpp"
-
 struct PlayerStatInfo {
   int points = 0;
   int goals = 0;
@@ -30,6 +29,7 @@ class Engine {
   ~Engine();
   Engine(const Engine&) = delete;
   Engine& operator=(const Engine&) = delete;
+  bool should_quit = false;
   int IsConnected() { return server_connected_; }
   void Init();
   void Update(float dt);

@@ -664,7 +664,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         }
         case ProjectileID::MISSILE_OBJECT: {
           play_state_.CreateMissileObject(e_id, pos, ori);
-          
+
           // Save game event
           GameEvent missile_event;
           missile_event.type = GameEvent::MISSILE_FIRE;
