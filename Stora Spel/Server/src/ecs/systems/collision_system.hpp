@@ -915,8 +915,7 @@ void PickUpPlayerCollision(entt::registry& registry) {
         int num_abilities =
             static_cast<typename std::underlying_type<AbilityID>::type>(
                 AbilityID::NUM_OF_ABILITY_IDS);
-        AbilityID pickup_ability = AbilityID::BLACKHOLE;
-            //static_cast<AbilityID>(rand() % (num_abilities - 1) + 1);
+        AbilityID pickup_ability = static_cast<AbilityID>(rand() % (num_abilities - 1) + 1);
 
         registry.assign<PickUpEvent>(
             entity, registry.get<IDComponent>(pick_up).id,
