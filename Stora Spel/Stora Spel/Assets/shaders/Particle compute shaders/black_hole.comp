@@ -1,0 +1,78 @@
+#version 440
+
+layout(local_size_x = 1024, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, binding=7) buffer Pos
+{
+	vec4 positions[];
+};
+
+layout(std430, binding=8) buffer Vel
+{
+	vec4 velocities[];
+};
+
+layout(std430, binding=9) buffer Col
+{
+	vec4 colors[];
+};
+
+layout(std430, binding=10) buffer Size
+{
+	float sizes[];
+};
+
+layout(std430, binding=11) buffer Time
+{
+	float times[];
+};
+
+uniform vec4 color_delta;
+uniform float velocity_delta;
+uniform float size_delta;
+uniform float dt;
+
+uniform vec4 color[10];
+uniform vec3 emit_pos;
+uniform vec3 dir;
+uniform int max_i;
+uniform int min_i;
+uniform float dir_strength;
+uniform float max_speed;
+uniform float min_speed;
+uniform float size;
+uniform float time;
+
+float rand(float n){return fract(sin(n) * 43758.5453123);}
+
+void main()
+{
+	uint gid = gl_GlobalInvocationID.x;
+	if (gid < 1000 && times[gid] > 0.f) {
+		positions[gid] += velocities[gid] * dt;
+		colors[gid] -= color_delta * dt;
+		sizes[gid] -= size_delta * dt;
+		times[gid] -= dt;
+
+		if (dot(positions[gid].xyz - emit_pos, velocities[gid]) > 0)
+			positions[gid].xyz = emit_pos;
+	} else if (gid >= min_i && gid < max_i) {
+		float random = rand(gid);
+		float random1 = rand(gid*2);
+		float random2 = rand(gid*3);
+		float normal_factor = random * (1-dir_strength) + dir_strength;
+		vec3 random_dir = normalize(vec3(random * 2 - 1, random1 * 2 - 1, random2 * 2 - 1));
+		random_dir -= random_dir * dot(dir, random_dir);
+		random_dir = normalize(random_dir);
+
+		random_dir = dir * normal_factor + random_dir * sqrt(1-normal_factor*normal_factor);
+		random_dir = normalize(random_dir);
+
+		times[gid] = time;
+		colors[gid] = color[0];
+		sizes[gid] = size;
+		positions[gid] = vec4(emit_pos + random_dir * 25, 0);
+
+		velocities[gid] = vec4(-random_dir * (random * max_speed), 0);
+	}
+}

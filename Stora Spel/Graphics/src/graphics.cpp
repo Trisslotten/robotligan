@@ -347,6 +347,10 @@ void Init() {
   compute_shaders["firework"]->add("Particle compute shaders/firework.comp");
   compute_shaders["firework"]->compile();
 
+  compute_shaders["black_hole"] = std::make_unique<ShaderProgram>();
+  compute_shaders["black_hole"]->add("Particle compute shaders/black_hole.comp");
+  compute_shaders["black_hole"]->compile();
+
   CreateDefaultParticleTexture();
   textures["smoke"] = TextureFromFile("smoke.png");
   textures["confetti"] = TextureFromFile("confetti.png");
