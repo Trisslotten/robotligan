@@ -166,6 +166,7 @@ EXPORT void SetSky(const std::string& texture);
 
 EXPORT void AddSpotlight(glm::vec3 position, glm::mat4 transform);
 
+EXPORT void SetStunned(bool is_stunned);
 
 /*
  * Render all items submitted this frame
