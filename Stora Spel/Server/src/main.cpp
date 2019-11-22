@@ -6,6 +6,7 @@
 #include "gameserver.hpp"
 #include "util/timer.hpp"
 #include "serverstate.hpp"
+#include "util/global_settings.hpp"
 
 entt::dispatcher dispatcher{};
 std::string workingdir() {
@@ -17,6 +18,7 @@ int main(unsigned argc, char** argv) {
   std::cout << "Workingdir: " << workingdir() << std::endl;
   std::unordered_map<std::string, std::string> arguments;
   std::cout << "Num server arguments: " << argc << std::endl;
+  GlobalSettings::Access()->UpdateValuesFromFile();
   if (argc > 1) {
     // IP - PORT
     arguments["IP"] = argv[0];
@@ -25,16 +27,19 @@ int main(unsigned argc, char** argv) {
   } else {
     arguments["PORT"] = std::to_string(1337);
     arguments["MPLAYERS"] = "6";
+	float mplayers = GlobalSettings::Access()->ValueOf("MAX_PLAYERS");
+	if (mplayers > 0)
+	{
+		arguments["MPLAYERS"] = (int)(std::ceilf(mplayers));
+	}
   }
   std::cout << "DEBUG: Starting Server" << std::endl;
-
   Timer timer;
   double accum_ms = 0;
   // max around 200'000 on home computer
   double update_rate = kServerUpdateRate;
   double update_time = 1.0 / update_rate;
   double update_time_ms = update_time * 1000.0;
-  GlobalSettings::Access()->UpdateValuesFromFile();
   GameServer server;
   dispatcher.sink<EventInfo>().connect<&GameServer::ReceiveEvent>(server);
   dispatcher.sink<GameEvent>().connect<&GameServer::ReceiveGameEvent>(server);

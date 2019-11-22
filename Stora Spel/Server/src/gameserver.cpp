@@ -33,6 +33,7 @@ void GameServer::Init(double in_update_rate,
   glob::SetModelUseGL(false);
 
   server_.Setup(std::stoi(args["PORT"]), std::stoi(args["MPLAYERS"]));
+  server_.Setup(std::stoi(args["PORT"]), 0);
   std::cout << "Filesystem: Working dir = " << std::filesystem::path()
             << std::endl;
 
@@ -42,7 +43,6 @@ void GameServer::Init(double in_update_rate,
   current_state_ = &lobby_state_;
   srand(time(NULL));
   pings_.resize(std::stoi(args["MPLAYERS"]));
-
   // very annoying thing
   ability_cooldowns_[AbilityID::BUILD_WALL] =
       GlobalSettings::Access()->ValueOf("ABILITY_BUILD_WALL_COOLDOWN");
