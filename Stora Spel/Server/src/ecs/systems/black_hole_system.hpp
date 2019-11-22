@@ -38,7 +38,7 @@ void Update(entt::registry& registry, float dt) {
       black_hole_c.is_active = true;
       black_hole_c.time =
           GlobalSettings::Access()->ValueOf("ABILITY_BLACK_HOLE_DURATION");
-      //registry.assign<physics::Sphere>(black_hole, glm::vec3(0.0f), 1.5f);
+      registry.assign<physics::Sphere>(black_hole, glm::vec3(0.0f), 1.5f);
       registry.remove<PhysicsComponent>(black_hole);
 
       GameEvent activate_black_hole;
@@ -65,6 +65,7 @@ void ApplyForceOnObjects(entt::registry& registry, entt::entity black_hole, floa
           GlobalSettings::Access()->ValueOf("ABILITY_BLACK_HOLE_STRENGTH");
       auto& phys_c = view.get<PhysicsComponent>(object);
       phys_c.velocity += dir * strength * dt * (range - length);
+      phys_c.is_airborne = true;
     }
   }
 }

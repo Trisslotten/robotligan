@@ -1289,7 +1289,6 @@ void PlayState::DrawJumbotronText() {
     jumbo_effect_timer_.Restart();
   }
 }
-
 void PlayState::DrawMiniMap() {
   // draw Minimap
   glob::Submit(gui_minimap_,
@@ -1421,8 +1420,6 @@ void PlayState::DrawMiniMap() {
         registry_gameplay_.view<TransformComponent, BallComponent>();
     for (auto entity : view_ball) {
       auto& trans_c = view_ball.get<TransformComponent>(entity);
-
-
 
       // Normalize and project player pos to screen space (Z in world space
       // is X in screen space and vice versa)
@@ -2089,7 +2086,7 @@ void PlayState::CreateBlackHoleObject(EntityID id, glm::vec3 pos,
                                                 glm::vec3(0.3f));
   registry_gameplay_.assign<IDComponent>(black_hole, id);
   registry_gameplay_.assign<SoundComponent>(black_hole,
-                                           sound_engine.CreatePlayer());
+                                            sound_engine.CreatePlayer());
   registry_gameplay_.assign<PhysicsComponent>(black_hole);
   registry_gameplay_.assign<ProjectileComponent>(black_hole,
                                                  ProjectileID::BLACK_HOLE);
@@ -2097,8 +2094,7 @@ void PlayState::CreateBlackHoleObject(EntityID id, glm::vec3 pos,
   // Save game event
   GameEvent black_hole_create_event;
   black_hole_create_event.type = GameEvent::BLACK_HOLE_CREATED;
-  black_hole_create_event.create_black_hole.black_hole_id =
-     id;
+  black_hole_create_event.create_black_hole.black_hole_id = id;
   dispatcher.trigger(black_hole_create_event);
 }
 
@@ -2514,6 +2510,19 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           break;
         }
       }
+      auto view_balls =
+          registry->view<IDComponent, TransformComponent, BallComponent>();
+      for (auto ball : view_balls) {
+        auto& id_c = view_balls.get<IDComponent>(ball);
+        if (id_c.id == e.super_kick.ball_id) {
+          auto& trans_c = view_balls.get<TransformComponent>(ball);
+
+          // TODO: maybe smaller shockwave if is player_id == my_id_
+          glob::CreateShockwave(trans_c.position, 0.6f, 40.f);
+
+          break;
+        }
+      }
     }
     case GameEvent::BLACK_HOLE_ACTIVATED: {
       auto registry = engine_->GetCurrentRegistry();
@@ -2525,20 +2534,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
         if (id_c.id == e.activate_black_hole.black_hole_id) {
           trans_c.scale = glm::vec3(1.5f);
-          break;
-        }
-      }
-
-      auto view_balls =
-          registry->view<IDComponent, TransformComponent, BallComponent>();
-      for (auto ball : view_balls) {
-        auto& id_c = view_balls.get<IDComponent>(ball);
-        if (id_c.id == e.super_kick.ball_id) {
-          auto& trans_c = view_balls.get<TransformComponent>(ball);
-
-          // TODO: maybe smaller shockwave if is player_id == my_id_
-          glob::CreateShockwave(trans_c.position, 0.6f, 40.f);
-
+          glob::CreateShockwave(trans_c.position, 5.0f, 20.f);
           break;
         }
       }

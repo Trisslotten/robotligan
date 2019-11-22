@@ -77,6 +77,10 @@ void SoundSystem::Init(Engine* engine) {
     sound_engine_.GetSound("assets/sound/poof.mp3");
   sound_ability_invisibility_end_ = sound_engine_.GetSound("assets/sound/invis_end.mp3");
   sound_ability_blackout_end_ = sound_engine_.GetSound("assets/sound/blackout_end.mp3");
+  sound_black_hole_active =
+      sound_engine_.GetSound("assets/sound/active_black_hole.mp3");
+  sound_black_hole_destroy =
+      sound_engine_.GetSound("assets/sound/destroy_black_hole.mp3");
   sound_pickup_spawned_ = sound_engine_.GetSound("assets/sound/pickup.wav");
   sound_player_stunned_ = sound_engine_.GetSound("assets/sound/stunned.mp3");
 
