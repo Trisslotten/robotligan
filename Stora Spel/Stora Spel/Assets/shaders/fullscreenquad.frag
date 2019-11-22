@@ -17,13 +17,13 @@ uniform vec2 resolution;
 uniform int shockwave_count;
 uniform vec3 shockwave_positions[MAX_SHOCKWAVES];
 uniform float shockwave_time_ratios[MAX_SHOCKWAVES];
-uniform float blackhole_strengths[MAX_SHOCKWAVES];
 uniform float shockwave_radii[MAX_SHOCKWAVES];
 
 
 #define MAX_BLACK_HOLES 8
 uniform int blackhole_count;
 uniform vec3 blackhole_positions[MAX_BLACK_HOLES];
+uniform float blackhole_strengths[MAX_BLACK_HOLES];
 uniform float blackhole_radii[MAX_BLACK_HOLES];
 
 // https://gist.github.com/patriciogonzalezvivo/670c22f3966e662d2f83

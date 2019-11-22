@@ -510,8 +510,6 @@ void Init() {
 
   SetSky("assets/texture/sky1k.png");
 
-  blackholes.Create(glm::vec3(30, 5, 0));
-
   // glEnable(GL_RASTERIZER_DISCARD);
 }
 
