@@ -30,7 +30,7 @@ class Engine {
   Engine(const Engine&) = delete;
   Engine& operator=(const Engine&) = delete;
   bool should_quit = false;
-  int IsConnected() { return server_connected_; }
+  int IsConnected() { return (int)(client_.IsConnected() * 2); }
   void Init();
   void Update(float dt);
   void UpdateNetwork();
