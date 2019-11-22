@@ -2681,6 +2681,14 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           trans_c.scale = glm::vec3(1.5f);
           //glob::CreateShockwave(trans_c.position, 5.0f, 20.f);
           glob::CreateBlackHole(trans_c.position);
+          auto handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> handles;
+          handles.push_back(handle);
+          glob::SetParticleSettings(handle, "black_hole.txt");
+          std::vector<glm::vec3> offsets = {glm::vec3(0.0f)};
+          std::vector<glm::vec3> directions = {glm::vec3(0.0f)};
+          registry->assign<ParticleComponent>(proj_ent, handles, offsets,
+                                              directions);
           break;
         }
       }
