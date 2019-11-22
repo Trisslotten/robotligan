@@ -30,7 +30,7 @@ int main(unsigned argc, char** argv) {
 	float mplayers = GlobalSettings::Access()->ValueOf("MAX_PLAYERS");
 	if (mplayers > 0)
 	{
-		arguments["MPLAYERS"] = (int)(std::ceilf(mplayers));
+		arguments["MPLAYERS"] = std::to_string((int)(std::ceilf(mplayers)));
 	}
   }
   std::cout << "DEBUG: Starting Server" << std::endl;

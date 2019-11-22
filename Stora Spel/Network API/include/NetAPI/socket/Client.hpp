@@ -19,8 +19,10 @@ class EXPORT Client {
   void Disconnect() { client_->Disconnect(); }
   bool IsConnected() { return client_->IsConnected(); }
   TcpClient* GetRaw() { return client_; }
-
+  bool JustDiconnected() { return just_disconnected; }
+  void SetDisconnected(bool disconnected) { just_disconnected = disconnected; }
  private:
+  bool just_disconnected = false;
   unsigned short ID_ = 0;
   NetAPI::Socket::TcpClient* client_ = nullptr;
   std::string GetHWID();

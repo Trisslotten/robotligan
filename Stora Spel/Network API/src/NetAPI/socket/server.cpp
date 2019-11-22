@@ -21,6 +21,7 @@ void NetAPI::Socket::Server::Receive() {
       std::cout << "DEBUG: removing client, lstrecvlen="
                 << c.second->client.GetRaw()->GetLastRecvLen()
                 << ", isConnected=" << c.second->client.IsConnected() << "\n";
+	  c.second->client.SetDisconnected(true);
       c.second->client.Disconnect();
       c.second->is_active = false;
       //connected_players_--;

@@ -48,6 +48,7 @@ class EXPORT Server {
   short game_players_ = 0;
   long current_client_guid_ = 0;
   unsigned short max_players_ = 6;
+  std::string server = "SERVER";
 };
 
 }  // namespace Socket
