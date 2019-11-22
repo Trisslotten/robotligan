@@ -413,6 +413,7 @@ class CreateServerState : public State {
   ~CreateServerState();
   StateType Type() { return StateType::CREATE_SERVER; }
   bool started_ = false;
+
  private:
   glob::Font2DHandle font_test_ = 0;
   entt::registry registry_create_server_;

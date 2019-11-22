@@ -171,7 +171,7 @@ bool NetAPI::Socket::Server::Setup(unsigned short port,
   if (!setup_) {
     if (listener_.Bind(port)) {
       setup_ = true;
-	  std::cout << "Server bound at port: " << port << std::endl;
+      std::cout << "Server bound at port: " << port << std::endl;
     }
     client_data_.reserve(maxplayers);
     max_players_ = maxplayers;

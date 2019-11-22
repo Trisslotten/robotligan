@@ -1,4 +1,3 @@
-
 #include <glob/window.hpp>
 #include <GLFW/glfw3.h>
 #include "../ecs/components.hpp"

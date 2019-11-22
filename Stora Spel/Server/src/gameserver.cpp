@@ -137,19 +137,18 @@ void GameServer::Update(float dt) {
       }
     }
     server_.ClearPackets(client_data);
-	if (client_data->client.JustDiconnected())
-	{
-		NetAPI::Common::Packet to_send;
-		std::string message = "Client: " + client_names_[id] + " disconnected!";
-		to_send.Add(server_name_.c_str(), server_name_.size());
-		to_send << server_name_.size();
-		to_send.Add(message.c_str(), message.size());
-		to_send << message.size();
-		to_send << 255;
-		to_send << PacketBlockType::MESSAGE;
-		server_.SendToAll(to_send);
-		client_data->client.SetDisconnected(false);
-	}
+    if (client_data->client.JustDiconnected()) {
+      NetAPI::Common::Packet to_send;
+      std::string message = "Client: " + client_names_[id] + " disconnected!";
+      to_send.Add(server_name_.c_str(), server_name_.size());
+      to_send << server_name_.size();
+      to_send.Add(message.c_str(), message.size());
+      to_send << message.size();
+      to_send << 255;
+      to_send << PacketBlockType::MESSAGE;
+      server_.SendToAll(to_send);
+      client_data->client.SetDisconnected(false);
+    }
   }
   DoOncePerSecond();
   current_state_->Update(dt);
@@ -356,17 +355,14 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       packet.Remove(name.data(), len);
       if (client_names_[client_id] != name) {
         while (NameAlreadyExists(name)) {
-			if (name.find("(") != std::string::npos)
-			{
-				auto index = name.find("(");
-				unsigned s = (name.at(index + 1) - '0');
-				s++;
-				name.at(index + 1) = (char)s;
-		    }
-			else
-			{
-				name.append("(1)");
-			}
+          if (name.find("(") != std::string::npos) {
+            auto index = name.find("(");
+            unsigned s = (name.at(index + 1) - '0');
+            s++;
+            name.at(index + 1) = (char)s;
+          } else {
+            name.append("(1)");
+          }
         }
         client_names_[client_id] = name;
         lobby_state_.SetTeamsUpdated(true);
