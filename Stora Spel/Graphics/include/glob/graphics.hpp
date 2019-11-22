@@ -162,6 +162,8 @@ EXPORT void SetInvisibleEffect(bool in_bool);
 
 EXPORT void SetBlackout(bool blackout);
 
+EXPORT bool IsBlackoutActive();
+
 EXPORT void SetSky(const std::string& texture);
 
 EXPORT void AddSpotlight(glm::vec3 position, glm::mat4 transform);

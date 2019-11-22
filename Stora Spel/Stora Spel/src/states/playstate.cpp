@@ -1772,6 +1772,7 @@ void PlayState::CreateBallEntity() {
   registry_gameplay_.assign<IDComponent>(ball, ball_id_);
   registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
   registry_gameplay_.assign<physics::Sphere>(ball, glm::vec3(0.0f), 1.0f);
+  registry_gameplay_.assign<TargetComponent>(ball);
   AddLightToBall(registry_gameplay_, ball);
 
   registry_gameplay_.assign<TrailComponent>(ball);

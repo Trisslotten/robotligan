@@ -17,6 +17,7 @@ public:
   void Init(Engine* engine);
   void PlayAmbientSound(entt::registry& registry);
   slob::SoundEngine& GetSoundEngine() { return sound_engine_; }
+  void SetArenaScale(glm::vec3 scale);
   
   void ReceiveGameEvent(const GameEvent& event);
   void ReceiveMenuEvent(const MenuEvent& event);
@@ -29,6 +30,9 @@ private:
   std::unordered_map<AbilityID, slob::SoundHandle> ability_sounds_;
 
   slob::SoundEngine sound_engine_;
+
+  glm::vec3 arena_scale_;
+  slob::PlayingSound crowd_ambience_;
 
   slob::SoundHandle button_hover_;
   slob::SoundHandle button_click_;
@@ -52,6 +56,7 @@ private:
   slob::SoundHandle sound_player_stunned_;
   slob::SoundHandle sound_ability_mine_trigger_;
   slob::SoundHandle sound_fireworks_;
+  slob::SoundHandle sound_crowd_shocked_;
 
   Engine* engine_;
 };

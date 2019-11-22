@@ -420,6 +420,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetMyPrimaryAbility(ability_id);
       play_state_.SetTeam(team);
       play_state_.SetArenaScale(arena_scale);
+      sound_system_.SetArenaScale(arena_scale);
       packet >> num_team_ids;
       for (int i = 0; i < num_team_ids; i++) {
         long client_id;
@@ -1010,7 +1011,6 @@ void Engine::UpdateReplayCamera() {
       this->registry_replay_->view<TargetComponent, TransformComponent>();
 
   for (entt::entity target : target_view) {
-    TargetComponent& target_c = registry_replay_->get<TargetComponent>(target);
     TransformComponent& target_trans_c =
         registry_replay_->get<TransformComponent>(target);
 
