@@ -19,10 +19,11 @@
 #include "2D/elements2D.hpp"
 #include "Font/Font2D.hpp"
 #include "Model/model.hpp"
+#include "Model/rope.hpp"
 #include "Particles/particle_settings.hpp"
 #include "glob/camera.hpp"
 #include "glob/window.hpp"
-#include "material\material.hpp"
+#include "material/material.hpp"
 #include "particles/particle_system.hpp"
 #include "postprocess/blur.hpp"
 #include "postprocess/postprocess.hpp"
@@ -69,6 +70,7 @@ PostProcess post_process;
 Blur blur;
 Shadows shadows;
 Shockwaves shockwaves;
+Rope rope;
 
 bool blackout = false;
 
@@ -245,6 +247,22 @@ void CreateDefaultParticleTexture() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+  for (auto &p : data) {
+    if (p != 0.f) p = 1.0f;
+  }
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 128, 128, 0, GL_RGBA, GL_FLOAT,
+               data.data());
+
+  textures["circle"] = texture;
+
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
   data.clear();
   data.resize(2 * 2 * 4, 1.0f);
 
@@ -322,6 +340,10 @@ void Init() {
   compute_shaders["dust"] = std::make_unique<ShaderProgram>();
   compute_shaders["dust"]->add("Particle compute shaders/dust.comp");
   compute_shaders["dust"]->compile();
+
+  compute_shaders["firework"] = std::make_unique<ShaderProgram>();
+  compute_shaders["firework"]->add("Particle compute shaders/firework.comp");
+  compute_shaders["firework"]->compile();
 
   CreateDefaultParticleTexture();
   textures["smoke"] = TextureFromFile("smoke.png");
@@ -480,10 +502,11 @@ void Init() {
   post_process.Init(blur);
   shadows.Init(blur);
   ssao.Init(blur);
+  rope.Init();
 
   buffer_particle_systems.reserve(10);
 
-  SetSky("assets/texture/nightsky.png");
+  SetSky("assets/texture/sky1k.png");
 
   // glEnable(GL_RASTERIZER_DISCARD);
 }
@@ -656,6 +679,12 @@ ParticleSettings ProccessMap(
       ss >> val;
 
       ps.number_of_bursts = val;
+    } else if (it.first == "emissive") {
+      std::stringstream ss(it.second);
+      bool emissive;
+      ss >> emissive;
+
+      ps.emissive = emissive;
     } else if (it.first == "texture") {
       std::string texture;
       std::stringstream ss(it.second);
@@ -1278,6 +1307,10 @@ void CreateShockwave(glm::vec3 position, float duration, float size) {
   shockwaves.Create(position, duration, size);
 }
 
+void SubmitRope(glm::vec3 start, glm::vec3 end) {
+  rope.Submit(start, end);
+}
+
 void SubmitCube(glm::mat4 t) { cubes.push_back(t); }
 
 void SubmitWireframeMesh(ModelHandle model_h) {
@@ -1436,6 +1469,8 @@ void Render() {
       SetDefaultMaterials(animated_model_shader);
       BARI.model->Draw(animated_model_shader);
     }
+    rope.Draw(cam_transform);
+
 
     // render wireframe cubes
     for (auto &m : cubes) DrawCube(m);

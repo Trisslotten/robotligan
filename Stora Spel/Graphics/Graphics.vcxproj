@@ -198,6 +198,7 @@
     <ClInclude Include="include\glob\mesh_data.hpp" />
     <ClInclude Include="src\material\material.hpp" />
     <ClInclude Include="src\Model\modelconfig.hpp" />
+    <ClInclude Include="src\Model\rope.hpp" />
     <ClInclude Include="src\Particles\particle_settings.hpp" />
     <ClInclude Include="src\Particles\particle_system.hpp" />
     <ClInclude Include="src\postprocess\blur.hpp" />
@@ -225,6 +226,7 @@
     <ClCompile Include="src\graphics.cpp" />
     <ClCompile Include="src\material\material.cpp" />
     <ClCompile Include="src\Model\modelconfig.cpp" />
+    <ClCompile Include="src\Model\rope.cpp" />
     <ClCompile Include="src\postprocess\blur.cpp" />
     <ClCompile Include="src\Particles\particle_system.cpp" />
     <ClCompile Include="src\postprocess\postprocess.cpp" />

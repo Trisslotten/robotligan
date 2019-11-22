@@ -19,6 +19,7 @@ class Engine;
 enum class StateType {
   MAIN_MENU,
   CONNECT_MENU,
+  CREATE_SERVER,
   LOBBY,
   PLAY,
   SETTINGS,
@@ -209,7 +210,13 @@ class SettingsState : public State {
 /////////////////////// PLAY ///////////////////////
 
 class PlayState : public State {
-  enum JumbotronEffect { TEAM_SCORES, MATCH_TIME, BEST_PLAYER, GOAL_SCORED, NUM_EFFECTS };
+  enum JumbotronEffect {
+    TEAM_SCORES,
+    MATCH_TIME,
+    BEST_PLAYER,
+    GOAL_SCORED,
+    NUM_EFFECTS
+  };
 
  public:
   void Startup() override;
@@ -240,6 +247,8 @@ class PlayState : public State {
   void CreateForcePushObject(EntityID id, glm::vec3 pos, glm::quat ori);
   void CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori);
   void CreateBlackHoleObject(EntityID id, glm::vec3 pos, glm::quat ori);
+  void CreateMineObject(unsigned int owner_team, EntityID mine_id,
+                        glm::vec3 pos);
   void DestroyEntity(EntityID id);
   void SwitchGoals();
   void SetMyPrimaryAbility(int id) { my_primary_ability_id = id; }
@@ -315,7 +324,7 @@ class PlayState : public State {
   void MovePlayer(float dt);
   void MoveBall(float dt);
   void Collision();
-  
+
   unsigned long GetBestPlayer();
 
   EntityID ClientIDToEntityID(long client_id);
@@ -395,4 +404,23 @@ class PlayState : public State {
   float my_stun_time_;
 };
 
+class CreateServerState : public State {
+ public:
+  void Startup() override;
+  void Init() override;
+  void Update(float dt) override;
+  void UpdateNetwork() override;
+  void Cleanup() override;
+  StateType Type() { return StateType::CREATE_SERVER; }
+  bool started_ = false;
+
+ private:
+  glob::Font2DHandle font_test_ = 0;
+  entt::registry registry_create_server_;
+  glob::GUIHandle bg_ = 0;
+  std::string ip_ = "";
+  std::string port_ = "1337";
+  std::string max_players_ = "6";
+  void CreateServer();
+};
 #endif  // STATE_HPP_
