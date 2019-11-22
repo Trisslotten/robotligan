@@ -85,11 +85,11 @@ void main() {
 
 	if(stunned != 0) 
 	{
-		n.x = 0.01*noise(20*time + 0.01);
+		n.x = 0.02*noise(40*time + 0.02);
 		noise_color.r = rand(gl_FragCoord.xy + time);
 		noise_color.g = rand(gl_FragCoord.xy + 1000 + time);
 		noise_color.b = rand(gl_FragCoord.xy + 2000 + time);
-		t = 0.2;
+		t = 0.20;
 	}
 	vec3 color;
 	color.r = calcColor(uv + n).r;
