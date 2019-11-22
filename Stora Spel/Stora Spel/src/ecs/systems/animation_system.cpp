@@ -212,6 +212,14 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
         ac.init = false;
       }
 
+      if (pl.can_smash && !pl.started_smash) {
+        PlayAnimation("ReadyKick", 1.f, &ac, 15, 1.f, LOOP);
+        pl.started_smash = true;
+      }
+      if (!pl.can_smash && pl.started_smash) {
+        StopAnimation("ReadyKick", &ac);
+        pl.started_smash = false;
+	  }
     } else {
       if (ac.init) {
         PlayAnimation("Resting", 0.5f, &ac, 10, 1.f, LOOP);

@@ -99,17 +99,22 @@ EXPORT void SubmitLightSource(glm::vec3 pos, glm::vec3 color,
 // Submit Bone Animated Mesh
 EXPORT void SubmitBAM(ModelHandle model_h, glm::mat4 transform,
                       std::vector<glm::mat4> bone_transforms,
-                      int material_index = 0, bool cast_shadow = true);
+                      int material_index = 0,
+                      bool cast_shadow = true, float emissive_strength = 1.0f);
 EXPORT void SubmitBAM(const std::vector<ModelHandle>& handles,
                       glm::mat4 transform,
                       std::vector<glm::mat4> bone_transforms,
-                      int material_index = 0, bool cast_shadow = true);
+                      int material_index = 0,
+                      bool cast_shadow = true, float emissive_strength = 1.0f);
 EXPORT void Submit(ModelHandle model_h, glm::vec3 pos, int material_index = 0,
-                   bool cast_shadow = true);
+                   bool cast_shadow = true,
+                   float emissive_strength = 1.0f);
 EXPORT void Submit(ModelHandle model_h, glm::mat4 transform,
-                   int material_index = 0, bool cast_shadow = true);
+                   int material_index = 0,
+                   bool cast_shadow = true, float emissive_strength = 1.0f);
 EXPORT void Submit(const std::vector<ModelHandle>& handles, glm::mat4 transform,
-                   int material_index = 0, bool cast_shadow = true);
+                   int material_index = 0,
+                   bool cast_shadow = true, float emissive_strength = 1.0f);
 EXPORT void SubmitParticles(ParticleSystemHandle handle);
 EXPORT void SubmitCube(glm::mat4 t);
 EXPORT void SubmitWireframeMesh(ModelHandle model_h);
@@ -131,7 +136,7 @@ EXPORT void Submit(Font2DHandle font_h, glm::vec3 pos, float size,
                    glm::mat4 rot = glm::mat4(1.0f));
 
 EXPORT void Submit(GUIHandle gui_h, glm::vec2 pos, float scale,
-                   float scale_x = 100.0f, float opacity = 1.0f);
+                   float scale_x = 100.0f, float opacity = 1.0f, float rot = 0.0f);
 EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale,
                    float rotDegrees, glm::vec3 rotAxis);
 
@@ -139,6 +144,10 @@ EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, glm::mat4 matrix);
 
 EXPORT void SubmitTrail(const std::vector<glm::vec3>& pos_history, float width,
                         glm::vec4 color);
+
+EXPORT void CreateShockwave(glm::vec3 position, float duration, float size);
+
+EXPORT void SubmitRope(glm::vec3 start, glm::vec3 end);
 
 EXPORT Camera& GetCamera();
 EXPORT void SetCamera(Camera camera);
@@ -156,6 +165,7 @@ EXPORT void SetBlackout(bool blackout);
 EXPORT void SetSky(const std::string& texture);
 
 EXPORT void AddSpotlight(glm::vec3 position, glm::mat4 transform);
+
 
 /*
  * Render all items submitted this frame

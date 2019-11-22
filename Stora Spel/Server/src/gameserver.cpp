@@ -1,10 +1,10 @@
 #include "gameserver.hpp"
-
 #include <algorithm>
 #include <bitset>
 #include <glob/graphics.hpp>
 #include <iostream>
 #include <numeric>
+#include <filesystem>
 
 #include "shared/id_component.hpp"
 #include "shared/pick_up_component.hpp"
@@ -22,22 +22,26 @@
 #include "ecs/systems/player_controller_system.hpp"
 #include "ecs/systems/target_system.hpp"
 #include "ecs/systems/pickup_spawner_system.hpp"
-
+#include "util/settings.hpp"
+#include "util/winadpihelpers.hpp"
 namespace {}  // namespace
 
 GameServer::~GameServer() {}
 
-void GameServer::Init(double in_update_rate) {
+void GameServer::Init(double in_update_rate,
+                      std::unordered_map<std::string, std::string>& args) {
   glob::SetModelUseGL(false);
 
-  server_.Setup(1337);
+  server_.Setup(std::stoi(args["PORT"]), std::stoi(args["MPLAYERS"]));
+  std::cout << "Filesystem: Working dir = " << std::filesystem::path()
+            << std::endl;
 
   lobby_state_.SetGameServer(this);
   play_state_.SetGameServer(this);
   lobby_state_.Init();
   current_state_ = &lobby_state_;
   srand(time(NULL));
-  pings_.resize(NetAPI::Common::kMaxPlayers);
+  pings_.resize(std::stoi(args["MPLAYERS"]));
 
   // very annoying thing
   ability_cooldowns_[AbilityID::BUILD_WALL] =
@@ -62,6 +66,8 @@ void GameServer::Init(double in_update_rate) {
       GlobalSettings::Access()->ValueOf("ABILITY_TELEPORT_COOLDOWN");
   ability_cooldowns_[AbilityID::BLACKOUT] =
       GlobalSettings::Access()->ValueOf("ABILITY_BLACKOUT_COOLDOWN");
+  ability_cooldowns_[AbilityID::MINE] =
+      GlobalSettings::Access()->ValueOf("ABILITY_MINE_COOLDOWN");
 
   ability_controller::ability_cooldowns = ability_cooldowns_;
 
@@ -406,7 +412,7 @@ void GameServer::DoOncePerSecond() {
   NetAPI::Common::Packet p;
   p.GetHeader()->receiver = NetAPI::Socket::EVERYONE;
   auto& data = server_.GetClients();
-  pings_.resize(NetAPI::Common::kMaxPlayers);
+  pings_.resize(kMaxPlayers);
   for (auto cli : data) {
     pings_[cli.first] = cli.second->ping_sum;
   }

@@ -12,8 +12,7 @@ void ConnectMenuState::Startup() {
   // PLAY BUTTON - change registry to registry_gameplay_
   ButtonComponent* b_c = GenerateButtonEntity(
       registry_connect_menu_, "CONNECT",
-      glm::vec2(dim.x / 2.0f - 90, dim.y / 2.0f - 110),
-      font_test_);
+      glm::vec2(dim.x / 2.0f - 90, dim.y / 2.0f - 110), font_test_);
   b_c->button_func = [&]() {
     if ((ip_.length() > 0) && (port_.length() > 0)) {
       client.Disconnect();

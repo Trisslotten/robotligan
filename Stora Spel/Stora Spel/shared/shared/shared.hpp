@@ -82,12 +82,14 @@ enum : int16_t {
   SERVER_CAN_JOIN,
   CREATE_BALL,
   CREATE_FAKE_BALL,
+  CREATE_MINE,
   SERVER_STATE,
   MY_NAME,
   HWID,
   PLAYER_LOOK_DIR,
   PLAYER_MOVE_DIR,
   TO_CLIENT_NAME,
+  YOU_CAN_SMASH,
   NUM_BLOCK_TYPES,
 };
 
@@ -106,6 +108,7 @@ enum class AbilityID {
   SWITCH_GOALS,
   TELEPORT,
   BLACKOUT,
+  MINE,
   // Fill with more abilities and passive boosts
   NUM_OF_ABILITY_IDS
 };
@@ -144,6 +147,8 @@ struct GameEvent {
     BLACKOUT_CAST,
     BLACKOUT_TRIGGER,
     BLACKOUT_END,
+    MINE_PLACE,
+    MINE_TRIGGER,
     SPRINT_START,
     SPRINT_END,
     RUN_START,
@@ -152,6 +157,7 @@ struct GameEvent {
     PRIMARY_USED,
     SECONDARY_USED,
     PICKUP_SPAWNED,
+	PLAYER_STUNNED,
     NUM_EVENTS
   } type;
   union {
@@ -218,6 +224,7 @@ struct GameEvent {
     // Ability Super Kick
     struct {
       EntityID player_id;
+      EntityID ball_id;
     } super_kick;
 
     // Ability Homing Ball
@@ -281,6 +288,17 @@ struct GameEvent {
     struct {
     } blackout_end;
 
+    // Ability Mine Place
+    struct {
+      EntityID entity_id;
+    } mine_place;
+
+    // Ability Mine Trigger
+    struct {
+      EntityID entity_id;
+      EntityID player_id;
+    } mine_trigger;
+
     // Player Sprint start
     struct {
       EntityID player_id;
@@ -324,6 +342,10 @@ struct GameEvent {
     struct {
       EntityID pickup_id;
     } pickup_spawned;
+    struct {
+      EntityID player_id;
+      float stun_time;
+    } player_stunned;
   };
 };
 

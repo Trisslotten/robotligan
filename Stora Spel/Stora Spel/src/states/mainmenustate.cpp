@@ -56,23 +56,30 @@ void MainMenuState::CreateMainMenu() {
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
 
   // PLAY BUTTON - change registry to registry_gameplay_
-  ButtonComponent* b_c = GenerateButtonEntity(registry_mainmenu_, "PLAY",
-                                              glm::vec2(100, 260), font_test_);
+  ButtonComponent* b_c = GenerateButtonEntity(registry_mainmenu_, "JOIN SERVER",
+                                              glm::vec2(100, 290), font_test_);
   b_c->button_func = [&]() { engine_->ChangeState(StateType::CONNECT_MENU); };
+
+  // Create Server
+  b_c = GenerateButtonEntity(registry_mainmenu_, "CREATE SERVER",
+	  glm::vec2(100, 230), font_test_);
+  b_c->button_func = [&]() {
+	  engine_->ChangeState(StateType::CREATE_SERVER);
+  };
 
   // SETTINGS BUTTON - change registry to registry_settings_
   b_c = GenerateButtonEntity(registry_mainmenu_, "SETTINGS",
-                             glm::vec2(100, 200), font_test_);
+                             glm::vec2(100, 170), font_test_);
   b_c->button_func = [&]() { engine_->ChangeState(StateType::SETTINGS); };
 
   b_c = GenerateButtonEntity(registry_mainmenu_, "INFORMATION",
-                             glm::vec2(100, 140), font_test_);
+                             glm::vec2(100, 110), font_test_);
   b_c->button_func = [&]() {
     engine_->SetCurrentRegistry(&registry_information_);
   };
 
   // EXIT BUTTON - close the game
-  b_c = GenerateButtonEntity(registry_mainmenu_, "EXIT", glm::vec2(100, 80),
+  b_c = GenerateButtonEntity(registry_mainmenu_, "EXIT", glm::vec2(100, 50),
                              font_test_);
   b_c->button_func = [&]() { exit(0); };
 }
@@ -91,7 +98,7 @@ void MainMenuState::CreateBackgroundEnitites() {
 
   auto light_test = registry_mainmenu_.create();  // Get from engine
   registry_mainmenu_.assign<LightComponent>(light_test, glm::vec3(0.05f), 30.f,
-                                            0.2f);
+                                            0.1f);
   registry_mainmenu_.assign<TransformComponent>(
       light_test, glm::vec3(0.f, 16.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
@@ -100,7 +107,7 @@ void MainMenuState::CreateBackgroundEnitites() {
 
   auto light_test2 = registry_mainmenu_.create();  // Get from engine
   registry_mainmenu_.assign<LightComponent>(
-      light_test2, glm::vec3(1.f, 1.f, 1.0f), 50.f, 0.2f);
+      light_test2, glm::vec3(1.f, 1.f, 1.0f), 50.f, 0.1f);
   registry_mainmenu_.assign<TransformComponent>(
       light_test2, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
@@ -132,7 +139,7 @@ void MainMenuState::CreateBackgroundEnitites() {
   }
   {
     glm::vec3 zero_vec = glm::vec3(0.0f);
-    glm::vec3 arena_scale = glm::vec3(2.6f);
+    glm::vec3 arena_scale = glm::vec3(1.f);
     auto arena = registry_mainmenu_.create();
     glob::ModelHandle model_map_walls =
         glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");

@@ -136,6 +136,7 @@ class ServerPlayState : public ServerState {
 
   std::vector<entt::entity> created_pick_ups_;
   std::vector<entt::entity> created_walls_;
+  std::vector<entt::entity> created_mines_;
 
   EntityID entity_guid_ = 0;
 

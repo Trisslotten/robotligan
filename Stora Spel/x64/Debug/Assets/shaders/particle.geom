@@ -45,7 +45,7 @@ void main()
 
 		//up = (rotate * vec4(up, 0)).xyz;
 		//right = (rotate * vec4(right, 0)).xyz;
-		if (g_pos[0].y == -11.0) {
+		if (g_pos[0].y == 0.1) {
 			up = vec3(1,0.2,0) * g_size[0];
 			right = vec3(0,0.2,1) * g_size[0];
 		}

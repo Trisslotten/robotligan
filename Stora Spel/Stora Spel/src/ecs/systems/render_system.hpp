@@ -36,7 +36,7 @@ void RenderSystem(entt::registry& registry) {
       if (!m.invisible) {
         glob::Submit(m.handles,
           glm::translate(t.position) * glm::toMat4(t.rotation) *
-          glm::translate(-m.offset) * glm::scale(t.scale), m.diffuse_index, m.cast_shadow);
+          glm::translate(-m.offset) * glm::scale(t.scale*0.01f), m.diffuse_index, m.cast_shadow, m.emission_strength);
       }
     }
   }
@@ -53,7 +53,7 @@ void RenderSystem(entt::registry& registry) {
         glm::translate(t.position) *
         glm::toMat4(t.rotation + m.rot_offset) *
         glm::translate(-m.offset) * glm::scale(t.scale),
-        a.bone_transforms, m.diffuse_index, m.cast_shadow);
+        a.bone_transforms, m.diffuse_index, m.cast_shadow, m.emission_strength);
     }
   }
 
@@ -127,10 +127,10 @@ void RenderSystem(entt::registry& registry) {
                    button_c.text, button_c.text_current_color);
       
       if (button_c.gui_handle_current) {
-        glob::Submit(button_c.gui_handle_current, button_pos, 1.f);
+        glob::Submit(button_c.gui_handle_current, button_pos, 0.66f); // 720p
 
         if (button_c.gui_handle_icon) {
-          glob::Submit(button_c.gui_handle_icon, button_pos, 1.f);
+          glob::Submit(button_c.gui_handle_icon, button_pos, 0.66f); // 720p
         }
       }
       if (button_c.has_hovered) {

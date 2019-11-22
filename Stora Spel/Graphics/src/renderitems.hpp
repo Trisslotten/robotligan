@@ -16,6 +16,7 @@ namespace glob {
 struct RenderItem {
   Model *model = nullptr;
   glm::mat4 transform;
+  float emission_strength;
 
   int material_index = 0;
   bool cast_shadow = true;
@@ -27,6 +28,7 @@ struct GUIItem {
   float scale;
   float scale_x;
   float opacity;
+  float rot;
 };
 
 struct E2DItem {
@@ -42,6 +44,7 @@ struct BoneAnimatedRenderItem {
   std::vector<glm::mat4>
       bone_transforms;  // may be a performance bottleneck, pointer instead?
   int numBones;
+  float emission_strength;
 
   int material_index = 0;
   bool cast_shadow = true;

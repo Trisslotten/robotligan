@@ -98,7 +98,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>DXGI.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DXGI.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -114,7 +114,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>DXGI.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DXGI.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -132,7 +132,7 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>DXGI.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DXGI.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -151,7 +151,7 @@
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>DXGI.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>DXGI.lib;Iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -165,6 +165,7 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\states\connectmenustate.cpp" />
     <ClCompile Include="src\client replay machine\client_replay_machine.cpp" />
+    <ClCompile Include="src\states\createserverstate.cpp" />
     <ClCompile Include="src\states\lobbystate.cpp" />
     <ClCompile Include="src\states\mainmenustate.cpp" />
     <ClCompile Include="src\states\playstate.cpp" />
@@ -185,6 +186,7 @@
     <ClInclude Include="shared\shared\bit_pack.hpp" />
     <ClInclude Include="shared\shared\fail_safe_arena.hpp" />
     <ClInclude Include="shared\shared\lifetime_component.hpp" />
+    <ClInclude Include="shared\shared\mine_component.hpp" />
     <ClInclude Include="shared\shared\physics_component.hpp" />
     <ClInclude Include="shared\shared\pick_up_component.hpp" />
     <ClInclude Include="shared\shared\projectile_component.hpp" />
@@ -195,6 +197,7 @@
     <ClInclude Include="src\ecs\components.hpp" />
     <ClInclude Include="src\ecs\components\animation_component.hpp" />
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
+    <ClInclude Include="src\ecs\components\skylight_component.hpp" />
     <ClInclude Include="src\ecs\components\button_component.hpp" />
     <ClInclude Include="src\ecs\components\fireworks_component.hpp" />
     <ClInclude Include="src\ecs\components\input_component.hpp" />
@@ -242,9 +245,11 @@
     <ClInclude Include="Entt systems\player_controller_system.hpp" />
     <ClInclude Include="Entt systems\ability_controller_system.hpp" />
     <ClInclude Include="Entt systems\print_position_system.hpp" />
+    <ClInclude Include="src\ecs\systems\skylight_system.hpp" />
     <ClInclude Include="src\ecs\systems\trail_system.hpp" />
     <ClInclude Include="src\util\asset_paths.hpp" />
     <ClInclude Include="src\util\debugoverlay.hpp" />
+    <ClInclude Include="src\util\winadpihelpers.hpp" />
     <ClInclude Include="util\global_settings.hpp" />
     <ClInclude Include="util\input.hpp" />
     <ClInclude Include="src\ecs\systems\sound_system.hpp" />
@@ -296,6 +301,7 @@
     <None Include="Assets\shaders\Particle compute shaders\dust.comp" />
     <None Include="Assets\shaders\Particle compute shaders\firework.comp" />
     <None Include="Assets\shaders\particle.geom" />
+    <None Include="Assets\shaders\rope.vert" />
     <None Include="Assets\shaders\shading.frag" />
     <None Include="Assets\shaders\fullscreenquad.frag" />
     <None Include="Assets\shaders\fullscreenquad.vert" />
@@ -312,6 +318,7 @@
     <None Include="Assets\shaders\text3Dshader.vert" />
     <None Include="Assets\shaders\trail.frag" />
     <None Include="Assets\shaders\trail.vert" />
+    <None Include="Assets\shaders\rope.frag" />
     <None Include="Assets\shaders\wireframe.frag" />
     <None Include="shaders\testshader.frag" />
     <None Include="shaders\testshader.vert" />

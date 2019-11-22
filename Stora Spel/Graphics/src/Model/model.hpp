@@ -17,13 +17,13 @@ namespace glob {
 
 class Model {
  private:
-  Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
+  Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene, glm::mat4 transform);
 
   GLint TextureFromFile(const char* path, std::string directory,
                         aiTextureType type);
 
   void LoadModel(std::string path);
-  void ProcessNode(aiNode* node, const aiScene* scene);
+  void ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parent_transform = glm::identity<glm::mat4>());
   std::string PrintArmature(Joint parent, int depth);
   Joint* MakeArmature(aiNode* node);
 

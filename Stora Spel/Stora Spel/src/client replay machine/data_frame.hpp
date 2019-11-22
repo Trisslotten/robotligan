@@ -207,4 +207,22 @@ class ForcePushFrame : public DataFrame {
   bool ThresholdCheck(DataFrame& in_future_df);
   void WriteBack(TransformComponent& trans_c);
 };
+
+//-----Mines---------------
+class MineFrame : public DataFrame {
+ protected:
+  glm::vec3 position_;
+
+ public:
+  MineFrame();
+  MineFrame(TransformComponent& trans_c);
+  ~MineFrame();
+
+  DataFrame* Clone();
+  DataFrame* InterpolateForward(unsigned int in_dist_to_target,
+                                unsigned int in_dist_to_point_b,
+                                DataFrame& in_point_b);
+  bool ThresholdCheck(DataFrame& in_future_df);
+  void WriteBack(TransformComponent& trans_c);
+};
 #endif  // DATA_FRAME_HPP_

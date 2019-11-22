@@ -14,7 +14,7 @@
 
 namespace glob {
 
-Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
+Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, glm::mat4 transform) {
   std::vector<Vertex> vertex;
   std::vector<GLuint> indices;
   std::vector<Texture> textures;
@@ -175,7 +175,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene) {
     return Mesh(vertex, indices, textures, weights, boneIndex);
   }
 
-  return Mesh(vertex, indices, textures);
+  return Mesh(vertex, indices, textures, transform);
 }
 
 GLint Model::TextureFromFile(const char* path, std::string directory,
@@ -207,8 +207,8 @@ GLint Model::TextureFromFile(const char* path, std::string directory,
 
   // Set some parameters for the texture
   glBindTexture(GL_TEXTURE_2D, texture_id);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -381,15 +381,16 @@ Joint* Model::MakeArmature(aiNode* node) {
 }
 
 // TODO: check if node transform fixes up-vector from blender export
-void Model::ProcessNode(aiNode* node, const aiScene* scene) {
+void Model::ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parent_transform) {
+  glm::mat4 transform = parent_transform * AssToGLM::ConvertToGLM4x4(node->mTransformation);
   // Process all the nodes meshes
   for (unsigned int i = 0; i < node->mNumMeshes; i++) {
     aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-    mesh_.push_back(ProcessMesh(mesh, scene));
+    mesh_.push_back(ProcessMesh(mesh, scene, transform));
   }
   // Then process nodes children
   for (unsigned int i = 0; i < node->mNumChildren; i++) {
-    ProcessNode(node->mChildren[i], scene);
+    ProcessNode(node->mChildren[i], scene, transform);
   }
 }
 
@@ -457,8 +458,10 @@ float Model::MaxDistance(glm::mat4 transform, glm::vec3 point) {
   float result = 0.f;
   for (int i = 0; i < mesh_.size(); i++) {
     MeshData temp = mesh_[i].GetMeshData();
+    glm::mat4 mesh_trans = mesh_[i].GetTransform();
+    glm::mat4 curr_transform = transform * mesh_trans;
     for (auto pos : temp.pos) {
-      glm::vec3 transformed = transform * glm::vec4(pos, 1);
+      glm::vec3 transformed = curr_transform * glm::vec4(pos, 1);
       int len = length(point - transformed);
       if (len > result) {
         result = len;
