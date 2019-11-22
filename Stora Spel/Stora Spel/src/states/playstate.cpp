@@ -121,7 +121,6 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
   registry.assign<ParticleComponent>(e, handles, offsets, directions);
   registry.assign<TimerComponent>(e, 5.f);
 
-
   e = registry_gameplay_.create();
   registry_gameplay_.assign<TimerComponent>(e, 2.0f);
   std::vector<glm::vec4> colors = {glm::vec4(1.f, 1.f, 0.f, 1.f),
@@ -1799,7 +1798,7 @@ void PlayState::CreateSpotlights() {
     auto entity = registry_gameplay_.create();
     ModelComponent& model_c = registry_gameplay_.assign<ModelComponent>(entity);
     glob::ModelHandle m_hndl = glob::GetModel("assets/Spotlight/Spotlight.fbx");
-    //model_c.handles.push_back(m_hndl);
+    // model_c.handles.push_back(m_hndl);
     TransformComponent& trans_c =
         registry_gameplay_.assign<TransformComponent>(entity);
     trans_c.position = temp_pos;
@@ -2127,9 +2126,11 @@ void PlayState::CreateMineObject(unsigned int owner_team, EntityID mine_id,
   glob::ModelHandle model_mine =
       glob::GetModel(kModelPathMine);  // Switch to mine model
 
-  ModelComponent& model_c =
-      registry_gameplay_.assign<ModelComponent>(mine_object);
-  model_c.handles.push_back(model_mine);
+  if (owner_team == my_team_) {
+    ModelComponent& model_c =
+        registry_gameplay_.assign<ModelComponent>(mine_object);
+    model_c.handles.push_back(model_mine);
+  }
   registry_gameplay_.assign<IDComponent>(mine_object, mine_id);
   registry_gameplay_.assign<TransformComponent>(mine_object, pos);
   registry_gameplay_.assign<MineComponent>(mine_object, owner_team);
