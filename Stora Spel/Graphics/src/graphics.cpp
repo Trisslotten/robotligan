@@ -32,6 +32,7 @@
 #include "renderitems.hpp"
 #include "shader.hpp"
 #include "shadows/shadows.hpp"
+#include <postprocess\blackholes.hpp>
 
 namespace glob {
 
@@ -70,6 +71,7 @@ PostProcess post_process;
 Blur blur;
 Shadows shadows;
 Shockwaves shockwaves;
+BlackHoles blackholes;
 Rope rope;
 
 bool blackout = false;
@@ -507,6 +509,8 @@ void Init() {
   buffer_particle_systems.reserve(10);
 
   SetSky("assets/texture/sky1k.png");
+
+  blackholes.Create(glm::vec3(30, 5, 0));
 
   // glEnable(GL_RASTERIZER_DISCARD);
 }
@@ -1564,6 +1568,7 @@ void Render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   shockwaves.Update(camera);
+  blackholes.Update(camera);
 
   fullscreen_shader.use();
   post_process.BindColorTex(0);
@@ -1576,6 +1581,7 @@ void Render() {
   fullscreen_shader.uniform("use_ao", use_ao);
   fullscreen_shader.uniform("resolution", ws);
   shockwaves.SetUniforms(fullscreen_shader);
+  blackholes.SetUniforms(fullscreen_shader);
   DrawFullscreenQuad();
 
   glBindVertexArray(quad_vao);
