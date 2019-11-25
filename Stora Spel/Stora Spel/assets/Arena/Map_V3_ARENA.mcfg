@@ -1,0 +1,5 @@
+w normal_map assets/materials/metalgrid3_normal-dx.png
+f normal_map_scale 50
+
+#w metallic_map assets/materials/Painted_metal_02_2K_Metallic.png
+#f metallic_map_scale 10
