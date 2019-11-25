@@ -13,6 +13,7 @@
 
 #include "ecs/components.hpp"
 #include "ecs/systems/ability_controller_system.hpp"
+#include "ecs/systems/black_hole_system.hpp"
 #include "ecs/systems/buff_controller_system.hpp"
 #include "ecs/systems/collision_system.hpp"
 #include "ecs/systems/goal_system.hpp"
@@ -395,6 +396,7 @@ void GameServer::UpdateSystems(float dt) {
   buff_controller::Update(registry_, dt);
   target_system::Update(registry_);
   missile_system::Update(registry_, dt);
+  black_hole::Update(registry_, dt);
 
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);

@@ -1112,6 +1112,19 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       registry.get<PickupSpawnerComponent>(spawner).spawned_id = id;
       break;
     }
+    case Event::CREATE_BLACK_HOLE: {
+      auto& registry = game_server_->GetRegistry();
+      Projectile projectile;
+      projectile.entity_id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, projectile.entity_id);
+      projectile.projectile_id = ProjectileID::BLACK_HOLE;
+      auto& trans_c = registry.get<TransformComponent>(e.entity);
+      projectile.pos = trans_c.position;
+      projectile.ori = trans_c.rotation;
+      created_projectiles_.push_back(projectile);
+
+      break;
+	}
     default:
       break;
   }

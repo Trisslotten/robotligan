@@ -153,6 +153,7 @@
     <None Include="Assets\shaders\rope.vert" />
     <None Include="Assets\shaders\rope.frag" />
     <None Include="Assets\shaders\Particle compute shaders\firework.comp" />
+    <None Include="Assets\shaders\Particle compute shaders\black_hole.comp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />
