@@ -2528,13 +2528,12 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
     }
     case GameEvent::BLACKOUT_TRIGGER: {
       glob::SetBlackout(true);
-      auto registry = engine_->GetCurrentRegistry();
-      auto view_controller = registry->view<LightComponent>();
+      auto view_controller = correct_registry->view<LightComponent>();
       for (auto entity : view_controller) {
         LightComponent& light_c = view_controller.get(entity);
 
         // Turn off all light sources affected by blackout
-        if (!registry->has<BallComponent>(entity) &&
+        if (!correct_registry->has<BallComponent>(entity) &&
             (entity != red_goal_light_ && entity != blue_goal_light_)) {
           light_c.blackout = true;
         }
@@ -2543,8 +2542,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
     }
     case GameEvent::BLACKOUT_END: {
       glob::SetBlackout(false);
-      auto registry = engine_->GetCurrentRegistry();
-      auto view_controller = registry->view<LightComponent>();
+      auto view_controller = correct_registry->view<LightComponent>();
       for (auto entity : view_controller) {
         LightComponent& light_c = view_controller.get(entity);
 
@@ -2671,8 +2669,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       break;
     }
     case GameEvent::BLACK_HOLE_ACTIVATED: {
-      auto registry = engine_->GetCurrentRegistry();
-      auto view_controller = registry->view<IDComponent, TransformComponent>();
+      auto view_controller = correct_registry->view<IDComponent, TransformComponent>();
 
       for (auto proj_ent : view_controller) {
         auto& id_c = view_controller.get<IDComponent>(proj_ent);
@@ -2688,7 +2685,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           glob::SetParticleSettings(handle, "black_hole.txt");
           std::vector<glm::vec3> offsets = {glm::vec3(0.0f)};
           std::vector<glm::vec3> directions = {glm::vec3(0.0f)};
-          registry->assign<ParticleComponent>(proj_ent, handles, offsets,
+          correct_registry->assign<ParticleComponent>(proj_ent, handles, offsets,
                                               directions);
           break;
         }
