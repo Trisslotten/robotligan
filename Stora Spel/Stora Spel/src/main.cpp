@@ -44,7 +44,7 @@ int main(unsigned argc, char** argv) {
 
   Timer frame_timer;
   float dt = 1.f / 60.f;
-  while (!glob::window::ShouldClose()) {
+  while (!glob::window::ShouldClose() && !engine.should_quit) {
     debug_overlay.BeforeEngineUpdate();
     engine.Update(dt);
     debug_overlay.AfterEngineUpdate();

@@ -13,6 +13,7 @@
 
 #include "ecs/components.hpp"
 #include "ecs/systems/ability_controller_system.hpp"
+#include "ecs/systems/black_hole_system.hpp"
 #include "ecs/systems/buff_controller_system.hpp"
 #include "ecs/systems/collision_system.hpp"
 #include "ecs/systems/goal_system.hpp"
@@ -42,7 +43,6 @@ void GameServer::Init(double in_update_rate,
   current_state_ = &lobby_state_;
   srand(time(NULL));
   pings_.resize(std::stoi(args["MPLAYERS"]));
-
   // very annoying thing
   ability_cooldowns_[AbilityID::BUILD_WALL] =
       GlobalSettings::Access()->ValueOf("ABILITY_BUILD_WALL_COOLDOWN");
@@ -138,6 +138,18 @@ void GameServer::Update(float dt) {
       }
     }
     server_.ClearPackets(client_data);
+    if (client_data->client.JustDiconnected()) {
+      NetAPI::Common::Packet to_send;
+      std::string message = "Client: " + client_names_[id] + " disconnected!";
+      to_send.Add(server_name_.c_str(), server_name_.size());
+      to_send << server_name_.size();
+      to_send.Add(message.c_str(), message.size());
+      to_send << message.size();
+      to_send << 255;
+      to_send << PacketBlockType::MESSAGE;
+      server_.SendToAll(to_send);
+      client_data->client.SetDisconnected(false);
+    }
   }
   DoOncePerSecond();
   current_state_->Update(dt);
@@ -344,7 +356,14 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       packet.Remove(name.data(), len);
       if (client_names_[client_id] != name) {
         while (NameAlreadyExists(name)) {
-          name.append("xD");
+          if (name.find("(") != std::string::npos) {
+            auto index = name.find("(");
+            unsigned s = (name.at(index + 1) - '0');
+            s++;
+            name.at(index + 1) = (char)s;
+          } else {
+            name.append("(1)");
+          }
         }
         client_names_[client_id] = name;
         lobby_state_.SetTeamsUpdated(true);
@@ -377,6 +396,7 @@ void GameServer::UpdateSystems(float dt) {
   buff_controller::Update(registry_, dt);
   target_system::Update(registry_);
   missile_system::Update(registry_, dt);
+  black_hole::Update(registry_, dt);
 
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);

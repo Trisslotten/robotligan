@@ -62,10 +62,8 @@ void MainMenuState::CreateMainMenu() {
 
   // Create Server
   b_c = GenerateButtonEntity(registry_mainmenu_, "CREATE SERVER",
-	  glm::vec2(100, 230), font_test_);
-  b_c->button_func = [&]() {
-	  engine_->ChangeState(StateType::CREATE_SERVER);
-  };
+                             glm::vec2(100, 230), font_test_);
+  b_c->button_func = [&]() { engine_->ChangeState(StateType::CREATE_SERVER); };
 
   // SETTINGS BUTTON - change registry to registry_settings_
   b_c = GenerateButtonEntity(registry_mainmenu_, "SETTINGS",
@@ -79,9 +77,10 @@ void MainMenuState::CreateMainMenu() {
   };
 
   // EXIT BUTTON - close the game
+  // Exit() is bad, does not call destructors
   b_c = GenerateButtonEntity(registry_mainmenu_, "EXIT", glm::vec2(100, 50),
                              font_test_);
-  b_c->button_func = [&]() { exit(0); };
+  b_c->button_func = [&]() { engine_->should_quit = true; };
 }
 
 void MainMenuState::CreateInformationMenu() {
@@ -132,7 +131,7 @@ void MainMenuState::CreateBackgroundEnitites() {
     model_c.handles.push_back(model_map);
     model_c.handles.push_back(model_map_floor);
     model_c.handles.push_back(model_map_projectors);
-    //model_c.cast_shadow = false;
+    // model_c.cast_shadow = false;
 
     registry_mainmenu_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                   arena_scale);
@@ -173,8 +172,8 @@ void MainMenuState::CreateBackgroundEnitites() {
 
     robot = registry_mainmenu_.create();
     auto& trans_c2 = registry_mainmenu_.assign<TransformComponent>(
-        robot, glm::vec3(22, 0, 0.f),
-        glm::vec3(0.f, glm::radians(180.0f), 0.f), glm::vec3(0.0033f));
+        robot, glm::vec3(22, 0, 0.f), glm::vec3(0.f, glm::radians(180.0f), 0.f),
+        glm::vec3(0.0033f));
     auto& model_c2 = registry_mainmenu_.assign<ModelComponent>(robot);
     model_c2.handles.push_back(model_robot);
 
@@ -208,6 +207,7 @@ void MainMenuState::CreateBackgroundEnitites() {
     auto& cam_trans = registry_mainmenu_.assign<TransformComponent>(camera);
     cam_trans.position = glm::vec3(15.f, 3.f, 0.f);
     glm::vec3 dir = glm::vec3(0) - cam_trans.position;
-    cam_c.orientation = glm::quat(glm::vec3(0.f, 0.f, 0.f*glm::radians(-86.f)));
+    cam_c.orientation =
+        glm::quat(glm::vec3(0.f, 0.f, 0.f * glm::radians(-86.f)));
   }
 }

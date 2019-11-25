@@ -65,7 +65,6 @@ void ConnectMenuState::Update(float dt) {
   auto is_enter = glob::window::KeyDown(GLFW_KEY_ENTER);
   auto is_escape = glob::window::KeyDown(GLFW_KEY_ESCAPE);
   isconnected_ = engine_->IsConnected();
-
   double text_width = glob::GetWidthOfText(font_test_, "Server Info", 45);
   auto gamepos = glm::vec2((windowsize.x / 2.f - text_width / 2.f),
                            windowsize.y * 0.5f + 130);

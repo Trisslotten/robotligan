@@ -121,9 +121,8 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
   registry.assign<ParticleComponent>(e, handles, offsets, directions);
   registry.assign<TimerComponent>(e, 5.f);
 
-
-  e = registry_gameplay_.create();
-  registry_gameplay_.assign<TimerComponent>(e, 2.0f);
+  e = registry.create();
+  registry.assign<TimerComponent>(e, 2.0f);
   std::vector<glm::vec4> colors = {glm::vec4(1.f, 1.f, 0.f, 1.f),
                                    glm::vec4(1.f, 0.f, 0.f, 1.f),
                                    glm::vec4(0.f, 1.f, 0.f, 1.f)};
@@ -131,28 +130,28 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
   float spawn = .8f;
   float timer = 0.8f;
 
-  registry_gameplay_.assign<FireworksComponent>(e, colors, position, spawn,
+  registry.assign<FireworksComponent>(e, colors, position, spawn,
                                                 timer);
 
-  e = registry_gameplay_.create();
-  registry_gameplay_.assign<TimerComponent>(e, 2.0f);
+  e = registry.create();
+  registry.assign<TimerComponent>(e, 2.0f);
   position = glm::vec3(x * -1.1f, 0.f, 0.f);
 
-  registry_gameplay_.assign<FireworksComponent>(e, colors, position, spawn,
+  registry.assign<FireworksComponent>(e, colors, position, spawn,
                                                 timer);
 
-  e = registry_gameplay_.create();
-  registry_gameplay_.assign<TimerComponent>(e, 2.0f);
+  e = registry.create();
+  registry.assign<TimerComponent>(e, 2.0f);
   position = glm::vec3(0.f, 0.f, 50.f);
 
-  registry_gameplay_.assign<FireworksComponent>(e, colors, position, spawn,
+  registry.assign<FireworksComponent>(e, colors, position, spawn,
                                                 timer);
 
-  e = registry_gameplay_.create();
-  registry_gameplay_.assign<TimerComponent>(e, 2.0f);
+  e = registry.create();
+  registry.assign<TimerComponent>(e, 2.0f);
   position = glm::vec3(0.f, 0.f, -50.f);
 
-  registry_gameplay_.assign<FireworksComponent>(e, colors, position, spawn,
+  registry.assign<FireworksComponent>(e, colors, position, spawn,
                                                 timer);
 }
 
@@ -436,8 +435,6 @@ void PlayState::Update(float dt) {
   DrawTarget();
   DrawStunTimer();
 
-  glob::Submit(test_ball_, glm::mat4());
-
   auto view_players = registry_gameplay_.view<PlayerComponent, IDComponent>();
   for (auto player : view_players) {
     EntityID id = registry_gameplay_.get<IDComponent>(player).id;
@@ -447,6 +444,8 @@ void PlayState::Update(float dt) {
       break;
     }
   }
+
+  glob::SetStunned(im_stunned_);
 
   if (stun_timer_.Elapsed() >= my_stun_time_) {
     im_stunned_ = false;
@@ -609,7 +608,7 @@ void PlayState::DrawWallOutline() {
     auto& camera = registry_gameplay_.get<CameraComponent>(my_entity_);
 
     glm::vec3 pos = camera.GetLookDir() * 4.5f + trans.position + camera.offset;
-    pos.y = 0.05f;
+    pos.y = 0.15f;
 
     if (glm::distance(
             glm::vec2(pos.x, pos.z),
@@ -1322,7 +1321,6 @@ void PlayState::DrawJumbotronText() {
     jumbo_effect_timer_.Restart();
   }
 }
-
 void PlayState::DrawMiniMap() {
   // draw Minimap
   glob::Submit(gui_minimap_,
@@ -1799,7 +1797,7 @@ void PlayState::CreateSpotlights() {
     auto entity = registry_gameplay_.create();
     ModelComponent& model_c = registry_gameplay_.assign<ModelComponent>(entity);
     glob::ModelHandle m_hndl = glob::GetModel("assets/Spotlight/Spotlight.fbx");
-    //model_c.handles.push_back(m_hndl);
+    // model_c.handles.push_back(m_hndl);
     TransformComponent& trans_c =
         registry_gameplay_.assign<TransformComponent>(entity);
     trans_c.position = temp_pos;
@@ -1923,7 +1921,8 @@ void PlayState::CreateInGameMenu() {
   in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "EXIT",
                                           in_game_menu_pos + glm::vec2(0, -210),
                                           font_test_, false);
-  in_game_buttons_->button_func = [&] { exit(0); };
+  // Exit is bad, does not call destructors
+  in_game_buttons_->button_func = [&] { engine_->should_quit = true; };
 }
 
 void PlayState::TestCreateLights() {
@@ -2010,16 +2009,19 @@ void PlayState::CreateWall(EntityID id, glm::vec3 position,
   registry_gameplay_.assign<SoundComponent>(wall, sound_engine.CreatePlayer());
   registry_gameplay_.assign<IDComponent>(wall, id);
   registry_gameplay_.assign<TransformComponent>(wall, position, rotation,
-                                                glm::vec3(1.f, 4.f, 5.f));
+                                                glm::vec3(1.f));
   auto& obb = registry_gameplay_.assign<physics::OBB>(wall);
   obb.extents[0] = 1.f;
-  obb.extents[1] = 8.3f;
+  obb.extents[1] = 8.5f;
   obb.extents[2] = 5.f;
 
-  glob::ModelHandle model = glob::GetModel("assets/Pickup/Pickup.fbx");
+  glob::ModelHandle model = glob::GetModel("assets/Wall/Wall_Solid.fbx");
+  glob::ModelHandle model_t =
+      glob::GetTransparentModel("assets/Wall/Wall_Transparent.fbx");
   int a = 10;
   std::vector<glob::ModelHandle> hs;
   hs.push_back(model);
+  hs.push_back(model_t);
   registry_gameplay_.assign<ModelComponent>(wall, hs);
   registry_gameplay_.assign<WallComponent>(wall);
 
@@ -2119,6 +2121,35 @@ void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
                                             glm::vec4(1.0f, 0.6f, 0.2f, 1.0f));
 }
 
+void PlayState::CreateBlackHoleObject(EntityID id, glm::vec3 pos,
+                                      glm::quat ori) {
+  std::cout << "created black hole\n";
+  auto& sound_engine = engine_->GetSoundEngine();
+
+  auto black_hole = registry_gameplay_.create();
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  glob::ModelHandle model_ball = glob::GetModel(kModelPathBall);
+  //"assets/Ball/force_push_ball.fbx"	TODO: Swap path to this one
+  auto& model_c = registry_gameplay_.assign<ModelComponent>(black_hole);
+  model_c.handles.push_back(model_ball);
+
+  registry_gameplay_.assign<TransformComponent>(black_hole, pos, ori,
+                                                glm::vec3(0.3f));
+  registry_gameplay_.assign<IDComponent>(black_hole, id);
+  registry_gameplay_.assign<SoundComponent>(black_hole,
+                                            sound_engine.CreatePlayer());
+  registry_gameplay_.assign<PhysicsComponent>(black_hole);
+  registry_gameplay_.assign<ProjectileComponent>(black_hole,
+                                                 ProjectileID::BLACK_HOLE);
+
+  
+  // Save game event
+  GameEvent black_hole_create_event;
+  black_hole_create_event.type = GameEvent::BLACK_HOLE_CREATED;
+  black_hole_create_event.create_black_hole.black_hole_id = id;
+  dispatcher.trigger(black_hole_create_event);
+}
+
 void PlayState::CreateMineObject(unsigned int owner_team, EntityID mine_id,
                                  glm::vec3 pos) {
   auto& sound_engine = engine_->GetSoundEngine();
@@ -2127,9 +2158,11 @@ void PlayState::CreateMineObject(unsigned int owner_team, EntityID mine_id,
   glob::ModelHandle model_mine =
       glob::GetModel(kModelPathMine);  // Switch to mine model
 
-  ModelComponent& model_c =
-      registry_gameplay_.assign<ModelComponent>(mine_object);
-  model_c.handles.push_back(model_mine);
+  if (owner_team == my_team_) {
+    ModelComponent& model_c =
+        registry_gameplay_.assign<ModelComponent>(mine_object);
+    model_c.handles.push_back(model_mine);
+  }
   registry_gameplay_.assign<IDComponent>(mine_object, mine_id);
   registry_gameplay_.assign<TransformComponent>(mine_object, pos);
   registry_gameplay_.assign<MineComponent>(mine_object, owner_team);
@@ -2550,7 +2583,6 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           break;
         }
       }
-
       auto view_balls =
           registry->view<IDComponent, TransformComponent, BallComponent>();
       for (auto ball : view_balls) {
@@ -2636,11 +2668,35 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
           // Shockwave
           glob::CreateShockwave(trans_c.position, 0.60f, 20.f);
-
           break;
         }
       }
       break;
+    }
+    case GameEvent::BLACK_HOLE_ACTIVATED: {
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller = registry->view<IDComponent, TransformComponent>();
+
+      for (auto proj_ent : view_controller) {
+        auto& id_c = view_controller.get<IDComponent>(proj_ent);
+        auto& trans_c = view_controller.get<TransformComponent>(proj_ent);
+
+        if (id_c.id == e.activate_black_hole.black_hole_id) {
+          trans_c.scale = glm::vec3(1.5f);
+          //glob::CreateShockwave(trans_c.position, 5.0f, 20.f);
+          glob::CreateBlackHole(trans_c.position);
+          auto handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> handles;
+          handles.push_back(handle);
+          glob::SetParticleSettings(handle, "black_hole.txt");
+          std::vector<glm::vec3> offsets = {glm::vec3(0.0f)};
+          std::vector<glm::vec3> directions = {glm::vec3(0.0f)};
+          registry->assign<ParticleComponent>(proj_ent, handles, offsets,
+                                              directions);
+          break;
+        }
+      }
+
     }
     case GameEvent::SPRINT_START: {
       sprinting_ = true;
