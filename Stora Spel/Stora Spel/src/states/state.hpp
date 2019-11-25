@@ -401,6 +401,7 @@ class PlayState : public State {
   bool game_has_ended_ = false;
   std::chrono::time_point<std::chrono::system_clock> overtime_start_time_, overtime_end_time_;
   bool overtime_has_started_ = false;
+  bool overtime_check_time = true;
   bool goals_swapped_ = false;
   EntityID my_target_ = -1;
 
