@@ -33,8 +33,7 @@ void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
 void EndHomingBall(entt::registry& registry, entt::entity& in_ball);
 void BlackHoleCollision(entt::registry& registry);
 
-std::ostream& operator<<(
-    std::ostream& o, glm::vec3 v) {
+std::ostream& operator<<(std::ostream& o, glm::vec3 v) {
   return o << v.x << " " << v.y << " " << v.z;
 }
 
@@ -76,6 +75,8 @@ void SetJumpToFalse(entt::registry& reg);
 void UpdateSphere(entt::registry& registry);
 void UpdateOBB(entt::registry& registry);
 void UpdateTransform(entt::registry& registry);
+
+void SetPlayerHooked(entt::registry& registry, EntityID id);
 
 void UpdateCollisions(entt::registry& registry) {
   UpdateSphere(registry);
@@ -762,10 +763,14 @@ void PlayerProjectileCollision(entt::registry& registry) {
           case ProjectileID::FISHING_HOOK: {
             if (registry.has<HookComponent>(projectile)) {
               HookComponent& hook_c = registry.get<HookComponent>(projectile);
+              PhysicsComponent& hook_phys_c =
+                  registry.get<PhysicsComponent>(projectile);
               hook_c.attached = true;
               hook_c.hooked_entity = player_id.id;
               hook_c.hook_m = PULL_OBJECT;
               hook_c.hook_timer.Restart();
+              hook_phys_c.velocity = glm::vec3(0);
+              hook_phys_c.acceleration = glm::vec3(0);
 
               // remove projectile component, fishing system will handle
               // position.
@@ -842,12 +847,17 @@ void ProjectileBallCollision(entt::registry& registry, entt::entity ball) {
         case ProjectileID::FISHING_HOOK: {
           if (registry.has<HookComponent>(projectile)) {
             HookComponent& hook_c = registry.get<HookComponent>(projectile);
+            PhysicsComponent& hook_phys_c =
+                registry.get<PhysicsComponent>(projectile);
             hook_c.attached = true;
             hook_c.hooked_entity = ball_id.id;
             hook_c.hook_m = PULL_OBJECT;
             hook_c.hook_timer.Restart();
+            hook_phys_c.velocity = glm::vec3(0);
+            hook_phys_c.acceleration = glm::vec3(0);
+            ball_physics.is_airborne = true;
 
-			// remove projectile component, fishing system will handle position.
+            // remove projectile component, fishing system will handle position.
             registry.remove<ProjectileComponent>(projectile);
           }
 
@@ -929,8 +939,9 @@ void ProjectileArenaCollision(entt::registry& registry) {
             hook_c.hook_timer.Restart();
             phys_c.acceleration = glm::vec3(0);
             phys_c.velocity = glm::vec3(0);
+            SetPlayerHooked(registry, hook_c.owner);
 
-			//remove projectile component
+            // remove projectile component
             registry.remove<ProjectileComponent>(projectile);
 
             break;
@@ -961,7 +972,8 @@ void PickUpPlayerCollision(entt::registry& registry) {
         int num_abilities =
             static_cast<typename std::underlying_type<AbilityID>::type>(
                 AbilityID::NUM_OF_ABILITY_IDS);
-        AbilityID pickup_ability = static_cast<AbilityID>(rand() % (num_abilities - 1) + 1);
+        AbilityID pickup_ability =
+            static_cast<AbilityID>(rand() % (num_abilities - 1) + 1);
 
         registry.assign<PickUpEvent>(
             entity, registry.get<IDComponent>(pick_up).id,
@@ -1108,7 +1120,7 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
   force_push.radius =
       GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_RADIUS");
   glm::vec3 dir = entity_pos - force_push.center;
-  float length = glm::length(dir); 
+  float length = glm::length(dir);
   if (length < force_push.radius) {
     physics_c.is_airborne = true;
     float force =
@@ -1177,7 +1189,8 @@ void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
 }
 void BlackHoleCollision(entt::registry& registry) {
   auto view_black_hole = registry.view<BlackHoleComponent, physics::Sphere>();
-  auto view_player = registry.view<PlayerComponent, physics::OBB, PhysicsComponent>();
+  auto view_player =
+      registry.view<PlayerComponent, physics::OBB, PhysicsComponent>();
 
   for (auto black_hole : view_black_hole) {
     auto& black_hole_hitbox = view_black_hole.get<physics::Sphere>(black_hole);
@@ -1189,9 +1202,8 @@ void BlackHoleCollision(entt::registry& registry) {
         player_hitbox.center -= data.move_vector;
         auto& phys_c = view_player.get<PhysicsComponent>(player);
         phys_c.velocity = glm::vec3(0.0f);
-	  }
-	}
-
+      }
+    }
   }
 }
 
@@ -1217,5 +1229,17 @@ void DestroyEntity(entt::registry& registry, entt::entity entity) {
   info.entity = entity;
   dispatcher.enqueue<EventInfo>(info);
   // registry.destroy(entity);
+}
+
+void SetPlayerHooked(entt::registry& registry, EntityID id) {
+  auto view_players = registry.view<PlayerComponent, IDComponent>();
+  for (auto player : view_players) {
+    auto& player_c = registry.get<PlayerComponent>(player);
+    auto& id_c = registry.get<IDComponent>(player);
+
+    if (id_c.id == id) {
+      player_c.hooked = true;
+    }
+  }
 }
 #endif  // COLLISION_SYSTEM_HPP_

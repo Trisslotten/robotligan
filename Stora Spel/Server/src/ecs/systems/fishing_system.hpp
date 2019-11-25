@@ -8,6 +8,18 @@
 
 namespace fishing_system {
 
+void SetPlayerHooked(entt::registry& registry, EntityID id, bool val) {
+  auto view_players = registry.view<PlayerComponent, IDComponent>();
+  for (auto player : view_players) {
+    auto& player_c = registry.get<PlayerComponent>(player);
+    auto& id_c = registry.get<IDComponent>(player);
+
+    if (id_c.id == id) {
+      player_c.hooked = val;
+    }
+  }
+}
+
 void Update(entt::registry& registry, float dt) {
   auto view_hooks = registry.view<HookComponent, TransformComponent,
                                   PhysicsComponent, IDComponent>();
@@ -90,6 +102,10 @@ void Update(entt::registry& registry, float dt) {
           glm::vec3 dir = glm::normalize(dist);
           glm::vec3 hook_point = hooked_trans_c->position - dir * collider_size;
 
+          hook_trans_c.SetRotation(
+              glm::normalize(hooked_trans_c->position - hook_point));
+          hook_trans_c.rotation *=
+              glm::quat(glm::vec3(0, 0, glm::pi<float>() / 2.f));
           hook_trans_c.position = hook_point;
 
           glm::vec3 owner_look_dir = owner_trans_c->Forward();
@@ -102,9 +118,10 @@ void Update(entt::registry& registry, float dt) {
         }
       }
 
-      // check if timer has run out
+      // check if timer has run out or if otherwise should be removed
       if (hook_hook_c.hook_timer.Elapsed() >= hook_hook_c.hook_time ||
           should_remove) {
+        SetPlayerHooked(registry, hook_hook_c.owner, false);
         GameEvent ge;
         ge.hook_removed.hook_id = hook_id_c.id;
         ge.type = GameEvent::REMOVE_FISHING_HOOK;

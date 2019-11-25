@@ -130,29 +130,25 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
   float spawn = .8f;
   float timer = 0.8f;
 
-  registry.assign<FireworksComponent>(e, colors, position, spawn,
-                                                timer);
+  registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
   registry.assign<TimerComponent>(e, 2.0f);
   position = glm::vec3(x * -1.1f, 0.f, 0.f);
 
-  registry.assign<FireworksComponent>(e, colors, position, spawn,
-                                                timer);
+  registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
   registry.assign<TimerComponent>(e, 2.0f);
   position = glm::vec3(0.f, 0.f, 50.f);
 
-  registry.assign<FireworksComponent>(e, colors, position, spawn,
-                                                timer);
+  registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
   registry.assign<TimerComponent>(e, 2.0f);
   position = glm::vec3(0.f, 0.f, -50.f);
 
-  registry.assign<FireworksComponent>(e, colors, position, spawn,
-                                                timer);
+  registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 }
 
 void PlayState::Init() {
@@ -275,9 +271,19 @@ void PlayState::Update(float dt) {
       registry_gameplay_.view<TransformComponent, IDComponent>();
 
   float f = 0.5;  // 0.25f * dt;  // pow(0.75f, dt);
+
   for (auto entity : view_entities) {
     auto& trans_c = view_entities.get<TransformComponent>(entity);
     auto& id_c = view_entities.get<IDComponent>(entity);
+
+    bool player_hooked = false;
+    for (auto fisher : fishers_) {
+      if (id_c.id == fisher.owner_id) {
+        player_hooked = true;
+        break;
+      }
+    }
+
     if (id_c.id == my_id_) {
       auto trans = new_transforms_[id_c.id];
       auto& cam_c = registry_gameplay_.get<CameraComponent>(my_entity_);
@@ -287,6 +293,7 @@ void PlayState::Update(float dt) {
       glm::vec3 temp =
           lerp(predicted_state_.position, server_predicted_.position, 0.5f);
       trans_c.position = glm::lerp(trans_c.position, temp, 0.8f);
+      if (player_hooked) trans_c.position = server_predicted_.position;
       // trans_c.position = trans.first;
       glm::quat orientation =
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
@@ -640,7 +647,7 @@ void PlayState::DrawWallOutline() {
 
 void PlayState::DrawFishingLines() {
   for (auto fisher : fishers_) {
-    glm::vec3 hook_pos, player_pos;
+    glm::vec3 hook_pos, player_pos, player_forward;
 
     bool found_hook = false;
     bool found_player = false;
@@ -658,9 +665,14 @@ void PlayState::DrawFishingLines() {
       if (id == fisher.owner_id) {
         found_player = true;
         player_pos = pos;
+        player_forward =
+            registry_gameplay_.get<TransformComponent>(transform).Forward();
       }
       if (found_hook && found_player) {
-        glob::SubmitRope(player_pos, hook_pos);
+        glm::vec3 right = glm::cross(player_forward, glm::vec3(0, 1, 0));
+		player_pos -= right * 0.6f;
+		player_pos += player_forward * 0.28f;
+			glob::SubmitRope(player_pos, hook_pos);
         break;
       }
     }
@@ -2052,7 +2064,7 @@ void PlayState::CreateWall(EntityID id, glm::vec3 position, glm::quat rotation,
   std::vector<glob::ModelHandle> hs;
   hs.push_back(model);
   hs.push_back(model_t);
-  registry_gameplay_.assign<ModelComponent>(wall, hs);
+  auto& model_c = registry_gameplay_.assign<ModelComponent>(wall, hs);
   registry_gameplay_.assign<WallComponent>(wall);
   if (team == TEAM_BLUE) {
     model_c.diffuse_index = 1;
@@ -2159,18 +2171,17 @@ void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
 void PlayState::CreateFishermanAndHook(EntityID id, glm::vec3 pos,
                                        glm::quat ori, EntityID owner_id) {
   auto& sound_engine = engine_->GetSoundEngine();
-
-  auto missile_object = registry_gameplay_.create();
+  glob::ModelHandle hook_model = glob::GetModel("assets/claw/claw.fbx");
+  auto hook_object = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glob::ModelHandle model_missile = glob::GetModel(kModelPathRocket);
-  auto& model_c = registry_gameplay_.assign<ModelComponent>(missile_object);
-  model_c.handles.push_back(model_missile);
-  registry_gameplay_.assign<TransformComponent>(missile_object, pos, ori,
-                                                glm::vec3(0.5f));
-  registry_gameplay_.assign<IDComponent>(missile_object, id);
-  registry_gameplay_.assign<SoundComponent>(missile_object,
+  auto& model_c = registry_gameplay_.assign<ModelComponent>(hook_object);
+  model_c.handles.push_back(hook_model);
+  registry_gameplay_.assign<TransformComponent>(hook_object, pos, ori,
+                                                glm::vec3(0.3f));
+  registry_gameplay_.assign<IDComponent>(hook_object, id);
+  registry_gameplay_.assign<SoundComponent>(hook_object,
                                             sound_engine.CreatePlayer());
-  registry_gameplay_.assign<ProjectileComponent>(missile_object,
+  registry_gameplay_.assign<ProjectileComponent>(hook_object,
                                                  ProjectileID::FISHING_HOOK);
 
   Fishermans fm;
@@ -2200,7 +2211,6 @@ void PlayState::CreateBlackHoleObject(EntityID id, glm::vec3 pos,
   registry_gameplay_.assign<ProjectileComponent>(black_hole,
                                                  ProjectileID::BLACK_HOLE);
 
-  
   // Save game event
   GameEvent black_hole_create_event;
   black_hole_create_event.type = GameEvent::BLACK_HOLE_CREATED;
@@ -2741,7 +2751,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
         if (id_c.id == e.activate_black_hole.black_hole_id) {
           trans_c.scale = glm::vec3(1.5f);
-          //glob::CreateShockwave(trans_c.position, 5.0f, 20.f);
+          // glob::CreateShockwave(trans_c.position, 5.0f, 20.f);
           glob::CreateBlackHole(trans_c.position);
           auto handle = glob::CreateParticleSystem();
           std::vector<glob::ParticleSystemHandle> handles;
@@ -2754,7 +2764,6 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           break;
         }
       }
-
     }
     case GameEvent::SPRINT_START: {
       sprinting_ = true;

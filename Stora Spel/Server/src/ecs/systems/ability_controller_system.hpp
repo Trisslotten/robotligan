@@ -548,7 +548,7 @@ bool DoHomingBall(entt::registry& registry, PlayerID id) {
 
 bool BuildWall(entt::registry& registry, PlayerID id) {
   auto view_players = registry.view<PlayerComponent, TransformComponent,
-                                    CameraComponent, IDComponent>();
+                                    CameraComponent, IDComponent, TeamComponent>();
   auto view_goals = registry.view<GoalComponenet, TransformComponent>();
 
   for (auto entity : view_players) {
@@ -798,7 +798,8 @@ void DoFishing(entt::registry& registry, long creator) {
                                         glm::vec3(0.f), false, 0.0f);
       registry.assign<TransformComponent>(
           hook, glm::vec3(tc.position + tc.rotation * cc.offset),
-          cc.orientation, glm::vec3(.3f, .3f, .3f));
+          cc.orientation * glm::quat(glm::vec3(0, 0, -glm::pi<float>() / 2.f)),
+          glm::vec3(.3f, .3f, .3f));
       registry.assign<physics::Sphere>(hook, glm::vec3(0.f), .3f);
       registry.assign<ProjectileComponent>(hook, ProjectileID::FISHING_HOOK,
                                            creator);

@@ -928,8 +928,12 @@ void ServerPlayState::ResetEntities() {
   }
 
   // remove fishing hook
-  auto view_hooks = registry.view<HookComponent>();
+  auto view_hooks = registry.view<HookComponent, IDComponent>();
   for (auto hook : view_hooks) {
+    GameEvent ge;
+    ge.type = GameEvent::REMOVE_FISHING_HOOK;
+    ge.hook_removed.hook_id = registry.get<IDComponent>(hook).id;
+    dispatcher.trigger(ge);
     registry.destroy(hook);
   }
 }
