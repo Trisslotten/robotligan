@@ -378,23 +378,22 @@ void PlayState::Update(float dt) {
 
     // draw mini map
     DrawMiniMap();
-	typedef std::chrono::high_resolution_clock Time;
-	typedef std::chrono::milliseconds ms;
-	typedef std::chrono::duration<float> fsec;
+    typedef std::chrono::high_resolution_clock Time;
+    typedef std::chrono::milliseconds ms;
+    typedef std::chrono::duration<float> fsec;
     if (overtime_has_started_) {
       glm::vec2 pos = glob::window::GetWindowDimensions();
       pos /= 2;
-	  pos.x -= 230;
-	  std::chrono::duration<double> elapsed_seconds;
-	  overtime_end_time_ = std::chrono::system_clock::now();
-	  elapsed_seconds = overtime_end_time_ - overtime_start_time_;
-	  if (elapsed_seconds.count() < 3.0)
-	  {
-		  glob::Submit(font_test_, pos, 175, "OVERTIME");
-	  }
+      pos.x -= 230;
+      std::chrono::duration<double> elapsed_seconds;
+      overtime_end_time_ = std::chrono::system_clock::now();
+      elapsed_seconds = overtime_end_time_ - overtime_start_time_;
+      if (elapsed_seconds.count() < 3.0) {
+        glob::Submit(font_test_, pos, 175, "OVERTIME");
+      }
       if (game_has_ended_) {
         overtime_has_started_ = false;
-		overtime_check_time = true;
+        overtime_check_time = true;
       }
     }
   }
@@ -2782,12 +2781,11 @@ void PlayState::EndGame() {
   game_has_ended_ = true;
 }
 
-void PlayState::OverTime() { 
-  if (!overtime_has_started_)
-  {
-	overtime_start_time_ = std::chrono::system_clock::now();
+void PlayState::OverTime() {
+  if (!overtime_has_started_) {
+    overtime_start_time_ = std::chrono::system_clock::now();
   }
-  overtime_has_started_ = true; 
+  overtime_has_started_ = true;
 }
 
 void PlayState::AddPitchYaw(float pitch, float yaw) {
