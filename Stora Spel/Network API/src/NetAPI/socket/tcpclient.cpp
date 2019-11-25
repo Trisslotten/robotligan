@@ -77,26 +77,23 @@ bool NetAPI::Socket::TcpClient::Connect(const char* addr, unsigned short port) {
 bool NetAPI::Socket::TcpClient::Send(NetAPI::Common::Packet& p) {
   auto h = p.GetHeader();
   h->packet_size = p.GetPacketSize();
-  FD_ZERO(&write_fd); //Reset the File Descriptor
+  FD_ZERO(&write_fd);  // Reset the File Descriptor
   FD_SET(send_socket_, &write_fd);
   timeout_.tv_sec = 0;
   timeout_.tv_usec = 50;
   // std::cout << "Network: send packet size=" << p.GetPacketSize() << "\n";
-  if (select(send_socket_, NULL, &write_fd, NULL, &timeout_) > 0)
-  {
-	  error_ = send(send_socket_, p.GetRaw(), (int)p.GetPacketSize(), 0);
-  }
-  else
-  {
-	  FD_ZERO(&write_fd);
-	  if (error_ == SOCKET_ERROR) {
-		  error_ = WSAGetLastError();
-		  if (error_ == WSAECONNRESET || error_ == WSAECONNABORTED ||
-			  error_ == WSAENETRESET || error_ == WSAENOTCONN) {
-			  this->Disconnect();
-		  }
-		  return false;
-	  }
+  if (select(send_socket_, NULL, &write_fd, NULL, &timeout_) > 0) {
+    error_ = send(send_socket_, p.GetRaw(), (int)p.GetPacketSize(), 0);
+  } else {
+    FD_ZERO(&write_fd);
+    if (error_ == SOCKET_ERROR) {
+      error_ = WSAGetLastError();
+      if (error_ == WSAECONNRESET || error_ == WSAECONNABORTED ||
+          error_ == WSAENETRESET || error_ == WSAENOTCONN) {
+        this->Disconnect();
+      }
+      return false;
+    }
   }
   return true;
 }

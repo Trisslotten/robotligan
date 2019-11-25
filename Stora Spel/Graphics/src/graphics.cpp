@@ -32,6 +32,7 @@
 #include "renderitems.hpp"
 #include "shader.hpp"
 #include "shadows/shadows.hpp"
+#include <postprocess\blackholes.hpp>
 
 namespace glob {
 
@@ -70,9 +71,13 @@ PostProcess post_process;
 Blur blur;
 Shadows shadows;
 Shockwaves shockwaves;
+BlackHoles blackholes;
 Rope rope;
 
+Timer global_timer;
+
 bool blackout = false;
+bool stunned = false;
 
 GLint is_invisible = 0;
 float num_frames = 0;
@@ -344,6 +349,10 @@ void Init() {
   compute_shaders["firework"] = std::make_unique<ShaderProgram>();
   compute_shaders["firework"]->add("Particle compute shaders/firework.comp");
   compute_shaders["firework"]->compile();
+
+  compute_shaders["black_hole"] = std::make_unique<ShaderProgram>();
+  compute_shaders["black_hole"]->add("Particle compute shaders/black_hole.comp");
+  compute_shaders["black_hole"]->compile();
 
   CreateDefaultParticleTexture();
   textures["smoke"] = TextureFromFile("smoke.png");
@@ -1311,6 +1320,10 @@ void SubmitRope(glm::vec3 start, glm::vec3 end) {
   rope.Submit(start, end);
 }
 
+void CreateBlackHole(glm::vec3 position) {
+  blackholes.Create(position);
+}
+
 void SubmitCube(glm::mat4 t) { cubes.push_back(t); }
 
 void SubmitWireframeMesh(ModelHandle model_h) {
@@ -1351,6 +1364,10 @@ void LoadWireframeMesh(ModelHandle model_h,
 
 void AddSpotlight(glm::vec3 position, glm::mat4 transform) {
   shadows.AddSpotlight(position, transform);
+}
+
+void SetStunned(bool is_stunned) {
+  stunned = is_stunned;
 }
 
 void Render() {
@@ -1564,6 +1581,7 @@ void Render() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   shockwaves.Update(camera);
+  blackholes.Update(camera);
 
   fullscreen_shader.use();
   post_process.BindColorTex(0);
@@ -1575,7 +1593,10 @@ void Render() {
   fullscreen_shader.uniform("texture_ssao", 2);
   fullscreen_shader.uniform("use_ao", use_ao);
   fullscreen_shader.uniform("resolution", ws);
+  fullscreen_shader.uniform("time", (float)global_timer.Elapsed());
+  fullscreen_shader.uniform("stunned", stunned ? 1 : 0);
   shockwaves.SetUniforms(fullscreen_shader);
+  blackholes.SetUniforms(fullscreen_shader);
   DrawFullscreenQuad();
 
   glBindVertexArray(quad_vao);

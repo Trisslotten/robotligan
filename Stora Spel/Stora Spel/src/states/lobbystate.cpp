@@ -120,8 +120,8 @@ void LobbyState::Init() {
   SelectAbilityHandler(my_selected_ability_);
   SendMyName();
 
-  engine_->GetChat()->SetPosition(glm::vec2(
-      glob::window::GetWindowDimensions().x - 535, 128));
+  engine_->GetChat()->SetPosition(
+      glm::vec2(glob::window::GetWindowDimensions().x - 535, 128));
 
   engine_->GetAnimationSystem().Reset(registry_lobby_);
 
@@ -134,8 +134,8 @@ void LobbyState::Update(float dt) {
   DrawAbilitySelect();
 
   // draw ready string
-  glm::vec2 pos = glm::vec2((glob::window::GetWindowDimensions().x / 2) - 100,
-                            50);
+  glm::vec2 pos =
+      glm::vec2((glob::window::GetWindowDimensions().x / 2) - 100, 50);
   glob::Submit(font_test_, pos, 72, "Ready: ");
 
   bool everyone_ready = true;
@@ -145,7 +145,7 @@ void LobbyState::Update(float dt) {
       break;
     }
   }
-  if (everyone_ready) {  // 
+  if (everyone_ready) {  //
     glm::vec2 bottom_pos =
         glm::vec2((glob::window::GetWindowDimensions().x / 2) - 150, 100);
 
@@ -306,6 +306,8 @@ void LobbyState::CreateBackgroundEntities() {
 void LobbyState::CreateGUIElements() {
   ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
   ability_blacklist.push_back((int)AbilityID::BLACKOUT);
+  // ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
+  ability_blacklist.push_back((int)AbilityID::BLACKHOLE);
   red_team_select_back_ = glob::GetGUIItem("Assets/GUI_elements/red_team.png");
   blue_team_select_back_ =
       glob::GetGUIItem("Assets/GUI_elements/blue_team.png");
@@ -356,9 +358,8 @@ void LobbyState::CreateGUIElements() {
   // auto button_join_red = registry_lobby_.create();
   ButtonComponent* button_c = GenerateButtonEntity(
       registry_lobby_, "JOIN RED",
-      (glm::vec2(
-          glob::window::GetWindowDimensions().x / 2 - 405,
-          glob::window::GetWindowDimensions().y - 200)),
+      (glm::vec2(glob::window::GetWindowDimensions().x / 2 - 405,
+                 glob::window::GetWindowDimensions().y - 200)),
       font_team_names_, true, 72);
   button_c->text_current_color = glm::vec4(1.f, 0.3f, 0.3f, 1.f);
   button_c->text_normal_color = glm::vec4(1.f, 0.3f, 0.3f, 1.f);
@@ -369,9 +370,8 @@ void LobbyState::CreateGUIElements() {
   // auto button_join_blue = registry_lobby_.create();
   button_c = GenerateButtonEntity(
       registry_lobby_, "JOIN BLUE",
-      (glm::vec2(
-          glob::window::GetWindowDimensions().x / 2 + 155,
-          glob::window::GetWindowDimensions().y - 200)),
+      (glm::vec2(glob::window::GetWindowDimensions().x / 2 + 155,
+                 glob::window::GetWindowDimensions().y - 200)),
       font_team_names_, true, 72);
   button_c->text_current_color = glm::vec4(.3f, .3f, 1.f, 1.f);
   button_c->text_normal_color = glm::vec4(.3f, .3f, 1.f, 1.f);
@@ -380,8 +380,8 @@ void LobbyState::CreateGUIElements() {
   button_c->button_func = [&] { SendJoinTeam(TEAM_BLUE); };
 
   // ability buttons
-  glm::vec2 ability_buttons_pos = glm::vec2(
-      130, glob::window::GetWindowDimensions().y - 145);
+  glm::vec2 ability_buttons_pos =
+      glm::vec2(130, glob::window::GetWindowDimensions().y - 145);
   int xoffset = 97;
   int yoffset = 0;
 
@@ -421,8 +421,8 @@ void LobbyState::CreateGUIElements() {
   button_comp.font_size = 0;  // menu_settings::font_size;
   button_comp.f_handle = font_test_;
   registry_lobby_.assign<TransformComponent>(
-      button, glm::vec3((glob::window::GetWindowDimensions().x / 2) + 30, 12,
-                        0));
+      button,
+      glm::vec3((glob::window::GetWindowDimensions().x / 2) + 30, 12, 0));
   button_comp.visible = true;
   button_comp.gui_handle_normal = ready_back_normal_;
   button_comp.gui_handle_current = ready_back_normal_;
@@ -435,9 +435,8 @@ void LobbyState::CreateGUIElements() {
       ReadyButtonFunc();
     }
   };
-  ButtonComponent* b_c = GenerateButtonEntity(
-      registry_lobby_, "DISCONNECT", glm::vec2(60, 50),
-      font_test_);
+  ButtonComponent* b_c = GenerateButtonEntity(registry_lobby_, "DISCONNECT",
+                                              glm::vec2(60, 50), font_test_);
   b_c->button_func = [&]() {
     engine_->GetClient().Disconnect();
     engine_->ChangeState(StateType::MAIN_MENU);

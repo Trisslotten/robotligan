@@ -114,6 +114,9 @@
     <ClInclude Include="src\Model\rope.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\postprocess\blackholes.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -180,6 +183,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Model\rope.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\postprocess\blackholes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -666,7 +666,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         }
         case ProjectileID::MISSILE_OBJECT: {
           play_state_.CreateMissileObject(e_id, pos, ori);
-          
+
           // Save game event
           GameEvent missile_event;
           missile_event.type = GameEvent::MISSILE_FIRE;
@@ -680,6 +680,10 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
           play_state_.CreateFishermanAndHook(e_id, pos, ori, owner);
           break;
         }
+        case ProjectileID::BLACK_HOLE: {
+          play_state_.CreateBlackHoleObject(e_id, pos, ori);
+          break;
+		}
       }
       break;
     }

@@ -108,6 +108,7 @@ enum class AbilityID {
   SWITCH_GOALS,
   TELEPORT,
   BLACKOUT,
+  BLACKHOLE,
   MINE,
   FISHINGING_POLE,
   // Fill with more abilities and passive boosts
@@ -158,6 +159,9 @@ struct GameEvent {
     PRIMARY_USED,
     SECONDARY_USED,
     PICKUP_SPAWNED,
+	BLACK_HOLE_CREATED,
+	BLACK_HOLE_ACTIVATED,
+	BLACK_HOLE_DESTROYED,
 	PLAYER_STUNNED,
 	CREATE_FISHING_HOOK,
 	REMOVE_FISHING_HOOK,
@@ -345,6 +349,18 @@ struct GameEvent {
     struct {
       EntityID pickup_id;
     } pickup_spawned;
+	//create black hole
+	struct {
+      EntityID black_hole_id;
+	} create_black_hole;
+	//activate black hole
+	struct {
+      EntityID black_hole_id;
+	} activate_black_hole;
+	//black hole destroyed
+	struct {
+      EntityID black_hole_id;
+	} destroy_black_hole;
     struct {
       EntityID player_id;
       float stun_time;
@@ -362,6 +378,7 @@ enum class ProjectileID {
   TELEPORT_PROJECTILE,
   FORCE_PUSH_OBJECT,
   MISSILE_OBJECT,
+  BLACK_HOLE,
   FISHING_HOOK,
   NUM_PROJECTILE_IDS
 };

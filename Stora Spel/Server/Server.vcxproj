@@ -159,6 +159,7 @@
     <ClInclude Include="src\ecs\components.hpp" />
     <ClInclude Include="src\ecs\components\ability_component.hpp" />
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
+    <ClInclude Include="src\ecs\components\black_hole_component.hpp" />
     <ClInclude Include="src\ecs\components\buff_component.hpp" />
     <ClInclude Include="src\ecs\components\goal_component.hpp" />
     <ClInclude Include="src\ecs\components\health_component.hpp" />
@@ -174,6 +175,7 @@
     <ClInclude Include="src\ecs\components\timer_component.hpp" />
     <ClInclude Include="src\ecs\components\wall_component.hpp" />
     <ClInclude Include="src\ecs\systems\ability_controller_system.hpp" />
+    <ClInclude Include="src\ecs\systems\black_hole_system.hpp" />
     <ClInclude Include="src\ecs\systems\buff_controller_system.hpp" />
     <ClInclude Include="src\ecs\systems\collision_system.hpp" />
     <ClInclude Include="src\ecs\systems\collision_temp_debug_system.h" />

@@ -38,6 +38,7 @@ void CreateFakeBalls(entt::registry& registry, EntityID id);
 bool BuildWall(entt::registry& registry, PlayerID id);
 bool DoInvisibility(entt::registry& registry, PlayerID id);
 bool DoBlackout(entt::registry& registry);
+void CreateBlackHole(entt::registry& registry, PlayerID id);
 bool PlaceMine(entt::registry& registry, PlayerID id);
 void DoFishing(entt::registry& registry, long creator);
 
@@ -78,8 +79,7 @@ void Update(entt::registry& registry, float dt) {
                          player_component.client_id, player)) {
         // If ability triggered successfully set the
         // AbilityComponent's cooldown to be on max capacity
-        ability_component.cooldown_remaining =
-            ability_cooldowns[ability_component.primary_ability];
+        ability_component.cooldown_remaining = ability_cooldowns[ability_component.primary_ability];
         GameEvent primary_used_event;
         primary_used_event.type = GameEvent::PRIMARY_USED;
         primary_used_event.primary_used.player_id = id_component.id;
@@ -208,6 +208,10 @@ bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
       break;
     case AbilityID::BLACKOUT:
       return DoBlackout(registry);
+      break;
+    case AbilityID::BLACKHOLE:
+      CreateBlackHole(registry, player_id);
+      return true;
       break;
     case AbilityID::MINE:
       return PlaceMine(registry, player_id);
@@ -746,6 +750,35 @@ void CreateFakeBalls(entt::registry& registry, EntityID id) {
   ge.fake_ball_created.ball_id = ball_id;
   ge.type = GameEvent::FAKE_BALL_CREATED;
   dispatcher.trigger(ge);
+}
+
+void CreateBlackHole(entt::registry& registry, PlayerID id) {
+  auto view_controller = registry.view<CameraComponent, PlayerComponent,
+                                       TransformComponent, IDComponent>();
+  for (auto entity : view_controller) {
+    CameraComponent& cc = view_controller.get<CameraComponent>(entity);
+    PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
+    TransformComponent& tc = view_controller.get<TransformComponent>(entity);
+    IDComponent& idc = view_controller.get<IDComponent>(entity);
+
+    if (pc.client_id == id) {
+      float speed =
+          GlobalSettings::Access()->ValueOf("ABILITY_BLACK_HOLE_SPEED");
+      auto black_hole = registry.create();
+      registry.assign<PhysicsComponent>(black_hole, cc.GetLookDir() * speed,
+                                        glm::vec3(0.f), false, 0.0f);
+      registry.assign<TransformComponent>(
+          black_hole, glm::vec3(tc.position + tc.rotation * cc.offset),
+          glm::vec3(0, 0, 0), glm::vec3(.5f, .5f, .5f));
+      registry.assign<BlackHoleComponent>(black_hole);
+
+	  EventInfo e;
+      e.event = Event::CREATE_BLACK_HOLE;
+      e.entity = black_hole;
+
+      dispatcher.enqueue<EventInfo>(e);
+    }
+  }
 }
 
 void DoFishing(entt::registry& registry, long creator) {
