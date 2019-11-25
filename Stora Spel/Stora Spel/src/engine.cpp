@@ -675,7 +675,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         case ProjectileID::BLACK_HOLE: {
           play_state_.CreateBlackHoleObject(e_id, pos, ori);
           break;
-		}
+        }
       }
       break;
     }

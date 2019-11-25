@@ -13,6 +13,7 @@
 #include "ecs/components.hpp"
 #include "eventdispatcher.hpp"
 #include "shared/shared.hpp"
+#include <glob/window.hpp>
 
 class Engine;
 
@@ -289,6 +290,29 @@ class PlayState : public State {
   void SetCanSmash(bool val) { can_smash_ = val; }
 
  private:
+  struct GuiNotRespnding {
+    glob::GUIHandle hndl = 0;
+    glm::vec2 drawpos = glm::vec2(0.0f, 0.0f);
+    double scale = 1.0;
+    glob::Font2DHandle font = 0;
+    uint64_t timeleft = 10000;
+    GuiNotRespnding() {
+      hndl = glob::GetGUIItem("Assets/GUI_elements/gray_bg.png");
+      drawpos = glm::vec2(glob::window::GetWindowDimensions().x -
+                              glob::window::GetWindowDimensions().x * 0.35,
+                          glob::window::GetWindowDimensions().y -
+                              glob::window::GetWindowDimensions().y * 0.2);
+      font = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+    }
+    void Draw(uint64_t time) {
+      int time_int = std::ceil((10000 - time) / 1000);
+      glob::Submit(hndl, drawpos, scale);
+      glob::Submit(font, drawpos + glm::vec2(50.0f, 70.0f), 29,
+                   "Connection problems, disconnecting in " +
+                       std::to_string(time_int) + std::string("s"),
+                   glm::vec4(0.0, 0.0, 0.0, 1.0));
+    }
+  } server_not_responding_;
   ServerStateType server_state_;
   void CreateInitialEntities();
   void CreatePlayerEntities();

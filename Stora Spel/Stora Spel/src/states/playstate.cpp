@@ -130,29 +130,25 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
   float spawn = .8f;
   float timer = 0.8f;
 
-  registry.assign<FireworksComponent>(e, colors, position, spawn,
-                                                timer);
+  registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
   registry.assign<TimerComponent>(e, 2.0f);
   position = glm::vec3(x * -1.1f, 0.f, 0.f);
 
-  registry.assign<FireworksComponent>(e, colors, position, spawn,
-                                                timer);
+  registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
   registry.assign<TimerComponent>(e, 2.0f);
   position = glm::vec3(0.f, 0.f, 50.f);
 
-  registry.assign<FireworksComponent>(e, colors, position, spawn,
-                                                timer);
+  registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
   registry.assign<TimerComponent>(e, 2.0f);
   position = glm::vec3(0.f, 0.f, -50.f);
 
-  registry.assign<FireworksComponent>(e, colors, position, spawn,
-                                                timer);
+  registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 }
 
 void PlayState::Init() {
@@ -196,7 +192,14 @@ void PlayState::Update(float dt) {
     cli.Disconnect();
     engine_->ChangeState(StateType::MAIN_MENU);
   }
-
+  auto timesinceupdate = cli.TimeSinceLastUpdate();
+  if (timesinceupdate > 1000) {
+    server_not_responding_.Draw(timesinceupdate);
+    if (cli.TimeSinceLastUpdate() > 10000) {
+      cli.Disconnect();
+      engine_->ChangeState(StateType::CONNECT_MENU);
+    }
+  }
   if (!player_look_dirs_.empty()) {
     auto view_entities =
         registry_gameplay_.view<PlayerComponent, IDComponent>();
@@ -2139,7 +2142,6 @@ void PlayState::CreateBlackHoleObject(EntityID id, glm::vec3 pos,
   registry_gameplay_.assign<ProjectileComponent>(black_hole,
                                                  ProjectileID::BLACK_HOLE);
 
-  
   // Save game event
   GameEvent black_hole_create_event;
   black_hole_create_event.type = GameEvent::BLACK_HOLE_CREATED;
@@ -2680,7 +2682,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
         if (id_c.id == e.activate_black_hole.black_hole_id) {
           trans_c.scale = glm::vec3(1.5f);
-          //glob::CreateShockwave(trans_c.position, 5.0f, 20.f);
+          // glob::CreateShockwave(trans_c.position, 5.0f, 20.f);
           glob::CreateBlackHole(trans_c.position);
           auto handle = glob::CreateParticleSystem();
           std::vector<glob::ParticleSystemHandle> handles;
@@ -2693,7 +2695,6 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           break;
         }
       }
-
     }
     case GameEvent::SPRINT_START: {
       sprinting_ = true;
