@@ -8,7 +8,7 @@
 #include "serverstate.hpp"
 #include "util/global_settings.hpp"
 #include "util/winadpihelpers.hpp"
-
+#define KILL_EXISTING_
 entt::dispatcher dispatcher{};
 std::string workingdir() {
   char buf[MAX_PATH + 1];
@@ -37,6 +37,10 @@ int main(unsigned argc, char** argv) {
     if (mplayers > 0) {
       arguments["MPLAYERS"] = std::to_string((int)(std::ceilf(mplayers)));
     }
+#ifdef KILL_EXISTING_
+	helper::ps::KillProcess("Server.exe");
+	helper::ps::KillProcess("server.exe");
+#endif // KILL_EXISTING
   }
   std::cout << "DEBUG: Starting Server" << std::endl;
   Timer timer;
