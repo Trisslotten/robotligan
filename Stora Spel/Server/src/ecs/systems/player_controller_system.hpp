@@ -8,6 +8,7 @@
 #include "ecs/components/player_component.hpp"
 #include "shared/camera_component.hpp"
 #include "shared/transform_component.hpp"
+#include <util/global_settings.hpp>
 
 namespace player_controller {
 
@@ -46,12 +47,14 @@ void Update(entt::registry& registry, float dt) {
     cam_c.orientation = glm::normalize(cam_c.orientation);
     trans_c.SetRotation(glm::vec3(0, player_c.yaw, 0));
 
-    if (player_c.actions[PlayerAction::SHOOT] && !player_c.stunned) {
+    if (player_c.actions[PlayerAction::SHOOT] && !player_c.stunned && ability_c.shoot_cooldown <= 0.f) {
+      ability_c.shoot = true;
+      ability_c.shoot_cooldown = GlobalSettings::Access()->ValueOf("PLAYER_SHOT_COOLDOWN");
+
       GameEvent shoot_event;
       shoot_event.type = GameEvent::SHOOT;
       shoot_event.shoot.player_id = registry.get<IDComponent>(entity).id;
       dispatcher.trigger(shoot_event);
-      ability_c.shoot = true;
     }
     // Caputre keyboard input and apply velocity
 
@@ -224,7 +227,7 @@ void Update(entt::registry& registry, float dt) {
     glm::vec3 kick_dir =
         cam_c.GetLookDir() + glm::vec3(0, player_c.kick_pitch, 0);
 
-	bool kicked = false;
+    bool kicked = false;
     if (player_c.actions[PlayerAction::KICK] &&
         player_c.kick_timer.Elapsed() > player_c.kick_cooldown &&
         !player_c.stunned) {

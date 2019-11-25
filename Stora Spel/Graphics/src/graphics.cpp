@@ -1223,6 +1223,8 @@ void SetBlackout(bool _blackout) {
   }
 }
 
+bool IsBlackoutActive() { return blackout; }
+
 void SetSky(const std::string &file) {
   if (sky_texture != 0) {
     glDeleteTextures(1, &sky_texture);

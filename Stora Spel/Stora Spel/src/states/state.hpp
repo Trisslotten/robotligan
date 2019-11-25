@@ -242,7 +242,7 @@ class PlayState : public State {
 
   void CreateWall(EntityID id, glm::vec3 position, glm::quat rotation);
   void CreatePickUp(EntityID id, glm::vec3 position);
-  void CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori);
+  void CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori, unsigned int creator_team);
   void CreateTeleportProjectile(EntityID id, glm::vec3 pos, glm::quat ori);
   void CreateForcePushObject(EntityID id, glm::vec3 pos, glm::quat ori);
   void CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori);

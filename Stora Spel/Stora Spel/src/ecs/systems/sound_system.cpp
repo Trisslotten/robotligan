@@ -51,6 +51,20 @@ void SoundSystem::Update(entt::registry& registry) {
       sound_c.sound_player->Play(sound_step_, 0, 0.2f);
     }
   }
+  // Alter audience volume based on ball distance from goal
+  if (!glob::IsBlackoutActive()) {
+    auto ball_view =
+        registry.view<BallComponent, TransformComponent, TargetComponent>();
+    for (auto ball : ball_view) {
+      // BallComponent& ball_c = ball_view.get<BallComponent>(ball);
+      TransformComponent& trans_c = ball_view.get<TransformComponent>(ball);
+
+      crowd_ambience_.SetVolume(
+          0.06f + (std::abs(trans_c.position.x) / (37.5f * arena_scale_.x)) * 0.06);
+    }
+  } else {
+    crowd_ambience_.SetVolume(0.2f);
+  }
 }
 
 void SoundSystem::Init(Engine* engine) {
@@ -67,6 +81,7 @@ void SoundSystem::Init(Engine* engine) {
   sound_woosh_ = sound_engine_.GetSound("assets/sound/kick_swing.mp3");
   sound_hit_ = sound_engine_.GetSound("assets/sound/ball_hit_sound.mp3");
   sound_nudge_ = sound_engine_.GetSound("assets/sound/ball_nudge.mp3");
+  sound_rmb_shot_ = sound_engine_.GetSound("assets/sound/rmb_fire.mp3");
   sound_goal_ = sound_engine_.GetSound("assets/sound/goal.mp3");
   sound_ball_bounce_ = sound_engine_.GetSound("assets/sound/bounce.mp3");
   sound_player_land_ = sound_engine_.GetSound("assets/sound/robot_land.mp3");
@@ -91,6 +106,7 @@ void SoundSystem::Init(Engine* engine) {
       sound_engine_.GetSound("assets/sound/blackout_end.mp3");
   sound_ability_mine_trigger_ =
       sound_engine_.GetSound("assets/sound/mine_trigger.mp3");
+  sound_crowd_shocked_ = sound_engine_.GetSound("assets/sound/crowd_shock.mp3");
 
   sound_pickup_spawned_ = sound_engine_.GetSound("assets/sound/pickup.wav");
   sound_player_stunned_ = sound_engine_.GetSound("assets/sound/stunned.mp3");
@@ -129,9 +145,13 @@ void SoundSystem::PlayAmbientSound(entt::registry& registry) {
     auto& cam_c = local_view.get<CameraComponent>(local_entity);
     auto& sound_c = local_view.get<SoundComponent>(local_entity);
 
-    sound_c.sound_player->Play(sound_crowd_, -1, 0.1f);
+    crowd_ambience_ = sound_c.sound_player->Play(sound_crowd_, -1, 0.06f);
     break;
   }
+}
+
+void SoundSystem::SetArenaScale(glm::vec3 scale) {
+  arena_scale_ = scale;
 }
 
 void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
@@ -177,6 +197,17 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       if (id_c.id == event.nudge.ball_id && nudge_timer_.Elapsed() > 0.1f) {
         nudge_timer_.Restart();
         sound_c.sound_player->Play(sound_nudge_, 0, 1.0f);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::SHOOT) {
+    auto view = registry->view<IDComponent, PlayerComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.shoot.player_id) {
+        sound_c.sound_player->Play(sound_rmb_shot_, 0, 1.0f);
         break;
       }
     }
@@ -350,7 +381,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.build_wall.wall_id) {
         sound_c.sound_player->Play(ability_sounds_[AbilityID::BUILD_WALL], 0,
-                                   10.0f);
+                                   1.0f);
         break;
       }
     }
@@ -405,6 +436,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
     for (auto entity : view) {
       auto& sound_c = view.get<SoundComponent>(entity);
       sound_c.sound_player->Play(ability_sounds_[AbilityID::BLACKOUT], 0, 0.7);
+      sound_c.sound_player->Play(sound_crowd_shocked_, 0, 0.5);
       break;
     }
   }

@@ -379,5 +379,6 @@ struct Projectile {
   ProjectileID projectile_id;
   glm::vec3 pos;
   glm::quat ori;
+  unsigned int creator_team;
 };
 #endif  // SHARED_HPP_
