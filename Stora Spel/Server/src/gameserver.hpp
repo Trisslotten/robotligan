@@ -76,6 +76,7 @@ class GameServer {
 
   bool NameAlreadyExists(std::string name);
   std::unordered_map<AbilityID, float> ability_cooldowns_;
+  std::string server_name_ = "Server";
 };
 
 #endif  // GAME_SERVER_HPP_

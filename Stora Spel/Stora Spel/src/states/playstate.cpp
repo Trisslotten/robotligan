@@ -435,8 +435,6 @@ void PlayState::Update(float dt) {
   DrawTarget();
   DrawStunTimer();
 
-  glob::Submit(test_ball_, glm::mat4());
-
   auto view_players = registry_gameplay_.view<PlayerComponent, IDComponent>();
   for (auto player : view_players) {
     EntityID id = registry_gameplay_.get<IDComponent>(player).id;
@@ -446,6 +444,8 @@ void PlayState::Update(float dt) {
       break;
     }
   }
+
+  glob::SetStunned(im_stunned_);
 
   if (stun_timer_.Elapsed() >= my_stun_time_) {
     im_stunned_ = false;
@@ -608,7 +608,7 @@ void PlayState::DrawWallOutline() {
     auto& camera = registry_gameplay_.get<CameraComponent>(my_entity_);
 
     glm::vec3 pos = camera.GetLookDir() * 4.5f + trans.position + camera.offset;
-    pos.y = 0.05f;
+    pos.y = 0.15f;
 
     if (glm::distance(
             glm::vec2(pos.x, pos.z),
@@ -1921,7 +1921,8 @@ void PlayState::CreateInGameMenu() {
   in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "EXIT",
                                           in_game_menu_pos + glm::vec2(0, -210),
                                           font_test_, false);
-  in_game_buttons_->button_func = [&] { exit(0); };
+  // Exit is bad, does not call destructors
+  in_game_buttons_->button_func = [&] { engine_->should_quit = true; };
 }
 
 void PlayState::TestCreateLights() {
