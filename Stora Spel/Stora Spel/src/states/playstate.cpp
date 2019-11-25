@@ -2050,8 +2050,15 @@ void PlayState::CreatePickUp(EntityID id, glm::vec3 position) {
   dispatcher.trigger(e);
 }
 
-void PlayState::CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori) {
+void PlayState::CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori,
+                                 unsigned int creator_team) {
   auto cannonball = registry_gameplay_.create();
+
+  // Set trail color depending on team
+  glm::vec4 color_vec(1.f, 0.2f, 0.2f, 1.f);
+  if (creator_team == TEAM_BLUE) {
+    color_vec = glm::vec4(0.2f, 0.2f, 1.f, 1.f);
+  }
 
   glob::ModelHandle model_shot = glob::GetModel(kModelPathRocket);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(cannonball);
@@ -2061,6 +2068,8 @@ void PlayState::CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori) {
                                                 glm::vec3(0.3f));
   registry_gameplay_.assign<ProjectileComponent>(cannonball,
                                                  ProjectileID::CANNON_BALL);
+  registry_gameplay_.assign<TrailComponent>(cannonball, 0.05f, color_vec);
+
   registry_gameplay_.assign<IDComponent>(cannonball, id);
 }
 

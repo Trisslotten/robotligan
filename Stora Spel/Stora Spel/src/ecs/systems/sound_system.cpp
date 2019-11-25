@@ -81,6 +81,7 @@ void SoundSystem::Init(Engine* engine) {
   sound_woosh_ = sound_engine_.GetSound("assets/sound/kick_swing.mp3");
   sound_hit_ = sound_engine_.GetSound("assets/sound/ball_hit_sound.mp3");
   sound_nudge_ = sound_engine_.GetSound("assets/sound/ball_nudge.mp3");
+  sound_rmb_shot_ = sound_engine_.GetSound("assets/sound/rmb_fire.mp3");
   sound_goal_ = sound_engine_.GetSound("assets/sound/goal.mp3");
   sound_ball_bounce_ = sound_engine_.GetSound("assets/sound/bounce.mp3");
   sound_player_land_ = sound_engine_.GetSound("assets/sound/robot_land.mp3");
@@ -188,6 +189,17 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       if (id_c.id == event.nudge.ball_id && nudge_timer_.Elapsed() > 0.1f) {
         nudge_timer_.Restart();
         sound_c.sound_player->Play(sound_nudge_, 0, 1.0f);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::SHOOT) {
+    auto view = registry->view<IDComponent, PlayerComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.shoot.player_id) {
+        sound_c.sound_player->Play(sound_rmb_shot_, 0, 1.0f);
         break;
       }
     }

@@ -641,10 +641,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::CREATE_PROJECTILE: {
-      ProjectileID p_id;
       EntityID e_id;
+      ProjectileID p_id;
       glm::vec3 pos;
       glm::quat ori;
+      unsigned int c_team;
+      packet >> c_team;
       packet >> ori;
       packet >> pos;
       packet >> p_id;
@@ -652,7 +654,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
 
       switch (p_id) {
         case ProjectileID::CANNON_BALL: {
-          play_state_.CreateCannonBall(e_id, pos, ori);
+          play_state_.CreateCannonBall(e_id, pos, ori, c_team);
           break;
         }
         case ProjectileID::TELEPORT_PROJECTILE: {

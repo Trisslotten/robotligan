@@ -42,6 +42,7 @@ private:
   slob::SoundHandle sound_woosh_;
   slob::SoundHandle sound_hit_;
   slob::SoundHandle sound_nudge_;
+  slob::SoundHandle sound_rmb_shot_;
   slob::SoundHandle sound_goal_;
   slob::SoundHandle sound_ball_bounce_;
   slob::SoundHandle sound_player_land_;

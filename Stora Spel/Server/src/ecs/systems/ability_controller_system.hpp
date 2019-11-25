@@ -121,10 +121,10 @@ void Update(entt::registry& registry, float dt) {
     }
 
     // Check if the player should shoot
-    if (ability_component.shoot && ability_component.shoot_cooldown <= 0.0f) {
+    if (ability_component.shoot) {
       entt::entity entity =
           CreateCannonBallEntity(registry, player_component.client_id);
-      ability_component.shoot_cooldown = 1.0f;
+
       EventInfo e;
       e.event = Event::CREATE_CANNONBALL;
       e.entity = entity;
@@ -333,11 +333,12 @@ bool DoSuperStrike(entt::registry& registry) {
 
 entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
   auto view_controller =
-      registry.view<CameraComponent, PlayerComponent, TransformComponent>();
+      registry.view<CameraComponent, PlayerComponent, TransformComponent, TeamComponent>();
   for (auto entity : view_controller) {
     CameraComponent& cc = view_controller.get<CameraComponent>(entity);
     PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
     TransformComponent& tc = view_controller.get<TransformComponent>(entity);
+    TeamComponent& team_c = view_controller.get<TeamComponent>(entity);
 
     if (pc.client_id == id) {
       float speed = pc.rocket_speed;
@@ -351,6 +352,7 @@ entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
       registry.assign<physics::Sphere>(cannonball, glm::vec3(0.f), .3f);
       registry.assign<ProjectileComponent>(cannonball,
                                            ProjectileID::CANNON_BALL, id);
+      registry.assign<TeamComponent>(cannonball, team_c.team);
       return cannonball;
     }
   }
