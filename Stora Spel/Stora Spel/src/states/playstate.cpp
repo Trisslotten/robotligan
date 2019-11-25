@@ -2008,16 +2008,19 @@ void PlayState::CreateWall(EntityID id, glm::vec3 position,
   registry_gameplay_.assign<SoundComponent>(wall, sound_engine.CreatePlayer());
   registry_gameplay_.assign<IDComponent>(wall, id);
   registry_gameplay_.assign<TransformComponent>(wall, position, rotation,
-                                                glm::vec3(1.f, 4.f, 5.f));
+                                                glm::vec3(1.f));
   auto& obb = registry_gameplay_.assign<physics::OBB>(wall);
   obb.extents[0] = 1.f;
-  obb.extents[1] = 8.3f;
+  obb.extents[1] = 8.5f;
   obb.extents[2] = 5.f;
 
-  glob::ModelHandle model = glob::GetModel("assets/Pickup/Pickup.fbx");
+  glob::ModelHandle model = glob::GetModel("assets/Wall/Wall_Solid.fbx");
+  glob::ModelHandle model_t =
+      glob::GetTransparentModel("assets/Wall/Wall_Transparent.fbx");
   int a = 10;
   std::vector<glob::ModelHandle> hs;
   hs.push_back(model);
+  hs.push_back(model_t);
   registry_gameplay_.assign<ModelComponent>(wall, hs);
   registry_gameplay_.assign<WallComponent>(wall);
 
