@@ -16,7 +16,7 @@ void Update(entt::registry& registry, slob::SoundEngine& sound_engine, float dt)
 
     if (c.timer >= c.spawn) {
       c.timer -= c.spawn;
-      auto e = registry.create();
+      auto new_rocket = registry.create();
       auto handle = glob::CreateParticleSystem();
 
       std::vector handles = {handle};
@@ -36,11 +36,12 @@ void Update(entt::registry& registry, slob::SoundEngine& sound_engine, float dt)
                      std::to_string(c.colors[i].a);
       glob::SetParticleSettings(handle, map);
 
-      registry.assign<ParticleComponent>(e, handles, offsets, directions);
-      registry.assign<TimerComponent>(e, 7.f);
-      registry.assign<TransformComponent>(e, c.position);
+      registry.assign<ParticleComponent>(new_rocket, handles, offsets,
+                                         directions);
+      registry.assign<TimerComponent>(new_rocket, 7.f);
+      registry.assign<TransformComponent>(new_rocket, c.position);
       auto sound_player = sound_engine.CreatePlayer();
-      registry.assign<SoundComponent>(entity, sound_player);
+      registry.assign<SoundComponent>(new_rocket, sound_player);
       sound_player->Play(sound_engine.GetSound("assets/sound/fireworks.mp3"),
                          0, 5.1f);
     }
