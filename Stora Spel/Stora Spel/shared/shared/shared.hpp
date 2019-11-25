@@ -188,6 +188,7 @@ struct GameEvent {
     // Ball bounce
     struct {
       EntityID ball_id;
+      float velocity;
     } bounce;
 
     // Player Land

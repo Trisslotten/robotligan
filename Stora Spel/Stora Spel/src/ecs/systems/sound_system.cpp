@@ -219,7 +219,9 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.nudge.ball_id) {
-        sound_c.sound_player->Play(sound_ball_bounce_);
+        float factor = 1.f;
+        if (event.bounce.velocity) factor = event.bounce.velocity;
+        sound_c.sound_player->Play(sound_ball_bounce_, 0, 1.f * factor);
         break;
       }
     }
