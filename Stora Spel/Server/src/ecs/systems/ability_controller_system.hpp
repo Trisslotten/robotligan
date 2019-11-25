@@ -78,7 +78,8 @@ void Update(entt::registry& registry, float dt) {
                          player_component.client_id, player)) {
         // If ability triggered successfully set the
         // AbilityComponent's cooldown to be on max capacity
-        ability_component.cooldown_remaining = ability_cooldowns[ability_component.primary_ability];
+        ability_component.cooldown_remaining =
+            ability_cooldowns[ability_component.primary_ability];
         GameEvent primary_used_event;
         primary_used_event.type = GameEvent::PRIMARY_USED;
         primary_used_event.primary_used.player_id = id_component.id;
@@ -321,7 +322,8 @@ bool DoSuperStrike(entt::registry& registry) {
               registry.get<IDComponent>(player_entity).id;
 
           if (registry.has<IDComponent>(ball_entity)) {
-            super_kick_event.super_kick.ball_id = registry.get<IDComponent>(ball_entity).id;
+            super_kick_event.super_kick.ball_id =
+                registry.get<IDComponent>(ball_entity).id;
           } else {
             super_kick_event.super_kick.ball_id = -1;
           }
@@ -336,8 +338,8 @@ bool DoSuperStrike(entt::registry& registry) {
 }
 
 entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
-  auto view_controller =
-      registry.view<CameraComponent, PlayerComponent, TransformComponent, TeamComponent>();
+  auto view_controller = registry.view<CameraComponent, PlayerComponent,
+                                       TransformComponent, TeamComponent>();
   for (auto entity : view_controller) {
     CameraComponent& cc = view_controller.get<CameraComponent>(entity);
     PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
@@ -636,18 +638,18 @@ bool DoBlackout(entt::registry& registry) {
 }
 
 bool PlaceMine(entt::registry& registry, PlayerID id) {
-  auto view_controller =
-      registry.view<CameraComponent, PlayerComponent, TransformComponent, TeamComponent>();
+  auto view_controller = registry.view<CameraComponent, PlayerComponent,
+                                       TransformComponent, TeamComponent>();
   for (auto entity : view_controller) {
-    PlayerComponent& p_c =
-        view_controller.get<PlayerComponent>(entity);
+    PlayerComponent& p_c = view_controller.get<PlayerComponent>(entity);
     TransformComponent& t_c = view_controller.get<TransformComponent>(entity);
     TeamComponent& team_c = view_controller.get<TeamComponent>(entity);
 
     if (p_c.client_id == id) {
       entt::entity mine = registry.create();
 
-      registry.assign<TransformComponent>(mine, t_c.position);
+      registry.assign<TransformComponent>(
+          mine, glm::vec3(t_c.position.x, 0.f, t_c.position.z));
       registry.assign<MineComponent>(mine, team_c.team);
       registry.assign<TimerComponent>(mine, 30.f);
 
@@ -766,7 +768,7 @@ void CreateBlackHole(entt::registry& registry, PlayerID id) {
           glm::vec3(0, 0, 0), glm::vec3(.5f, .5f, .5f));
       registry.assign<BlackHoleComponent>(black_hole);
 
-	  EventInfo e;
+      EventInfo e;
       e.event = Event::CREATE_BLACK_HOLE;
       e.entity = black_hole;
 

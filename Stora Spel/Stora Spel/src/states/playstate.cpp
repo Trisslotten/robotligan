@@ -130,29 +130,25 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
   float spawn = .8f;
   float timer = 0.8f;
 
-  registry.assign<FireworksComponent>(e, colors, position, spawn,
-                                                timer);
+  registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
   registry.assign<TimerComponent>(e, 2.0f);
   position = glm::vec3(x * -1.1f, 0.f, 0.f);
 
-  registry.assign<FireworksComponent>(e, colors, position, spawn,
-                                                timer);
+  registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
   registry.assign<TimerComponent>(e, 2.0f);
   position = glm::vec3(0.f, 0.f, 50.f);
 
-  registry.assign<FireworksComponent>(e, colors, position, spawn,
-                                                timer);
+  registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
   registry.assign<TimerComponent>(e, 2.0f);
   position = glm::vec3(0.f, 0.f, -50.f);
 
-  registry.assign<FireworksComponent>(e, colors, position, spawn,
-                                                timer);
+  registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 }
 
 void PlayState::Init() {
@@ -2152,7 +2148,6 @@ void PlayState::CreateBlackHoleObject(EntityID id, glm::vec3 pos,
   registry_gameplay_.assign<ProjectileComponent>(black_hole,
                                                  ProjectileID::BLACK_HOLE);
 
-  
   // Save game event
   GameEvent black_hole_create_event;
   black_hole_create_event.type = GameEvent::BLACK_HOLE_CREATED;
@@ -2163,16 +2158,24 @@ void PlayState::CreateBlackHoleObject(EntityID id, glm::vec3 pos,
 void PlayState::CreateMineObject(unsigned int owner_team, EntityID mine_id,
                                  glm::vec3 pos) {
   auto& sound_engine = engine_->GetSoundEngine();
-
   entt::entity mine_object = registry_gameplay_.create();
-  glob::ModelHandle model_mine =
-      glob::GetModel(kModelPathMine);  // Switch to mine model
 
   if (owner_team == my_team_) {
+    glob::ModelHandle model_mine =
+        glob::GetModel(kModelPathMine);  // Switch to mine model
     ModelComponent& model_c =
         registry_gameplay_.assign<ModelComponent>(mine_object);
+
+    // Set the right color on the mine
+    if (my_team_ == TEAM_BLUE) {
+      model_c.diffuse_index = 1;
+    } else {
+      model_c.diffuse_index = 0;
+    }
+
     model_c.handles.push_back(model_mine);
   }
+
   registry_gameplay_.assign<IDComponent>(mine_object, mine_id);
   registry_gameplay_.assign<TransformComponent>(mine_object, pos);
   registry_gameplay_.assign<MineComponent>(mine_object, owner_team);
@@ -2682,7 +2685,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       break;
     }
     case GameEvent::BLACK_HOLE_ACTIVATED: {
-      auto view_controller = correct_registry->view<IDComponent, TransformComponent>();
+      auto view_controller =
+          correct_registry->view<IDComponent, TransformComponent>();
 
       for (auto proj_ent : view_controller) {
         auto& id_c = view_controller.get<IDComponent>(proj_ent);
@@ -2690,7 +2694,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
         if (id_c.id == e.activate_black_hole.black_hole_id) {
           trans_c.scale = glm::vec3(1.5f);
-          //glob::CreateShockwave(trans_c.position, 5.0f, 20.f);
+          // glob::CreateShockwave(trans_c.position, 5.0f, 20.f);
           glob::CreateBlackHole(trans_c.position);
           auto handle = glob::CreateParticleSystem();
           std::vector<glob::ParticleSystemHandle> handles;
@@ -2698,12 +2702,11 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           glob::SetParticleSettings(handle, "black_hole.txt");
           std::vector<glm::vec3> offsets = {glm::vec3(0.0f)};
           std::vector<glm::vec3> directions = {glm::vec3(0.0f)};
-          correct_registry->assign<ParticleComponent>(proj_ent, handles, offsets,
-                                              directions);
+          correct_registry->assign<ParticleComponent>(proj_ent, handles,
+                                                      offsets, directions);
           break;
         }
       }
-
     }
     case GameEvent::SPRINT_START: {
       sprinting_ = true;
