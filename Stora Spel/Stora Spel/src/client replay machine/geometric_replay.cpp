@@ -45,6 +45,8 @@ ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
       return ReplayObjectType::REPLAY_MISSILE;
     } else if (proj_c.projectile_id == ProjectileID::FORCE_PUSH_OBJECT) {
       return ReplayObjectType::REPLAY_FORCE_PUSH;
+    } else if (proj_c.projectile_id == ProjectileID::BLACK_HOLE) {
+      return ReplayObjectType::REPLAY_BLACKHOLE;
     }
   } else if (in_registry.has<MineComponent>(in_entity)) {
     return ReplayObjectType::REPLAY_MINE;
@@ -129,6 +131,10 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
     ret_ptr = new MineFrame(trans_c);
+  } else if (object_type == REPLAY_BLACKHOLE) {
+    TransformComponent& trans_c =
+        in_registry.get<TransformComponent>(in_entity);
+    ret_ptr = new BlackholeFrame(trans_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unidentified entity");
@@ -317,6 +323,14 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
         in_registry.get<TransformComponent>(in_entity);
     // Transfer
     mf_c_ptr->WriteBack(trans_c);
+  } else if (in_type == REPLAY_BLACKHOLE) {
+    // Cast
+    BlackholeFrame* bh_c_ptr = dynamic_cast<BlackholeFrame*>(in_df_ptr);
+    // Get
+    TransformComponent& trans_c =
+        in_registry.get<TransformComponent>(in_entity);
+    // Transfer
+    bh_c_ptr->WriteBack(trans_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -494,6 +508,20 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     // - Add the relevant ModelHandle:s to entity
     model_c.handles.push_back(mine_model);
+  } else if (object_type == REPLAY_BLACKHOLE) {
+    // -Cast DataFrame to correct type
+    BlackholeFrame* bh_c_ptr = dynamic_cast<BlackholeFrame*>(df_ptr);
+    in_registry.assign<IDComponent>(entity,
+                                    channels_.at(in_channel_index).object_id);
+    // - Assign the relevant components to entity
+    TransformComponent& trans_c =
+        in_registry.assign<TransformComponent>(entity);
+    bh_c_ptr->WriteBack(trans_c);
+    // - Assign a model component to thew entity
+    glob::ModelHandle blackhole_model = glob::GetModel(kModelPathBall);
+    ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    // - Add the relevant ModelHandle:s to entity
+    model_c.handles.push_back(blackhole_model);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
