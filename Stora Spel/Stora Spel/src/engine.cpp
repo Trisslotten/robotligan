@@ -566,14 +566,16 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::CREATE_WALL: {
+      unsigned int team;
       glm::quat rot;
       glm::vec3 pos;
       EntityID id;
 
+	  packet >> team;
       packet >> id;
       packet >> pos;
       packet >> rot;
-      play_state_.CreateWall(id, pos, rot);
+      play_state_.CreateWall(id, pos, rot, team);
       break;
     }
     case PacketBlockType::CREATE_PICK_UP: {

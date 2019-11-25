@@ -756,6 +756,20 @@ void PlayerProjectileCollision(entt::registry& registry) {
             DestroyEntity(registry, projectile);
             break;
           }
+          case ProjectileID::FISHING_HOOK: {
+            if (registry.has<HookComponent>(projectile)) {
+              HookComponent& hook_c = registry.get<HookComponent>(projectile);
+              hook_c.attached = true;
+              hook_c.hooked_entity = player_id.id;
+              hook_c.hook_m = PULL_OBJECT;
+              hook_c.hook_timer.Restart();
+
+              // remove projectile component, fishing system will handle
+              // position.
+              registry.remove<ProjectileComponent>(projectile);
+            }
+            break;
+          }
         }
       }
     }
@@ -828,7 +842,7 @@ void ProjectileBallCollision(entt::registry& registry, entt::entity ball) {
             hook_c.attached = true;
             hook_c.hooked_entity = ball_id.id;
             hook_c.hook_m = PULL_OBJECT;
-
+            hook_c.hook_timer.Restart();
 
 			// remove projectile component, fishing system will handle position.
             registry.remove<ProjectileComponent>(projectile);
@@ -908,6 +922,8 @@ void ProjectileArenaCollision(entt::registry& registry) {
             HookComponent& hook_c = registry.get<HookComponent>(projectile);
             hook_c.attached = true;
             hook_c.hook_m = PULL_PLAYER;
+
+            hook_c.hook_timer.Restart();
             phys_c.acceleration = glm::vec3(0);
             phys_c.velocity = glm::vec3(0);
 

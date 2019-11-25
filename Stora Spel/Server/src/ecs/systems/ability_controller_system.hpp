@@ -546,12 +546,14 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
   auto view_players = registry.view<PlayerComponent, TransformComponent,
                                     CameraComponent, IDComponent>();
   auto view_goals = registry.view<GoalComponenet, TransformComponent>();
+
   for (auto entity : view_players) {
     auto& player_c = view_players.get<PlayerComponent>(entity);
 
     if (player_c.client_id == id) {
       auto& trans_c = view_players.get<TransformComponent>(entity);
       auto& camera = view_players.get<CameraComponent>(entity);
+      auto& team_c = view_players.get<TeamComponent>(entity);
 
       glm::vec3 position = camera.GetLookDir() * 4.5f + trans_c.position +
                            trans_c.rotation * camera.offset;
@@ -570,6 +572,7 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
         }
       }
 
+
       auto orientation = trans_c.rotation;
       // orientation.y = camera.GetLookDir().y;
 
@@ -578,6 +581,7 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
       registry.assign<TimerComponent>(wall, 10.f);
       registry.assign<HealthComponent>(wall, 100);
       registry.assign<TransformComponent>(wall, position, orientation);
+      registry.assign<TeamComponent>(wall, team_c.team);
       auto& obb = registry.assign<physics::OBB>(wall);
       obb.extents[0] = 1.f;
       obb.extents[1] = 8.3f;
@@ -754,7 +758,7 @@ void DoFishing(entt::registry& registry, long creator) {
     IDComponent& idc = view_controller.get<IDComponent>(entity);
 
     if (pc.client_id == creator) {
-      float speed = pc.rocket_speed;
+      float speed = 80.f;
       auto hook = registry.create();
       registry.assign<PhysicsComponent>(hook,
                                         glm::vec3(cc.GetLookDir() * speed),

@@ -364,10 +364,13 @@ void ServerPlayState::HandleDataToSend() {
     for (auto entity : created_walls_) {
       auto& t = registry.get<TransformComponent>(entity);
       auto& id = registry.get<IDComponent>(entity);
+      auto& team = registry.get<TeamComponent>(entity);
 
       to_send << t.rotation;
       to_send << t.position;
       to_send << id.id;
+      to_send << team.team;
+
       to_send << PacketBlockType::CREATE_WALL;
     }
 
@@ -922,6 +925,12 @@ void ServerPlayState::ResetEntities() {
       dispatcher.trigger(homing_ball_end_event);
     }
     ball_component.homer_cid = -1;
+  }
+
+  // remove fishing hook
+  auto view_hooks = registry.view<HookComponent>();
+  for (auto hook : view_hooks) {
+    registry.destroy(hook);
   }
 }
 

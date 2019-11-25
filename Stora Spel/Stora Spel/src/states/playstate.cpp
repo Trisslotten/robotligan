@@ -2032,8 +2032,8 @@ void PlayState::AddPlayer() {
   }
 }
 
-void PlayState::CreateWall(EntityID id, glm::vec3 position,
-                           glm::quat rotation) {
+void PlayState::CreateWall(EntityID id, glm::vec3 position, glm::quat rotation,
+                           unsigned int team) {
   auto wall = registry_gameplay_.create();
   auto& sound_engine = engine_->GetSoundEngine();
   registry_gameplay_.assign<SoundComponent>(wall, sound_engine.CreatePlayer());
@@ -2045,7 +2045,10 @@ void PlayState::CreateWall(EntityID id, glm::vec3 position,
   obb.extents[1] = 8.3f;
   obb.extents[2] = 5.f;
 
-  glob::ModelHandle model = glob::GetModel("assets/Pickup/Pickup.fbx");
+  glob::ModelHandle model = glob::GetModel("assets/Pickup/Pickup.fbx"); // "röd vägg"
+  if (team == TEAM_BLUE) {
+	// model = blå vägg ...
+  }
   int a = 10;
   std::vector<glob::ModelHandle> hs;
   hs.push_back(model);
@@ -2734,6 +2737,23 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       }
       break;
     }
+    case GameEvent::REMOVE_FISHING_HOOK: {
+      EntityID id = e.hook_removed.hook_id;
+      for (int i = 0; i < fishers_.size(); i++) {
+        if (fishers_[i].hook_id == id) {
+          fishers_.erase(fishers_.begin() + i);
+          break;
+        }
+      }
+      auto view_hooks = registry_gameplay_.view<IDComponent>();
+      for (auto hook : view_hooks) {
+        auto& hook_id_c = registry_gameplay_.get<IDComponent>(hook);
+        if (hook_id_c.id == id) {
+          registry_gameplay_.destroy(hook);
+        }
+      }
+      break;
+    }
   }
 }
 
@@ -2769,6 +2789,9 @@ void PlayState::Reset() {
   predicted_state_.velocity = glm::vec3(0.0f);
   current_jumbo_effect_ = TEAM_SCORES;
   jumbo_effect_timer_.Restart();
+
+  // clear fishing lines
+  fishers_.clear();
 }
 
 void PlayState::EndGame() {

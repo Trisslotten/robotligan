@@ -34,7 +34,9 @@ void SoundSystem::Update(entt::registry& registry) {
       vel = phys_c.velocity;
     }
 
-    sound_c.sound_player->Set3DAttributes(trans_c.position, vel);
+    if (registry.valid(sound_entity)) {
+      sound_c.sound_player->Set3DAttributes(trans_c.position, vel);
+	}
   }
   // Play footstep sounds from each player on the field
   auto player_view =

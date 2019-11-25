@@ -160,6 +160,7 @@ struct GameEvent {
     PICKUP_SPAWNED,
 	PLAYER_STUNNED,
 	CREATE_FISHING_HOOK,
+	REMOVE_FISHING_HOOK,
     NUM_EVENTS
   } type;
   union {
@@ -348,6 +349,11 @@ struct GameEvent {
       EntityID player_id;
       float stun_time;
     } player_stunned;
+
+	//hook removed
+	struct {
+      EntityID hook_id;
+	} hook_removed;
   };
 };
 
