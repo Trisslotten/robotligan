@@ -2045,15 +2045,18 @@ void PlayState::CreateWall(EntityID id, glm::vec3 position, glm::quat rotation,
   obb.extents[1] = 8.3f;
   obb.extents[2] = 5.f;
 
-  glob::ModelHandle model = glob::GetModel("assets/Pickup/Pickup.fbx"); // "röd vägg"
-  if (team == TEAM_BLUE) {
-	// model = blå vägg ...
-  }
+  glob::ModelHandle model = glob::GetModel("assets/Pickup/Pickup.fbx");
+ 
   int a = 10;
   std::vector<glob::ModelHandle> hs;
   hs.push_back(model);
-  registry_gameplay_.assign<ModelComponent>(wall, hs);
+  auto& model_c = registry_gameplay_.assign<ModelComponent>(wall, hs);
   registry_gameplay_.assign<WallComponent>(wall);
+  if (team == TEAM_BLUE) {
+    model_c.diffuse_index = 1;
+  } else {
+    model_c.diffuse_index = 0;
+  }
 
   GameEvent wall_event;
   wall_event.type = GameEvent::BUILD_WALL;
