@@ -1921,7 +1921,8 @@ void PlayState::CreateInGameMenu() {
   in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "EXIT",
                                           in_game_menu_pos + glm::vec2(0, -210),
                                           font_test_, false);
-  in_game_buttons_->button_func = [&] { exit(0); };
+  // Exit is bad, does not call destructors
+  in_game_buttons_->button_func = [&] { engine_->should_quit = true; };
 }
 
 void PlayState::TestCreateLights() {

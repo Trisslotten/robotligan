@@ -411,6 +411,7 @@ class CreateServerState : public State {
   void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
+  ~CreateServerState();
   StateType Type() { return StateType::CREATE_SERVER; }
   bool started_ = false;
 
