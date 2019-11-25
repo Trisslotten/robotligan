@@ -111,8 +111,6 @@
     <ClInclude Include="src\util\winadpihelpers.hpp" />
     <ClInclude Include="src\ecs\components\fireworks_component.hpp" />
     <ClInclude Include="src\ecs\systems\fireworks_system.hpp" />
-    <ClInclude Include="src\ecs\components\popup_component.h" />
-    <ClInclude Include="src\ecs\systems\popup_system.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />
