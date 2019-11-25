@@ -435,8 +435,6 @@ void PlayState::Update(float dt) {
   DrawTarget();
   DrawStunTimer();
 
-  glob::Submit(test_ball_, glm::mat4());
-
   auto view_players = registry_gameplay_.view<PlayerComponent, IDComponent>();
   for (auto player : view_players) {
     EntityID id = registry_gameplay_.get<IDComponent>(player).id;
@@ -446,6 +444,8 @@ void PlayState::Update(float dt) {
       break;
     }
   }
+
+  glob::SetStunned(im_stunned_);
 
   if (stun_timer_.Elapsed() >= my_stun_time_) {
     im_stunned_ = false;

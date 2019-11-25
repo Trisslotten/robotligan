@@ -74,7 +74,10 @@ Shockwaves shockwaves;
 BlackHoles blackholes;
 Rope rope;
 
+Timer global_timer;
+
 bool blackout = false;
+bool stunned = false;
 
 GLint is_invisible = 0;
 float num_frames = 0;
@@ -1363,6 +1366,10 @@ void AddSpotlight(glm::vec3 position, glm::mat4 transform) {
   shadows.AddSpotlight(position, transform);
 }
 
+void SetStunned(bool is_stunned) {
+  stunned = is_stunned;
+}
+
 void Render() {
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
 
@@ -1586,6 +1593,8 @@ void Render() {
   fullscreen_shader.uniform("texture_ssao", 2);
   fullscreen_shader.uniform("use_ao", use_ao);
   fullscreen_shader.uniform("resolution", ws);
+  fullscreen_shader.uniform("time", (float)global_timer.Elapsed());
+  fullscreen_shader.uniform("stunned", stunned ? 1 : 0);
   shockwaves.SetUniforms(fullscreen_shader);
   blackholes.SetUniforms(fullscreen_shader);
   DrawFullscreenQuad();
