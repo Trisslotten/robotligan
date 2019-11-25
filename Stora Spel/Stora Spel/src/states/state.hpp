@@ -246,6 +246,7 @@ class PlayState : public State {
   void CreateTeleportProjectile(EntityID id, glm::vec3 pos, glm::quat ori);
   void CreateForcePushObject(EntityID id, glm::vec3 pos, glm::quat ori);
   void CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori);
+  void CreateBlackHoleObject(EntityID id, glm::vec3 pos, glm::quat ori);
   void CreateMineObject(unsigned int owner_team, EntityID mine_id,
                         glm::vec3 pos);
   void DestroyEntity(EntityID id);
@@ -410,6 +411,7 @@ class CreateServerState : public State {
   void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
+  ~CreateServerState();
   StateType Type() { return StateType::CREATE_SERVER; }
   bool started_ = false;
 
