@@ -88,7 +88,7 @@ void UpdateCollisions(entt::registry& registry) {
       registry.view<physics::OBB, PhysicsComponent, PlayerComponent>();
   auto view_arena =
       registry
-          .view<physics::MeshHitbox, physics::Arena, FailSafeArenaComponent>();
+          .view<physics::MeshHitbox, FailSafeArenaComponent>();
   auto view_wall = registry.view<physics::OBB, WallComponent>();
 
   entt::entity arena_entity;
