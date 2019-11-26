@@ -104,9 +104,7 @@ class GeometricReplay {
     unsigned int frame_number;
   };
 
-  Engine* engine_;
-  std::vector<CapturedGameEvent> captured_events_;
-  unsigned int next_index_to_read_ = 0;
+  
 
   //---
   ReplayObjectType IdentifyEntity(entt::entity& in_entity,
@@ -142,6 +140,10 @@ class GeometricReplay {
   unsigned int current_frame_number_write_ = 0;
   unsigned int current_frame_number_read_ = 0;
 
+  Engine* engine_;
+  std::vector<CapturedGameEvent> captured_events_;
+  unsigned int next_event_index_to_read_ = 0;
+
   GeometricReplay();
 
  public:
@@ -167,6 +169,8 @@ class GeometricReplay {
 
   void ReceiveGameEvent(GameEvent event);
   void SetEngine(Engine* eng) { engine_ = eng; }
+
+  void ClearAllVectors();
 
   std::string GetGeometricReplayTree();
   std::string GetStateOfReplay();

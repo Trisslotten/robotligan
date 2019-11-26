@@ -504,69 +504,37 @@ void GeometricReplay::FrameChannelCleanUp() {
   // *When an object disappears from the game world (and thus the replay)
   // register that as an "ending entry".
 
-  // Debug output A
-  // for (unsigned int j = 0; j < this->channels_.size(); j++) {
-  //  if (this->channels_.at(j).entries.size() > 1) {
-  //    GlobalSettings::Access()->WriteError(
-  //        "Channels with ending entries",
-  //        "(Index|EntityId|ObjectType|ChannelSize|<1>End)",
-  //        std::to_string(j) + "|" +
-  //            std::to_string(this->channels_.at(j).object_id) + "|" +
-  //            std::to_string(this->channels_.at(j).object_type) + "|" +
-  //            std::to_string(this->channels_.at(j).entries.size()) + "|" +
-  //            std::to_string(this->channels_.at(j).entries.at(1).ending_entry));
-  //  }
-  //}
-
   for (unsigned int i = 0; i < this->channels_.size(); i++) {
     if (this->channels_.at(i).entries.size() > 1) {  //(1.)
       unsigned int age = this->current_frame_number_write_ -
                          this->channels_.at(i).entries.at(1).frame_number;
       if (age > this->threshhold_age_) {                         //(2.)
         if (this->channels_.at(i).entries.at(1).ending_entry) {  //(3.1)
-          // Debug output A
+          // Debug output
           // GlobalSettings::Access()->WriteError(
-          //    "Deleting Channel",
-          //    "(Index|EntityId|ObjectType|ChannelSize|<1>End)",
-          //    std::to_string(i) + "|" +
-          //        std::to_string(this->channels_.at(i).object_id) + "|" +
-          //        std::to_string(this->channels_.at(i).object_type) + "|" +
-          //        std::to_string(this->channels_.at(i).entries.size()) + "|" +
-          //        std::to_string(
-          //            this->channels_.at(i).entries.at(1).ending_entry));
+          //    "Target", "ObjID",
+          //    std::to_string(this->channels_.at(i).object_id));
+          // for (unsigned int j = 0; j < this->channels_.size(); j++) {
+          //  GlobalSettings::Access()->WriteError(
+          //      "Channel Sizes", "(id|pre-delete size)",
+          //      std::to_string(this->channels_.at(j).object_id) + "|" +
+          //          std::to_string(this->channels_.at(j).entries.size()));
+          //}
+          // GlobalSettings::Access()->WriteError("", "", "");
+          // Debug output
 
-          // Debug output B
-          GlobalSettings::Access()->WriteError(
-              "Target", "ObjID",
-              std::to_string(this->channels_.at(i).object_id));
-          for (unsigned int j = 0; j < this->channels_.size(); j++) {
-            GlobalSettings::Access()->WriteError(
-                "Channel Sizes", "(id|pre-delete size)",
-                std::to_string(this->channels_.at(j).object_id) + "|" +
-                    std::to_string(this->channels_.at(j).entries.size()));
-          }
-          GlobalSettings::Access()->WriteError("", "", "");
-
-          /*FrameChannel* temp_fc;
-          temp_fc = &(this->channels_.at(i));
-
-          std::remove()*/
-
-          this->channels_.erase(
-              this->channels_.begin() +
-              i);  //<- Consider this thing //Working here, it is at this exact
-                   // line the extra frames in the channels appear
+          this->channels_.erase(this->channels_.begin() + i);
           i--;
 
-          // Debug output B
-          for (unsigned int j = 0; j < this->channels_.size(); j++) {
-            GlobalSettings::Access()->WriteError(
-                "Channel Sizes", "(id|post-delete size)",
-                std::to_string(this->channels_.at(j).object_id) + "|" +
-                    std::to_string(this->channels_.at(j).entries.size()));
-          }
-          GlobalSettings::Access()->WriteError("", "", "");
-
+          // Debug output
+          // for (unsigned int j = 0; j < this->channels_.size(); j++) {
+          //  GlobalSettings::Access()->WriteError(
+          //      "Channel Sizes", "(id|post-delete size)",
+          //      std::to_string(this->channels_.at(j).object_id) + "|" +
+          //          std::to_string(this->channels_.at(j).entries.size()));
+          //}
+          // GlobalSettings::Access()->WriteError("", "", "");
+          // Debug output
         } else {  //(3.2)
           this->channels_.at(i).entries.erase(
               this->channels_.at(i).entries.begin());
@@ -610,12 +578,13 @@ GeometricReplay* GeometricReplay::Clone() {
     FrameChannel temp_fc = this->channels_.at(i);
     clone->channels_.push_back(temp_fc);
   }
-
   clone->threshhold_age_ = this->threshhold_age_;
   clone->current_frame_number_write_ = this->current_frame_number_write_;
   clone->current_frame_number_read_ = this->current_frame_number_read_;
-  clone->captured_events_ = this->captured_events_;
+  
   clone->engine_ = this->engine_;
+  clone->captured_events_ = this->captured_events_;
+  clone->next_event_index_to_read_ = this->next_event_index_to_read_;
 
   return clone;
 }
@@ -713,15 +682,20 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
     }
   }
 
-  if (next_index_to_read_ < captured_events_.size()) {
-    while (captured_events_[next_index_to_read_].frame_number ==
+  // Event handling:
+  // - Check the vector of captured events
+  // - Read all events with the current read frame's number
+  // - Dispatch them
+  if (next_event_index_to_read_ < captured_events_.size()) {
+    while (captured_events_[next_event_index_to_read_].frame_number ==
            current_frame_number_read_) {
-      dispatcher.trigger(captured_events_[next_index_to_read_].event);
+      dispatcher.trigger(captured_events_[next_event_index_to_read_].event);
       // printf("Triggered event of type: %i \n",
       //       captured_events_[next_index_to_read_].event.type);
-      next_index_to_read_++;
+      next_event_index_to_read_++;
     }
   }
+
   // Increment read index
   this->current_frame_number_read_++;
 
@@ -820,6 +794,13 @@ void GeometricReplay::ReceiveGameEvent(GameEvent event) {
   cge.event = event;
   cge.frame_number = current_frame_number_write_;
   captured_events_.push_back(cge);
+}
+
+void GeometricReplay::ClearAllVectors() {
+  // Clear FrameChannel:s and CapturedGameEvent:S
+  // without reseting frame reads and writes
+  this->channels_.clear();
+  this->captured_events_.clear();
 }
 
 std::string GeometricReplay::GetGeometricReplayTree() {
