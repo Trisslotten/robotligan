@@ -2052,9 +2052,9 @@ void PlayState::CreateWall(EntityID id, glm::vec3 position,
   registry_gameplay_.assign<TransformComponent>(wall, position, rotation,
                                                 glm::vec3(1.f));
   auto& obb = registry_gameplay_.assign<physics::OBB>(wall);
-  obb.extents[0] = 1.f;
-  obb.extents[1] = 8.5f;
-  obb.extents[2] = 5.f;
+  obb.extents[0] = 0.5f;
+  obb.extents[1] = 6.2f;
+  obb.extents[2] = 5.5f;
 
   glob::ModelHandle model = glob::GetModel("assets/Wall/Wall_Solid.fbx");
   glob::ModelHandle model_t =

@@ -582,9 +582,9 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
       registry.assign<HealthComponent>(wall, 100);
       registry.assign<TransformComponent>(wall, position, orientation);
       auto& obb = registry.assign<physics::OBB>(wall);
-      obb.extents[0] = 1.f;
-      obb.extents[1] = 8.3f;
-      obb.extents[2] = 5.f;
+      obb.extents[0] = 0.5f;
+      obb.extents[1] = 6.2f;
+      obb.extents[2] = 5.5f;
 
       EventInfo e;
       e.event = Event::BUILD_WALL;

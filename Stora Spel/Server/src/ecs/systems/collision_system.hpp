@@ -230,13 +230,13 @@ void HandleBallCollisions(entt::registry& registry, const CollisionList& list,
       float vel = glm::length(ball_physics.velocity);
       if (vel > 20.f) {
         auto& health = registry.get<HealthComponent>(object.entity);
-        health.health -= 50;
+        //health.health -= 50;
       } else if (vel > 10) {
         auto& health = registry.get<HealthComponent>(object.entity);
-        health.health -= 30;
+        //health.health -= 30;
       } else if (vel > 6) {
         auto& health = registry.get<HealthComponent>(object.entity);
-        health.health -= 10;
+        //health.health -= 10;
       }
     }
   } else if (list.collision_list.size() > 1) {
@@ -450,45 +450,56 @@ void BallWallCollision(entt::registry& registry, const CollisionObject& object,
   auto& ball_hitbox = registry.get<physics::Sphere>(ball);
   auto& ball_c = registry.get<BallComponent>(ball);
 
-  ball_hitbox.center += object.move_vector;
+  glm::vec3 move_vector = object.move_vector;
+  glm::vec3 normal = object.normal;
+  if (normal.y < 0.1f && normal.y > -0.1f) {
+    normal.y = 0.f; 
+    normal = glm::normalize(normal);
+    move_vector.y = 0.f;
+  }
+  ball_hitbox.center += move_vector;
+  
 
   bool bounced = false;
 
-  float dot_val = glm::dot(object.normal, ball_physics.velocity);
+  float dot_val = glm::dot(normal, ball_physics.velocity);
   if (dot_val < 0.f) {
     ball_physics.velocity =
-        ball_physics.velocity - object.normal * dot_val * 0.8f * 2.f;
+        ball_physics.velocity - normal * dot_val * 0.8f * 2.f;
     bounced = true;
   }
-  if (object.normal.y > 0.5f) {
+  if (normal.y > 0.5f) {
     ball_physics.is_airborne = true;
   }
-
-  if (object.normal.y == 1) {
+  
+  if (normal.y == 1) {
     bounced = false;
   }
 
   if (bounced) {
     // save game event
-    if (registry.has<IDComponent>(ball)) {
+    if (registry.has<IDComponent>(ball) && !ball_c.bounced_last_frame) {
       GameEvent bounce_event;
       bounce_event.type = GameEvent::BOUNCE;
       bounce_event.bounce.ball_id = registry.get<IDComponent>(ball).id;
+      bounce_event.bounce.velocity = glm::length(ball_physics.velocity);
       dispatcher.trigger(bounce_event);
     }
   }
+  ball_c.bounced_last_frame = 1 << 30;
 
   // Rotate ball
-  glm::vec3 nn = glm::normalize(object.normal);
+  glm::vec3 nn = glm::normalize(normal);
   glm::vec3 dir =
       ball_physics.velocity - glm::dot(ball_physics.velocity, nn) * nn;
 
-  if (glm::length(dir) == 0) return;
 
   if (ball_c.is_super_striked) {
     ball_physics.velocity *= 0.3f;
     ball_c.is_super_striked = false;
   }
+  if (glm::length(dir) < 0.1f) return;
+
 
   glm::vec3 rotate = glm::normalize(glm::cross(nn, dir));
   float amount = glm::length(dir);
