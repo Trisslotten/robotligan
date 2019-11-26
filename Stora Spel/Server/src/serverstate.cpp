@@ -589,7 +589,7 @@ void ServerPlayState::CreateMapEntity() {
   arena_scale2.x = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
   arena_scale2.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
   arena_scale2.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
-  glm::vec3 arena_scale = glm::vec3(1.0f) * arena_scale2;
+  glm::vec3 arena_scale = glm::vec3(2.6f) * arena_scale2;
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
   glob::ModelHandle model_map = glob::GetModel("assets/MapV3/Map_Hitbox.fbx");
