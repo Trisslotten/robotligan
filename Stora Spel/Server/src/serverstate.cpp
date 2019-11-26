@@ -159,6 +159,7 @@ void ServerPlayState::Init() {
     to_send << num_players;
     to_send << client_abilities_[client_id];
     to_send << arena_scale;
+    to_send << switched_goals;
     to_send << PacketBlockType::GAME_START;
 
     auto pick_up_view =
@@ -1187,6 +1188,7 @@ void ServerPlayState::Reconnect(int id) {
   to_send << num_players;
   to_send << client_abilities_[id];
   to_send << arena_scale;
+  to_send << switched_goals;
   to_send << PacketBlockType::GAME_START;
 
   auto pick_up_view =

@@ -294,6 +294,7 @@ class PlayState : public State {
 
   void FetchMapAndArena(entt::registry& in_registry);
   void SetCanSmash(bool val) { can_smash_ = val; }
+  void SetGoalsSwapped(bool val) { goals_swapped_ = val; }
 
  private:
   struct GuiNotRespnding {
@@ -437,7 +438,7 @@ class PlayState : public State {
   Timer stun_timer_;
   float my_stun_time_;
 
-  bool switching_goals = false;
+  bool switching_goals_ = false;
 
   std::vector<Fishermans> fishers_;
 };

@@ -408,6 +408,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       int ability_id;
       int num_team_ids;
       glm::vec3 arena_scale;
+      bool switched;
+      packet >> switched;
       packet >> arena_scale;
       packet >> ability_id;
       packet >> num_players;
@@ -438,7 +440,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         psbi.saves = 0;
         player_scores_[client_id] = psbi;
       }
-
+      play_state_.SetGoalsSwapped(true);
       ChangeState(StateType::PLAY);
 
       std::cout << "PACKET: GAME_START\n";

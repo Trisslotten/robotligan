@@ -179,6 +179,7 @@ void PlayState::Init() {
 
   engine_->GetSoundSystem().PlayAmbientSound(registry_gameplay_);
   goals_swapped_ = false;
+  switching_goals_ = false;
   primary_cd_ = 0.f;
   engine_->SetSecondaryAbility(AbilityID::NULL_ABILITY);
   engine_->GetChat()->CloseChat();
@@ -766,7 +767,7 @@ void PlayState::UpdateSwitchGoalTimer() {
 #endif
 
   // Write out timer
-  if (switching_goals) {
+  if (switching_goals_) {
     glm::vec2 countdown_pos = glob::window::GetWindowDimensions();
     countdown_pos /= 2;
     countdown_pos.x += 10;
@@ -2859,11 +2860,11 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       break;
     }
     case GameEvent::SWITCH_GOALS_BEGIN: {
-      switching_goals = true;
+      switching_goals_ = true;
       break;
     }
     case GameEvent::SWITCH_GOALS_DONE: {
-      switching_goals = false;
+      switching_goals_ = false;
       SwitchGoals();
       break;
     }
@@ -2888,6 +2889,10 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 }
 
 void PlayState::Reset() {
+  if (goals_swapped_) {
+    SwitchGoals();
+  }
+
   auto view_particle = registry_gameplay_.view<ParticleComponent>();
   for (auto& entity : view_particle) {
     auto& particle_c = view_particle.get(entity);
