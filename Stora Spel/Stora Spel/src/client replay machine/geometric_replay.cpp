@@ -535,7 +535,8 @@ void GeometricReplay::FrameChannelCleanUp() {
 
           // Debug output B
           GlobalSettings::Access()->WriteError(
-              "Target", "ObjID", std::to_string(this->channels_.at(i).object_id));
+              "Target", "ObjID",
+              std::to_string(this->channels_.at(i).object_id));
           for (unsigned int j = 0; j < this->channels_.size(); j++) {
             GlobalSettings::Access()->WriteError(
                 "Channel Sizes", "(id|pre-delete size)",
@@ -544,10 +545,15 @@ void GeometricReplay::FrameChannelCleanUp() {
           }
           GlobalSettings::Access()->WriteError("", "", "");
 
+          /*FrameChannel* temp_fc;
+          temp_fc = &(this->channels_.at(i));
+
+          std::remove()*/
+
           this->channels_.erase(
               this->channels_.begin() +
               i);  //<- Consider this thing //Working here, it is at this exact
-                   //line the extra frames in the channels appear
+                   // line the extra frames in the channels appear
           i--;
 
           // Debug output B

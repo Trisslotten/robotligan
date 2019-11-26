@@ -30,11 +30,15 @@ class GeometricReplay {
     DataFrame* data_ptr = nullptr;
     bool ending_entry = false;
 
-	// Default constructor
+    // Default constructor
     ChannelEntry() {}
 
-	// Copy Constructor
+    // Copy Constructor
     ChannelEntry(const ChannelEntry& in_ce) {
+      if (data_ptr != nullptr) {
+        delete data_ptr;
+      }
+
       this->frame_number = in_ce.frame_number;
       this->data_ptr = nullptr;
       if (in_ce.data_ptr != nullptr) {
@@ -43,15 +47,21 @@ class GeometricReplay {
       this->ending_entry = in_ce.ending_entry;
     }
 
-	// Destructor
+    // Destructor
     ~ChannelEntry() {
       if (data_ptr != nullptr) {
         delete data_ptr;
       }
     }
 
-	// Assignment operator
+    // Assignment operator
     ChannelEntry& operator=(ChannelEntry const& rhs) {
+      if (&rhs == this) return *this;
+
+      if (data_ptr != nullptr) {
+        delete data_ptr;
+      }
+
       this->frame_number = rhs.frame_number;
       this->data_ptr = nullptr;
       if (rhs.data_ptr != nullptr) {
@@ -59,7 +69,7 @@ class GeometricReplay {
       }
       this->ending_entry = rhs.ending_entry;
 
-	  return *this;
+      return *this;
     }
   };
 
@@ -70,20 +80,22 @@ class GeometricReplay {
     unsigned int index_a = 0;
     unsigned int index_b = 0;
 
-	//Assignment operator
+    // Destructor
+    ~FrameChannel() { entries.clear(); }
+
+    // Assignment operator
     FrameChannel& operator=(FrameChannel const& rhs) {
+      if (&rhs == this) return *this;
+
       this->object_type = rhs.object_type;
       this->object_id = rhs.object_id;
 
-      for (unsigned int i = 0; i < rhs.entries.size(); i++) {
-        ChannelEntry temp_ce = rhs.entries.at(i);
-        this->entries.push_back(temp_ce);
-      }
+      this->entries = rhs.entries;
 
       this->index_a = rhs.index_a;
       this->index_b = rhs.index_b;
 
-	  return *this;
+      return *this;
     }
   };
 
