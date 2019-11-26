@@ -581,7 +581,7 @@ GeometricReplay* GeometricReplay::Clone() {
   clone->threshhold_age_ = this->threshhold_age_;
   clone->current_frame_number_write_ = this->current_frame_number_write_;
   clone->current_frame_number_read_ = this->current_frame_number_read_;
-  
+
   clone->engine_ = this->engine_;
   clone->captured_events_ = this->captured_events_;
   clone->next_event_index_to_read_ = this->next_event_index_to_read_;
@@ -728,11 +728,11 @@ void GeometricReplay::SetEndingFrame(EntityID in_id,
 
           unfound = false;
 
-          GlobalSettings::Access()->WriteError(
-              "Setting Ending Frame in Channel", "(Index|Id|Obj)",
-              std::to_string(i) + "|" +
-                  std::to_string(this->channels_.at(i).object_id) + "|" +
-                  std::to_string(this->channels_.at(i).object_type));
+          // GlobalSettings::Access()->WriteError(
+          //    "Setting Ending Frame in Channel", "(Index|Id|Obj)",
+          //    std::to_string(i) + "|" +
+          //        std::to_string(this->channels_.at(i).object_id) + "|" +
+          //        std::to_string(this->channels_.at(i).object_type));
         }
       }
     }
@@ -803,6 +803,8 @@ void GeometricReplay::ClearAllVectors() {
   this->captured_events_.clear();
 }
 
+//---
+
 std::string GeometricReplay::GetGeometricReplayTree() {
   std::string ret_str = "Geometric Replay Tree\n";
   ret_str += "\tThreshold age: " + std::to_string(this->threshhold_age_) + "\n";
@@ -847,7 +849,7 @@ std::string GeometricReplay::GetGeometricReplayTree() {
   return ret_str;
 }
 
-std::string GeometricReplay::GetStateOfReplay() {
+std::string GeometricReplay::GetGeometricReplayState() {
   std::string ret_str = "";
 
   unsigned int start_frame = 0;

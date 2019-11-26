@@ -104,8 +104,6 @@ class GeometricReplay {
     unsigned int frame_number;
   };
 
-  
-
   //---
   ReplayObjectType IdentifyEntity(entt::entity& in_entity,
                                   entt::registry& in_registry);
@@ -172,8 +170,10 @@ class GeometricReplay {
 
   void ClearAllVectors();
 
+  //---
+
   std::string GetGeometricReplayTree();
-  std::string GetStateOfReplay();
+  std::string GetGeometricReplayState();
   std::string GetGeometricReplaySummary();
 };
 

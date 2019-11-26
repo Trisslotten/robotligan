@@ -113,11 +113,6 @@ bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
 
   // NTS: Remember to save replays to file before deleting them
   if (load_result) {
-    GlobalSettings::Access()->WriteError(
-        "Remaining Replays",
-        std::to_string(this->stored_replays_.size()-1) + "\n",
-        this->stored_replays_.at(0)->GetGeometricReplaySummary());
-
     this->stored_replays_.erase(this->stored_replays_.begin());
   }
 
@@ -128,22 +123,4 @@ void ClientReplayMachine::ReceiveGameEvent(GameEvent event) {
   if (this->engine_->IsRecording()) {
     primary_replay_->ReceiveGameEvent(event);
   }
-}
-
-std::string ClientReplayMachine::GetSelectedReplayStringTree() {
-  if (this->stored_replays_.empty()) {
-    return "ERROR: There are no stored replays";
-  }
-
-  return this->stored_replays_.at(this->selected_replay_index_)
-      ->GetGeometricReplayTree();
-}
-
-std::string ClientReplayMachine::GetSelectedReplayStringState() {
-  if (this->stored_replays_.empty()) {
-    return "ERROR: There are no stored replays";
-  }
-
-  return this->stored_replays_.at(this->selected_replay_index_)
-      ->GetStateOfReplay();
 }

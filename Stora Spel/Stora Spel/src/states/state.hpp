@@ -392,9 +392,12 @@ class ReplayState : public State {
   glm::vec3 arena_scale_ = glm::vec3(0.f);
   bool goals_swapped_ = false;
 
-  void FetchMapAndArena();
+  void AddConstantStuff();
   void UpdateCamera();
   void UpdatePickUpMovement(/*float dt*/);
+
+  void StartReplayMode();
+  void PlayReplay();
 
  public:
   void Startup() override;
@@ -402,12 +405,6 @@ class ReplayState : public State {
   void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
-
-  void StartRecording();
-  void AlertOnDestroy(EntityID in_id);
-
-  void StartReplayMode();
-  void PlayReplay();
 
   StateType Type() { return StateType::REPLAY; }
   void EndGame() { end_game_timer_.Restart(); }
