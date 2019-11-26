@@ -420,6 +420,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.SetMyPrimaryAbility(ability_id);
       play_state_.SetTeam(team);
       play_state_.SetArenaScale(arena_scale);
+      sound_system_.SetArenaScale(arena_scale);
       packet >> num_team_ids;
       for (int i = 0; i < num_team_ids; i++) {
         long client_id;
@@ -640,10 +641,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::CREATE_PROJECTILE: {
-      ProjectileID p_id;
       EntityID e_id;
+      ProjectileID p_id;
       glm::vec3 pos;
       glm::quat ori;
+      unsigned int c_team;
+      packet >> c_team;
       packet >> ori;
       packet >> pos;
       packet >> p_id;
@@ -651,7 +654,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
 
       switch (p_id) {
         case ProjectileID::CANNON_BALL: {
-          play_state_.CreateCannonBall(e_id, pos, ori);
+          play_state_.CreateCannonBall(e_id, pos, ori, c_team);
           break;
         }
         case ProjectileID::TELEPORT_PROJECTILE: {
@@ -675,7 +678,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         case ProjectileID::BLACK_HOLE: {
           play_state_.CreateBlackHoleObject(e_id, pos, ori);
           break;
-		}
+        }
       }
       break;
     }
@@ -1014,7 +1017,6 @@ void Engine::UpdateReplayCamera() {
       this->registry_replay_->view<TargetComponent, TransformComponent>();
 
   for (entt::entity target : target_view) {
-    TargetComponent& target_c = registry_replay_->get<TargetComponent>(target);
     TransformComponent& target_trans_c =
         registry_replay_->get<TransformComponent>(target);
 

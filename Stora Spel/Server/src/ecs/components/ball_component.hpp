@@ -16,6 +16,7 @@ struct BallComponent {
   unsigned int faker_team = TEAM_RED;
   bool should_be_destroyed = false;
   bool can_ball_collide = false;
+  unsigned int bounced_last_frame = 0;
 };
 
 #endif  // BALL_COMPONENT_HPP_
