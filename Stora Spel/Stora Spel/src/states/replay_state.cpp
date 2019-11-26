@@ -200,7 +200,7 @@ void ReplayState::PlayReplay() {
     }
   }
 
-  this->UpdatePickUpMovement();
+  //this->UpdatePickUpMovement(); //<< TEMP DISABLED
   this->UpdateCamera();
 }
 
