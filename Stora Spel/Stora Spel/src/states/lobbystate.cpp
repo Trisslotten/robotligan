@@ -147,7 +147,7 @@ void LobbyState::Update(float dt) {
   }
   if (everyone_ready) {  //
     glm::vec2 bottom_pos =
-        glm::vec2((glob::window::GetWindowDimensions().x / 2) - 150, 100);
+        glm::vec2((glob::window::GetWindowDimensions().x / 4), 100);
 
     if (engine_->GetServerState() == ServerStateType::LOBBY) {
       glob::Submit(font_test_, bottom_pos, 28,

@@ -261,6 +261,15 @@ void ServerPlayState::Update(float dt) {
     Reconnect(reconnect_id_);
     reconnect_id_ = 100;
   }
+
+  if (switching_goals && (switch_goal_timer_.Elapsed() >= switch_goal_time_)) {
+    game_server_->HandleSwitchGoal();
+    switched_goals = !switched_goals;
+    GameEvent ge;
+    ge.type = GameEvent::SWITCH_GOALS_DONE;
+    dispatcher.trigger(ge);
+    switching_goals = false;
+  }
 }
 
 void ServerPlayState::HandleDataToSend() {
@@ -415,25 +424,6 @@ void ServerPlayState::HandleDataToSend() {
       to_send << goal_team_c;
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
-      if (goal_goal_c.switched_this_tick) {
-        switch_goal_timer_.Restart();
-      }
-      if (switch_goal_timer_.Elapsed() <= switch_goal_time_) {
-        if (!sent_switch) {
-          to_send << switch_goal_time_;
-          to_send << (float)switch_goal_timer_.Elapsed();
-          to_send << PacketBlockType::SWITCH_GOALS;
-          sent_switch = true;
-        }
-      } else {
-        if (!sent_switch) {
-          switch_goal_timer_.Pause();
-          to_send << switch_goal_time_;
-          to_send << (float)switch_goal_time_;
-          to_send << PacketBlockType::SWITCH_GOALS;
-          sent_switch = true;
-        }
-      }
     }
 
     // Tell client if secondary ability was used
@@ -464,6 +454,7 @@ void ServerPlayState::HandleDataToSend() {
       to_send << projectiles.projectile_id;
       to_send << projectiles.pos;
       to_send << projectiles.ori;
+      to_send << projectiles.creator_team;
       to_send << PacketBlockType::CREATE_PROJECTILE;
     }
     // send destroy entity
@@ -491,6 +482,11 @@ void ServerPlayState::HandleDataToSend() {
         break;
       }
     }
+    if (switching_goals) {
+      to_send << switch_goal_timer_.Elapsed();
+      to_send << switch_goal_time_;
+      to_send << PacketBlockType::SWITCH_GOALS_TIMER;
+    }
   }
 
   created_projectiles_.clear();
@@ -503,14 +499,6 @@ void ServerPlayState::HandleDataToSend() {
   }
 
   // switch goal cleanup
-  auto view_goals = registry.view<GoalComponenet, TeamComponent>();
-  for (auto goal : view_goals) {
-    GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
-    TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
-    if (goal_goal_c.switched_this_tick) {
-      goal_goal_c.switched_this_tick = false;
-    }
-  }
 
   created_walls_.clear();
   if (pick_ups_sent) created_pick_ups_.clear();
@@ -594,12 +582,6 @@ void ServerPlayState::CreateMapEntity() {
   arena_scale2.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
   arena_scale2.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
   glm::vec3 arena_scale = glm::vec3(2.6f) * arena_scale2;
-  // Prepare hard-coded values
-  // Scale on the hitbox for the map
-  float v1 = 6.8f * arena_scale.z;
-  float v2 = 10.67f * arena_scale.x;  // 13.596f;
-  float v3 = 2.723f * arena_scale.y;
-  float v4 = 5.723f * arena_scale.y;
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
   glob::ModelHandle model_map = glob::GetModel("assets/MapV3/Map_Hitbox.fbx");
@@ -608,8 +590,6 @@ void ServerPlayState::CreateMapEntity() {
   // registry_.assign<ModelComponent>(entity, model_arena);
   registry.assign<TransformComponent>(entity, zero_vec, zero_vec, arena_scale);
 
-  // Add a hitbox
-  registry.assign<physics::Arena>(entity, -v2, v2, -v3, v4, -v1, v1);
   auto md = glob::GetMeshData(model_map);
   glm::mat4 matrix =
       glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f)) *
@@ -777,47 +757,12 @@ void ServerPlayState::ResetEntities() {
   unsigned int blue_counter = 0;
   unsigned int red_counter = 0;
 
-  bool switched_goals = false;
-  auto view_goal =
-      registry.view<TransformComponent, GoalComponenet, TeamComponent>();
-  for (auto entity : view_goal) {
-    auto& team = view_goal.get<TeamComponent>(entity);
-    if (team.team == TEAM_BLUE) {
-      auto& trans = view_goal.get<TransformComponent>(entity);
-      if (trans.position.x > 0) {
-        switched_goals = true;
-
-        break;
-      }
-    }
-  }
+  switching_goals = false;
   if (switched_goals) {
-    auto view_goal =
-        registry.view<TransformComponent, GoalComponenet, TeamComponent>();
-    GoalComponenet* first_goal_comp = nullptr;
-    GoalComponenet* second_goal_comp = nullptr;
-    bool got_first = false;
-    for (auto goal : view_goal) {
-      TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
-      GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
-
-      if (goal_team_c.team == TEAM_RED) {
-        goal_team_c.team = TEAM_BLUE;
-      } else {
-        goal_team_c.team = TEAM_RED;
-      }
-      if (!got_first) {
-        first_goal_comp = &goal_goal_c;
-        got_first = true;
-      } else {
-        second_goal_comp = &goal_goal_c;
-      }
-    }
-    if (first_goal_comp != nullptr && second_goal_comp != nullptr) {
-      unsigned int first_goals = first_goal_comp->goals;
-      first_goal_comp->goals = second_goal_comp->goals;
-      second_goal_comp->goals = first_goals;
-    }
+    GameEvent ge;
+    ge.type = GameEvent::SWITCH_GOALS_DONE;
+    dispatcher.trigger(ge);
+    game_server_->HandleSwitchGoal();  // perform a switch when resetting
   }
   switched_goals = false;
 
@@ -992,6 +937,8 @@ void ServerPlayState::WallAnimation() {
   }
 }
 
+void ServerPlayState::UpdateSwitchGoals() {}
+
 void ServerPlayState::ReceiveEvent(const EventInfo& e) {
   switch (e.event) {
     case Event::DESTROY_ENTITY: {
@@ -1009,8 +956,10 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       registry.assign<IDComponent>(e.entity, projectile.entity_id);
       projectile.projectile_id = ProjectileID::CANNON_BALL;
       auto& trans_c = registry.get<TransformComponent>(e.entity);
+      auto& team_c = registry.get<TeamComponent>(e.entity);
       projectile.pos = trans_c.position;
       projectile.ori = trans_c.rotation;
+      projectile.creator_team = team_c.team;
       created_projectiles_.push_back(projectile);
 
       break;
@@ -1150,9 +1099,8 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       projectile.pos = trans_c.position;
       projectile.ori = trans_c.rotation;
       created_projectiles_.push_back(projectile);
-
       break;
-	}
+    }
     default:
       break;
   }

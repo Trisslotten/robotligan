@@ -31,7 +31,7 @@ struct PlayerComponent {  // Server side
   float kick_force = GlobalSettings::Access()->ValueOf("PLAYER_KICK_FORCE");
   float kick_others_force =
       GlobalSettings::Access()->ValueOf("PLAYER_KICK_OTHERS_FORCE");
-  float rocket_speed = GlobalSettings::Access()->ValueOf("PLAYER_ROCKET_SPEED");
+  float rocket_speed = GlobalSettings::Access()->ValueOf("PLAYER_SHOT_SPEED");
   Timer kick_timer;
 
   // input from client

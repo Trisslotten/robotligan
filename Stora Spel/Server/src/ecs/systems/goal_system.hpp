@@ -18,6 +18,34 @@ const float kTimeToSimulate = 1.5f;
 bool just_blocked = false;
 glm::vec3 last_blocked = glm::vec3(0.0f);
 
+void PerformSwitchGoals(entt::registry& registry) {
+  auto view_goals = registry.view<GoalComponenet, TeamComponent>();
+  GoalComponenet* first_goal_comp = nullptr;
+  GoalComponenet* second_goal_comp = nullptr;
+  bool got_first = false;
+  for (auto goal : view_goals) {
+    TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
+    GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
+
+    if (goal_team_c.team == TEAM_RED) {
+      goal_team_c.team = TEAM_BLUE;
+    } else {
+      goal_team_c.team = TEAM_RED;
+    }
+    if (!got_first) {
+      first_goal_comp = &goal_goal_c;
+      got_first = true;
+    } else {
+      second_goal_comp = &goal_goal_c;
+    }
+  }
+  if (first_goal_comp != nullptr && second_goal_comp != nullptr) {
+    unsigned int first_goals = first_goal_comp->goals;
+    first_goal_comp->goals = second_goal_comp->goals;
+    second_goal_comp->goals = first_goals;
+  }
+}
+
 void Update(entt::registry& registry) {
   auto view_balls = registry.view<BallComponent, TransformComponent,
                                   physics::Sphere, PhysicsComponent>();

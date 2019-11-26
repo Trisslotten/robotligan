@@ -75,12 +75,14 @@ void SetJumpToFalse(entt::registry& reg);
 void UpdateSphere(entt::registry& registry);
 void UpdateOBB(entt::registry& registry);
 void UpdateTransform(entt::registry& registry);
+void UpdateBallBounced(entt::registry& registry);
 
 void SetPlayerHooked(entt::registry& registry, EntityID id);
 
 void UpdateCollisions(entt::registry& registry) {
   UpdateSphere(registry);
   UpdateOBB(registry);
+  UpdateBallBounced(registry);
   SetJumpToFalse(registry);
   auto view_ball =
       registry.view<BallComponent, physics::Sphere, PhysicsComponent>();
@@ -88,7 +90,7 @@ void UpdateCollisions(entt::registry& registry) {
       registry.view<physics::OBB, PhysicsComponent, PlayerComponent>();
   auto view_arena =
       registry
-          .view<physics::MeshHitbox, physics::Arena, FailSafeArenaComponent>();
+          .view<physics::MeshHitbox, FailSafeArenaComponent>();
   auto view_wall = registry.view<physics::OBB, WallComponent>();
 
   entt::entity arena_entity;
@@ -317,7 +319,7 @@ void PlayerBallCollision(entt::registry& registry,
   float player_speed = glm::length(player_physics.velocity);
   if (ball_speed < player_speed) {
     ball_physics.velocity =
-        object.normal * (glm::dot(player_physics.velocity, object.normal));
+        object.normal * (glm::dot(player_physics.velocity, object.normal) * 1.02f);
 
   } else {
     BallCollision(&ball_physics, object.normal);  // player_physics.velocity);
@@ -414,13 +416,15 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
 
   if (bounced) {
     // save game event
-    if (registry.has<IDComponent>(ball)) {
+    if (registry.has<IDComponent>(ball) && !ball_c.bounced_last_frame) {
       GameEvent bounce_event;
       bounce_event.type = GameEvent::BOUNCE;
       bounce_event.bounce.ball_id = registry.get<IDComponent>(ball).id;
+      bounce_event.bounce.velocity = glm::length(ball_physics.velocity);
       dispatcher.trigger(bounce_event);
     }
   }
+  ball_c.bounced_last_frame = 1 << 30;
 
   // Rotate ball
   glm::vec3 nn = glm::normalize(object.normal);
@@ -1105,6 +1109,16 @@ void UpdateTransform(entt::registry& registry) {
     auto& hitbox = view_obb.get<physics::OBB>(obb);
 
     transform.position = hitbox.center;
+  }
+}
+
+void UpdateBallBounced(entt::registry& registry) {
+  auto view_ball = registry.view<BallComponent>();
+
+  for (auto entity : view_ball) {
+    auto& ball = view_ball.get(entity);
+
+    ball.bounced_last_frame = ball.bounced_last_frame >> 1;
   }
 }
 

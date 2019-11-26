@@ -123,10 +123,10 @@ void Update(entt::registry& registry, float dt) {
     }
 
     // Check if the player should shoot
-    if (ability_component.shoot && ability_component.shoot_cooldown <= 0.0f) {
+    if (ability_component.shoot) {
       entt::entity entity =
           CreateCannonBallEntity(registry, player_component.client_id);
-      ability_component.shoot_cooldown = 1.0f;
+
       EventInfo e;
       e.event = Event::CREATE_CANNONBALL;
       e.entity = entity;
@@ -342,12 +342,13 @@ bool DoSuperStrike(entt::registry& registry) {
 }
 
 entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
-  auto view_controller =
-      registry.view<CameraComponent, PlayerComponent, TransformComponent>();
+  auto view_controller = registry.view<CameraComponent, PlayerComponent,
+                                       TransformComponent, TeamComponent>();
   for (auto entity : view_controller) {
     CameraComponent& cc = view_controller.get<CameraComponent>(entity);
     PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
     TransformComponent& tc = view_controller.get<TransformComponent>(entity);
+    TeamComponent& team_c = view_controller.get<TeamComponent>(entity);
 
     if (pc.client_id == id) {
       float speed = pc.rocket_speed;
@@ -361,44 +362,17 @@ entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
       registry.assign<physics::Sphere>(cannonball, glm::vec3(0.f), .3f);
       registry.assign<ProjectileComponent>(cannonball,
                                            ProjectileID::CANNON_BALL, id);
+      registry.assign<TeamComponent>(cannonball, team_c.team);
       return cannonball;
     }
   }
 }
 
 void DoSwitchGoals(entt::registry& registry) {
-  auto view_goals = registry.view<GoalComponenet, TeamComponent>();
-  GoalComponenet* first_goal_comp = nullptr;
-  GoalComponenet* second_goal_comp = nullptr;
-  bool got_first = false;
-  for (auto goal : view_goals) {
-    TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
-    GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
-
-    if (goal_team_c.team == TEAM_RED) {
-      goal_team_c.team = TEAM_BLUE;
-      goal_goal_c.switched_this_tick = true;
-    } else {
-      goal_team_c.team = TEAM_RED;
-      goal_goal_c.switched_this_tick = true;
-    }
-    if (!got_first) {
-      first_goal_comp = &goal_goal_c;
-      got_first = true;
-    } else {
-      second_goal_comp = &goal_goal_c;
-    }
-  }
-  if (first_goal_comp != nullptr && second_goal_comp != nullptr) {
-    unsigned int first_goals = first_goal_comp->goals;
-    first_goal_comp->goals = second_goal_comp->goals;
-    second_goal_comp->goals = first_goals;
-
-    // Save game event
-    GameEvent switch_goals_event;
-    switch_goals_event.type = GameEvent::SWITCH_GOALS;
-    dispatcher.trigger(switch_goals_event);
-  }
+  // Save game event
+  GameEvent switch_goals_event;
+  switch_goals_event.type = GameEvent::SWITCH_GOALS_BEGIN;
+  dispatcher.trigger(switch_goals_event);
 }
 
 entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id) {
@@ -654,7 +628,8 @@ bool PlaceMine(entt::registry& registry, PlayerID id) {
     if (p_c.client_id == id) {
       entt::entity mine = registry.create();
 
-      registry.assign<TransformComponent>(mine, t_c.position);
+      registry.assign<TransformComponent>(
+          mine, glm::vec3(t_c.position.x, 0.f, t_c.position.z));
       registry.assign<MineComponent>(mine, team_c.team);
       registry.assign<TimerComponent>(mine, 30.f);
 

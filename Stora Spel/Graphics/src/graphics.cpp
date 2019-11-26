@@ -515,7 +515,7 @@ void Init() {
 
   buffer_particle_systems.reserve(10);
 
-  SetSky("assets/texture/sky1k.png");
+  SetSky("assets/texture/darksky2.png");
 
   // glEnable(GL_RASTERIZER_DISCARD);
 }
@@ -1222,6 +1222,8 @@ void SetBlackout(bool _blackout) {
     shadows.SetNumUsed(2);
   }
 }
+
+bool IsBlackoutActive() { return blackout; }
 
 void SetSky(const std::string &file) {
   if (sky_texture != 0) {

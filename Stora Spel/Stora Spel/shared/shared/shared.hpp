@@ -55,7 +55,7 @@ enum : int16_t {
   TEST_STRING,
   TEAM_SCORE,
   CHOOSE_TEAM,
-  SWITCH_GOALS,
+  SWITCH_GOALS_TIMER,
   SECONDARY_USED,
   MESSAGE,
   UPDATE_POINTS,
@@ -139,7 +139,7 @@ struct GameEvent {
     HOMING_BALL_END,
     FORCE_PUSH,
     FORCE_PUSH_IMPACT,
-    SWITCH_GOALS,
+    SWITCH_GOALS_BEGIN,
     SWITCH_GOALS_DONE,
     BUILD_WALL,
     FAKE_BALL_CREATED,
@@ -192,6 +192,7 @@ struct GameEvent {
     // Ball bounce
     struct {
       EntityID ball_id;
+      float velocity;
     } bounce;
 
     // Player Land
@@ -391,6 +392,7 @@ struct Projectile {
   ProjectileID projectile_id;
   glm::vec3 pos;
   glm::quat ori;
+  unsigned int creator_team;
   EntityID owner_id;
 };
 #endif  // SHARED_HPP_

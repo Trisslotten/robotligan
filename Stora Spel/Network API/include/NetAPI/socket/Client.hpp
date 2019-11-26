@@ -21,7 +21,11 @@ class EXPORT Client {
   TcpClient* GetRaw() { return client_; }
   bool JustDiconnected() { return just_disconnected_; }
   void SetDisconnected(bool disconnected) { just_disconnected_ = disconnected; }
+  uint64_t TimeSinceLastUpdate();
+
  private:
+  std::chrono::high_resolution_clock::time_point last_client_update_time_ =
+      std::chrono::high_resolution_clock::now();
   bool just_disconnected_ = false;
   unsigned short ID_ = 0;
   NetAPI::Socket::TcpClient* client_ = nullptr;
