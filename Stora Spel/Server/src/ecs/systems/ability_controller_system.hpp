@@ -79,7 +79,8 @@ void Update(entt::registry& registry, float dt) {
                          player_component.client_id, player)) {
         // If ability triggered successfully set the
         // AbilityComponent's cooldown to be on max capacity
-        ability_component.cooldown_remaining = ability_cooldowns[ability_component.primary_ability];
+        ability_component.cooldown_remaining =
+            ability_cooldowns[ability_component.primary_ability];
         GameEvent primary_used_event;
         primary_used_event.type = GameEvent::PRIMARY_USED;
         primary_used_event.primary_used.player_id = id_component.id;
@@ -547,8 +548,9 @@ bool DoHomingBall(entt::registry& registry, PlayerID id) {
 }
 
 bool BuildWall(entt::registry& registry, PlayerID id) {
-  auto view_players = registry.view<PlayerComponent, TransformComponent,
-                                    CameraComponent, IDComponent, TeamComponent>();
+  auto view_players =
+      registry.view<PlayerComponent, TransformComponent, CameraComponent,
+                    IDComponent, TeamComponent>();
   auto view_goals = registry.view<GoalComponenet, TransformComponent>();
 
   for (auto entity : view_players) {
@@ -575,7 +577,6 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
           return false;
         }
       }
-
 
       auto orientation = trans_c.rotation;
       // orientation.y = camera.GetLookDir().y;
@@ -772,7 +773,7 @@ void CreateBlackHole(entt::registry& registry, PlayerID id) {
           glm::vec3(0, 0, 0), glm::vec3(.5f, .5f, .5f));
       registry.assign<BlackHoleComponent>(black_hole);
 
-	  EventInfo e;
+      EventInfo e;
       e.event = Event::CREATE_BLACK_HOLE;
       e.entity = black_hole;
 
@@ -782,8 +783,8 @@ void CreateBlackHole(entt::registry& registry, PlayerID id) {
 }
 
 void DoFishing(entt::registry& registry, long creator) {
-  auto view_controller =
-      registry.view<CameraComponent, PlayerComponent, TransformComponent, IDComponent>();
+  auto view_controller = registry.view<CameraComponent, PlayerComponent,
+                                       TransformComponent, IDComponent>();
   for (auto entity : view_controller) {
     CameraComponent& cc = view_controller.get<CameraComponent>(entity);
     PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
@@ -806,12 +807,17 @@ void DoFishing(entt::registry& registry, long creator) {
       HookComponent& hook_c = registry.assign<HookComponent>(hook);
       hook_c.owner = idc.id;
 
-	  EventInfo e;
+      EventInfo e;
       e.event = Event::CREATE_HOOK;
       e.entity = hook;
       e.owner_id = idc.id;
       dispatcher.enqueue<EventInfo>(e);
-	  break;
+
+      GameEvent ge;
+      ge.type = GameEvent::FISHING_HOOK_SHOOT;
+      ge.hook_attached.hook_id = idc.id;
+      dispatcher.trigger(ge);
+      break;
     }
   }
 }

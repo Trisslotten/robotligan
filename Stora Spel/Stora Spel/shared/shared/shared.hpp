@@ -163,7 +163,8 @@ struct GameEvent {
 	BLACK_HOLE_ACTIVATED,
 	BLACK_HOLE_DESTROYED,
 	PLAYER_STUNNED,
-	CREATE_FISHING_HOOK,
+	FISHING_HOOK_SHOOT,
+	FISHING_HOOK_ATTACHED,
 	REMOVE_FISHING_HOOK,
     NUM_EVENTS
   } type;
@@ -365,7 +366,9 @@ struct GameEvent {
       EntityID player_id;
       float stun_time;
     } player_stunned;
-
+	struct {
+      EntityID hook_id;
+	} hook_attached;
 	//hook removed
 	struct {
       EntityID hook_id;

@@ -97,6 +97,8 @@ void SoundSystem::Init(Engine* engine) {
   sound_pickup_spawned_ = sound_engine_.GetSound("assets/sound/pickup.wav");
   sound_player_stunned_ = sound_engine_.GetSound("assets/sound/stunned.mp3");
   sound_fireworks_ = sound_engine_.GetSound("assets/sound/fireworks.mp3");
+  sound_fishing_hook_attached_ =
+      sound_engine_.GetSound("assets/sound/grappling.mp3");
 
   ability_sounds_[AbilityID::GRAVITY_CHANGE] =
       sound_engine_.GetSound("assets/sound/gravitydrop.wav");
@@ -122,6 +124,9 @@ void SoundSystem::Init(Engine* engine) {
       sound_engine_.GetSound("assets/sound/shoot_black_hole.mp3");
   ability_sounds_[AbilityID::MINE] =
       sound_engine_.GetSound("assets/sound/place_mine.mp3");
+  ability_sounds_[AbilityID::FISHINGING_POLE] =
+      sound_engine_.GetSound("assets/sound/grappling_shoot.wav");
+  
 }
 
 void SoundSystem::PlayAmbientSound(entt::registry& registry) {
@@ -500,6 +505,28 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.player_stunned.player_id) {
         sound_c.sound_player->Play(sound_player_stunned_);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::FISHING_HOOK_ATTACHED) {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.hook_attached.hook_id) {
+        sound_c.sound_player->Play(sound_fishing_hook_attached_);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::FISHING_HOOK_SHOOT) {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.hook_attached.hook_id) {
+        sound_c.sound_player->Play(ability_sounds_[AbilityID::FISHINGING_POLE]);
         break;
       }
     }

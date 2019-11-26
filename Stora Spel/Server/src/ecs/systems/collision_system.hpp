@@ -772,8 +772,15 @@ void PlayerProjectileCollision(entt::registry& registry) {
               hook_phys_c.velocity = glm::vec3(0);
               hook_phys_c.acceleration = glm::vec3(0);
 
-              // remove projectile component, fishing system will handle
-              // position.
+			  if (registry.has<IDComponent>(projectile)) {
+                GameEvent ge;
+                ge.type = GameEvent::FISHING_HOOK_ATTACHED;
+                // skicka game event
+                ge.hook_attached.hook_id = hook_c.owner;
+                dispatcher.trigger(ge);
+			  }
+                          // remove projectile component, fishing system will
+                          // handle position. 
               registry.remove<ProjectileComponent>(projectile);
             }
             break;
@@ -856,6 +863,14 @@ void ProjectileBallCollision(entt::registry& registry, entt::entity ball) {
             hook_phys_c.velocity = glm::vec3(0);
             hook_phys_c.acceleration = glm::vec3(0);
             ball_physics.is_airborne = true;
+
+			if (registry.has<IDComponent>(projectile)) {
+              GameEvent ge;
+              ge.type = GameEvent::FISHING_HOOK_ATTACHED;
+              // skicka game event
+              ge.hook_attached.hook_id = hook_c.owner;
+              dispatcher.trigger(ge);
+            }
 
             // remove projectile component, fishing system will handle position.
             registry.remove<ProjectileComponent>(projectile);
@@ -940,6 +955,14 @@ void ProjectileArenaCollision(entt::registry& registry) {
             phys_c.acceleration = glm::vec3(0);
             phys_c.velocity = glm::vec3(0);
             SetPlayerHooked(registry, hook_c.owner);
+
+			if (registry.has<IDComponent>(projectile)) {
+              GameEvent ge;
+              ge.type = GameEvent::FISHING_HOOK_ATTACHED;
+              // skicka game event
+              ge.hook_attached.hook_id = hook_c.owner;
+              dispatcher.trigger(ge);
+            }
 
             // remove projectile component
             registry.remove<ProjectileComponent>(projectile);
