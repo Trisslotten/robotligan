@@ -459,6 +459,7 @@ void ServerPlayState::HandleDataToSend() {
       to_send << projectiles.projectile_id;
       to_send << projectiles.pos;
       to_send << projectiles.ori;
+      to_send << projectiles.creator_team;
       to_send << PacketBlockType::CREATE_PROJECTILE;
     }
     // send destroy entity
@@ -589,12 +590,6 @@ void ServerPlayState::CreateMapEntity() {
   arena_scale2.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
   arena_scale2.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
   glm::vec3 arena_scale = glm::vec3(2.6f) * arena_scale2;
-  // Prepare hard-coded values
-  // Scale on the hitbox for the map
-  float v1 = 6.8f * arena_scale.z;
-  float v2 = 10.67f * arena_scale.x;  // 13.596f;
-  float v3 = 2.723f * arena_scale.y;
-  float v4 = 5.723f * arena_scale.y;
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
   glob::ModelHandle model_map = glob::GetModel("assets/MapV3/Map_Hitbox.fbx");
@@ -603,8 +598,6 @@ void ServerPlayState::CreateMapEntity() {
   // registry_.assign<ModelComponent>(entity, model_arena);
   registry.assign<TransformComponent>(entity, zero_vec, zero_vec, arena_scale);
 
-  // Add a hitbox
-  registry.assign<physics::Arena>(entity, -v2, v2, -v3, v4, -v1, v1);
   auto md = glob::GetMeshData(model_map);
   glm::mat4 matrix =
       glm::rotate(-90.f * glm::pi<float>() / 180.f, glm::vec3(1.f, 0.f, 0.f)) *
@@ -994,8 +987,10 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       registry.assign<IDComponent>(e.entity, projectile.entity_id);
       projectile.projectile_id = ProjectileID::CANNON_BALL;
       auto& trans_c = registry.get<TransformComponent>(e.entity);
+      auto& team_c = registry.get<TeamComponent>(e.entity);
       projectile.pos = trans_c.position;
       projectile.ori = trans_c.rotation;
+      projectile.creator_team = team_c.team;
       created_projectiles_.push_back(projectile);
 
       break;

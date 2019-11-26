@@ -1,0 +1,5 @@
+w normal_map assets/materials/MetalPlates01_nrm.png
+f normal_map_scale 20
+
+w metallic_map assets/materials/half_metallic.png
+f metallic_map_scale 5

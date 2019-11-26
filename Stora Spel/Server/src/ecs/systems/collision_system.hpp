@@ -26,14 +26,14 @@ void ApplyForcePush(entt::registry& registry, glm::vec3 pos);
 void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
                             PhysicsComponent& physics_c,
                             entt::registry& registry, entt::entity& entity);
-void ApplyMineStun(entt::registry& registry, PhysicsComponent& physics_c, PlayerComponent& player_c, IDComponent& id_c);
+void ApplyMineStun(entt::registry& registry, PhysicsComponent& physics_c,
+                   PlayerComponent& player_c, IDComponent& id_c);
 void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
                          long player_id);
 void EndHomingBall(entt::registry& registry, entt::entity& in_ball);
 void BlackHoleCollision(entt::registry& registry);
 
-std::ostream& operator<<(
-    std::ostream& o, glm::vec3 v) {
+std::ostream& operator<<(std::ostream& o, glm::vec3 v) {
   return o << v.x << " " << v.y << " " << v.z;
 }
 
@@ -75,10 +75,12 @@ void SetJumpToFalse(entt::registry& reg);
 void UpdateSphere(entt::registry& registry);
 void UpdateOBB(entt::registry& registry);
 void UpdateTransform(entt::registry& registry);
+void UpdateBallBounced(entt::registry& registry);
 
 void UpdateCollisions(entt::registry& registry) {
   UpdateSphere(registry);
   UpdateOBB(registry);
+  UpdateBallBounced(registry);
   SetJumpToFalse(registry);
   auto view_ball =
       registry.view<BallComponent, physics::Sphere, PhysicsComponent>();
@@ -86,7 +88,7 @@ void UpdateCollisions(entt::registry& registry) {
       registry.view<physics::OBB, PhysicsComponent, PlayerComponent>();
   auto view_arena =
       registry
-          .view<physics::MeshHitbox, physics::Arena, FailSafeArenaComponent>();
+          .view<physics::MeshHitbox, FailSafeArenaComponent>();
   auto view_wall = registry.view<physics::OBB, WallComponent>();
 
   entt::entity arena_entity;
@@ -315,7 +317,7 @@ void PlayerBallCollision(entt::registry& registry,
   float player_speed = glm::length(player_physics.velocity);
   if (ball_speed < player_speed) {
     ball_physics.velocity =
-        object.normal * (glm::dot(player_physics.velocity, object.normal));
+        object.normal * (glm::dot(player_physics.velocity, object.normal) * 1.02f);
 
   } else {
     BallCollision(&ball_physics, object.normal);  // player_physics.velocity);
@@ -412,13 +414,15 @@ void BallArenaCollision(entt::registry& registry, const CollisionObject& object,
 
   if (bounced) {
     // save game event
-    if (registry.has<IDComponent>(ball)) {
+    if (registry.has<IDComponent>(ball) && !ball_c.bounced_last_frame) {
       GameEvent bounce_event;
       bounce_event.type = GameEvent::BOUNCE;
       bounce_event.bounce.ball_id = registry.get<IDComponent>(ball).id;
+      bounce_event.bounce.velocity = glm::length(ball_physics.velocity);
       dispatcher.trigger(bounce_event);
     }
   }
+  ball_c.bounced_last_frame = 1 << 30;
 
   // Rotate ball
   glm::vec3 nn = glm::normalize(object.normal);
@@ -915,7 +919,8 @@ void PickUpPlayerCollision(entt::registry& registry) {
         int num_abilities =
             static_cast<typename std::underlying_type<AbilityID>::type>(
                 AbilityID::NUM_OF_ABILITY_IDS);
-        AbilityID pickup_ability = static_cast<AbilityID>(rand() % (num_abilities - 1) + 1);
+        AbilityID pickup_ability =
+            static_cast<AbilityID>(rand() % (num_abilities - 1) + 1);
 
         registry.assign<PickUpEvent>(
             entity, registry.get<IDComponent>(pick_up).id,
@@ -933,11 +938,12 @@ void PickUpPlayerCollision(entt::registry& registry) {
 }
 
 void MinePlayerCollision(entt::registry& registry) {
-  auto mine_view = registry.view<MineComponent, TransformComponent, IDComponent>();
+  auto mine_view =
+      registry.view<MineComponent, TransformComponent, IDComponent>();
   auto player_view =
       registry.view<PlayerComponent, TransformComponent, PhysicsComponent,
                     TeamComponent, IDComponent>();
- 
+
   for (auto mine : mine_view) {
     auto& mine_c = mine_view.get<MineComponent>(mine);
     auto& mine_tc = mine_view.get<TransformComponent>(mine);
@@ -955,7 +961,6 @@ void MinePlayerCollision(entt::registry& registry) {
               GlobalSettings::Access()->ValueOf(
                   "ABILITY_MINE_TRIGGER_RADIUS") &&
           mine_c.owner_team != p_teamc.team) {
-
         ApplyMineStun(registry, p_pc, p_c, p_idc);
 
         // Save game event
@@ -1027,6 +1032,16 @@ void UpdateTransform(entt::registry& registry) {
   }
 }
 
+void UpdateBallBounced(entt::registry& registry) {
+  auto view_ball = registry.view<BallComponent>();
+
+  for (auto entity : view_ball) {
+    auto& ball = view_ball.get(entity);
+
+    ball.bounced_last_frame = ball.bounced_last_frame >> 1;
+  }
+}
+
 void ApplyForcePush(entt::registry& registry, glm::vec3 pos) {
   physics::Sphere force_push;
   force_push.center = pos;
@@ -1062,7 +1077,7 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
   force_push.radius =
       GlobalSettings::Access()->ValueOf("ABILITY_FORCE_PUSH_RADIUS");
   glm::vec3 dir = entity_pos - force_push.center;
-  float length = glm::length(dir); 
+  float length = glm::length(dir);
   if (length < force_push.radius) {
     physics_c.is_airborne = true;
     float force =
@@ -1081,12 +1096,13 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
         ge.player_stunned.player_id = registry.get<IDComponent>(entity).id;
       ge.player_stunned.stun_time = player_c.stun_time;
       dispatcher.trigger(ge);
-	}
+    }
     std::cout << " Velocity: " << physics_c.velocity;
   }
 }
 
-void ApplyMineStun(entt::registry& registry, PhysicsComponent& physics_c, PlayerComponent& player_c, IDComponent& id_c) {
+void ApplyMineStun(entt::registry& registry, PhysicsComponent& physics_c,
+                   PlayerComponent& player_c, IDComponent& id_c) {
   // Push
   physics_c.velocity = glm::vec3(0.f, 10.f, 0.f);
 
@@ -1130,7 +1146,8 @@ void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
 }
 void BlackHoleCollision(entt::registry& registry) {
   auto view_black_hole = registry.view<BlackHoleComponent, physics::Sphere>();
-  auto view_player = registry.view<PlayerComponent, physics::OBB, PhysicsComponent>();
+  auto view_player =
+      registry.view<PlayerComponent, physics::OBB, PhysicsComponent>();
 
   for (auto black_hole : view_black_hole) {
     auto& black_hole_hitbox = view_black_hole.get<physics::Sphere>(black_hole);
@@ -1142,9 +1159,8 @@ void BlackHoleCollision(entt::registry& registry) {
         player_hitbox.center -= data.move_vector;
         auto& phys_c = view_player.get<PhysicsComponent>(player);
         phys_c.velocity = glm::vec3(0.0f);
-	  }
-	}
-
+      }
+    }
   }
 }
 

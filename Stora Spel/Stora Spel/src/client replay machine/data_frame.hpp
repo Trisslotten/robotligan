@@ -225,4 +225,23 @@ class MineFrame : public DataFrame {
   bool ThresholdCheck(DataFrame& in_future_df);
   void WriteBack(TransformComponent& trans_c);
 };
+
+//-----Mines---------------
+class BlackholeFrame : public DataFrame {
+ protected:
+  glm::vec3 position_;
+  glm::quat rotation_;
+
+ public:
+  BlackholeFrame();
+  BlackholeFrame(TransformComponent& trans_c);
+  ~BlackholeFrame();
+
+  DataFrame* Clone();
+  DataFrame* InterpolateForward(unsigned int in_dist_to_target,
+                                unsigned int in_dist_to_point_b,
+                                DataFrame& in_point_b);
+  bool ThresholdCheck(DataFrame& in_future_df);
+  void WriteBack(TransformComponent& trans_c);
+};
 #endif  // DATA_FRAME_HPP_
