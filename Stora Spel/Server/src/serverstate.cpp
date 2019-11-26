@@ -489,7 +489,7 @@ void ServerPlayState::HandleDataToSend() {
       }
     }
     if (switching_goals) {
-      to_send << switch_goal_timer_.Elapsed();
+      to_send << (float)switch_goal_timer_.Elapsed();
       to_send << switch_goal_time_;
       to_send << PacketBlockType::SWITCH_GOALS_TIMER;
     }
