@@ -162,7 +162,9 @@ struct GameEvent {
 	BLACK_HOLE_ACTIVATED,
 	BLACK_HOLE_DESTROYED,
 	PLAYER_STUNNED,
-    NUM_EVENTS
+    NUM_EVENTS,
+	PLAYER_IDLE,
+	PLAYER_IDLE_END
   } type;
   union {
     // Goal
@@ -362,6 +364,13 @@ struct GameEvent {
       EntityID player_id;
       float stun_time;
     } player_stunned;
+
+    struct {
+      EntityID player_id;
+    } player_idle;
+    struct {
+      EntityID player_id;
+    } player_idle_end;
   };
 };
 

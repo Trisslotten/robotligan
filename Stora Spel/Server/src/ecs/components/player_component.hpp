@@ -46,6 +46,8 @@ struct PlayerComponent {  // Server side
   // States
   bool sprinting = false;
   bool running = false;
+  bool idle = false;
+  bool idle_end_event_sent = false;
   bool invisible = false;
   float invisibility_remaining = 0.0f;
 

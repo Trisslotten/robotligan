@@ -2,6 +2,7 @@
 
 #include "engine.hpp"
 #include "glob/AssimpToGLMConverter.hpp"
+#include "util/player_animation_controller.hpp"
 
 void AnimationSystem::Init(Engine* engine) { engine_ = engine; }
 
@@ -219,35 +220,20 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       if (!pl.can_smash && pl.started_smash) {
         StopAnimation("ReadyKick", &ac);
         pl.started_smash = false;
-	  }
+      }
     } else {
       if (ac.init) {
         PlayAnimation("Resting", 0.5f, &ac, 10, 1.f, LOOP);
 
-        PlayAnimation("LookUp", 0.5f, &ac, 21, 0.f, LOOP,
-                      &ac.model_data.upperBody, &ac.model_data.arms);
-        PlayAnimation("LookDown", 0.5f, &ac, 21, 0.f, LOOP,
-                      &ac.model_data.upperBody, &ac.model_data.arms);
-        PlayAnimation("LookLeft", 0.5f, &ac, 21, 0.f, LOOP,
-                      &ac.model_data.upperBody, &ac.model_data.arms);
-        PlayAnimation("LookRight", 0.5f, &ac, 21, 0.f, LOOP,
-                      &ac.model_data.upperBody, &ac.model_data.arms);
-        PlayAnimation("LookAhead", 1.f, &ac, 21, 0.f, LOOP,
-                      &ac.model_data.upperBody, &ac.model_data.arms);
-
         if (pl.running) {
-          PlayAnimation("Run", 1.f, &ac, 15, 1.f, LOOP);
-        }
-        if (pl.jumping) {
-          PlayAnimation("JumpStart", 0.5f, &ac, 25, 1.f, LOOP);
-          PlayAnimation("JumpEnd", 0.5f, &ac, 25, 0.f, LOOP);
-        }
-        if (pl.sprinting) {
-          PlayAnimation("SlideF", 1.f, &ac, 20, 0.f, LOOP);
-          PlayAnimation("SlideB", 1.f, &ac, 20, 0.f, LOOP);
-          PlayAnimation("SlideR", 1.f, &ac, 20, 0.f, LOOP);
-          PlayAnimation("SlideL", 1.f, &ac, 20, 0.f, LOOP);
-        }
+          PAC::playRunAnims(this, ac, pl.localPlayer);
+        }else if (pl.jumping) {
+          PAC::playJumpAnims(this, ac, pl.localPlayer);
+        }else if (pl.sprinting) {
+          PAC::playSlideAnims(this, ac, pl.localPlayer);
+        } else {
+          PAC::playLookAnims(this, ac, pl.localPlayer);
+		}
 
         ac.init = false;
       }
@@ -256,7 +242,7 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
           glm::normalize(pl.look_dir * glm::vec3(1.f, 0.f, 1.f));
       glm::vec3 UDlookDir = glm::normalize(pl.look_dir);
       glm::vec3 moveDir;
-      if (abs(ph.velocity.x) > 0.01 || abs(ph.velocity.y > 0.01) ||
+      if (abs(ph.velocity.x) > 0.01 ||
           abs(ph.velocity.z > 0.01)) {
         moveDir = ph.velocity;
         pl.vel_dir = moveDir;
@@ -311,8 +297,8 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
         float LAStrength = 1.f - glm::clamp(totStrength, 0.f, 1.f);
         int LAAnim = GetActiveAnimationByName("LookAhead", &ac);
         ac.active_animations.at(LAAnim)->strength_ = LAStrength;
-
-      } else {
+      }
+      if (pl.sprinting) {
         m.rot_offset = glm::quat();
 
         float strength = 0.f;
@@ -361,47 +347,46 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
           int b = GetActiveAnimationByName("SlideB", &ac);
           float defaultPoseModifier =
               std::clamp(1.f - totStrength, 0.f, 1.f) / 2.f;
-          ac.active_animations.at(f)->strength_ = defaultPoseModifier;
-          ac.active_animations.at(b)->strength_ = defaultPoseModifier;
+          if (f >= 0 && b >= 0) {
+            ac.active_animations.at(f)->strength_ = defaultPoseModifier;
+            ac.active_animations.at(b)->strength_ = defaultPoseModifier;
+          }
         }
       }
 
-      // RUNNING ANIMATIONS
-
       // JUMPING ANIMATIONS
       if (pl.jumping) {
-        float startStrength = 0.f;
+        float startStrength = 1.f;
         float endStrength = 0.f;
+        float velCoeff = 1.f;
+		float vertVel = std::clamp(glm::vec3((ph.velocity / pl.jump_force) * up).y, -1.f, 1.f);
+        
+		if (vertVel != 0) {
+          startStrength = std::clamp(vertVel, 0.f, 1.f);
 
-        float velCoeff =
-            std::clamp(glm::dot(ph.velocity / pl.jump_force, up), 0.f, 1.f);
+          try {
+            int js = GetActiveAnimationByName("JumpStart", &ac);
+            if (js < 0 || js >= ac.active_animations.size()) {
+              std::cout << "Error: could not find animation JumpStart"
+                        << std::endl;
+            } else {
+              ac.active_animations.at(js)->strength_ = startStrength;
+            }
 
-        startStrength = velCoeff;
+            endStrength = std::clamp((1.f - vertVel) / 2.f, 0.f, 1.f);
 
-        try {
-          int js = GetActiveAnimationByName("JumpStart", &ac);
-          // std::cout << js << " : js\n";
-          if (js < 0 || js >= ac.active_animations.size()) {
-            std::cout << "Error: could not find animation JumpStart"
-                      << std::endl;
-          } else {
-            ac.active_animations.at(js)->strength_ = startStrength;
+            int es = GetActiveAnimationByName("JumpEnd", &ac);
+            if (es < 0 || es >= ac.active_animations.size()) {
+              std::cout << "Error: could not find animation JumpEnd"
+                        << std::endl;
+            } else {
+              ac.active_animations.at(es)->strength_ = endStrength;
+            }
+
+          } catch (std::exception& e) {
+            // ???
+            // std::cout << e.what() << '\n';
           }
-          // std::cout << startStrength << "\n";
-
-          endStrength = 1.f - velCoeff;
-
-          int es = GetActiveAnimationByName("JumpEnd", &ac);
-          // std::cout << es << " : es\n";
-          if (es < 0 || es >= ac.active_animations.size()) {
-            std::cout << "Error: could not find animation JumpEnd" << std::endl;
-          } else {
-            ac.active_animations.at(es)->strength_ = endStrength;
-          }
-
-        } catch (std::exception& e) {
-          // ???
-          // std::cout << e.what() << '\n';
         }
       }
 
@@ -422,12 +407,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
         if (view.get<IDComponent>(entity).id == event.shoot.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
-          if (pc.localPlayer) {
-            PlayAnimation("Shoot", 1.f, &ac, 14, 1.f, MUTE_ALL);
-          } else {
-            PlayAnimation("Shoot", 4.f, &ac, 14, 1.f, PARTIAL_MUTE,
-                          &ac.model_data.upperBody);
-          }
+          PAC::playShootAnims(this, ac, pc.localPlayer);
           break;
         }
       }
@@ -440,12 +420,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
         if (view.get<IDComponent>(entity).id == event.kick.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
-          if (pc.localPlayer) {
-            PlayAnimation("Kick", 1.f, &ac, 14, 1.f, MUTE_ALL);
-          } else {
-            PlayAnimation("Kick", 4.f, &ac, 14, 1.f, PARTIAL_MUTE,
-                          &ac.model_data.upperBody);
-          }
+          PAC::playKickAnims(this, ac, pc.localPlayer);
           break;
         }
       }
@@ -459,8 +434,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           pc.jumping = true;
-          PlayAnimation("JumpStart", 0.5f, &ac, 25, 1.f, LOOP);
-          PlayAnimation("JumpEnd", 0.5f, &ac, 25, 0.f, LOOP);
+          PAC::playJumpAnims(this, ac, pc.localPlayer);
           pc.jump_force =
               GlobalSettings::Access()->ValueOf("PLAYER_SPEED_JUMP");
           break;
@@ -476,8 +450,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           pc.jumping = false;
-          StopAnimation("JumpStart", &ac);
-          StopAnimation("JumpEnd", &ac);
+          PAC::stopJumpAnims(this, ac, pc.localPlayer);
 
           break;
         }
@@ -492,7 +465,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           pc.running = true;
-          PlayAnimation("Run", 1.f, &ac, 15, 1.f, LOOP);
+		  PAC::playRunAnims(this, ac, pc.localPlayer);
 
           break;
         }
@@ -507,7 +480,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           pc.running = false;
-          StopAnimation("Run", &ac);
+          PAC::stopRunAnims(this, ac, pc.localPlayer);
 
           break;
         }
@@ -523,21 +496,8 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           auto& ac = view.get<AnimationComponent>(entity);
 
           pc.sprinting = true;
-          if (pc.localPlayer) {
-            PlayAnimation("Slide", 1.f, &ac, 20, 1.f, LOOP);
-          } else {
-            PlayAnimation("SlideF", 1.f, &ac, 20, 0.f, LOOP);
-            PlayAnimation("SlideB", 1.f, &ac, 20, 0.f, LOOP);
-            PlayAnimation("SlideR", 1.f, &ac, 20, 0.f, LOOP);
-            PlayAnimation("SlideL", 1.f, &ac, 20, 0.f, LOOP);
-
-            StopAnimation("LookUp", &ac);
-            StopAnimation("LookDown", &ac);
-            StopAnimation("LookRight", &ac);
-            StopAnimation("LookLeft", &ac);
-            StopAnimation("LookAhead", &ac);
-          }
-
+          PAC::playSlideAnims(this, ac, pc.localPlayer);
+          PAC::stopLookAnims(this, ac, pc.localPlayer);
           break;
         }
       }
@@ -552,27 +512,41 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           auto& ac = view.get<AnimationComponent>(entity);
 
           pc.sprinting = false;
-          if (pc.localPlayer) {
-            StopAnimation("Slide", &ac);
-          } else {
-            StopAnimation("SlideF", &ac);
-            StopAnimation("SlideB", &ac);
-            StopAnimation("SlideR", &ac);
-            StopAnimation("SlideL", &ac);
-            pc.sprint_coeff = 0.f;
+          PAC::stopSlideAnims(this, ac, pc.localPlayer);
+          PAC::playLookAnims(this, ac, pc.localPlayer);
+          pc.sprint_coeff = 0.f;
 
-            PlayAnimation("LookUp", 0.5f, &ac, 21, 0.f, LOOP,
-                          &ac.model_data.upperBody, &ac.model_data.arms);
-            PlayAnimation("LookDown", 0.5f, &ac, 21, 0.f, LOOP,
-                          &ac.model_data.upperBody, &ac.model_data.arms);
-            PlayAnimation("LookLeft", 0.5f, &ac, 21, 0.f, LOOP,
-                          &ac.model_data.upperBody, &ac.model_data.arms);
-            PlayAnimation("LookRight", 0.5f, &ac, 21, 0.f, LOOP,
-                          &ac.model_data.upperBody, &ac.model_data.arms);
-            PlayAnimation("LookAhead", 1.f, &ac, 21, 0.f, LOOP,
-                          &ac.model_data.upperBody, &ac.model_data.arms);
-          }
+          break;
+        }
+      }
+      break;
+    }
 
+    case GameEvent::PLAYER_IDLE: {
+      auto view =
+          registry->view<IDComponent, AnimationComponent, PlayerComponent>();
+      for (auto entity : view) {
+        if (view.get<IDComponent>(entity).id == event.player_idle.player_id) {
+          auto& pc = view.get<PlayerComponent>(entity);
+          auto& ac = view.get<AnimationComponent>(entity);
+
+          PAC::playLookAnims(this, ac, pc.localPlayer);
+
+          break;
+        }
+      }
+      break;
+    }
+
+    case GameEvent::PLAYER_IDLE_END: {
+      auto view =
+          registry->view<IDComponent, AnimationComponent, PlayerComponent>();
+      for (auto entity : view) {
+        if (view.get<IDComponent>(entity).id ==
+            event.player_idle_end.player_id) {
+          auto& pc = view.get<PlayerComponent>(entity);
+          auto& ac = view.get<AnimationComponent>(entity);
+          PAC::stopLookAnims(this, ac, pc.localPlayer);
           break;
         }
       }
@@ -680,9 +654,9 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
               a.model_data.bones.at(jointId).transform = finalMat;
             } else if (anim->mode_ == PARTIAL_MUTE) {
               if (anim->bonesSpecified()) {
-                if (IsIncluded(
-                        jointId, anim->body_include_,
-                        anim->body_exclude_)) {  // override specified bodyparts
+                if (IsIncluded(jointId, anim->body_include_,
+                               anim->body_exclude_)) {  // override specified
+                                                        // bodyparts
                   bonePriorities.at(jointId) = 254;
                   a.model_data.bones.at(jointId).transform = finalMat;
                 } else {
