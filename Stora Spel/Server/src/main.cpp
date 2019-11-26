@@ -8,7 +8,7 @@
 #include "serverstate.hpp"
 #include "util/global_settings.hpp"
 #include "util/winadpihelpers.hpp"
-#define NO_K_EXISTIVE_
+#define NO_KILL_EXISTING_
 entt::dispatcher dispatcher{};
 std::string workingdir() {
   char buf[MAX_PATH + 1];

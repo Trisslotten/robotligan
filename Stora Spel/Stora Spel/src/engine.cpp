@@ -38,8 +38,8 @@ Engine::~Engine() {
     delete this->registry_replay_;
   }
   if (create_server_state_.started_) {
-    helper::ps::KillProcess("Server.exe");
-    helper::ps::KillProcess("server.exe");
+   // helper::ps::KillProcess("Server.exe");
+   //helper::ps::KillProcess("server.exe");
   }
 }
 
