@@ -390,6 +390,8 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     glob::ModelHandle pickup_model = glob::GetModel(kModelPathPickup);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     model_c.handles.push_back(pickup_model);
+
+    in_registry.assign<PickUpComponent>(entity);
     // TBA
   } else if (object_type == REPLAY_WALL) {
     // -Cast DataFrame to correct type

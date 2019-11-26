@@ -394,6 +394,7 @@ class ReplayState : public State {
 
   void FetchMapAndArena();
   void UpdateCamera();
+  void UpdatePickUpMovement(/*float dt*/);
 
  public:
   void Startup() override;

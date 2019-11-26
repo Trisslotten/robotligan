@@ -13,12 +13,14 @@ void ReplayState::UpdateCamera() {
       this->replay_registry_.view<TargetComponent, TransformComponent>();
 
   for (entt::entity target : target_view) {
-    TargetComponent& target_c = this->replay_registry_.get<TargetComponent>(target);
+    TargetComponent& target_c =
+        this->replay_registry_.get<TargetComponent>(target);
     TransformComponent& target_trans_c =
         this->replay_registry_.get<TransformComponent>(target);
 
     for (entt::entity camera : camera_view) {
-      CameraComponent& cam_c = this->replay_registry_.get<CameraComponent>(camera);
+      CameraComponent& cam_c =
+          this->replay_registry_.get<CameraComponent>(camera);
       TransformComponent& cam_trans_c =
           this->replay_registry_.get<TransformComponent>(camera);
 
@@ -31,6 +33,24 @@ void ReplayState::UpdateCamera() {
       cam_c.orientation =
           glm::quatLookAt(temp_dir, glm::vec3(0, 1, 0)) * quarter_turn;
     }
+  }
+}
+
+void ReplayState::UpdatePickUpMovement(/*float dt*/) {
+  float dt = 1;
+  auto view_pickups =
+      replay_registry_.view<PickUpComponent, TransformComponent>();
+  for (auto pickup : view_pickups) {
+    float speed = 0.6f;
+    auto& trans_c = replay_registry_.get<TransformComponent>(pickup);
+    auto& pick_c = replay_registry_.get<PickUpComponent>(pickup);
+    // y = -8.6
+    float dir = pick_c.moving_up ? 1.0 : -1.0f;
+    trans_c.position.y += dt * speed * dir;
+    if (abs(trans_c.position.y - pick_c.o_pos.y) > pick_c.move_range) {
+      pick_c.moving_up = !pick_c.moving_up;
+    }
+    trans_c.Rotate(glm::vec3(0, dt * speed * 1.1f, 0));
   }
 }
 
@@ -130,8 +150,10 @@ void ReplayState::FetchMapAndArena() {
   entt::entity camera = this->replay_registry_.create();
   this->replay_registry_.assign<CameraComponent>(camera, glm::vec3(0.f),
                                                  glm::quat(glm::vec3(0.f)));
+
+  glm::vec3 cam_pos = /*glm::vec3(0.f, 13.f, 42.f);*/ glm::vec3(60.f, 4.f, 38.f);
   this->replay_registry_.assign<TransformComponent>(
-      camera, glm::vec3(0.f, 13.f, 42.f), glm::quat(), glm::vec3(0.f));
+      camera, cam_pos, glm::quat(), glm::vec3(0.f));
 }
 
 // Public----------------------------------------------------------------------
@@ -149,7 +171,7 @@ void ReplayState::Init() {
 
 void ReplayState::Update(float dt) {
   // Highlight loop logic : NTS: Moved to network update
-  //PlayReplay();
+  // PlayReplay();
   //-------Draw scoreboard during highlight time--------------
   engine_->DrawScoreboard();
 
@@ -193,6 +215,8 @@ void ReplayState::Update(float dt) {
   if (end_game_timer_.Elapsed() > game_end_timeout) {
     engine_->ChangeState(StateType::LOBBY);
   }
+
+  // Up
 }
 
 void ReplayState::UpdateNetwork() {
@@ -249,5 +273,6 @@ void ReplayState::PlayReplay() {
     }
   }
 
+  this->UpdatePickUpMovement();
   this->UpdateCamera();
 }

@@ -345,28 +345,28 @@ DataFrame* PickUpFrame::InterpolateForward(unsigned int in_dist_to_target,
 }
 
 bool PickUpFrame::ThresholdCheck(DataFrame& in_future_df) {
-  // Cast to PickupFrame
-  PickUpFrame& future_pf = dynamic_cast<PickUpFrame&>(in_future_df);
+  //// Cast to PickupFrame
+  //PickUpFrame& future_pf = dynamic_cast<PickUpFrame&>(in_future_df);
 
-  float threshold = 0.0f;
+  //float threshold = 0.0f;
 
-  // POSITION
-  float pos_diff = glm::distance(position_, future_pf.position_);
-  threshold =
-      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_PICKUP_POSITION");
-  if (pos_diff > threshold) {
-    // If we have moved over the threshold value away
-    return true;
-  }
+  //// POSITION
+  //float pos_diff = glm::distance(position_, future_pf.position_);
+  //threshold =
+  //    GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_PICKUP_POSITION");
+  //if (pos_diff > threshold) {
+  //  // If we have moved over the threshold value away
+  //  return true;
+  //}
 
-  // ROTATION
-  float rot_diff = glm::dot(rotation_, future_pf.rotation_);
-  threshold =
-      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_PICKUP_ROTATION");
-  if (abs(rot_diff - 1.0f) > threshold) {
-    // If we have rotated more than the theshhold value allows
-    return true;
-  }
+  //// ROTATION
+  //float rot_diff = glm::dot(rotation_, future_pf.rotation_);
+  //threshold =
+  //    GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_PICKUP_ROTATION");
+  //if (abs(rot_diff - 1.0f) > threshold) {
+  //  // If we have rotated more than the theshhold value allows
+  //  return true;
+  //}
 
   return false;
 }
