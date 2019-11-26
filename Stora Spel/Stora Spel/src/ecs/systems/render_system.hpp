@@ -134,10 +134,7 @@ void RenderSystem(entt::registry& registry) {
         }
       }
       if (button_c.has_hovered) {
-        glm::vec2 tooltip_pos = Input::MousePos();
-        tooltip_pos.y =
-            glob::window::GetWindowDimensions().y - tooltip_pos.y - 15;
-        tooltip_pos.x += 20;
+        glm::vec2 tooltip_pos = button_c.tooltip_pos;
 		glob::Submit(button_c.f_handle, tooltip_pos - glm::vec2(1,1), 32, button_c.hover_text, glm::vec4(0,0,0,0.7));
         glob::Submit(button_c.f_handle, tooltip_pos, 32, button_c.hover_text);
 	  }

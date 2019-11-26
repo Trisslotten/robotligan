@@ -533,10 +533,9 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     */
-    case PacketBlockType::SWITCH_GOALS: {
-      // std::cout << "PACKET: SWITCH_GOALS\n";
-      packet >> switch_goal_timer_;
+    case PacketBlockType::SWITCH_GOALS_TIMER: {
       packet >> switch_goal_time_;
+      packet >> switch_goal_timer_;
       break;
     }
     case PacketBlockType::SECONDARY_USED: {
@@ -567,14 +566,16 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::CREATE_WALL: {
+      unsigned int team;
       glm::quat rot;
       glm::vec3 pos;
       EntityID id;
 
+	  packet >> team;
       packet >> id;
       packet >> pos;
       packet >> rot;
-      play_state_.CreateWall(id, pos, rot);
+      play_state_.CreateWall(id, pos, rot, team);
       break;
     }
     case PacketBlockType::CREATE_PICK_UP: {
@@ -673,6 +674,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
           missile_event.type = GameEvent::MISSILE_FIRE;
           missile_event.missile_fire.projectile_id = e_id;
           dispatcher.trigger(missile_event);
+          break;
+        }
+        case ProjectileID::FISHING_HOOK: {
+          EntityID owner;
+          packet >> owner;
+          play_state_.CreateFishermanAndHook(e_id, pos, ori, owner);
           break;
         }
         case ProjectileID::BLACK_HOLE: {

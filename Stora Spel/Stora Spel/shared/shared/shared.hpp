@@ -55,7 +55,7 @@ enum : int16_t {
   TEST_STRING,
   TEAM_SCORE,
   CHOOSE_TEAM,
-  SWITCH_GOALS,
+  SWITCH_GOALS_TIMER,
   SECONDARY_USED,
   MESSAGE,
   UPDATE_POINTS,
@@ -110,6 +110,7 @@ enum class AbilityID {
   BLACKOUT,
   BLACKHOLE,
   MINE,
+  FISHINGING_POLE,
   // Fill with more abilities and passive boosts
   NUM_OF_ABILITY_IDS
 };
@@ -138,7 +139,7 @@ struct GameEvent {
     HOMING_BALL_END,
     FORCE_PUSH,
     FORCE_PUSH_IMPACT,
-    SWITCH_GOALS,
+    SWITCH_GOALS_BEGIN,
     SWITCH_GOALS_DONE,
     BUILD_WALL,
     FAKE_BALL_CREATED,
@@ -162,6 +163,9 @@ struct GameEvent {
 	BLACK_HOLE_ACTIVATED,
 	BLACK_HOLE_DESTROYED,
 	PLAYER_STUNNED,
+	FISHING_HOOK_SHOOT,
+	FISHING_HOOK_ATTACHED,
+	REMOVE_FISHING_HOOK,
     NUM_EVENTS
   } type;
   union {
@@ -363,6 +367,13 @@ struct GameEvent {
       EntityID player_id;
       float stun_time;
     } player_stunned;
+	struct {
+      EntityID hook_id;
+	} hook_attached;
+	//hook removed
+	struct {
+      EntityID hook_id;
+	} hook_removed;
   };
 };
 
@@ -372,6 +383,7 @@ enum class ProjectileID {
   FORCE_PUSH_OBJECT,
   MISSILE_OBJECT,
   BLACK_HOLE,
+  FISHING_HOOK,
   NUM_PROJECTILE_IDS
 };
 
@@ -381,5 +393,6 @@ struct Projectile {
   glm::vec3 pos;
   glm::quat ori;
   unsigned int creator_team;
+  EntityID owner_id;
 };
 #endif  // SHARED_HPP_

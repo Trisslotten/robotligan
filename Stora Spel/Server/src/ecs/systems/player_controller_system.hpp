@@ -196,6 +196,7 @@ void Update(entt::registry& registry, float dt) {
     // if (cur_move_speed > 0.f) {
     // movement "floatiness", lower value = less floaty
     float t = 0.0005f;
+    if (player_c.hooked) t = 0.05f;
     if (!player_c.stunned || (player_c.stunned && !physics_c.is_airborne)) {
       physics_c.velocity.x = glm::mix(physics_c.velocity.x, final_velocity.x,
                                       1.f - glm::pow(t, dt));
@@ -205,13 +206,11 @@ void Update(entt::registry& registry, float dt) {
       physics_c.velocity.y = final_velocity.y;
     }
 
-    // physics stuff, absolute atm, may need to change. Other
-    // systems may affect velocity. velocity of player object.
-
-    // Ability buttons
-    if (player_c.actions[PlayerAction::ABILITY_PRIMARY] && !player_c.stunned) {
-      ability_c.use_primary = true;
-    }
+      // Ability buttons
+      if (player_c.actions[PlayerAction::ABILITY_PRIMARY] &&
+          !player_c.stunned) {
+        ability_c.use_primary = true;
+      }
     if (player_c.actions[PlayerAction::ABILITY_SECONDARY] &&
         !player_c.stunned) {
       ability_c.use_secondary = true;

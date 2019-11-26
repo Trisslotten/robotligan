@@ -261,6 +261,15 @@ void ServerPlayState::Update(float dt) {
     Reconnect(reconnect_id_);
     reconnect_id_ = 100;
   }
+
+  if (switching_goals && (switch_goal_timer_.Elapsed() >= switch_goal_time_)) {
+    game_server_->HandleSwitchGoal();
+    switched_goals = !switched_goals;
+    GameEvent ge;
+    ge.type = GameEvent::SWITCH_GOALS_DONE;
+    dispatcher.trigger(ge);
+    switching_goals = false;
+  }
 }
 
 void ServerPlayState::HandleDataToSend() {
@@ -364,10 +373,13 @@ void ServerPlayState::HandleDataToSend() {
     for (auto entity : created_walls_) {
       auto& t = registry.get<TransformComponent>(entity);
       auto& id = registry.get<IDComponent>(entity);
+      auto& team = registry.get<TeamComponent>(entity);
 
       to_send << t.rotation;
       to_send << t.position;
       to_send << id.id;
+      to_send << team.team;
+
       to_send << PacketBlockType::CREATE_WALL;
     }
 
@@ -412,25 +424,6 @@ void ServerPlayState::HandleDataToSend() {
       to_send << goal_team_c;
       to_send << goal_goal_c.goals;
       to_send << PacketBlockType::TEAM_SCORE;
-      if (goal_goal_c.switched_this_tick) {
-        switch_goal_timer_.Restart();
-      }
-      if (switch_goal_timer_.Elapsed() <= switch_goal_time_) {
-        if (!sent_switch) {
-          to_send << switch_goal_time_;
-          to_send << (float)switch_goal_timer_.Elapsed();
-          to_send << PacketBlockType::SWITCH_GOALS;
-          sent_switch = true;
-        }
-      } else {
-        if (!sent_switch) {
-          switch_goal_timer_.Pause();
-          to_send << switch_goal_time_;
-          to_send << (float)switch_goal_time_;
-          to_send << PacketBlockType::SWITCH_GOALS;
-          sent_switch = true;
-        }
-      }
     }
 
     // Tell client if secondary ability was used
@@ -455,6 +448,8 @@ void ServerPlayState::HandleDataToSend() {
 
     // send created projectiles
     for (auto projectiles : created_projectiles_) {
+      if (projectiles.projectile_id == ProjectileID::FISHING_HOOK)
+        to_send << projectiles.owner_id;
       to_send << projectiles.entity_id;
       to_send << projectiles.projectile_id;
       to_send << projectiles.pos;
@@ -487,6 +482,11 @@ void ServerPlayState::HandleDataToSend() {
         break;
       }
     }
+    if (switching_goals) {
+      to_send << switch_goal_timer_.Elapsed();
+      to_send << switch_goal_time_;
+      to_send << PacketBlockType::SWITCH_GOALS_TIMER;
+    }
   }
 
   created_projectiles_.clear();
@@ -499,14 +499,6 @@ void ServerPlayState::HandleDataToSend() {
   }
 
   // switch goal cleanup
-  auto view_goals = registry.view<GoalComponenet, TeamComponent>();
-  for (auto goal : view_goals) {
-    GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
-    TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
-    if (goal_goal_c.switched_this_tick) {
-      goal_goal_c.switched_this_tick = false;
-    }
-  }
 
   created_walls_.clear();
   if (pick_ups_sent) created_pick_ups_.clear();
@@ -765,47 +757,12 @@ void ServerPlayState::ResetEntities() {
   unsigned int blue_counter = 0;
   unsigned int red_counter = 0;
 
-  bool switched_goals = false;
-  auto view_goal =
-      registry.view<TransformComponent, GoalComponenet, TeamComponent>();
-  for (auto entity : view_goal) {
-    auto& team = view_goal.get<TeamComponent>(entity);
-    if (team.team == TEAM_BLUE) {
-      auto& trans = view_goal.get<TransformComponent>(entity);
-      if (trans.position.x > 0) {
-        switched_goals = true;
-
-        break;
-      }
-    }
-  }
+  switching_goals = false;
   if (switched_goals) {
-    auto view_goal =
-        registry.view<TransformComponent, GoalComponenet, TeamComponent>();
-    GoalComponenet* first_goal_comp = nullptr;
-    GoalComponenet* second_goal_comp = nullptr;
-    bool got_first = false;
-    for (auto goal : view_goal) {
-      TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
-      GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
-
-      if (goal_team_c.team == TEAM_RED) {
-        goal_team_c.team = TEAM_BLUE;
-      } else {
-        goal_team_c.team = TEAM_RED;
-      }
-      if (!got_first) {
-        first_goal_comp = &goal_goal_c;
-        got_first = true;
-      } else {
-        second_goal_comp = &goal_goal_c;
-      }
-    }
-    if (first_goal_comp != nullptr && second_goal_comp != nullptr) {
-      unsigned int first_goals = first_goal_comp->goals;
-      first_goal_comp->goals = second_goal_comp->goals;
-      second_goal_comp->goals = first_goals;
-    }
+    GameEvent ge;
+    ge.type = GameEvent::SWITCH_GOALS_DONE;
+    dispatcher.trigger(ge);
+    game_server_->HandleSwitchGoal();  // perform a switch when resetting
   }
   switched_goals = false;
 
@@ -914,6 +871,16 @@ void ServerPlayState::ResetEntities() {
     }
     ball_component.homer_cid = -1;
   }
+
+  // remove fishing hook
+  auto view_hooks = registry.view<HookComponent, IDComponent>();
+  for (auto hook : view_hooks) {
+    GameEvent ge;
+    ge.type = GameEvent::REMOVE_FISHING_HOOK;
+    ge.hook_removed.hook_id = registry.get<IDComponent>(hook).id;
+    dispatcher.trigger(ge);
+    registry.destroy(hook);
+  }
 }
 
 EntityID ServerPlayState::CreatePickUpComponents(glm::vec3 pos) {
@@ -969,6 +936,8 @@ void ServerPlayState::WallAnimation() {
     trans.position.y = y;
   }
 }
+
+void ServerPlayState::UpdateSwitchGoals() {}
 
 void ServerPlayState::ReceiveEvent(const EventInfo& e) {
   switch (e.event) {
@@ -1030,6 +999,19 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       projectile.ori = trans_c.rotation;
       created_projectiles_.push_back(projectile);
 
+      break;
+    }
+    case Event::CREATE_HOOK: {
+      auto& registry = game_server_->GetRegistry();
+      Projectile projectile;
+      projectile.entity_id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, projectile.entity_id);
+      projectile.projectile_id = ProjectileID::FISHING_HOOK;
+      auto& trans_c = registry.get<TransformComponent>(e.entity);
+      projectile.pos = trans_c.position;
+      projectile.ori = trans_c.rotation;
+      projectile.owner_id = e.owner_id;
+      created_projectiles_.push_back(projectile);
       break;
     }
     case Event::CREATE_MINE: {
@@ -1117,9 +1099,8 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       projectile.pos = trans_c.position;
       projectile.ori = trans_c.rotation;
       created_projectiles_.push_back(projectile);
-
       break;
-	}
+    }
     default:
       break;
   }
