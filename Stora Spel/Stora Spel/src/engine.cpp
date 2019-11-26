@@ -440,7 +440,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         psbi.saves = 0;
         player_scores_[client_id] = psbi;
       }
-      play_state_.SetGoalsSwapped(true);
+      play_state_.SetGoalsSwappedAtStart(switched);
       ChangeState(StateType::PLAY);
 
       std::cout << "PACKET: GAME_START\n";

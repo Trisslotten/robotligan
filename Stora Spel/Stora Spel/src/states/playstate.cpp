@@ -185,6 +185,11 @@ void PlayState::Init() {
   engine_->GetChat()->CloseChat();
   timer_ = 0.f;
   Reset();
+
+  if (goals_swapped_at_start_) {
+    SwitchGoals();
+    goals_swapped_at_start_ = false;
+  }
 }
 
 void PlayState::Update(float dt) {
@@ -685,9 +690,9 @@ void PlayState::DrawFishingLines() {
       }
       if (found_hook && found_player) {
         glm::vec3 right = glm::cross(player_forward, glm::vec3(0, 1, 0));
-		player_pos -= right * 0.6f;
-		player_pos += player_forward * 0.28f;
-			glob::SubmitRope(player_pos, hook_pos);
+        player_pos -= right * 0.6f;
+        player_pos += player_forward * 0.28f;
+        glob::SubmitRope(player_pos, hook_pos);
         break;
       }
     }
@@ -2889,10 +2894,6 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 }
 
 void PlayState::Reset() {
-  if (goals_swapped_) {
-    SwitchGoals();
-  }
-
   auto view_particle = registry_gameplay_.view<ParticleComponent>();
   for (auto& entity : view_particle) {
     auto& particle_c = view_particle.get(entity);
