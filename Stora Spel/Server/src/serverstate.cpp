@@ -459,6 +459,7 @@ void ServerPlayState::HandleDataToSend() {
       to_send << projectiles.projectile_id;
       to_send << projectiles.pos;
       to_send << projectiles.ori;
+      to_send << projectiles.creator_team;
       to_send << PacketBlockType::CREATE_PROJECTILE;
     }
     // send destroy entity
@@ -994,8 +995,10 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       registry.assign<IDComponent>(e.entity, projectile.entity_id);
       projectile.projectile_id = ProjectileID::CANNON_BALL;
       auto& trans_c = registry.get<TransformComponent>(e.entity);
+      auto& team_c = registry.get<TeamComponent>(e.entity);
       projectile.pos = trans_c.position;
       projectile.ori = trans_c.rotation;
+      projectile.creator_team = team_c.team;
       created_projectiles_.push_back(projectile);
 
       break;

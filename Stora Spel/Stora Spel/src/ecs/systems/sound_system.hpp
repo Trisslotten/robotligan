@@ -17,6 +17,7 @@ public:
   void Init(Engine* engine);
   void PlayAmbientSound(entt::registry& registry);
   slob::SoundEngine& GetSoundEngine() { return sound_engine_; }
+  void SetArenaScale(glm::vec3 scale);
   
   void ReceiveGameEvent(const GameEvent& event);
   void ReceiveMenuEvent(const MenuEvent& event);
@@ -30,6 +31,9 @@ private:
 
   slob::SoundEngine sound_engine_;
 
+  glm::vec3 arena_scale_;
+  slob::PlayingSound crowd_ambience_;
+
   slob::SoundHandle button_hover_;
   slob::SoundHandle button_click_;
 
@@ -38,6 +42,7 @@ private:
   slob::SoundHandle sound_woosh_;
   slob::SoundHandle sound_hit_;
   slob::SoundHandle sound_nudge_;
+  slob::SoundHandle sound_rmb_shot_;
   slob::SoundHandle sound_goal_;
   slob::SoundHandle sound_ball_bounce_;
   slob::SoundHandle sound_player_land_;
@@ -54,6 +59,7 @@ private:
   slob::SoundHandle sound_player_stunned_;
   slob::SoundHandle sound_ability_mine_trigger_;
   slob::SoundHandle sound_fireworks_;
+  slob::SoundHandle sound_crowd_shocked_;
 
   Engine* engine_;
 };

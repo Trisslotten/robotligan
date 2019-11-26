@@ -846,3 +846,83 @@ void MineFrame::WriteBack(TransformComponent& trans_c) {
   trans_c.position = position_;
   trans_c.scale = glm::vec3(1.0f);
 }
+
+BlackholeFrame::BlackholeFrame() {
+  position_ = glm::vec3(0.f);
+  rotation_ = glm::quat();
+}
+
+BlackholeFrame::BlackholeFrame(TransformComponent& trans_c) {
+  position_ = trans_c.position;
+  rotation_ = trans_c.rotation;
+}
+
+BlackholeFrame::~BlackholeFrame() {}
+
+DataFrame* BlackholeFrame::Clone() {
+  BlackholeFrame* blackhole_return = new BlackholeFrame();
+
+  blackhole_return->position_ = position_;
+  blackhole_return->rotation_ = rotation_;
+
+  return blackhole_return;
+}
+
+DataFrame* BlackholeFrame::InterpolateForward(unsigned int in_dist_to_target,
+                                              unsigned int in_dist_to_point_b,
+                                              DataFrame& in_point_b) {
+  // Cast the BlackholeFrame to ForcePushFrame
+  try {
+    BlackholeFrame& point_b = dynamic_cast<BlackholeFrame&>(in_point_b);
+    // Skips forward if std::bad_cast
+
+    // INTERPOLATED FRAME
+    BlackholeFrame* ret_frame = new BlackholeFrame();
+
+    // RATIO
+    if (in_dist_to_point_b < 1) {
+      // Prevent division on zero
+      in_dist_to_point_b = 1;
+    }
+    float percentage_a = in_dist_to_target / in_dist_to_point_b;
+
+    // INTERPOLATION
+
+    // POSITION
+    ret_frame->position_ =
+        position_ + (point_b.position_ - position_) * percentage_a;
+
+    // ROTATION
+    ret_frame->rotation_ =
+        glm::slerp(rotation_, point_b.rotation_, percentage_a);
+
+    return ret_frame;
+
+  } catch (std::bad_cast exp) {
+    GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__, "Bad cast");
+    return nullptr;
+  }
+}
+
+bool BlackholeFrame::ThresholdCheck(DataFrame& in_future_df) {  // Cast to ForcePushFrame
+  BlackholeFrame& future_pf = dynamic_cast<BlackholeFrame&>(in_future_df);
+
+  float threshold = 0.0f;
+
+  // POSITION
+  float pos_diff = glm::distance(position_, future_pf.position_);
+  threshold =
+      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_BLACKHOLE_POSITION");
+  if (pos_diff > threshold) {
+    // If we have moved over the threshold value away
+    return true;
+  }
+
+  return false;
+}
+
+void BlackholeFrame::WriteBack(TransformComponent& trans_c) {
+  trans_c.position = position_;
+  trans_c.rotation = rotation_;
+  trans_c.scale = glm::vec3(0.3f);
+}

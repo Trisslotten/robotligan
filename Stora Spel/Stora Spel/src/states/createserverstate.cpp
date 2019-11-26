@@ -1,4 +1,3 @@
-
 #include <glob/window.hpp>
 #include <GLFW/glfw3.h>
 #include "../ecs/components.hpp"
@@ -206,13 +205,19 @@ void CreateServerState::Update(float dt) {
 void CreateServerState::UpdateNetwork() {}
 
 void CreateServerState::Cleanup() {}
+CreateServerState::~CreateServerState() {
+  if (started_) {
+    helper::ps::KillProcess("Server.exe");
+    helper::ps::KillProcess("server.exe");
+  }
+}
 bool is_number(const std::string& s) {
   return !s.empty() && std::find_if(s.begin(), s.end(), [](char c) {
                          return !std::isdigit(c);
                        }) == s.end();
 }
 /*
-	Reee
+        Reee
 */
 std::string workingdir() {
   char buf[MAX_PATH + 1];
@@ -242,8 +247,7 @@ void CreateServerState::CreateServer() {
         p = path = path.substr(0, index + 1);
         path += "server.exe";
       }
-      std::cout << path << std::endl;
-      std::cout << p << std::endl;
+
       helper::ps::KillProcess("server.exe");
       helper::ps::KillProcess("Server.exe");
       ZeroMemory(&si, sizeof(si));
