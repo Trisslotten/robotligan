@@ -388,6 +388,9 @@ void GameServer::ReceiveGameEvent(const GameEvent& event) {
   if (event.type == GameEvent::GOAL) {
     play_state_.StartResetTimer();
   }
+  if (event.type == GameEvent::SWITCH_GOALS_BEGIN) {
+    play_state_.SetSwitchingGoals(true);
+  }
 }
 
 void GameServer::UpdateSystems(float dt) {
@@ -407,6 +410,10 @@ void GameServer::UpdateSystems(float dt) {
 
   dispatcher.update<EventInfo>();
   // glob::LoadWireframeMesh(model_arena, mh.pos, mh.indices);
+}
+
+void GameServer::HandleSwitchGoal() {
+  goal_system::PerformSwitchGoals(registry_);
 }
 
 void GameServer::ReceiveEvent(const EventInfo& e) {

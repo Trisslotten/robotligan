@@ -365,38 +365,10 @@ entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
 }
 
 void DoSwitchGoals(entt::registry& registry) {
-  auto view_goals = registry.view<GoalComponenet, TeamComponent>();
-  GoalComponenet* first_goal_comp = nullptr;
-  GoalComponenet* second_goal_comp = nullptr;
-  bool got_first = false;
-  for (auto goal : view_goals) {
-    TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
-    GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
-
-    if (goal_team_c.team == TEAM_RED) {
-      goal_team_c.team = TEAM_BLUE;
-      goal_goal_c.switched_this_tick = true;
-    } else {
-      goal_team_c.team = TEAM_RED;
-      goal_goal_c.switched_this_tick = true;
-    }
-    if (!got_first) {
-      first_goal_comp = &goal_goal_c;
-      got_first = true;
-    } else {
-      second_goal_comp = &goal_goal_c;
-    }
-  }
-  if (first_goal_comp != nullptr && second_goal_comp != nullptr) {
-    unsigned int first_goals = first_goal_comp->goals;
-    first_goal_comp->goals = second_goal_comp->goals;
-    second_goal_comp->goals = first_goals;
-
-    // Save game event
-    GameEvent switch_goals_event;
-    switch_goals_event.type = GameEvent::SWITCH_GOALS;
-    dispatcher.trigger(switch_goals_event);
-  }
+  // Save game event
+  GameEvent switch_goals_event;
+  switch_goals_event.type = GameEvent::SWITCH_GOALS_BEGIN;
+  dispatcher.trigger(switch_goals_event);
 }
 
 entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id) {

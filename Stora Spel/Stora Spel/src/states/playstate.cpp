@@ -651,12 +651,8 @@ void PlayState::UpdateSwitchGoalTimer() {
   // Countdown timer
   int temp_time = engine_->GetSwitchGoalTime();
   float time = engine_->GetSwitchGoalCountdownTimer();
-  int count = (int)time;
 
-  // Start countdown
-  if (time < temp_time) {
-    countdown_in_progress_ = true;
-  }
+  int time_left = std::ceil((float)temp_time - time);
 
 #define LIGHT_EFFECT 2
 #if LIGHT_EFFECT == 0
@@ -724,7 +720,7 @@ void PlayState::UpdateSwitchGoalTimer() {
 #endif
 
   // Write out timer
-  if (countdown_in_progress_) {
+  if (switching_goals) {
     glm::vec2 countdown_pos = glob::window::GetWindowDimensions();
     countdown_pos /= 2;
     countdown_pos.x += 10;
@@ -736,27 +732,19 @@ void PlayState::UpdateSwitchGoalTimer() {
     countdown_text_pos.y += 300;
     glob::Submit(font_test_, countdown_text_pos, 50,
                  std::string("SWITCHING GOALS IN..."), glm::vec4(0.8));
-    glob::Submit(font_test_, countdown_pos, 100,
-                 std::to_string(temp_time - count), glm::vec4(0.8));
+    glob::Submit(font_test_, countdown_pos, 100, std::to_string(time_left),
+                 glm::vec4(0.8));
 
     // After timer reaches zero swap goals
     if (temp_time - time <= 0) {
-      auto& blue_light =
+      /*auto& blue_light =
           registry_gameplay_.get<LightComponent>(blue_goal_light_);
       blue_light.color = glm::vec3(0.1f, 0.1f, 1.f);
       blue_light.radius = 30;
 
       auto& red_light = registry_gameplay_.get<LightComponent>(red_goal_light_);
       red_light.color = glm::vec3(1.f, 0.1f, 0.1f);
-      red_light.radius = 30;
-      SwitchGoals();
-
-      // Save game event
-      GameEvent switch_goals_event_done;
-      switch_goals_event_done.type = GameEvent::SWITCH_GOALS_DONE;
-      // dispatcher.trigger(switch_goals_event_done);
-
-      countdown_in_progress_ = false;
+      red_light.radius = 30;*/
     }
   }
 }
@@ -1163,9 +1151,9 @@ void PlayState::UpdateGravity() {
   for (auto gravity : view) {
     auto& time_c = view.get<TimerComponent>(gravity);
 
-	if (time_c.time_left > 3.0f) {
+    if (time_c.time_left > 3.0f) {
       low_gravity = true;
-	}
+    }
   }
   if (low_gravity == true) {
     physics::SetGravity(4.0f);
@@ -2299,6 +2287,14 @@ void PlayState::SwitchGoals() {
   blue_light_trans_c.position = red_light_trans_c.position;
   red_light_trans_c.position = blue_light_pos;
 
+  auto& blue_light = registry_gameplay_.get<LightComponent>(blue_goal_light_);
+  blue_light.color = glm::vec3(0.1f, 0.1f, 1.f);
+  blue_light.radius = 30;
+
+  auto& red_light = registry_gameplay_.get<LightComponent>(red_goal_light_);
+  red_light.color = glm::vec3(1.f, 0.1f, 0.1f);
+  red_light.radius = 30;
+
   auto& map_trans =
       registry_gameplay_.get<TransformComponent>(map_visual_entity_);
 
@@ -2789,14 +2785,19 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       }
       break;
     }
+    case GameEvent::SWITCH_GOALS_BEGIN: {
+      switching_goals = true;
+      break;
+    }
+    case GameEvent::SWITCH_GOALS_DONE: {
+      switching_goals = false;
+      SwitchGoals();
+      break;
+    }
   }
 }
 
 void PlayState::Reset() {
-  if (goals_swapped_) {
-    SwitchGoals();
-  }
-
   auto view_particle = registry_gameplay_.view<ParticleComponent>();
   for (auto& entity : view_particle) {
     auto& particle_c = view_particle.get(entity);

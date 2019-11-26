@@ -533,10 +533,9 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     */
-    case PacketBlockType::SWITCH_GOALS: {
-      // std::cout << "PACKET: SWITCH_GOALS\n";
-      packet >> switch_goal_timer_;
+    case PacketBlockType::SWITCH_GOALS_TIMER: {
       packet >> switch_goal_time_;
+      packet >> switch_goal_timer_;
       break;
     }
     case PacketBlockType::SECONDARY_USED: {

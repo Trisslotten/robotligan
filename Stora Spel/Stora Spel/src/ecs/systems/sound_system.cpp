@@ -358,7 +358,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       }
     }
   }
-  if (event.type == GameEvent::SWITCH_GOALS) {
+  if (event.type == GameEvent::SWITCH_GOALS_BEGIN) {
     auto view = registry->view<CameraComponent, SoundComponent>();
     for (auto entity : view) {
       auto& sound_c = view.get<SoundComponent>(entity);
@@ -371,8 +371,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
     auto view = registry->view<CameraComponent, SoundComponent>();
     for (auto entity : view) {
       auto& sound_c = view.get<SoundComponent>(entity);
-      sound_c.sound_player->Play(ability_sounds_[AbilityID::SWITCH_GOALS], 0,
-                                 0.3f);
+      //sound_c.sound_player->Play(ability_sounds_[AbilityID::SWITCH_GOALS], 0,
+        //                         0.3f);
       break;
     }
   }

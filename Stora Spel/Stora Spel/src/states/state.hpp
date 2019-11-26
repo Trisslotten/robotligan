@@ -429,6 +429,8 @@ class PlayState : public State {
   bool im_stunned_ = false;
   Timer stun_timer_;
   float my_stun_time_;
+
+  bool switching_goals = false;
 };
 
 class CreateServerState : public State {
