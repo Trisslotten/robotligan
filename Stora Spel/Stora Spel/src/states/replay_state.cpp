@@ -104,38 +104,44 @@ void ReplayState::AddConstantStuff() {
                                                  glm::quat(glm::vec3(0.f)));
 
   glm::vec3 cam_pos =
-      /*glm::vec3(0.f, 13.f, 42.f);*/ glm::vec3(60.f, 4.f, 38.f);
+      glm::vec3(0.f, 13.f, 42.f);  // glm::vec3(60.f, 4.f, 38.f);
   this->replay_registry_.assign<TransformComponent>(
       camera, cam_pos, glm::quat(), glm::vec3(0.f));
 }
 
 void ReplayState::UpdateCamera() {
-  entt::basic_view camera_view =
-      this->replay_registry_.view<CameraComponent, TransformComponent>();
+  // Default point of interest
+  glm::vec3 point_of_interest = glm::vec3(0.0f);
+
+  // Get target, set point of interest
   entt::basic_view target_view =
       this->replay_registry_.view<TargetComponent, TransformComponent>();
-
   for (entt::entity target : target_view) {
     TargetComponent& target_c =
         this->replay_registry_.get<TargetComponent>(target);
     TransformComponent& target_trans_c =
         this->replay_registry_.get<TransformComponent>(target);
 
-    for (entt::entity camera : camera_view) {
-      CameraComponent& cam_c =
-          this->replay_registry_.get<CameraComponent>(camera);
-      TransformComponent& cam_trans_c =
-          this->replay_registry_.get<TransformComponent>(camera);
+    point_of_interest = target_trans_c.position;
+  }
 
-      // Create vector from camera to target
-      glm::vec3 temp_dir =
-          glm::normalize(target_trans_c.position - cam_trans_c.position);
+  // Update camera
+  entt::basic_view camera_view =
+      this->replay_registry_.view<CameraComponent, TransformComponent>();
+  for (entt::entity camera : camera_view) {
+    CameraComponent& cam_c =
+        this->replay_registry_.get<CameraComponent>(camera);
+    TransformComponent& cam_trans_c =
+        this->replay_registry_.get<TransformComponent>(camera);
 
-      auto quarter_turn = glm::quat(glm::vec3(0, glm::pi<float>() * 0.5f, 0));
+    // Create vector from camera to target
+    glm::vec3 temp_dir =
+        glm::normalize(point_of_interest - cam_trans_c.position);
 
-      cam_c.orientation =
-          glm::quatLookAt(temp_dir, glm::vec3(0, 1, 0)) * quarter_turn;
-    }
+    auto quarter_turn = glm::quat(glm::vec3(0, glm::pi<float>() * 0.5f, 0));
+
+    cam_c.orientation =
+        glm::quatLookAt(temp_dir, glm::vec3(0, 1, 0)) * quarter_turn;
   }
 }
 
@@ -184,12 +190,13 @@ void ReplayState::PlayReplay() {
     this->replay_registry_.reset();
     replay_counter_++;
 
+	// Add the constant stuff back in again
+	// Also prevents black-sceen when all replays are done
+    this->AddConstantStuff();
+
     if (!engine_->GetReplayMachinePtr()->SelectReplay(replay_counter_)) {
       // And stop replaying
       this->replaying_ = false;
-    } else {
-      // NTS: Remove else to see arena at end?
-      this->AddConstantStuff();
     }
   }
 

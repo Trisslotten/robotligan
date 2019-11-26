@@ -24,8 +24,8 @@ class ClientReplayMachine {
 
   void RecordFrame(entt::registry& in_registry);
   void NotifyDestroyedObject(EntityID in_id, entt::registry& in_registry);
-
   void StoreAndClearReplay();
+  
   unsigned int NumberOfStoredReplays() const;
   unsigned int ReplayLength() const { return replay_length_sec_; }
   int CurrentlySelectedReplay() const;
