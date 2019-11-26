@@ -485,10 +485,6 @@ void GeometricReplay::CreateChannelForEntity(entt::entity& in_entity,
   temp_fc.object_id = in_id_c.id;
   temp_fc.entries.push_back(temp_ce);
 
-  // TEMP
-  temp_fc.num = next_num;
-  next_num++;
-
   this->channels_.push_back(temp_fc);
 }
 
@@ -505,20 +501,64 @@ void GeometricReplay::FrameChannelCleanUp() {
   //
   // *When an object disappears from the game world (and thus the replay)
   // register that as an "ending entry".
+
+  // Debug output A
+  // for (unsigned int j = 0; j < this->channels_.size(); j++) {
+  //  if (this->channels_.at(j).entries.size() > 1) {
+  //    GlobalSettings::Access()->WriteError(
+  //        "Channels with ending entries",
+  //        "(Index|EntityId|ObjectType|ChannelSize|<1>End)",
+  //        std::to_string(j) + "|" +
+  //            std::to_string(this->channels_.at(j).object_id) + "|" +
+  //            std::to_string(this->channels_.at(j).object_type) + "|" +
+  //            std::to_string(this->channels_.at(j).entries.size()) + "|" +
+  //            std::to_string(this->channels_.at(j).entries.at(1).ending_entry));
+  //  }
+  //}
+
   for (unsigned int i = 0; i < this->channels_.size(); i++) {
     if (this->channels_.at(i).entries.size() > 1) {  //(1.)
       unsigned int age = this->current_frame_number_write_ -
                          this->channels_.at(i).entries.at(1).frame_number;
       if (age > this->threshhold_age_) {                         //(2.)
         if (this->channels_.at(i).entries.at(1).ending_entry) {  //(3.1)
-          this->channels_.erase(this->channels_.begin() + i);
+          // Debug output A
+          // GlobalSettings::Access()->WriteError(
+          //    "Deleting Channel",
+          //    "(Index|EntityId|ObjectType|ChannelSize|<1>End)",
+          //    std::to_string(i) + "|" +
+          //        std::to_string(this->channels_.at(i).object_id) + "|" +
+          //        std::to_string(this->channels_.at(i).object_type) + "|" +
+          //        std::to_string(this->channels_.at(i).entries.size()) + "|" +
+          //        std::to_string(
+          //            this->channels_.at(i).entries.at(1).ending_entry));
+
+          // Debug output B
+          GlobalSettings::Access()->WriteError(
+              "Target", "ObjID", std::to_string(this->channels_.at(i).object_id));
+          for (unsigned int j = 0; j < this->channels_.size(); j++) {
+            GlobalSettings::Access()->WriteError(
+                "Channel Sizes", "(id|pre-delete size)",
+                std::to_string(this->channels_.at(j).object_id) + "|" +
+                    std::to_string(this->channels_.at(j).entries.size()));
+          }
+          GlobalSettings::Access()->WriteError("", "", "");
+
+          this->channels_.erase(
+              this->channels_.begin() +
+              i);  //<- Consider this thing //Working here, it is at this exact
+                   //line the extra frames in the channels appear
           i--;
 
-          GlobalSettings::Access()->WriteError(
-              "Deleting Channel", "(Num|Id|Obj)",
-              std::to_string(this->channels_.at(i).num) + "|" +
-                  std::to_string(this->channels_.at(i).object_id) + "|" +
-                  std::to_string(this->channels_.at(i).object_type));
+          // Debug output B
+          for (unsigned int j = 0; j < this->channels_.size(); j++) {
+            GlobalSettings::Access()->WriteError(
+                "Channel Sizes", "(id|post-delete size)",
+                std::to_string(this->channels_.at(j).object_id) + "|" +
+                    std::to_string(this->channels_.at(j).entries.size()));
+          }
+          GlobalSettings::Access()->WriteError("", "", "");
+
         } else {  //(3.2)
           this->channels_.at(i).entries.erase(
               this->channels_.at(i).entries.begin());
@@ -568,9 +608,6 @@ GeometricReplay* GeometricReplay::Clone() {
   clone->current_frame_number_read_ = this->current_frame_number_read_;
   clone->captured_events_ = this->captured_events_;
   clone->engine_ = this->engine_;
-
-  // TEMP
-  clone->next_num = this->next_num;
 
   return clone;
 }
@@ -708,6 +745,12 @@ void GeometricReplay::SetEndingFrame(EntityID in_id,
           this->channels_.at(i).entries.push_back(ending_ce);
 
           unfound = false;
+
+          GlobalSettings::Access()->WriteError(
+              "Setting Ending Frame in Channel", "(Index|Id|Obj)",
+              std::to_string(i) + "|" +
+                  std::to_string(this->channels_.at(i).object_id) + "|" +
+                  std::to_string(this->channels_.at(i).object_type));
         }
       }
     }
@@ -881,7 +924,7 @@ std::string GeometricReplay::GetGeometricReplaySummary() {
   ret_str += "\tFrame channels in replay:\n";
   for (unsigned int i = 0; i < this->channels_.size(); i++) {
     ret_str +=
-        "\t\t#" + std::to_string(this->channels_.at(i).num) +
+        "\t\tIndex: " + std::to_string(i) +
         " - EntId:" + std::to_string(this->channels_.at(i).object_id) +
         " - ChannelType: " + std::to_string(this->channels_.at(i).object_type) +
         "\n";

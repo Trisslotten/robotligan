@@ -30,8 +30,10 @@ class GeometricReplay {
     DataFrame* data_ptr = nullptr;
     bool ending_entry = false;
 
+	// Default constructor
     ChannelEntry() {}
 
+	// Copy Constructor
     ChannelEntry(const ChannelEntry& in_ce) {
       this->frame_number = in_ce.frame_number;
       this->data_ptr = nullptr;
@@ -41,19 +43,23 @@ class GeometricReplay {
       this->ending_entry = in_ce.ending_entry;
     }
 
+	// Destructor
     ~ChannelEntry() {
       if (data_ptr != nullptr) {
         delete data_ptr;
       }
     }
 
-    void operator=(ChannelEntry const& rhs) {
+	// Assignment operator
+    ChannelEntry& operator=(ChannelEntry const& rhs) {
       this->frame_number = rhs.frame_number;
       this->data_ptr = nullptr;
       if (rhs.data_ptr != nullptr) {
         this->data_ptr = rhs.data_ptr->Clone();
       }
       this->ending_entry = rhs.ending_entry;
+
+	  return *this;
     }
   };
 
@@ -64,10 +70,8 @@ class GeometricReplay {
     unsigned int index_a = 0;
     unsigned int index_b = 0;
 
-    // TEMP
-    unsigned int num = 0;
-
-    void operator=(FrameChannel const& rhs) {
+	//Assignment operator
+    FrameChannel& operator=(FrameChannel const& rhs) {
       this->object_type = rhs.object_type;
       this->object_id = rhs.object_id;
 
@@ -79,8 +83,7 @@ class GeometricReplay {
       this->index_a = rhs.index_a;
       this->index_b = rhs.index_b;
 
-      // TEMP
-      this->num = rhs.num;
+	  return *this;
     }
   };
 
@@ -126,9 +129,6 @@ class GeometricReplay {
   unsigned int threshhold_age_;
   unsigned int current_frame_number_write_ = 0;
   unsigned int current_frame_number_read_ = 0;
-
-  // TEMP
-  unsigned int next_num = 0;
 
   GeometricReplay();
 
