@@ -185,6 +185,11 @@ void PlayState::Init() {
   engine_->GetChat()->CloseChat();
   timer_ = 0.f;
   Reset();
+
+  if (goals_swapped_at_start_) {
+    SwitchGoals();
+    goals_swapped_at_start_ = false;
+  }
 }
 
 void PlayState::Update(float dt) {
@@ -2898,10 +2903,6 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 }
 
 void PlayState::Reset() {
-  if (goals_swapped_) {
-    SwitchGoals();
-  }
-
   auto view_particle = registry_gameplay_.view<ParticleComponent>();
   for (auto& entity : view_particle) {
     auto& particle_c = view_particle.get(entity);

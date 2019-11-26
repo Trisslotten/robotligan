@@ -296,7 +296,7 @@ class PlayState : public State {
 
   void FetchMapAndArena(entt::registry& in_registry);
   void SetCanSmash(bool val) { can_smash_ = val; }
-  void SetGoalsSwapped(bool val) { goals_swapped_ = val; }
+  void SetGoalsSwappedAtStart(bool val) { goals_swapped_at_start_ = val; }
 
  private:
   struct GuiNotRespnding {
@@ -416,6 +416,7 @@ class PlayState : public State {
   bool overtime_has_started_ = false;
   bool overtime_check_time = true;
   bool goals_swapped_ = false;
+  bool goals_swapped_at_start_ = false;
   EntityID my_target_ = -1;
 
   glob::ModelHandle test_ball_;

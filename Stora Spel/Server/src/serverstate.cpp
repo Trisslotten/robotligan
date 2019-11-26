@@ -94,6 +94,11 @@ void ServerPlayState::Init() {
   auto& server = game_server_->GetServer();
   auto& registry = game_server_->GetRegistry();
 
+  if (switched_goals) {
+    switched_goals = false;
+    game_server_->HandleSwitchGoal();
+  }
+
   // initialize option values
   match_time_ = (int)GlobalSettings::Access()->ValueOf("MATCH_TIME");
   count_down_time_ = (int)GlobalSettings::Access()->ValueOf("COUNTDOWN_TIME");
