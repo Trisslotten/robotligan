@@ -347,8 +347,9 @@ class PlayState : public State {
                               float dt);
   void MovePlayer(float dt);
   void MoveBall(float dt);
+  void BlackHoleMovement(float dt);
   void Collision();
-
+  void UpdateGravity();
   unsigned long GetBestPlayer();
 
   EntityID ClientIDToEntityID(long client_id);

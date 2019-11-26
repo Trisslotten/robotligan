@@ -267,11 +267,13 @@ void PlayState::Update(float dt) {
     // MovePlayer(1 / 64.0f);
     actions_.clear();
   }
+  UpdateGravity();
   timer_ += dt;
-  if (timer_ > 1.0f / kClientUpdateRate) {
-    MoveBall(dt);
-    MovePlayer(dt);
-    timer_ -= dt;
+  while (timer_ > 1.0f / kClientUpdateRate) {
+    float DT = 1.0f / kClientUpdateRate;
+    MoveBall(DT);
+    MovePlayer(DT);
+    timer_ -= DT;
   }
   // interpolate
   auto view_entities =
@@ -847,7 +849,8 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action,
     if (sprint) {
       accum_velocity *= 2.f;
     }
-
+    // black_hole prediction
+    BlackHoleMovement(dt);
     // physics stuff
 
     final_velocity += accum_velocity;
@@ -1007,6 +1010,27 @@ void PlayState::MoveBall(float dt) {
   }
 }
 
+void PlayState::BlackHoleMovement(float dt) {
+  auto view = registry_gameplay_.view<TransformComponent, BlackHoleComponent>();
+  auto& player_trans = registry_gameplay_.get<TransformComponent>(my_entity_);
+
+  for (auto black_hole : view) {
+    auto& black_hole_trans = view.get<TransformComponent>(black_hole);
+    glm::vec3 dir = black_hole_trans.position - player_trans.position;
+    float length = glm::length(dir);
+    float range = GlobalSettings::Access()->ValueOf("ABILITY_BLACK_HOLE_RANGE");
+
+    if (length <= range) {
+      dir = glm::normalize(dir);
+      float strength =
+          GlobalSettings::Access()->ValueOf("ABILITY_BLACK_HOLE_STRENGTH");
+      auto& phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
+      phys_c.velocity += dir * strength * dt * (range - length);
+      phys_c.is_airborne = true;
+    }
+  }
+}
+
 void PlayState::Collision() {
   auto view_moveable =
       registry_gameplay_.view<TransformComponent, physics::OBB>();
@@ -1129,6 +1153,24 @@ void PlayState::Collision() {
 
     transform.position = hitbox.center;
     // std::cout << transform.position.y << " after\n";
+  }
+}
+
+void PlayState::UpdateGravity() {
+  auto view = registry_gameplay_.view<GravityComponent, TimerComponent>();
+  bool low_gravity = false;
+
+  for (auto gravity : view) {
+    auto& time_c = view.get<TimerComponent>(gravity);
+
+	if (time_c.time_left > 3.0f) {
+      low_gravity = true;
+	}
+  }
+  if (low_gravity == true) {
+    physics::SetGravity(4.0f);
+  } else {
+    physics::SetGravity(9.82f);
   }
 }
 
@@ -1699,7 +1741,7 @@ void PlayState::CreateAudienceEntities() {
 void PlayState::CreateMapEntity() {
   auto arena = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 arena_scale = glm::vec3(2.6f) * arena_scale_;
+  glm::vec3 arena_scale = glm::vec3(1.0f) * arena_scale_;
   glob::ModelHandle model_hitbox =
       glob::GetModel("assets/MapV3/Map_Hitbox.fbx");
   glob::ModelHandle model_map_walls =
@@ -1710,16 +1752,6 @@ void PlayState::CreateMapEntity() {
   model_c.handles.push_back(model_map_walls);
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                 map_wall_scale);
-
-  // Prepare hard-coded values
-  // Scale on the hitbox for the map
-  float v1 = 6.8f * arena_scale.z;
-  float v2 = 10.67f * arena_scale.x;  // 13.596f;
-  float v3 = 2.723f * arena_scale.y;
-  float v4 = 5.723f * arena_scale.y;
-
-  // Add a hitbox
-  registry_gameplay_.assign<physics::Arena>(arena, -v2, v2, -v3, v4, -v1, v1);
 
   auto md = glob::GetMeshData(model_hitbox);
   glm::mat4 matrix =
@@ -2141,7 +2173,6 @@ void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
 
 void PlayState::CreateBlackHoleObject(EntityID id, glm::vec3 pos,
                                       glm::quat ori) {
-  std::cout << "created black hole\n";
   auto& sound_engine = engine_->GetSoundEngine();
 
   auto black_hole = registry_gameplay_.create();
@@ -2552,6 +2583,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       correct_registry->assign<ParticleComponent>(entity, handles, offsets,
                                                   directions);
       correct_registry->assign<TimerComponent>(entity, 13.f);
+      correct_registry->assign<GravityComponent>(entity);
       break;
     }
     case GameEvent::BLACKOUT_TRIGGER: {
@@ -2706,7 +2738,6 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
         if (id_c.id == e.activate_black_hole.black_hole_id) {
           trans_c.scale = glm::vec3(1.5f);
-          // glob::CreateShockwave(trans_c.position, 5.0f, 20.f);
           glob::CreateBlackHole(trans_c.position);
           auto handle = glob::CreateParticleSystem();
           std::vector<glob::ParticleSystemHandle> handles;

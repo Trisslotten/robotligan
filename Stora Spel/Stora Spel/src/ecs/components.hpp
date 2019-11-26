@@ -2,6 +2,7 @@
 #define COMPONENTS_HPP_
 
 #include "components/ball_component.hpp"
+#include "components/black_hole_component.hpp"
 #include "components/button_component.hpp"
 #include "components/fireworks_component.hpp"
 #include "components/light_component.hpp"
