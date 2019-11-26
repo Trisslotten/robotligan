@@ -1769,7 +1769,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       CreateGoalParticles(e.goal.x, *correct_registry);
 
       if (this->recording_) {
-        this->engine_->GetReplayMachinePtr()->StoreReplay();
+        this->engine_->GetReplayMachinePtr()->StoreAndClearReplay();
       }
       break;
     }

@@ -46,11 +46,14 @@ void ClientReplayMachine::NotifyDestroyedObject(EntityID in_id,
   this->primary_replay_->SetEndingFrame(in_id, in_registry);
 }
 
-void ClientReplayMachine::StoreReplay() {
+void ClientReplayMachine::StoreAndClearReplay() {
   // Take a copy of the current state of the
   // primary replay and store it in the vector
   GeometricReplay* replay_to_save = this->primary_replay_->Clone();
   this->stored_replays_.push_back(replay_to_save);
+
+  //Clear the primary replay of its data
+  this->primary_replay_->ClearAllVectors();
 
   // Adjust the beginning of the stored vector
   // to lie at its threshold value
