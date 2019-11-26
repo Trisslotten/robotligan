@@ -237,12 +237,14 @@ class PlayState : public State {
                           glm::quat orientation);
   void SetEntityPhysics(EntityID player_id, glm::vec3 vel, bool is_airborne);
   void SetCameraOrientation(glm::quat orientation);
-  void SetEntityIDs(std::vector<EntityID> player_ids, EntityID my_id,
-                    EntityID ball_id) {
+  void SetEntityIDs(std::vector<EntityID> player_ids, EntityID my_id) {
     player_ids_ = player_ids;
     my_id_ = my_id;
-    ball_id_ = ball_id;
   }
+  void SetInitBallData(EntityID ball_id, bool is_real) {
+    init_balls_[ball_id] = is_real;
+  }
+
   void SetCurrentStamina(float stamina) { current_stamina_ = stamina; }
   auto* GetReg() { return &registry_gameplay_; }
 
@@ -326,7 +328,7 @@ class PlayState : public State {
   void CreateArenaEntity();
   void CreateAudienceEntities();
   void CreateMapEntity();
-  void CreateBallEntity();
+  void CreateBallEntities();
   void CreateSpotlights();
   void CreateJumbotron();
   void ParticleComponentDestroyed(entt::entity e, entt::registry& registry);
@@ -366,7 +368,9 @@ class PlayState : public State {
   entt::registry registry_gameplay_;
 
   std::vector<EntityID> player_ids_;
-  EntityID my_id_, ball_id_;
+  EntityID my_id_;
+
+  std::unordered_map<EntityID, bool> init_balls_;
   float current_stamina_ = 0.f;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> transforms_;

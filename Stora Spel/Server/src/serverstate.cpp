@@ -140,11 +140,11 @@ void ServerPlayState::Init() {
     for (auto ball : ball_view) {
       auto& ball_c = ball_view.get<BallComponent>(ball);
       auto& id_c = ball_view.get<IDComponent>(ball);
-
+      to_send << true;
       to_send << id_c.id;
-
       break;
     }
+    to_send << (int)1;
 
     to_send << clients_player_ids_[client_id];
 
@@ -1169,10 +1169,14 @@ void ServerPlayState::Reconnect(int id) {
     auto& ball_c = ball_view.get<BallComponent>(ball);
     auto& id_c = ball_view.get<IDComponent>(ball);
 
+    if(team_id == ball_c.faker_team) {
+      to_send << ball_c.is_real;
+    } else {
+      to_send << true;
+    }
     to_send << id_c.id;
-
-    break;
   }
+  to_send << (int)ball_view.size();
 
   to_send << clients_player_ids_[id];
 

@@ -6,6 +6,7 @@
 #include <glob/graphics.hpp>
 #include <iostream>
 
+#include <ecs\systems\skylight_system.hpp>
 #include <ecs\systems\trail_system.hpp>
 #include <glob\window.hpp>
 #include <shared\pick_up_component.hpp>
@@ -25,7 +26,6 @@
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
-#include <ecs\systems\skylight_system.hpp>
 #include "util/winadpihelpers.hpp"
 
 Engine::Engine() {}
@@ -38,8 +38,8 @@ Engine::~Engine() {
     delete this->registry_replay_;
   }
   if (create_server_state_.started_) {
-   // helper::ps::KillProcess("Server.exe");
-   //helper::ps::KillProcess("server.exe");
+    // helper::ps::KillProcess("Server.exe");
+    // helper::ps::KillProcess("server.exe");
   }
 }
 
@@ -404,7 +404,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       int num_players = -1;
       std::vector<EntityID> player_ids;
       EntityID my_id;
-      EntityID ball_id;
+      int num_balls = 0;
+      
       int ability_id;
       int num_team_ids;
       glm::vec3 arena_scale;
@@ -416,9 +417,18 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       player_ids.resize(num_players);
       packet.Remove(player_ids.data(), player_ids.size());
       packet >> my_id;
-      packet >> ball_id;
+
+      packet >> num_balls;
+      for (int i = 0; i < num_balls; i++) {
+        EntityID ball_id;
+        bool is_real;
+        packet >> ball_id;
+        packet >> is_real;
+        play_state_.SetInitBallData(ball_id, is_real);
+      }
+
       packet >> team;
-      play_state_.SetEntityIDs(player_ids, my_id, ball_id);
+      play_state_.SetEntityIDs(player_ids, my_id);
       play_state_.SetMyPrimaryAbility(ability_id);
       play_state_.SetTeam(team);
       play_state_.SetArenaScale(arena_scale);
@@ -573,7 +583,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       glm::vec3 pos;
       EntityID id;
 
-	  packet >> team;
+      packet >> team;
       packet >> id;
       packet >> pos;
       packet >> rot;

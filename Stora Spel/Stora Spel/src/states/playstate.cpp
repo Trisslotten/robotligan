@@ -248,7 +248,7 @@ void PlayState::Update(float dt) {
   if (!transforms_.empty()) {
     auto view_entities =
         registry_gameplay_.view<TransformComponent, IDComponent>();
-    glm::vec3 pos = new_transforms_[ball_id_].first;
+    //glm::vec3 pos = new_transforms_[ball_id_].first;
     new_transforms_.clear();
     for (auto entity : view_entities) {
       auto& trans_c = view_entities.get<TransformComponent>(entity);
@@ -337,6 +337,8 @@ void PlayState::Update(float dt) {
         // trans_c.position = trans.first;
       }
       bool slerp = true;
+      /*
+      TODO: fix
       if (id_c.id == ball_id_) {
         auto ball_view =
             registry_gameplay_.view<BallComponent, PhysicsComponent>();
@@ -347,6 +349,7 @@ void PlayState::Update(float dt) {
           }
         }
       }
+      */
       if (slerp == true) {
         trans_c.rotation = glm::slerp(trans_c.rotation, trans.second, 0.2f);
       }
@@ -685,9 +688,9 @@ void PlayState::DrawFishingLines() {
       }
       if (found_hook && found_player) {
         glm::vec3 right = glm::cross(player_forward, glm::vec3(0, 1, 0));
-		player_pos -= right * 0.6f;
-		player_pos += player_forward * 0.28f;
-			glob::SubmitRope(player_pos, hook_pos);
+        player_pos -= right * 0.6f;
+        player_pos += player_forward * 0.28f;
+        glob::SubmitRope(player_pos, hook_pos);
         break;
       }
     }
@@ -1586,7 +1589,7 @@ void PlayState::CreateInitialEntities() {
   CreateMapEntity();
   CreateArenaEntity();
   CreateAudienceEntities();
-  CreateBallEntity();
+  CreateBallEntities();
   TestCreateLights();
   CreateSpotlights();
   CreateJumbotron();
@@ -1823,33 +1826,39 @@ void AddLightToBall(entt::registry& registry, entt::entity& ball) {
                                   false);
 }
 
-void PlayState::CreateBallEntity() {
+void PlayState::CreateBallEntities() {
   auto& sound_engine = engine_->GetSoundEngine();
 
-  // Ball
-  glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 arena_scale = glm::vec3(1.0f);
-  auto ball = registry_gameplay_.create();
-  glob::ModelHandle model_ball_projectors_p =
-      glob::GetModel(kModelPathBallProjectors);
-  glob::ModelHandle model_ball_sphere_p =
-      glob::GetTransparentModel(kModelPathBallSphere);
-  // glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
-  auto& model_c = registry_gameplay_.assign<ModelComponent>(ball);
-  model_c.handles.push_back(model_ball_sphere_p);
-  model_c.handles.push_back(model_ball_projectors_p);
+  for (auto& [id, is_real]: init_balls_) {
+    CreateNewBallEntity(!is_real, id);
+    /*
+    glm::vec3 zero_vec = glm::vec3(0.0f);
+    glm::vec3 arena_scale = glm::vec3(1.0f);
+    auto ball = registry_gameplay_.create();
+    glob::ModelHandle model_ball_projectors_p =
+        glob::GetModel(kModelPathBallProjectors);
+    glob::ModelHandle model_ball_sphere_p =
+        glob::GetTransparentModel(kModelPathBallSphere);
+    // glob::GetModel("assets/Ball_new/Ball_Comb_tmp.fbx");
+    auto& model_c = registry_gameplay_.assign<ModelComponent>(ball);
+    model_c.handles.push_back(model_ball_sphere_p);
+    model_c.handles.push_back(model_ball_projectors_p);
 
-  registry_gameplay_.assign<TransformComponent>(ball, zero_vec, zero_vec,
-                                                glm::vec3(0.95f));
-  registry_gameplay_.assign<PhysicsComponent>(ball);
-  registry_gameplay_.assign<BallComponent>(ball);
-  registry_gameplay_.assign<IDComponent>(ball, ball_id_);
-  registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
-  registry_gameplay_.assign<physics::Sphere>(ball, glm::vec3(0.0f), 1.0f);
-  registry_gameplay_.assign<TargetComponent>(ball);
-  AddLightToBall(registry_gameplay_, ball);
+    registry_gameplay_.assign<TransformComponent>(ball, zero_vec, zero_vec,
+                                                  glm::vec3(0.95f));
+    registry_gameplay_.assign<PhysicsComponent>(ball);
+    auto& ball_c = registry_gameplay_.assign<BallComponent>(ball);
 
-  registry_gameplay_.assign<TrailComponent>(ball);
+    registry_gameplay_.assign<IDComponent>(ball, ball_obj.first);
+    registry_gameplay_.assign<SoundComponent>(ball,
+                                              sound_engine.CreatePlayer());
+    registry_gameplay_.assign<physics::Sphere>(ball, glm::vec3(0.0f), 1.0f);
+    registry_gameplay_.assign<TargetComponent>(ball);
+    AddLightToBall(registry_gameplay_, ball);
+
+    registry_gameplay_.assign<TrailComponent>(ball);
+    */
+  }
 }
 
 void PlayState::CreateSpotlights() {
