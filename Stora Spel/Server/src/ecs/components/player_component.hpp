@@ -52,6 +52,7 @@ struct PlayerComponent {  // Server side
   bool can_jump = false;
   bool ready_to_smash = false;
   bool stunned = false;
+  bool hooked = false;
   Timer stun_timer;
   float stun_time = 0.0f;
   // Comparasion Operators

@@ -280,9 +280,19 @@ void PlayState::Update(float dt) {
       registry_gameplay_.view<TransformComponent, IDComponent>();
 
   float f = 0.5;  // 0.25f * dt;  // pow(0.75f, dt);
+
   for (auto entity : view_entities) {
     auto& trans_c = view_entities.get<TransformComponent>(entity);
     auto& id_c = view_entities.get<IDComponent>(entity);
+
+    bool player_hooked = false;
+    for (auto fisher : fishers_) {
+      if (id_c.id == fisher.owner_id) {
+        player_hooked = true;
+        break;
+      }
+    }
+
     if (id_c.id == my_id_) {
       auto trans = new_transforms_[id_c.id];
       auto& cam_c = registry_gameplay_.get<CameraComponent>(my_entity_);
@@ -292,6 +302,7 @@ void PlayState::Update(float dt) {
       glm::vec3 temp =
           lerp(predicted_state_.position, server_predicted_.position, 0.5f);
       trans_c.position = glm::lerp(trans_c.position, temp, 0.8f);
+      if (player_hooked) trans_c.position = server_predicted_.position;
       // trans_c.position = trans.first;
       glm::quat orientation =
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
@@ -444,6 +455,7 @@ void PlayState::Update(float dt) {
   DrawTopScores();
   DrawTarget();
   DrawStunTimer();
+  DrawFishingLines();
 
   auto view_players = registry_gameplay_.view<PlayerComponent, IDComponent>();
   for (auto player : view_players) {
@@ -644,6 +656,40 @@ void PlayState::DrawWallOutline() {
     // glob::SubmitCube(glm::translate(pos) *
     //                 glm::toMat4(trans.rotation) *
     //    glm::scale(glm::vec3(1, 0.f, 5)));
+  }
+}
+
+void PlayState::DrawFishingLines() {
+  for (auto fisher : fishers_) {
+    glm::vec3 hook_pos, player_pos, player_forward;
+
+    bool found_hook = false;
+    bool found_player = false;
+
+    auto view_transforms =
+        registry_gameplay_.view<TransformComponent, IDComponent>();
+    for (auto transform : view_transforms) {
+      EntityID id = registry_gameplay_.get<IDComponent>(transform).id;
+      glm::vec3 pos =
+          registry_gameplay_.get<TransformComponent>(transform).position;
+      if (id == fisher.hook_id) {
+        found_hook = true;
+        hook_pos = pos;
+      }
+      if (id == fisher.owner_id) {
+        found_player = true;
+        player_pos = pos;
+        player_forward =
+            registry_gameplay_.get<TransformComponent>(transform).Forward();
+      }
+      if (found_hook && found_player) {
+        glm::vec3 right = glm::cross(player_forward, glm::vec3(0, 1, 0));
+		player_pos -= right * 0.6f;
+		player_pos += player_forward * 0.28f;
+			glob::SubmitRope(player_pos, hook_pos);
+        break;
+      }
+    }
   }
 }
 
@@ -2031,8 +2077,8 @@ void PlayState::AddPlayer() {
   }
 }
 
-void PlayState::CreateWall(EntityID id, glm::vec3 position,
-                           glm::quat rotation) {
+void PlayState::CreateWall(EntityID id, glm::vec3 position, glm::quat rotation,
+                           unsigned int team) {
   auto wall = registry_gameplay_.create();
   auto& sound_engine = engine_->GetSoundEngine();
   registry_gameplay_.assign<SoundComponent>(wall, sound_engine.CreatePlayer());
@@ -2051,8 +2097,13 @@ void PlayState::CreateWall(EntityID id, glm::vec3 position,
   std::vector<glob::ModelHandle> hs;
   hs.push_back(model);
   hs.push_back(model_t);
-  registry_gameplay_.assign<ModelComponent>(wall, hs);
+  auto& model_c = registry_gameplay_.assign<ModelComponent>(wall, hs);
   registry_gameplay_.assign<WallComponent>(wall);
+  if (team == TEAM_BLUE) {
+    model_c.diffuse_index = 1;
+  } else {
+    model_c.diffuse_index = 0;
+  }
 
   GameEvent wall_event;
   wall_event.type = GameEvent::BUILD_WALL;
@@ -2157,6 +2208,28 @@ void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
                                                  ProjectileID::MISSILE_OBJECT);
   registry_gameplay_.assign<TrailComponent>(missile_object, 0.2f,
                                             glm::vec4(1.0f, 0.6f, 0.2f, 1.0f));
+}
+
+void PlayState::CreateFishermanAndHook(EntityID id, glm::vec3 pos,
+                                       glm::quat ori, EntityID owner_id) {
+  auto& sound_engine = engine_->GetSoundEngine();
+  glob::ModelHandle hook_model = glob::GetModel("assets/claw/claw.fbx");
+  auto hook_object = registry_gameplay_.create();
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+  auto& model_c = registry_gameplay_.assign<ModelComponent>(hook_object);
+  model_c.handles.push_back(hook_model);
+  registry_gameplay_.assign<TransformComponent>(hook_object, pos, ori,
+                                                glm::vec3(0.3f));
+  registry_gameplay_.assign<IDComponent>(hook_object, id);
+  registry_gameplay_.assign<SoundComponent>(hook_object,
+                                            sound_engine.CreatePlayer());
+  registry_gameplay_.assign<ProjectileComponent>(hook_object,
+                                                 ProjectileID::FISHING_HOOK);
+
+  Fishermans fm;
+  fm.hook_id = id;
+  fm.owner_id = owner_id;
+  fishers_.push_back(fm);
 }
 
 void PlayState::CreateBlackHoleObject(EntityID id, glm::vec3 pos,
@@ -2794,6 +2867,23 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       SwitchGoals();
       break;
     }
+    case GameEvent::REMOVE_FISHING_HOOK: {
+      EntityID id = e.hook_removed.hook_id;
+      for (int i = 0; i < fishers_.size(); i++) {
+        if (fishers_[i].hook_id == id) {
+          fishers_.erase(fishers_.begin() + i);
+          break;
+        }
+      }
+      auto view_hooks = registry_gameplay_.view<IDComponent>();
+      for (auto hook : view_hooks) {
+        auto& hook_id_c = registry_gameplay_.get<IDComponent>(hook);
+        if (hook_id_c.id == id) {
+          registry_gameplay_.destroy(hook);
+        }
+      }
+      break;
+    }
   }
 }
 
@@ -2825,6 +2915,9 @@ void PlayState::Reset() {
   predicted_state_.velocity = glm::vec3(0.0f);
   current_jumbo_effect_ = TEAM_SCORES;
   jumbo_effect_timer_.Restart();
+
+  // clear fishing lines
+  fishers_.clear();
 }
 
 void PlayState::EndGame() {

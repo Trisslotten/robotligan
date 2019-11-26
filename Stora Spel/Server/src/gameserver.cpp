@@ -23,6 +23,7 @@
 #include "ecs/systems/player_controller_system.hpp"
 #include "ecs/systems/target_system.hpp"
 #include "ecs/systems/pickup_spawner_system.hpp"
+#include "ecs/systems/fishing_system.hpp"
 #include "util/settings.hpp"
 #include "util/winadpihelpers.hpp"
 namespace {}  // namespace
@@ -68,6 +69,8 @@ void GameServer::Init(double in_update_rate,
       GlobalSettings::Access()->ValueOf("ABILITY_BLACKOUT_COOLDOWN");
   ability_cooldowns_[AbilityID::MINE] =
       GlobalSettings::Access()->ValueOf("ABILITY_MINE_COOLDOWN");
+  ability_cooldowns_[AbilityID::FISHINGING_POLE] =
+      GlobalSettings::Access()->ValueOf("ABILITY_FISHING_POLE_COOLDOWN");
 
   ability_controller::ability_cooldowns = ability_cooldowns_;
 
@@ -405,6 +408,7 @@ void GameServer::UpdateSystems(float dt) {
   UpdateCollisions(registry_);
   lifetime::Update(registry_, dt);
   pickup_spawner_system::Update(registry_, dt);
+  fishing_system::Update(registry_, dt);
 
   if (!play_state_.IsResetting()) goal_system::Update(registry_);
 

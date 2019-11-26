@@ -373,10 +373,13 @@ void ServerPlayState::HandleDataToSend() {
     for (auto entity : created_walls_) {
       auto& t = registry.get<TransformComponent>(entity);
       auto& id = registry.get<IDComponent>(entity);
+      auto& team = registry.get<TeamComponent>(entity);
 
       to_send << t.rotation;
       to_send << t.position;
       to_send << id.id;
+      to_send << team.team;
+
       to_send << PacketBlockType::CREATE_WALL;
     }
 
@@ -445,6 +448,8 @@ void ServerPlayState::HandleDataToSend() {
 
     // send created projectiles
     for (auto projectiles : created_projectiles_) {
+      if (projectiles.projectile_id == ProjectileID::FISHING_HOOK)
+        to_send << projectiles.owner_id;
       to_send << projectiles.entity_id;
       to_send << projectiles.projectile_id;
       to_send << projectiles.pos;
@@ -866,6 +871,16 @@ void ServerPlayState::ResetEntities() {
     }
     ball_component.homer_cid = -1;
   }
+
+  // remove fishing hook
+  auto view_hooks = registry.view<HookComponent, IDComponent>();
+  for (auto hook : view_hooks) {
+    GameEvent ge;
+    ge.type = GameEvent::REMOVE_FISHING_HOOK;
+    ge.hook_removed.hook_id = registry.get<IDComponent>(hook).id;
+    dispatcher.trigger(ge);
+    registry.destroy(hook);
+  }
 }
 
 EntityID ServerPlayState::CreatePickUpComponents(glm::vec3 pos) {
@@ -984,6 +999,19 @@ void ServerPlayState::ReceiveEvent(const EventInfo& e) {
       projectile.ori = trans_c.rotation;
       created_projectiles_.push_back(projectile);
 
+      break;
+    }
+    case Event::CREATE_HOOK: {
+      auto& registry = game_server_->GetRegistry();
+      Projectile projectile;
+      projectile.entity_id = GetNextEntityGuid();
+      registry.assign<IDComponent>(e.entity, projectile.entity_id);
+      projectile.projectile_id = ProjectileID::FISHING_HOOK;
+      auto& trans_c = registry.get<TransformComponent>(e.entity);
+      projectile.pos = trans_c.position;
+      projectile.ori = trans_c.rotation;
+      projectile.owner_id = e.owner_id;
+      created_projectiles_.push_back(projectile);
       break;
     }
     case Event::CREATE_MINE: {
