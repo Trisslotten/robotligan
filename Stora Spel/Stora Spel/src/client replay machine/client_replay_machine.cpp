@@ -52,7 +52,7 @@ void ClientReplayMachine::StoreAndClearReplay() {
   GeometricReplay* replay_to_save = this->primary_replay_->Clone();
   this->stored_replays_.push_back(replay_to_save);
 
-  //Clear the primary replay of its data
+  // Clear the primary replay of its data
   this->primary_replay_->ClearAllVectors();
 
   // Adjust the beginning of the stored vector
@@ -106,15 +106,8 @@ bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
   // Otherwise read a frame into the registry
   // LoadFrame() returns true if the read index has
   // caught up with the write index
-  // bool load_result = this->stored_replays_.at(this->selected_replay_index_)
-  //                       ->LoadFrame(in_registry);
-
-  bool load_result = this->stored_replays_.at(0)->LoadFrame(in_registry);
-
-  // NTS: Remember to save replays to file before deleting them
-  if (load_result) {
-    this->stored_replays_.erase(this->stored_replays_.begin());
-  }
+  bool load_result = this->stored_replays_.at(this->selected_replay_index_)
+                         ->LoadFrame(in_registry);
 
   return load_result;
 }

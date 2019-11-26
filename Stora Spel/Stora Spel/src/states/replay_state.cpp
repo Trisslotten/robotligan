@@ -140,7 +140,7 @@ void ReplayState::UpdateCamera() {
 }
 
 void ReplayState::UpdatePickUpMovement(/*float dt*/) {
-  float dt = 1;
+  float dt = 1 / 128;
   auto view_pickups =
       replay_registry_.view<PickUpComponent, TransformComponent>();
   for (auto pickup : view_pickups) {
@@ -168,8 +168,8 @@ void ReplayState::StartReplayMode() {
   // Get number of replays
   this->num_of_replays_ =
       this->engine_->GetReplayMachinePtr()->NumberOfStoredReplays();
-  // this->replay_counter_ = 0 /*num_of_replays_ - 1*/;  // Cheat row
-  // engine_->GetReplayMachinePtr()->SelectReplay(this->replay_counter_);
+  this->replay_counter_ = 0;
+  engine_->GetReplayMachinePtr()->SelectReplay(this->replay_counter_);
 
   this->AddConstantStuff();
 }
@@ -182,10 +182,9 @@ void ReplayState::PlayReplay() {
   if (this->engine_->GetReplayMachinePtr()->LoadFrame(this->replay_registry_)) {
     // Once replay is done playing, clear the registry
     this->replay_registry_.reset();
-    // replay_counter_++;
+    replay_counter_++;
 
-    // if (!engine_->GetReplayMachinePtr()->SelectReplay(replay_counter_)) {
-    if (this->engine_->GetReplayMachinePtr()->IsEmpty()) {
+    if (!engine_->GetReplayMachinePtr()->SelectReplay(replay_counter_)) {
       // And stop replaying
       this->replaying_ = false;
     } else {

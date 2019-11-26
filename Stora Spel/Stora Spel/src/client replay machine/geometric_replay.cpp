@@ -391,8 +391,7 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     model_c.handles.push_back(pickup_model);
 
-    in_registry.assign<PickUpComponent>(entity);
-    // TBA
+    in_registry.assign<PickUpComponent>(entity, trans_c.position);
   } else if (object_type == REPLAY_WALL) {
     // -Cast DataFrame to correct type
     WallFrame* wf_c_ptr = dynamic_cast<WallFrame*>(df_ptr);
