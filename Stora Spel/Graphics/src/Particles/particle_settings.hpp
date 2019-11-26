@@ -24,6 +24,7 @@ struct ParticleSettings {
   int number_of_bursts = 1;
   bool burst = false;
   bool emissive = false;
+  glm::vec3 emitter_vel;
 
   GLuint texture = 0;
   ShaderProgram* compute_shader = nullptr;

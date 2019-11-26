@@ -197,6 +197,7 @@
     <ClInclude Include="src\ecs\components.hpp" />
     <ClInclude Include="src\ecs\components\animation_component.hpp" />
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
+    <ClInclude Include="src\ecs\components\follow_bone_component.hpp" />
     <ClInclude Include="src\ecs\components\skylight_component.hpp" />
     <ClInclude Include="src\ecs\components\button_component.hpp" />
     <ClInclude Include="src\ecs\components\fireworks_component.hpp" />
@@ -301,6 +302,7 @@
     <None Include="Assets\shaders\Particle compute shaders\black_hole.comp" />
     <None Include="Assets\shaders\Particle compute shaders\dust.comp" />
     <None Include="Assets\shaders\Particle compute shaders\firework.comp" />
+    <None Include="Assets\shaders\Particle compute shaders\jet.comp" />
     <None Include="Assets\shaders\particle.geom" />
     <None Include="Assets\shaders\rope.vert" />
     <None Include="Assets\shaders\shading.frag" />

@@ -1,6 +1,8 @@
 #include "state.hpp"
 
+#include <ecs\components\follow_bone_component.hpp>
 #include <glob/window.hpp>
+#include <util\asset_paths.hpp>
 #include "../ecs/components.hpp"
 #include "../ecs/systems/animation_system.hpp"
 #include "engine.hpp"
@@ -55,7 +57,7 @@ void MainMenuState::CreateMainMenu() {
   glob::window::SetMouseLocked(false);
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
 
-  // PLAY BUTTON - change registry to registry_gameplay_
+  // PLAY BUTTON - change registry to registry_mainmenu_
   ButtonComponent* b_c = GenerateButtonEntity(registry_mainmenu_, "JOIN SERVER",
                                               glm::vec2(100, 290), font_test_);
   b_c->button_func = [&]() { engine_->ChangeState(StateType::CONNECT_MENU); };
