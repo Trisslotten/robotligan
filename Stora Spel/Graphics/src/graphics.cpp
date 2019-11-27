@@ -1455,6 +1455,7 @@ void Render() {
     model_shader.use();
     for (auto &render_item : normal_items) {
       SetDefaultMaterials(model_shader);
+      model_shader.uniform("diffuse_index", render_item.material_index);
       model_shader.uniform("model_transform", render_item.transform);
       model_shader.uniform("normal_transform",
                            calcNormalTransform(render_item.transform));
@@ -1547,6 +1548,7 @@ void Render() {
     for (auto &[dist, render_items] : transparent_items) {
       for (auto &render_item : render_items) {
         SetDefaultMaterials(model_shader);
+        model_shader.uniform("diffuse_index", render_item.material_index);
         model_shader.uniform("model_transform", render_item.transform);
         model_shader.uniform("normal_transform",
                              calcNormalTransform(render_item.transform));
