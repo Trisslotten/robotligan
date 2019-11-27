@@ -1867,6 +1867,9 @@ void PlayState::CreateBallEntities() {
 }
 
 void PlayState::CreateSpotlights() {
+  glob::ClearSpotlights();
+
+
   glm::vec3 pos_base;
   pos_base.x = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEX");
   pos_base.y = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEY");

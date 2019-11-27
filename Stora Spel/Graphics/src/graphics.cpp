@@ -1368,6 +1368,10 @@ void AddSpotlight(glm::vec3 position, glm::mat4 transform) {
   shadows.AddSpotlight(position, transform);
 }
 
+void ClearSpotlights() {
+  shadows.ClearSpotlights();
+}
+
 void SetStunned(bool is_stunned) {
   stunned = is_stunned;
 }
