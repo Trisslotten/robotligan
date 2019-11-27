@@ -557,7 +557,7 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
 
       auto wall = registry.create();
       registry.assign<WallComponent>(wall);
-      registry.assign<TimerComponent>(wall, GlobalSettings::Access()->ValueOf(""));
+      registry.assign<TimerComponent>(wall, GlobalSettings::Access()->ValueOf("ABILITY_WALL_DURATION"));
       registry.assign<HealthComponent>(wall, 100);
       registry.assign<TransformComponent>(wall, position, orientation);
       registry.assign<TeamComponent>(wall, team_c.team);
