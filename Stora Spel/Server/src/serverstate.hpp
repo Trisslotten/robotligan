@@ -159,7 +159,7 @@ class ServerPlayState : public ServerState {
   bool reset_ = false;
 
   int switch_goal_time_ =
-      (int)GlobalSettings::Access()->ValueOf("ABILITY_SWITCH_GOAL_COUNTDOWN");
+      (int)GlobalSettings::Access()->ValueOf("ABILITY_SWITCH_GOAL_TIMER");
   Timer switch_goal_timer_;
 
   std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
