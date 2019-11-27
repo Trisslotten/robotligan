@@ -5,14 +5,17 @@
 #include <glm/glm.hpp>
 
 
+enum class BoneEmitterType
+{
+	ROCKET,
+	SMASH,
+} ;
+
 struct BoneEmitter {
   int bone_id = 0;
   glm::vec3 pos;
   glm::vec3 dir;
-  enum {
-    ROCKET,
-    HIT,
-  } type = ROCKET;
+  BoneEmitterType type = BoneEmitterType::ROCKET;
 
   float speed = 10.f;
 };

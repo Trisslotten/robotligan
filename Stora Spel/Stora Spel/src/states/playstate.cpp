@@ -1575,7 +1575,9 @@ void PlayState::CreatePlayerEntities() {
     }
 
     if (entity_id == my_id_) {
-		
+		f.emitters.push_back({ joints["Smasher"].id,
+							glm::vec3(-4.42201, -5.44919, 10.35781),
+							glm::normalize(glm::vec3(0, 1, 0)), BoneEmitterType::SMASH });
     } else {
       f.emitters.push_back({joints["Thruster upper L"].id,
                             glm::vec3(1.90377, 4.66975, 14.3237),

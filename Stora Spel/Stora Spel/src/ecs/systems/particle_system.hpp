@@ -72,15 +72,14 @@ void ParticleSystem(entt::registry& registry, float dt) {
       }
       std::unordered_map<std::string, std::string> map;
       switch (current.type) {
-        case BoneEmitter::ROCKET:
+        case BoneEmitterType::ROCKET:
           if (player_c.sprinting) {
             map["spawn_rate"] = "500.f";
           } else {
             map["spawn_rate"] = "0.f";
           }
           break;
-        case BoneEmitter::HIT:
-
+        case BoneEmitterType::SMASH:
           break;
       }
 
