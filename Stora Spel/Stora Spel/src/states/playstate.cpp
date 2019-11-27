@@ -2909,6 +2909,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
 void PlayState::Reset() {
   auto view_particle = registry_gameplay_.view<ParticleComponent>();
+  switching_goals_ = false;
   for (auto& entity : view_particle) {
     auto& particle_c = view_particle.get(entity);
 
