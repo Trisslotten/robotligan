@@ -115,6 +115,7 @@ void SoundSystem::Init(Engine* engine) {
   sound_fireworks_ = sound_engine_.GetSound("assets/sound/fireworks.mp3");
   sound_fishing_hook_attached_ =
       sound_engine_.GetSound("assets/sound/grappling.mp3");
+  sound_picked_up_pickup_ = sound_engine_.GetSound("assets/sound/picked_up_pickup.wav");
 
   ability_sounds_[AbilityID::GRAVITY_CHANGE] =
       sound_engine_.GetSound("assets/sound/gravitydrop.wav");
@@ -563,6 +564,14 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
         sound_c.sound_player->Play(ability_sounds_[AbilityID::FISHINGING_POLE]);
         break;
       }
+    }
+  }
+  if (event.type == GameEvent::PICKED_UP_PICKUP) {
+    auto view = registry->view<CameraComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& sound_c = view.get<SoundComponent>(entity);
+      sound_c.sound_player->Play(sound_picked_up_pickup_);
+      break;
     }
   }
 }
