@@ -188,6 +188,14 @@ bool NetAPI::Socket::Server::Update() {
   Receive();
   // Send Data
   SendStoredData();
+
+  // CHECK DC
+  for (auto& [id, client_data] : client_data_) {
+    if (client_data->client.TimeSinceLastUpdate() > 3000) {
+      client_data->client.Disconnect();
+    }
+  }
+
   return true;
 }
 
