@@ -34,6 +34,8 @@ class Shadows {
 
   void AddSpotlight(glm::vec3 position, glm::mat4 transform);
 
+  void ClearSpotlights();
+
  private:
   int GetBlurredSize() { return size_ / glm::pow(2, blurred_level_); }
 
