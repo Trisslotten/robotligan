@@ -628,6 +628,9 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
     case PacketBlockType::RECEIVE_PICK_UP: {
       packet >> second_ability_;
+      GameEvent ge;
+      ge.type = GameEvent::PICKED_UP_PICKUP;
+      dispatcher.trigger(ge);
       break;
     }
     case PacketBlockType::GAME_EVENT: {

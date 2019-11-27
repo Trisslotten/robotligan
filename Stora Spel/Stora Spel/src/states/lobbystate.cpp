@@ -304,10 +304,13 @@ void LobbyState::CreateBackgroundEntities() {
 }
 
 void LobbyState::CreateGUIElements() {
-  //ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
   ability_blacklist.push_back((int)AbilityID::BLACKOUT);
-  // ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
+  ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
   ability_blacklist.push_back((int)AbilityID::BLACKHOLE);
+  ability_blacklist.push_back((int)AbilityID::MINE);
+  ability_blacklist.push_back((int)AbilityID::GRAVITY_CHANGE);
+  ability_blacklist.push_back((int)AbilityID::FAKE_BALL);
+
   red_team_select_back_ = glob::GetGUIItem("Assets/GUI_elements/red_team.png");
   blue_team_select_back_ =
       glob::GetGUIItem("Assets/GUI_elements/blue_team.png");
@@ -355,7 +358,7 @@ void LobbyState::CreateGUIElements() {
   ability_tooltips_[10] =
       "TELEPORT: Fire a projectile that teleports you to the point of impact.";
   ability_tooltips_[11] = "BLACKOUT: Turn off the lights.";
-  ability_tooltips_[12] = "BLACKOUT: No, don't do it. You have been warned.";
+  ability_tooltips_[12] = "BLACK HOLE: No, don't do it. You have been warned.";
   ability_tooltips_[13] = "MINE: Place an explosive mine on the ground that will launch enemies into the air.";
   ability_tooltips_[14] = "FISHING POLE: It's literally just a grappling hook.";
 
@@ -385,8 +388,8 @@ void LobbyState::CreateGUIElements() {
 
   // ability buttons
   glm::vec2 ability_buttons_pos =
-      glm::vec2(130, glob::window::GetWindowDimensions().y - 145);
-  int xoffset = 97;
+      glm::vec2(190, glob::window::GetWindowDimensions().y - 145);
+  int xoffset = 120;
   int yoffset = 0;
 
   int columns = num_abilites;
