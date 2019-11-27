@@ -362,6 +362,7 @@ void Init() {
   textures["smoke"] = TextureFromFile("smoke.png");
   textures["confetti"] = TextureFromFile("confetti.png");
   textures["dust"] = TextureFromFile("dust.png");
+  textures["spark"] = TextureFromFile("spark.png");
 
   model_shader.add("modelshader.vert");
   model_shader.add("modelshader.frag");

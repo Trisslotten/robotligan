@@ -78,6 +78,6 @@ void main()
 		colors[gid] = color[0];
 		sizes[gid] = size;
 		positions[gid] = vec4(emit_pos + offset, 0);
-		velocities[gid] = new_vel + emitter_vel;
+		velocities[gid] = new_vel + vec4(emitter_vel, 0);
 	}
 }

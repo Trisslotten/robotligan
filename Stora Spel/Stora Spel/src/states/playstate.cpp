@@ -1575,6 +1575,7 @@ void PlayState::CreatePlayerEntities() {
     }
 
     if (entity_id == my_id_) {
+		
     } else {
       f.emitters.push_back({joints["Thruster upper L"].id,
                             glm::vec3(1.90377, 4.66975, 14.3237),
