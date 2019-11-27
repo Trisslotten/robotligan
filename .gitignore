@@ -329,3 +329,4 @@ ASALocalRun/
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
 /Stora Spel/glm/glm/out/build/x64-Debug
+/Stora Spel/entt-master/out/build/x64-Debug/CMakeFiles

@@ -33,7 +33,7 @@ void ConnectMenuState::Startup() {
   ip_field.pos = ip_pos;
   ip_field.input_name = "IP";
   ip_field.font_size = 32;
-  ip_field.text = ip_;
+  ip_field.text = GlobalSettings::Access()->StringValueOf("DEFAULT_IP");
   ip_field.linked_value = &ip_;
 
   auto port = registry_connect_menu_.create();
