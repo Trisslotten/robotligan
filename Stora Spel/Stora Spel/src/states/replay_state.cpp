@@ -339,7 +339,7 @@ void ReplayState::UpdateNetwork() {
 }
 
 void ReplayState::Cleanup() {
-  // Clear registry
+  // Clear registry   
   this->replay_registry_.reset();
 
   // Reset all variables
