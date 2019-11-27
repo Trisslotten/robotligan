@@ -310,7 +310,7 @@ void LobbyState::CreateGUIElements() {
   ability_blacklist.push_back((int)AbilityID::MINE);
   ability_blacklist.push_back((int)AbilityID::GRAVITY_CHANGE);
   ability_blacklist.push_back((int)AbilityID::FAKE_BALL);
-  ability_blacklist.push_back((int)AbilityID::HOMING_BALL);
+  //ability_blacklist.push_back((int)AbilityID::HOMING_BALL);
 
   red_team_select_back_ = glob::GetGUIItem("Assets/GUI_elements/red_team.png");
   blue_team_select_back_ =
