@@ -176,6 +176,7 @@ class ConnectMenuState : public State {
   glob::GUIHandle bg_ = 0;
   glm::vec4 color_ = glm::vec4(1, 1, 1, 1);
   std::string ip_ = "localhost";
+  ;
   std::string port_ = "1337";
   glob::Font2DHandle font_test_ = 0;
   entt::registry registry_connect_menu_;
