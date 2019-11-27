@@ -1876,12 +1876,12 @@ void PlayState::CreateSpotlights() {
 
   float xrot = 1.f;
   float zrot = 1.f;
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 2; i++) {
     glm::vec3 temp_pos =
         glm::vec3(xrot * pos_base.x, pos_base.y, zrot * pos_base.z);
     glm::mat4 temp_trans =
-        glm::perspective(glm::radians(70.f), 1.f, 0.1f, 100.f) *
-        glm::lookAt(temp_pos, glm::vec3(0, -40.0, 0), glm::vec3(0, 1, 0));
+        glm::perspective(glm::radians(70.f), 1.f, 0.1f, 300.f) *
+        glm::lookAt(temp_pos, glm::vec3(0, 0.0, 0), glm::vec3(0, 1, 0));
 
     // Add model entity for spotlight
     auto entity = registry_gameplay_.create();
@@ -1894,13 +1894,15 @@ void PlayState::CreateSpotlights() {
     // trans_c.rotation = glm::toQuat(
     //  glm::lookAt(temp_pos, glm::vec3(0, -40.0, 0), glm::vec3(0, 1, 0)));
     trans_c.rotation *= glm::quatLookAtRH(
-        glm::normalize(glm::vec3(0.f, -40.0f, 0.f) - temp_pos),
+        glm::normalize(glm::vec3(0.f, 0.f, 0.f) - temp_pos),
         glm::vec3(0, 1, 0));
     trans_c.Rotate(glm::vec3(0, glm::radians(90.f), 0));
 
     // add the spotlight to glob::Shadow object in glob
     glob::AddSpotlight(temp_pos, temp_trans);
 
+    std::swap(xrot, zrot);
+    zrot *= -1.f;
     std::swap(xrot, zrot);
     zrot *= -1.f;
   }
