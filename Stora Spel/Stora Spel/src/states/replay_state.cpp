@@ -1,7 +1,9 @@
 #include "state.hpp"
 
+#include <GLFW/glfw3.h>
 #include <glob/graphics.hpp>
 #include <glob/window.hpp>
+#include "..//entitycreation.hpp"
 #include "engine.hpp"
 
 // Private---------------------------------------------------------------------
@@ -190,9 +192,10 @@ void ReplayState::PlayReplay() {
     this->replay_registry_.reset();
     replay_counter_++;
 
-	// Add the constant stuff back in again
-	// Also prevents black-sceen when all replays are done
+    // Add the constant stuff back in again
+    // Also prevents black-sceen when all replays are done
     this->AddConstantStuff();
+    this->CreateInGameMenu();
 
     if (!engine_->GetReplayMachinePtr()->SelectReplay(replay_counter_)) {
       // And stop replaying
@@ -200,14 +203,62 @@ void ReplayState::PlayReplay() {
     }
   }
 
-  //this->UpdatePickUpMovement(); //<< TEMP DISABLED
+  // this->UpdatePickUpMovement(); //<< TEMP DISABLED
   this->UpdateCamera();
+}
+
+void ReplayState::ToggleInGameMenu() {
+  show_in_game_menu_buttons_ = !show_in_game_menu_buttons_;
+  glob::window::SetMouseLocked(!show_in_game_menu_buttons_);
+  engine_->SetSendInput(!show_in_game_menu_buttons_);
+  engine_->SetTakeInput(!show_in_game_menu_buttons_);
+  UpdateInGameMenu(show_in_game_menu_buttons_);
+}
+
+void ReplayState::UpdateInGameMenu(bool show_menu) {
+  // Set in_game buttons visibility
+  auto view = replay_registry_.view<ButtonComponent, TransformComponent>();
+  for (auto v : view) {
+    auto& button_c = replay_registry_.get<ButtonComponent>(v);
+    button_c.visible = show_menu;
+  }
+}
+
+void ReplayState::CreateInGameMenu() {
+  font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+
+  glm::vec2 in_game_menu_pos = glob::window::GetWindowDimensions();
+  in_game_menu_pos /= 2;
+  in_game_menu_pos.x -= 110;
+  in_game_menu_pos.y += 110;
+
+  // CONTINUE BUTTON -- change registry to registry_gameplay_
+  ButtonComponent* in_game_buttons_ = GenerateButtonEntity(
+      replay_registry_, "CONTINUE", in_game_menu_pos + glm::vec2(0, 0),
+      font_test_, false);
+  in_game_buttons_->button_func = [&]() { ToggleInGameMenu(); };
+  // SETTINGS BUTTON -- change registry to registry_settings_
+  in_game_buttons_ = GenerateButtonEntity(replay_registry_, "LOBBY",
+                                          in_game_menu_pos + glm::vec2(0, -100),
+                                          font_test_, false);
+
+  in_game_buttons_->button_func = [&] {
+    engine_->ChangeState(StateType::LOBBY);
+    ToggleInGameMenu();
+  };
+
+  in_game_buttons_ = GenerateButtonEntity(replay_registry_, "EXIT",
+                                          in_game_menu_pos + glm::vec2(0, -200),
+                                          font_test_, false);
+  in_game_buttons_->button_func = [&] { exit(0); };
 }
 
 // Public----------------------------------------------------------------------
 
 void ReplayState::Startup() {
   this->font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+  in_game_menu_gui_ =
+      glob::GetGUIItem("Assets/GUI_elements/ingame_menu_V1.png");
 }
 
 void ReplayState::Init() {
@@ -215,9 +266,12 @@ void ReplayState::Init() {
   this->engine_->SetCurrentRegistry(&this->replay_registry_);
 
   this->StartReplayMode();
+
+  CreateInGameMenu();
 }
 
 void ReplayState::Update(float dt) {
+  // One function for the scoreboard
   // Highlight loop logic : NTS: Moved to network update
   // PlayReplay();
   //-------Draw scoreboard during highlight time--------------
@@ -265,6 +319,18 @@ void ReplayState::Update(float dt) {
   }
 
   // Up
+
+  // Escape button
+  if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
+    ToggleInGameMenu();
+  }
+  if (show_in_game_menu_buttons_) {
+    glm::vec2 in_game_menu_pos = glob::window::GetWindowDimensions();
+    in_game_menu_pos /= 2;
+    in_game_menu_pos.x -= 165;
+    in_game_menu_pos.y -= 180;
+    glob::Submit(in_game_menu_gui_, in_game_menu_pos, 1.0f);
+  }
 }
 
 void ReplayState::UpdateNetwork() {

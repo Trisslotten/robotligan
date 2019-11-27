@@ -380,8 +380,10 @@ class PlayState : public State {
 class ReplayState : public State {
  private:
   entt::registry replay_registry_;
+  glob::GUIHandle in_game_menu_gui_ = 0;
 
   bool replaying_ = false;
+  bool show_in_game_menu_buttons_ = false;
 
   unsigned int num_of_replays_ = 0;
   unsigned int replay_counter_ = 0;
@@ -398,6 +400,10 @@ class ReplayState : public State {
 
   void StartReplayMode();
   void PlayReplay();
+
+  void ToggleInGameMenu();
+  void UpdateInGameMenu(bool show_menu);
+  void CreateInGameMenu();
 
  public:
   void Startup() override;
