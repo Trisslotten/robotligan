@@ -83,6 +83,7 @@ void Update(entt::registry& registry, float dt) {
           if (hooked_id_c.id == hook_hook_c.hooked_entity) {
             hooked_trans_c = &registry.get<TransformComponent>(entity);
             hooked_phys_c = &registry.get<PhysicsComponent>(entity);
+            hooked_phys_c->is_airborne = true;
             found_hooked = true;
             if (registry.has<physics::Sphere>(entity)) {
               collider_size = registry.get<physics::Sphere>(entity).radius;

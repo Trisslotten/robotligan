@@ -2,6 +2,7 @@
 #define STATE_HPP_
 
 #include <NetAPI\packet.hpp>
+#include <client replay machine/client_replay_machine.hpp>
 #include <ecs/components/button_component.hpp>
 #include <entt.hpp>
 #include <glm/glm.hpp>
@@ -23,7 +24,9 @@ enum class StateType {
   CREATE_SERVER,
   LOBBY,
   PLAY,
+  REPLAY,
   SETTINGS,
+  NUM_OF_STATES
 };
 
 class State {
@@ -299,6 +302,11 @@ class PlayState : public State {
   void SetCanSmash(bool val) { can_smash_ = val; }
   void SetGoalsSwappedAtStart(bool val) { goals_swapped_at_start_ = val; }
 
+  // Replay stuff
+  bool IsRecording() const { return this->recording_; }
+  // void SetRecording(bool in_val) { this->recording_ = in_val; }
+  //
+
  private:
   struct GuiNotRespnding {
     glob::GUIHandle hndl = 0;
@@ -411,7 +419,6 @@ class PlayState : public State {
   // For switch goal
   bool countdown_in_progress_ = false;
 
-  Timer end_game_timer_;
   bool game_has_ended_ = false;
   std::chrono::time_point<std::chrono::system_clock> overtime_start_time_, overtime_end_time_;
   bool overtime_has_started_ = false;
@@ -448,6 +455,58 @@ class PlayState : public State {
   bool me_hooked_ = false;
 
   std::vector<Fishermans> fishers_;
+
+  // Replay stuff
+  bool recording_ = false;
+  // Replay stuff
+};
+
+class ReplayState : public State {
+ private:
+  // Registry
+  entt::registry replay_registry_;
+
+  // Replay variables
+  bool replaying_ = false;
+  unsigned int num_of_replays_ = 0;
+  unsigned int replay_counter_ = 0;
+
+  // End game time handling
+  unsigned int replay_state_duration_ = 0;
+  Timer replay_state_timer_;
+
+  // Menu stuff
+  glob::GUIHandle in_game_menu_gui_ = 0;
+  bool show_in_game_menu_buttons_ = false;
+
+  // More variables
+  glob::Font2DHandle font_test_ = 0;
+  glm::vec3 arena_scale_ = glm::vec3(0.f);
+  bool goals_swapped_ = false;
+
+  // Functions
+  void AddConstantStuff();
+  void UpdateCamera();
+  void UpdatePickUpMovement(/*float dt*/);
+
+  void StartReplayMode();
+  void PlayReplay();
+
+  void ToggleInGameMenu();
+  void UpdateInGameMenu(bool show_menu);
+  void CreateInGameMenu();
+
+  void ShowScoreboard();
+
+ public:
+  void Startup() override;
+  void Init() override;
+  void Update(float dt) override;
+  void UpdateNetwork() override;
+  void Cleanup() override;
+
+  StateType Type() { return StateType::REPLAY; }
+  void SetArenaScale(glm::vec3 in_scale) { this->arena_scale_ = in_scale; }
 };
 
 class CreateServerState : public State {

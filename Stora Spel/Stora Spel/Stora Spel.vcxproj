@@ -169,6 +169,7 @@
     <ClCompile Include="src\states\lobbystate.cpp" />
     <ClCompile Include="src\states\mainmenustate.cpp" />
     <ClCompile Include="src\states\playstate.cpp" />
+    <ClCompile Include="src\states\replay_state.cpp" />
     <ClCompile Include="src\states\settingsstate.cpp" />
     <ClCompile Include="src\util\debugoverlay.cpp" />
     <ClCompile Include="src\util\global_settings.cpp" />
