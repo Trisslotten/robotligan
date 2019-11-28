@@ -10,7 +10,8 @@ enum class BoneEmitterType
 	ROCKET,
   SLIDE_SPARKS,
 	HIT,
-} ;
+  SHOOT,
+};
 
 struct BoneEmitter {
   int bone_id = 0;
@@ -19,6 +20,8 @@ struct BoneEmitter {
   BoneEmitterType type = BoneEmitterType::ROCKET;
 
   float speed = 8.f;
+
+  bool emitted = false;
 };
 
 struct FollowBoneComponent {

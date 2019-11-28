@@ -1546,18 +1546,18 @@ void PlayState::CreatePlayerEntities() {
 
     glob::ModelHandle player_model;
     if (entity_id == my_id_) {
-      // glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
-      glm::vec3 camera_offset = glm::vec3(-4.5f, 1.4f, 1.5f);
+      glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
+      // glm::vec3 camera_offset = glm::vec3(-4.5f, 1.4f, 1.5f);
 
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
                                                  glm::quat(glm::vec3(0.f)));
 
-      // player_model = glob::GetModel("Assets/Mech/FPS_body.fbx");
-      player_model = glob::GetModel(kModelPathMech);
+      player_model = glob::GetModel("Assets/Mech/FPS_body.fbx");
+      // player_model = glob::GetModel(kModelPathMech);
 
       model_c.cast_shadow = false;
-      // pc.localPlayer = true;
-      pc.localPlayer = false;
+      pc.localPlayer = true;
+      // pc.localPlayer = false;
 
       my_entity_ = entity;
     } else {
@@ -1574,47 +1574,48 @@ void PlayState::CreatePlayerEntities() {
     for (auto& bone : anim_c.model_data.bones) {
       joints[bone.name] = bone;
     }
-
-    // if (entity_id == my_id_) {
     f.emitters.push_back(
         {joints["Smasher"].id, glm::vec3(-4.42201, -5.44919, 10.35781),
-         glm::normalize(glm::vec3(0, -1, 0)), BoneEmitterType::HIT});
-    //} else {
-    f.emitters.push_back({joints["Thruster upper L"].id,
-                          glm::vec3(1.90377, 4.66975, 14.3237),
-                          glm::normalize(glm::vec3(20, 71, 41))});
-    f.emitters.push_back({joints["Thruster upper R"].id,
-                          glm::vec3(-1.90377, 4.66975, 14.3237),
-                          glm::normalize(glm::vec3(-20, 71, 41))});
-    f.emitters.push_back({joints["Thruster lower L"].id,
-                          glm::vec3(1.90377, 4.66975, 13.6999),
-                          glm::normalize(glm::vec3(20, 71, -35))});
-    f.emitters.push_back({joints["Thruster lower R"].id,
-                          glm::vec3(-1.90377, 4.66975, 13.6999),
-                          glm::normalize(glm::vec3(-20, 71, -35))});
-    f.emitters.push_back({joints["Leg upper thruster L"].id,
-                          glm::vec3(1.64806, 0.743561, 7.4594),
-                          glm::normalize(glm::vec3(7, 62, -57))});
-    f.emitters.push_back({joints["Leg upper thruster R"].id,
-                          glm::vec3(-1.64806, 0.743561, 7.4594),
-                          glm::normalize(glm::vec3(-7, 62, -57))});
-    f.emitters.push_back({joints["Leg lower thruster L"].id,
-                          glm::vec3(1.72301, 0.825308, 2.48634),
-                          glm::normalize(glm::vec3(7, 72, -43))});
-    f.emitters.push_back({joints["Leg lower thruster R"].id,
-                          glm::vec3(-1.72301, 0.825308, 2.48634),
-                          glm::normalize(glm::vec3(-7, 72, -43))});
-                          
-    f.emitters.push_back({joints["Foot R"].id,
-                          glm::vec3(-1.70696, -0.959843, 0.197735),
-                          glm::normalize(glm::vec3(0, 0, 1)),
-                          BoneEmitterType::SLIDE_SPARKS, 2.5f});
-    f.emitters.push_back({joints["Foot L"].id,
-                          glm::vec3(1.70696, -0.959843, 0.197735),
-                          glm::normalize(glm::vec3(0, 0, 1)),
-                          BoneEmitterType::SLIDE_SPARKS, 2.5f});
+         glm::normalize(glm::vec3(0, -1, 0)), BoneEmitterType::HIT, 3.5f});
 
-    //}
+    f.emitters.push_back(
+        {joints["Gun autoloader"].id, glm::vec3(4.39386, -3.68348, 9.73308),
+         glm::normalize(glm::vec3(0, -1, 0)), BoneEmitterType::SHOOT, 20.0f});
+    if (entity_id != my_id_) {
+      f.emitters.push_back({joints["Thruster upper L"].id,
+                            glm::vec3(1.90377, 4.66975, 14.3237),
+                            glm::normalize(glm::vec3(20, 71, 41))});
+      f.emitters.push_back({joints["Thruster upper R"].id,
+                            glm::vec3(-1.90377, 4.66975, 14.3237),
+                            glm::normalize(glm::vec3(-20, 71, 41))});
+      f.emitters.push_back({joints["Thruster lower L"].id,
+                            glm::vec3(1.90377, 4.66975, 13.6999),
+                            glm::normalize(glm::vec3(20, 71, -35))});
+      f.emitters.push_back({joints["Thruster lower R"].id,
+                            glm::vec3(-1.90377, 4.66975, 13.6999),
+                            glm::normalize(glm::vec3(-20, 71, -35))});
+      f.emitters.push_back({joints["Leg upper thruster L"].id,
+                            glm::vec3(1.64806, 0.743561, 7.4594),
+                            glm::normalize(glm::vec3(7, 62, -57))});
+      f.emitters.push_back({joints["Leg upper thruster R"].id,
+                            glm::vec3(-1.64806, 0.743561, 7.4594),
+                            glm::normalize(glm::vec3(-7, 62, -57))});
+      f.emitters.push_back({joints["Leg lower thruster L"].id,
+                            glm::vec3(1.72301, 0.825308, 2.48634),
+                            glm::normalize(glm::vec3(7, 72, -43))});
+      f.emitters.push_back({joints["Leg lower thruster R"].id,
+                            glm::vec3(-1.72301, 0.825308, 2.48634),
+                            glm::normalize(glm::vec3(-7, 72, -43))});
+
+      f.emitters.push_back({joints["Foot R"].id,
+                            glm::vec3(-1.70696, -0.959843, 0.197735),
+                            glm::normalize(glm::vec3(0, 0, 1)),
+                            BoneEmitterType::SLIDE_SPARKS, 2.5f});
+      f.emitters.push_back({joints["Foot L"].id,
+                            glm::vec3(1.70696, -0.959843, 0.197735),
+                            glm::normalize(glm::vec3(0, 0, 1)),
+                            BoneEmitterType::SLIDE_SPARKS, 2.5f});
+    }
 
     auto& part_c = registry_gameplay_.assign<ParticleComponent>(entity);
     for (unsigned i = 0; i < f.emitters.size(); i++) {
@@ -1627,7 +1628,10 @@ void PlayState::CreatePlayerEntities() {
           glob::SetParticleSettings(handle, "slidesparks.txt");
           break;
         case BoneEmitterType::HIT:
-          glob::SetParticleSettings(handle, "charfire.txt");
+          glob::SetParticleSettings(handle, "hitsparks.txt");
+          break;
+        case BoneEmitterType::SHOOT:
+          glob::SetParticleSettings(handle, "shoot.txt");
           break;
       }
       part_c.handles.push_back(handle);

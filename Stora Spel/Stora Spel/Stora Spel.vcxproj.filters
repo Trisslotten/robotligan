@@ -23,6 +23,7 @@
     <ClCompile Include="src\client replay machine\data_frame.cpp" />
     <ClCompile Include="src\util\debugoverlay.cpp" />
     <ClCompile Include="src\states\createserverstate.cpp" />
+    <ClCompile Include="src\ecs\systems\particle_system.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
@@ -187,5 +188,7 @@
     <Text Include="Assets\Particle config\smoke_main_menu.txt" />
     <Text Include="Assets\Particle config\superkick.txt" />
     <Text Include="Assets\Particle config\teleport.txt" />
+    <Text Include="Assets\Particle config\hitsparks.txt" />
+    <Text Include="Assets\Particle config\shoot.txt" />
   </ItemGroup>
 </Project>
