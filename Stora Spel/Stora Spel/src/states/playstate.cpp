@@ -253,7 +253,7 @@ void PlayState::Update(float dt) {
   if (!transforms_.empty()) {
     auto view_entities =
         registry_gameplay_.view<TransformComponent, IDComponent>();
-    //glm::vec3 pos = new_transforms_[ball_id_].first;
+    // glm::vec3 pos = new_transforms_[ball_id_].first;
     new_transforms_.clear();
     for (auto entity : view_entities) {
       auto& trans_c = view_entities.get<TransformComponent>(entity);
@@ -381,80 +381,75 @@ void PlayState::Update(float dt) {
     primary_cd_ -= dt;
   }
 
-  // --- dont display during replay ---
-  // TODO: Remove if-statement and just dont draw GUI in replay state when it's
-  // implemented
-  if (!engine_->IsReplaying()) {
-    // draw quickslots
-    DrawQuickslots();
+  // draw quickslots
+  DrawQuickslots();
 
   // draw stamina bar
   glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
   glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
   glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
 
-    // draw crosshair
-    glm::vec2 crosshair_pos = glob::window::GetWindowDimensions();
-    crosshair_pos /= 2;
-    glob::Submit(gui_crosshair_, crosshair_pos - glm::vec2(12, 12), 1.f);
+  // draw crosshair
+  glm::vec2 crosshair_pos = glob::window::GetWindowDimensions();
+  crosshair_pos /= 2;
+  glob::Submit(gui_crosshair_, crosshair_pos - glm::vec2(12, 12), 1.f);
 
-    // draw mini map
-    DrawMiniMap();
-    typedef std::chrono::high_resolution_clock Time;
-    typedef std::chrono::milliseconds ms;
-    typedef std::chrono::duration<float> fsec;
-    if (overtime_has_started_) {
-      glm::vec2 pos = glob::window::GetWindowDimensions();
-      pos /= 2;
-      pos.x -= 230;
-      std::chrono::duration<double> elapsed_seconds;
-      overtime_end_time_ = std::chrono::system_clock::now();
-      elapsed_seconds = overtime_end_time_ - overtime_start_time_;
-      if (elapsed_seconds.count() < 3.0) {
-        glob::Submit(font_test_, pos, 175, "OVERTIME");
-      }
-      if (game_has_ended_) {
-        overtime_has_started_ = false;
-        overtime_check_time = true;
-      }
+  // draw mini map
+  DrawMiniMap();
+  typedef std::chrono::high_resolution_clock Time;
+  typedef std::chrono::milliseconds ms;
+  typedef std::chrono::duration<float> fsec;
+  if (overtime_has_started_) {
+    glm::vec2 pos = glob::window::GetWindowDimensions();
+    pos /= 2;
+    pos.x -= 230;
+    std::chrono::duration<double> elapsed_seconds;
+    overtime_end_time_ = std::chrono::system_clock::now();
+    elapsed_seconds = overtime_end_time_ - overtime_start_time_;
+    if (elapsed_seconds.count() < 3.0) {
+      glob::Submit(font_test_, pos, 175, "OVERTIME");
+    }
+    if (game_has_ended_) {
+      overtime_has_started_ = false;
+      overtime_check_time = true;
     }
   }
-  // --- dont display during replay ---
 
   if (game_has_ended_) {
     engine_->DrawScoreboard();
 
-  if (game_has_ended_) {
-    engine_->ChangeState(StateType::REPLAY);
-  }
-  if (primary_cd_ > 0) {
-    primary_cd_ -= dt;
-  }
-
-  DrawTopScores();
-  DrawTarget();
-  DrawStunTimer();
-  DrawFishingLines();
-
-  auto view_players = registry_gameplay_.view<PlayerComponent, IDComponent>();
-  for (auto player : view_players) {
-    EntityID id = registry_gameplay_.get<IDComponent>(player).id;
-    auto& player_c = registry_gameplay_.get<PlayerComponent>(player);
-    if (id == my_id_) {
-      player_c.can_smash = can_smash_;
-      break;
+    if (game_has_ended_) {
+      engine_->ChangeState(StateType::REPLAY);
     }
-  }
-
-  glob::SetStunned(im_stunned_);
-
-  if (stun_timer_.Elapsed() >= my_stun_time_) {
-    im_stunned_ = false;
-    if (registry_gameplay_.has<ModelComponent>(my_entity_)) {
-      registry_gameplay_.get<ModelComponent>(my_entity_).emission_strength =
-          1.0f;
+    if (primary_cd_ > 0) {
+      primary_cd_ -= dt;
     }
-    stun_timer_.Pause();
+
+    DrawTopScores();
+    DrawTarget();
+    DrawStunTimer();
+    DrawFishingLines();
+
+    auto view_players = registry_gameplay_.view<PlayerComponent, IDComponent>();
+    for (auto player : view_players) {
+      EntityID id = registry_gameplay_.get<IDComponent>(player).id;
+      auto& player_c = registry_gameplay_.get<PlayerComponent>(player);
+      if (id == my_id_) {
+        player_c.can_smash = can_smash_;
+        break;
+      }
+    }
+
+    glob::SetStunned(im_stunned_);
+
+    if (stun_timer_.Elapsed() >= my_stun_time_) {
+      im_stunned_ = false;
+      if (registry_gameplay_.has<ModelComponent>(my_entity_)) {
+        registry_gameplay_.get<ModelComponent>(my_entity_).emission_strength =
+            1.0f;
+      }
+      stun_timer_.Pause();
+    }
   }
 }
 
@@ -773,9 +768,9 @@ void PlayState::UpdateSwitchGoalTimer() {
       blue_light.color = glm::vec3(0.1f, 0.1f, 1.f);
       blue_light.radius = 30;
 
-      auto& red_light = registry_gameplay_.get<LightComponent>(red_goal_light_);
-      red_light.color = glm::vec3(1.f, 0.1f, 0.1f);
-      red_light.radius = 30;*/
+      auto& red_light =
+      registry_gameplay_.get<LightComponent>(red_goal_light_); red_light.color
+      = glm::vec3(1.f, 0.1f, 0.1f); red_light.radius = 30;*/
     }
   }
 }
@@ -811,7 +806,8 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action,
   new_state.is_airborne = state.is_airborne;
   for (auto entity : view_controller) {
     CameraComponent& cam_c = view_controller.get<CameraComponent>(entity);
-    // PlayerComponent& player_c = view_controller.get<PlayerComponent>(entity);
+    // PlayerComponent& player_c =
+    // view_controller.get<PlayerComponent>(entity);
     TransformComponent& trans_c =
         view_controller.get<TransformComponent>(entity);
     // PhysicsComponent& physics_c =
@@ -1431,8 +1427,8 @@ void PlayState::DrawMiniMap() {
                             17.1f;
       float minimap_pos_y = (norm_pos_y * 190.f) + 190.f - 17.1f;
 
-      // Draw the right color for player icons in the right positions from a red
-      // player's perspective
+      // Draw the right color for player icons in the right positions from a
+      // red player's perspective
       if (id_c.id == my_id_) {
         glob::Submit(gui_minimap_player_me_,
                      glm::vec2(minimap_pos_x, minimap_pos_y), 0.2f, 100.f, 1.f,
@@ -1810,7 +1806,7 @@ void AddLightToBall(entt::registry& registry, entt::entity& ball) {
 void PlayState::CreateBallEntities() {
   auto& sound_engine = engine_->GetSoundEngine();
 
-  for (auto& [id, is_real]: init_balls_) {
+  for (auto& [id, is_real] : init_balls_) {
     CreateNewBallEntity(!is_real, id);
     /*
     glm::vec3 zero_vec = glm::vec3(0.0f);
@@ -1845,7 +1841,6 @@ void PlayState::CreateBallEntities() {
 void PlayState::CreateSpotlights() {
   glob::ClearSpotlights();
 
-
   glm::vec3 pos_base;
   pos_base.x = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEX");
   pos_base.y = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEY");
@@ -1872,9 +1867,9 @@ void PlayState::CreateSpotlights() {
     trans_c.position = temp_pos;
     // trans_c.rotation = glm::toQuat(
     //  glm::lookAt(temp_pos, glm::vec3(0, -40.0, 0), glm::vec3(0, 1, 0)));
-    trans_c.rotation *= glm::quatLookAtRH(
-        glm::normalize(glm::vec3(0.f, 0.f, 0.f) - temp_pos),
-        glm::vec3(0, 1, 0));
+    trans_c.rotation *=
+        glm::quatLookAtRH(glm::normalize(glm::vec3(0.f, 0.f, 0.f) - temp_pos),
+                          glm::vec3(0, 1, 0));
     trans_c.Rotate(glm::vec3(0, glm::radians(90.f), 0));
 
     // add the spotlight to glob::Shadow object in glob

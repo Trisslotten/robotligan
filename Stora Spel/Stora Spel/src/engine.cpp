@@ -34,9 +34,6 @@ Engine::~Engine() {
   if (this->replay_machine_ != nullptr) {
     delete this->replay_machine_;
   }
-  if (this->registry_replay_ != nullptr) {
-    delete this->registry_replay_;
-  }
   if (create_server_state_.started_) {
     // helper::ps::KillProcess("Server.exe");
     // helper::ps::KillProcess("server.exe");
