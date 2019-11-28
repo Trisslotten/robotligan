@@ -358,6 +358,10 @@ void Init() {
   compute_shaders["jet"]->add("Particle compute shaders/jet.comp");
   compute_shaders["jet"]->compile();
 
+  compute_shaders["sparks"] = std::make_unique<ShaderProgram>();
+  compute_shaders["sparks"]->add("Particle compute shaders/sparks.comp");
+  compute_shaders["sparks"]->compile();
+
   CreateDefaultParticleTexture();
   textures["smoke"] = TextureFromFile("smoke.png");
   textures["confetti"] = TextureFromFile("confetti.png");

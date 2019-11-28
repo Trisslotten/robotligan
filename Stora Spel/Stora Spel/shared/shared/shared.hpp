@@ -12,8 +12,8 @@
 #include <glm/glm.hpp>
 #include<glm/gtx/quaternion.hpp>
 
-const double kClientUpdateRate = 128;
-const double kServerUpdateRate = 128;
+const double kClientUpdateRate = 64;
+const double kServerUpdateRate = 64;
 const unsigned kServerTimeout = 6;
 
 enum class ServerStateType {

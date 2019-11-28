@@ -6,7 +6,9 @@
 #include <ecs\components\follow_bone_component.hpp>
 #include "ecs/components.hpp"
 
-void ParticleSystem(entt::registry& registry, float dt) {
+namespace particle_system {
+
+void Update(entt::registry& registry, float dt) {
   auto view_movable = registry.view<ParticleComponent, TransformComponent>();
   for (auto& entity : view_movable) {
     auto& particle_c = view_movable.get<ParticleComponent>(entity);
@@ -73,13 +75,19 @@ void ParticleSystem(entt::registry& registry, float dt) {
       std::unordered_map<std::string, std::string> map;
       switch (current.type) {
         case BoneEmitterType::ROCKET:
-          if (player_c.sprinting) {
+          if (player_c.sprinting && !model_c.invisible) {
             map["spawn_rate"] = "500.f";
           } else {
             map["spawn_rate"] = "0.f";
           }
           break;
-        case BoneEmitterType::SMASH:
+        case BoneEmitterType::SLIDE_SPARKS:
+          if (player_c.sprinting && !player_c.jumping && !model_c.invisible) {
+            map["spawn_rate"] = "100.f";
+          } else {
+            map["spawn_rate"] = "0.f";
+          }
+          emitter_vel *= 0.5;
           break;
       }
 
@@ -103,4 +111,17 @@ void ParticleSystem(entt::registry& registry, float dt) {
     }
   }
 }
+
+
+
+void ReceiveGameEvent(const GameEvent& e) {
+  switch (e.type) {
+    case GameEvent::KICK: {
+      
+    } break;
+  }
+}
+
+}  // namespace particle_system
+
 #endif  // PARTICLE_SYSTEM_HPP_

@@ -8,7 +8,8 @@
 enum class BoneEmitterType
 {
 	ROCKET,
-	SMASH,
+  SLIDE_SPARKS,
+	HIT,
 } ;
 
 struct BoneEmitter {

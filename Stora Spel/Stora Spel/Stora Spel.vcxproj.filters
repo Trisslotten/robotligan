@@ -156,6 +156,7 @@
     <None Include="Assets\shaders\Particle compute shaders\firework.comp" />
     <None Include="Assets\shaders\Particle compute shaders\black_hole.comp" />
     <None Include="Assets\shaders\Particle compute shaders\jet.comp" />
+    <None Include="Assets\shaders\Particle compute shaders\sparks.comp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />
@@ -169,5 +170,22 @@
     <Text Include="src\util\errorlog.txt" />
     <Text Include="config\client_settings.txt" />
     <Text Include="config\player_settings.txt" />
+    <Text Include="Assets\Particle config\slidesparks.txt" />
+    <Text Include="Assets\Particle config\ball_destroy.txt" />
+    <Text Include="Assets\Particle config\black_hole.txt" />
+    <Text Include="Assets\Particle config\charfire.txt" />
+    <Text Include="Assets\Particle config\confetti.txt" />
+    <Text Include="Assets\Particle config\dirt.txt" />
+    <Text Include="Assets\Particle config\dust.txt" />
+    <Text Include="Assets\Particle config\firework.txt" />
+    <Text Include="Assets\Particle config\force_push.txt" />
+    <Text Include="Assets\Particle config\goal_fire.txt" />
+    <Text Include="Assets\Particle config\green_donut.txt" />
+    <Text Include="Assets\Particle config\mine_trigger.txt" />
+    <Text Include="Assets\Particle config\missile_impact.txt" />
+    <Text Include="Assets\Particle config\smoke.txt" />
+    <Text Include="Assets\Particle config\smoke_main_menu.txt" />
+    <Text Include="Assets\Particle config\superkick.txt" />
+    <Text Include="Assets\Particle config\teleport.txt" />
   </ItemGroup>
 </Project>

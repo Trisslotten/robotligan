@@ -6,6 +6,7 @@
 #include <glob/graphics.hpp>
 #include <iostream>
 
+#include <ecs\systems\skylight_system.hpp>
 #include <ecs\systems\trail_system.hpp>
 #include <glob\window.hpp>
 #include <shared\pick_up_component.hpp>
@@ -25,7 +26,6 @@
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
-#include <ecs\systems\skylight_system.hpp>
 #include "util/winadpihelpers.hpp"
 
 Engine::Engine() {}
@@ -63,6 +63,7 @@ void Engine::Init() {
       animation_system_);
   dispatcher.sink<GameEvent>().connect<&PlayState::ReceiveGameEvent>(
       play_state_);
+  dispatcher.sink<GameEvent>().connect<particle_system::ReceiveGameEvent>();
 
   SetKeybinds();
 
@@ -678,7 +679,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         case ProjectileID::BLACK_HOLE: {
           play_state_.CreateBlackHoleObject(e_id, pos, ori);
           break;
-		}
+        }
       }
       break;
     }
@@ -819,7 +820,7 @@ void Engine::UpdateSystems(float dt) {
   gui_system::Update(*registry_current_);
   input_system::Update(*registry_current_);
   fireworks::Update(*registry_current_, GetSoundEngine(), dt);
-  ParticleSystem(*registry_current_, dt);
+  particle_system::Update(*registry_current_, dt);
   animation_system_.UpdateAnimations(*registry_current_, dt);
   trailsystem::Update(*registry_current_, dt);
   skylight_system::Update(*registry_current_);
