@@ -23,7 +23,7 @@ namespace window {
 
 unsigned int window_width = 1280;
 unsigned int window_height = 720;
-bool fullscreen = true;
+bool fullscreen = false;
 
 void Create() {
   if (glfw_window) {
