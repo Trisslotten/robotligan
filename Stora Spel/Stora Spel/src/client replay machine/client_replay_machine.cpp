@@ -112,8 +112,29 @@ bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
   return load_result;
 }
 
+void ClientReplayMachine::SetEngine(Engine* in_engine_ptr) {
+  this->engine_ = in_engine_ptr;
+  this->primary_replay_->SetEngine(in_engine_ptr);
+}
+
 void ClientReplayMachine::ReceiveGameEvent(GameEvent event) {
   if (this->engine_->IsRecording()) {
     primary_replay_->ReceiveGameEvent(event);
   }
+}
+
+void ClientReplayMachine::ResetMachine() {
+  // Delete the primary replay and
+  // create a new one
+  delete this->primary_replay_;
+  this->primary_replay_ = new GeometricReplay(this->replay_length_sec_,
+                                              this->replay_frames_per_sec_);
+  this->primary_replay_->SetEngine(this->engine_);
+
+  // Clear out the stored replays
+  while (!this->stored_replays_.empty()) {
+    delete this->stored_replays_.back();
+    this->stored_replays_.erase(this->stored_replays_.end() - 1);
+  }
+  this->selected_replay_index_ = 0;
 }

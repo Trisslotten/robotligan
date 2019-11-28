@@ -352,10 +352,14 @@ void ReplayState::Cleanup() {
   // Clear registry
   this->replay_registry_.reset();
 
-  // Reset all variables
+  // Reset variables
   this->replaying_ = false;
   this->num_of_replays_ = 0;
   this->replay_counter_ = 0;
 
   this->replay_state_timer_.Pause();
+
+  // Tell replay machine to clear stored data
+  this->engine_->GetReplayMachinePtr()->ResetMachine();
+
 }

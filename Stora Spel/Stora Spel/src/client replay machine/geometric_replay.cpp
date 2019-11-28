@@ -349,8 +349,9 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     AnimationComponent& anim_c = in_registry.assign<AnimationComponent>(
         entity, glob::GetAnimationData(mh_mech));
 
+	auto& sound_engine = engine_->GetSoundEngine();
     in_registry.assign<SoundComponent>(
-        entity, engine_->GetSoundEngine().CreatePlayer());
+        entity, sound_engine.CreatePlayer());
 
     pf_ptr->WriteBack(transform_c, player_c, phys_c);
   } else if (object_type == REPLAY_BALL) {
