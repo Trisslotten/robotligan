@@ -415,6 +415,32 @@ void PlayState::Update(float dt) {
     }
   }
 
+  DrawTopScores();
+  DrawTarget();
+  DrawStunTimer();
+  DrawFishingLines();
+
+  auto view_players = registry_gameplay_.view<PlayerComponent, IDComponent>();
+  for (auto player : view_players) {
+    EntityID id = registry_gameplay_.get<IDComponent>(player).id;
+    auto& player_c = registry_gameplay_.get<PlayerComponent>(player);
+    if (id == my_id_) {
+      player_c.can_smash = can_smash_;
+      break;
+    }
+  }
+
+  glob::SetStunned(im_stunned_);
+
+  if (stun_timer_.Elapsed() >= my_stun_time_) {
+    im_stunned_ = false;
+    if (registry_gameplay_.has<ModelComponent>(my_entity_)) {
+      registry_gameplay_.get<ModelComponent>(my_entity_).emission_strength =
+          1.0f;
+    }
+    stun_timer_.Pause();
+  }
+
   if (game_has_ended_) {
     engine_->DrawScoreboard();
 
@@ -423,32 +449,6 @@ void PlayState::Update(float dt) {
     }
     if (primary_cd_ > 0) {
       primary_cd_ -= dt;
-    }
-
-    DrawTopScores();
-    DrawTarget();
-    DrawStunTimer();
-    DrawFishingLines();
-
-    auto view_players = registry_gameplay_.view<PlayerComponent, IDComponent>();
-    for (auto player : view_players) {
-      EntityID id = registry_gameplay_.get<IDComponent>(player).id;
-      auto& player_c = registry_gameplay_.get<PlayerComponent>(player);
-      if (id == my_id_) {
-        player_c.can_smash = can_smash_;
-        break;
-      }
-    }
-
-    glob::SetStunned(im_stunned_);
-
-    if (stun_timer_.Elapsed() >= my_stun_time_) {
-      im_stunned_ = false;
-      if (registry_gameplay_.has<ModelComponent>(my_entity_)) {
-        registry_gameplay_.get<ModelComponent>(my_entity_).emission_strength =
-            1.0f;
-      }
-      stun_timer_.Pause();
     }
   }
 }
