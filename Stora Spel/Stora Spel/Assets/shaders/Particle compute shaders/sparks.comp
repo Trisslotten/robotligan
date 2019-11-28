@@ -49,44 +49,67 @@ float rand(float n){return fract(sin(n) * 43758.5453123);}
 void main()
 {
 	uint gid = gl_GlobalInvocationID.x;
-	if (gid < 1000 && times[gid] > 0.f) {
-		float ratio = times[gid] / time;
+	const uint num_per_lead = 8;
+	uint lead_id = num_per_lead*(gid/num_per_lead);
+	uint local_id = gid - lead_id;
+	if(gid == lead_id)
+	{
+		if (gid < 1000 && times[gid] > 0.f) {
+			float ratio = times[gid] / time;
+			vec3 vel = velocities[gid].xyz;
+			vec3 pos = positions[gid].xyz;
+			if(pos.y < 0.1) 
+			{
+				pos.y = 0.1;
+				vel.y = abs(vel.y);
+				vel.y *= 0.8;
+				vel.xz *= 0.6;
+			}
+			vel.y -= 9.82 * dt;
+			//float factor = (vel - velocity_delta * dt) / vel;
+			velocities[gid].xyz = vel;
+			positions[gid].xyz += vel * dt;
+			colors[gid] -= color_delta * dt;
+			sizes[gid] -= size_delta * dt;
+			times[gid] -= dt;
+		} else if (gid >= min_i && gid < max_i) {
+			float random = rand(gid);
+			float random1 = rand(gid*2);
+			float random2 = rand(gid*3);
+			float normal_factor = random * (1-dir_strength) + dir_strength;
+			vec3 random_dir = normalize(vec3(random * 2 - 1, random1 * 2 - 1, random2 * 2 - 1));
+			random_dir -= random_dir * dot(dir, random_dir);
+			random_dir = normalize(random_dir);
 
-		vec3 vel = velocities[gid].xyz;
-		vec3 pos = positions[gid].xyz;
-		if(pos.y < 0.1) 
-		{
-			vel.y = abs(vel.y);
-			vel.y *= 0.8;
-			vel.xz *= 0.4;
+			random_dir = dir * normal_factor + random_dir * sqrt(1-normal_factor*normal_factor);
+			random_dir = normalize(random_dir);
+
+			vec4 new_vel = vec4(random_dir * (random * (max_speed-min_speed) + min_speed), 0);
+			vec4 old_pos = positions[gid];
+			vec3 offset_dir = new_vel.xyz;
+			vec3 offset = rand(gid+1000*dt) * length(new_vel.xyz) * offset_dir / 80.0;
+			times[gid] += time;
+			colors[gid] = color[0];
+			sizes[gid] = size;
+			positions[gid] = vec4(emit_pos + offset, 0);
+			velocities[gid] = new_vel + vec4(emitter_vel, 0);
 		}
-		vel.y -= 9.82 * dt;
-		//float factor = (vel - velocity_delta * dt) / vel;
-		velocities[gid].xyz = vel;
-		positions[gid].xyz += vel * dt;
-		colors[gid] -= color_delta * dt;
-		sizes[gid] -= size_delta * dt;
-		times[gid] -= dt;
-	} else if (gid >= min_i && gid < max_i) {
-		float random = rand(gid);
-		float random1 = rand(gid*2);
-		float random2 = rand(gid*3);
-		float normal_factor = random * (1-dir_strength) + dir_strength;
-		vec3 random_dir = normalize(vec3(random * 2 - 1, random1 * 2 - 1, random2 * 2 - 1));
-		random_dir -= random_dir * dot(dir, random_dir);
-		random_dir = normalize(random_dir);
+	}
+	memoryBarrier();
 
-		random_dir = dir * normal_factor + random_dir * sqrt(1-normal_factor*normal_factor);
-		random_dir = normalize(random_dir);
+	if(gid != lead_id) 
+	{
+		float t = float(local_id) / float(num_per_lead);
+		t = t*2.- 1.;
+		t *= .005;
 
-		vec4 new_vel = vec4(random_dir * (random * (max_speed-min_speed) + min_speed), 0);
-		vec4 old_pos = positions[gid];
-		vec3 offset_dir = new_vel.xyz;
-		vec3 offset = rand(gid+1000*dt) * length(new_vel.xyz) * offset_dir / 80.0;
-		times[gid] += time;
-		colors[gid] = color[0];
-		sizes[gid] = size;
-		positions[gid] = vec4(emit_pos + offset, 0);
-		velocities[gid] = new_vel + vec4(emitter_vel, 0);
+		vec3 lead_vel = velocities[lead_id].xyz;
+		vec3 dir = normalize(lead_vel);
+		float len = length(lead_vel) + 0.005;
+		velocities[gid] = velocities[lead_id];
+		positions[gid] = positions[lead_id] + vec4(t * (len * dir), 0);
+		colors[gid] = colors[lead_id];
+		sizes[gid] = sizes[lead_id];
+		times[gid] = times[lead_id];
 	}
 }

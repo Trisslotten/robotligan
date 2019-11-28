@@ -18,7 +18,7 @@ struct BoneEmitter {
   glm::vec3 dir;
   BoneEmitterType type = BoneEmitterType::ROCKET;
 
-  float speed = 10.f;
+  float speed = 8.f;
 };
 
 struct FollowBoneComponent {

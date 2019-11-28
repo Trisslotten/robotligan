@@ -1275,6 +1275,9 @@ void ReloadShaders() {
   wireframe_shader.reload();
   gui_shader.reload();
   e2D_shader.reload();
+  for(auto& [str, shader] : compute_shaders) {
+    shader->reload();
+  }
 }
 
 void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x,

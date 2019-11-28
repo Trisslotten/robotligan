@@ -83,7 +83,7 @@ void Update(entt::registry& registry, float dt) {
           break;
         case BoneEmitterType::SLIDE_SPARKS:
           if (player_c.sprinting && !player_c.jumping && !model_c.invisible) {
-            map["spawn_rate"] = "100.f";
+            map["spawn_rate"] = "400.f";
           } else {
             map["spawn_rate"] = "0.f";
           }

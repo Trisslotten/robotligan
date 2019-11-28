@@ -1547,7 +1547,7 @@ void PlayState::CreatePlayerEntities() {
     glob::ModelHandle player_model;
     if (entity_id == my_id_) {
       // glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
-      glm::vec3 camera_offset = glm::vec3(-1.5f, 1.4f, 0.5f);
+      glm::vec3 camera_offset = glm::vec3(-4.5f, 1.4f, 1.5f);
 
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
                                                  glm::quat(glm::vec3(0.f)));
@@ -1583,43 +1583,36 @@ void PlayState::CreatePlayerEntities() {
     f.emitters.push_back({joints["Thruster upper L"].id,
                           glm::vec3(1.90377, 4.66975, 14.3237),
                           glm::normalize(glm::vec3(20, 71, 41))});
-
     f.emitters.push_back({joints["Thruster upper R"].id,
                           glm::vec3(-1.90377, 4.66975, 14.3237),
                           glm::normalize(glm::vec3(-20, 71, 41))});
-
     f.emitters.push_back({joints["Thruster lower L"].id,
                           glm::vec3(1.90377, 4.66975, 13.6999),
                           glm::normalize(glm::vec3(20, 71, -35))});
-
     f.emitters.push_back({joints["Thruster lower R"].id,
                           glm::vec3(-1.90377, 4.66975, 13.6999),
                           glm::normalize(glm::vec3(-20, 71, -35))});
-
     f.emitters.push_back({joints["Leg upper thruster L"].id,
                           glm::vec3(1.64806, 0.743561, 7.4594),
                           glm::normalize(glm::vec3(7, 62, -57))});
-
     f.emitters.push_back({joints["Leg upper thruster R"].id,
                           glm::vec3(-1.64806, 0.743561, 7.4594),
                           glm::normalize(glm::vec3(-7, 62, -57))});
-
     f.emitters.push_back({joints["Leg lower thruster L"].id,
                           glm::vec3(1.72301, 0.825308, 2.48634),
                           glm::normalize(glm::vec3(7, 72, -43))});
-
     f.emitters.push_back({joints["Leg lower thruster R"].id,
                           glm::vec3(-1.72301, 0.825308, 2.48634),
                           glm::normalize(glm::vec3(-7, 72, -43))});
-
+                          
     f.emitters.push_back({joints["Foot R"].id,
                           glm::vec3(-1.70696, -0.959843, 0.197735),
                           glm::normalize(glm::vec3(0, 0, 1)),
-                          BoneEmitterType::SLIDE_SPARKS, 4.f});
+                          BoneEmitterType::SLIDE_SPARKS, 2.5f});
     f.emitters.push_back({joints["Foot L"].id,
                           glm::vec3(1.70696, -0.959843, 0.197735),
                           glm::normalize(glm::vec3(0, 0, 1)),
-                          BoneEmitterType::SLIDE_SPARKS, 4.f});
+                          BoneEmitterType::SLIDE_SPARKS, 2.5f});
 
     //}
 
