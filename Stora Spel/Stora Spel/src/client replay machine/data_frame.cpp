@@ -345,24 +345,24 @@ DataFrame* PickUpFrame::InterpolateForward(unsigned int in_dist_to_target,
 
 bool PickUpFrame::ThresholdCheck(DataFrame& in_future_df) {
   //// Cast to PickupFrame
-  //PickUpFrame& future_pf = dynamic_cast<PickUpFrame&>(in_future_df);
+  // PickUpFrame& future_pf = dynamic_cast<PickUpFrame&>(in_future_df);
 
-  //float threshold = 0.0f;
+  // float threshold = 0.0f;
 
   //// POSITION
-  //float pos_diff = glm::distance(position_, future_pf.position_);
-  //threshold =
+  // float pos_diff = glm::distance(position_, future_pf.position_);
+  // threshold =
   //    GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_PICKUP_POSITION");
-  //if (pos_diff > threshold) {
+  // if (pos_diff > threshold) {
   //  // If we have moved over the threshold value away
   //  return true;
   //}
 
   //// ROTATION
-  //float rot_diff = glm::dot(rotation_, future_pf.rotation_);
-  //threshold =
+  // float rot_diff = glm::dot(rotation_, future_pf.rotation_);
+  // threshold =
   //    GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_PICKUP_ROTATION");
-  //if (abs(rot_diff - 1.0f) > threshold) {
+  // if (abs(rot_diff - 1.0f) > threshold) {
   //  // If we have rotated more than the theshhold value allows
   //  return true;
   //}
@@ -847,6 +847,10 @@ void MineFrame::WriteBack(TransformComponent& trans_c) {
   trans_c.scale = glm::vec3(1.0f);
 }
 
+//##############################
+//			BlackholeFrame
+//##############################
+
 BlackholeFrame::BlackholeFrame() {
   position_ = glm::vec3(0.f);
   rotation_ = glm::quat();
@@ -871,7 +875,7 @@ DataFrame* BlackholeFrame::Clone() {
 DataFrame* BlackholeFrame::InterpolateForward(unsigned int in_dist_to_target,
                                               unsigned int in_dist_to_point_b,
                                               DataFrame& in_point_b) {
-  // Cast the BlackholeFrame to ForcePushFrame
+  // Cast the DataFrame to BlackholeFrame
   try {
     BlackholeFrame& point_b = dynamic_cast<BlackholeFrame&>(in_point_b);
     // Skips forward if std::bad_cast
@@ -904,7 +908,8 @@ DataFrame* BlackholeFrame::InterpolateForward(unsigned int in_dist_to_target,
   }
 }
 
-bool BlackholeFrame::ThresholdCheck(DataFrame& in_future_df) {  // Cast to ForcePushFrame
+bool BlackholeFrame::ThresholdCheck(
+    DataFrame& in_future_df) {
   BlackholeFrame& future_pf = dynamic_cast<BlackholeFrame&>(in_future_df);
 
   float threshold = 0.0f;
@@ -922,6 +927,87 @@ bool BlackholeFrame::ThresholdCheck(DataFrame& in_future_df) {  // Cast to Force
 }
 
 void BlackholeFrame::WriteBack(TransformComponent& trans_c) {
+  trans_c.position = position_;
+  trans_c.rotation = rotation_;
+  trans_c.scale = glm::vec3(0.3f);
+}
+
+//##############################
+//			HookFrame
+//##############################
+
+HookFrame::HookFrame() {}
+
+HookFrame::HookFrame(TransformComponent& trans_c) {
+  position_ = trans_c.position;
+  rotation_ = trans_c.rotation;
+}
+
+HookFrame::~HookFrame() {}
+
+DataFrame* HookFrame::Clone() {
+  HookFrame* ret_ptr = new HookFrame();
+
+  ret_ptr->position_ = this->position_;
+  ret_ptr->rotation_ = this->rotation_;
+
+  return ret_ptr;
+}
+
+DataFrame* HookFrame::InterpolateForward(unsigned int in_dist_to_target,
+                                         unsigned int in_dist_to_point_b,
+                                         DataFrame& in_point_b) {
+  // Cast the DataFrame to HookFrame
+  try {
+    HookFrame& point_b = dynamic_cast<HookFrame&>(in_point_b);
+    // Skips forward if std::bad_cast
+
+    // INTERPOLATED FRAME
+    HookFrame* ret_frame = new HookFrame();
+
+    // RATIO
+    if (in_dist_to_point_b < 1) {
+      // Prevent division on zero
+      in_dist_to_point_b = 1;
+    }
+    float percentage_a = in_dist_to_target / in_dist_to_point_b;
+
+    // INTERPOLATION
+
+    // POSITION
+    ret_frame->position_ =
+        position_ + (point_b.position_ - position_) * percentage_a;
+
+    // ROTATION
+    ret_frame->rotation_ =
+        glm::slerp(rotation_, point_b.rotation_, percentage_a);
+
+    return ret_frame;
+
+  } catch (std::bad_cast exp) {
+    GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__, "Bad cast");
+    return nullptr;
+  }
+}
+
+bool HookFrame::ThresholdCheck(DataFrame& in_future_df) {
+  HookFrame& future_hf = dynamic_cast<HookFrame&>(in_future_df);
+
+  float threshold = 0.0f;
+
+  // POSITION
+  float pos_diff = glm::distance(position_, future_hf.position_);
+  threshold =
+      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_HOOK_POSITION");
+  if (pos_diff > threshold) {
+    // If we have moved over the threshold value away
+    return true;
+  }
+
+  return false;
+}
+
+void HookFrame::WriteBack(TransformComponent& trans_c) {
   trans_c.position = position_;
   trans_c.rotation = rotation_;
   trans_c.scale = glm::vec3(0.3f);

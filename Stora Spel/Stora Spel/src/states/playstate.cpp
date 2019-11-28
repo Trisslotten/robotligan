@@ -1387,6 +1387,7 @@ void PlayState::DrawJumbotronText() {
     jumbo_effect_timer_.Restart();
   }
 }
+
 void PlayState::DrawMiniMap() {
   // draw Minimap
   glob::Submit(gui_minimap_,
@@ -2205,7 +2206,7 @@ void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
 void PlayState::CreateFishermanAndHook(EntityID id, glm::vec3 pos,
                                        glm::quat ori, EntityID owner_id) {
   auto& sound_engine = engine_->GetSoundEngine();
-  glob::ModelHandle hook_model = glob::GetModel("assets/claw/claw.fbx");
+  glob::ModelHandle hook_model = glob::GetModel(kModelPathHook);
   auto hook_object = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(hook_object);

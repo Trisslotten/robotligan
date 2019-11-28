@@ -105,8 +105,7 @@ void ReplayState::AddConstantStuff() {
   this->replay_registry_.assign<CameraComponent>(camera, glm::vec3(0.f),
                                                  glm::quat(glm::vec3(0.f)));
 
-  glm::vec3 cam_pos =
-      /*glm::vec3(0.f, 13.f, 42.f);*/  glm::vec3(60.f, 4.f, 38.f);
+  glm::vec3 cam_pos = glm::vec3(0.f, 13.f, 42.f);//  glm::vec3(60.f, 4.f, 38.f);
   this->replay_registry_.assign<TransformComponent>(
       camera, cam_pos, glm::quat(), glm::vec3(0.f));
 }

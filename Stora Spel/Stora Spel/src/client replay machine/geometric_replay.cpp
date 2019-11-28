@@ -47,6 +47,8 @@ ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
       return ReplayObjectType::REPLAY_FORCE_PUSH;
     } else if (proj_c.projectile_id == ProjectileID::BLACK_HOLE) {
       return ReplayObjectType::REPLAY_BLACKHOLE;
+    } else if (proj_c.projectile_id == ProjectileID::FISHING_HOOK) {
+      return ReplayObjectType::REPLAY_HOOK;
     }
   } else if (in_registry.has<MineComponent>(in_entity)) {
     return ReplayObjectType::REPLAY_MINE;
@@ -135,6 +137,10 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
     ret_ptr = new BlackholeFrame(trans_c);
+  } else if (object_type == REPLAY_HOOK) {
+    TransformComponent& trans_c =
+        in_registry.get<TransformComponent>(in_entity);
+    ret_ptr = new HookFrame(trans_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unidentified entity");
@@ -331,6 +337,14 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
         in_registry.get<TransformComponent>(in_entity);
     // Transfer
     bh_c_ptr->WriteBack(trans_c);
+  } else if (in_type == REPLAY_HOOK) {
+    // Cast
+    HookFrame* hf_c_ptr = dynamic_cast<HookFrame*>(in_df_ptr);
+    // Get
+    TransformComponent& trans_c =
+        in_registry.get<TransformComponent>(in_entity);
+    // Transfer
+    hf_c_ptr->WriteBack(trans_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -524,6 +538,21 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     // - Add the relevant ModelHandle:s to entity
     model_c.handles.push_back(blackhole_model);
+  } else if (object_type == REPLAY_HOOK) {
+    // -Cast DataFrame to correct type
+    HookFrame* h_c_ptr = dynamic_cast<HookFrame*>(df_ptr);
+    in_registry.assign<IDComponent>(entity,
+                                    channels_.at(in_channel_index).object_id);
+    // - Assign the relevant components to entity
+    TransformComponent& trans_c =
+        in_registry.assign<TransformComponent>(entity);
+    h_c_ptr->WriteBack(trans_c);
+    // - Assign a model component to thew entity
+    glob::ModelHandle hook_model = glob::GetModel(kModelPathHook);
+    ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    // - Add the relevant ModelHandle:s to entity
+    model_c.handles.push_back(hook_model);
+
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
