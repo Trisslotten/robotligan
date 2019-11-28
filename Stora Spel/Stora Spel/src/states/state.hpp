@@ -379,21 +379,28 @@ class PlayState : public State {
 
 class ReplayState : public State {
  private:
+  // Registry
   entt::registry replay_registry_;
-  glob::GUIHandle in_game_menu_gui_ = 0;
 
+  // Replay variables
   bool replaying_ = false;
-  bool show_in_game_menu_buttons_ = false;
-
   unsigned int num_of_replays_ = 0;
   unsigned int replay_counter_ = 0;
 
-  Timer end_game_timer_;
+  // End game time handling
+  unsigned int replay_state_duration_ = 0;
+  Timer replay_state_timer_;
 
+  // Menu stuff
+  glob::GUIHandle in_game_menu_gui_ = 0;
+  bool show_in_game_menu_buttons_ = false;
+
+  // More variables
   glob::Font2DHandle font_test_ = 0;
   glm::vec3 arena_scale_ = glm::vec3(0.f);
   bool goals_swapped_ = false;
 
+  // Functions
   void AddConstantStuff();
   void UpdateCamera();
   void UpdatePickUpMovement(/*float dt*/);
@@ -405,6 +412,8 @@ class ReplayState : public State {
   void UpdateInGameMenu(bool show_menu);
   void CreateInGameMenu();
 
+  void ShowScoreboard();
+
  public:
   void Startup() override;
   void Init() override;
@@ -413,8 +422,7 @@ class ReplayState : public State {
   void Cleanup() override;
 
   StateType Type() { return StateType::REPLAY; }
-  void EndGame() { end_game_timer_.Restart(); }
-  void SetArenaScale(glm::vec3 in_scale) { arena_scale_ = in_scale; }
+  void SetArenaScale(glm::vec3 in_scale) { this->arena_scale_ = in_scale; }
 };
 
 #endif  // STATE_HPP_

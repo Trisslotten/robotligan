@@ -179,6 +179,14 @@ void ReplayState::StartReplayMode() {
   this->replay_counter_ = 0;
   engine_->GetReplayMachinePtr()->SelectReplay(this->replay_counter_);
 
+  // Set timer to [length] * [number] + 5 seconds
+  this->replay_state_duration_ =
+      (this->engine_->GetReplayMachinePtr()->ReplayLength() *
+       this->num_of_replays_) +
+      5;
+  this->replay_state_timer_.Restart();
+
+  // Add in stuff that is in all replays
   this->AddConstantStuff();
 }
 
@@ -210,22 +218,23 @@ void ReplayState::PlayReplay() {
 void ReplayState::ToggleInGameMenu() {
   show_in_game_menu_buttons_ = !show_in_game_menu_buttons_;
   glob::window::SetMouseLocked(!show_in_game_menu_buttons_);
-  engine_->SetSendInput(!show_in_game_menu_buttons_);
-  engine_->SetTakeInput(!show_in_game_menu_buttons_);
-  UpdateInGameMenu(show_in_game_menu_buttons_);
+  this->engine_->SetSendInput(!show_in_game_menu_buttons_);
+  this->engine_->SetTakeInput(!show_in_game_menu_buttons_);
+  this->UpdateInGameMenu(show_in_game_menu_buttons_);
 }
 
 void ReplayState::UpdateInGameMenu(bool show_menu) {
   // Set in_game buttons visibility
-  auto view = replay_registry_.view<ButtonComponent, TransformComponent>();
+  auto view =
+      this->replay_registry_.view<ButtonComponent, TransformComponent>();
   for (auto v : view) {
-    auto& button_c = replay_registry_.get<ButtonComponent>(v);
+    auto& button_c = this->replay_registry_.get<ButtonComponent>(v);
     button_c.visible = show_menu;
   }
 }
 
 void ReplayState::CreateInGameMenu() {
-  font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+  this->font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
 
   glm::vec2 in_game_menu_pos = glob::window::GetWindowDimensions();
   in_game_menu_pos /= 2;
@@ -234,23 +243,60 @@ void ReplayState::CreateInGameMenu() {
 
   // CONTINUE BUTTON -- change registry to registry_gameplay_
   ButtonComponent* in_game_buttons_ = GenerateButtonEntity(
-      replay_registry_, "CONTINUE", in_game_menu_pos + glm::vec2(0, 0),
-      font_test_, false);
+      this->replay_registry_, "CONTINUE", in_game_menu_pos + glm::vec2(0, 0),
+      this->font_test_, false);
   in_game_buttons_->button_func = [&]() { ToggleInGameMenu(); };
   // SETTINGS BUTTON -- change registry to registry_settings_
-  in_game_buttons_ = GenerateButtonEntity(replay_registry_, "LOBBY",
+  in_game_buttons_ = GenerateButtonEntity(this->replay_registry_, "LOBBY",
                                           in_game_menu_pos + glm::vec2(0, -100),
-                                          font_test_, false);
+                                          this->font_test_, false);
 
   in_game_buttons_->button_func = [&] {
-    engine_->ChangeState(StateType::LOBBY);
-    ToggleInGameMenu();
+    this->engine_->ChangeState(StateType::LOBBY);
+    this->ToggleInGameMenu();
   };
 
   in_game_buttons_ = GenerateButtonEntity(replay_registry_, "EXIT",
                                           in_game_menu_pos + glm::vec2(0, -200),
                                           font_test_, false);
   in_game_buttons_->button_func = [&] { exit(0); };
+}
+
+void ReplayState::ShowScoreboard() {
+  this->engine_->DrawScoreboard();
+
+  glm::vec2 pos = glob::window::GetWindowDimensions();
+  pos /= 2;
+  pos.y -= 160;
+
+  std::string end_countdown_text = std::to_string((
+      int)(this->replay_state_duration_ - this->replay_state_timer_.Elapsed()));
+
+  std::string return_to_lobby_test =
+      "Returning to lobby in: " + end_countdown_text;
+
+  double width = glob::GetWidthOfText(font_test_, return_to_lobby_test, 48);
+  pos.x = (glob::window::GetWindowDimensions().x / 2) - (width / 2);
+
+  glob::Submit(font_test_, pos + glm::vec2(0, -40), 48, return_to_lobby_test);
+
+  std::string best_team = "BLUE";
+  glm::vec4 best_team_color = glm::vec4(0.13f, 0.13f, 1.f, 1.f);
+
+  if (this->engine_->GetTeamScores()[0] > this->engine_->GetTeamScores()[1]) {
+    best_team = "RED";
+    best_team_color = glm::vec4(1.f, 0.13f, 0.13f, 1.f);
+  }
+
+  std::string winnin_team_text = best_team + " wins!";
+  width = glob::GetWidthOfText(this->font_test_, winnin_team_text, 48);
+
+  pos.x -= width / 2;
+
+  glob::Submit(this->font_test_, pos + glm::vec2(1, -1), 48, winnin_team_text,
+               glm::vec4(0, 0, 0, 0.7f));
+
+  glob::Submit(font_test_, pos, 48, winnin_team_text, best_team_color);
 }
 
 // Public----------------------------------------------------------------------
@@ -267,69 +313,33 @@ void ReplayState::Init() {
 
   this->StartReplayMode();
 
-  CreateInGameMenu();
+  this->CreateInGameMenu();
 }
 
 void ReplayState::Update(float dt) {
   // One function for the scoreboard
   // Highlight loop logic : NTS: Moved to network update
   // PlayReplay();
-  //-------Draw scoreboard during highlight time--------------
-  engine_->DrawScoreboard();
 
-  glm::vec2 pos = glob::window::GetWindowDimensions();
-  pos /= 2;
-  pos.y -= 160;
+  // Draw scoreboard during highlight time
+  this->ShowScoreboard();
 
-  int game_end_timeout =
-      (engine_->GetReplayMachinePtr()->ReplayLength() * num_of_replays_) + 20;
-
-  std::string end_countdown_text =
-      std::to_string((int)(game_end_timeout - end_game_timer_.Elapsed()));
-
-  std::string return_to_lobby_test =
-      "Returning to lobby in: " + end_countdown_text;
-
-  double width = glob::GetWidthOfText(font_test_, return_to_lobby_test, 48);
-  pos.x = (glob::window::GetWindowDimensions().x / 2) - (width / 2);
-
-  glob::Submit(font_test_, pos + glm::vec2(0, -40), 48, return_to_lobby_test);
-
-  std::string best_team = "BLUE";
-  glm::vec4 best_team_color = glm::vec4(0.13f, 0.13f, 1.f, 1.f);
-
-  if (engine_->GetTeamScores()[0] > engine_->GetTeamScores()[1]) {
-    best_team = "RED";
-    best_team_color = glm::vec4(1.f, 0.13f, 0.13f, 1.f);
-  }
-
-  std::string winnin_team_text = best_team + " wins!";
-  width = glob::GetWidthOfText(font_test_, winnin_team_text, 48);
-
-  pos.x -= width / 2;
-
-  glob::Submit(font_test_, pos + glm::vec2(1, -1), 48, winnin_team_text,
-               glm::vec4(0, 0, 0, 0.7f));
-
-  glob::Submit(font_test_, pos, 48, winnin_team_text, best_team_color);
-
-  //-------Draw scoreboard during highlight time--------------
-  if (end_game_timer_.Elapsed() > game_end_timeout) {
-    engine_->ChangeState(StateType::LOBBY);
-  }
-
-  // Up
-
-  // Escape button
+  // Escape button: Show menu
   if (Input::IsKeyPressed(GLFW_KEY_ESCAPE)) {
     ToggleInGameMenu();
   }
+
   if (show_in_game_menu_buttons_) {
     glm::vec2 in_game_menu_pos = glob::window::GetWindowDimensions();
     in_game_menu_pos /= 2;
     in_game_menu_pos.x -= 165;
     in_game_menu_pos.y -= 180;
     glob::Submit(in_game_menu_gui_, in_game_menu_pos, 1.0f);
+  }
+
+  // Go to lobby once replay is done
+  if (this->replay_state_timer_.Elapsed() > this->replay_state_duration_) {
+    engine_->ChangeState(StateType::LOBBY);
   }
 }
 
@@ -339,7 +349,7 @@ void ReplayState::UpdateNetwork() {
 }
 
 void ReplayState::Cleanup() {
-  // Clear registry   
+  // Clear registry
   this->replay_registry_.reset();
 
   // Reset all variables
@@ -347,5 +357,5 @@ void ReplayState::Cleanup() {
   this->num_of_replays_ = 0;
   this->replay_counter_ = 0;
 
-  this->end_game_timer_.Pause();
+  this->replay_state_timer_.Pause();
 }
