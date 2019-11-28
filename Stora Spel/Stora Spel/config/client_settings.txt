@@ -43,7 +43,7 @@ Example: '#MY_STRING=BOGDANBOIS2007'
 
 //--STRINGS--//
 #USERNAME=vusko
-#DEFAULT_IP=192.168.1.42
+#DEFAULT_IP=localhost
 >INPUT_MOUSE_SENS=1.000000
 
 //--Replay Settings--//
