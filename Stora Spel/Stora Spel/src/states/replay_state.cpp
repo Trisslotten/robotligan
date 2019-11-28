@@ -106,7 +106,7 @@ void ReplayState::AddConstantStuff() {
                                                  glm::quat(glm::vec3(0.f)));
 
   glm::vec3 cam_pos =
-      glm::vec3(0.f, 13.f, 42.f);  // glm::vec3(60.f, 4.f, 38.f);
+      /*glm::vec3(0.f, 13.f, 42.f);*/  glm::vec3(60.f, 4.f, 38.f);
   this->replay_registry_.assign<TransformComponent>(
       camera, cam_pos, glm::quat(), glm::vec3(0.f));
 }
@@ -148,13 +148,13 @@ void ReplayState::UpdateCamera() {
 }
 
 void ReplayState::UpdatePickUpMovement(/*float dt*/) {
-  float dt = 1 / 128;
+  float dt = 1;
   auto view_pickups =
       replay_registry_.view<PickUpComponent, TransformComponent>();
   for (auto pickup : view_pickups) {
     float speed = 0.6f;
-    auto& trans_c = replay_registry_.get<TransformComponent>(pickup);
-    auto& pick_c = replay_registry_.get<PickUpComponent>(pickup);
+    auto& trans_c = view_pickups.get<TransformComponent>(pickup);
+    auto& pick_c = view_pickups.get<PickUpComponent>(pickup);
     // y = -8.6
     float dir = pick_c.moving_up ? 1.0 : -1.0f;
     trans_c.position.y += dt * speed * dir;
@@ -211,7 +211,7 @@ void ReplayState::PlayReplay() {
     }
   }
 
-  // this->UpdatePickUpMovement(); //<< TEMP DISABLED
+  this->UpdatePickUpMovement(); //<< TEMP DISABLED
   this->UpdateCamera();
 }
 

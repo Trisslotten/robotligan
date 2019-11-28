@@ -383,6 +383,7 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     PickUpFrame* pu_ptr = dynamic_cast<PickUpFrame*>(df_ptr);
     in_registry.assign<IDComponent>(entity,
                                     channels_.at(in_channel_index).object_id);
+
     TransformComponent& trans_c =
         in_registry.assign<TransformComponent>(entity);
     pu_ptr->WriteBack(trans_c);
