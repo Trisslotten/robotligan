@@ -1105,6 +1105,7 @@ void PlayState::Collision() {
   // collision with arena
   physics::IntersectData data =
       Intersect(arena_hitbox, my_obb, -my_phys_c.velocity);
+  if (data.collision == false) data = Intersect(arena_hitbox2.arena, my_obb);
   if (data.collision) {
     my_obb.center += data.move_vector;
     if (data.normal.y > 0.25) {
