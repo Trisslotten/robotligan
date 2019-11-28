@@ -88,6 +88,17 @@ void Update(entt::registry& registry, float dt) {
             ability_component.cooldown_remaining;
         dispatcher.trigger(primary_used_event);
       }
+    } else if (ability_component.use_primary && ability_component
+                   .primary_ability ==
+               AbilityID::FISHINGING_POLE) {
+      auto view_hooks = registry.view<HookComponent>();
+      for (auto hook : view_hooks)
+      {
+        auto& hook_c = registry.get<HookComponent>(hook);
+        if (hook_c.attached && hook_c.owner == id_component.id) {
+			hook_c.should_remove = true;
+		}
+	  }
     }
     // When finished set primary ability to not activated
     ability_component.use_primary = false;
@@ -358,8 +369,8 @@ entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
                                         glm::vec3(0.f), false, 0.0f);
       registry.assign<TransformComponent>(
           cannonball, glm::vec3(tc.position + tc.rotation * cc.offset),
-          cc.orientation, glm::vec3(.3f, .3f, .3f));
-      registry.assign<physics::Sphere>(cannonball, glm::vec3(0.f), .3f);
+          cc.orientation, glm::vec3(.6f, .6f, .6f));
+      registry.assign<physics::Sphere>(cannonball, glm::vec3(0.f), .6f);
       registry.assign<ProjectileComponent>(cannonball,
                                            ProjectileID::CANNON_BALL, id);
       registry.assign<TeamComponent>(cannonball, team_c.team);
@@ -557,7 +568,8 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
 
       auto wall = registry.create();
       registry.assign<WallComponent>(wall);
-      registry.assign<TimerComponent>(wall, GlobalSettings::Access()->ValueOf("ABILITY_WALL_DURATION"));
+      registry.assign<TimerComponent>(
+          wall, GlobalSettings::Access()->ValueOf("ABILITY_WALL_DURATION"));
       registry.assign<HealthComponent>(wall, 100);
       registry.assign<TransformComponent>(wall, position, orientation);
       registry.assign<TeamComponent>(wall, team_c.team);
@@ -786,7 +798,7 @@ void DoFishing(entt::registry& registry, long creator) {
       e.event = Event::CREATE_HOOK;
       e.entity = hook;
       e.owner_id = idc.id;
-      dispatcher.enqueue<EventInfo>(e);
+      dispatcher.trigger<EventInfo>(e);
 
       GameEvent ge;
       ge.type = GameEvent::FISHING_HOOK_SHOOT;

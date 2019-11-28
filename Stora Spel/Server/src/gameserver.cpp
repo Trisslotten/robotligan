@@ -359,14 +359,15 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       packet.Remove(name.data(), len);
       if (client_names_[client_id] != name) {
         while (NameAlreadyExists(name)) {
-          if (name.find("(") != std::string::npos) {
+          name.append("xD");
+          /*if (name.find("(") != std::string::npos) {
             auto index = name.find("(");
             unsigned s = (name.at(index + 1) - '0');
             s++;
             name.at(index + 1) = (char)s;
           } else {
             name.append("(1)");
-          }
+          }*/
         }
         client_names_[client_id] = name;
         lobby_state_.SetTeamsUpdated(true);

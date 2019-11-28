@@ -555,7 +555,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::UPDATE_POINTS: {
-      PlayerID id;
+      long id;
       EntityID eid;
       int goals, points, assists, saves, ping;
       unsigned int team;

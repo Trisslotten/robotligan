@@ -92,7 +92,7 @@ class Engine {
     play_state_.Init();
   }
 
-  std::unordered_map<PlayerID, PlayerStatInfo> GetPlayerScores() {
+  std::unordered_map<long, PlayerStatInfo> GetPlayerScores() {
     return player_scores_;
   }
 
@@ -167,7 +167,7 @@ class Engine {
   AbilityID second_ability_ = AbilityID::NULL_ABILITY;
   unsigned int new_team_ = std::numeric_limits<unsigned int>::max();
 
-  std::unordered_map<PlayerID, PlayerStatInfo> player_scores_;
+  std::unordered_map<long, PlayerStatInfo> player_scores_;
 
   StateType previous_state_;
 

@@ -10,7 +10,7 @@
 #define POINTS_SAVE 4
 
 #include <glm/glm.hpp>
-#include<glm/gtx/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 const double kClientUpdateRate = 64;
 const double kServerUpdateRate = 64;
@@ -159,14 +159,14 @@ struct GameEvent {
     PRIMARY_USED,
     SECONDARY_USED,
     PICKUP_SPAWNED,
-	BLACK_HOLE_CREATED,
-	BLACK_HOLE_ACTIVATED,
-	BLACK_HOLE_DESTROYED,
-	PLAYER_STUNNED,
-	FISHING_HOOK_SHOOT,
-	FISHING_HOOK_ATTACHED,
-	REMOVE_FISHING_HOOK,
-	PICKED_UP_PICKUP,
+    BLACK_HOLE_CREATED,
+    BLACK_HOLE_ACTIVATED,
+    BLACK_HOLE_DESTROYED,
+    PLAYER_STUNNED,
+    FISHING_HOOK_SHOOT,
+    FISHING_HOOK_ATTACHED,
+    REMOVE_FISHING_HOOK,
+    PICKED_UP_PICKUP,
     NUM_EVENTS
   } type;
   union {
@@ -352,29 +352,31 @@ struct GameEvent {
     struct {
       EntityID pickup_id;
     } pickup_spawned;
-	//create black hole
-	struct {
+    // create black hole
+    struct {
       EntityID black_hole_id;
-	} create_black_hole;
-	//activate black hole
-	struct {
+    } create_black_hole;
+    // activate black hole
+    struct {
       EntityID black_hole_id;
-	} activate_black_hole;
-	//black hole destroyed
-	struct {
+    } activate_black_hole;
+    // black hole destroyed
+    struct {
       EntityID black_hole_id;
-	} destroy_black_hole;
+    } destroy_black_hole;
     struct {
       EntityID player_id;
       float stun_time;
     } player_stunned;
-	struct {
+    struct {
       EntityID hook_id;
-	} hook_attached;
-	//hook removed
-	struct {
+      EntityID owner_id;
+    } hook_attached;
+    // hook removed
+    struct {
       EntityID hook_id;
-	} hook_removed;
+      EntityID owner_id;
+    } hook_removed;
   };
 };
 

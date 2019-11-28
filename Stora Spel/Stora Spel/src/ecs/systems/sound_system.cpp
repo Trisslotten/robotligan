@@ -110,7 +110,7 @@ void SoundSystem::Init(Engine* engine) {
       sound_engine_.GetSound("assets/sound/mine_trigger.mp3");
   sound_crowd_shocked_ = sound_engine_.GetSound("assets/sound/crowd_shock.mp3");
 
-  sound_pickup_spawned_ = sound_engine_.GetSound("assets/sound/pickup.wav");
+  sound_pickup_spawned_ = sound_engine_.GetSound("assets/sound/picked_up_pickup.wav");
   sound_player_stunned_ = sound_engine_.GetSound("assets/sound/stunned.mp3");
   sound_fireworks_ = sound_engine_.GetSound("assets/sound/fireworks.mp3");
   sound_fishing_hook_attached_ =
@@ -463,7 +463,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
-      if (id_c.id == event.super_kick.player_id) {
+      if (id_c.id == event.pickup_spawned.pickup_id) {
         sound_c.sound_player->Play(sound_pickup_spawned_, 0, 1.0f);
         break;
       }

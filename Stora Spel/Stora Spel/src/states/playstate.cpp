@@ -66,6 +66,8 @@ void PlayState::Startup() {
       glob::GetGUIItem("assets/GUI_elements/player_blue_icon.png");
   gui_minimap_ball_ = glob::GetGUIItem("assets/GUI_elements/BALL_V3.png");
   gui_crosshair_ = glob::GetGUIItem("assets/GUI_elements/Crosshair_V2.png");
+  gui_detach_ =
+      glob::GetGUIItem("assets/GUI_elements/ability_icons/detach_hook.png");
 
   int num_abilities = (int)AbilityID::NUM_OF_ABILITY_IDS;
   ability_handles_.resize(num_abilities);
@@ -253,7 +255,7 @@ void PlayState::Update(float dt) {
   if (!transforms_.empty()) {
     auto view_entities =
         registry_gameplay_.view<TransformComponent, IDComponent>();
-    //glm::vec3 pos = new_transforms_[ball_id_].first;
+    // glm::vec3 pos = new_transforms_[ball_id_].first;
     new_transforms_.clear();
     for (auto entity : view_entities) {
       auto& trans_c = view_entities.get<TransformComponent>(entity);
@@ -1218,7 +1220,7 @@ void PlayState::UpdateGravity() {
 }
 
 unsigned long PlayState::GetBestPlayer() {
-  std::unordered_map<EntityID, PlayerStatInfo> p_scores =
+  std::unordered_map<long, PlayerStatInfo> p_scores =
       engine_->GetPlayerScores();
 
   unsigned long best_id = 0;
@@ -1283,17 +1285,21 @@ void PlayState::DrawQuickslots() {
   if (primary_cd_ > 0.0f) {
     opacity = 0.33f;
   }
-  glob::Submit(ability_handles_[my_primary_ability_id], glm::vec2(9, 50), 0.75f,
-               100, opacity);
+  if (my_primary_ability_id == (int)AbilityID::FISHINGING_POLE && me_hooked_) { // fishing hook special case (stage 2)
+    glob::Submit(gui_detach_, glm::vec2(9, 50), 0.75f, 100, 1.f);
+  } else { // otherwise draw ability and CD normally
+    glob::Submit(ability_handles_[my_primary_ability_id], glm::vec2(9, 50),
+                 0.75f, 100, opacity);
+    if (primary_cd_ > 0.0f) {
+      std::string cd_string = std::to_string((int)primary_cd_);
+      float jump_left = (cd_string.length() - 1) * 16;
+      glob::Submit(font_test_, glm::vec2(45 - jump_left, 89), 72, cd_string,
+                   glm::vec4(0, 0, 0, 0.7f));
+      glob::Submit(font_test_, glm::vec2(46 - jump_left, 90), 72, cd_string);
+    }
+  }
   glob::Submit(ability_handles_[(int)engine_->GetSecondaryAbility()],
                glm::vec2(66, 50), 0.75f, 100);
-  if (primary_cd_ > 0.0f) {
-    std::string cd_string = std::to_string((int)primary_cd_);
-    float jump_left = (cd_string.length() - 1) * 16;
-    glob::Submit(font_test_, glm::vec2(45 - jump_left, 89), 72, cd_string,
-                 glm::vec4(0, 0, 0, 0.7f));
-    glob::Submit(font_test_, glm::vec2(46 - jump_left, 90), 72, cd_string);
-  }
 }
 
 void PlayState::DrawJumbotronText() {
@@ -1717,6 +1723,7 @@ void PlayState::CreateArenaEntity() {
   auto& model_c2 = registry_gameplay_.assign<ModelComponent>(arena);
   model_c2.handles.push_back(model_map);
   model_c2.handles.push_back(model_map_floor);
+  model_c2.emission_strength = 0.4f;
   registry_gameplay_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                 arena_scale);
   map_visual_entity_ = arena;
@@ -1834,7 +1841,7 @@ void AddLightToBall(entt::registry& registry, entt::entity& ball) {
 void PlayState::CreateBallEntities() {
   auto& sound_engine = engine_->GetSoundEngine();
 
-  for (auto& [id, is_real]: init_balls_) {
+  for (auto& [id, is_real] : init_balls_) {
     CreateNewBallEntity(!is_real, id);
     /*
     glm::vec3 zero_vec = glm::vec3(0.0f);
@@ -1869,7 +1876,6 @@ void PlayState::CreateBallEntities() {
 void PlayState::CreateSpotlights() {
   glob::ClearSpotlights();
 
-
   glm::vec3 pos_base;
   pos_base.x = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEX");
   pos_base.y = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEY");
@@ -1896,9 +1902,9 @@ void PlayState::CreateSpotlights() {
     trans_c.position = temp_pos;
     // trans_c.rotation = glm::toQuat(
     //  glm::lookAt(temp_pos, glm::vec3(0, -40.0, 0), glm::vec3(0, 1, 0)));
-    trans_c.rotation *= glm::quatLookAtRH(
-        glm::normalize(glm::vec3(0.f, 0.f, 0.f) - temp_pos),
-        glm::vec3(0, 1, 0));
+    trans_c.rotation *=
+        glm::quatLookAtRH(glm::normalize(glm::vec3(0.f, 0.f, 0.f) - temp_pos),
+                          glm::vec3(0, 1, 0));
     trans_c.Rotate(glm::vec3(0, glm::radians(90.f), 0));
 
     // add the spotlight to glob::Shadow object in glob
@@ -2902,7 +2908,15 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           registry_gameplay_.destroy(hook);
         }
       }
+      if (e.hook_removed.owner_id == my_id_) {
+        me_hooked_ = false;
+      }
       break;
+    }
+    case GameEvent::FISHING_HOOK_ATTACHED: {
+      if (e.hook_attached.owner_id == my_id_) {
+        me_hooked_ = true;
+      }
     }
   }
 }

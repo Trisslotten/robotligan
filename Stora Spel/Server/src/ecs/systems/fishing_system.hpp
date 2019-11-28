@@ -120,10 +120,11 @@ void Update(entt::registry& registry, float dt) {
 
       // check if timer has run out or if otherwise should be removed
       if (hook_hook_c.hook_timer.Elapsed() >= hook_hook_c.hook_time ||
-          should_remove) {
+          should_remove || hook_hook_c.should_remove) {
         SetPlayerHooked(registry, hook_hook_c.owner, false);
         GameEvent ge;
         ge.hook_removed.hook_id = hook_id_c.id;
+        ge.hook_removed.owner_id = hook_hook_c.owner;
         ge.type = GameEvent::REMOVE_FISHING_HOOK;
         dispatcher.trigger(ge);
         registry.destroy(hook);

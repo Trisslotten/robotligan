@@ -58,10 +58,10 @@ void NetAPI::Socket::Server::ListenForClients() {
     auto addr = buffer;
     auto port = ntohs(client_addr.sin_port);
     // auto ID = getHashedID(addr, port);
-    // std::string address = addr + (":" + std::to_string(port));
+     std::string address = addr + (":" + std::to_string(port));
     // std::string address = addr; För att kunna reconnecta till pågående match,
     // låter vara så folk kan debugga ordentligt.
-    std::string address = "";
+    //std::string address = "";
     std::cout << "DEBUG: tcp connection accepted: "
               << addr + (":" + std::to_string(port)) << "\n";
 
@@ -75,7 +75,7 @@ void NetAPI::Socket::Server::ListenForClients() {
         std::string str;
         str.resize(size);
         packet.Remove(str.data(), size);
-        address = str;  // Kommentera ut detta om du vill debugga två instanser
+        //address = str;  // Kommentera ut detta om du vill debugga två instanser
         break;
       }
     }

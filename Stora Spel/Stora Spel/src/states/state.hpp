@@ -398,7 +398,7 @@ class PlayState : public State {
       gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_, gui_minimap_,
       gui_minimap_goal_red_, gui_minimap_goal_blue_, gui_minimap_player_me_,
       gui_minimap_player_red_, gui_minimap_player_blue_, gui_minimap_ball_,
-      gui_crosshair_;
+      gui_crosshair_, gui_detach_;
 
   std::vector<glob::GUIHandle> ability_handles_;
 
@@ -445,6 +445,7 @@ class PlayState : public State {
   float my_stun_time_;
 
   bool switching_goals_ = false;
+  bool me_hooked_ = false;
 
   std::vector<Fishermans> fishers_;
 };
