@@ -81,10 +81,10 @@ H GetAsset(std::unordered_map<std::string, H>& handles,
 SoundEngine::SoundEngine() { this->impl_ = new Impl(); }
 
 SoundEngine::~SoundEngine() {
-  delete impl_;
   for (auto sp : impl_->sound_players) {
     delete sp;
   }
+  delete impl_;
 }
 
 void SoundEngine::Init() {

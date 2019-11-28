@@ -35,11 +35,10 @@ class ClientReplayMachine {
   bool LoadFrame(entt::registry& in_registry);
   bool IsEmpty() { return stored_replays_.empty(); }
 
-  void SetEngine(Engine* eng) {
-    engine_ = eng;
-    primary_replay_->SetEngine(eng);
-  }
+  void SetEngine(Engine* in_engine_ptr);
   void ReceiveGameEvent(GameEvent event);
+
+  void ResetMachine();
 };
 
 #endif  // !CLIENT_REPLAY_MACHINE_HPP_
