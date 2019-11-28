@@ -6,11 +6,13 @@
 #include <glob/graphics.hpp>
 #include <iostream>
 
+#include <ecs\systems\skylight_system.hpp>
 #include <ecs\systems\trail_system.hpp>
 #include <glob\window.hpp>
 #include <shared\pick_up_component.hpp>
 #include "ecs/components.hpp"
 #include "ecs/systems/animation_system.hpp"
+#include "ecs/systems/fireworks_system.hpp"
 #include "ecs/systems/gui_system.hpp"
 #include "ecs/systems/input_system.hpp"
 #include "ecs/systems/lifetime_system.hpp"
@@ -24,12 +26,20 @@
 #include "shared/transform_component.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
+#include "util/winadpihelpers.hpp"
 
 Engine::Engine() {}
 
 Engine::~Engine() {
   if (this->replay_machine_ != nullptr) {
     delete this->replay_machine_;
+  }
+  if (this->registry_replay_ != nullptr) {
+    delete this->registry_replay_;
+  }
+  if (create_server_state_.started_) {
+    // helper::ps::KillProcess("Server.exe");
+    // helper::ps::KillProcess("server.exe");
   }
 }
 
@@ -84,13 +94,14 @@ void Engine::Init() {
   play_state_.SetEngine(this);
   settings_state_.SetEngine(this);
   replay_state_.SetEngine(this);
+  create_server_state_.SetEngine(this);
 
 
   main_menu_state_.Startup();
   settings_state_.Startup();
   connect_menu_state_.Startup();
   lobby_state_.Startup();
-
+  create_server_state_.Startup();
   play_state_.Startup();
 
   replay_state_.Startup();
@@ -174,6 +185,9 @@ void Engine::Update(float dt) {
       case StateType::MAIN_MENU:
         current_state_ = &main_menu_state_;
         // std::cout << "CHANGE STATE: MAIN_MENU\n";
+        break;
+      case StateType::CREATE_SERVER:
+        current_state_ = &create_server_state_;
         break;
       case StateType::CONNECT_MENU:
         current_state_ = &connect_menu_state_;
@@ -373,22 +387,35 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       int num_players = -1;
       std::vector<EntityID> player_ids;
       EntityID my_id;
-      EntityID ball_id;
+      int num_balls = 0;
+      
       int ability_id;
       int num_team_ids;
       glm::vec3 arena_scale;
+      bool switched;
+      packet >> switched;
       packet >> arena_scale;
       packet >> ability_id;
       packet >> num_players;
       player_ids.resize(num_players);
       packet.Remove(player_ids.data(), player_ids.size());
       packet >> my_id;
-      packet >> ball_id;
+
+      packet >> num_balls;
+      for (int i = 0; i < num_balls; i++) {
+        EntityID ball_id;
+        bool is_real;
+        packet >> ball_id;
+        packet >> is_real;
+        play_state_.SetInitBallData(ball_id, is_real);
+      }
+
       packet >> team;
-      play_state_.SetEntityIDs(player_ids, my_id, ball_id);
+      play_state_.SetEntityIDs(player_ids, my_id);
       play_state_.SetMyPrimaryAbility(ability_id);
       play_state_.SetTeam(team);
       play_state_.SetArenaScale(arena_scale);
+      sound_system_.SetArenaScale(arena_scale);
       replay_state_.SetArenaScale(arena_scale);
       packet >> num_team_ids;
       for (int i = 0; i < num_team_ids; i++) {
@@ -407,7 +434,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         psbi.saves = 0;
         player_scores_[client_id] = psbi;
       }
-
+      play_state_.SetGoalsSwappedAtStart(switched);
       ChangeState(StateType::PLAY);
 
       std::cout << "PACKET: GAME_START\n";
@@ -502,10 +529,9 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     */
-    case PacketBlockType::SWITCH_GOALS: {
-      // std::cout << "PACKET: SWITCH_GOALS\n";
-      packet >> switch_goal_timer_;
+    case PacketBlockType::SWITCH_GOALS_TIMER: {
       packet >> switch_goal_time_;
+      packet >> switch_goal_timer_;
       break;
     }
     case PacketBlockType::SECONDARY_USED: {
@@ -536,14 +562,16 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::CREATE_WALL: {
+      unsigned int team;
       glm::quat rot;
       glm::vec3 pos;
       EntityID id;
 
+      packet >> team;
       packet >> id;
       packet >> pos;
       packet >> rot;
-      play_state_.CreateWall(id, pos, rot);
+      play_state_.CreateWall(id, pos, rot, team);
       break;
     }
     case PacketBlockType::CREATE_PICK_UP: {
@@ -591,6 +619,9 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
     case PacketBlockType::RECEIVE_PICK_UP: {
       packet >> second_ability_;
+      GameEvent ge;
+      ge.type = GameEvent::PICKED_UP_PICKUP;
+      dispatcher.trigger(ge);
       break;
     }
     case PacketBlockType::GAME_EVENT: {
@@ -617,10 +648,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::CREATE_PROJECTILE: {
-      ProjectileID p_id;
       EntityID e_id;
+      ProjectileID p_id;
       glm::vec3 pos;
       glm::quat ori;
+      unsigned int c_team;
+      packet >> c_team;
       packet >> ori;
       packet >> pos;
       packet >> p_id;
@@ -628,7 +661,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
 
       switch (p_id) {
         case ProjectileID::CANNON_BALL: {
-          play_state_.CreateCannonBall(e_id, pos, ori);
+          play_state_.CreateCannonBall(e_id, pos, ori, c_team);
           break;
         }
         case ProjectileID::TELEPORT_PROJECTILE: {
@@ -641,14 +674,22 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         }
         case ProjectileID::MISSILE_OBJECT: {
           play_state_.CreateMissileObject(e_id, pos, ori);
-          // TODO: Dont trigger this event on the client like this. Fix so that
-          // event is sent/received AFTER the create_projectile packet on server
-          // instead Note: Sometimes this plays on player entity rather than the
-          // missile entity [???]
+
+          // Save game event
           GameEvent missile_event;
           missile_event.type = GameEvent::MISSILE_FIRE;
           missile_event.missile_fire.projectile_id = e_id;
           dispatcher.trigger(missile_event);
+          break;
+        }
+        case ProjectileID::FISHING_HOOK: {
+          EntityID owner;
+          packet >> owner;
+          play_state_.CreateFishermanAndHook(e_id, pos, ori, owner);
+          break;
+        }
+        case ProjectileID::BLACK_HOLE: {
+          play_state_.CreateBlackHoleObject(e_id, pos, ori);
           break;
         }
       }
@@ -705,6 +746,23 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       play_state_.CreateNewBallEntity(true, id);
       break;
     }
+    case PacketBlockType::CREATE_MINE: {
+      unsigned int owner_team;
+      EntityID mine_id;
+      glm::vec3 pos;
+      packet >> owner_team;
+      packet >> mine_id;
+      packet >> pos;
+      play_state_.CreateMineObject(owner_team, mine_id, pos);
+
+      // Save game event
+      GameEvent mine_place_event;
+      mine_place_event.type = GameEvent::MINE_PLACE;
+      mine_place_event.mine_place.entity_id = mine_id;
+      dispatcher.trigger(mine_place_event);
+
+      break;
+    }
     case PacketBlockType::TO_CLIENT_NAME: {
       long client_id;
       size_t name_size = 0;
@@ -715,6 +773,11 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet.Remove(name.data(), name.size());
       player_names_[client_id] = name;
       break;
+    }
+    case PacketBlockType::YOU_CAN_SMASH: {
+      bool smash = false;
+      packet >> smash;
+      play_state_.SetCanSmash(smash);
     }
   }
 }
@@ -767,9 +830,11 @@ void Engine::UpdateSystems(float dt) {
 
   gui_system::Update(*registry_current_);
   input_system::Update(*registry_current_);
+  fireworks::Update(*registry_current_, GetSoundEngine(), dt);
   ParticleSystem(*registry_current_, dt);
   animation_system_.UpdateAnimations(*registry_current_, dt);
   trailsystem::Update(*registry_current_, dt);
+  skylight_system::Update(*registry_current_);
   lifetime::Update(*registry_current_, dt);
   RenderSystem(*registry_current_);
 }

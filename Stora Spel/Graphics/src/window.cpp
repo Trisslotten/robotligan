@@ -5,9 +5,8 @@
 // no move plz
 
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-
 #include <cassert>
+#include <glm/glm.hpp>
 #include <iostream>
 
 namespace {
@@ -22,9 +21,9 @@ namespace glob {
 
 namespace window {
 
-unsigned int window_width = 1600;
-unsigned int window_height = 800;
-bool fullscreen = false;
+unsigned int window_width = 1280;
+unsigned int window_height = 720;
+bool fullscreen = true;
 
 void Create() {
   if (glfw_window) {
@@ -55,7 +54,7 @@ void Create() {
 
   const char* title_str = "Robotligan";
 
-  if(!fullscreen) {
+  if (!fullscreen) {
     primary = nullptr;
   }
 
@@ -113,8 +112,8 @@ void Update() {
 }
 
 void Cleanup() {
-  //glfwDestroyWindow(glfw_window);
-  //glfwTerminate();
+  // glfwDestroyWindow(glfw_window);
+  // glfwTerminate();
 }
 
 bool IsInitialized() { return initd; }

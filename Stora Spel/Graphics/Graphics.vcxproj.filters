@@ -108,6 +108,15 @@
     <ClInclude Include="src\postprocess\ssao.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\postprocess\shockwaves.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Model\rope.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\postprocess\blackholes.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -168,6 +177,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\postprocess\ssao.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\postprocess\shockwaves.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Model\rope.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\postprocess\blackholes.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

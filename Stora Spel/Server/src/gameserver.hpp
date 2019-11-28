@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 #include <shared/shared.hpp>
 #include <vector>
+#include <unordered_map>
 #include "serverstate.hpp"
 
 #include "replay machine/replay_machine.hpp"
@@ -20,7 +21,8 @@
 class GameServer {
  public:
   ~GameServer();
-  void Init(double in_update_rate);
+  void Init(double in_update_rate,
+            std::unordered_map<std::string, std::string>& args);
   void Update(float dt);
   void HandlePacketsToSend();
   void HandleStateChange();
@@ -44,6 +46,8 @@ class GameServer {
   std::unordered_map<long, std::string> GetClientNames() {
     return client_names_;
   }
+
+  void HandleSwitchGoal();
 
  private:
   void UpdateSystems(float dt);
@@ -74,6 +78,7 @@ class GameServer {
 
   bool NameAlreadyExists(std::string name);
   std::unordered_map<AbilityID, float> ability_cooldowns_;
+  std::string server_name_ = "Server";
 };
 
 #endif  // GAME_SERVER_HPP_

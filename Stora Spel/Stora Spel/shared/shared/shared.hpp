@@ -12,8 +12,8 @@
 #include <glm/glm.hpp>
 #include<glm/gtx/quaternion.hpp>
 
-const double kClientUpdateRate = 128;
-const double kServerUpdateRate = 128;
+const double kClientUpdateRate = 64;
+const double kServerUpdateRate = 64;
 const unsigned kServerTimeout = 6;
 
 enum class ServerStateType {
@@ -55,7 +55,7 @@ enum : int16_t {
   TEST_STRING,
   TEAM_SCORE,
   CHOOSE_TEAM,
-  SWITCH_GOALS,
+  SWITCH_GOALS_TIMER,
   SECONDARY_USED,
   MESSAGE,
   UPDATE_POINTS,
@@ -82,12 +82,14 @@ enum : int16_t {
   SERVER_CAN_JOIN,
   CREATE_BALL,
   CREATE_FAKE_BALL,
+  CREATE_MINE,
   SERVER_STATE,
   MY_NAME,
   HWID,
   PLAYER_LOOK_DIR,
   PLAYER_MOVE_DIR,
   TO_CLIENT_NAME,
+  YOU_CAN_SMASH,
   NUM_BLOCK_TYPES,
 };
 
@@ -106,6 +108,9 @@ enum class AbilityID {
   SWITCH_GOALS,
   TELEPORT,
   BLACKOUT,
+  BLACKHOLE,
+  MINE,
+  FISHINGING_POLE,
   // Fill with more abilities and passive boosts
   NUM_OF_ABILITY_IDS
 };
@@ -134,7 +139,7 @@ struct GameEvent {
     HOMING_BALL_END,
     FORCE_PUSH,
     FORCE_PUSH_IMPACT,
-    SWITCH_GOALS,
+    SWITCH_GOALS_BEGIN,
     SWITCH_GOALS_DONE,
     BUILD_WALL,
     FAKE_BALL_CREATED,
@@ -144,6 +149,8 @@ struct GameEvent {
     BLACKOUT_CAST,
     BLACKOUT_TRIGGER,
     BLACKOUT_END,
+    MINE_PLACE,
+    MINE_TRIGGER,
     SPRINT_START,
     SPRINT_END,
     RUN_START,
@@ -152,6 +159,14 @@ struct GameEvent {
     PRIMARY_USED,
     SECONDARY_USED,
     PICKUP_SPAWNED,
+	BLACK_HOLE_CREATED,
+	BLACK_HOLE_ACTIVATED,
+	BLACK_HOLE_DESTROYED,
+	PLAYER_STUNNED,
+	FISHING_HOOK_SHOOT,
+	FISHING_HOOK_ATTACHED,
+	REMOVE_FISHING_HOOK,
+	PICKED_UP_PICKUP,
     NUM_EVENTS
   } type;
   union {
@@ -178,6 +193,7 @@ struct GameEvent {
     // Ball bounce
     struct {
       EntityID ball_id;
+      float velocity;
     } bounce;
 
     // Player Land
@@ -218,6 +234,7 @@ struct GameEvent {
     // Ability Super Kick
     struct {
       EntityID player_id;
+      EntityID ball_id;
     } super_kick;
 
     // Ability Homing Ball
@@ -281,6 +298,17 @@ struct GameEvent {
     struct {
     } blackout_end;
 
+    // Ability Mine Place
+    struct {
+      EntityID entity_id;
+    } mine_place;
+
+    // Ability Mine Trigger
+    struct {
+      EntityID entity_id;
+      EntityID player_id;
+    } mine_trigger;
+
     // Player Sprint start
     struct {
       EntityID player_id;
@@ -324,6 +352,29 @@ struct GameEvent {
     struct {
       EntityID pickup_id;
     } pickup_spawned;
+	//create black hole
+	struct {
+      EntityID black_hole_id;
+	} create_black_hole;
+	//activate black hole
+	struct {
+      EntityID black_hole_id;
+	} activate_black_hole;
+	//black hole destroyed
+	struct {
+      EntityID black_hole_id;
+	} destroy_black_hole;
+    struct {
+      EntityID player_id;
+      float stun_time;
+    } player_stunned;
+	struct {
+      EntityID hook_id;
+	} hook_attached;
+	//hook removed
+	struct {
+      EntityID hook_id;
+	} hook_removed;
   };
 };
 
@@ -332,6 +383,8 @@ enum class ProjectileID {
   TELEPORT_PROJECTILE,
   FORCE_PUSH_OBJECT,
   MISSILE_OBJECT,
+  BLACK_HOLE,
+  FISHING_HOOK,
   NUM_PROJECTILE_IDS
 };
 
@@ -340,5 +393,7 @@ struct Projectile {
   ProjectileID projectile_id;
   glm::vec3 pos;
   glm::quat ori;
+  unsigned int creator_team;
+  EntityID owner_id;
 };
 #endif  // SHARED_HPP_

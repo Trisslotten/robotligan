@@ -22,15 +22,21 @@ void SoundSystem::Update(entt::registry& registry) {
 
   // Set 3D space attributes for sounds coming from each object/player on the
   // field
-  auto sound_view =
-      registry.view<TransformComponent, SoundComponent, PhysicsComponent>();
+  auto sound_view = registry.view<TransformComponent, SoundComponent>();
   for (auto sound_entity : sound_view) {
     TransformComponent& trans_c =
         sound_view.get<TransformComponent>(sound_entity);
     SoundComponent& sound_c = sound_view.get<SoundComponent>(sound_entity);
-    PhysicsComponent& phys_c = sound_view.get<PhysicsComponent>(sound_entity);
+    glm::vec3 vel = glm::vec3(0.f);
 
-    sound_c.sound_player->Set3DAttributes(trans_c.position, phys_c.velocity);
+    if (registry.has<PhysicsComponent>(sound_entity)) {
+      PhysicsComponent& phys_c = registry.get<PhysicsComponent>(sound_entity);
+      vel = phys_c.velocity;
+    }
+
+    if (registry.valid(sound_entity)) {
+      sound_c.sound_player->Set3DAttributes(trans_c.position, vel);
+	}
   }
   // Play footstep sounds from each player on the field
   auto player_view =
@@ -46,6 +52,20 @@ void SoundSystem::Update(entt::registry& registry) {
       player_c.step_timer.Restart();
       sound_c.sound_player->Play(sound_step_, 0, 0.2f);
     }
+  }
+  // Alter audience volume based on ball distance from goal
+  if (!glob::IsBlackoutActive()) {
+    auto ball_view =
+        registry.view<BallComponent, TransformComponent, TargetComponent>();
+    for (auto ball : ball_view) {
+      // BallComponent& ball_c = ball_view.get<BallComponent>(ball);
+      TransformComponent& trans_c = ball_view.get<TransformComponent>(ball);
+
+      crowd_ambience_.SetVolume(
+          0.06f + (std::abs(trans_c.position.x) / (37.5f * arena_scale_.x)) * 0.06);
+    }
+  } else {
+    crowd_ambience_.SetVolume(0.2f);
   }
 }
 
@@ -63,6 +83,7 @@ void SoundSystem::Init(Engine* engine) {
   sound_woosh_ = sound_engine_.GetSound("assets/sound/kick_swing.mp3");
   sound_hit_ = sound_engine_.GetSound("assets/sound/ball_hit_sound.mp3");
   sound_nudge_ = sound_engine_.GetSound("assets/sound/ball_nudge.mp3");
+  sound_rmb_shot_ = sound_engine_.GetSound("assets/sound/rmb_fire.mp3");
   sound_goal_ = sound_engine_.GetSound("assets/sound/goal.mp3");
   sound_ball_bounce_ = sound_engine_.GetSound("assets/sound/bounce.mp3");
   sound_player_land_ = sound_engine_.GetSound("assets/sound/robot_land.mp3");
@@ -77,8 +98,24 @@ void SoundSystem::Init(Engine* engine) {
     sound_engine_.GetSound("assets/sound/poof.mp3");
   sound_ability_invisibility_end_ = sound_engine_.GetSound("assets/sound/invis_end.mp3");
   sound_ability_blackout_end_ = sound_engine_.GetSound("assets/sound/blackout_end.mp3");
+  sound_black_hole_active =
+      sound_engine_.GetSound("assets/sound/active_black_hole.mp3");
+  sound_black_hole_destroy =
+      sound_engine_.GetSound("assets/sound/destroy_black_hole.mp3");
+  sound_ability_invisibility_end_ =
+      sound_engine_.GetSound("assets/sound/invis_end.mp3");
+  sound_ability_blackout_end_ =
+      sound_engine_.GetSound("assets/sound/blackout_end.mp3");
+  sound_ability_mine_trigger_ =
+      sound_engine_.GetSound("assets/sound/mine_trigger.mp3");
+  sound_crowd_shocked_ = sound_engine_.GetSound("assets/sound/crowd_shock.mp3");
 
   sound_pickup_spawned_ = sound_engine_.GetSound("assets/sound/pickup.wav");
+  sound_player_stunned_ = sound_engine_.GetSound("assets/sound/stunned.mp3");
+  sound_fireworks_ = sound_engine_.GetSound("assets/sound/fireworks.mp3");
+  sound_fishing_hook_attached_ =
+      sound_engine_.GetSound("assets/sound/grappling.mp3");
+  sound_picked_up_pickup_ = sound_engine_.GetSound("assets/sound/picked_up_pickup.wav");
 
   ability_sounds_[AbilityID::GRAVITY_CHANGE] =
       sound_engine_.GetSound("assets/sound/gravitydrop.wav");
@@ -97,9 +134,16 @@ void SoundSystem::Init(Engine* engine) {
   ability_sounds_[AbilityID::FAKE_BALL] =
       sound_engine_.GetSound("assets/sound/fake_ball.wav");
   ability_sounds_[AbilityID::INVISIBILITY] =
-    sound_engine_.GetSound("assets/sound/invis_pop.mp3");
+      sound_engine_.GetSound("assets/sound/invis_pop.mp3");
   ability_sounds_[AbilityID::BLACKOUT] =
       sound_engine_.GetSound("assets/sound/blackout_start.mp3");
+  ability_sounds_[AbilityID::BLACKHOLE] =
+      sound_engine_.GetSound("assets/sound/shoot_black_hole.mp3");
+  ability_sounds_[AbilityID::MINE] =
+      sound_engine_.GetSound("assets/sound/place_mine.mp3");
+  ability_sounds_[AbilityID::FISHINGING_POLE] =
+      sound_engine_.GetSound("assets/sound/grappling_shoot.wav");
+  
 }
 
 void SoundSystem::PlayAmbientSound(entt::registry& registry) {
@@ -109,9 +153,13 @@ void SoundSystem::PlayAmbientSound(entt::registry& registry) {
     auto& cam_c = local_view.get<CameraComponent>(local_entity);
     auto& sound_c = local_view.get<SoundComponent>(local_entity);
 
-    sound_c.sound_player->Play(sound_crowd_, -1, 0.1f);
+    crowd_ambience_ = sound_c.sound_player->Play(sound_crowd_, -1, 0.06f);
     break;
   }
+}
+
+void SoundSystem::SetArenaScale(glm::vec3 scale) {
+  arena_scale_ = scale;
 }
 
 void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
@@ -161,6 +209,17 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       }
     }
   }
+  if (event.type == GameEvent::SHOOT) {
+    auto view = registry->view<IDComponent, PlayerComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.shoot.player_id) {
+        sound_c.sound_player->Play(sound_rmb_shot_, 0, 0.1f);
+        break;
+      }
+    }
+  }
   if (event.type == GameEvent::BOUNCE) {
     auto view = registry->view<IDComponent, BallComponent, SoundComponent>();
     for (auto entity : view) {
@@ -168,7 +227,9 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.nudge.ball_id) {
-        sound_c.sound_player->Play(sound_ball_bounce_);
+        float factor = 1.f;
+        if (event.bounce.velocity) factor = event.bounce.velocity;
+        sound_c.sound_player->Play(sound_ball_bounce_, 0, 1.f * factor);
         break;
       }
     }
@@ -300,12 +361,12 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.force_push_impact.projectile_id) {
-        sound_c.sound_player->Play(sound_ability_force_push_impact_, 0, 1.5f);
+        sound_c.sound_player->Play(sound_ability_force_push_impact_, 0, 2.5f);
         break;
       }
     }
   }
-  if (event.type == GameEvent::SWITCH_GOALS) {
+  if (event.type == GameEvent::SWITCH_GOALS_BEGIN) {
     auto view = registry->view<CameraComponent, SoundComponent>();
     for (auto entity : view) {
       auto& sound_c = view.get<SoundComponent>(entity);
@@ -318,8 +379,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
     auto view = registry->view<CameraComponent, SoundComponent>();
     for (auto entity : view) {
       auto& sound_c = view.get<SoundComponent>(entity);
-      sound_c.sound_player->Play(ability_sounds_[AbilityID::SWITCH_GOALS], 0,
-                                 0.3f);
+      //sound_c.sound_player->Play(ability_sounds_[AbilityID::SWITCH_GOALS], 0,
+        //                         0.3f);
       break;
     }
   }
@@ -330,7 +391,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.build_wall.wall_id) {
         sound_c.sound_player->Play(ability_sounds_[AbilityID::BUILD_WALL], 0,
-                                   10.0f);
+                                   1.0f);
         break;
       }
     }
@@ -363,7 +424,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.invisibility_cast.player_id) {
-        sound_c.sound_player->Play(ability_sounds_[AbilityID::INVISIBILITY]);
+        sound_c.sound_player->Play(ability_sounds_[AbilityID::INVISIBILITY], 0,
+                                   0.5f);
         break;
       }
     }
@@ -374,7 +436,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.invisibility_end.player_id) {
-        sound_c.sound_player->Play(sound_ability_invisibility_end_);
+        sound_c.sound_player->Play(sound_ability_invisibility_end_, 0, 0.5f);
         break;
       }
     }
@@ -383,7 +445,8 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
     auto view = registry->view<CameraComponent, SoundComponent>();
     for (auto entity : view) {
       auto& sound_c = view.get<SoundComponent>(entity);
-      sound_c.sound_player->Play(ability_sounds_[AbilityID::BLACKOUT]);
+      sound_c.sound_player->Play(ability_sounds_[AbilityID::BLACKOUT], 0, 0.7);
+      sound_c.sound_player->Play(sound_crowd_shocked_, 0, 0.5);
       break;
     }
   }
@@ -401,10 +464,114 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.super_kick.player_id) {
-        sound_c.sound_player->Play(sound_pickup_spawned_, 0,
-                                   1.0f);
+        sound_c.sound_player->Play(sound_pickup_spawned_, 0, 1.0f);
         break;
       }
+    }
+  }
+  if (event.type == GameEvent::MINE_PLACE) {
+    auto view = registry->view<IDComponent, MineComponent, SoundComponent>();
+    for (auto entity : view) {
+      IDComponent& id_c = view.get<IDComponent>(entity);
+      MineComponent& mine_c = view.get<MineComponent>(entity);
+      SoundComponent& sound_c = view.get<SoundComponent>(entity);
+
+      if (id_c.id == event.mine_place.entity_id) {
+        sound_c.sound_player->Play(ability_sounds_[AbilityID::MINE]);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::MINE_TRIGGER) {
+    auto view = registry->view<IDComponent, MineComponent, SoundComponent>();
+    for (auto entity : view) {
+      IDComponent& id_c = view.get<IDComponent>(entity);
+      MineComponent& mine_c = view.get<MineComponent>(entity);
+      SoundComponent& sound_c = view.get<SoundComponent>(entity);
+
+      if (id_c.id == event.mine_trigger.entity_id) {
+        sound_c.sound_player->Play(sound_ability_mine_trigger_, 0, 2.0f);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::BLACK_HOLE_CREATED) {
+    auto view = registry->view<IDComponent, SoundComponent>();
+        std::cout << "playing black hole sound\n";
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.create_black_hole.black_hole_id) {
+        sound_c.sound_player->Play(ability_sounds_[AbilityID::BLACKHOLE], 0,
+                                   5.0f);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::BLACK_HOLE_ACTIVATED) {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.create_black_hole.black_hole_id) {
+        sound_c.sound_player->Stop(ability_sounds_[AbilityID::BLACKHOLE]);
+        sound_c.sound_player->Play(sound_black_hole_active, 0,
+                                   5.0f);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::BLACK_HOLE_DESTROYED) {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.create_black_hole.black_hole_id) {
+        sound_c.sound_player->Stop(sound_black_hole_active);
+        sound_c.sound_player->Play(sound_black_hole_destroy, 0, 5.0f);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::PLAYER_STUNNED) {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.player_stunned.player_id) {
+        sound_c.sound_player->Play(sound_player_stunned_);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::FISHING_HOOK_ATTACHED) {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.hook_attached.hook_id) {
+        sound_c.sound_player->Play(sound_fishing_hook_attached_);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::FISHING_HOOK_SHOOT) {
+    auto view = registry->view<IDComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& sound_c = view.get<SoundComponent>(entity);
+      if (id_c.id == event.hook_attached.hook_id) {
+        sound_c.sound_player->Play(ability_sounds_[AbilityID::FISHINGING_POLE]);
+        break;
+      }
+    }
+  }
+  if (event.type == GameEvent::PICKED_UP_PICKUP) {
+    auto view = registry->view<CameraComponent, SoundComponent>();
+    for (auto entity : view) {
+      auto& sound_c = view.get<SoundComponent>(entity);
+      sound_c.sound_player->Play(sound_picked_up_pickup_);
+      break;
     }
   }
 }

@@ -23,6 +23,7 @@
     <ClCompile Include="src\client replay machine\data_frame.cpp" />
     <ClCompile Include="src\util\debugoverlay.cpp" />
     <ClCompile Include="src\states\replay_state.cpp" />
+    <ClCompile Include="src\states\createserverstate.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
@@ -105,6 +106,13 @@
     <ClInclude Include="src\ecs\systems\lifetime_system.hpp" />
     <ClInclude Include="src\ecs\components\target_component.hpp" />
     <ClInclude Include="src\util\debugoverlay.hpp" />
+    <ClInclude Include="src\ecs\components\skylight_component.hpp" />
+    <ClInclude Include="src\ecs\systems\skylight_system.hpp" />
+    <ClInclude Include="shared\shared\mine_component.hpp" />
+    <ClInclude Include="src\util\winadpihelpers.hpp" />
+    <ClInclude Include="src\ecs\components\fireworks_component.hpp" />
+    <ClInclude Include="src\ecs\systems\fireworks_system.hpp" />
+    <ClInclude Include="src\ecs\components\black_hole_component.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />
@@ -143,6 +151,11 @@
     <None Include="Assets\shaders\sky.vert" />
     <None Include="Assets\shaders\sky.frag" />
     <None Include="Assets\shaders\ssao.comp" />
+    <None Include="Assets\MapV3\Map_EnergyWall.mcfg" />
+    <None Include="Assets\shaders\rope.vert" />
+    <None Include="Assets\shaders\rope.frag" />
+    <None Include="Assets\shaders\Particle compute shaders\firework.comp" />
+    <None Include="Assets\shaders\Particle compute shaders\black_hole.comp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />

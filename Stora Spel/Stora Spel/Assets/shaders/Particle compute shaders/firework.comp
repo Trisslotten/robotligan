@@ -1,0 +1,104 @@
+#version 440
+
+layout(local_size_x = 1024, local_size_y = 1, local_size_z = 1) in;
+
+layout(std430, binding=7) buffer Pos
+{
+	vec4 positions[];
+};
+
+layout(std430, binding=8) buffer Vel
+{
+	vec4 velocities[];
+};
+
+layout(std430, binding=9) buffer Col
+{
+	vec4 colors[];
+};
+
+layout(std430, binding=10) buffer Size
+{
+	float sizes[];
+};
+
+layout(std430, binding=11) buffer Time
+{
+	float times[];
+};
+
+uniform vec4 color_delta;
+uniform float velocity_delta;
+uniform float size_delta;
+uniform float dt;
+
+uniform vec4 color[10];
+uniform vec3 emit_pos;
+uniform vec3 dir;
+uniform int max_i;
+uniform int min_i;
+uniform float dir_strength;
+uniform float max_speed;
+uniform float min_speed;
+uniform float size;
+uniform float time;
+
+float rand(float n){return fract(sin(n) * 43758.5453123);}
+
+void main()
+{
+	uint gid = gl_GlobalInvocationID.x;
+	if (gid < 1000 && times[gid] > 0.f) {
+		// white trail / rocket
+		if (times[gid] > 4.0) {
+			positions[gid] += velocities[gid] * dt;
+		} else {
+			if (times[gid] < 2.0)
+				velocities[gid].y -= 20.82 * 0.5 * dt;
+			
+			positions[gid] += velocities[gid] * dt;
+			if (times[gid] < 2)
+				colors[gid].a -= dt * 0.5;
+		}
+
+		times[gid] -= dt;
+		if (gid < 10 && times[gid] < 4)
+			times[gid] = 0.0;
+		if (times[gid] < 0.0)
+			times[gid] = 0.0;
+	} else if (gid >= min_i && gid < max_i * 50 && gid < 1000) {
+		if (gid < 10) {
+			uint rest = gid % 10;
+			times[gid] = time;
+			colors[gid] = vec4(1.0, 1.0, 1.0, 1.0);
+			velocities[gid] = vec4(dir, 0);
+			positions[gid] = vec4(emit_pos, 0) + velocities[gid] * rest / 10.0 * 0.05;
+			sizes[gid] = size;
+		} else {
+			sizes[gid] = size;
+			uint rest = gid % 50;
+			uint same_gid = gid - rest;
+			float random = rand(same_gid);
+			float random1 = rand(same_gid*2);
+			float random2 = rand(same_gid*3);
+			float normal_factor = random * (1-dir_strength) + dir_strength;
+			vec3 random_dir = normalize(vec3(random * 2 - 1, random1 * 2 - 1, random2 * 2 - 1));
+			//random_dir -= random_dir * dot(dir, random_dir);
+			random_dir = normalize(random_dir);
+
+			//random_dir = dir * normal_factor + random_dir * sqrt(1-normal_factor*normal_factor);
+			//random_dir += vec3(rand(gid), rand(gid*2), rand(gid*3)) * 0.02;
+			//random_dir = normalize(random_dir);
+
+			velocities[gid] = vec4(random_dir * max_speed, 0);
+			colors[gid] = color[0];
+
+			times[gid] = -1.0;
+		}
+	} else if (gid < 1000 && times[gid] < 0.f && times[0] < 4.f) {
+		uint rest = gid % 50;
+		float ratio = rest / 50.0 * 0.5;
+		times[gid] = 2.0 + 0.5 - ratio;
+		positions[gid] = positions[0] + velocities[gid] * ratio * 1.0;
+	}
+}

@@ -17,13 +17,13 @@ namespace glob {
 
 class Model {
  private:
-  Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
+  Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene, glm::mat4 transform);
 
   GLint TextureFromFile(const char* path, std::string directory,
                         aiTextureType type);
 
   void LoadModel(std::string path);
-  void ProcessNode(aiNode* node, const aiScene* scene);
+  void ProcessNode(aiNode* node, const aiScene* scene, glm::mat4 parent_transform = glm::identity<glm::mat4>());
   std::string PrintArmature(Joint parent, int depth);
   Joint* MakeArmature(aiNode* node);
 
@@ -43,12 +43,13 @@ class Model {
   bool use_gl_ = true;
   bool is_emissive_ = false;
   bool is_transparent_ = false;
+  bool is_glass_ = false;
 
   int num_diffuse_textures_ = 1;
 
   Material material_;
   float normal_map_scale_ = 1.f;
-  float metallic_map_scale_= 1.f;
+  float metallic_map_scale_ = 1.f;
   float roughness_map_scale_ = 1.f;
 
  public:
@@ -74,6 +75,7 @@ class Model {
   bool IsEmissive() { return is_emissive_; }
   void SetTransparent(bool is_transparent) { is_transparent_ = is_transparent; }
   bool IsTransparent() { return is_transparent_; }
+  bool IsGlass() { return is_glass_; }
 };
 
 }  // namespace glob

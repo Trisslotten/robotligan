@@ -14,12 +14,14 @@
 #include "ecs/components.hpp"
 #include "eventdispatcher.hpp"
 #include "shared/shared.hpp"
+#include <glob/window.hpp>
 
 class Engine;
 
 enum class StateType {
   MAIN_MENU,
   CONNECT_MENU,
+  CREATE_SERVER,
   LOBBY,
   PLAY,
   REPLAY,
@@ -110,7 +112,8 @@ class LobbyState : public State {
   void CreateGUIElements();
   void DrawTeamSelect();
   void DrawAbilitySelect();
-  glob::GUIHandle team_select_back_;
+  glob::GUIHandle red_team_select_back_;
+  glob::GUIHandle blue_team_select_back_;
   glob::GUIHandle ability_select_back_;
   glob::GUIHandle ability_back_normal_;
   glob::GUIHandle ability_back_hover_;
@@ -176,6 +179,7 @@ class ConnectMenuState : public State {
   glob::GUIHandle bg_ = 0;
   glm::vec4 color_ = glm::vec4(1, 1, 1, 1);
   std::string ip_ = "localhost";
+  ;
   std::string port_ = "1337";
   glob::Font2DHandle font_test_ = 0;
   entt::registry registry_connect_menu_;
@@ -211,6 +215,19 @@ class SettingsState : public State {
 /////////////////////// PLAY ///////////////////////
 
 class PlayState : public State {
+  enum JumbotronEffect {
+    TEAM_SCORES,
+    MATCH_TIME,
+    BEST_PLAYER,
+    GOAL_SCORED,
+    NUM_EFFECTS
+  };
+
+  struct Fishermans {
+    EntityID hook_id;
+    EntityID owner_id;
+  };
+
  public:
   void Startup() override;
   void Init() override;
@@ -224,21 +241,27 @@ class PlayState : public State {
                           glm::quat orientation);
   void SetEntityPhysics(EntityID player_id, glm::vec3 vel, bool is_airborne);
   void SetCameraOrientation(glm::quat orientation);
-  void SetEntityIDs(std::vector<EntityID> player_ids, EntityID my_id,
-                    EntityID ball_id) {
+  void SetEntityIDs(std::vector<EntityID> player_ids, EntityID my_id) {
     player_ids_ = player_ids;
     my_id_ = my_id;
-    ball_id_ = ball_id;
   }
+  void SetInitBallData(EntityID ball_id, bool is_real) {
+    init_balls_[ball_id] = is_real;
+  }
+
   void SetCurrentStamina(float stamina) { current_stamina_ = stamina; }
   auto* GetReg() { return &registry_gameplay_; }
 
-  void CreateWall(EntityID id, glm::vec3 position, glm::quat rotation);
+  void CreateWall(EntityID id, glm::vec3 position, glm::quat rotation, unsigned int team = TEAM_NONE);
   void CreatePickUp(EntityID id, glm::vec3 position);
-  void CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori);
+  void CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori, unsigned int creator_team);
   void CreateTeleportProjectile(EntityID id, glm::vec3 pos, glm::quat ori);
   void CreateForcePushObject(EntityID id, glm::vec3 pos, glm::quat ori);
   void CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori);
+  void CreateFishermanAndHook(EntityID id, glm::vec3 pos, glm::quat ori, EntityID owner_id);
+  void CreateBlackHoleObject(EntityID id, glm::vec3 pos, glm::quat ori);
+  void CreateMineObject(unsigned int owner_team, EntityID mine_id,
+                        glm::vec3 pos);
   void DestroyEntity(EntityID id);
   void SwitchGoals();
   void SetMyPrimaryAbility(int id) { my_primary_ability_id = id; }
@@ -275,19 +298,48 @@ class PlayState : public State {
   void SetCountdownInProgress(bool val) { countdown_in_progress_ = val; }
   void SetArenaScale(glm::vec3 arena_scale) { arena_scale_ = arena_scale; }
 
+  void FetchMapAndArena(entt::registry& in_registry);
+  void SetCanSmash(bool val) { can_smash_ = val; }
+  void SetGoalsSwappedAtStart(bool val) { goals_swapped_at_start_ = val; }
+
   // Replay stuff
   bool IsRecording() const { return this->recording_; }
   // void SetRecording(bool in_val) { this->recording_ = in_val; }
   //
 
  private:
+  struct GuiNotRespnding {
+    glob::GUIHandle hndl = 0;
+    glm::vec2 drawpos = glm::vec2(0.0f, 0.0f);
+    double scale = 1.0;
+    glob::Font2DHandle font = 0;
+    uint64_t timeleft = 10000;
+    GuiNotRespnding() {
+      hndl = glob::GetGUIItem("Assets/GUI_elements/gray_bg.png");
+      drawpos = glm::vec2(glob::window::GetWindowDimensions().x -
+                              glob::window::GetWindowDimensions().x * 0.35,
+                          glob::window::GetWindowDimensions().y -
+                              glob::window::GetWindowDimensions().y * 0.2);
+      font = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
+    }
+    void Draw(uint64_t time) {
+      int time_int = std::ceil((10000 - time) / 1000);
+      glob::Submit(hndl, drawpos, scale);
+      glob::Submit(font, drawpos + glm::vec2(50.0f, 70.0f), 29,
+                   "Connection problems, disconnecting in " +
+                       std::to_string(time_int) + std::string("s"),
+                   glm::vec4(0.0, 0.0, 0.0, 1.0));
+    }
+  } server_not_responding_;
   ServerStateType server_state_;
   void CreateInitialEntities();
   void CreatePlayerEntities();
   void CreateArenaEntity();
+  void CreateAudienceEntities();
   void CreateMapEntity();
-  void CreateBallEntity();
+  void CreateBallEntities();
   void CreateSpotlights();
+  void CreateJumbotron();
   void ParticleComponentDestroyed(entt::entity e, entt::registry& registry);
   void CreateInGameMenu();
   void AddPlayer();
@@ -300,15 +352,24 @@ class PlayState : public State {
 
   void DrawNameOverPlayer();
   void DrawWallOutline();
+  void DrawFishingLines();
 
   void DrawTopScores();
   void DrawTarget();
   void DrawQuickslots();
+  void DrawStunTimer();
+
+  void DrawMiniMap();
+  void DrawJumbotronText();
+
   FrameState SimulateMovement(std::vector<int>& action, FrameState& state,
                               float dt);
   void MovePlayer(float dt);
   void MoveBall(float dt);
+  void BlackHoleMovement(float dt);
   void Collision();
+  void UpdateGravity();
+  unsigned long GetBestPlayer();
 
   EntityID ClientIDToEntityID(long client_id);
   ////////////////////////////////////////
@@ -316,7 +377,9 @@ class PlayState : public State {
   entt::registry registry_gameplay_;
 
   std::vector<EntityID> player_ids_;
-  EntityID my_id_, ball_id_;
+  EntityID my_id_;
+
+  std::unordered_map<EntityID, bool> init_balls_;
   float current_stamina_ = 0.f;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, glm::quat>> transforms_;
@@ -325,6 +388,8 @@ class PlayState : public State {
   std::unordered_map<EntityID, glm::vec3> player_move_dirs_;
   FrameState server_predicted_;
   entt::entity my_entity_, arena_entity_, map_visual_entity_;
+
+  std::vector<entt::entity> Audiences;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
 
@@ -339,8 +404,9 @@ class PlayState : public State {
   glob::GUIHandle in_game_menu_gui_ = 0;
   glob::GUIHandle gui_test_, gui_teamscore_, gui_stamina_base_,
       gui_stamina_fill_, gui_stamina_icon_, gui_quickslots_, gui_minimap_,
-      gui_minimap_goal_red_, gui_minimap_goal_blue_, gui_minimap_player_red_,
-      gui_minimap_player_blue_, gui_minimap_ball_, gui_crosshair_;
+      gui_minimap_goal_red_, gui_minimap_goal_blue_, gui_minimap_player_me_,
+      gui_minimap_player_red_, gui_minimap_player_blue_, gui_minimap_ball_,
+      gui_crosshair_;
 
   std::vector<glob::GUIHandle> ability_handles_;
 
@@ -354,8 +420,11 @@ class PlayState : public State {
   bool countdown_in_progress_ = false;
 
   bool game_has_ended_ = false;
+  std::chrono::time_point<std::chrono::system_clock> overtime_start_time_, overtime_end_time_;
   bool overtime_has_started_ = false;
+  bool overtime_check_time = true;
   bool goals_swapped_ = false;
+  bool goals_swapped_at_start_ = false;
   EntityID my_target_ = -1;
 
   glob::ModelHandle test_ball_;
@@ -371,6 +440,20 @@ class PlayState : public State {
   float primary_cd_ = 0.0f;
 
   bool sprinting_ = false;
+
+  int current_jumbo_effect_ = TEAM_SCORES;
+  Timer jumbo_effect_timer_;
+  float jumbo_effect_time_ = 5.0f;
+
+  bool can_smash_ = false;
+
+  bool im_stunned_ = false;
+  Timer stun_timer_;
+  float my_stun_time_;
+
+  bool switching_goals_ = false;
+
+  std::vector<Fishermans> fishers_;
 
   // Replay stuff
   bool recording_ = false;
@@ -425,4 +508,24 @@ class ReplayState : public State {
   void SetArenaScale(glm::vec3 in_scale) { this->arena_scale_ = in_scale; }
 };
 
+class CreateServerState : public State {
+ public:
+  void Startup() override;
+  void Init() override;
+  void Update(float dt) override;
+  void UpdateNetwork() override;
+  void Cleanup() override;
+  ~CreateServerState();
+  StateType Type() { return StateType::CREATE_SERVER; }
+  bool started_ = false;
+
+ private:
+  glob::Font2DHandle font_test_ = 0;
+  entt::registry registry_create_server_;
+  glob::GUIHandle bg_ = 0;
+  std::string ip_ = "";
+  std::string port_ = "1337";
+  std::string max_players_ = "6";
+  void CreateServer();
+};
 #endif  // STATE_HPP_

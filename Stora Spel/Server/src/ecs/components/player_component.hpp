@@ -31,7 +31,7 @@ struct PlayerComponent {  // Server side
   float kick_force = GlobalSettings::Access()->ValueOf("PLAYER_KICK_FORCE");
   float kick_others_force =
       GlobalSettings::Access()->ValueOf("PLAYER_KICK_OTHERS_FORCE");
-  float rocket_speed = GlobalSettings::Access()->ValueOf("PLAYER_ROCKET_SPEED");
+  float rocket_speed = GlobalSettings::Access()->ValueOf("PLAYER_SHOT_SPEED");
   Timer kick_timer;
 
   // input from client
@@ -50,6 +50,11 @@ struct PlayerComponent {  // Server side
   float invisibility_remaining = 0.0f;
 
   bool can_jump = false;
+  bool ready_to_smash = false;
+  bool stunned = false;
+  bool hooked = false;
+  Timer stun_timer;
+  float stun_time = 0.0f;
   // Comparasion Operators
   bool operator==(const PlayerComponent& rhs) {
     return (this->client_id == rhs.client_id) &&
@@ -67,7 +72,9 @@ struct PlayerComponent {  // Server side
            (this->kick_force == rhs.kick_force) &&
            (this->actions == rhs.actions) && (this->yaw == rhs.yaw) &&
            (this->pitch == rhs.pitch) && (this->target == rhs.target) &&
-           (this->sprinting == rhs.sprinting) && (this->running == rhs.running);
+           (this->sprinting == rhs.sprinting) &&
+           (this->running == rhs.running) && (this->stunned = rhs.stunned) &&
+           (this->ready_to_smash == rhs.ready_to_smash);
   }
 
   bool operator!=(const PlayerComponent& rhs) { return !((*this) == rhs); }

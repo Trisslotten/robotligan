@@ -145,3 +145,7 @@ void glob::Shadows::AddSpotlight(glm::vec3 position, glm::mat4 transform) {
   }
   set_manually_ = true;
 }
+
+void glob::Shadows::ClearSpotlights() {
+  num_maps_used_ = 0;
+}

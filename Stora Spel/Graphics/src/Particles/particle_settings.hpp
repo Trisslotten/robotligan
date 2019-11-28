@@ -23,6 +23,7 @@ struct ParticleSettings {
   float burst_particles = 0.f;
   int number_of_bursts = 1;
   bool burst = false;
+  bool emissive = false;
 
   GLuint texture = 0;
   ShaderProgram* compute_shader = nullptr;

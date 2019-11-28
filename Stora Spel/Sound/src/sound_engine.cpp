@@ -6,8 +6,9 @@
 #include <unordered_map>
 #include <vector>
 
-#include <fmod_api_core_inc/fmod_errors.h>
 #include <fmod_api_core_inc/fmod.hpp>
+#include <fmod_api_core_inc/fmod_errors.h>
+
 #include <glm/ext.hpp>
 
 namespace slob {
@@ -20,8 +21,8 @@ class EXPORT Sound {
     // std::cout << "error nr: " << result << std::endl;
     sound_->setMode(FMOD_LOOP_NORMAL);
   }
-  void Play(FMOD::System* system, FMOD::ChannelGroup* group, int loop_count,
-            float volume) {
+  PlayingSound Play(FMOD::System* system, FMOD::ChannelGroup* group,
+                      int loop_count, float volume) {
     FMOD::Channel* channel = nullptr;
     FMOD_RESULT result = system->playSound(sound_, group, true, &channel);
     if (result != FMOD_OK) {
@@ -30,6 +31,9 @@ class EXPORT Sound {
     channel->setLoopCount(loop_count);
     channel->setVolume(volume);
     channel->setPaused(false);
+    PlayingSound playing_sound;
+    playing_sound.channel = channel;
+    return playing_sound;
   }
   void Stop(FMOD::System* system, FMOD::ChannelGroup* group) { group->stop(); }
   bool IsLoaded() { return sound_ != nullptr; }
@@ -107,7 +111,7 @@ void SoundEngine::Init() {
   FMOD_VECTOR listener_up{0.0f, 1.0f, 0.0f};
   FMOD_VECTOR listener_vel{0.0f, 0.0f, 0.0f};
 
-  impl_->system->set3DSettings(1.f, 1.0f, 1.0f);
+  impl_->system->set3DSettings(1.0f, 1.0f, 1.0f);
   impl_->system->set3DListenerAttributes(0, &listener_pos, &listener_vel,
                                          &listener_forward, &listener_up);
 }
@@ -128,6 +132,7 @@ void SoundEngine::SetListenerAttributes(glm::vec3 pos, glm::quat orientation,
                                         glm::vec3 vel) {
   glm::vec3 forward = orientation * glm::vec3(-1, 0, 0);
   glm::vec3 up = orientation * glm::vec3(0, 1, 0);
+
   impl_->system->set3DListenerAttributes(
       0, (FMOD_VECTOR*)&pos, (FMOD_VECTOR*)&vel, (FMOD_VECTOR*)&forward,
       (FMOD_VECTOR*)&up);
@@ -154,12 +159,14 @@ SoundPlayer::SoundPlayer(void* engine_impl) {
 }
 SoundPlayer::~SoundPlayer() { delete i_; }
 
-void SoundPlayer::Play(SoundHandle handle, int loop_count, float volume) {
+PlayingSound SoundPlayer::Play(SoundHandle handle, int loop_count,
+                               float volume) {
   auto iter = i_->sound_engine->sounds.find(handle);
   if (iter != i_->sound_engine->sounds.end()) {
-    iter->second.Play(i_->sound_engine->system, i_->channel_group, loop_count,
+    return iter->second.Play(i_->sound_engine->system, i_->channel_group, loop_count,
                       volume);
   }
+  return PlayingSound();
 }
 
 void SoundPlayer::Stop(SoundHandle handle) {
@@ -172,6 +179,12 @@ void SoundPlayer::Stop(SoundHandle handle) {
 void SoundPlayer::Set3DAttributes(glm::vec3 pos, glm::vec3 vel) {
   auto result = i_->channel_group->set3DAttributes((FMOD_VECTOR*)&pos,
                                                    (FMOD_VECTOR*)&vel);
+}
+
+void PlayingSound::SetVolume(float vol) {
+  if (channel) {
+    ((FMOD::Channel*)channel)->setVolume(vol);
+  }
 }
 
 }  // namespace slob

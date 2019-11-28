@@ -159,9 +159,11 @@
     <ClInclude Include="src\ecs\components.hpp" />
     <ClInclude Include="src\ecs\components\ability_component.hpp" />
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
+    <ClInclude Include="src\ecs\components\black_hole_component.hpp" />
     <ClInclude Include="src\ecs\components\buff_component.hpp" />
     <ClInclude Include="src\ecs\components\goal_component.hpp" />
     <ClInclude Include="src\ecs\components\health_component.hpp" />
+    <ClInclude Include="src\ecs\components\hook_component.hpp" />
     <ClInclude Include="src\ecs\components\match_timer_component.hpp" />
     <ClInclude Include="src\ecs\components\missile_component.hpp" />
     <ClInclude Include="src\ecs\components\physics_component.hpp" />
@@ -173,9 +175,11 @@
     <ClInclude Include="src\ecs\components\timer_component.hpp" />
     <ClInclude Include="src\ecs\components\wall_component.hpp" />
     <ClInclude Include="src\ecs\systems\ability_controller_system.hpp" />
+    <ClInclude Include="src\ecs\systems\black_hole_system.hpp" />
     <ClInclude Include="src\ecs\systems\buff_controller_system.hpp" />
     <ClInclude Include="src\ecs\systems\collision_system.hpp" />
     <ClInclude Include="src\ecs\systems\collision_temp_debug_system.h" />
+    <ClInclude Include="src\ecs\systems\fishing_system.hpp" />
     <ClInclude Include="src\ecs\systems\goal_system.hpp" />
     <ClInclude Include="src\ecs\systems\lifetime_system.hpp" />
     <ClInclude Include="src\ecs\systems\missile_system.hpp" />
@@ -189,8 +193,10 @@
     <ClInclude Include="src\replay machine\deterministic_replay.hpp" />
     <ClInclude Include="src\util\event.hpp" />
     <ClInclude Include="src\util\global_settings.hpp" />
+    <ClInclude Include="src\util\settings.hpp" />
     <ClInclude Include="src\util\timer.hpp" />
     <ClInclude Include="src\serverstate.hpp" />
+    <ClInclude Include="src\util\winadpihelpers.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\replay machine\replay_machine.cpp" />
