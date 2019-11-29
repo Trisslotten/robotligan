@@ -17,9 +17,15 @@ struct AnimationComponent {
 
   std::vector<glm::mat4> bone_transforms;
 
+  std::vector<glm::quat> bone_rotations;
+  std::vector<glm::mat4> bone_positions;
+  std::vector<glm::mat4> bone_scales;
+
     std::vector<priorityGroup> p_groups;
 
 	bool init = true;
+
+	float yawInterpolator = 0.f;
 };
 
 #endif  // ANIMATION_COMPONENT_HPP_

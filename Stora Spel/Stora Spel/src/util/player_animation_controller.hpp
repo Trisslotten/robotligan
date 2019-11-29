@@ -41,10 +41,12 @@ void stopLookAnims(AnimationSystem* system, AnimationComponent& ac,
 
 void playRunAnims(AnimationSystem* system, AnimationComponent& ac, bool local) {
   system->PlayAnimation("Run", 1.f, &ac, prioRun, 1.f, system->LOOP);
+  system->PlayAnimation("Run_B", 1.f, &ac, prioRun, 0.f, system->LOOP);
 }
 
 void stopRunAnims(AnimationSystem* system, AnimationComponent& ac, bool local) {
   system->StopAnimation("Run", &ac);
+  system->StopAnimation("Run_B", &ac);
 }
 
 void playSlideAnims(AnimationSystem* system, AnimationComponent& ac,

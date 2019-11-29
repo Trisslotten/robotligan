@@ -63,6 +63,9 @@ class AnimationSystem {
   glm::vec3 InterpolateVector(float time, std::vector<aiVectorKey>* keys);
   glm::mat4 InterpolateQuat(float time, std::vector<aiQuatKey>* keys);
 
+  void interpolatePRS(glob::Joint joint, glm::mat4 pos, glm::quat rot, glm::mat4 scale, float strength);
+  void setPRS(glob::Joint joint, glm::mat4 pos, glm::quat rot, glm::mat4 scale);
+
   void Reset(entt::registry& registry);
 
     enum ANIM_MODES { LOOP, MUTE_ALL, PARTIAL_MUTE };

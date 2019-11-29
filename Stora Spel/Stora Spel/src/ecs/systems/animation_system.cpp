@@ -227,13 +227,13 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
 
         if (pl.running) {
           PAC::playRunAnims(this, ac, pl.localPlayer);
-        }else if (pl.jumping) {
+        } else if (pl.jumping) {
           PAC::playJumpAnims(this, ac, pl.localPlayer);
-        }else if (pl.sprinting) {
+        } else if (pl.sprinting) {
           PAC::playSlideAnims(this, ac, pl.localPlayer);
         } else {
           PAC::playLookAnims(this, ac, pl.localPlayer);
-		}
+        }
 
         ac.init = false;
       }
@@ -242,21 +242,37 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
           glm::normalize(pl.look_dir * glm::vec3(1.f, 0.f, 1.f));
       glm::vec3 UDlookDir = glm::normalize(pl.look_dir);
       glm::vec3 moveDir;
-      if (abs(ph.velocity.x) > 0.01 ||
-          abs(ph.velocity.z > 0.01)) {
+      if (abs(ph.velocity.x) > 0.01 || abs(ph.velocity.z > 0.01)) {
         moveDir = ph.velocity;
         pl.vel_dir = moveDir;
       } else {
         moveDir = pl.vel_dir;
       }
-      // SLIDE ANIMATIONS
+
+      float lookMoveOffset = glm::dot(
+          LRlookDir, glm::normalize(moveDir * glm::vec3(1.f, 0.1, 1.f)));
+
+      bool backwards = (lookMoveOffset < -0.1);
+
+      // LOOK ANIMATIONS
       constexpr float pi = glm::pi<float>();
       if (!pl.sprinting) {
         glm::quat offset = -t.rotation;
+        float yaw = 0.f;
+		if (backwards && pl.running && !pl.jumping) {
+          yaw = atan2(-moveDir.x, -moveDir.z);
+		} else {
+          yaw = atan2(moveDir.x, moveDir.z);
+		}
 
-        float yaw = atan2(moveDir.x, moveDir.z);
-        offset += glm::quat(glm::vec3(0.f, yaw - pi / 2.f, 0.f));
+        float rotator = dt * 5.f;
+        float lYaw = yaw + pi;
+		float SA =
+            fmod(fmod((lYaw - ac.yawInterpolator + pi), pi * 2.f) + (pi * 3.f), pi * 2.f) - pi;
 
+        ac.yawInterpolator += fmod(SA * rotator, pi);
+
+        offset += glm::quat(glm::vec3(0.f, ac.yawInterpolator - pi / 2.f, 0.f));
         m.rot_offset = offset;
 
         float strength = 0.f;
@@ -298,6 +314,21 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
         int LAAnim = GetActiveAnimationByName("LookAhead", &ac);
         ac.active_animations.at(LAAnim)->strength_ = LAStrength;
       }
+
+      // RUN ANIMATIONS
+      if (pl.running && GetActiveAnimationByName("Run_B", &ac) != -1 && GetActiveAnimationByName("Run", &ac) != -1) {
+        int RAnim;
+        if (backwards) {
+          RAnim = GetActiveAnimationByName("Run_B", &ac);
+
+        } else {
+          RAnim = GetActiveAnimationByName("Run", &ac);
+        }
+
+        ac.active_animations.at(RAnim)->strength_ = 1.f;
+      }
+
+      // SLIDE ANIMATIONS
       if (pl.sprinting) {
         m.rot_offset = glm::quat();
 
@@ -359,9 +390,10 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
         float startStrength = 1.f;
         float endStrength = 0.f;
         float velCoeff = 1.f;
-		float vertVel = std::clamp(glm::vec3((ph.velocity / pl.jump_force) * up).y, -1.f, 1.f);
-        
-		if (vertVel != 0) {
+        float vertVel = std::clamp(
+            glm::vec3((ph.velocity / pl.jump_force) * up).y, -1.f, 1.f);
+
+        if (vertVel != 0) {
           startStrength = std::clamp(vertVel, 0.f, 1.f);
 
           try {
@@ -465,7 +497,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           pc.running = true;
-		  PAC::playRunAnims(this, ac, pc.localPlayer);
+          PAC::playRunAnims(this, ac, pc.localPlayer);
 
           break;
         }
@@ -615,6 +647,7 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
                 InterpolateVector(anim->time_, &channel->scaling_keys);
             glm::mat4 scaling = glm::scale(scale);
 
+			//Unused for the moment, potential fix for additive animation scaling problems
             anim->bone_position_->at(jointId) = pos;
             anim->bone_rotation_->at(jointId) = rotation;
             anim->bone_scale_->at(jointId) = scale;
@@ -675,6 +708,8 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
 
       anim->time_ += anim->speed_ * anim->animation_->tick_per_second_ * dt;
     }
+
+	//add all AC positions/rotations/scales togeather here
 
     GetDefaultPose(glm::mat4(1.f), &a.model_data.bones.at(rootBone),
                    &a.model_data.bones, a.model_data.globalInverseTransform);
@@ -743,6 +778,15 @@ glm::mat4 AnimationSystem::InterpolateQuat(float time,
 
   return glm::mat4(
       glob::AssToGLM::ConvertToGLM3x3(ret.Normalize().GetMatrix()));
+}
+
+void AnimationSystem::interpolatePRS(glob::Joint joint, glm::mat4 pos, glm::quat rot,
+                                     glm::mat4 scale, float strength) {
+	
+}
+void AnimationSystem::setPRS(glob::Joint joint, glm::mat4 pos, glm::quat rot,
+                             glm::mat4 scale) {
+
 }
 
 void AnimationSystem::Reset(entt::registry& registry) {
