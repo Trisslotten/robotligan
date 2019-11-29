@@ -608,7 +608,7 @@ void PlayerWallCollision(entt::registry& registry) {
 void ProjectileWallCollision(entt::registry& registry) {
   auto view_proj = registry.view<physics::Sphere, PhysicsComponent,
                                  ProjectileComponent, IDComponent>();
-  auto view_wall = registry.view<physics::OBB, WallComponent>();
+  auto view_wall = registry.view<IDComponent, physics::OBB, WallComponent>();
 
   for (auto proj : view_proj) {
     auto& proj_hitbox = view_proj.get<physics::Sphere>(proj);
