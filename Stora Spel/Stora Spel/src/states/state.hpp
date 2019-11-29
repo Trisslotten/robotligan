@@ -15,6 +15,8 @@
 #include "shared/shared.hpp"
 #include <glob/window.hpp>
 
+//>>comment<<
+
 class Engine;
 
 enum class StateType {
