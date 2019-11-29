@@ -13,6 +13,7 @@
 #include "client replay machine/client_replay_machine.hpp"
 #include "ecs/systems/animation_system.hpp"
 #include "ecs/systems/sound_system.hpp"
+#include "ecs/systems/particle_system.hpp"
 #include "shared/shared.hpp"
 #include "states/state.hpp"
 struct PlayerStatInfo {
@@ -156,6 +157,7 @@ class Engine {
   ServerStateType server_state_;
   SoundSystem sound_system_;
   AnimationSystem animation_system_;
+  ParticleSystem particle_system_;
 
   AbilityID second_ability_ = AbilityID::NULL_ABILITY;
   unsigned int new_team_ = std::numeric_limits<unsigned int>::max();

@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <collision.hpp>
+#include <ecs\components\follow_bone_component.hpp>
 #include <ecs\components\skylight_component.hpp>
 #include <ecs\components\trail_component.hpp>
 #include <glm\gtx\extended_min_max.hpp>
@@ -320,7 +321,7 @@ void PlayState::Update(float dt) {
         cam_c.orientation = orientation;
         trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
         // FPS Model rotations
-        mc.rot_offset = orientation - glm::quat(glm::vec3(0.f, yaw_, 0.f));
+        // mc.rot_offset = orientation - glm::quat(glm::vec3(0.f, yaw_, 0.f));
       }
 
       // rotate model offset as well, this does not want to work...
@@ -1593,9 +1594,6 @@ void PlayState::CreatePlayerEntities() {
         glm::vec3(5.509f - 5.714f * 2.f, -1.0785f, 4.505f - 5.701f * 1.5f);
     glm::vec3 character_scale = glm::vec3(0.0033f);
 
-    glob::ModelHandle player_model = glob::GetModel(kModelPathMech);
-    glob::ModelHandle FPS_model = glob::GetModel("Assets/Mech/FPS_body.fbx");
-
     registry_gameplay_.assign<IDComponent>(entity, entity_id);
     auto& pc = registry_gameplay_.assign<PlayerComponent>(entity);
     registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(0.f),
@@ -1623,28 +1621,100 @@ void PlayState::CreatePlayerEntities() {
         coeff_z_side * character_scale.z * 0.7f   //
     );
 
+    glob::ModelHandle player_model;
     if (entity_id == my_id_) {
       glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
+      // glm::vec3 camera_offset = glm::vec3(-4.5f, 1.4f, 1.5f);
+
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
                                                  glm::quat(glm::vec3(0.f)));
 
-      model_c.handles.push_back(FPS_model);
+      player_model = glob::GetModel("Assets/Mech/FPS_body.fbx");
+      // player_model = glob::GetModel(kModelPathMech);
+
       model_c.cast_shadow = false;
-
-      registry_gameplay_.assign<AnimationComponent>(
-          entity, glob::GetAnimationData(FPS_model));
-
       pc.localPlayer = true;
+      // pc.localPlayer = false;
 
       my_entity_ = entity;
     } else {
-      model_c.handles.push_back(player_model);
-
-      registry_gameplay_.assign<AnimationComponent>(
-          entity, glob::GetAnimationData(player_model));
+      player_model = glob::GetModel(kModelPathMech);
     }
+    model_c.handles.push_back(player_model);
+    auto& anim_c = registry_gameplay_.assign<AnimationComponent>(
+        entity, glob::GetAnimationData(player_model));
 
     model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
+
+    auto& f = registry_gameplay_.assign<FollowBoneComponent>(entity);
+    std::unordered_map<std::string, glob::Joint> joints;
+    for (auto& bone : anim_c.model_data.bones) {
+      joints[bone.name] = bone;
+    }
+    f.emitters.push_back(
+        {joints["Smasher"].id, glm::vec3(-4.42201, -5.44919, 10.35781),
+         glm::normalize(glm::vec3(0, -1, 0)), BoneEmitterType::HIT, 3.5f});
+
+    f.emitters.push_back(
+        {joints["Gun autoloader"].id, glm::vec3(4.39386, -3.68348, 9.73308),
+         glm::normalize(glm::vec3(0, -1, 0)), BoneEmitterType::SHOOT, 30.0f});
+    if (entity_id != my_id_) {
+      f.emitters.push_back({joints["Thruster upper L"].id,
+                            glm::vec3(1.90377, 4.66975, 14.3237),
+                            glm::normalize(glm::vec3(20, 71, 41))});
+      f.emitters.push_back({joints["Thruster upper R"].id,
+                            glm::vec3(-1.90377, 4.66975, 14.3237),
+                            glm::normalize(glm::vec3(-20, 71, 41))});
+      f.emitters.push_back({joints["Thruster lower L"].id,
+                            glm::vec3(1.90377, 4.66975, 13.6999),
+                            glm::normalize(glm::vec3(20, 71, -35))});
+      f.emitters.push_back({joints["Thruster lower R"].id,
+                            glm::vec3(-1.90377, 4.66975, 13.6999),
+                            glm::normalize(glm::vec3(-20, 71, -35))});
+      f.emitters.push_back({joints["Leg upper thruster L"].id,
+                            glm::vec3(1.64806, 0.743561, 7.4594),
+                            glm::normalize(glm::vec3(7, 62, -57))});
+      f.emitters.push_back({joints["Leg upper thruster R"].id,
+                            glm::vec3(-1.64806, 0.743561, 7.4594),
+                            glm::normalize(glm::vec3(-7, 62, -57))});
+      f.emitters.push_back({joints["Leg lower thruster L"].id,
+                            glm::vec3(1.72301, 0.825308, 2.48634),
+                            glm::normalize(glm::vec3(7, 72, -43))});
+      f.emitters.push_back({joints["Leg lower thruster R"].id,
+                            glm::vec3(-1.72301, 0.825308, 2.48634),
+                            glm::normalize(glm::vec3(-7, 72, -43))});
+
+      f.emitters.push_back({joints["Foot R"].id,
+                            glm::vec3(-1.70696, -0.959843, 0.197735),
+                            glm::normalize(glm::vec3(0, 0, 1)),
+                            BoneEmitterType::SLIDE_SPARKS, 2.5f});
+      f.emitters.push_back({joints["Foot L"].id,
+                            glm::vec3(1.70696, -0.959843, 0.197735),
+                            glm::normalize(glm::vec3(0, 0, 1)),
+                            BoneEmitterType::SLIDE_SPARKS, 2.5f});
+    }
+
+    auto& part_c = registry_gameplay_.assign<ParticleComponent>(entity);
+    for (unsigned i = 0; i < f.emitters.size(); i++) {
+      auto handle = glob::CreateParticleSystem();
+      switch (f.emitters[i].type) {
+        case BoneEmitterType::ROCKET:
+          glob::SetParticleSettings(handle, "charfire.txt");
+          break;
+        case BoneEmitterType::SLIDE_SPARKS:
+          glob::SetParticleSettings(handle, "slidesparks.txt");
+          break;
+        case BoneEmitterType::HIT:
+          glob::SetParticleSettings(handle, "hitsparks.txt");
+          break;
+        case BoneEmitterType::SHOOT:
+          glob::SetParticleSettings(handle, "shoot.txt");
+          break;
+      }
+      part_c.handles.push_back(handle);
+    }
+    part_c.offsets.resize(f.emitters.size(), glm::vec3(0));
+    part_c.directions.resize(f.emitters.size(), glm::vec3(-1, 0, 0));
 
     if (engine_->GetPlayerTeam(entity_id) == TEAM_BLUE) {
       model_c.diffuse_index = 1;

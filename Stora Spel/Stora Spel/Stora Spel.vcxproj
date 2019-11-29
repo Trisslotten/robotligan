@@ -158,6 +158,7 @@
     <ClCompile Include="src\Chat.cpp" />
     <ClCompile Include="src\client replay machine\data_frame.cpp" />
     <ClCompile Include="src\ecs\systems\animation_system.cpp" />
+    <ClCompile Include="src\ecs\systems\particle_system.cpp" />
     <ClCompile Include="src\ecs\systems\sound_system.cpp" />
     <ClCompile Include="src\client replay machine\geometric_replay.cpp" />
     <ClCompile Include="src\engine.cpp" />
@@ -199,6 +200,7 @@
     <ClInclude Include="src\ecs\components\animation_component.hpp" />
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
     <ClInclude Include="src\ecs\components\black_hole_component.hpp" />
+    <ClInclude Include="src\ecs\components\follow_bone_component.hpp" />
     <ClInclude Include="src\ecs\components\skylight_component.hpp" />
     <ClInclude Include="src\ecs\components\button_component.hpp" />
     <ClInclude Include="src\ecs\components\fireworks_component.hpp" />
@@ -303,6 +305,8 @@
     <None Include="Assets\shaders\Particle compute shaders\black_hole.comp" />
     <None Include="Assets\shaders\Particle compute shaders\dust.comp" />
     <None Include="Assets\shaders\Particle compute shaders\firework.comp" />
+    <None Include="Assets\shaders\Particle compute shaders\jet.comp" />
+    <None Include="Assets\shaders\Particle compute shaders\sparks.comp" />
     <None Include="Assets\shaders\particle.geom" />
     <None Include="Assets\shaders\rope.vert" />
     <None Include="Assets\shaders\shading.frag" />
@@ -328,6 +332,25 @@
     <None Include="src\ecs\systems\input_system.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="Assets\Particle config\ball_destroy.txt" />
+    <Text Include="Assets\Particle config\black_hole.txt" />
+    <Text Include="Assets\Particle config\charfire.txt" />
+    <Text Include="Assets\Particle config\confetti.txt" />
+    <Text Include="Assets\Particle config\dirt.txt" />
+    <Text Include="Assets\Particle config\dust.txt" />
+    <Text Include="Assets\Particle config\firework.txt" />
+    <Text Include="Assets\Particle config\force_push.txt" />
+    <Text Include="Assets\Particle config\goal_fire.txt" />
+    <Text Include="Assets\Particle config\green_donut.txt" />
+    <Text Include="Assets\Particle config\hitsparks.txt" />
+    <Text Include="Assets\Particle config\mine_trigger.txt" />
+    <Text Include="Assets\Particle config\missile_impact.txt" />
+    <Text Include="Assets\Particle config\shoot.txt" />
+    <Text Include="Assets\Particle config\slidesparks.txt" />
+    <Text Include="Assets\Particle config\smoke.txt" />
+    <Text Include="Assets\Particle config\smoke_main_menu.txt" />
+    <Text Include="Assets\Particle config\superkick.txt" />
+    <Text Include="Assets\Particle config\teleport.txt" />
     <Text Include="src\util\errorlog.txt" />
     <Text Include="config\client_settings.txt" />
     <Text Include="config\player_settings.txt" />

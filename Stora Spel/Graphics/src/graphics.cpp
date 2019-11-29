@@ -354,10 +354,19 @@ void Init() {
   compute_shaders["black_hole"]->add("Particle compute shaders/black_hole.comp");
   compute_shaders["black_hole"]->compile();
 
+  compute_shaders["jet"] = std::make_unique<ShaderProgram>();
+  compute_shaders["jet"]->add("Particle compute shaders/jet.comp");
+  compute_shaders["jet"]->compile();
+
+  compute_shaders["sparks"] = std::make_unique<ShaderProgram>();
+  compute_shaders["sparks"]->add("Particle compute shaders/sparks.comp");
+  compute_shaders["sparks"]->compile();
+
   CreateDefaultParticleTexture();
   textures["smoke"] = TextureFromFile("smoke.png");
   textures["confetti"] = TextureFromFile("confetti.png");
   textures["dust"] = TextureFromFile("dust.png");
+  textures["spark"] = TextureFromFile("spark.png");
 
   model_shader.add("modelshader.vert");
   model_shader.add("modelshader.frag");
@@ -712,6 +721,14 @@ ParticleSettings ProccessMap(
       if (it != compute_shaders.end()) {
         ps.compute_shader = it->second.get();
       }
+    } else if (it.first == "emitter_vel") {
+      std::stringstream ss(it.second);
+      glm::vec3 vel;
+      ss >> vel.x;
+      ss >> vel.y;
+      ss >> vel.z;
+
+      ps.emitter_vel = vel;
     }
   }
 
@@ -1258,6 +1275,9 @@ void ReloadShaders() {
   wireframe_shader.reload();
   gui_shader.reload();
   e2D_shader.reload();
+  for(auto& [str, shader] : compute_shaders) {
+    shader->reload();
+  }
 }
 
 void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x,

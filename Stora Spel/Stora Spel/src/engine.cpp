@@ -45,6 +45,7 @@ void Engine::Init() {
   Input::Initialize();
   sound_system_.Init(this);
   animation_system_.Init(this);
+  particle_system_.Init(this);
 
   // Tell the GlobalSettings class to do a first read from the settings file
   GlobalSettings::Access()->UpdateValuesFromFile();
@@ -60,6 +61,8 @@ void Engine::Init() {
       animation_system_);
   dispatcher.sink<GameEvent>().connect<&PlayState::ReceiveGameEvent>(
       play_state_);
+  dispatcher.sink<GameEvent>().connect<&ParticleSystem::ReceiveGameEvent>(
+      particle_system_);
 
   SetKeybinds();
 
@@ -828,7 +831,7 @@ void Engine::UpdateSystems(float dt) {
   gui_system::Update(*registry_current_);
   input_system::Update(*registry_current_);
   fireworks::Update(*registry_current_, GetSoundEngine(), dt);
-  ParticleSystem(*registry_current_, dt);
+  particle_system_.Update(*registry_current_, dt);
   animation_system_.UpdateAnimations(*registry_current_, dt);
   trailsystem::Update(*registry_current_, dt);
   skylight_system::Update(*registry_current_);
