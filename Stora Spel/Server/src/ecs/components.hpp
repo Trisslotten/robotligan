@@ -18,5 +18,6 @@
 #include "components/wall_component.hpp"
 #include "components/pickup_spawner_component.hpp"
 #include "components/black_hole_component.hpp"
+#include "components/hook_component.hpp"
 
 #endif  // COMPONENTS_HPP_

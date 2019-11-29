@@ -353,7 +353,8 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
             pl.sprint_coeff -= 1.f * dt;
           }
           pl.sprint_coeff = std::clamp(pl.sprint_coeff, 0.f, 1.f);
-          ac.active_animations.at(anim)->strength_ = strength;
+          if (anim != -1)
+            ac.active_animations.at(anim)->strength_ = strength;
           totStrength += strength;
         }
         if (speed < cutoffSpeed) {
@@ -361,8 +362,10 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
           int b = GetActiveAnimationByName("SlideB", &ac);
           float defaultPoseModifier =
               std::clamp(1.f - totStrength, 0.f, 1.f) / 2.f;
-          ac.active_animations.at(f)->strength_ = defaultPoseModifier;
-          ac.active_animations.at(b)->strength_ = defaultPoseModifier;
+          if (f != -1)
+            ac.active_animations.at(f)->strength_ = defaultPoseModifier;
+          if (b != -1)
+            ac.active_animations.at(b)->strength_ = defaultPoseModifier;
         }
       }
 

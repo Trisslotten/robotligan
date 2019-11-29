@@ -170,6 +170,7 @@
     <ClCompile Include="src\states\lobbystate.cpp" />
     <ClCompile Include="src\states\mainmenustate.cpp" />
     <ClCompile Include="src\states\playstate.cpp" />
+    <ClCompile Include="src\states\replay_state.cpp" />
     <ClCompile Include="src\states\settingsstate.cpp" />
     <ClCompile Include="src\util\debugoverlay.cpp" />
     <ClCompile Include="src\util\global_settings.cpp" />
@@ -198,6 +199,7 @@
     <ClInclude Include="src\ecs\components.hpp" />
     <ClInclude Include="src\ecs\components\animation_component.hpp" />
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
+    <ClInclude Include="src\ecs\components\black_hole_component.hpp" />
     <ClInclude Include="src\ecs\components\follow_bone_component.hpp" />
     <ClInclude Include="src\ecs\components\skylight_component.hpp" />
     <ClInclude Include="src\ecs\components\button_component.hpp" />

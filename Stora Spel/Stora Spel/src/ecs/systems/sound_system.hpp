@@ -60,6 +60,8 @@ private:
   slob::SoundHandle sound_ability_mine_trigger_;
   slob::SoundHandle sound_fireworks_;
   slob::SoundHandle sound_crowd_shocked_;
+  slob::SoundHandle sound_fishing_hook_attached_;
+  slob::SoundHandle sound_picked_up_pickup_;
 
   Engine* engine_;
 };

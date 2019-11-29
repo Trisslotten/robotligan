@@ -146,7 +146,7 @@ Lighting shading(vec3 position, vec3 normal) {
 		vec2 uv = (shadow_space.xy+1.)*0.5;
 		if(shadow_space.w > 0 && !(uv.x < 0. || uv.x > 1. || uv.y < 0. || uv.y > 1.)) {
 			vec3 ld = normalize(shadow_light_positions[i] - position);
-			vec3 light_color = vec3(0.23);
+			vec3 light_color = vec3(0.4);
 
 			vec2 q = abs(shadow_space.xy) - vec2(0.5);
   			float len = length(max(q,0.0)) + min(max(q.x, q.y), 0.0);

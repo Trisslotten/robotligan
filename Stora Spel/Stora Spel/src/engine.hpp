@@ -10,7 +10,7 @@
 #include <util/global_settings.hpp>
 #include <vector>
 #include "Chat.hpp"
-#include "client replay machine/client_replay_machine.hpp"
+//#include "client replay machine/client_replay_machine.hpp"
 #include "ecs/systems/animation_system.hpp"
 #include "ecs/systems/sound_system.hpp"
 #include "ecs/systems/particle_system.hpp"
@@ -97,8 +97,10 @@ class Engine {
     return player_scores_;
   }
 
-  bool IsRecording() { return recording_; }
-  bool IsReplaying() { return replaying_; }
+  //Replay stuff---
+  ClientReplayMachine* GetReplayMachinePtr() { return this->replay_machine_; }
+  bool IsRecording() const { return this->play_state_.IsRecording(); }
+  //Replay stuff---
 
  private:
   void SetKeybinds();
@@ -106,16 +108,6 @@ class Engine {
   void UpdateChat(float dt);
   void UpdateSystems(float dt);
   void HandlePacketBlock(NetAPI::Common::Packet& packet);
-
-  // Replay Functions---
-  void BeginRecording();
-  // void DoRecording();
-  void StopRecording();
-  void SaveRecording();
-  void BeginReplay();
-  void PlayReplay();
-  void UpdateReplayCamera();
-  // Replay Functions---
 
   NetAPI::Socket::Client client_;
   NetAPI::Common::Packet packet_;
@@ -127,6 +119,7 @@ class Engine {
   MainMenuState main_menu_state_;
   LobbyState lobby_state_;
   PlayState play_state_;
+  ReplayState replay_state_;
   ConnectMenuState connect_menu_state_;
   SettingsState settings_state_;
   CreateServerState create_server_state_;
@@ -179,10 +172,6 @@ class Engine {
   std::list<float> time_test;
 
   // Replay Variables ---
-  bool recording_ = false;
-  bool replaying_ = false;
-  entt::registry* registry_on_hold_ = nullptr;
-  entt::registry* registry_replay_ = nullptr;
   ClientReplayMachine* replay_machine_ = nullptr;
   // Replay Variables ---
 };

@@ -24,24 +24,21 @@ class ClientReplayMachine {
 
   void RecordFrame(entt::registry& in_registry);
   void NotifyDestroyedObject(EntityID in_id, entt::registry& in_registry);
-
-  void StoreReplay();
+  void StoreAndClearReplay();
+  
   unsigned int NumberOfStoredReplays() const;
+  unsigned int ReplayLength() const { return replay_length_sec_; }
   int CurrentlySelectedReplay() const;
   bool SelectReplay(unsigned int in_index);
   void ResetSelectedReplay();
 
   bool LoadFrame(entt::registry& in_registry);
+  bool IsEmpty() { return stored_replays_.empty(); }
 
-  std::string GetSelectedReplayStringTree();
-  std::string GetSelectedReplayStringState();
-
-  void SetEngine(Engine* eng) {
-    engine_ = eng;
-    primary_replay_->SetEngine(eng);
-  }
+  void SetEngine(Engine* in_engine_ptr);
   void ReceiveGameEvent(GameEvent event);
-  
+
+  void ResetMachine();
 };
 
 #endif  // !CLIENT_REPLAY_MACHINE_HPP_

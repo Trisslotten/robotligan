@@ -34,12 +34,9 @@ Engine::~Engine() {
   if (this->replay_machine_ != nullptr) {
     delete this->replay_machine_;
   }
-  if (this->registry_replay_ != nullptr) {
-    delete this->registry_replay_;
-  }
   if (create_server_state_.started_) {
-    helper::ps::KillProcess("Server.exe");
-    helper::ps::KillProcess("server.exe");
+    // helper::ps::KillProcess("Server.exe");
+    // helper::ps::KillProcess("server.exe");
   }
 }
 
@@ -96,7 +93,9 @@ void Engine::Init() {
   connect_menu_state_.SetEngine(this);
   play_state_.SetEngine(this);
   settings_state_.SetEngine(this);
+  replay_state_.SetEngine(this);
   create_server_state_.SetEngine(this);
+
 
   main_menu_state_.Startup();
   settings_state_.Startup();
@@ -104,6 +103,8 @@ void Engine::Init() {
   lobby_state_.Startup();
   create_server_state_.Startup();
   play_state_.Startup();
+
+  replay_state_.Startup();
 
   main_menu_state_.Init();
   current_state_ = &main_menu_state_;
@@ -115,14 +116,16 @@ void Engine::Init() {
   // Initiate the Replay Machine
   unsigned int length_sec =
       (unsigned int)GlobalSettings::Access()->ValueOf("REPLAY_LENGTH_SECONDS");
-  unsigned int approximate_tickrate = 64;  // TODO: Replace with better
-                                           // approximation
+  unsigned int approximate_tickrate = 128;  // TODO: Replace with better
+                                            // approximation
   this->replay_machine_ =
       new ClientReplayMachine(length_sec, approximate_tickrate);
-  this->replay_machine_->SetEngine(this);
+  replay_machine_->SetEngine(this);
 
   dispatcher.sink<GameEvent>().connect<&ClientReplayMachine::ReceiveGameEvent>(
       *replay_machine_);
+
+  // Initiate the Replay Machine
 }
 
 void Engine::Update(float dt) {
@@ -160,41 +163,15 @@ void Engine::Update(float dt) {
 
     play_state_.AddPitchYaw(-mouse_movement.y, -mouse_movement.x);
 
-    if (Input::IsKeyPressed(GLFW_KEY_K)) {
+    if (Input::IsKeyPressed(GLFW_KEY_K)) { //???: What is this?
       new_team_ = TEAM_BLUE;
     }
     if (Input::IsKeyPressed(GLFW_KEY_L)) {
       new_team_ = TEAM_RED;
     }
-
-    // Replay stuff
-    if (Input::IsKeyPressed(GLFW_KEY_I)) {
-      if (!this->recording_) {
-        this->BeginRecording();
-      } else {
-        this->StopRecording();
-      }
-    }
-    if (Input::IsKeyPressed(GLFW_KEY_O)) {
-      this->SaveRecording();
-      std::cout << this->replay_machine_->GetSelectedReplayStringTree() << "\n";
-    }
-    if (Input::IsKeyPressed(GLFW_KEY_P)) {
-      this->BeginReplay();
-    }
-    // Replay stuff
   }
 
-  // Check if we are in play state
-  if (this->current_state_->Type() == StateType::PLAY) {
-    // Once we are check if we are recording
-    // or if we are replaying
-    if (this->recording_) {
-      this->replay_machine_->RecordFrame(*(this->registry_current_));
-    } else if (this->replaying_) {
-      this->PlayReplay();
-    }
-  }
+  // Update current state
   current_state_->Update(dt);
 
   UpdateSystems(dt);
@@ -226,6 +203,9 @@ void Engine::Update(float dt) {
         // ReInit();
         scores_[0] = 0;
         scores_[1] = 0;
+        break;
+      case StateType::REPLAY:
+        current_state_ = &replay_state_;
         break;
       case StateType::SETTINGS:
         current_state_ = &settings_state_;
@@ -407,23 +387,36 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       int num_players = -1;
       std::vector<EntityID> player_ids;
       EntityID my_id;
-      EntityID ball_id;
+      int num_balls = 0;
+      
       int ability_id;
       int num_team_ids;
       glm::vec3 arena_scale;
+      bool switched;
+      packet >> switched;
       packet >> arena_scale;
       packet >> ability_id;
       packet >> num_players;
       player_ids.resize(num_players);
       packet.Remove(player_ids.data(), player_ids.size());
       packet >> my_id;
-      packet >> ball_id;
+
+      packet >> num_balls;
+      for (int i = 0; i < num_balls; i++) {
+        EntityID ball_id;
+        bool is_real;
+        packet >> ball_id;
+        packet >> is_real;
+        play_state_.SetInitBallData(ball_id, is_real);
+      }
+
       packet >> team;
-      play_state_.SetEntityIDs(player_ids, my_id, ball_id);
+      play_state_.SetEntityIDs(player_ids, my_id);
       play_state_.SetMyPrimaryAbility(ability_id);
       play_state_.SetTeam(team);
       play_state_.SetArenaScale(arena_scale);
       sound_system_.SetArenaScale(arena_scale);
+      replay_state_.SetArenaScale(arena_scale);
       packet >> num_team_ids;
       for (int i = 0; i < num_team_ids; i++) {
         long client_id;
@@ -441,7 +434,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         psbi.saves = 0;
         player_scores_[client_id] = psbi;
       }
-
+      play_state_.SetGoalsSwappedAtStart(switched);
       ChangeState(StateType::PLAY);
 
       std::cout << "PACKET: GAME_START\n";
@@ -536,10 +529,9 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     */
-    case PacketBlockType::SWITCH_GOALS: {
-      // std::cout << "PACKET: SWITCH_GOALS\n";
-      packet >> switch_goal_timer_;
+    case PacketBlockType::SWITCH_GOALS_TIMER: {
       packet >> switch_goal_time_;
+      packet >> switch_goal_timer_;
       break;
     }
     case PacketBlockType::SECONDARY_USED: {
@@ -570,14 +562,16 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::CREATE_WALL: {
+      unsigned int team;
       glm::quat rot;
       glm::vec3 pos;
       EntityID id;
 
+      packet >> team;
       packet >> id;
       packet >> pos;
       packet >> rot;
-      play_state_.CreateWall(id, pos, rot);
+      play_state_.CreateWall(id, pos, rot, team);
       break;
     }
     case PacketBlockType::CREATE_PICK_UP: {
@@ -596,6 +590,13 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
             registry_current_->view<PickUpComponent, IDComponent>();
         for (auto entity : pick_up_view) {
           if (id == pick_up_view.get<IDComponent>(entity).id) {
+
+			// Notify replay machine before entity is gone
+            if (this->IsRecording()) {
+              this->replay_machine_->NotifyDestroyedObject(
+                  id, *(this->registry_current_));
+            }
+
             registry_current_->destroy(entity);
             break;
           }
@@ -618,6 +619,9 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     }
     case PacketBlockType::RECEIVE_PICK_UP: {
       packet >> second_ability_;
+      GameEvent ge;
+      ge.type = GameEvent::PICKED_UP_PICKUP;
+      dispatcher.trigger(ge);
       break;
     }
     case PacketBlockType::GAME_EVENT: {
@@ -678,6 +682,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
           dispatcher.trigger(missile_event);
           break;
         }
+        case ProjectileID::FISHING_HOOK: {
+          EntityID owner;
+          packet >> owner;
+          play_state_.CreateFishermanAndHook(e_id, pos, ori, owner);
+          break;
+        }
         case ProjectileID::BLACK_HOLE: {
           play_state_.CreateBlackHoleObject(e_id, pos, ori);
           break;
@@ -689,9 +699,8 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       EntityID id;
       packet >> id;
 
-      // If we are recording notify replay machine
-      // before entity is gone
-      if (this->recording_) {
+      // Notify replay machine before entity is gone
+      if (this->IsRecording()) {
         this->replay_machine_->NotifyDestroyedObject(
             id, *(this->registry_current_));
       }
@@ -848,7 +857,7 @@ void Engine::DrawScoreboard() {
   scoreboard_pos /= 2;
   scoreboard_pos.x -= 290;
   scoreboard_pos.y -= 150;
-  glob::Submit(gui_scoreboard_back_, scoreboard_pos, 0.6, 100);
+  glob::Submit(gui_scoreboard_back_, scoreboard_pos, 0.6, 100, 0.5f);
   int red_count = 0;
   int blue_count = 0;
   int jump = -16;
@@ -932,112 +941,3 @@ int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }
 float Engine::GetSwitchGoalCountdownTimer() const { return switch_goal_timer_; }
 
 int Engine::GetSwitchGoalTime() const { return switch_goal_time_; }
-
-// Replay Functions ---
-void Engine::BeginRecording() {
-  std::cout << "<Begining to record>" << std::endl;
-
-  // If we are currently not replaying,
-  // start recording
-  if (!this->replaying_) {
-    this->recording_ = true;
-  }
-}
-
-void Engine::StopRecording() {
-  std::cout << "<Stopped recording>" << std::endl;
-  // Stop recordng
-  this->recording_ = false;
-}
-
-void Engine::SaveRecording() {
-  std::cout << "<Saved replay>" << std::endl;
-
-  // Tell the ReplayMachine to save what currently lies in its buffer
-  this->replay_machine_->StoreReplay();
-
-  // NTS: Currently always selects the latest replay
-  // as per the following code
-  this->replay_machine_->SelectReplay(
-      this->replay_machine_->NumberOfStoredReplays() - 1);
-}
-
-void Engine::BeginReplay() {
-  std::cout << "<Starting replay>" << std::endl;
-
-  // Stop recording
-  this->StopRecording();
-
-  // Swap to the registry of the replay machine
-  // if we are not already replaying
-  if (!this->replaying_) {
-    this->registry_on_hold_ = this->registry_current_;
-    this->registry_replay_ = new entt::registry;
-    this->play_state_.FetchMapAndArena(*(this->registry_replay_));
-    this->registry_current_ = this->registry_replay_;
-
-    this->replaying_ = true;
-  }
-}
-
-void Engine::PlayReplay() {
-  // If we aren't replaying, return
-  if (!this->replaying_) {
-    return;
-  }
-
-  std::cout << "<Replaying>" << std::endl;
-  // std::cout << this->replay_machine_->GetSelectedReplayStringState()
-  //          << std::endl;
-
-  // Send in registry to get the next frame from the replay machine
-  if (this->replay_machine_->LoadFrame(*(this->registry_current_))) {
-    // If the recording is not playing
-    //	- Either it has ended
-    //	- Or it doesn't exist
-    // Swap back registries
-    this->registry_current_ = this->registry_on_hold_;
-    delete this->registry_replay_;
-    this->registry_replay_ = nullptr;
-    this->registry_on_hold_ = nullptr;
-
-    this->replaying_ = false;
-
-    this->replay_machine_->ResetSelectedReplay();
-
-    std::cout << "<Replay finished>" << std::endl;
-    return;
-  }
-
-  // Update replay camera
-  UpdateReplayCamera();
-}
-
-void Engine::UpdateReplayCamera() {
-  entt::basic_view camera_view =
-      this->registry_replay_->view<CameraComponent, TransformComponent>();
-  entt::basic_view target_view =
-      this->registry_replay_->view<TargetComponent, TransformComponent>();
-
-  for (entt::entity target : target_view) {
-    TransformComponent& target_trans_c =
-        registry_replay_->get<TransformComponent>(target);
-
-    for (entt::entity camera : camera_view) {
-      CameraComponent& cam_c = registry_replay_->get<CameraComponent>(camera);
-      TransformComponent& cam_trans_c =
-          registry_replay_->get<TransformComponent>(camera);
-
-      // Create vector from camera to target
-      glm::vec3 temp_dir =
-          glm::normalize(target_trans_c.position - cam_trans_c.position);
-
-      auto quarter_turn = glm::quat(glm::vec3(0, glm::pi<float>() * 0.5f, 0));
-
-      cam_c.orientation =
-          glm::quatLookAt(temp_dir, glm::vec3(0, 1, 0)) * quarter_turn;
-    }
-  }
-}
-
-// Replay Functions ---

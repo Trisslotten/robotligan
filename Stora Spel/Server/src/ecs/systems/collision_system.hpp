@@ -77,6 +77,8 @@ void UpdateOBB(entt::registry& registry);
 void UpdateTransform(entt::registry& registry);
 void UpdateBallBounced(entt::registry& registry);
 
+void SetPlayerHooked(entt::registry& registry, EntityID id);
+
 void UpdateCollisions(entt::registry& registry) {
   UpdateSphere(registry);
   UpdateOBB(registry);
@@ -88,7 +90,7 @@ void UpdateCollisions(entt::registry& registry) {
       registry.view<physics::OBB, PhysicsComponent, PlayerComponent>();
   auto view_arena =
       registry
-          .view<physics::MeshHitbox, physics::Arena, FailSafeArenaComponent>();
+          .view<physics::MeshHitbox, FailSafeArenaComponent>();
   auto view_wall = registry.view<physics::OBB, WallComponent>();
 
   entt::entity arena_entity;
@@ -230,13 +232,13 @@ void HandleBallCollisions(entt::registry& registry, const CollisionList& list,
       float vel = glm::length(ball_physics.velocity);
       if (vel > 20.f) {
         auto& health = registry.get<HealthComponent>(object.entity);
-        health.health -= 50;
+        //health.health -= 50;
       } else if (vel > 10) {
         auto& health = registry.get<HealthComponent>(object.entity);
-        health.health -= 30;
+        //health.health -= 30;
       } else if (vel > 6) {
         auto& health = registry.get<HealthComponent>(object.entity);
-        health.health -= 10;
+        //health.health -= 10;
       }
     }
   } else if (list.collision_list.size() > 1) {
@@ -450,45 +452,56 @@ void BallWallCollision(entt::registry& registry, const CollisionObject& object,
   auto& ball_hitbox = registry.get<physics::Sphere>(ball);
   auto& ball_c = registry.get<BallComponent>(ball);
 
-  ball_hitbox.center += object.move_vector;
+  glm::vec3 move_vector = object.move_vector;
+  glm::vec3 normal = object.normal;
+  if (normal.y < 0.1f && normal.y > -0.1f) {
+    normal.y = 0.f; 
+    normal = glm::normalize(normal);
+    move_vector.y = 0.f;
+  }
+  ball_hitbox.center += move_vector;
+  
 
   bool bounced = false;
 
-  float dot_val = glm::dot(object.normal, ball_physics.velocity);
+  float dot_val = glm::dot(normal, ball_physics.velocity);
   if (dot_val < 0.f) {
     ball_physics.velocity =
-        ball_physics.velocity - object.normal * dot_val * 0.8f * 2.f;
+        ball_physics.velocity - normal * dot_val * 0.8f * 2.f;
     bounced = true;
   }
-  if (object.normal.y > 0.5f) {
+  if (normal.y > 0.5f) {
     ball_physics.is_airborne = true;
   }
-
-  if (object.normal.y == 1) {
+  
+  if (normal.y == 1) {
     bounced = false;
   }
 
   if (bounced) {
     // save game event
-    if (registry.has<IDComponent>(ball)) {
+    if (registry.has<IDComponent>(ball) && !ball_c.bounced_last_frame) {
       GameEvent bounce_event;
       bounce_event.type = GameEvent::BOUNCE;
       bounce_event.bounce.ball_id = registry.get<IDComponent>(ball).id;
+      bounce_event.bounce.velocity = glm::length(ball_physics.velocity);
       dispatcher.trigger(bounce_event);
     }
   }
+  ball_c.bounced_last_frame = 1 << 30;
 
   // Rotate ball
-  glm::vec3 nn = glm::normalize(object.normal);
+  glm::vec3 nn = glm::normalize(normal);
   glm::vec3 dir =
       ball_physics.velocity - glm::dot(ball_physics.velocity, nn) * nn;
 
-  if (glm::length(dir) == 0) return;
 
   if (ball_c.is_super_striked) {
     ball_physics.velocity *= 0.3f;
     ball_c.is_super_striked = false;
   }
+  if (glm::length(dir) < 0.1f) return;
+
 
   glm::vec3 rotate = glm::normalize(glm::cross(nn, dir));
   float amount = glm::length(dir);
@@ -762,6 +775,31 @@ void PlayerProjectileCollision(entt::registry& registry) {
             DestroyEntity(registry, projectile);
             break;
           }
+          case ProjectileID::FISHING_HOOK: {
+            if (registry.has<HookComponent>(projectile)) {
+              HookComponent& hook_c = registry.get<HookComponent>(projectile);
+              PhysicsComponent& hook_phys_c =
+                  registry.get<PhysicsComponent>(projectile);
+              hook_c.attached = true;
+              hook_c.hooked_entity = player_id.id;
+              hook_c.hook_m = PULL_OBJECT;
+              hook_c.hook_timer.Restart();
+              hook_phys_c.velocity = glm::vec3(0);
+              hook_phys_c.acceleration = glm::vec3(0);
+
+			  if (registry.has<IDComponent>(projectile)) {
+                GameEvent ge;
+                ge.type = GameEvent::FISHING_HOOK_ATTACHED;
+                // skicka game event
+                ge.hook_attached.hook_id = hook_c.owner;
+                dispatcher.trigger(ge);
+			  }
+                          // remove projectile component, fishing system will
+                          // handle position. 
+              registry.remove<ProjectileComponent>(projectile);
+            }
+            break;
+          }
         }
       }
     }
@@ -776,6 +814,7 @@ void ProjectileBallCollision(entt::registry& registry, entt::entity ball) {
   auto& ball_hitbox = registry.get<physics::Sphere>(ball);
   auto& ball_c = registry.get<BallComponent>(ball);
   auto& ball_physics = registry.get<PhysicsComponent>(ball);
+  auto& ball_id = registry.get<IDComponent>(ball);
 
   for (auto projectile : view_projectile) {
     auto& proj_hitbox = view_projectile.get<physics::Sphere>(projectile);
@@ -825,6 +864,33 @@ void ProjectileBallCollision(entt::registry& registry, entt::entity ball) {
           dispatcher.trigger(force_push_impact_event);
 
           DestroyEntity(registry, projectile);
+          break;
+        }
+        case ProjectileID::FISHING_HOOK: {
+          if (registry.has<HookComponent>(projectile)) {
+            HookComponent& hook_c = registry.get<HookComponent>(projectile);
+            PhysicsComponent& hook_phys_c =
+                registry.get<PhysicsComponent>(projectile);
+            hook_c.attached = true;
+            hook_c.hooked_entity = ball_id.id;
+            hook_c.hook_m = PULL_OBJECT;
+            hook_c.hook_timer.Restart();
+            hook_phys_c.velocity = glm::vec3(0);
+            hook_phys_c.acceleration = glm::vec3(0);
+            ball_physics.is_airborne = true;
+
+			if (registry.has<IDComponent>(projectile)) {
+              GameEvent ge;
+              ge.type = GameEvent::FISHING_HOOK_ATTACHED;
+              // skicka game event
+              ge.hook_attached.hook_id = hook_c.owner;
+              dispatcher.trigger(ge);
+            }
+
+            // remove projectile component, fishing system will handle position.
+            registry.remove<ProjectileComponent>(projectile);
+          }
+
           break;
         }
       }
@@ -891,6 +957,31 @@ void ProjectileArenaCollision(entt::registry& registry) {
                 proj_hitbox.center + data.normal * 1.0f + data.move_vector,
                 proj_id.creator);
             DestroyEntity(registry, projectile);
+            break;
+          }
+          case ProjectileID::FISHING_HOOK: {
+            PhysicsComponent& phys_c =
+                registry.get<PhysicsComponent>(projectile);
+            HookComponent& hook_c = registry.get<HookComponent>(projectile);
+            hook_c.attached = true;
+            hook_c.hook_m = PULL_PLAYER;
+
+            hook_c.hook_timer.Restart();
+            phys_c.acceleration = glm::vec3(0);
+            phys_c.velocity = glm::vec3(0);
+            SetPlayerHooked(registry, hook_c.owner);
+
+			if (registry.has<IDComponent>(projectile)) {
+              GameEvent ge;
+              ge.type = GameEvent::FISHING_HOOK_ATTACHED;
+              // skicka game event
+              ge.hook_attached.hook_id = hook_c.owner;
+              dispatcher.trigger(ge);
+            }
+
+            // remove projectile component
+            registry.remove<ProjectileComponent>(projectile);
+
             break;
           }
         }
@@ -1186,5 +1277,17 @@ void DestroyEntity(entt::registry& registry, entt::entity entity) {
   info.entity = entity;
   dispatcher.enqueue<EventInfo>(info);
   // registry.destroy(entity);
+}
+
+void SetPlayerHooked(entt::registry& registry, EntityID id) {
+  auto view_players = registry.view<PlayerComponent, IDComponent>();
+  for (auto player : view_players) {
+    auto& player_c = registry.get<PlayerComponent>(player);
+    auto& id_c = registry.get<IDComponent>(player);
+
+    if (id_c.id == id) {
+      player_c.hooked = true;
+    }
+  }
 }
 #endif  // COLLISION_SYSTEM_HPP_

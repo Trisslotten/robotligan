@@ -40,6 +40,7 @@ bool DoInvisibility(entt::registry& registry, PlayerID id);
 bool DoBlackout(entt::registry& registry);
 void CreateBlackHole(entt::registry& registry, PlayerID id);
 bool PlaceMine(entt::registry& registry, PlayerID id);
+void DoFishing(entt::registry& registry, long creator);
 
 std::unordered_map<AbilityID, float> ability_cooldowns;
 
@@ -216,6 +217,9 @@ bool TriggerAbility(entt::registry& registry, AbilityID in_a_id,
     case AbilityID::MINE:
       return PlaceMine(registry, player_id);
       break;
+    case AbilityID::FISHINGING_POLE:
+      DoFishing(registry, player_id);
+      return true;
     default:
       return false;
       break;
@@ -365,38 +369,10 @@ entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
 }
 
 void DoSwitchGoals(entt::registry& registry) {
-  auto view_goals = registry.view<GoalComponenet, TeamComponent>();
-  GoalComponenet* first_goal_comp = nullptr;
-  GoalComponenet* second_goal_comp = nullptr;
-  bool got_first = false;
-  for (auto goal : view_goals) {
-    TeamComponent& goal_team_c = registry.get<TeamComponent>(goal);
-    GoalComponenet& goal_goal_c = registry.get<GoalComponenet>(goal);
-
-    if (goal_team_c.team == TEAM_RED) {
-      goal_team_c.team = TEAM_BLUE;
-      goal_goal_c.switched_this_tick = true;
-    } else {
-      goal_team_c.team = TEAM_RED;
-      goal_goal_c.switched_this_tick = true;
-    }
-    if (!got_first) {
-      first_goal_comp = &goal_goal_c;
-      got_first = true;
-    } else {
-      second_goal_comp = &goal_goal_c;
-    }
-  }
-  if (first_goal_comp != nullptr && second_goal_comp != nullptr) {
-    unsigned int first_goals = first_goal_comp->goals;
-    first_goal_comp->goals = second_goal_comp->goals;
-    second_goal_comp->goals = first_goals;
-
-    // Save game event
-    GameEvent switch_goals_event;
-    switch_goals_event.type = GameEvent::SWITCH_GOALS;
-    dispatcher.trigger(switch_goals_event);
-  }
+  // Save game event
+  GameEvent switch_goals_event;
+  switch_goals_event.type = GameEvent::SWITCH_GOALS_BEGIN;
+  dispatcher.trigger(switch_goals_event);
 }
 
 entt::entity CreateForcePushEntity(entt::registry& registry, PlayerID id) {
@@ -546,15 +522,18 @@ bool DoHomingBall(entt::registry& registry, PlayerID id) {
 }
 
 bool BuildWall(entt::registry& registry, PlayerID id) {
-  auto view_players = registry.view<PlayerComponent, TransformComponent,
-                                    CameraComponent, IDComponent>();
+  auto view_players =
+      registry.view<PlayerComponent, TransformComponent, CameraComponent,
+                    IDComponent, TeamComponent>();
   auto view_goals = registry.view<GoalComponenet, TransformComponent>();
+
   for (auto entity : view_players) {
     auto& player_c = view_players.get<PlayerComponent>(entity);
 
     if (player_c.client_id == id) {
       auto& trans_c = view_players.get<TransformComponent>(entity);
       auto& camera = view_players.get<CameraComponent>(entity);
+      auto& team_c = view_players.get<TeamComponent>(entity);
 
       glm::vec3 position = camera.GetLookDir() * 4.5f + trans_c.position +
                            trans_c.rotation * camera.offset;
@@ -578,13 +557,14 @@ bool BuildWall(entt::registry& registry, PlayerID id) {
 
       auto wall = registry.create();
       registry.assign<WallComponent>(wall);
-      registry.assign<TimerComponent>(wall, 10.f);
+      registry.assign<TimerComponent>(wall, GlobalSettings::Access()->ValueOf("ABILITY_WALL_DURATION"));
       registry.assign<HealthComponent>(wall, 100);
       registry.assign<TransformComponent>(wall, position, orientation);
+      registry.assign<TeamComponent>(wall, team_c.team);
       auto& obb = registry.assign<physics::OBB>(wall);
-      obb.extents[0] = 1.f;
-      obb.extents[1] = 8.3f;
-      obb.extents[2] = 5.f;
+      obb.extents[0] = 0.5f;
+      obb.extents[1] = 6.2f;
+      obb.extents[2] = 5.5f;
 
       EventInfo e;
       e.event = Event::BUILD_WALL;
@@ -740,7 +720,7 @@ void CreateFakeBalls(entt::registry& registry, EntityID id) {
     EventInfo e;
     e.event = Event::CREATE_FAKE_BALL;
     e.entity = fake_ball;
-    dispatcher.enqueue<EventInfo>(e);
+    dispatcher.trigger<EventInfo>(e);
   }
   GameEvent ge;
   ge.fake_ball_created.ball_id = ball_id;
@@ -773,6 +753,46 @@ void CreateBlackHole(entt::registry& registry, PlayerID id) {
       e.entity = black_hole;
 
       dispatcher.enqueue<EventInfo>(e);
+    }
+  }
+}
+
+void DoFishing(entt::registry& registry, long creator) {
+  auto view_controller = registry.view<CameraComponent, PlayerComponent,
+                                       TransformComponent, IDComponent>();
+  for (auto entity : view_controller) {
+    CameraComponent& cc = view_controller.get<CameraComponent>(entity);
+    PlayerComponent& pc = view_controller.get<PlayerComponent>(entity);
+    TransformComponent& tc = view_controller.get<TransformComponent>(entity);
+    IDComponent& idc = view_controller.get<IDComponent>(entity);
+
+    if (pc.client_id == creator) {
+      float speed = 80.f;
+      auto hook = registry.create();
+      registry.assign<PhysicsComponent>(hook,
+                                        glm::vec3(cc.GetLookDir() * speed),
+                                        glm::vec3(0.f), false, 0.0f);
+      registry.assign<TransformComponent>(
+          hook, glm::vec3(tc.position + tc.rotation * cc.offset),
+          cc.orientation * glm::quat(glm::vec3(0, 0, -glm::pi<float>() / 2.f)),
+          glm::vec3(.3f, .3f, .3f));
+      registry.assign<physics::Sphere>(hook, glm::vec3(0.f), .3f);
+      registry.assign<ProjectileComponent>(hook, ProjectileID::FISHING_HOOK,
+                                           creator);
+      HookComponent& hook_c = registry.assign<HookComponent>(hook);
+      hook_c.owner = idc.id;
+
+      EventInfo e;
+      e.event = Event::CREATE_HOOK;
+      e.entity = hook;
+      e.owner_id = idc.id;
+      dispatcher.enqueue<EventInfo>(e);
+
+      GameEvent ge;
+      ge.type = GameEvent::FISHING_HOOK_SHOOT;
+      ge.hook_attached.hook_id = idc.id;
+      dispatcher.trigger(ge);
+      break;
     }
   }
 }

@@ -47,6 +47,8 @@ class GameServer {
     return client_names_;
   }
 
+  void HandleSwitchGoal();
+
  private:
   void UpdateSystems(float dt);
 

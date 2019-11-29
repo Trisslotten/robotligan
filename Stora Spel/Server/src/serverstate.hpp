@@ -108,6 +108,10 @@ class ServerPlayState : public ServerState {
   void SetFrameID(int client_id, int id) { player_frame_id_[client_id] = id; }
   void Reconnect(int id);
   void SetReconnect(unsigned int ID) { reconnect_id_ = ID; }
+  void SetSwitchingGoals(bool val) {
+    switching_goals = val;
+    switch_goal_timer_.Restart();
+  }
 
  private:
   entt::entity CreateIDEntity();
@@ -127,6 +131,7 @@ class ServerPlayState : public ServerState {
   void OverTime();
   void EndGame();
   void WallAnimation();
+  void UpdateSwitchGoals();
 
   std::unordered_map<long, bool> clients_receive_updates_;
   std::unordered_map<int, EntityID> clients_player_ids_;
@@ -154,7 +159,7 @@ class ServerPlayState : public ServerState {
   bool reset_ = false;
 
   int switch_goal_time_ =
-      (int)GlobalSettings::Access()->ValueOf("ABILITY_SWITCH_GOAL_COUNTDOWN");
+      (int)GlobalSettings::Access()->ValueOf("ABILITY_SWITCH_GOAL_TIMER");
   Timer switch_goal_timer_;
 
   std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
@@ -167,6 +172,8 @@ class ServerPlayState : public ServerState {
   ReplayMachine* replay_machine_ = nullptr;
   bool record_ = false;
   bool replay_ = false;
+  bool switched_goals = false;
+  bool switching_goals = false;
   //---
 };
 
