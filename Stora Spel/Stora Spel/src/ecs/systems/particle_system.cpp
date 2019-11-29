@@ -158,7 +158,7 @@ void ParticleSystem::HandleHit(const GameEvent& event) {
       }
 
       if (animation_c.bone_transforms.empty()) {
-        continue;
+        break;
       }
       for (int i = 0; i < follow_c.emitters.size(); ++i) {
         BoneEmitter& current = follow_c.emitters[i];
@@ -209,6 +209,7 @@ void ParticleSystem::HandleHit(const GameEvent& event) {
           glob::SetParticleSettings(particle_c.handles[i], map);
         }
       }
+      break;
     }
   }
 }
@@ -236,7 +237,7 @@ void ParticleSystem::HandleShoot(const GameEvent& event) {
       }
 
       if (animation_c.bone_transforms.empty()) {
-        continue;
+        break;
       }
       for (int i = 0; i < follow_c.emitters.size(); ++i) {
         BoneEmitter& current = follow_c.emitters[i];
@@ -287,6 +288,7 @@ void ParticleSystem::HandleShoot(const GameEvent& event) {
           glob::SetParticleSettings(particle_c.handles[i], map);
         }
       }
+      break;
     }
   }
 }
