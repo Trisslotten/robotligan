@@ -309,8 +309,8 @@ void PlayState::Update(float dt) {
       auto& mc = registry_gameplay_.get<ModelComponent>(my_entity_);
 
       glm::vec3 temp =
-          lerp(predicted_state_.position, server_predicted_.position, 0.5f);
-      trans_c.position = glm::lerp(trans_c.position, temp, 0.8f);
+          lerp(predicted_state_.position, server_predicted_.position, 0.2f);
+      trans_c.position = glm::lerp(trans_c.position, temp, 1.0f);
       if (player_hooked) trans_c.position = server_predicted_.position;
       // trans_c.position = trans.first;
       glm::quat orientation =
