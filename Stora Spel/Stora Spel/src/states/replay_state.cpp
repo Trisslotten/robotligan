@@ -14,6 +14,7 @@ void ReplayState::AddConstantStuff() {
   this->AddBatmanLights();
   this->AddLights();
   this->AddSpotlights();
+  this->AddAudience();
   this->AddCamera(glm::vec3(0.f, 13.f, 42.f));  //  glm::vec3(60.f, 4.f, 38.f);
 }
 
@@ -141,6 +142,29 @@ void ReplayState::AddSpotlights() {
 
     std::swap(xrot, zrot);
     zrot *= -1.f;
+  }
+}
+
+void ReplayState::AddAudience() {
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+
+  glob::ModelHandle model_audience = glob::GetModel(kModelPathAudience);
+
+  for (int i = 0; i < 4; i++) {
+    auto audience = this->replay_registry_.create();
+
+    auto& audience_mc = this->replay_registry_.assign<ModelComponent>(audience);
+    audience_mc.handles.push_back(model_audience);
+
+    this->replay_registry_.assign<TransformComponent>(
+        audience, zero_vec, glm::vec3(0.f, (pi / 2.f) * i, 0.f),
+        glm::vec3(0.02f, 0.02f, 0.02f));
+
+    auto& animation_c = this->replay_registry_.assign<AnimationComponent>(
+        audience, glob::GetAnimationData(model_audience));
+    engine_->GetAnimationSystem().PlayAnimation(
+        "WaveRowsUp", 1.f, &animation_c, 10, 1.f,
+        engine_->GetAnimationSystem().LOOP);
   }
 }
 

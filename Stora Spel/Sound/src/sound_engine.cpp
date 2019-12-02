@@ -88,7 +88,6 @@ SoundEngine::~SoundEngine() {
   for (auto sp : impl_->sound_players) {
     delete sp;
   }
-  delete impl_->system;
   delete impl_;
 }
 

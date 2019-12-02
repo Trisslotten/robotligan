@@ -390,8 +390,6 @@ class PlayState : public State {
   FrameState server_predicted_;
   entt::entity my_entity_, arena_entity_, map_visual_entity_;
 
-  std::vector<entt::entity> Audiences;
-
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
 
   std::unordered_map<EntityID, unsigned int> teams_;
@@ -490,6 +488,7 @@ class ReplayState : public State {
   void AddBatmanLights();
   void AddLights();
   void AddSpotlights();
+  void AddAudience();
   void AddCamera(glm::vec3 in_cam_pos);
 
   void UpdateCamera();

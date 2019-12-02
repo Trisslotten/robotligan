@@ -1746,8 +1746,6 @@ void PlayState::CreateAudienceEntities() {
     engine_->GetAnimationSystem().PlayAnimation(
         "WaveRowsUp", 1.f, &animation_c, 10, 1.f,
         engine_->GetAnimationSystem().LOOP);
-
-    Audiences.push_back(audience);
   }
 }
 

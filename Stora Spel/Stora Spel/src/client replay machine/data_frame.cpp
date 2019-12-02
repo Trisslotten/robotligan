@@ -457,8 +457,7 @@ bool WallFrame::ThresholdCheck(DataFrame& in_future_df) {
 void WallFrame::WriteBack(TransformComponent& trans_c) {
   trans_c.position = position_;
   trans_c.rotation = rotation_;
-  trans_c.scale =
-      glm::vec3(1.f, 4.f, 5.f);  // Values from Playstate -> CreateWall
+  trans_c.scale = glm::vec3(1.f);  // Values from Playstate -> CreateWall
 }
 
 //##############################
@@ -908,8 +907,7 @@ DataFrame* BlackholeFrame::InterpolateForward(unsigned int in_dist_to_target,
   }
 }
 
-bool BlackholeFrame::ThresholdCheck(
-    DataFrame& in_future_df) {
+bool BlackholeFrame::ThresholdCheck(DataFrame& in_future_df) {
   BlackholeFrame& future_pf = dynamic_cast<BlackholeFrame&>(in_future_df);
 
   float threshold = 0.0f;

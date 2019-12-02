@@ -446,9 +446,11 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     wf_c_ptr->WriteBack(trans_c);
     // - Assign a model component to thew entity
     glob::ModelHandle wall_model = glob::GetModel(kModelPathWall);
+    glob::ModelHandle wall_trans = glob::GetModel(kModelPathWallTransparent);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     // - Add the relevant ModelHandle:s to entity
     model_c.handles.push_back(wall_model);
+    model_c.handles.push_back(wall_trans);
   } else if (object_type == REPLAY_SHOT) {
     ShotFrame* sf_ptr = dynamic_cast<ShotFrame*>(df_ptr);
     in_registry.assign<IDComponent>(
