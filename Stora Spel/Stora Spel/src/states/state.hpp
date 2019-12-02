@@ -458,6 +458,8 @@ class PlayState : public State {
 
   std::vector<Fishermans> fishers_;
 
+  bool want_dab_ = false;
+
   // Replay stuff
   bool recording_ = false;
   // Replay stuff

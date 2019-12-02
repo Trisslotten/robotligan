@@ -219,7 +219,7 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       if (!pl.can_smash && pl.started_smash) {
         StopAnimation("ReadyKick", &ac);
         pl.started_smash = false;
-	  }
+      }
     } else {
       if (ac.init) {
         PlayAnimation("Resting", 0.5f, &ac, 10, 1.f, LOOP);
@@ -353,8 +353,7 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
             pl.sprint_coeff -= 1.f * dt;
           }
           pl.sprint_coeff = std::clamp(pl.sprint_coeff, 0.f, 1.f);
-          if (anim != -1)
-            ac.active_animations.at(anim)->strength_ = strength;
+          if (anim != -1) ac.active_animations.at(anim)->strength_ = strength;
           totStrength += strength;
         }
         if (speed < cutoffSpeed) {
@@ -581,6 +580,25 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
       }
       break;
     }
+    case GameEvent::DABBING: {
+      auto view =
+          registry->view<IDComponent, AnimationComponent, PlayerComponent>();
+      for (auto entity : view) {
+        if (view.get<IDComponent>(entity).id ==
+            event.dabbing.player_entity_id) {
+          auto& ac = view.get<AnimationComponent>(entity);
+          auto& pc = view.get<PlayerComponent>(entity);
+          if (pc.localPlayer) {
+            // PlayAnimation("Emote2", 1.f, &ac, 14, 1.f, MUTE_ALL);
+          } else {
+            PlayAnimation("Emote2", 2.f, &ac, 100, 1.f, PARTIAL_MUTE,
+                          &ac.model_data.upperBody);
+          }
+          break;
+        }
+      }
+      break;
+    };
   };
 }
 
