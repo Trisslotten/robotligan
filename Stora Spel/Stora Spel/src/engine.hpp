@@ -102,6 +102,10 @@ class Engine {
   bool IsRecording() const { return this->play_state_.IsRecording(); }
   // Replay stuff---
 
+  void ClearNames() {
+    player_names_.clear();
+  }
+
  private:
   void SetKeybinds();
 

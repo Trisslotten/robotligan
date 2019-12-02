@@ -74,12 +74,6 @@ void Engine::Init() {
   gameplay_timer_.push_back(4);
   gameplay_timer_.push_back(59);*/
 
-  std::vector<std::string> names = {"Bogdan",  "Smibel Gork", "Big King",
-                                    "Blorgon", "Thrall",      "Fisken",
-                                    "Snabel",  "BOI"};
-  for (int i = 0; i < names.size(); i++) {
-    player_names_[i] = names[i];
-  }
 
   // TODO: move to states
   gui_scoreboard_back_ =
@@ -95,7 +89,6 @@ void Engine::Init() {
   settings_state_.SetEngine(this);
   replay_state_.SetEngine(this);
   create_server_state_.SetEngine(this);
-
 
   main_menu_state_.Startup();
   settings_state_.Startup();
@@ -163,7 +156,7 @@ void Engine::Update(float dt) {
 
     play_state_.AddPitchYaw(-mouse_movement.y, -mouse_movement.x);
 
-    if (Input::IsKeyPressed(GLFW_KEY_K)) { //???: What is this?
+    if (Input::IsKeyPressed(GLFW_KEY_K)) {  //???: What is this?
       new_team_ = TEAM_BLUE;
     }
     if (Input::IsKeyPressed(GLFW_KEY_L)) {
@@ -225,6 +218,13 @@ void Engine::Update(float dt) {
 
   if (Input::IsKeyPressed(GLFW_KEY_F5)) {
     glob::ReloadShaders();
+  }
+
+  if (Input::IsKeyPressed(GLFW_KEY_F4)) {
+    std::cout << "NAMES:\n";
+    for (auto& [client_id, name] : this->player_names_) {
+      std::cout << "\t" << name << "\n";
+    }
   }
 
   Input::Reset();
@@ -388,7 +388,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       std::vector<EntityID> player_ids;
       EntityID my_id;
       int num_balls = 0;
-      
+
       int ability_id;
       int num_team_ids;
       glm::vec3 arena_scale;
@@ -590,8 +590,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
             registry_current_->view<PickUpComponent, IDComponent>();
         for (auto entity : pick_up_view) {
           if (id == pick_up_view.get<IDComponent>(entity).id) {
-
-			// Notify replay machine before entity is gone
+            // Notify replay machine before entity is gone
             if (this->IsRecording()) {
               this->replay_machine_->NotifyDestroyedObject(
                   id, *(this->registry_current_));
@@ -631,7 +630,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::LOBBY_UPDATE_TEAM: {
-      // std::cout << "PACKET: LOBBY_UPDATE_TEAM\n";
+      std::cout << "PACKET: LOBBY_UPDATE_TEAM\n";
       lobby_state_.HandleUpdateLobbyTeamPacket(packet);
       break;
     }
