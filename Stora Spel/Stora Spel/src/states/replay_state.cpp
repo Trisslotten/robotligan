@@ -306,6 +306,12 @@ void ReplayState::CreateInGameMenu() {
   in_game_buttons_->button_func = [&] { exit(0); };
 }
 
+void ReplayState::SoundComponentDestroyed(entt::entity e,
+                                          entt::registry& registry) {
+  auto& sc = registry.get<SoundComponent>(e);
+  engine_->GetSoundEngine().DestroyPlayer(sc.sound_player);
+}
+
 void ReplayState::ShowScoreboard() {
   this->engine_->DrawScoreboard();
 
@@ -347,8 +353,11 @@ void ReplayState::ShowScoreboard() {
 
 void ReplayState::Startup() {
   this->font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
-  in_game_menu_gui_ =
+  this->in_game_menu_gui_ =
       glob::GetGUIItem("Assets/GUI_elements/ingame_menu_V1.png");
+
+  this->replay_registry_.on_destroy<SoundComponent>()
+      .connect<&ReplayState::SoundComponentDestroyed>(*this);
 }
 
 void ReplayState::Init() {

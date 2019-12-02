@@ -341,6 +341,7 @@ class PlayState : public State {
   void CreateSpotlights();
   void CreateJumbotron();
   void ParticleComponentDestroyed(entt::entity e, entt::registry& registry);
+  void SoundComponentDestroyed(entt::entity e, entt::registry& registry);
   void CreateInGameMenu();
   void AddPlayer();
   void TestCreateLights();
@@ -500,6 +501,8 @@ class ReplayState : public State {
   void ToggleInGameMenu();
   void UpdateInGameMenu(bool show_menu);
   void CreateInGameMenu();
+
+  void SoundComponentDestroyed(entt::entity e, entt::registry& registry);
 
   void ShowScoreboard();
 

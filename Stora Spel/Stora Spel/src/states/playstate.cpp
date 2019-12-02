@@ -84,6 +84,9 @@ void PlayState::Startup() {
 
   registry_gameplay_.on_destroy<ParticleComponent>()
       .connect<&PlayState::ParticleComponentDestroyed>(*this);
+
+  registry_gameplay_.on_destroy<SoundComponent>()
+      .connect<&PlayState::SoundComponentDestroyed>(*this);
 }
 
 void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
@@ -1913,6 +1916,12 @@ void PlayState::ParticleComponentDestroyed(entt::entity e,
   for (int i = 0; i < pc.handles.size(); ++i) {
     glob::DestroyParticleSystem(pc.handles[i]);
   }
+}
+
+void PlayState::SoundComponentDestroyed(entt::entity e,
+                                        entt::registry& registry) {
+  auto& sc = registry.get<SoundComponent>(e);
+  engine_->GetSoundEngine().DestroyPlayer(sc.sound_player);
 }
 
 void PlayState::CreateNewBallEntity(bool fake, EntityID id) {
