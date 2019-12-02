@@ -26,6 +26,8 @@ struct ButtonComponent {
 
   std::string find_name = "";
   std::string hover_text = "";
+
+  glm::vec2 tooltip_pos;
 };
 
 #endif  // !BUTTON_COMPONENT_HPP_

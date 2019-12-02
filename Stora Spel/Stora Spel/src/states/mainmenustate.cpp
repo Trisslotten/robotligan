@@ -1,6 +1,8 @@
 #include "state.hpp"
 
+#include <ecs\components\follow_bone_component.hpp>
 #include <glob/window.hpp>
+#include <util\asset_paths.hpp>
 #include "../ecs/components.hpp"
 #include "../ecs/systems/animation_system.hpp"
 #include "engine.hpp"
@@ -55,26 +57,32 @@ void MainMenuState::CreateMainMenu() {
   glob::window::SetMouseLocked(false);
   font_test_ = glob::GetFont("assets/fonts/fonts/ariblk.ttf");
 
-  // PLAY BUTTON - change registry to registry_gameplay_
-  ButtonComponent* b_c = GenerateButtonEntity(registry_mainmenu_, "PLAY",
-                                              glm::vec2(100, 260), font_test_);
+  // PLAY BUTTON - change registry to registry_mainmenu_
+  ButtonComponent* b_c = GenerateButtonEntity(registry_mainmenu_, "JOIN SERVER",
+                                              glm::vec2(100, 290), font_test_);
   b_c->button_func = [&]() { engine_->ChangeState(StateType::CONNECT_MENU); };
+
+  // Create Server
+  b_c = GenerateButtonEntity(registry_mainmenu_, "CREATE SERVER",
+                             glm::vec2(100, 230), font_test_);
+  b_c->button_func = [&]() { engine_->ChangeState(StateType::CREATE_SERVER); };
 
   // SETTINGS BUTTON - change registry to registry_settings_
   b_c = GenerateButtonEntity(registry_mainmenu_, "SETTINGS",
-                             glm::vec2(100, 200), font_test_);
+                             glm::vec2(100, 170), font_test_);
   b_c->button_func = [&]() { engine_->ChangeState(StateType::SETTINGS); };
 
   b_c = GenerateButtonEntity(registry_mainmenu_, "INFORMATION",
-                             glm::vec2(100, 140), font_test_);
+                             glm::vec2(100, 110), font_test_);
   b_c->button_func = [&]() {
     engine_->SetCurrentRegistry(&registry_information_);
   };
 
   // EXIT BUTTON - close the game
-  b_c = GenerateButtonEntity(registry_mainmenu_, "EXIT", glm::vec2(100, 80),
+  // Exit() is bad, does not call destructors
+  b_c = GenerateButtonEntity(registry_mainmenu_, "EXIT", glm::vec2(100, 50),
                              font_test_);
-  b_c->button_func = [&]() { exit(0); };
+  b_c->button_func = [&]() { engine_->should_quit = true; };
 }
 
 void MainMenuState::CreateInformationMenu() {
@@ -91,7 +99,7 @@ void MainMenuState::CreateBackgroundEnitites() {
 
   auto light_test = registry_mainmenu_.create();  // Get from engine
   registry_mainmenu_.assign<LightComponent>(light_test, glm::vec3(0.05f), 30.f,
-                                            0.2f);
+                                            0.1f);
   registry_mainmenu_.assign<TransformComponent>(
       light_test, glm::vec3(0.f, 16.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
@@ -100,14 +108,14 @@ void MainMenuState::CreateBackgroundEnitites() {
 
   auto light_test2 = registry_mainmenu_.create();  // Get from engine
   registry_mainmenu_.assign<LightComponent>(
-      light_test2, glm::vec3(1.f, 1.f, 1.0f), 50.f, 0.2f);
+      light_test2, glm::vec3(1.f, 1.f, 1.0f), 50.f, 0.1f);
   registry_mainmenu_.assign<TransformComponent>(
       light_test2, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
   {
     // ladda in och skapa entity för bana
     auto arena = registry_mainmenu_.create();
-    glm::vec3 arena_scale = glm::vec3(1.0f);
+    glm::vec3 arena_scale = glm::vec3(2.0f);
 
     glob::ModelHandle model_arena =
         glob::GetModel("assets/Arena/Map_V3_ARENA.fbx");
@@ -125,19 +133,21 @@ void MainMenuState::CreateBackgroundEnitites() {
     model_c.handles.push_back(model_map);
     model_c.handles.push_back(model_map_floor);
     model_c.handles.push_back(model_map_projectors);
+    // model_c.cast_shadow = false;
 
     registry_mainmenu_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                   arena_scale);
   }
   {
     glm::vec3 zero_vec = glm::vec3(0.0f);
-    glm::vec3 arena_scale = glm::vec3(2.6f);
+    glm::vec3 arena_scale = glm::vec3(1.f);
     auto arena = registry_mainmenu_.create();
     glob::ModelHandle model_map_walls =
         glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
 
     auto& model_c = registry_mainmenu_.assign<ModelComponent>(arena);
     model_c.handles.push_back(model_map_walls);
+    model_c.cast_shadow = false;
 
     registry_mainmenu_.assign<TransformComponent>(arena, zero_vec, zero_vec,
                                                   arena_scale);
@@ -164,8 +174,8 @@ void MainMenuState::CreateBackgroundEnitites() {
 
     robot = registry_mainmenu_.create();
     auto& trans_c2 = registry_mainmenu_.assign<TransformComponent>(
-        robot, glm::vec3(22, 0, 0.f),
-        glm::vec3(0.f, glm::radians(180.0f), 0.f), glm::vec3(0.0033f));
+        robot, glm::vec3(22, 0, 0.f), glm::vec3(0.f, glm::radians(180.0f), 0.f),
+        glm::vec3(0.0033f));
     auto& model_c2 = registry_mainmenu_.assign<ModelComponent>(robot);
     model_c2.handles.push_back(model_robot);
 
@@ -199,6 +209,7 @@ void MainMenuState::CreateBackgroundEnitites() {
     auto& cam_trans = registry_mainmenu_.assign<TransformComponent>(camera);
     cam_trans.position = glm::vec3(15.f, 3.f, 0.f);
     glm::vec3 dir = glm::vec3(0) - cam_trans.position;
-    cam_c.orientation = glm::quat(glm::vec3(0.f, 0.f, 0.f*glm::radians(-86.f)));
+    cam_c.orientation =
+        glm::quat(glm::vec3(0.f, 0.f, 0.f * glm::radians(-86.f)));
   }
 }

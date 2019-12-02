@@ -19,4 +19,8 @@ const char* const kModelPathRocket = "assets/Rocket/Rocket.fbx";
 
 const char* const kModelPathWall = "assets/Pickup/Pickup.fbx";
 
+const char* const kModelPathMine = "assets/Mine/Mine.fbx";
+
+const char* const kModelPathHook = "assets/claw/claw.fbx";
+
 #endif  // !ASSET_PATHS_HPP_

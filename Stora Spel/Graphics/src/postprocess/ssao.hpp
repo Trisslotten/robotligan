@@ -29,6 +29,7 @@ class Ssao {
   GLuint blurred_ssao_texture_;
   GLuint internal_format_ = 0;
 
+  // set in constructor
   float downscale_ = 1.f;
   int num_samples_ = 0;
 

@@ -35,7 +35,6 @@ PlayerFrame::PlayerFrame(TransformComponent& in_transform_c,
   pc_look_dir_ = in_player_c_.look_dir;
   pc_move_dir_ = in_player_c_.move_dir;
 
-
   /*for (auto anim : in_anim_c.active_animations) {
     active_animations_.push_back(anim);
   }*/
@@ -174,7 +173,7 @@ void PlayerFrame::WriteBack(TransformComponent& in_transform_c,
   in_player_c_.running = pc_running_;
   in_player_c_.vel_dir = pc_vel_dir_;
   in_player_c_.look_dir = pc_look_dir_;
-  in_player_c_.move_dir= pc_move_dir_;
+  in_player_c_.move_dir = pc_move_dir_;
   in_phys_c.velocity = velocity_;
 }
 
@@ -345,28 +344,28 @@ DataFrame* PickUpFrame::InterpolateForward(unsigned int in_dist_to_target,
 }
 
 bool PickUpFrame::ThresholdCheck(DataFrame& in_future_df) {
-  // Cast to PickupFrame
-  PickUpFrame& future_pf = dynamic_cast<PickUpFrame&>(in_future_df);
+  //// Cast to PickupFrame
+  // PickUpFrame& future_pf = dynamic_cast<PickUpFrame&>(in_future_df);
 
-  float threshold = 0.0f;
+  // float threshold = 0.0f;
 
-  // POSITION
-  float pos_diff = glm::distance(position_, future_pf.position_);
-  threshold =
-      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_PICKUP_POSITION");
-  if (pos_diff > threshold) {
-    // If we have moved over the threshold value away
-    return true;
-  }
+  //// POSITION
+  // float pos_diff = glm::distance(position_, future_pf.position_);
+  // threshold =
+  //    GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_PICKUP_POSITION");
+  // if (pos_diff > threshold) {
+  //  // If we have moved over the threshold value away
+  //  return true;
+  //}
 
-  // ROTATION
-  float rot_diff = glm::dot(rotation_, future_pf.rotation_);
-  threshold =
-      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_PICKUP_ROTATION");
-  if (abs(rot_diff - 1.0f) > threshold) {
-    // If we have rotated more than the theshhold value allows
-    return true;
-  }
+  //// ROTATION
+  // float rot_diff = glm::dot(rotation_, future_pf.rotation_);
+  // threshold =
+  //    GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_PICKUP_ROTATION");
+  // if (abs(rot_diff - 1.0f) > threshold) {
+  //  // If we have rotated more than the theshhold value allows
+  //  return true;
+  //}
 
   return false;
 }
@@ -574,14 +573,15 @@ TeleportShotFrame* TeleportShotFrame::Clone() {
 
 bool TeleportShotFrame::ThresholdCheck(DataFrame& in_future_df) {
   // Cast to TeleportShotFrame
-  TeleportShotFrame& future_tsf = dynamic_cast<TeleportShotFrame&>(in_future_df);
+  TeleportShotFrame& future_tsf =
+      dynamic_cast<TeleportShotFrame&>(in_future_df);
 
   float threshold = 0.0f;
 
   // POSITION
   float pos_diff = glm::distance(this->position_, future_tsf.position_);
-  threshold =
-      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_TELEPORT_SHOT_POSITION");
+  threshold = GlobalSettings::Access()->ValueOf(
+      "REPLAY_THRESHOLD_TELEPORT_SHOT_POSITION");
   if (pos_diff > threshold) {
     // If we have moved over the threshold value away
     return true;
@@ -804,4 +804,211 @@ void ForcePushFrame::WriteBack(TransformComponent& trans_c) {
   trans_c.position = position_;
   trans_c.rotation = rotation_;
   trans_c.scale = glm::vec3(0.5f);
+}
+
+//##############################
+//			MineFrame
+//##############################
+
+MineFrame::MineFrame() { position_ = glm::vec3(0.f); }
+
+MineFrame::MineFrame(TransformComponent& trans_c) {
+  position_ = trans_c.position;
+}
+
+MineFrame::~MineFrame() {}
+
+DataFrame* MineFrame::Clone() {
+  MineFrame* mine_return = new MineFrame();
+
+  mine_return->position_ = position_;
+
+  return mine_return;
+}
+
+DataFrame* MineFrame::InterpolateForward(unsigned int in_dist_to_target,
+                                         unsigned int in_dist_to_point_b,
+                                         DataFrame& in_point_b) {
+  // INTERPOLATED FRAME
+  MineFrame* ret_frame = new MineFrame();
+
+  // "INTERPOLATION" :D
+
+  // POSITION
+  ret_frame->position_ = this->position_;
+
+  return ret_frame;
+}
+
+bool MineFrame::ThresholdCheck(DataFrame& in_future_df) { return false; }
+
+void MineFrame::WriteBack(TransformComponent& trans_c) {
+  trans_c.position = position_;
+  trans_c.scale = glm::vec3(1.0f);
+}
+
+//##############################
+//			BlackholeFrame
+//##############################
+
+BlackholeFrame::BlackholeFrame() {
+  position_ = glm::vec3(0.f);
+  rotation_ = glm::quat();
+}
+
+BlackholeFrame::BlackholeFrame(TransformComponent& trans_c) {
+  position_ = trans_c.position;
+  rotation_ = trans_c.rotation;
+}
+
+BlackholeFrame::~BlackholeFrame() {}
+
+DataFrame* BlackholeFrame::Clone() {
+  BlackholeFrame* blackhole_return = new BlackholeFrame();
+
+  blackhole_return->position_ = position_;
+  blackhole_return->rotation_ = rotation_;
+
+  return blackhole_return;
+}
+
+DataFrame* BlackholeFrame::InterpolateForward(unsigned int in_dist_to_target,
+                                              unsigned int in_dist_to_point_b,
+                                              DataFrame& in_point_b) {
+  // Cast the DataFrame to BlackholeFrame
+  try {
+    BlackholeFrame& point_b = dynamic_cast<BlackholeFrame&>(in_point_b);
+    // Skips forward if std::bad_cast
+
+    // INTERPOLATED FRAME
+    BlackholeFrame* ret_frame = new BlackholeFrame();
+
+    // RATIO
+    if (in_dist_to_point_b < 1) {
+      // Prevent division on zero
+      in_dist_to_point_b = 1;
+    }
+    float percentage_a = in_dist_to_target / in_dist_to_point_b;
+
+    // INTERPOLATION
+
+    // POSITION
+    ret_frame->position_ =
+        position_ + (point_b.position_ - position_) * percentage_a;
+
+    // ROTATION
+    ret_frame->rotation_ =
+        glm::slerp(rotation_, point_b.rotation_, percentage_a);
+
+    return ret_frame;
+
+  } catch (std::bad_cast exp) {
+    GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__, "Bad cast");
+    return nullptr;
+  }
+}
+
+bool BlackholeFrame::ThresholdCheck(
+    DataFrame& in_future_df) {
+  BlackholeFrame& future_pf = dynamic_cast<BlackholeFrame&>(in_future_df);
+
+  float threshold = 0.0f;
+
+  // POSITION
+  float pos_diff = glm::distance(position_, future_pf.position_);
+  threshold =
+      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_BLACKHOLE_POSITION");
+  if (pos_diff > threshold) {
+    // If we have moved over the threshold value away
+    return true;
+  }
+
+  return false;
+}
+
+void BlackholeFrame::WriteBack(TransformComponent& trans_c) {
+  trans_c.position = position_;
+  trans_c.rotation = rotation_;
+  trans_c.scale = glm::vec3(0.3f);
+}
+
+//##############################
+//			HookFrame
+//##############################
+
+HookFrame::HookFrame() {}
+
+HookFrame::HookFrame(TransformComponent& trans_c) {
+  position_ = trans_c.position;
+  rotation_ = trans_c.rotation;
+}
+
+HookFrame::~HookFrame() {}
+
+DataFrame* HookFrame::Clone() {
+  HookFrame* ret_ptr = new HookFrame();
+
+  ret_ptr->position_ = this->position_;
+  ret_ptr->rotation_ = this->rotation_;
+
+  return ret_ptr;
+}
+
+DataFrame* HookFrame::InterpolateForward(unsigned int in_dist_to_target,
+                                         unsigned int in_dist_to_point_b,
+                                         DataFrame& in_point_b) {
+  // Cast the DataFrame to HookFrame
+  try {
+    HookFrame& point_b = dynamic_cast<HookFrame&>(in_point_b);
+    // Skips forward if std::bad_cast
+
+    // INTERPOLATED FRAME
+    HookFrame* ret_frame = new HookFrame();
+
+    // RATIO
+    if (in_dist_to_point_b < 1) {
+      // Prevent division on zero
+      in_dist_to_point_b = 1;
+    }
+    float percentage_a = in_dist_to_target / in_dist_to_point_b;
+
+    // INTERPOLATION
+
+    // POSITION
+    ret_frame->position_ =
+        position_ + (point_b.position_ - position_) * percentage_a;
+
+    // ROTATION
+    ret_frame->rotation_ =
+        glm::slerp(rotation_, point_b.rotation_, percentage_a);
+
+    return ret_frame;
+
+  } catch (std::bad_cast exp) {
+    GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__, "Bad cast");
+    return nullptr;
+  }
+}
+
+bool HookFrame::ThresholdCheck(DataFrame& in_future_df) {
+  HookFrame& future_hf = dynamic_cast<HookFrame&>(in_future_df);
+
+  float threshold = 0.0f;
+
+  // POSITION
+  float pos_diff = glm::distance(position_, future_hf.position_);
+  threshold =
+      GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_HOOK_POSITION");
+  if (pos_diff > threshold) {
+    // If we have moved over the threshold value away
+    return true;
+  }
+
+  return false;
+}
+
+void HookFrame::WriteBack(TransformComponent& trans_c) {
+  trans_c.position = position_;
+  trans_c.rotation = rotation_;
+  trans_c.scale = glm::vec3(0.3f);
 }

@@ -55,7 +55,7 @@ void GlobalSettings::UpdateValuesFromFile() {
       this->settings_map_[key_str] = std::stof(val_str);
     }
 
-	if (!(cur_str.size() == 0) && cur_str.at(0) == '#') {
+    if (!(cur_str.size() == 0) && cur_str.at(0) == '#') {
       // If it is, read the string up the '=' delimiter. That is the key.
       key_str = cur_str.substr(0, cur_str.find('='));
 
@@ -165,7 +165,6 @@ void GlobalSettings::WriteValue(std::string name, float value) {
   while (std::getline(settings_file, cur_str)) {
     // Read up to the end of the line. Save as the current line
     bool replaced = false;
-    
 
     // Check if the first char is '>'
     if (!(cur_str.size() == 0) && cur_str.at(0) == '>') {
@@ -190,7 +189,7 @@ void GlobalSettings::WriteValue(std::string name, float value) {
   settings_file.close();
   std::ofstream output_file("config/client_settings.txt");
   output_file.write(accum.c_str(), accum.size());
-  
+
   output_file.close();
   UpdateValuesFromFile();
 }

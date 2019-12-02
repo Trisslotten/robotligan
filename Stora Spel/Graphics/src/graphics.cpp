@@ -19,17 +19,20 @@
 #include "2D/elements2D.hpp"
 #include "Font/Font2D.hpp"
 #include "Model/model.hpp"
+#include "Model/rope.hpp"
 #include "Particles/particle_settings.hpp"
 #include "glob/camera.hpp"
 #include "glob/window.hpp"
-#include "material\material.hpp"
+#include "material/material.hpp"
 #include "particles/particle_system.hpp"
 #include "postprocess/blur.hpp"
 #include "postprocess/postprocess.hpp"
+#include "postprocess/shockwaves.hpp"
 #include "postprocess/ssao.hpp"
 #include "renderitems.hpp"
 #include "shader.hpp"
 #include "shadows/shadows.hpp"
+#include <postprocess\blackholes.hpp>
 
 namespace glob {
 
@@ -67,6 +70,14 @@ GLuint sky_texture = 0;
 PostProcess post_process;
 Blur blur;
 Shadows shadows;
+Shockwaves shockwaves;
+BlackHoles blackholes;
+Rope rope;
+
+Timer global_timer;
+
+bool blackout = false;
+bool stunned = false;
 
 GLint is_invisible = 0;
 float num_frames = 0;
@@ -241,6 +252,22 @@ void CreateDefaultParticleTexture() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+  for (auto &p : data) {
+    if (p != 0.f) p = 1.0f;
+  }
+
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 128, 128, 0, GL_RGBA, GL_FLOAT,
+               data.data());
+
+  textures["circle"] = texture;
+
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
   data.clear();
   data.resize(2 * 2 * 4, 1.0f);
 
@@ -319,10 +346,27 @@ void Init() {
   compute_shaders["dust"]->add("Particle compute shaders/dust.comp");
   compute_shaders["dust"]->compile();
 
+  compute_shaders["firework"] = std::make_unique<ShaderProgram>();
+  compute_shaders["firework"]->add("Particle compute shaders/firework.comp");
+  compute_shaders["firework"]->compile();
+
+  compute_shaders["black_hole"] = std::make_unique<ShaderProgram>();
+  compute_shaders["black_hole"]->add("Particle compute shaders/black_hole.comp");
+  compute_shaders["black_hole"]->compile();
+
+  compute_shaders["jet"] = std::make_unique<ShaderProgram>();
+  compute_shaders["jet"]->add("Particle compute shaders/jet.comp");
+  compute_shaders["jet"]->compile();
+
+  compute_shaders["sparks"] = std::make_unique<ShaderProgram>();
+  compute_shaders["sparks"]->add("Particle compute shaders/sparks.comp");
+  compute_shaders["sparks"]->compile();
+
   CreateDefaultParticleTexture();
   textures["smoke"] = TextureFromFile("smoke.png");
   textures["confetti"] = TextureFromFile("confetti.png");
   textures["dust"] = TextureFromFile("dust.png");
+  textures["spark"] = TextureFromFile("spark.png");
 
   model_shader.add("modelshader.vert");
   model_shader.add("modelshader.frag");
@@ -476,12 +520,13 @@ void Init() {
   post_process.Init(blur);
   shadows.Init(blur);
   ssao.Init(blur);
+  rope.Init();
 
   buffer_particle_systems.reserve(10);
 
-  SetSky("assets/texture/nightsky.png");
+  SetSky("assets/texture/darksky2.png");
 
-  //glEnable(GL_RASTERIZER_DISCARD);
+  // glEnable(GL_RASTERIZER_DISCARD);
 }
 
 // H=Handle, A=Asset
@@ -494,13 +539,13 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
   std::string borg = filepath;
   std::transform(borg.begin(), borg.end(), borg.begin(),
                  [](unsigned char c) { return std::tolower(c); });
-  auto item = handles.find(filepath);
+  auto item = handles.find(borg);
   if (item == handles.end()) {
     // std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";
     A &asset = assets[guid];
-    asset.LoadFromFile(filepath);
+    asset.LoadFromFile(borg);
     if (asset.IsLoaded()) {
-      handles[filepath] = guid;
+      handles[borg] = guid;
       result = guid;
       guid++;
     } else {
@@ -652,6 +697,12 @@ ParticleSettings ProccessMap(
       ss >> val;
 
       ps.number_of_bursts = val;
+    } else if (it.first == "emissive") {
+      std::stringstream ss(it.second);
+      bool emissive;
+      ss >> emissive;
+
+      ps.emissive = emissive;
     } else if (it.first == "texture") {
       std::string texture;
       std::stringstream ss(it.second);
@@ -670,6 +721,14 @@ ParticleSettings ProccessMap(
       if (it != compute_shaders.end()) {
         ps.compute_shader = it->second.get();
       }
+    } else if (it.first == "emitter_vel") {
+      std::stringstream ss(it.second);
+      glm::vec3 vel;
+      ss >> vel.x;
+      ss >> vel.y;
+      ss >> vel.z;
+
+      ps.emitter_vel = vel;
     }
   }
 
@@ -1003,16 +1062,19 @@ void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
 }
 
 void SubmitBAM(const std::vector<ModelHandle> &handles, glm::mat4 transform,
-               std::vector<glm::mat4> bone_transforms,
-               int material_index) {  // Submit Bone Animated Mesh
+               std::vector<glm::mat4> bone_transforms, int material_index,
+               bool cast_shadow,
+               float emissive_strength) {  // Submit Bone Animated Mesh
   for (auto handle : handles) {
-    SubmitBAM(handle, transform, bone_transforms, material_index);
+    SubmitBAM(handle, transform, bone_transforms, material_index, cast_shadow,
+              emissive_strength);
   }
 }
 
 void SubmitBAM(ModelHandle model_h, glm::mat4 transform,
-               std::vector<glm::mat4> bone_transforms,
-               int material_index) {  // Submit Bone Animated Mesh
+               std::vector<glm::mat4> bone_transforms, int material_index,
+               bool cast_shadow,
+               float emissive_strength) {  // Submit Bone Animated Mesh
   BoneAnimatedRenderItem BARI;
 
   auto find_res = models.find(model_h);
@@ -1031,22 +1093,26 @@ void SubmitBAM(ModelHandle model_h, glm::mat4 transform,
   BARI.numBones = BARI.bone_transforms.size();
 
   BARI.material_index = material_index;
+  BARI.emission_strength = emissive_strength;
+  BARI.cast_shadow = cast_shadow;
 
   bone_animated_items_to_render.push_back(BARI);
 }
 
-void Submit(ModelHandle model_h, glm::vec3 pos, int material_index) {
+void Submit(ModelHandle model_h, glm::vec3 pos, int material_index,
+            bool cast_shadow, float emissive_strength) {
   glm::mat4 transform = glm::translate(pos);
-  Submit(model_h, transform, material_index);
+  Submit(model_h, transform, material_index, cast_shadow, emissive_strength);
 }
 
 void Submit(const std::vector<ModelHandle> &handles, glm::mat4 transform,
-            int material_index) {
+            int material_index, bool cast_shadow, float emissive_strength) {
   for (auto handle : handles) {
-    Submit(handle, transform, material_index);
+    Submit(handle, transform, material_index, cast_shadow, emissive_strength);
   }
 }
-void Submit(ModelHandle model_h, glm::mat4 transform, int material_index) {
+void Submit(ModelHandle model_h, glm::mat4 transform, int material_index,
+            bool cast_shadow, float emissive_strength) {
   auto find_res = models.find(model_h);
   if (find_res == models.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted model\n";
@@ -1054,13 +1120,15 @@ void Submit(ModelHandle model_h, glm::mat4 transform, int material_index) {
   }
 
   const glm::mat4 pre_rotation =
-      glm::rotate(glm::pi<float>() / 2.f, glm::vec3(0, 1, 0)) *
-      glm::rotate(-glm::pi<float>() / 2.f, glm::vec3(1, 0, 0));
+      glm::rotate(glm::pi<float>() / 2.f, glm::vec3(0, 1, 0));  // *
+  // glm::rotate(-glm::pi<float>() / 2.f, glm::vec3(1, 0, 0));
 
   RenderItem to_render;
   to_render.model = &find_res->second;
   to_render.transform = transform * pre_rotation;
   to_render.material_index = material_index;
+  to_render.emission_strength = emissive_strength;
+  to_render.cast_shadow = cast_shadow;
 
   items_to_render.push_back(to_render);
 }
@@ -1163,13 +1231,16 @@ void SetSSAO(bool val) { use_ao = val; }
 
 void SetInvisibleEffect(bool in_bool) { is_invisible = (GLint)in_bool; }
 
-void SetBlackout(bool blackout) {
-  if (blackout) {
+void SetBlackout(bool _blackout) {
+  blackout = _blackout;
+  if (_blackout) {
     shadows.SetNumUsed(0);
   } else {
     shadows.SetNumUsed(2);
   }
 }
+
+bool IsBlackoutActive() { return blackout; }
 
 void SetSky(const std::string &file) {
   if (sky_texture != 0) {
@@ -1204,10 +1275,13 @@ void ReloadShaders() {
   wireframe_shader.reload();
   gui_shader.reload();
   e2D_shader.reload();
+  for(auto& [str, shader] : compute_shaders) {
+    shader->reload();
+  }
 }
 
 void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x,
-            float opacity) {
+            float opacity, float rot) {
   auto find_res = gui_elements.find(gui_h);
   if (find_res == gui_elements.end()) {
     std::cout << "ERROR graphics.cpp: could not find submitted gui element\n";
@@ -1220,6 +1294,7 @@ void Submit(GUIHandle gui_h, glm::vec2 pos, float scale, float scale_x,
   to_render.scale = scale;
   to_render.scale_x = scale_x;
   to_render.opacity = opacity;
+  to_render.rot = rot;
   gui_items_to_render.push_back(to_render);
 }
 
@@ -1257,6 +1332,18 @@ void Submit(E2DHandle e2D_h, glm::vec3 pos, glm::mat4 matrix) {
 void SubmitTrail(const std::vector<glm::vec3> &pos_history, float width,
                  glm::vec4 color) {
   trails_to_render.push_back({pos_history, width, color});
+}
+
+void CreateShockwave(glm::vec3 position, float duration, float size) {
+  shockwaves.Create(position, duration, size);
+}
+
+void SubmitRope(glm::vec3 start, glm::vec3 end) {
+  rope.Submit(start, end);
+}
+
+void CreateBlackHole(glm::vec3 position) {
+  blackholes.Create(position);
 }
 
 void SubmitCube(glm::mat4 t) { cubes.push_back(t); }
@@ -1301,6 +1388,14 @@ void AddSpotlight(glm::vec3 position, glm::mat4 transform) {
   shadows.AddSpotlight(position, transform);
 }
 
+void ClearSpotlights() {
+  shadows.ClearSpotlights();
+}
+
+void SetStunned(bool is_stunned) {
+  stunned = is_stunned;
+}
+
 void Render() {
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
 
@@ -1330,25 +1425,29 @@ void Render() {
 
   auto draw_function = [&](ShaderProgram &shader) {
     for (auto &render_item : items_to_render) {
-      shader.uniform("model_transform", render_item.transform);
-      render_item.model->Draw(shader);
+      if (render_item.cast_shadow) {
+        shader.uniform("model_transform", render_item.transform);
+        render_item.model->Draw(shader);
+      }
     }
   };
   auto anim_draw_function = [&](ShaderProgram &shader) {
     for (auto &BARI : bone_animated_items_to_render) {
-      shader.uniform("model_transform", BARI.transform);
-      shader.uniformv("bone_transform", BARI.bone_transforms.size(),
-                      BARI.bone_transforms.data());
-      /*
-      int numBones = 0;
-      for (auto &bone : BARI.bone_transforms) {
-        shader.uniform("bone_transform[" + std::to_string(numBones) + "]",
-                       bone);
-        numBones++;
+      if (BARI.cast_shadow) {
+        shader.uniform("model_transform", BARI.transform);
+        shader.uniformv("bone_transform", BARI.bone_transforms.size(),
+                        BARI.bone_transforms.data());
+        /*
+        int numBones = 0;
+        for (auto &bone : BARI.bone_transforms) {
+          shader.uniform("bone_transform[" + std::to_string(numBones) + "]",
+                         bone);
+          numBones++;
+        }
+        */
+        // shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
+        BARI.model->Draw(animated_model_shader);
       }
-      */
-      // shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
-      BARI.model->Draw(animated_model_shader);
     }
   };
   shadows.RenderToMaps(draw_function, anim_draw_function, blur);
@@ -1370,6 +1469,7 @@ void Render() {
     shader->uniform("cam_transform", cam_transform);
     shader->uniform("cam_position", camera.GetPosition());
     shadows.SetUniforms(*shader);
+    shader->uniform("blackout", blackout ? 1.f : 0.f);
   }
 
   auto ws = glob::window::GetWindowDimensions();
@@ -1379,9 +1479,12 @@ void Render() {
     model_shader.use();
     for (auto &render_item : normal_items) {
       SetDefaultMaterials(model_shader);
+      model_shader.uniform("diffuse_index", render_item.material_index);
       model_shader.uniform("model_transform", render_item.transform);
       model_shader.uniform("normal_transform",
                            calcNormalTransform(render_item.transform));
+      model_shader.uniform("dynamic_em_strength",
+                           render_item.emission_strength);
       render_item.model->Draw(model_shader);
     }
 
@@ -1395,6 +1498,8 @@ void Render() {
                                      BARI.bone_transforms.data());
       animated_model_shader.uniform("normal_transform",
                                     calcNormalTransform(BARI.transform));
+      animated_model_shader.uniform("dynamic_em_strength",
+                                    BARI.emission_strength);
       /*
       int numBones = 0;
       for (auto &bone : BARI.bone_transforms) {
@@ -1408,6 +1513,8 @@ void Render() {
       SetDefaultMaterials(animated_model_shader);
       BARI.model->Draw(animated_model_shader);
     }
+    rope.Draw(cam_transform);
+
 
     // render wireframe cubes
     for (auto &m : cubes) DrawCube(m);
@@ -1430,14 +1537,6 @@ void Render() {
       glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-    // render particles
-    particle_shader.use();
-    particle_shader.uniform("cam_transform", cam_transform);
-    particle_shader.uniform("cam_pos", camera.GetPosition());
-    particle_shader.uniform("cam_up", camera.GetUpVector());
-    for (auto p : particles_to_render) {
-      buffer_particle_systems[p].system.Draw(particle_shader);
-    }
     // draw sky
     glDepthFunc(GL_LEQUAL);
     sky_shader.use();
@@ -1449,28 +1548,16 @@ void Render() {
     sky_shader.uniform("texture_sky", 0);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glDepthFunc(GL_LESS);
-
-    // TODO: Sort all transparent triangles
-    // maybe sort internally in modell and then and externally
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    model_shader.use();
-    for (auto &[dist, render_items] : transparent_items) {
-      for (auto &render_item : render_items) {
-        SetDefaultMaterials(model_shader);
-        model_shader.uniform("model_transform", render_item.transform);
-        model_shader.uniform("normal_transform",
-                           calcNormalTransform(render_item.transform));
-        render_item.model->Draw(model_shader);
-      }
+    // render particles
+    particle_shader.use();
+    particle_shader.uniform("cam_transform", cam_transform);
+    particle_shader.uniform("cam_pos", camera.GetPosition());
+    particle_shader.uniform("cam_up", camera.GetUpVector());
+    for (auto p : particles_to_render) {
+      buffer_particle_systems[p].system.Draw(particle_shader);
     }
-    glDisable(GL_BLEND);
 
     // render text
-    glDisable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glDepthFunc(GL_LEQUAL);
     glBindVertexArray(quad_vao);
     text3D_shader.use();
     text3D_shader.uniform("cam_transform", cam_transform);
@@ -1478,10 +1565,22 @@ void Render() {
       text3D.font->Draw3D(text3D_shader, text3D.pos, text3D.size, text3D.text,
                           text3D.color, text3D.rotation);
     }
-    //glDisable(GL_BLEND);
-    //glEnable(GL_CULL_FACE);
 
-    glDepthFunc(GL_LESS);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    model_shader.use();
+    for (auto &[dist, render_items] : transparent_items) {
+      for (auto &render_item : render_items) {
+        SetDefaultMaterials(model_shader);
+        model_shader.uniform("diffuse_index", render_item.material_index);
+        model_shader.uniform("model_transform", render_item.transform);
+        model_shader.uniform("normal_transform",
+                             calcNormalTransform(render_item.transform));
+        render_item.model->Draw(model_shader);
+      }
+    }
+
+    // TODO: maybe sort trail with other transparent
     glBindVertexArray(trail_vao);
     trail_shader.use();
     trail_shader.uniform("cam_transform", cam_transform);
@@ -1509,6 +1608,9 @@ void Render() {
   glViewport(0, 0, ws.x, ws.y);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  shockwaves.Update(camera);
+  blackholes.Update(camera);
+
   fullscreen_shader.use();
   post_process.BindColorTex(0);
   post_process.BindEmissionTex(1);
@@ -1518,6 +1620,11 @@ void Render() {
   fullscreen_shader.uniform("texture_emission", 1);
   fullscreen_shader.uniform("texture_ssao", 2);
   fullscreen_shader.uniform("use_ao", use_ao);
+  fullscreen_shader.uniform("resolution", ws);
+  fullscreen_shader.uniform("time", (float)global_timer.Elapsed());
+  fullscreen_shader.uniform("stunned", stunned ? 1 : 0);
+  shockwaves.SetUniforms(fullscreen_shader);
+  blackholes.SetUniforms(fullscreen_shader);
   DrawFullscreenQuad();
 
   glBindVertexArray(quad_vao);
@@ -1528,7 +1635,8 @@ void Render() {
   gui_shader.use();
   for (auto &gui_item : gui_items_to_render) {
     gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale,
-                               gui_item.scale_x, gui_item.opacity);
+                               gui_item.scale_x, gui_item.opacity,
+                               gui_item.rot);
   }
   // glBindTexture(GL_TEXTURE_2D, 0);
 

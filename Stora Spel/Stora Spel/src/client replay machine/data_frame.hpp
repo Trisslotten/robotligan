@@ -189,7 +189,8 @@ class MissileFrame : public DataFrame {
    void WriteBack(TransformComponent& in_transform_c);
 };
 
-//-----Force push---------------
+//---
+
 class ForcePushFrame : public DataFrame {
  protected:
   glm::vec3 position_;
@@ -207,4 +208,64 @@ class ForcePushFrame : public DataFrame {
   bool ThresholdCheck(DataFrame& in_future_df);
   void WriteBack(TransformComponent& trans_c);
 };
+
+//---
+
+class MineFrame : public DataFrame {
+ protected:
+  glm::vec3 position_;
+
+ public:
+  MineFrame();
+  MineFrame(TransformComponent& trans_c);
+  ~MineFrame();
+
+  DataFrame* Clone();
+  DataFrame* InterpolateForward(unsigned int in_dist_to_target,
+                                unsigned int in_dist_to_point_b,
+                                DataFrame& in_point_b);
+  bool ThresholdCheck(DataFrame& in_future_df);
+  void WriteBack(TransformComponent& trans_c);
+};
+
+//---
+
+class BlackholeFrame : public DataFrame {
+ protected:
+  glm::vec3 position_;
+  glm::quat rotation_;
+
+ public:
+  BlackholeFrame();
+  BlackholeFrame(TransformComponent& trans_c);
+  ~BlackholeFrame();
+
+  DataFrame* Clone();
+  DataFrame* InterpolateForward(unsigned int in_dist_to_target,
+                                unsigned int in_dist_to_point_b,
+                                DataFrame& in_point_b);
+  bool ThresholdCheck(DataFrame& in_future_df);
+  void WriteBack(TransformComponent& trans_c);
+};
+
+//---
+
+class HookFrame : public DataFrame {
+ protected:
+  glm::vec3 position_;
+  glm::quat rotation_;
+
+ public:
+  HookFrame();
+  HookFrame(TransformComponent& trans_c);
+  ~HookFrame();
+
+  DataFrame* Clone();
+  DataFrame* InterpolateForward(unsigned int in_dist_to_target,
+                                unsigned int in_dist_to_point_b,
+                                DataFrame& in_point_b);
+  bool ThresholdCheck(DataFrame& in_future_df);
+  void WriteBack(TransformComponent& trans_c);
+};
+
 #endif  // DATA_FRAME_HPP_

@@ -98,14 +98,23 @@ EXPORT void SubmitLightSource(glm::vec3 pos, glm::vec3 color,
                               glm::float32 radius, glm::float32 ambient);
 // Submit Bone Animated Mesh
 EXPORT void SubmitBAM(ModelHandle model_h, glm::mat4 transform,
-                      std::vector<glm::mat4> bone_transforms, int material_index = 0);
+                      std::vector<glm::mat4> bone_transforms,
+                      int material_index = 0,
+                      bool cast_shadow = true, float emissive_strength = 1.0f);
 EXPORT void SubmitBAM(const std::vector<ModelHandle>& handles,
                       glm::mat4 transform,
-                      std::vector<glm::mat4> bone_transforms, int material_index = 0);
-EXPORT void Submit(ModelHandle model_h, glm::vec3 pos, int material_index = 0);
-EXPORT void Submit(ModelHandle model_h, glm::mat4 transform, int material_index = 0);
-EXPORT void Submit(const std::vector<ModelHandle>& handles,
-                   glm::mat4 transform, int material_index = 0);
+                      std::vector<glm::mat4> bone_transforms,
+                      int material_index = 0,
+                      bool cast_shadow = true, float emissive_strength = 1.0f);
+EXPORT void Submit(ModelHandle model_h, glm::vec3 pos, int material_index = 0,
+                   bool cast_shadow = true,
+                   float emissive_strength = 1.0f);
+EXPORT void Submit(ModelHandle model_h, glm::mat4 transform,
+                   int material_index = 0,
+                   bool cast_shadow = true, float emissive_strength = 1.0f);
+EXPORT void Submit(const std::vector<ModelHandle>& handles, glm::mat4 transform,
+                   int material_index = 0,
+                   bool cast_shadow = true, float emissive_strength = 1.0f);
 EXPORT void SubmitParticles(ParticleSystemHandle handle);
 EXPORT void SubmitCube(glm::mat4 t);
 EXPORT void SubmitWireframeMesh(ModelHandle model_h);
@@ -113,25 +122,33 @@ EXPORT void LoadWireframeMesh(ModelHandle model_h,
                               const std::vector<glm::vec3>& vertices,
                               const std::vector<unsigned int>& indices);
 
-EXPORT double GetWidthOfText(Font2DHandle font_handle, std::string text, float size);
-EXPORT double GetWidthOfChatText(Font2DHandle font_handle, std::string text,
+EXPORT double GetWidthOfText(Font2DHandle font_handle, std::string text,
                              float size);
+EXPORT double GetWidthOfChatText(Font2DHandle font_handle, std::string text,
+                                 float size);
 EXPORT void Submit(Font2DHandle font_h, glm::vec2 pos, unsigned int size,
                    std::string text, glm::vec4 color = glm::vec4(1, 1, 1, 1),
-                   bool visible = true, bool equal_spacing = false, float spacing = 13.0f);
+                   bool visible = true, bool equal_spacing = false,
+                   float spacing = 13.0f);
 
 EXPORT void Submit(Font2DHandle font_h, glm::vec3 pos, float size,
                    std::string text, glm::vec4 color = glm::vec4(1, 1, 1, 1),
                    glm::mat4 rot = glm::mat4(1.0f));
 
 EXPORT void Submit(GUIHandle gui_h, glm::vec2 pos, float scale,
-                   float scale_x = 100.0f, float opacity = 1.0f);
+                   float scale_x = 100.0f, float opacity = 1.0f, float rot = 0.0f);
 EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, float scale,
                    float rotDegrees, glm::vec3 rotAxis);
 
 EXPORT void Submit(E2DHandle e2D_h, glm::vec3 pos, glm::mat4 matrix);
 
-EXPORT void SubmitTrail(const std::vector<glm::vec3>& pos_history, float width, glm::vec4 color);
+EXPORT void SubmitTrail(const std::vector<glm::vec3>& pos_history, float width,
+                        glm::vec4 color);
+
+EXPORT void CreateShockwave(glm::vec3 position, float duration, float size);
+EXPORT void CreateBlackHole(glm::vec3 position);
+
+EXPORT void SubmitRope(glm::vec3 start, glm::vec3 end);
 
 EXPORT Camera& GetCamera();
 EXPORT void SetCamera(Camera camera);
@@ -146,9 +163,14 @@ EXPORT void SetInvisibleEffect(bool in_bool);
 
 EXPORT void SetBlackout(bool blackout);
 
+EXPORT bool IsBlackoutActive();
+
 EXPORT void SetSky(const std::string& texture);
 
 EXPORT void AddSpotlight(glm::vec3 position, glm::mat4 transform);
+EXPORT void ClearSpotlights();
+
+EXPORT void SetStunned(bool is_stunned);
 
 /*
  * Render all items submitted this frame

@@ -1,10 +1,10 @@
 #include "gameserver.hpp"
-
 #include <algorithm>
 #include <bitset>
 #include <glob/graphics.hpp>
 #include <iostream>
 #include <numeric>
+#include <filesystem>
 
 #include "shared/id_component.hpp"
 #include "shared/pick_up_component.hpp"
@@ -13,6 +13,7 @@
 
 #include "ecs/components.hpp"
 #include "ecs/systems/ability_controller_system.hpp"
+#include "ecs/systems/black_hole_system.hpp"
 #include "ecs/systems/buff_controller_system.hpp"
 #include "ecs/systems/collision_system.hpp"
 #include "ecs/systems/goal_system.hpp"
@@ -22,23 +23,27 @@
 #include "ecs/systems/player_controller_system.hpp"
 #include "ecs/systems/target_system.hpp"
 #include "ecs/systems/pickup_spawner_system.hpp"
-
+#include "ecs/systems/fishing_system.hpp"
+#include "util/settings.hpp"
+#include "util/winadpihelpers.hpp"
 namespace {}  // namespace
 
 GameServer::~GameServer() {}
 
-void GameServer::Init(double in_update_rate) {
+void GameServer::Init(double in_update_rate,
+                      std::unordered_map<std::string, std::string>& args) {
   glob::SetModelUseGL(false);
 
-  server_.Setup(1337);
+  server_.Setup(std::stoi(args["PORT"]), std::stoi(args["MPLAYERS"]));
+  std::cout << "Filesystem: Working dir = " << std::filesystem::path()
+            << std::endl;
 
   lobby_state_.SetGameServer(this);
   play_state_.SetGameServer(this);
   lobby_state_.Init();
   current_state_ = &lobby_state_;
   srand(time(NULL));
-  pings_.resize(NetAPI::Common::kMaxPlayers);
-
+  pings_.resize(std::stoi(args["MPLAYERS"]));
   // very annoying thing
   ability_cooldowns_[AbilityID::BUILD_WALL] =
       GlobalSettings::Access()->ValueOf("ABILITY_BUILD_WALL_COOLDOWN");
@@ -62,6 +67,10 @@ void GameServer::Init(double in_update_rate) {
       GlobalSettings::Access()->ValueOf("ABILITY_TELEPORT_COOLDOWN");
   ability_cooldowns_[AbilityID::BLACKOUT] =
       GlobalSettings::Access()->ValueOf("ABILITY_BLACKOUT_COOLDOWN");
+  ability_cooldowns_[AbilityID::MINE] =
+      GlobalSettings::Access()->ValueOf("ABILITY_MINE_COOLDOWN");
+  ability_cooldowns_[AbilityID::FISHINGING_POLE] =
+      GlobalSettings::Access()->ValueOf("ABILITY_FISHING_POLE_COOLDOWN");
 
   ability_controller::ability_cooldowns = ability_cooldowns_;
 
@@ -132,6 +141,18 @@ void GameServer::Update(float dt) {
       }
     }
     server_.ClearPackets(client_data);
+    if (client_data->client.JustDiconnected()) {
+      NetAPI::Common::Packet to_send;
+      std::string message = "Client: " + client_names_[id] + " disconnected!";
+      to_send.Add(server_name_.c_str(), server_name_.size());
+      to_send << server_name_.size();
+      to_send.Add(message.c_str(), message.size());
+      to_send << message.size();
+      to_send << 255;
+      to_send << PacketBlockType::MESSAGE;
+      server_.SendToAll(to_send);
+      client_data->client.SetDisconnected(false);
+    }
   }
   DoOncePerSecond();
   current_state_->Update(dt);
@@ -339,6 +360,14 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       if (client_names_[client_id] != name) {
         while (NameAlreadyExists(name)) {
           name.append("xD");
+          /*if (name.find("(") != std::string::npos) {
+            auto index = name.find("(");
+            unsigned s = (name.at(index + 1) - '0');
+            s++;
+            name.at(index + 1) = (char)s;
+          } else {
+            name.append("(1)");
+          }*/
         }
         client_names_[client_id] = name;
         lobby_state_.SetTeamsUpdated(true);
@@ -363,6 +392,9 @@ void GameServer::ReceiveGameEvent(const GameEvent& event) {
   if (event.type == GameEvent::GOAL) {
     play_state_.StartResetTimer();
   }
+  if (event.type == GameEvent::SWITCH_GOALS_BEGIN) {
+    play_state_.SetSwitchingGoals(true);
+  }
 }
 
 void GameServer::UpdateSystems(float dt) {
@@ -371,16 +403,22 @@ void GameServer::UpdateSystems(float dt) {
   buff_controller::Update(registry_, dt);
   target_system::Update(registry_);
   missile_system::Update(registry_, dt);
+  black_hole::Update(registry_, dt);
 
   UpdatePhysics(registry_, dt);
   UpdateCollisions(registry_);
   lifetime::Update(registry_, dt);
   pickup_spawner_system::Update(registry_, dt);
+  fishing_system::Update(registry_, dt);
 
   if (!play_state_.IsResetting()) goal_system::Update(registry_);
 
   dispatcher.update<EventInfo>();
   // glob::LoadWireframeMesh(model_arena, mh.pos, mh.indices);
+}
+
+void GameServer::HandleSwitchGoal() {
+  goal_system::PerformSwitchGoals(registry_);
 }
 
 void GameServer::ReceiveEvent(const EventInfo& e) {
@@ -406,7 +444,7 @@ void GameServer::DoOncePerSecond() {
   NetAPI::Common::Packet p;
   p.GetHeader()->receiver = NetAPI::Socket::EVERYONE;
   auto& data = server_.GetClients();
-  pings_.resize(NetAPI::Common::kMaxPlayers);
+  pings_.resize(kMaxPlayers);
   for (auto cli : data) {
     pings_[cli.first] = cli.second->ping_sum;
   }

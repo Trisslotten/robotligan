@@ -269,6 +269,7 @@ namespace glob {
     settings_.compute_shader->uniform("min_speed", settings_.min_velocity);
     settings_.compute_shader->uniform("size", settings_.size);
     settings_.compute_shader->uniform("time", settings_.time);
+    settings_.compute_shader->uniform("emitter_vel", settings_.emitter_vel);
 #endif
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, position_vbo_);
@@ -311,6 +312,7 @@ namespace glob {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     shader.uniform("image", 0);
+    shader.uniform("emissive", settings_.emissive);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, settings_.texture);
     glBindVertexArray(vertex_array_object_);

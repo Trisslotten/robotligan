@@ -52,7 +52,7 @@ bool glob::Elements2D::LoadFromFile(const std::string& path) {
 }
 
 void glob::Elements2D::DrawOnScreen(ShaderProgram& shader, glm::vec2 pos,
-                                    float scale, float scale_x, float opacity) {
+                                    float scale, float scale_x, float opacity, float rot) {
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tex_id_);
 
@@ -60,6 +60,7 @@ void glob::Elements2D::DrawOnScreen(ShaderProgram& shader, glm::vec2 pos,
   shader.uniform("t_scale", scale);
   shader.uniform("t_scale_x", scale_x);
   shader.uniform("opacity", opacity);
+  shader.uniform("t_rot", rot);
   shader.uniform("screen_dims", window::GetWindowDimensions());
   shader.uniform("texture_dims", glm::vec2(texture_width_, texture_height_));
   shader.uniform("gui_element_texture", 0);

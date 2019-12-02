@@ -36,7 +36,7 @@ void RenderSystem(entt::registry& registry) {
       if (!m.invisible) {
         glob::Submit(m.handles,
           glm::translate(t.position) * glm::toMat4(t.rotation) *
-          glm::translate(-m.offset) * glm::scale(t.scale), m.diffuse_index);
+          glm::translate(-m.offset) * glm::scale(t.scale*0.01f), m.diffuse_index, m.cast_shadow, m.emission_strength);
       }
     }
   }
@@ -53,7 +53,7 @@ void RenderSystem(entt::registry& registry) {
         glm::translate(t.position) *
         glm::toMat4(t.rotation + m.rot_offset) *
         glm::translate(-m.offset) * glm::scale(t.scale),
-        a.bone_transforms, m.diffuse_index);
+        a.bone_transforms, m.diffuse_index, m.cast_shadow, m.emission_strength);
     }
   }
 
@@ -127,17 +127,14 @@ void RenderSystem(entt::registry& registry) {
                    button_c.text, button_c.text_current_color);
       
       if (button_c.gui_handle_current) {
-        glob::Submit(button_c.gui_handle_current, button_pos, 1.f);
+        glob::Submit(button_c.gui_handle_current, button_pos, 0.66f); // 720p
 
         if (button_c.gui_handle_icon) {
-          glob::Submit(button_c.gui_handle_icon, button_pos, 1.f);
+          glob::Submit(button_c.gui_handle_icon, button_pos, 0.66f); // 720p
         }
       }
       if (button_c.has_hovered) {
-        glm::vec2 tooltip_pos = Input::MousePos();
-        tooltip_pos.y =
-            glob::window::GetWindowDimensions().y - tooltip_pos.y - 15;
-        tooltip_pos.x += 20;
+        glm::vec2 tooltip_pos = button_c.tooltip_pos;
 		glob::Submit(button_c.f_handle, tooltip_pos - glm::vec2(1,1), 32, button_c.hover_text, glm::vec4(0,0,0,0.7));
         glob::Submit(button_c.f_handle, tooltip_pos, 32, button_c.hover_text);
 	  }
