@@ -125,7 +125,7 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
   registry.assign<TimerComponent>(e, 5.f);
 
   e = registry.create();
-  registry.assign<TimerComponent>(e, 2.0f);
+  registry.assign<TimerComponent>(e, 5.0f);
   std::vector<glm::vec4> colors = {glm::vec4(1.f, 1.f, 0.f, 1.f),
                                    glm::vec4(1.f, 0.f, 0.f, 1.f),
                                    glm::vec4(0.f, 1.f, 0.f, 1.f)};
@@ -136,19 +136,19 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
   registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
-  registry.assign<TimerComponent>(e, 2.0f);
+  registry.assign<TimerComponent>(e, 5.0f);
   position = glm::vec3(x * -1.1f, 0.f, 0.f);
 
   registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
-  registry.assign<TimerComponent>(e, 2.0f);
+  registry.assign<TimerComponent>(e, 5.0f);
   position = glm::vec3(0.f, 0.f, 50.f);
 
   registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
-  registry.assign<TimerComponent>(e, 2.0f);
+  registry.assign<TimerComponent>(e, 5.0f);
   position = glm::vec3(0.f, 0.f, -50.f);
 
   registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
@@ -2067,7 +2067,7 @@ void PlayState::CreateInGameMenu() {
   };
 
   // END GAME -- change registry to registry_mainmenu_
-  in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "MAINMENU",
+  in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "MAIN MENU",
                                           in_game_menu_pos + glm::vec2(0, -140),
                                           font_test_, false);
   in_game_buttons_->button_func = [&] {
@@ -2991,7 +2991,7 @@ void PlayState::Reset() {
   auto view_delete =
       registry_gameplay_.view<ParticleComponent, TimerComponent>();
   for (auto& entity : view_delete) {
-    registry_gameplay_.destroy(entity);
+   // registry_gameplay_.destroy(entity);
   }
   if (my_team_ == TEAM_BLUE) {
     yaw_ = glm::pi<float>();
