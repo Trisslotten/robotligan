@@ -9,6 +9,7 @@
 #include "shared/shared.hpp"
 #include "util/event.hpp"
 #include "util/timer.hpp"
+#include <set>
 
 class GameServer;
 
@@ -113,6 +114,10 @@ class ServerPlayState : public ServerState {
     switch_goal_timer_.Restart();
   }
 
+  void SetWantDab(long client_id) {
+    wants_dab_.insert(client_id);
+  }
+
  private:
   entt::entity CreateIDEntity();
   unsigned short reconnect_id_ = 100;
@@ -142,6 +147,8 @@ class ServerPlayState : public ServerState {
   std::vector<entt::entity> created_pick_ups_;
   std::vector<entt::entity> created_walls_;
   std::vector<entt::entity> created_mines_;
+
+  std::set<long> wants_dab_;
 
   EntityID entity_guid_ = 0;
 

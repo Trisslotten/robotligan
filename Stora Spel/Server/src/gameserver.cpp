@@ -1,10 +1,10 @@
 #include "gameserver.hpp"
 #include <algorithm>
 #include <bitset>
+#include <filesystem>
 #include <glob/graphics.hpp>
 #include <iostream>
 #include <numeric>
-#include <filesystem>
 
 #include "shared/id_component.hpp"
 #include "shared/pick_up_component.hpp"
@@ -16,14 +16,14 @@
 #include "ecs/systems/black_hole_system.hpp"
 #include "ecs/systems/buff_controller_system.hpp"
 #include "ecs/systems/collision_system.hpp"
+#include "ecs/systems/fishing_system.hpp"
 #include "ecs/systems/goal_system.hpp"
 #include "ecs/systems/lifetime_system.hpp"
 #include "ecs/systems/missile_system.hpp"
 #include "ecs/systems/physics_system.hpp"
+#include "ecs/systems/pickup_spawner_system.hpp"
 #include "ecs/systems/player_controller_system.hpp"
 #include "ecs/systems/target_system.hpp"
-#include "ecs/systems/pickup_spawner_system.hpp"
-#include "ecs/systems/fishing_system.hpp"
 #include "util/settings.hpp"
 #include "util/winadpihelpers.hpp"
 namespace {}  // namespace
@@ -373,6 +373,10 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
         lobby_state_.SetTeamsUpdated(true);
         this->client_sent_name_ = true;
       }
+      break;
+    }
+    case PacketBlockType::WANT_DAB: {
+      play_state_.SetWantDab(client_id);
       break;
     }
   }

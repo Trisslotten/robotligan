@@ -444,6 +444,10 @@ void PlayState::Update(float dt) {
     stun_timer_.Pause();
   }
 
+  if (Input::IsKeyPressed(GLFW_KEY_F)) {
+    want_dab_ = true;
+  }
+
   if (game_has_ended_) {
     engine_->DrawScoreboard();
 
@@ -462,6 +466,11 @@ void PlayState::UpdateNetwork() {
   frame_id++;
   packet << frame_id;
   packet << PacketBlockType::FRAME_ID;
+
+  if(want_dab_) {
+    packet << PacketBlockType::WANT_DAB;
+    want_dab_ = false;
+  }
 
   // Record replay
   if (this->recording_) {
@@ -1259,9 +1268,10 @@ void PlayState::DrawQuickslots() {
   if (primary_cd_ > 0.0f) {
     opacity = 0.33f;
   }
-  if (my_primary_ability_id == (int)AbilityID::FISHINGING_POLE && me_hooked_) { // fishing hook special case (stage 2)
+  if (my_primary_ability_id == (int)AbilityID::FISHINGING_POLE &&
+      me_hooked_) {  // fishing hook special case (stage 2)
     glob::Submit(gui_detach_, glm::vec2(9, 50), 0.75f, 100, 1.f);
-  } else { // otherwise draw ability and CD normally
+  } else {  // otherwise draw ability and CD normally
     glob::Submit(ability_handles_[my_primary_ability_id], glm::vec2(9, 50),
                  0.75f, 100, opacity);
     if (primary_cd_ > 0.0f) {
@@ -1623,18 +1633,18 @@ void PlayState::CreatePlayerEntities() {
 
     glob::ModelHandle player_model;
     if (entity_id == my_id_) {
-      glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
-      // glm::vec3 camera_offset = glm::vec3(-4.5f, 1.4f, 1.5f);
+      //glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
+      glm::vec3 camera_offset = glm::vec3(-4.5f, 1.4f, 1.5f);
 
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
                                                  glm::quat(glm::vec3(0.f)));
 
-      player_model = glob::GetModel("Assets/Mech/FPS_body.fbx");
-      // player_model = glob::GetModel(kModelPathMech);
+      //player_model = glob::GetModel("Assets/Mech/FPS_body.fbx");
+      player_model = glob::GetModel(kModelPathMech);
 
       model_c.cast_shadow = false;
-      pc.localPlayer = true;
-      // pc.localPlayer = false;
+      //pc.localPlayer = true;
+      pc.localPlayer = false;
 
       my_entity_ = entity;
     } else {

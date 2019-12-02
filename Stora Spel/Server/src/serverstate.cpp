@@ -276,6 +276,22 @@ void ServerPlayState::Update(float dt) {
     dispatcher.trigger(ge);
     switching_goals = false;
   }
+
+  if (!wants_dab_.empty()) {
+    auto view = registry.view<IDComponent, PlayerComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& player_c = view.get<PlayerComponent>(entity);
+
+      if(wants_dab_.count(player_c.client_id) > 0) {
+        GameEvent event;
+        event.type = GameEvent::DABBING;
+        event.dabbing.player_entity_id = id_c.id;
+        dispatcher.trigger(event);
+      }
+    }
+    wants_dab_.clear();
+  }
 }
 
 void ServerPlayState::HandleDataToSend() {
@@ -1174,7 +1190,7 @@ void ServerPlayState::Reconnect(int id) {
     auto& ball_c = ball_view.get<BallComponent>(ball);
     auto& id_c = ball_view.get<IDComponent>(ball);
 
-    if(team_id == ball_c.faker_team) {
+    if (team_id == ball_c.faker_team) {
       to_send << ball_c.is_real;
     } else {
       to_send << true;

@@ -211,5 +211,6 @@ void MainMenuState::CreateBackgroundEnitites() {
     glm::vec3 dir = glm::vec3(0) - cam_trans.position;
     cam_c.orientation =
         glm::quat(glm::vec3(0.f, 0.f, 0.f * glm::radians(-86.f)));
+
   }
 }
