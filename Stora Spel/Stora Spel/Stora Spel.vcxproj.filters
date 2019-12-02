@@ -115,6 +115,7 @@
     <ClInclude Include="src\ecs\systems\fireworks_system.hpp" />
     <ClInclude Include="src\ecs\components\black_hole_component.hpp" />
     <ClInclude Include="src\ecs\components\follow_bone_component.hpp" />
+    <ClInclude Include="src\ecs\components\destroy_on_reset_component.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="assets\shaders\modelshader.frag" />

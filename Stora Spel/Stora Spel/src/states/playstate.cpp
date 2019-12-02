@@ -104,13 +104,12 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
   float x_dir = (x > 0) ? -1 : 1;
   glob::SetParticleDirection(handle, glm::vec3(x_dir, 5.f, 0.f));
 
-  e = registry.create();
   handle = glob::CreateParticleSystem();
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
   glob::SetEmitPosition(handle,
                         glm::vec3(x * 1.0f, 0.f, 15.f * arena_scale_.z));
-  e = registry.create();
+
   handle = glob::CreateParticleSystem();
   handles.push_back(handle);
   glob::SetParticleSettings(handle, "goal_fire.txt");
@@ -123,6 +122,7 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
 
   registry.assign<ParticleComponent>(e, handles, offsets, directions);
   registry.assign<TimerComponent>(e, 5.f);
+  registry.assign<DestroyOnResetComponent>(e);
 
   e = registry.create();
   registry.assign<TimerComponent>(e, 2.0f);
@@ -155,6 +155,7 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
 }
 
 void PlayState::Init() {
+  registry_gameplay_.reset();
   glob::window::SetMouseLocked(true);
   engine_->SetSendInput(true);
   engine_->SetCurrentRegistry(&registry_gameplay_);
@@ -2967,9 +2968,14 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 }
 
 void PlayState::Reset() {
+  auto destroy_view = registry_gameplay_.view<DestroyOnResetComponent>();
+  registry_gameplay_.destroy(destroy_view.begin(), destroy_view.end());
+
   auto view_particle = registry_gameplay_.view<ParticleComponent>();
   switching_goals_ = false;
   for (auto& entity : view_particle) {
+    if (registry_gameplay_.has<TimerComponent>(entity)) continue;
+
     auto& particle_c = view_particle.get(entity);
 
     for (int i = 0; i < particle_c.handles.size(); ++i) {
@@ -2977,11 +2983,6 @@ void PlayState::Reset() {
     }
   }
 
-  auto view_delete =
-      registry_gameplay_.view<ParticleComponent, TimerComponent>();
-  for (auto& entity : view_delete) {
-    registry_gameplay_.destroy(entity);
-  }
   if (my_team_ == TEAM_BLUE) {
     yaw_ = glm::pi<float>();
   } else if (my_team_ == TEAM_RED) {

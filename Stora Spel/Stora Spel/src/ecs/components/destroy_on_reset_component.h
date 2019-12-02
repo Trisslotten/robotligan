@@ -1,0 +1,6 @@
+#ifndef DESTROY_ON_RESET_COMPONENT_HPP_
+#define DESTROY_ON_RESET_COMPONENT_HPP_
+
+struct DestroyOnResetComponent {};
+
+#endif  // DESTROY_ON_RESET_COMPONENT_HPP_
