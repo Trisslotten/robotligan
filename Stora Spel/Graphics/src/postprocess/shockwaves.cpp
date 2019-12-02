@@ -59,4 +59,8 @@ void Shockwaves::SetUniforms(ShaderProgram& shader) {
   
 }
 
+void Shockwaves::Clear() {
+  shockwaves_.clear();
+}
+
 }  // namespace glob

@@ -180,6 +180,7 @@ void Engine::Update(float dt) {
   if (wanted_state_type_ != current_state_->Type()) {
     // cleanup old state
     current_state_->Cleanup();
+    glob::ClearEffects();
     // set new state
     switch (wanted_state_type_) {
       case StateType::MAIN_MENU:
