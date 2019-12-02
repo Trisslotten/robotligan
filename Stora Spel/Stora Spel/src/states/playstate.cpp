@@ -2057,7 +2057,7 @@ void PlayState::CreateInGameMenu() {
   };
 
   // END GAME -- change registry to registry_mainmenu_
-  in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "MAINMENU",
+  in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "MAIN MENU",
                                           in_game_menu_pos + glm::vec2(0, -140),
                                           font_test_, false);
   in_game_buttons_->button_func = [&] {
