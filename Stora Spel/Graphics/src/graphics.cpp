@@ -1343,7 +1343,12 @@ void SubmitRope(glm::vec3 start, glm::vec3 end) {
 }
 
 void CreateBlackHole(glm::vec3 position) {
-  blackholes.Create(position);
+  blackholes.Create(position); }
+
+void ClearEffects() {
+  shockwaves.Clear();
+  blackholes.Clear();
+  SetStunned(false);
 }
 
 void SubmitCube(glm::mat4 t) { cubes.push_back(t); }
