@@ -221,6 +221,7 @@
     <ClInclude Include="src\ecs\systems\lifetime_system.hpp" />
     <ClInclude Include="src\ecs\systems\particle_system.hpp" />
     <ClInclude Include="src\ecs\systems\gui_system.hpp" />
+    <ClInclude Include="src\ecs\systems\pickup_bob_system.hpp" />
     <ClInclude Include="src\ecs\systems\print_position_system.hpp" />
     <ClInclude Include="src\ecs\systems\render_system.hpp" />
     <ClInclude Include="shared\shared\camera_component.hpp" />

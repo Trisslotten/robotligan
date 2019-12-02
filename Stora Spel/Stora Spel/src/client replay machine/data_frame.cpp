@@ -304,6 +304,20 @@ DataFrame* PickUpFrame::Clone() {
 DataFrame* PickUpFrame::InterpolateForward(unsigned int in_dist_to_target,
                                            unsigned int in_dist_to_point_b,
                                            DataFrame& in_point_b) {
+  // INTERPOLATED FRAME
+  PickUpFrame* ret_frame = new PickUpFrame();
+
+  // "INTERPOLATION" :D
+
+  // POSITION
+  ret_frame->position_ = this->position_;
+
+  return ret_frame;
+
+  /* REMOVE THING BELOW IF ABOVE WORKS*/
+
+  /*
+
   // Cast the DataFrame to PlayerFrame
   try {
     PickUpFrame& point_b = dynamic_cast<PickUpFrame&>(in_point_b);
@@ -341,6 +355,7 @@ DataFrame* PickUpFrame::InterpolateForward(unsigned int in_dist_to_target,
   }
 
   return nullptr;
+  */
 }
 
 bool PickUpFrame::ThresholdCheck(DataFrame& in_future_df) {

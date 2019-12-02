@@ -276,10 +276,13 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     // Transfer
     bf_c_ptr->WriteBack(transform_c);
   } else if (in_type == REPLAY_PICKUP) {
+    /* //TRACKER
     PickUpFrame* pu_c_ptr = dynamic_cast<PickUpFrame*>(in_df_ptr);
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
     pu_c_ptr->WriteBack(trans_c);
+    */
+
     // TBA
   } else if (in_type == REPLAY_WALL) {
     // Cast
@@ -428,7 +431,7 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
 
     TransformComponent& trans_c =
         in_registry.assign<TransformComponent>(entity);
-    pu_ptr->WriteBack(trans_c);
+    pu_ptr->WriteBack(trans_c);  // TRACKER
 
     glob::ModelHandle pickup_model = glob::GetModel(kModelPathPickup);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
@@ -777,8 +780,7 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
     while (captured_events_[next_event_index_to_read_].frame_number ==
            current_frame_number_read_) {
       dispatcher.trigger(captured_events_[next_event_index_to_read_].event);
-      // printf("Triggered event of type: %i \n",
-      //       captured_events_[next_index_to_read_].event.type);
+
       next_event_index_to_read_++;
     }
   }
