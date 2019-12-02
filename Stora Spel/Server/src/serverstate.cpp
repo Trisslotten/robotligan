@@ -41,6 +41,7 @@ void ServerLobbyState::Update(float dt) {
       this->game_server_->GetServer().SendToAll(p);
     }
   }
+
   bool can_start = clients_ready_.size() >= min_players;
   for (auto ready : clients_ready_) {
     can_start = can_start && ready.second;
