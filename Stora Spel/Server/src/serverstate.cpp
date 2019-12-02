@@ -876,6 +876,20 @@ void ServerPlayState::ResetEntities() {
       dispatcher.trigger(homing_ball_end_event);
     }
     ball_component.homer_cid = -1;
+
+	// clear projectiles and hooks
+    auto view_projectiles = registry.view<ProjectileComponent, IDComponent>();
+    for (auto projectile : view_projectiles) {
+      auto id_c = registry.get<IDComponent>(projectile);
+      destroy_entities_.push_back(id_c.id);
+      registry.destroy(projectile);
+	}
+    auto view_hooks = registry.view<HookComponent, IDComponent>();
+    for (auto hook : view_hooks) {
+      auto id_c = registry.get<IDComponent>(hook);
+      destroy_entities_.push_back(id_c.id);
+      registry.destroy(hook);
+    }
   }
 
   // remove fishing hook
@@ -1174,7 +1188,7 @@ void ServerPlayState::Reconnect(int id) {
     auto& ball_c = ball_view.get<BallComponent>(ball);
     auto& id_c = ball_view.get<IDComponent>(ball);
 
-    if(team_id == ball_c.faker_team) {
+    if (team_id == ball_c.faker_team) {
       to_send << ball_c.is_real;
     } else {
       to_send << true;

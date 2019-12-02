@@ -125,7 +125,7 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
   registry.assign<TimerComponent>(e, 5.f);
 
   e = registry.create();
-  registry.assign<TimerComponent>(e, 2.0f);
+  registry.assign<TimerComponent>(e, 5.0f);
   std::vector<glm::vec4> colors = {glm::vec4(1.f, 1.f, 0.f, 1.f),
                                    glm::vec4(1.f, 0.f, 0.f, 1.f),
                                    glm::vec4(0.f, 1.f, 0.f, 1.f)};
@@ -136,19 +136,19 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
   registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
-  registry.assign<TimerComponent>(e, 2.0f);
+  registry.assign<TimerComponent>(e, 5.0f);
   position = glm::vec3(x * -1.1f, 0.f, 0.f);
 
   registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
-  registry.assign<TimerComponent>(e, 2.0f);
+  registry.assign<TimerComponent>(e, 5.0f);
   position = glm::vec3(0.f, 0.f, 50.f);
 
   registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
-  registry.assign<TimerComponent>(e, 2.0f);
+  registry.assign<TimerComponent>(e, 5.0f);
   position = glm::vec3(0.f, 0.f, -50.f);
 
   registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
@@ -1259,9 +1259,10 @@ void PlayState::DrawQuickslots() {
   if (primary_cd_ > 0.0f) {
     opacity = 0.33f;
   }
-  if (my_primary_ability_id == (int)AbilityID::FISHINGING_POLE && me_hooked_) { // fishing hook special case (stage 2)
+  if (my_primary_ability_id == (int)AbilityID::FISHINGING_POLE &&
+      me_hooked_) {  // fishing hook special case (stage 2)
     glob::Submit(gui_detach_, glm::vec2(9, 50), 0.75f, 100, 1.f);
-  } else { // otherwise draw ability and CD normally
+  } else {  // otherwise draw ability and CD normally
     glob::Submit(ability_handles_[my_primary_ability_id], glm::vec2(9, 50),
                  0.75f, 100, opacity);
     if (primary_cd_ > 0.0f) {
@@ -2980,7 +2981,7 @@ void PlayState::Reset() {
   auto view_delete =
       registry_gameplay_.view<ParticleComponent, TimerComponent>();
   for (auto& entity : view_delete) {
-    registry_gameplay_.destroy(entity);
+   // registry_gameplay_.destroy(entity);
   }
   if (my_team_ == TEAM_BLUE) {
     yaw_ = glm::pi<float>();
