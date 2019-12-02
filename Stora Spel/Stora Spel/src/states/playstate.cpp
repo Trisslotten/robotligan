@@ -1588,7 +1588,7 @@ void PlayState::CreatePlayerEntities() {
     glm::vec3 character_scale = glm::vec3(0.0033f);
 
     glob::ModelHandle player_model = glob::GetModel(kModelPathMech);
-    glob::ModelHandle FPS_model = glob::GetModel("Assets/Mech/FPS_body.fbx");
+    glob::ModelHandle FPS_model = glob::GetModel(kModelPathMechFPS);
 
     registry_gameplay_.assign<IDComponent>(entity, entity_id);
     auto& pc = registry_gameplay_.assign<PlayerComponent>(entity);
@@ -1652,25 +1652,19 @@ void PlayState::CreateArenaEntity() {
   auto arena = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f) * arena_scale_;
-  glob::ModelHandle model_arena =
-      glob::GetModel("assets/Arena/Map_V3_ARENA.fbx");
-  glob::ModelHandle model_arena_banner =
-      glob::GetModel("assets/Arena/Map_V3_ARENA_SIGNS.fbx");
-  glob::ModelHandle model_map = glob::GetModel("assets/MapV3/Map_Walls.fbx");
-  glob::ModelHandle model_map_floor =
-      glob::GetModel("assets/MapV3/Map_Floor.fbx");
+  glob::ModelHandle model_arena = glob::GetModel(kModelPathArena);
+  glob::ModelHandle model_arena_banner = glob::GetModel(kModelPathArenaSigns);
+  glob::ModelHandle model_map = glob::GetModel(kModelPathMapWalls);
+  glob::ModelHandle model_map_floor = glob::GetModel(kModelPathMapFloor);
   glob::ModelHandle model_map_projectors =
-      glob::GetModel("assets/MapV3/Map_Projectors.fbx");
-  glob::ModelHandle model_map_misc_laken =
-      glob::GetModel("assets/Arena_misc/ArenaMiscLaken.fbx");
+      glob::GetModel(kModelPathMapProjectors);
+  glob::ModelHandle model_map_misc_laken = glob::GetModel(kModelPathMiscLaken);
   glob::ModelHandle model_map_misc_spectre =
-      glob::GetModel("assets/Arena_misc/ArenaMiscSpectre.fbx");
+      glob::GetModel(kModelPathMiscSpectre);
   glob::ModelHandle model_map_misc_starfighter =
-      glob::GetModel("assets/Arena_misc/ArenaMiscStarfighter.fbx");
-  glob::ModelHandle model_map_misc_mig =
-      glob::GetModel("assets/Arena_misc/ArenaMiscMig.fbx");
-  glob::ModelHandle model_map_misc1 =
-      glob::GetModel("assets/Arena_misc/ArenaMisc1.fbx");
+      glob::GetModel(kModelPathMiscStarfighter);
+  glob::ModelHandle model_map_misc_mig = glob::GetModel(kModelPathMiscMig);
+  glob::ModelHandle model_map_misc1 = glob::GetModel(kModelPathMisc1);
 
   // glob::GetModel(kModelPathMapSingular);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
@@ -1697,7 +1691,7 @@ void PlayState::CreateArenaEntity() {
 
   {
     glob::ModelHandle batman_light =
-        glob::GetTransparentModel("assets/batman_light/batman_light.fbx");
+        glob::GetTransparentModel(kModelPathBatmanLight);
     int x = 1;
     int y = 1;
     for (int i = 0; i < 4; i++) {
@@ -1732,8 +1726,7 @@ void PlayState::CreateArenaEntity() {
 void PlayState::CreateAudienceEntities() {
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
-  glob::ModelHandle model_audience =
-      glob::GetModel("assets/Arena/Audience.fbx");
+  glob::ModelHandle model_audience = glob::GetModel(kModelPathAudience);
 
   for (int i = 0; i < 4; i++) {
     auto audience = registry_gameplay_.create();
@@ -1759,10 +1752,9 @@ void PlayState::CreateMapEntity() {
   auto arena = registry_gameplay_.create();
   glm::vec3 zero_vec = glm::vec3(0.0f);
   glm::vec3 arena_scale = glm::vec3(1.0f) * arena_scale_;
-  glob::ModelHandle model_hitbox =
-      glob::GetModel("assets/MapV3/Map_Hitbox.fbx");
+  glob::ModelHandle model_hitbox = glob::GetModel(kModelPathMapHitbox);
   glob::ModelHandle model_map_walls =
-      glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
+      glob::GetTransparentModel(kModelPathMapEnergyWalls);
 
   glm::vec3 map_wall_scale = glm::vec3(1) * arena_scale_;
   auto& model_c = registry_gameplay_.assign<ModelComponent>(arena);
@@ -1862,7 +1854,7 @@ void PlayState::CreateSpotlights() {
     // Add model entity for spotlight
     auto entity = registry_gameplay_.create();
     ModelComponent& model_c = registry_gameplay_.assign<ModelComponent>(entity);
-    glob::ModelHandle m_hndl = glob::GetModel("assets/Spotlight/Spotlight.fbx");
+    glob::ModelHandle m_hndl = glob::GetModel(kModelPathSpotlight);
     // model_c.handles.push_back(m_hndl);
     TransformComponent& trans_c =
         registry_gameplay_.assign<TransformComponent>(entity);
@@ -1931,11 +1923,11 @@ void PlayState::CreateNewBallEntity(bool fake, EntityID id) {
   glm::vec3 arena_scale = glm::vec3(1.0f);
   auto ball = registry_gameplay_.create();
   glob::ModelHandle model_ball_projectors_p =
-      glob::GetModel("Assets/Ball_new/Ball_projectors.fbx");
+      glob::GetModel(kModelPathBallProjectors);
 
-  std::string model_path = "Assets/Ball_new/Ball_Sphere.fbx";
+  std::string model_path = kModelPathBallSphere;
   if (fake) {
-    model_path = "Assets/Ball_new/fake/Ball_Sphere.fbx";
+    model_path = kModelPathBallSphereFake;
   } else {
     AddLightToBall(registry_gameplay_, ball);
   }
@@ -2031,7 +2023,7 @@ void PlayState::AddPlayer() {
     registry_gameplay_.assign<TransformComponent>(entity, glm::vec3(0.f),
                                                   glm::quat(), character_scale);
 
-    glob::ModelHandle player_model = glob::GetModel("Assets/Mech/Mech.fbx");
+    glob::ModelHandle player_model = glob::GetModel(kModelPathMech);
     auto& model_c = registry_gameplay_.assign<ModelComponent>(entity);
     model_c.handles.push_back(player_model);
     model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
@@ -2083,9 +2075,9 @@ void PlayState::CreateWall(EntityID id, glm::vec3 position, glm::quat rotation,
   obb.extents[1] = 6.2f;
   obb.extents[2] = 5.5f;
 
-  glob::ModelHandle model = glob::GetModel("assets/Wall/Wall_Solid.fbx");
+  glob::ModelHandle model = glob::GetModel(kModelPathWall);
   glob::ModelHandle model_t =
-      glob::GetTransparentModel("assets/Wall/Wall_Transparent.fbx");
+      glob::GetTransparentModel(kModelPathWallTransparent);
   int a = 10;
   std::vector<glob::ModelHandle> hs;
   hs.push_back(model);

@@ -3,48 +3,53 @@
 #include <GLFW/glfw3.h>
 #include <glob/graphics.hpp>
 #include <glob/window.hpp>
+#include <util/asset_paths.hpp>
 #include "..//entitycreation.hpp"
 #include "engine.hpp"
 
 // Private---------------------------------------------------------------------
 
 void ReplayState::AddConstantStuff() {
+  this->AddArenaStuff();
+  this->AddBatmanLights();
+  this->AddLights();
+  this->AddSpotlights();
+  this->AddCamera(glm::vec3(0.f, 13.f, 42.f));  //  glm::vec3(60.f, 4.f, 38.f);
+}
+
+void ReplayState::AddArenaStuff() {
   // Map
-  entt::entity map = this->replay_registry_.create();
-  glm::vec3 zero_vec = glm::vec3(0.0f);
-  glm::vec3 map_scale = glm::vec3(2.6f) * arena_scale_;
-  glob::ModelHandle model_map_walls =
-      glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
-
-  ModelComponent& model_map_c =
-      this->replay_registry_.assign<ModelComponent>(map);
-  model_map_c.handles.push_back(model_map_walls);
-
-  this->replay_registry_.assign<TransformComponent>(map, zero_vec, zero_vec,
-                                                    map_scale);
-
-  // Arena
   entt::entity arena = this->replay_registry_.create();
-  glm::vec3 arena_scale = glm::vec3(1.0f) * arena_scale_;
-  glob::ModelHandle model_arena =
-      glob::GetModel("assets/Arena/Map_V3_ARENA.fbx");
-  glob::ModelHandle model_arena_banner =
-      glob::GetModel("assets/Arena/Map_V3_ARENA_SIGNS.fbx");
-  glob::ModelHandle model_map = glob::GetModel("assets/MapV3/Map_Walls.fbx");
-  glob::ModelHandle model_map_floor =
-      glob::GetModel("assets/MapV3/Map_Floor.fbx");
-  glob::ModelHandle model_map_projectors =
-      glob::GetModel("assets/MapV3/Map_Projectors.fbx");
+  glm::vec3 zero_vec = glm::vec3(0.0f);
 
-  // glob::GetModel(kModelPathMapSingular);
-  ModelComponent& model_arena_c =
+  glob::ModelHandle model_arena = glob::GetModel(kModelPathArena);
+  glob::ModelHandle model_arena_banner = glob::GetModel(kModelPathArenaSigns);
+  glob::ModelHandle model_map = glob::GetModel(kModelPathMapWalls);
+  glob::ModelHandle model_map_floor = glob::GetModel(kModelPathMapFloor);
+  glob::ModelHandle model_map_projectors =
+      glob::GetModel(kModelPathMapProjectors);
+  glob::ModelHandle model_map_misc_laken = glob::GetModel(kModelPathMiscLaken);
+  glob::ModelHandle model_map_misc_spectre =
+      glob::GetModel(kModelPathMiscSpectre);
+  glob::ModelHandle model_map_misc_starfighter =
+      glob::GetModel(kModelPathMiscStarfighter);
+  glob::ModelHandle model_map_misc_mig = glob::GetModel(kModelPathMiscMig);
+  glob::ModelHandle model_map_misc1 = glob::GetModel(kModelPathMisc1);
+
+  ModelComponent& model_c =
       this->replay_registry_.assign<ModelComponent>(arena);
-  model_arena_c.handles.push_back(model_arena);
-  model_arena_c.handles.push_back(model_arena_banner);
-  model_arena_c.handles.push_back(model_map_projectors);
+  model_c.handles.push_back(model_arena);
+  model_c.handles.push_back(model_arena_banner);
+  model_c.handles.push_back(model_map_projectors);
+  model_c.handles.push_back(model_map_misc1);
+  model_c.handles.push_back(model_map_misc_laken);
+  model_c.handles.push_back(model_map_misc_spectre);
+  model_c.handles.push_back(model_map_misc_starfighter);
+  model_c.handles.push_back(model_map_misc_mig);
+  model_c.cast_shadow = false;
 
   this->replay_registry_.assign<TransformComponent>(arena, zero_vec, zero_vec,
-                                                    arena_scale);
+                                                    this->arena_scale_);
 
   entt::entity arena_floor = this->replay_registry_.create();
   ModelComponent& floor_model_c =
@@ -52,26 +57,64 @@ void ReplayState::AddConstantStuff() {
   floor_model_c.handles.push_back(model_map);
   floor_model_c.handles.push_back(model_map_floor);
   TransformComponent& trans_c =
-      this->replay_registry_.assign<TransformComponent>(arena_floor, zero_vec,
-                                                        zero_vec, arena_scale);
-
+      this->replay_registry_.assign<TransformComponent>(
+          arena_floor, zero_vec, zero_vec, this->arena_scale_);
+  // Ensure goals are correctly drawn
   if (goals_swapped_) {
     trans_c.rotation *= glm::quat(glm::vec3(0.f, glm::pi<float>(), 0.f));
   }
+}
 
+void ReplayState::AddBatmanLights() {
+  // Batman lights
+  glob::ModelHandle batman_light =
+      glob::GetTransparentModel(kModelPathBatmanLight);
+  int x = 1;
+  int y = 1;
+  for (int i = 0; i < 4; i++) {
+    {
+      auto entity = this->replay_registry_.create();
+      auto& model_c = this->replay_registry_.assign<ModelComponent>(entity);
+      model_c.handles.push_back(batman_light);
+
+      glm::vec3 pos = glm::vec3(-50 * x, 0, 85 * y);
+      this->replay_registry_.assign<TransformComponent>(
+          entity, pos, glm::vec3(), glm::vec3(1, 250, 10));
+      this->replay_registry_.assign<SkyLightComponent>(entity);
+    }
+    {
+      auto entity = this->replay_registry_.create();
+      auto& model_c = this->replay_registry_.assign<ModelComponent>(entity);
+      model_c.handles.push_back(batman_light);
+
+      glm::vec3 pos = glm::vec3(-95 * x, 0, 50 * y);
+      this->replay_registry_.assign<TransformComponent>(
+          entity, pos, glm::vec3(), glm::vec3(1, 250, 10));
+
+      this->replay_registry_.assign<SkyLightComponent>(entity);
+    }
+
+    std::swap(x, y);
+    y *= -1;
+  }
+}
+
+void ReplayState::AddLights() {
   // Lights
   entt::entity light = this->replay_registry_.create();
   this->replay_registry_.assign<LightComponent>(
       light, glm::vec3(0.4f, 0.4f, 0.4f), 90.f, 0.2f);
   this->replay_registry_.assign<TransformComponent>(
       light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
+}
 
+void ReplayState::AddSpotlights() {
+  // Spotlights
   glm::vec3 pos_base;
   pos_base.x = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEX");
   pos_base.y = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEY");
   pos_base.z = GlobalSettings::Access()->ValueOf("SPOTLIGHT_POSITION_BASEZ");
 
-  // Spotlights
   pos_base *= arena_scale_;
 
   float xrot = 1.f;
@@ -84,7 +127,7 @@ void ReplayState::AddConstantStuff() {
     auto entity = this->replay_registry_.create();
     ModelComponent& model_c =
         this->replay_registry_.assign<ModelComponent>(entity);
-    glob::ModelHandle m_hndl = glob::GetModel("assets/Spotlight/Spotlight.fbx");
+    glob::ModelHandle m_hndl = glob::GetModel(kModelPathSpotlight);
     model_c.handles.push_back(m_hndl);
     TransformComponent& trans_c =
         this->replay_registry_.assign<TransformComponent>(entity);
@@ -99,13 +142,15 @@ void ReplayState::AddConstantStuff() {
     std::swap(xrot, zrot);
     zrot *= -1.f;
   }
+}
 
+void ReplayState::AddCamera(glm::vec3 in_cam_pos) {
   // Camera
   entt::entity camera = this->replay_registry_.create();
   this->replay_registry_.assign<CameraComponent>(camera, glm::vec3(0.f),
                                                  glm::quat(glm::vec3(0.f)));
 
-  glm::vec3 cam_pos = glm::vec3(0.f, 13.f, 42.f);//  glm::vec3(60.f, 4.f, 38.f);
+  glm::vec3 cam_pos = in_cam_pos;
   this->replay_registry_.assign<TransformComponent>(
       camera, cam_pos, glm::quat(), glm::vec3(0.f));
 }
@@ -210,7 +255,7 @@ void ReplayState::PlayReplay() {
     }
   }
 
-  this->UpdatePickUpMovement(); //<< TEMP DISABLED
+  this->UpdatePickUpMovement();  //<< TEMP DISABLED
   this->UpdateCamera();
 }
 
@@ -360,5 +405,4 @@ void ReplayState::Cleanup() {
 
   // Tell replay machine to clear stored data
   this->engine_->GetReplayMachinePtr()->ResetMachine();
-
 }

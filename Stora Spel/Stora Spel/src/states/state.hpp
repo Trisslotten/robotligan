@@ -485,6 +485,12 @@ class ReplayState : public State {
 
   // Functions
   void AddConstantStuff();
+  void AddArenaStuff();
+  void AddBatmanLights();
+  void AddLights();
+  void AddSpotlights();
+  void AddCamera(glm::vec3 in_cam_pos);
+
   void UpdateCamera();
   void UpdatePickUpMovement(/*float dt*/);
 
