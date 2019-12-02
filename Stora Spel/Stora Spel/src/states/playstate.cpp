@@ -2028,6 +2028,7 @@ void PlayState::CreateNewBallEntity(bool fake, EntityID id) {
   registry_gameplay_.assign<BallComponent>(ball);
   registry_gameplay_.assign<IDComponent>(ball, id);
   registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
+  registry_gameplay_.assign<physics::Sphere>(ball, zero_vec, 0.95f);
 
   registry_gameplay_.assign<TrailComponent>(ball);
 }
