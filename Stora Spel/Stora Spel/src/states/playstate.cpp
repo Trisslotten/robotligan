@@ -1634,7 +1634,7 @@ void PlayState::CreatePlayerEntities() {
     glob::ModelHandle player_model;
     if (entity_id == my_id_) {
       //glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
-      glm::vec3 camera_offset = glm::vec3(-4.5f, 1.4f, 1.5f);
+      glm::vec3 camera_offset = glm::vec3(-4.5f, 1.4f, 0.0f);
 
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
                                                  glm::quat(glm::vec3(0.f)));
