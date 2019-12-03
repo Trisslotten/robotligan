@@ -2226,9 +2226,9 @@ void PlayState::CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori,
   auto cannonball = registry_gameplay_.create();
 
   // Set trail color depending on team
-  glm::vec4 color_vec(1.f, 0.2f, 0.2f, 1.f);
+  glm::vec4 color_vec(1.f, 0.2f, 0.2f, 0.7f);
   if (creator_team == TEAM_BLUE) {
-    color_vec = glm::vec4(0.2f, 0.2f, 1.f, 1.f);
+    color_vec = glm::vec4(0.2f, 0.2f, 1.f, 0.7f);
   }
 
   glob::ModelHandle model_shot = glob::GetModel(kModelPathRocket);
@@ -2236,7 +2236,7 @@ void PlayState::CreateCannonBall(EntityID id, glm::vec3 pos, glm::quat ori,
   model_c.handles.push_back(model_shot);
 
   registry_gameplay_.assign<TransformComponent>(cannonball, pos, ori,
-                                                glm::vec3(0.3f));
+                                                glm::vec3(0.6f));
   registry_gameplay_.assign<ProjectileComponent>(cannonball,
                                                  ProjectileID::CANNON_BALL);
   registry_gameplay_.assign<TrailComponent>(cannonball, 0.05f, color_vec);
@@ -2629,6 +2629,37 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
           glob::SetEmitPosition(handle, trans_c.position);
 
           glob::CreateShockwave(trans_c.position, 0.60f, 40.f);
+
+          break;
+        }
+      }
+
+      correct_registry->assign<ParticleComponent>(ent, handles, offsets,
+                                                  directions);
+      correct_registry->assign<TimerComponent>(ent, 1.f);
+      break;
+    }
+    case GameEvent::CANNON_IMPACT: {
+      auto ent = correct_registry->create();
+      auto handle = glob::CreateParticleSystem();
+
+      std::vector handles = {handle};
+      std::vector<glm::vec3> offsets;
+      std::vector<glm::vec3> directions;
+
+      glob::SetParticleSettings(handle, "missile_impact.txt");
+
+      auto registry = engine_->GetCurrentRegistry();
+      auto view_controller = registry->view<IDComponent, TransformComponent>();
+
+      for (auto proj_ent : view_controller) {
+        auto& id_c = view_controller.get<IDComponent>(proj_ent);
+        auto& trans_c = view_controller.get<TransformComponent>(proj_ent);
+
+        if (id_c.id == e.cannon_impact.projectile_id) {
+          glob::SetEmitPosition(handle, trans_c.position);
+
+          glob::CreateShockwave(trans_c.position, 0.30f, 20.f);
 
           break;
         }
