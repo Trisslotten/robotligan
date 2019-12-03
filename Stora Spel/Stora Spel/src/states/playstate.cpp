@@ -2872,7 +2872,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       for (auto hook : view_hooks) {
         auto& hook_id_c = registry_gameplay_.get<IDComponent>(hook);
         if (hook_id_c.id == id) {
-          registry_gameplay_.destroy(hook);
+          //registry_gameplay_.destroy(hook);
+          correct_registry->destroy(hook);
         }
       }
       break;
