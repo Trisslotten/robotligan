@@ -41,6 +41,8 @@ void Update(entt::registry& registry, float dt) {
     }
   }
 
+  //dt ~= 0.0078125
+
  // auto view_pickups = registry.view<PickUpComponent,TransformComponent>();
  // for (auto pickup : view_pickups) {
  //   float speed = 0.6f;
