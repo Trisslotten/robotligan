@@ -61,10 +61,13 @@ class AnimationSystem {
   void UpdateAnimations(entt::registry& registry, float dt);
 
   glm::vec3 InterpolateVector(float time, std::vector<aiVectorKey>* keys);
-  glm::mat4 InterpolateQuat(float time, std::vector<aiQuatKey>* keys);
+  glm::quat InterpolateQuat(float time, std::vector<aiQuatKey>* keys);
 
-  void interpolatePRS(glob::Joint joint, glm::mat4 pos, glm::quat rot, glm::mat4 scale, float strength);
-  void setPRS(glob::Joint joint, glm::mat4 pos, glm::quat rot, glm::mat4 scale);
+  void interpolatePRS(glm::vec3& j_pos, glm::quat& j_rot, glm::vec3& j_scale,
+                      glm::vec3 pos, glm::quat rot, glm::vec3 scale, float str);
+
+  void setPRS(glm::vec3& j_pos, glm::quat& j_rot, glm::vec3& j_scale,
+              glm::vec3 pos, glm::quat rot, glm::vec3 scale);
 
   void Reset(entt::registry& registry);
 

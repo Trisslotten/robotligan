@@ -259,16 +259,18 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       if (!pl.sprinting) {
         glm::quat offset = -t.rotation;
         float yaw = 0.f;
-		if (backwards && pl.running && !pl.jumping) {
+        if (backwards && pl.running && !pl.jumping) {
           yaw = atan2(-moveDir.x, -moveDir.z);
-		} else {
+        } else {
           yaw = atan2(moveDir.x, moveDir.z);
-		}
+        }
 
         float rotator = dt * 5.f;
         float lYaw = yaw + pi;
-		float SA =
-            fmod(fmod((lYaw - ac.yawInterpolator + pi), pi * 2.f) + (pi * 3.f), pi * 2.f) - pi;
+        float SA =
+            fmod(fmod((lYaw - ac.yawInterpolator + pi), pi * 2.f) + (pi * 3.f),
+                 pi * 2.f) -
+            pi;
 
         ac.yawInterpolator += fmod(SA * rotator, pi);
 
@@ -316,7 +318,8 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       }
 
       // RUN ANIMATIONS
-      if (pl.running && GetActiveAnimationByName("Run_B", &ac) != -1 && GetActiveAnimationByName("Run", &ac) != -1) {
+      if (pl.running && GetActiveAnimationByName("Run_B", &ac) != -1 &&
+          GetActiveAnimationByName("Run", &ac) != -1) {
         int RAnim;
         if (backwards) {
           RAnim = GetActiveAnimationByName("Run_B", &ac);
@@ -640,68 +643,19 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
                 InterpolateVector(anim->time_, &channel->position_keys);
             glm::mat4 position = glm::translate(pos);
 
-            glm::mat4 rotation =
+            glm::quat rotation =
                 InterpolateQuat(anim->time_, &channel->rotation_keys);
 
             glm::vec3 scale =
                 InterpolateVector(anim->time_, &channel->scaling_keys);
             glm::mat4 scaling = glm::scale(scale);
 
-			//Unused for the moment, potential fix for additive animation scaling problems
+            // Unused for the moment, potential fix for additive animation
+            // scaling problems
             anim->bone_position_->at(jointId) = pos;
-            anim->bone_rotation_->at(jointId) = rotation;
+            anim->bone_rotation_->at(jointId) = glm::normalize(rotation);
             anim->bone_scale_->at(jointId) = scale;
 
-            glm::mat4 combPRS = position * rotation * scaling;
-
-            glm::mat4 finalMat = combPRS * anim->strength_;
-
-            if (anim->mode_ == LOOP) {
-              if (anim->priority_ >
-                  bonePriorities.at(jointId)) {  // priority override
-                if (anim->bonesSpecified()) {
-                  if (IsIncluded(jointId, anim->body_include_,
-                                 anim->body_exclude_)) {  // body argument
-                                                          // success, override
-                    bonePriorities.at(jointId) = anim->priority_;
-                    a.model_data.bones.at(jointId).transform = finalMat;
-                  }
-                } else {  // No body argument, override
-                  bonePriorities.at(jointId) = anim->priority_;
-                  a.model_data.bones.at(jointId).transform = finalMat;
-                }
-              } else if (anim->priority_ ==
-                         bonePriorities.at(jointId)) {  // blend
-                if (anim->bonesSpecified()) {
-                  if (IsIncluded(jointId, anim->body_include_,
-                                 anim->body_exclude_)) {  // body argument
-                                                          // success, blend
-                    a.model_data.bones.at(jointId).transform += finalMat;
-                  }
-                } else {  // No body argument, blend
-                  a.model_data.bones.at(jointId).transform += finalMat;
-                }
-              }
-            } else if (anim->mode_ == MUTE_ALL) {  // override
-              bonePriorities.at(jointId) = 255;
-              a.model_data.bones.at(jointId).transform = finalMat;
-            } else if (anim->mode_ == PARTIAL_MUTE) {
-              if (anim->bonesSpecified()) {
-                if (IsIncluded(jointId, anim->body_include_,
-                               anim->body_exclude_)) {  // override specified
-                                                        // bodyparts
-                  bonePriorities.at(jointId) = 254;
-                  a.model_data.bones.at(jointId).transform = finalMat;
-                } else {
-                  if (anim->priority_ >= bonePriorities.at(jointId)) {
-                    bonePriorities.at(jointId) = anim->priority_;
-                    a.model_data.bones.at(jointId).transform = finalMat;
-                  } else if (anim->priority_ == bonePriorities.at(jointId)) {
-                    a.model_data.bones.at(jointId).transform += finalMat;
-                  }
-                }
-              }
-            }
           }
         }
       }
@@ -709,7 +663,120 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
       anim->time_ += anim->speed_ * anim->animation_->tick_per_second_ * dt;
     }
 
-	//add all AC positions/rotations/scales togeather here
+    std::vector<glm::vec3> f_pos(a.model_data.bones.size(), glm::vec3(0.f));
+    std::vector<glm::quat> f_rot(a.model_data.bones.size(), glm::quat());
+    std::vector<glm::vec3> f_scale(a.model_data.bones.size(), glm::vec3(0.f));
+
+    for (int i = 0; i < a.active_animations.size(); i++) {
+      glob::PlayableAnimation* anim = a.active_animations.at(i);
+      for (int j = 0; j < anim->bone_position_->size();
+           j++) {  // all channels (bones)
+        glob::Channel* channel = &anim->animation_->channels_.at(j);
+        int jointId = (int)channel->boneID;
+        if (anim->mode_ == LOOP) {
+          if (anim->priority_ >
+              bonePriorities.at(jointId)) {  // priority override
+            if (anim->bonesSpecified()) {
+              if (IsIncluded(jointId, anim->body_include_,
+                             anim->body_exclude_)) {  // body argument
+                                                      // success, override
+                bonePriorities.at(jointId) = anim->priority_;
+
+                setPRS(f_pos.at(jointId), f_rot.at(jointId),
+                       f_scale.at(jointId), anim->bone_position_->at(jointId),
+                       anim->bone_rotation_->at(jointId),
+                       anim->bone_scale_->at(jointId));
+              }
+            } else {  // No body argument, override
+              bonePriorities.at(jointId) = anim->priority_;
+
+              setPRS(f_pos.at(jointId), f_rot.at(jointId), f_scale.at(jointId),
+                     anim->bone_position_->at(jointId),
+                     anim->bone_rotation_->at(jointId),
+                     anim->bone_scale_->at(jointId));
+            }
+          } else if (anim->priority_ == bonePriorities.at(jointId)) {  // blend
+            if (anim->bonesSpecified()) {
+              if (IsIncluded(jointId, anim->body_include_,
+                             anim->body_exclude_)) {  // body argument
+                                                      // success, blend
+
+                interpolatePRS(f_pos.at(jointId), f_rot.at(jointId),
+                               f_scale.at(jointId),
+                               anim->bone_position_->at(jointId),
+                               anim->bone_rotation_->at(jointId),
+                               anim->bone_scale_->at(jointId), anim->strength_);
+              }
+            } else {  // No body argument, blend
+
+              interpolatePRS(f_pos.at(jointId), f_rot.at(jointId),
+                             f_scale.at(jointId),
+                             anim->bone_position_->at(jointId),
+                             anim->bone_rotation_->at(jointId),
+                             anim->bone_scale_->at(jointId), anim->strength_);
+            }
+          }
+        } else if (anim->mode_ == MUTE_ALL) {  // override
+          bonePriorities.at(jointId) = 255;
+
+          setPRS(f_pos.at(jointId), f_rot.at(jointId), f_scale.at(jointId),
+                 anim->bone_position_->at(jointId),
+                 anim->bone_rotation_->at(jointId),
+                 anim->bone_scale_->at(jointId));
+
+        } else if (anim->mode_ == PARTIAL_MUTE) {
+          if (anim->bonesSpecified()) {
+            if (IsIncluded(jointId, anim->body_include_,
+                           anim->body_exclude_)) {  // override specified
+                                                    // bodyparts
+              bonePriorities.at(jointId) = 254;
+
+              setPRS(f_pos.at(jointId), f_rot.at(jointId), f_scale.at(jointId),
+                     anim->bone_position_->at(jointId),
+                     anim->bone_rotation_->at(jointId),
+                     anim->bone_scale_->at(jointId));
+
+            } else {
+              if (anim->priority_ >= bonePriorities.at(jointId)) {
+                bonePriorities.at(jointId) = anim->priority_;
+
+                setPRS(f_pos.at(jointId), f_rot.at(jointId),
+                       f_scale.at(jointId), anim->bone_position_->at(jointId),
+                       anim->bone_rotation_->at(jointId),
+                       anim->bone_scale_->at(jointId));
+
+              } else if (anim->priority_ == bonePriorities.at(jointId)) {
+                interpolatePRS(f_pos.at(jointId), f_rot.at(jointId),
+                               f_scale.at(jointId),
+                               anim->bone_position_->at(jointId),
+                               anim->bone_rotation_->at(jointId),
+                               anim->bone_scale_->at(jointId), anim->strength_);
+              }
+            }
+          }
+        }
+      }
+    }
+    // add all AC positions/rotations/scales togeather here
+	
+	for (int i = 0; i < a.model_data.bones.size(); i++) {
+      if (i != rootBone) {
+
+      glm::mat4 mat = glm::mat4(glm::translate(f_pos.at(i)) * glm::mat4(f_rot.at(i)) * glm::scale(f_scale.at(i)));
+        /*
+	  std::cout << mat[0][0] << ", " << mat[0][1] << ", " << mat[0][2] << ", "
+                << mat[0][3] << "\n"
+                << mat[1][0] << ", " << mat[1][1] << ", " << mat[1][2] << ", "
+                << mat[1][3] << "\n"
+                << mat[2][0] << ", " << mat[2][1] << ", " << mat[2][2] << ", "
+                << mat[2][3] << "\n"
+                << mat[3][0] << ", " << mat[3][1] << ", " << mat[3][2] << ", "
+                << mat[3][3] << "\n\n";
+				*/
+
+	  a.model_data.bones.at(i).transform = mat;
+		}
+	}
 
     GetDefaultPose(glm::mat4(1.f), &a.model_data.bones.at(rootBone),
                    &a.model_data.bones, a.model_data.globalInverseTransform);
@@ -750,7 +817,7 @@ glm::vec3 AnimationSystem::InterpolateVector(float time,
   return start + f * dtv3;
 }
 
-glm::mat4 AnimationSystem::InterpolateQuat(float time,
+glm::quat AnimationSystem::InterpolateQuat(float time,
                                            std::vector<aiQuatKey>* keys) {
   aiQuaternion ret;
   if (keys->size() == 1) {
@@ -776,17 +843,29 @@ glm::mat4 AnimationSystem::InterpolateQuat(float time,
   aiQuaternion end = keys->at(nextPos).mValue;
   aiQuaternion::Interpolate(ret, start, end, f);
 
-  return glm::mat4(
-      glob::AssToGLM::ConvertToGLM3x3(ret.Normalize().GetMatrix()));
+  glm::quat q;
+  q.w = ret.w;
+  q.x = ret.x;
+  q.y = ret.y;
+  q.z = ret.z;
+  return q;
 }
 
-void AnimationSystem::interpolatePRS(glob::Joint joint, glm::mat4 pos, glm::quat rot,
-                                     glm::mat4 scale, float strength) {
-	
+void AnimationSystem::interpolatePRS(glm::vec3& j_pos, glm::quat& j_rot,
+                                     glm::vec3& j_scale, glm::vec3 pos,
+                                     glm::quat rot, glm::vec3 scale,
+                                     float str) {
+  j_pos = j_pos + pos * str;
+  j_rot = glm::normalize(glm::lerp(j_rot, rot, str));
+  j_scale = j_scale + scale * str;
 }
-void AnimationSystem::setPRS(glob::Joint joint, glm::mat4 pos, glm::quat rot,
-                             glm::mat4 scale) {
 
+void AnimationSystem::setPRS(glm::vec3& j_pos, glm::quat& j_rot,
+                             glm::vec3& j_scale, glm::vec3 pos, glm::quat rot,
+                             glm::vec3 scale) {
+  j_pos = pos;
+  j_rot = rot;
+  j_scale = scale;
 }
 
 void AnimationSystem::Reset(entt::registry& registry) {
