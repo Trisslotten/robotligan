@@ -164,7 +164,6 @@ class Engine {
   ParticleSystem particle_system_;
 
   AbilityID second_ability_ = AbilityID::NULL_ABILITY;
-  unsigned int new_team_ = std::numeric_limits<unsigned int>::max();
 
   std::unordered_map<long, PlayerStatInfo> player_scores_;
 
