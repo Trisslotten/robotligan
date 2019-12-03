@@ -39,7 +39,7 @@ class GameServer {
   }
   entt::registry& GetRegistry() { return registry_; }
 
-  std::unordered_map<AbilityID, float> GetAbilityCooldowns() {
+  std::unordered_map<AbilityID, float>& GetAbilityCooldowns() {
     return ability_cooldowns_;
   }
 
@@ -49,11 +49,7 @@ class GameServer {
 
   void HandleSwitchGoal();
 
-  void RemoveClientName(long client_id) {
-    if (client_names_.count(client_id) > 0) {
-      client_names_.erase(client_id);
-    }
-  }
+  void RemoveClientName(long client_id) { client_names_.erase(client_id); }
 
  private:
   void UpdateSystems(float dt);
