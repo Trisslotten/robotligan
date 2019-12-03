@@ -39,7 +39,7 @@ class GameServer {
   }
   entt::registry& GetRegistry() { return registry_; }
 
-  std::unordered_map<AbilityID, float> GetAbilityCooldowns() {
+  std::unordered_map<AbilityID, float>& GetAbilityCooldowns() {
     return ability_cooldowns_;
   }
 

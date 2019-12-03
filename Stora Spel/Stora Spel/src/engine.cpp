@@ -74,7 +74,6 @@ void Engine::Init() {
   gameplay_timer_.push_back(4);
   gameplay_timer_.push_back(59);*/
 
-
   // TODO: move to states
   gui_scoreboard_back_ =
       glob::GetGUIItem("assets/GUI_elements/Scoreboard_no_players.png");
@@ -221,10 +220,18 @@ void Engine::Update(float dt) {
     glob::ReloadShaders();
   }
 
+  for (auto iter = player_names_.begin(); iter != player_names_.end();) {
+    if (iter->second == "") {
+      player_names_.erase(iter++);
+    } else {
+      ++iter;
+    }
+  }
+
   if (Input::IsKeyPressed(GLFW_KEY_F4)) {
     std::cout << "NAMES:\n";
     for (auto& [client_id, name] : this->player_names_) {
-      std::cout << "\t" << name << "\n";
+      std::cout << "\t" << client_id << ": " << name << "\n";
     }
   }
 
