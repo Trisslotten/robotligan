@@ -1633,18 +1633,21 @@ void PlayState::CreatePlayerEntities() {
 
     glob::ModelHandle player_model;
     if (entity_id == my_id_) {
-      //glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
+      //#define TEST_3RD_PERSON
+      #ifdef TEST_3RD_PERSON
       glm::vec3 camera_offset = glm::vec3(-4.5f, 1.4f, 0.0f);
+      player_model = glob::GetModel(kModelPathMech);
+      pc.localPlayer = false;
+      #else
+      glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
+      player_model = glob::GetModel("Assets/Mech/FPS_body.fbx");
+      pc.localPlayer = true;
+      #endif
 
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
                                                  glm::quat(glm::vec3(0.f)));
 
-      //player_model = glob::GetModel("Assets/Mech/FPS_body.fbx");
-      player_model = glob::GetModel(kModelPathMech);
-
       model_c.cast_shadow = false;
-      //pc.localPlayer = true;
-      pc.localPlayer = false;
 
       my_entity_ = entity;
     } else {
