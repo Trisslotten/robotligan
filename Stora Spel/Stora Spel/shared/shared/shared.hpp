@@ -16,6 +16,8 @@ const double kClientUpdateRate = 64;
 const double kServerUpdateRate = 64;
 const unsigned kServerTimeout = 6;
 
+const bool kEnableReconnect = false;
+
 enum class ServerStateType {
   LOBBY = 0,
   PLAY,

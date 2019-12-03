@@ -36,10 +36,12 @@ void ServerLobbyState::Update(float dt) {
       p << cli.second->ID;
       p << PacketBlockType::PLAYER_LOBBY_DISCONNECT;
       this->game_server_->GetServer().KickPlayer(cli.second->ID);
+      this->game_server_->RemoveClientName(cli.second->ID);
       teams_updated_ = true;
       this->game_server_->GetServer().SendToAll(p);
     }
   }
+
   bool can_start = clients_ready_.size() >= min_players;
   for (auto ready : clients_ready_) {
     can_start = can_start && ready.second;

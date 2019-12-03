@@ -106,8 +106,6 @@ void LobbyState::Startup() {
 }
 
 void LobbyState::Init() {
-  //
-
   glob::window::SetMouseLocked(false);
   auto& cli = engine_->GetClient();
   engine_->SetSendInput(false);
@@ -195,7 +193,7 @@ void LobbyState::HandleUpdateLobbyTeamPacket(NetAPI::Common::Packet& packet) {
   packet >> len;
   name.resize(len);
   packet.Remove(name.data(), len);
-  std::cout << "Lobby: name: " << name << "\n";
+  //std::cout << "Lobby: name: " << name << "\n";
   if (id != -1) {
     LobbyPlayer plyr;
     plyr.ready = ready;
@@ -209,6 +207,7 @@ void LobbyState::HandlePlayerDisconnect(NetAPI::Common::Packet& packet) {
   unsigned short id = -1;
   packet >> id;
   lobby_players_.erase(id);
+  engine_->player_names_.erase(id);
 }
 
 void LobbyState::CreateBackgroundEntities() {
@@ -449,6 +448,8 @@ void LobbyState::CreateGUIElements() {
                                               glm::vec2(60, 50), font_test_);
   b_c->button_func = [&]() {
     engine_->GetClient().Disconnect();
+    engine_->ClearNames();
+    lobby_players_.clear();
     engine_->ChangeState(StateType::MAIN_MENU);
   };
 }

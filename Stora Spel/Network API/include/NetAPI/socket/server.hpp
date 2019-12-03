@@ -35,7 +35,9 @@ class EXPORT Server {
   void Receive();
   void ListenForClients();
   void SendStoredData();
+
   std::unordered_map<std::string, long> ids_;
+  std::unordered_map<long, std::string> ids_rev_;
   std::unordered_map<long, ClientData*> client_data_;
   std::vector<long> client_to_remove_;
   std::vector<ClientData*> newly_connected_;

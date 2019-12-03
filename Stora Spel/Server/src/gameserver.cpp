@@ -107,6 +107,7 @@ void GameServer::Update(float dt) {
         bool ready = true;
         to_send << ready;
         to_send << PacketBlockType::LOBBY_UPDATE_TEAM;
+        
       }
       server_.Send(to_send);
       // s = 1;

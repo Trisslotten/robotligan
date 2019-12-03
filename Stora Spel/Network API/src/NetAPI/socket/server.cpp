@@ -57,11 +57,18 @@ void NetAPI::Socket::Server::ListenForClients() {
     inet_ntop(AF_INET, &client_addr.sin_addr, buffer, 14);
     auto addr = buffer;
     auto port = ntohs(client_addr.sin_port);
-    // auto ID = getHashedID(addr, port);
-     std::string address = addr + (":" + std::to_string(port));
-    // std::string address = addr; För att kunna reconnecta till pågående match,
-    // låter vara så folk kan debugga ordentligt.
-    //std::string address = "";
+
+    std::string address;
+
+    if (kEnableReconnect) {
+      // För att kunna reconnecta till pågående match,
+      // address = addr;
+    } else {
+      // för att kunna testa många klienter
+      address = addr + (":" + std::to_string(port));
+    }
+
+    // std::string address = "";
     std::cout << "DEBUG: tcp connection accepted: "
               << addr + (":" + std::to_string(port)) << "\n";
 
@@ -75,7 +82,10 @@ void NetAPI::Socket::Server::ListenForClients() {
         std::string str;
         str.resize(size);
         packet.Remove(str.data(), size);
-        //address = str;  // Kommentera ut detta om du vill debugga två instanser
+        if(kEnableReconnect) {
+          address = str;  // Kommentera ut detta om du vill debugga två
+        }
+        // instanser
         break;
       }
     }
@@ -108,6 +118,7 @@ void NetAPI::Socket::Server::ListenForClients() {
 
       connection_client_->ID = current_client_guid_;
       ids_[address] = current_client_guid_;
+      ids_rev_[current_client_guid_] = address;
       client_data_[current_client_guid_] = connection_client_;
 
       connected_players_++;
@@ -196,6 +207,11 @@ bool NetAPI::Socket::Server::Update() {
     }
   }
 
+  for(auto client_id : client_to_remove_) {
+    client_data_.erase(client_id);
+  }
+  client_to_remove_.clear();
+
   return true;
 }
 
@@ -220,6 +236,12 @@ void NetAPI::Socket::Server::Send(NetAPI::Common::Packet& p) {
 }
 
 bool NetAPI::Socket::Server::KickPlayer(long ID) {
+  auto id_res = ids_rev_.find(ID);
+  if(id_res != ids_rev_.end()) {
+    ids_.erase(id_res->second);
+    ids_rev_.erase(id_res);
+  }
+
   auto it = client_data_.find(ID);
   if (it != client_data_.end()) {
     client_to_remove_.push_back(ID);
