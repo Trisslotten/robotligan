@@ -31,6 +31,7 @@ void ServerLobbyState::Update(float dt) {
     if (!cli.second->client.IsConnected() && cli.second->is_active) {
       cli.second->is_active = false;
       this->client_teams_.erase(cli.second->ID);
+      this->client_abilities_.erase(cli.second->ID);
       this->clients_ready_.erase(cli.second->ID);
       NetAPI::Common::Packet p;
       p << cli.second->ID;

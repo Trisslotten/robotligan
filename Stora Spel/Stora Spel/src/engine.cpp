@@ -234,6 +234,7 @@ void Engine::Update(float dt) {
       std::cout << "\t" << client_id << ": " << name << "\n";
     }
   }
+  
 
   Input::Reset();
 }
