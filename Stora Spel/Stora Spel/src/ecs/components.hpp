@@ -24,5 +24,7 @@
 #include "components/trail_component.hpp"
 #include "components/wall_component.hpp"
 #include "components/target_component.hpp"
+#include "components/hook_component.hpp"
+
 
 #endif COMPONENTS_HPP_

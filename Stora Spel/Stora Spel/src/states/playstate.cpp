@@ -2297,6 +2297,8 @@ void PlayState::CreateFishermanAndHook(EntityID id, glm::vec3 pos,
   registry_gameplay_.assign<ProjectileComponent>(hook_object,
                                                  ProjectileID::FISHING_HOOK);
 
+  registry_gameplay_.assign<HookComponent>(hook_object, owner_id);
+
   Fishermans fm;
   fm.hook_id = id;
   fm.owner_id = owner_id;

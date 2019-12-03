@@ -877,7 +877,8 @@ void Engine::DrawScoreboard() {
         points
         ping
   */
-  if (current_state_->Type() == StateType::PLAY) {
+  if (current_state_->Type() == StateType::PLAY ||
+      current_state_->Type() == StateType::REPLAY) {
     for (auto& p_score : player_scores_) {
       if (p_score.second.team == TEAM_BLUE) {
         glm::vec2 text_pos = start_pos_blue + glm::vec2(0, blue_count * jump);

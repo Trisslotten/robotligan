@@ -255,9 +255,11 @@ class HookFrame : public DataFrame {
   glm::vec3 position_;
   glm::quat rotation_;
 
+  EntityID owner_;
+
  public:
   HookFrame();
-  HookFrame(TransformComponent& trans_c);
+  HookFrame(TransformComponent& trans_c, HookComponent& hook_c);
   ~HookFrame();
 
   DataFrame* Clone();
@@ -265,7 +267,7 @@ class HookFrame : public DataFrame {
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
   bool ThresholdCheck(DataFrame& in_future_df);
-  void WriteBack(TransformComponent& trans_c);
+  void WriteBack(TransformComponent& trans_c, HookComponent& hook_c);
 };
 
 #endif  // DATA_FRAME_HPP_
