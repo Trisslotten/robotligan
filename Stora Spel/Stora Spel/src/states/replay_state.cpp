@@ -16,6 +16,7 @@ void ReplayState::AddConstantStuff() {
   this->AddSpotlights();
   this->AddAudience();
   this->AddCamera(glm::vec3(0.f, 13.f, 42.f));  //  glm::vec3(60.f, 4.f, 38.f);
+  glob::GetCamera().SetFov(60);
 }
 
 void ReplayState::AddArenaStuff() {
@@ -180,6 +181,8 @@ void ReplayState::AddCamera(glm::vec3 in_cam_pos) {
 }
 
 void ReplayState::UpdateCamera() {
+  float dt = 1.f/128.f;
+
   // Default point of interest
   glm::vec3 point_of_interest = glm::vec3(0.0f);
 
@@ -212,6 +215,14 @@ void ReplayState::UpdateCamera() {
 
     cam_c.orientation =
         glm::quatLookAt(temp_dir, glm::vec3(0, 1, 0)) * quarter_turn;
+
+    // Follow ball
+    float speed = 0.65f * glm::distance(cam_trans_c.position.x, point_of_interest.x);
+    if (cam_trans_c.position.x < point_of_interest.x) {
+      cam_trans_c.position.x += speed * dt;
+    } else {
+      cam_trans_c.position.x -= speed * dt;
+    }
   }
 }
 
