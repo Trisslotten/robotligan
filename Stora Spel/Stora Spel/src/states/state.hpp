@@ -492,7 +492,6 @@ class ReplayState : public State {
   void AddCamera(glm::vec3 in_cam_pos);
 
   void UpdateCamera();
-  void UpdatePickUpMovement(/*float dt*/);
 
   void StartReplayMode();
   void PlayReplay();

@@ -215,24 +215,6 @@ void ReplayState::UpdateCamera() {
   }
 }
 
-void ReplayState::UpdatePickUpMovement(/*float dt*/) {
-  float dt = 1;
-  auto view_pickups =
-      replay_registry_.view<PickUpComponent, TransformComponent>();
-  for (auto pickup : view_pickups) {
-    float speed = 0.6f;
-    auto& trans_c = view_pickups.get<TransformComponent>(pickup);
-    auto& pick_c = view_pickups.get<PickUpComponent>(pickup);
-    // y = -8.6
-    float dir = pick_c.moving_up ? 1.0 : -1.0f;
-    trans_c.position.y += dt * speed * dir;
-    if (abs(trans_c.position.y - pick_c.o_pos.y) > pick_c.move_range) {
-      pick_c.moving_up = !pick_c.moving_up;
-    }
-    trans_c.Rotate(glm::vec3(0, dt * speed * 1.1f, 0));
-  }
-}
-
 void ReplayState::StartReplayMode() {
   // Do not start if already replaying
   if (this->replaying_) {
@@ -279,7 +261,6 @@ void ReplayState::PlayReplay() {
     }
   }
 
-  //this->UpdatePickUpMovement();  //<< TEMP DISABLED
   this->UpdateCamera();
 }
 
