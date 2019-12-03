@@ -124,6 +124,7 @@ void LobbyState::Init() {
   engine_->GetAnimationSystem().Reset(registry_lobby_);
 
   engine_->GetChat()->SetShowChat();
+  glob::GetCamera().SetFov(90.f);
 }
 
 void LobbyState::Update(float dt) {
@@ -133,7 +134,7 @@ void LobbyState::Update(float dt) {
 
   // draw ready string
   glm::vec2 pos =
-      glm::vec2((glob::window::GetWindowDimensions().x / 2) - 100, 50);
+      glm::vec2((glob::window::GetWindowDimensions().x / 2) - 100, 40);
   glob::Submit(font_test_, pos, 72, "Ready: ");
 
   bool everyone_ready = true;

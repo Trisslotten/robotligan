@@ -29,6 +29,7 @@ void MainMenuState::Init() {
   if (client.IsConnected()) {
     client.Disconnect();
   }
+  glob::GetCamera().SetFov(90.f);
 }
 
 void MainMenuState::Update(float dt) {

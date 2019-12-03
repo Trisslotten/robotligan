@@ -194,6 +194,10 @@ void PlayState::Init() {
     SwitchGoals();
     goals_swapped_at_start_ = false;
   }
+
+  float fov = GlobalSettings::Access()->ValueOf("GRAPHICS_FOV");
+  if (fov == 0.0) fov = 90.f;
+  glob::GetCamera().SetFov(fov);
 }
 
 void PlayState::Update(float dt) {
@@ -468,7 +472,7 @@ void PlayState::UpdateNetwork() {
   packet << frame_id;
   packet << PacketBlockType::FRAME_ID;
 
-  if(want_dab_) {
+  if (want_dab_) {
     packet << PacketBlockType::WANT_DAB;
     want_dab_ = false;
   }
@@ -1634,16 +1638,16 @@ void PlayState::CreatePlayerEntities() {
 
     glob::ModelHandle player_model;
     if (entity_id == my_id_) {
-      //#define TEST_3RD_PERSON
-      #ifdef TEST_3RD_PERSON
+//#define TEST_3RD_PERSON
+#ifdef TEST_3RD_PERSON
       glm::vec3 camera_offset = glm::vec3(-4.5f, 1.4f, 0.0f);
       player_model = glob::GetModel(kModelPathMech);
       pc.localPlayer = false;
-      #else
+#else
       glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
       player_model = glob::GetModel("Assets/Mech/FPS_body.fbx");
       pc.localPlayer = true;
-      #endif
+#endif
 
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
                                                  glm::quat(glm::vec3(0.f)));
