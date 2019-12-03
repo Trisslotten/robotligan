@@ -252,7 +252,7 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       float lookMoveOffset = glm::dot(
           LRlookDir, glm::normalize(moveDir * glm::vec3(1.f, 0.1, 1.f)));
 
-      bool backwards = (lookMoveOffset < -0.1);
+      bool backwards = (lookMoveOffset < -0.2);
 
       // LOOK ANIMATIONS
       constexpr float pi = glm::pi<float>();
@@ -673,6 +673,7 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
            j++) {  // all channels (bones)
         glob::Channel* channel = &anim->animation_->channels_.at(j);
         int jointId = (int)channel->boneID;
+
         if (anim->mode_ == LOOP) {
           if (anim->priority_ >
               bonePriorities.at(jointId)) {  // priority override
@@ -757,22 +758,12 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
         }
       }
     }
+	// modulate animation strengths
     // add all AC positions/rotations/scales togeather here
-	
 	for (int i = 0; i < a.model_data.bones.size(); i++) {
       if (i != rootBone) {
 
-      glm::mat4 mat = glm::mat4(glm::translate(f_pos.at(i)) * glm::mat4(f_rot.at(i)) * glm::scale(f_scale.at(i)));
-        /*
-	  std::cout << mat[0][0] << ", " << mat[0][1] << ", " << mat[0][2] << ", "
-                << mat[0][3] << "\n"
-                << mat[1][0] << ", " << mat[1][1] << ", " << mat[1][2] << ", "
-                << mat[1][3] << "\n"
-                << mat[2][0] << ", " << mat[2][1] << ", " << mat[2][2] << ", "
-                << mat[2][3] << "\n"
-                << mat[3][0] << ", " << mat[3][1] << ", " << mat[3][2] << ", "
-                << mat[3][3] << "\n\n";
-				*/
+      glm::mat4 mat = glm::mat4(glm::translate(f_pos.at(i)) * glm::mat4(glm::normalize(f_rot.at(i))) * glm::scale(f_scale.at(i)));
 
 	  a.model_data.bones.at(i).transform = mat;
 		}
@@ -855,9 +846,9 @@ void AnimationSystem::interpolatePRS(glm::vec3& j_pos, glm::quat& j_rot,
                                      glm::vec3& j_scale, glm::vec3 pos,
                                      glm::quat rot, glm::vec3 scale,
                                      float str) {
-  j_pos = j_pos + pos * str;
-  j_rot = glm::normalize(glm::lerp(j_rot, rot, str));
-  j_scale = j_scale + scale * str;
+  j_pos = j_pos + (j_pos - pos) * str;
+  j_rot = glm::slerp(j_rot, rot, str);
+  j_scale = j_scale + (j_scale - scale) * str;
 }
 
 void AnimationSystem::setPRS(glm::vec3& j_pos, glm::quat& j_rot,

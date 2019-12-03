@@ -39,6 +39,7 @@ class PlayableAnimation {
     delete bone_position_;
     delete bone_rotation_;
     delete bone_scale_;
+
     delete body_include_;
     delete body_exclude_;
   }
