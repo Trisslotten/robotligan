@@ -39,7 +39,7 @@ class Engine {
   void UpdateSettingsValues() {
     sound_system_.GetSoundEngine().SetMasterVolume(
         GlobalSettings::Access()->ValueOf("SOUND_VOLUME") / 100.f);
-    glob::GetCamera().SetFov(GlobalSettings::Access()->ValueOf("GRAPHICS_FOV"));
+    //glob::GetCamera().SetFov(GlobalSettings::Access()->ValueOf("GRAPHICS_FOV"));
     mouse_sensitivity_ = GlobalSettings::Access()->ValueOf("INPUT_MOUSE_SENS");
   }
 

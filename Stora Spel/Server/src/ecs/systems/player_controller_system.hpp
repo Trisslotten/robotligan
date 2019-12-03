@@ -195,7 +195,7 @@ void Update(entt::registry& registry, float dt) {
     float cur_move_speed = glm::length(sidemov);
     // if (cur_move_speed > 0.f) {
     // movement "floatiness", lower value = less floaty
-    float t = 0.0005f;
+    float t = 0.0001f;
     if (player_c.hooked) t = 0.05f;
     if (!player_c.stunned || (player_c.stunned && !physics_c.is_airborne)) {
       physics_c.velocity.x = glm::mix(physics_c.velocity.x, final_velocity.x,
