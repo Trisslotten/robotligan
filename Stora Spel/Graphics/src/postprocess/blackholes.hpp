@@ -14,14 +14,16 @@ class BlackHoles {
  public:
   void Create(glm::vec3 position);
 
- void Update(Camera camera);
+  void Update(Camera camera);
 
   void SetUniforms(ShaderProgram& shader);
 
+  void Clear() { black_holes_.clear(); }
+
  private:
-  struct BlackHole{
+  struct BlackHole {
     glm::vec3 position;
-     
+
     Timer timer;
   };
 

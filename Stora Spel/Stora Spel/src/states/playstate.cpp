@@ -125,7 +125,7 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
   registry.assign<DestroyOnResetComponent>(e);
 
   e = registry.create();
-  registry.assign<TimerComponent>(e, 2.0f);
+  registry.assign<TimerComponent>(e, 5.0f);
   std::vector<glm::vec4> colors = {glm::vec4(1.f, 1.f, 0.f, 1.f),
                                    glm::vec4(1.f, 0.f, 0.f, 1.f),
                                    glm::vec4(0.f, 1.f, 0.f, 1.f)};
@@ -136,19 +136,19 @@ void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
   registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
-  registry.assign<TimerComponent>(e, 2.0f);
+  registry.assign<TimerComponent>(e, 5.0f);
   position = glm::vec3(x * -1.1f, 0.f, 0.f);
 
   registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
-  registry.assign<TimerComponent>(e, 2.0f);
+  registry.assign<TimerComponent>(e, 5.0f);
   position = glm::vec3(0.f, 0.f, 50.f);
 
   registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
 
   e = registry.create();
-  registry.assign<TimerComponent>(e, 2.0f);
+  registry.assign<TimerComponent>(e, 5.0f);
   position = glm::vec3(0.f, 0.f, -50.f);
 
   registry.assign<FireworksComponent>(e, colors, position, spawn, timer);
@@ -310,8 +310,8 @@ void PlayState::Update(float dt) {
       auto& mc = registry_gameplay_.get<ModelComponent>(my_entity_);
 
       glm::vec3 temp =
-          lerp(predicted_state_.position, server_predicted_.position, 0.5f);
-      trans_c.position = glm::lerp(trans_c.position, temp, 0.8f);
+          lerp(predicted_state_.position, server_predicted_.position, 0.2f);
+      trans_c.position = glm::lerp(trans_c.position, temp, 1.0f);
       if (player_hooked) trans_c.position = server_predicted_.position;
       // trans_c.position = trans.first;
       glm::quat orientation =
@@ -445,6 +445,10 @@ void PlayState::Update(float dt) {
     stun_timer_.Pause();
   }
 
+  if (Input::IsKeyPressed(GLFW_KEY_F)) {
+    want_dab_ = true;
+  }
+
   if (game_has_ended_) {
     engine_->DrawScoreboard();
 
@@ -463,6 +467,11 @@ void PlayState::UpdateNetwork() {
   frame_id++;
   packet << frame_id;
   packet << PacketBlockType::FRAME_ID;
+
+  if(want_dab_) {
+    packet << PacketBlockType::WANT_DAB;
+    want_dab_ = false;
+  }
 
   // Record replay
   if (this->recording_) {
@@ -1260,9 +1269,10 @@ void PlayState::DrawQuickslots() {
   if (primary_cd_ > 0.0f) {
     opacity = 0.33f;
   }
-  if (my_primary_ability_id == (int)AbilityID::FISHINGING_POLE && me_hooked_) { // fishing hook special case (stage 2)
+  if (my_primary_ability_id == (int)AbilityID::FISHINGING_POLE &&
+      me_hooked_) {  // fishing hook special case (stage 2)
     glob::Submit(gui_detach_, glm::vec2(9, 50), 0.75f, 100, 1.f);
-  } else { // otherwise draw ability and CD normally
+  } else {  // otherwise draw ability and CD normally
     glob::Submit(ability_handles_[my_primary_ability_id], glm::vec2(9, 50),
                  0.75f, 100, opacity);
     if (primary_cd_ > 0.0f) {
@@ -1624,18 +1634,21 @@ void PlayState::CreatePlayerEntities() {
 
     glob::ModelHandle player_model;
     if (entity_id == my_id_) {
+      //#define TEST_3RD_PERSON
+      #ifdef TEST_3RD_PERSON
+      glm::vec3 camera_offset = glm::vec3(-4.5f, 1.4f, 0.0f);
+      player_model = glob::GetModel(kModelPathMech);
+      pc.localPlayer = false;
+      #else
       glm::vec3 camera_offset = glm::vec3(-0.2f, 0.4f, 0.f);
-      // glm::vec3 camera_offset = glm::vec3(-4.5f, 1.4f, 1.5f);
+      player_model = glob::GetModel("Assets/Mech/FPS_body.fbx");
+      pc.localPlayer = true;
+      #endif
 
       registry_gameplay_.assign<CameraComponent>(entity, camera_offset,
                                                  glm::quat(glm::vec3(0.f)));
 
-      player_model = glob::GetModel("Assets/Mech/FPS_body.fbx");
-      // player_model = glob::GetModel(kModelPathMech);
-
       model_c.cast_shadow = false;
-      pc.localPlayer = true;
-      // pc.localPlayer = false;
 
       my_entity_ = entity;
     } else {
@@ -2029,6 +2042,7 @@ void PlayState::CreateNewBallEntity(bool fake, EntityID id) {
   registry_gameplay_.assign<BallComponent>(ball);
   registry_gameplay_.assign<IDComponent>(ball, id);
   registry_gameplay_.assign<SoundComponent>(ball, sound_engine.CreatePlayer());
+  registry_gameplay_.assign<physics::Sphere>(ball, zero_vec, 0.95f);
 
   registry_gameplay_.assign<TrailComponent>(ball);
 }
@@ -2057,7 +2071,7 @@ void PlayState::CreateInGameMenu() {
   };
 
   // END GAME -- change registry to registry_mainmenu_
-  in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "MAINMENU",
+  in_game_buttons_ = GenerateButtonEntity(registry_gameplay_, "MAIN MENU",
                                           in_game_menu_pos + glm::vec2(0, -140),
                                           font_test_, false);
   in_game_buttons_->button_func = [&] {

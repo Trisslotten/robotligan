@@ -18,6 +18,8 @@ class Shockwaves {
 
   void SetUniforms(ShaderProgram& shader);
 
+  void Clear();
+
  private:
   struct Shockwave {
     glm::vec3 position = glm::vec3(0);
