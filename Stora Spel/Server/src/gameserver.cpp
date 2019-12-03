@@ -107,7 +107,6 @@ void GameServer::Update(float dt) {
         bool ready = true;
         to_send << ready;
         to_send << PacketBlockType::LOBBY_UPDATE_TEAM;
-        
       }
       server_.Send(to_send);
       // s = 1;
@@ -115,22 +114,6 @@ void GameServer::Update(float dt) {
     p << this->current_state_type_ << PacketBlockType::SERVER_STATE;
     server_.Send(p);
   }
-
-  /*
-  TODO: fix
-  if (client_sent_name_ && current_state_type_ == ServerStateType::PLAY) {
-    for (auto& [client_id, to_send] : GetPackets()) {
-      for (auto [cl_id, name] : client_names_) {
-        std::cout << "TO_CLIENT_SEND: " << name << "\n";
-        to_send.Add(name.data(), name.size());
-        to_send << name.size();
-        to_send << cl_id;
-        to_send << PacketBlockType::TO_CLIENT_NAME;
-      }
-    }
-  }
-  client_sent_name_ = false;
-  */
 
   // handle received data
   for (auto& [id, client_data] : server_.GetClients()) {
@@ -267,7 +250,6 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
     }
     case PacketBlockType::CLIENT_READY: {
       lobby_state_.SetClientIsReady(client_id, true);
-      std::cout << "PACKET: CLIENT_READY: " << client_id << "\n";
       break;
     }
     case PacketBlockType::CLIENT_NOT_READY: {
