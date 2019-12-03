@@ -129,6 +129,12 @@ void LobbyState::Init() {
 }
 
 void LobbyState::Update(float dt) {
+  auto& cli = engine_->GetClient();
+  if (!cli.IsConnected()) {
+    cli.Disconnect();
+    engine_->ChangeState(StateType::MAIN_MENU);
+  }
+
   server_state_ = engine_->GetServerState();
   DrawTeamSelect();
   DrawAbilitySelect();
@@ -196,7 +202,7 @@ void LobbyState::HandleUpdateLobbyTeamPacket(NetAPI::Common::Packet& packet) {
   if (len > 0) {
     name.resize(len);
     packet.Remove(name.data(), len);
-    //std::cout << "Lobby: name: " << name << "\n";
+    // std::cout << "Lobby: name: " << name << "\n";
     if (id != -1) {
       LobbyPlayer plyr;
       plyr.ready = ready;
