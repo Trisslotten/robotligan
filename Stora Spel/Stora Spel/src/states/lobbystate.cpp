@@ -170,13 +170,6 @@ void LobbyState::Update(float dt) {
   glob::Submit(chatbox_back_,
                glm::vec2(glob::window::GetWindowDimensions().x - 545, 12),
                1.0f);
-
-  if (Input::IsKeyPressed(GLFW_KEY_F4)) {
-    std::cout << "LOBBY PLAYERS\n";
-    for (auto& [client_id, lb] : lobby_players_) {
-      std::cout << "\t" << client_id << ": " << lb.team << "\n";
-    }
-  }
 }
 
 void LobbyState::UpdateNetwork() {}
@@ -202,7 +195,7 @@ void LobbyState::HandleUpdateLobbyTeamPacket(NetAPI::Common::Packet& packet) {
   if (len > 0) {
     name.resize(len);
     packet.Remove(name.data(), len);
-    std::cout << "Lobby: name: " << name << "\n";
+    //std::cout << "Lobby: name: " << name << "\n";
     if (id != -1) {
       LobbyPlayer plyr;
       plyr.ready = ready;

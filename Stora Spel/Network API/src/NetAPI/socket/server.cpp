@@ -209,7 +209,7 @@ bool NetAPI::Socket::Server::Update() {
   }
 
   for(auto client_id : client_to_remove_) {
-    std::cout << "!!!!!!!!!!!!!!!! Remove client: " << client_id << "\n";
+    //std::cout << "!!!!!!!!!!!!!!!! Remove client: " << client_id << "\n";
     client_data_.erase(client_id);
   }
   client_to_remove_.clear();

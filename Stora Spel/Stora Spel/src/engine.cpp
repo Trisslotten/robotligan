@@ -228,14 +228,6 @@ void Engine::Update(float dt) {
     }
   }
 
-  if (Input::IsKeyPressed(GLFW_KEY_F4)) {
-    std::cout << "NAMES:\n";
-    for (auto& [client_id, name] : this->player_names_) {
-      std::cout << "\t" << client_id << ": " << name << "\n";
-    }
-  }
-  
-
   Input::Reset();
 }
 

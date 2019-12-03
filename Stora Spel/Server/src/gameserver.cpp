@@ -250,20 +250,6 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
     }
     case PacketBlockType::CLIENT_READY: {
       lobby_state_.SetClientIsReady(client_id, true);
-      std::cout << "PACKET: CLIENT_READY: " << client_id << "\n";
-      std::cout << "#################### num connected: " << server_.GetNumConnected() << "\n";
-      std::cout << "NAMES:\n";
-      for (auto& [client_id, name] : this->client_names_) {
-        std::cout << "\t" << client_id << ": " << name << "\n";
-      }
-      std::cout << "CLIENT TEAMS:\n";
-      for (auto& [client_id, team] : lobby_state_.client_teams_) {
-        std::cout << "\t" << client_id << ": " << team << "\n";
-      }
-      std::cout << "CLIENT ABILITIES:\n";
-      for (auto& [client_id, team] : lobby_state_.client_abilities_) {
-        std::cout << "\t" << client_id << ": " << (int)team << "\n";
-      }
       break;
     }
     case PacketBlockType::CLIENT_NOT_READY: {
