@@ -460,6 +460,7 @@ void PlayState::Update(float dt) {
     engine_->DrawScoreboard();
 
     if (game_has_ended_) {
+      this->recording_ = false;
       engine_->ChangeState(StateType::REPLAY);
     }
     if (primary_cd_ > 0) {
@@ -2479,12 +2480,12 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       current_jumbo_effect_ = GOAL_SCORED;
       jumbo_effect_timer_.Pause();
 
-      if (this->recording_) {
-        this->engine_->GetReplayMachinePtr()->StoreAndClearReplay();
-      }
       break;
     }
     case GameEvent::RESET: {
+      if (this->recording_) {
+        this->engine_->GetReplayMachinePtr()->StoreAndClearReplay();
+      }
       Reset();
       break;
     }
