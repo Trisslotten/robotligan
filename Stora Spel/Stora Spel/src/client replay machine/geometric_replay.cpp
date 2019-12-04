@@ -94,13 +94,16 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
         in_registry.get<TransformComponent>(in_entity);
     PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
     PhysicsComponent& phys_c = in_registry.get<PhysicsComponent>(in_entity);
+    IDComponent& id_c = in_registry.get<IDComponent>(in_entity);
 
-    ret_ptr = new PlayerFrame(transform_c, player_c, phys_c);
+    ret_ptr = new PlayerFrame(transform_c, player_c, phys_c,
+                              engine_->GetPlayerTeam(id_c.id));
   } else if (object_type == REPLAY_BALL) {
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
+    TrailComponent& trail_c = in_registry.get<TrailComponent>(in_entity);
 
-    ret_ptr = new BallFrame(transform_c);
+    ret_ptr = new BallFrame(transform_c, trail_c);
   } else if (object_type == REPLAY_PICKUP) {
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
@@ -109,7 +112,8 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
   } else if (object_type == REPLAY_WALL) {
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
-    ret_ptr = new WallFrame(trans_c);
+    WallComponent& wall_c = in_registry.get<WallComponent>(in_entity);
+    ret_ptr = new WallFrame(trans_c, wall_c);
   } else if (object_type == REPLAY_SHOT) {
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
@@ -132,7 +136,8 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
   } else if (object_type == REPLAY_MINE) {
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
-    ret_ptr = new MineFrame(trans_c);
+    MineComponent& mine_c = in_registry.get<MineComponent>(in_entity);
+    ret_ptr = new MineFrame(trans_c, mine_c);
   } else if (object_type == REPLAY_BLACKHOLE) {
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
@@ -265,16 +270,20 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
     PhysicsComponent& phys_c = in_registry.get<PhysicsComponent>(in_entity);
 
+    // Just placeholder, isn't used here
+    unsigned int player_team = TEAM_RED;
+
     // Transfer
-    pf_c_ptr->WriteBack(transform_c, player_c, phys_c);
+    pf_c_ptr->WriteBack(transform_c, player_c, phys_c, player_team);
   } else if (in_type == REPLAY_BALL) {
     // Cast
     BallFrame* bf_c_ptr = dynamic_cast<BallFrame*>(in_df_ptr);
     // Get
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
+    TrailComponent& trail_c = in_registry.get<TrailComponent>(in_entity);
     // Transfer
-    bf_c_ptr->WriteBack(transform_c);
+    bf_c_ptr->WriteBack(transform_c, trail_c);
   } else if (in_type == REPLAY_PICKUP) {
     // TRACKER PICKUP WRITEBACK
     PickUpFrame* pu_c_ptr = dynamic_cast<PickUpFrame*>(in_df_ptr);
@@ -287,8 +296,9 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     // Get
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
+    WallComponent& wall_c = in_registry.get<WallComponent>(in_entity);
     // Transfer
-    wf_c_ptr->WriteBack(trans_c);
+    wf_c_ptr->WriteBack(trans_c, wall_c);
   } else if (in_type == REPLAY_SHOT) {
     // Cast
     ShotFrame* sf_c_ptr = dynamic_cast<ShotFrame*>(in_df_ptr);
@@ -327,8 +337,9 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     // Get
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
+    MineComponent& mine_c = in_registry.get<MineComponent>(in_entity);
     // Transfer
-    mf_c_ptr->WriteBack(trans_c);
+    mf_c_ptr->WriteBack(trans_c, mine_c);
   } else if (in_type == REPLAY_BLACKHOLE) {
     // Cast
     BlackholeFrame* bh_c_ptr = dynamic_cast<BlackholeFrame*>(in_df_ptr);
@@ -388,13 +399,25 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     model_c.handles.push_back(mh_mech);
     model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
 
+    // Add animation stuff
     AnimationComponent& anim_c = in_registry.assign<AnimationComponent>(
         entity, glob::GetAnimationData(mh_mech));
 
+    // Add sound stuff
     in_registry.assign<SoundComponent>(
         entity, engine_->GetSoundEngine().CreatePlayer());
 
-    pf_ptr->WriteBack(transform_c, player_c, phys_c);
+    // Assume mech to be red
+    unsigned int player_team = TEAM_RED;
+    model_c.diffuse_index = 0;
+
+    // Write back date from DataFrame
+    pf_ptr->WriteBack(transform_c, player_c, phys_c, player_team);
+
+    // If assumption wrong, swap
+    if (player_team == TEAM_BLUE) {
+      model_c.diffuse_index = 1;
+    }
   } else if (object_type == REPLAY_BALL) {
     BallFrame* bf_ptr = dynamic_cast<BallFrame*>(df_ptr);
     in_registry.assign<IDComponent>(
@@ -406,7 +429,8 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     //
     TransformComponent& transform_c =
         in_registry.assign<TransformComponent>(entity);
-    bf_ptr->WriteBack(transform_c);
+    TrailComponent& trail_c = in_registry.assign<TrailComponent>(entity);
+    bf_ptr->WriteBack(transform_c, trail_c);
 
     // Create and add ModelHandle
     glob::ModelHandle mh_ball_proj = glob::GetModel(kModelPathBallProjectors);
@@ -443,11 +467,18 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     // - Assign the relevant components to entity
     TransformComponent& trans_c =
         in_registry.assign<TransformComponent>(entity);
-    wf_c_ptr->WriteBack(trans_c);
+    WallComponent& wall_c = in_registry.assign<WallComponent>(entity);
+    wf_c_ptr->WriteBack(trans_c, wall_c);
     // - Assign a model component to thew entity
     glob::ModelHandle wall_model = glob::GetModel(kModelPathWall);
     glob::ModelHandle wall_trans = glob::GetModel(kModelPathWallTransparent);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    // - Set color on wall
+    if (wall_c.owner_team == TEAM_BLUE) {
+      model_c.diffuse_index = 1;
+    } else {
+      model_c.diffuse_index = 0;
+    }
     // - Add the relevant ModelHandle:s to entity
     model_c.handles.push_back(wall_model);
     model_c.handles.push_back(wall_trans);
@@ -515,15 +546,22 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
   } else if (object_type == REPLAY_MINE) {
     // -Cast DataFrame to correct type
     MineFrame* mf_c_ptr = dynamic_cast<MineFrame*>(df_ptr);
+    // - Assign the relevant components to entity
     in_registry.assign<IDComponent>(entity,
                                     channels_.at(in_channel_index).object_id);
-    // - Assign the relevant components to entity
     TransformComponent& trans_c =
         in_registry.assign<TransformComponent>(entity);
-    mf_c_ptr->WriteBack(trans_c);
+    MineComponent& mine_c = in_registry.assign<MineComponent>(entity);
+    mf_c_ptr->WriteBack(trans_c, mine_c);
     // - Assign a model component to thew entity
     glob::ModelHandle mine_model = glob::GetModel(kModelPathMine);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    // - Set color on wall
+    if (mine_c.owner_team == TEAM_BLUE) {
+      model_c.diffuse_index = 1;
+    } else {
+      model_c.diffuse_index = 0;
+    }
     // - Add the relevant ModelHandle:s to entity
     model_c.handles.push_back(mine_model);
   } else if (object_type == REPLAY_BLACKHOLE) {
@@ -776,7 +814,7 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
   while (next_event_index_to_read_ < captured_events_.size() &&
          captured_events_[next_event_index_to_read_].frame_number ==
              current_frame_number_read_) {
-	//
+    //
     dispatcher.trigger(captured_events_[next_event_index_to_read_].event);
     next_event_index_to_read_++;
   }
