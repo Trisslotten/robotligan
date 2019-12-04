@@ -134,9 +134,11 @@ class ShotFrame : public DataFrame {
   glm::vec3 position_;
   glm::quat rotation_;
 
+  glm::vec4 trail_color_;
+
  public:
   ShotFrame();
-  ShotFrame(TransformComponent& in_transform_c);
+  ShotFrame(TransformComponent& in_transform_c, TrailComponent& in_trail_c);
   ~ShotFrame();
 
   ShotFrame* Clone();
@@ -145,7 +147,7 @@ class ShotFrame : public DataFrame {
   DataFrame* InterpolateForward(unsigned int in_dist_to_target,
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
-  void WriteBack(TransformComponent& in_transform_c);
+  void WriteBack(TransformComponent& in_transform_c, TrailComponent& in_trail_c);
 };
 
 //---
