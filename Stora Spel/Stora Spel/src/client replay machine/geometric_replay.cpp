@@ -99,8 +99,9 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
   } else if (object_type == REPLAY_BALL) {
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
+    TrailComponent& trail_c = in_registry.get<TrailComponent>(in_entity);
 
-    ret_ptr = new BallFrame(transform_c);
+    ret_ptr = new BallFrame(transform_c, trail_c);
   } else if (object_type == REPLAY_PICKUP) {
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
@@ -273,8 +274,9 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     // Get
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
+    TrailComponent& trail_c = in_registry.get<TrailComponent>(in_entity);
     // Transfer
-    bf_c_ptr->WriteBack(transform_c);
+    bf_c_ptr->WriteBack(transform_c, trail_c);
   } else if (in_type == REPLAY_PICKUP) {
     // TRACKER PICKUP WRITEBACK
     PickUpFrame* pu_c_ptr = dynamic_cast<PickUpFrame*>(in_df_ptr);
@@ -406,7 +408,8 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     //
     TransformComponent& transform_c =
         in_registry.assign<TransformComponent>(entity);
-    bf_ptr->WriteBack(transform_c);
+    TrailComponent& trail_c = in_registry.assign<TrailComponent>(entity);
+    bf_ptr->WriteBack(transform_c, trail_c);
 
     // Create and add ModelHandle
     glob::ModelHandle mh_ball_proj = glob::GetModel(kModelPathBallProjectors);

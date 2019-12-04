@@ -183,10 +183,12 @@ void PlayerFrame::WriteBack(TransformComponent& in_transform_c,
 
 BallFrame::BallFrame() {}
 
-BallFrame::BallFrame(TransformComponent& in_transform_c) {
+BallFrame::BallFrame(TransformComponent& in_transform_c,
+                     TrailComponent& in_trail_c) {
   //
   this->position_ = in_transform_c.position;
   this->rotation_ = in_transform_c.rotation;
+  this->trail_color_ = in_trail_c.color;
   // this->scale_ = in_transform_c.scale;
 }
 
@@ -197,6 +199,8 @@ DataFrame* BallFrame::Clone() {
 
   ret_ptr->position_ = this->position_;
   ret_ptr->rotation_ = this->rotation_;
+
+  ret_ptr->trail_color_ = trail_color_;
   // ret_ptr->scale_ = this->scale_;
 
   return ret_ptr;
@@ -258,6 +262,8 @@ DataFrame* BallFrame::InterpolateForward(unsigned int in_dist_to_target,
     ret_frame->rotation_ =
         glm::slerp(this->rotation_, point_b.rotation_, percentage_a);
 
+	ret_frame->trail_color_ = trail_color_;
+
     // SCALE
     // ret_frame->scale_ = this->scale_;
 
@@ -269,11 +275,13 @@ DataFrame* BallFrame::InterpolateForward(unsigned int in_dist_to_target,
   }
 }
 
-void BallFrame::WriteBack(TransformComponent& in_transform_c) {
+void BallFrame::WriteBack(TransformComponent& in_transform_c,
+                          TrailComponent& in_trail_c) {
   in_transform_c.position = this->position_;
   in_transform_c.rotation = this->rotation_;
   // in_transform_c.scale = this->scale_;
   in_transform_c.scale = glm::vec3(1.0);
+  in_trail_c.color = trail_color_;
 }
 
 //##############################

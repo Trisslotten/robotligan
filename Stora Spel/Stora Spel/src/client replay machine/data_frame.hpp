@@ -72,10 +72,11 @@ class BallFrame : public DataFrame {
   // glm::vec3 scale_;
 
   // NTS: See comment in declaration of PlayerFrame
+  glm::vec4 trail_color_;
 
  public:
   BallFrame();
-  BallFrame(TransformComponent& in_transform_c);
+  BallFrame(TransformComponent& in_transform_c, TrailComponent& in_trail_c);
   ~BallFrame();
 
   DataFrame* Clone();
@@ -84,7 +85,7 @@ class BallFrame : public DataFrame {
   DataFrame* InterpolateForward(unsigned int in_dist_to_target,
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
-  void WriteBack(TransformComponent& in_transform_c);
+  void WriteBack(TransformComponent& in_transform_c, TrailComponent& in_trail_c);
 };
 
 //---
