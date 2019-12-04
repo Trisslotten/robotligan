@@ -3003,9 +3003,10 @@ void PlayState::Reset() {
     yaw_ = 0.0f;
   }
   pitch_ = 0.0f;
-
-  auto& player_c = registry_gameplay_.get<PlayerComponent>(my_entity_);
-  player_c.can_jump = false;
+  if (registry_gameplay_.valid(my_entity_)) {
+	auto& player_c = registry_gameplay_.get<PlayerComponent>(my_entity_);
+	player_c.can_jump = false;
+  }
   server_predicted_.velocity = glm::vec3(0.0f);
   predicted_state_.velocity = glm::vec3(0.0f);
   current_jumbo_effect_ = TEAM_SCORES;

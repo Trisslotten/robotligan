@@ -286,8 +286,8 @@ void LobbyState::CreateBackgroundEntities() {
     glob::ModelHandle model_robot = glob::GetModel(kModelPathMech);
     auto& model_c = registry_lobby_.assign<ModelComponent>(robot);
     model_c.handles.push_back(model_robot);
-    // registry_lobby_.assign<AnimationComponent>(robot,
-    // glob::GetAnimationData(model_robot));
+    registry_lobby_.assign<AnimationComponent>(robot,
+     glob::GetAnimationData(model_robot));
     trans.position = glm::vec3(10.f, 1.f, 0.f);
   }
 
