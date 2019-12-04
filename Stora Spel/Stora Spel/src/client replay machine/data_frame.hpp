@@ -7,7 +7,6 @@
 #include <ecs/components.hpp>
 #include <ecs/components/player_component.hpp>
 #include <shared/transform_component.hpp>
-#include <ecs/components.hpp>
 
 #include <glob/graphics.hpp>
 //---
@@ -47,10 +46,13 @@ class PlayerFrame : public DataFrame {
   // physics stuff
   glm::vec3 velocity_;
 
+  // Team
+  unsigned int team_ = TEAM_RED;
+
  public:
   PlayerFrame();
   PlayerFrame(TransformComponent& in_transform_c, PlayerComponent& in_player_c,
-              PhysicsComponent& in_phys_c);
+              PhysicsComponent& in_phys_c, unsigned int player_team);
   ~PlayerFrame();
 
   DataFrame* Clone();
@@ -60,7 +62,8 @@ class PlayerFrame : public DataFrame {
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
   void WriteBack(TransformComponent& in_transform_c,
-                 PlayerComponent& in_player_c, PhysicsComponent& in_phys_c);
+                 PlayerComponent& in_player_c, PhysicsComponent& in_phys_c,
+                 unsigned int& in_team);
 };
 
 //---
@@ -107,15 +110,15 @@ class PickUpFrame : public DataFrame {
   void WriteBack(TransformComponent& in_transform_c);
 };
 
-
 //-----Wall---------------
 class WallFrame : public DataFrame {
  protected:
   glm::vec3 position_;
   glm::quat rotation_;
+  unsigned int team_ = TEAM_RED;
  public:
   WallFrame();
-  WallFrame(TransformComponent& trans_c);
+  WallFrame(TransformComponent& trans_c, WallComponent& wall_c);
   ~WallFrame();
 
   DataFrame* Clone();
@@ -123,8 +126,7 @@ class WallFrame : public DataFrame {
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
   bool ThresholdCheck(DataFrame& in_future_df);
-  void WriteBack(TransformComponent& trans_c);
-
+  void WriteBack(TransformComponent& trans_c, WallComponent& wall_c);
 };
 
 //---
@@ -172,21 +174,21 @@ class TeleportShotFrame : public DataFrame {
 
 class MissileFrame : public DataFrame {
  protected:
-   glm::vec3 position_;
-   glm::quat rotation_;
+  glm::vec3 position_;
+  glm::quat rotation_;
 
  public:
-   MissileFrame();
-   MissileFrame(TransformComponent& in_transform_c);
-   ~MissileFrame();
+  MissileFrame();
+  MissileFrame(TransformComponent& in_transform_c);
+  ~MissileFrame();
 
-   MissileFrame* Clone();
+  MissileFrame* Clone();
 
-   bool ThresholdCheck(DataFrame& in_future_df);
-   DataFrame* InterpolateForward(unsigned int in_dist_to_target,
-                                 unsigned int in_dist_to_point_b,
-                                 DataFrame& in_point_b);
-   void WriteBack(TransformComponent& in_transform_c);
+  bool ThresholdCheck(DataFrame& in_future_df);
+  DataFrame* InterpolateForward(unsigned int in_dist_to_target,
+                                unsigned int in_dist_to_point_b,
+                                DataFrame& in_point_b);
+  void WriteBack(TransformComponent& in_transform_c);
 };
 
 //---

@@ -2186,7 +2186,7 @@ void PlayState::CreateWall(EntityID id, glm::vec3 position, glm::quat rotation,
   hs.push_back(model);
   hs.push_back(model_t);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(wall, hs);
-  registry_gameplay_.assign<WallComponent>(wall);
+  registry_gameplay_.assign<WallComponent>(wall, team);
   if (team == TEAM_BLUE) {
     model_c.diffuse_index = 1;
   } else {
