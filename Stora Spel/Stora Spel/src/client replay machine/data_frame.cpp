@@ -774,10 +774,14 @@ void ForcePushFrame::WriteBack(TransformComponent& trans_c) {
 //			MineFrame
 //##############################
 
-MineFrame::MineFrame() { position_ = glm::vec3(0.f); }
+MineFrame::MineFrame() {
+  position_ = glm::vec3(0.f);
+  team_ = TEAM_RED;
+}
 
-MineFrame::MineFrame(TransformComponent& trans_c) {
+MineFrame::MineFrame(TransformComponent& trans_c, MineComponent& mine_c) {
   position_ = trans_c.position;
+  team_ = mine_c.owner_team;
 }
 
 MineFrame::~MineFrame() {}
@@ -785,7 +789,8 @@ MineFrame::~MineFrame() {}
 DataFrame* MineFrame::Clone() {
   MineFrame* mine_return = new MineFrame();
 
-  mine_return->position_ = position_;
+  mine_return->position_ = this->position_;
+  mine_return->team_ = this->team_;
 
   return mine_return;
 }
@@ -801,14 +806,18 @@ DataFrame* MineFrame::InterpolateForward(unsigned int in_dist_to_target,
   // POSITION
   ret_frame->position_ = this->position_;
 
+  // TEAM
+  ret_frame->team_ = this->team_;
+
   return ret_frame;
 }
 
 bool MineFrame::ThresholdCheck(DataFrame& in_future_df) { return false; }
 
-void MineFrame::WriteBack(TransformComponent& trans_c) {
+void MineFrame::WriteBack(TransformComponent& trans_c, MineComponent& mine_c) {
   trans_c.position = position_;
   trans_c.scale = glm::vec3(1.0f);
+  mine_c.owner_team = team_;
 }
 
 //##############################

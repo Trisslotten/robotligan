@@ -135,7 +135,8 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
   } else if (object_type == REPLAY_MINE) {
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
-    ret_ptr = new MineFrame(trans_c);
+    MineComponent& mine_c = in_registry.get<MineComponent>(in_entity);
+    ret_ptr = new MineFrame(trans_c, mine_c);
   } else if (object_type == REPLAY_BLACKHOLE) {
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
@@ -334,8 +335,9 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     // Get
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
+    MineComponent& mine_c = in_registry.get<MineComponent>(in_entity);
     // Transfer
-    mf_c_ptr->WriteBack(trans_c);
+    mf_c_ptr->WriteBack(trans_c, mine_c);
   } else if (in_type == REPLAY_BLACKHOLE) {
     // Cast
     BlackholeFrame* bh_c_ptr = dynamic_cast<BlackholeFrame*>(in_df_ptr);
@@ -541,15 +543,22 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
   } else if (object_type == REPLAY_MINE) {
     // -Cast DataFrame to correct type
     MineFrame* mf_c_ptr = dynamic_cast<MineFrame*>(df_ptr);
+    // - Assign the relevant components to entity
     in_registry.assign<IDComponent>(entity,
                                     channels_.at(in_channel_index).object_id);
-    // - Assign the relevant components to entity
     TransformComponent& trans_c =
         in_registry.assign<TransformComponent>(entity);
-    mf_c_ptr->WriteBack(trans_c);
+    MineComponent& mine_c = in_registry.assign<MineComponent>(entity);
+    mf_c_ptr->WriteBack(trans_c, mine_c);
     // - Assign a model component to thew entity
     glob::ModelHandle mine_model = glob::GetModel(kModelPathMine);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    // - Set color on wall
+    if (mine_c.owner_team == TEAM_BLUE) {
+      model_c.diffuse_index = 1;
+    } else {
+      model_c.diffuse_index = 0;
+    }
     // - Add the relevant ModelHandle:s to entity
     model_c.handles.push_back(mine_model);
   } else if (object_type == REPLAY_BLACKHOLE) {

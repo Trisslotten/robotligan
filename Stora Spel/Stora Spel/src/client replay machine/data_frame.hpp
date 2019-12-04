@@ -216,10 +216,11 @@ class ForcePushFrame : public DataFrame {
 class MineFrame : public DataFrame {
  protected:
   glm::vec3 position_;
+  unsigned int team_;
 
  public:
   MineFrame();
-  MineFrame(TransformComponent& trans_c);
+  MineFrame(TransformComponent& trans_c, MineComponent& mine_c);
   ~MineFrame();
 
   DataFrame* Clone();
@@ -227,7 +228,7 @@ class MineFrame : public DataFrame {
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
   bool ThresholdCheck(DataFrame& in_future_df);
-  void WriteBack(TransformComponent& trans_c);
+  void WriteBack(TransformComponent& trans_c, MineComponent& mine_c);
 };
 
 //---
