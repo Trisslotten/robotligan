@@ -3008,6 +3008,7 @@ void PlayState::Reset() {
   }
   pitch_ = 0.0f;
 
+  // TODO: crashed here when RESET event happened while replaying
   auto& player_c = registry_gameplay_.get<PlayerComponent>(my_entity_);
   player_c.can_jump = false;
   server_predicted_.velocity = glm::vec3(0.0f);
