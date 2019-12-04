@@ -19,6 +19,7 @@
 #include "ecs/systems/particle_system.hpp"
 #include "ecs/systems/render_system.hpp"
 #include "ecs/systems/sound_system.hpp"
+#include "ecs/systems/pickup_bob_system.hpp"
 #include "entitycreation.hpp"
 #include "eventdispatcher.hpp"
 #include "shared/camera_component.hpp"
@@ -818,6 +819,8 @@ void Engine::UpdateSystems(float dt) {
   trailsystem::Update(*registry_current_, dt);
   skylight_system::Update(*registry_current_);
   lifetime::Update(*registry_current_, dt);
+  pickup_bob_system::Update(*registry_current_, dt);
+  
   RenderSystem(*registry_current_);
 }
 
