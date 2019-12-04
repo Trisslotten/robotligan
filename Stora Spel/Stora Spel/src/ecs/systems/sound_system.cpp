@@ -497,13 +497,12 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
   }
   if (event.type == GameEvent::BLACK_HOLE_CREATED) {
     auto view = registry->view<IDComponent, SoundComponent>();
-        std::cout << "playing black hole sound\n";
     for (auto entity : view) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.create_black_hole.black_hole_id) {
         sound_c.sound_player->Play(ability_sounds_[AbilityID::BLACKHOLE], 0,
-                                   5.0f);
+                                   1.0f);
         break;
       }
     }
@@ -516,7 +515,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       if (id_c.id == event.create_black_hole.black_hole_id) {
         sound_c.sound_player->Stop(ability_sounds_[AbilityID::BLACKHOLE]);
         sound_c.sound_player->Play(sound_black_hole_active, 0,
-                                   5.0f);
+                                   1.0f);
         break;
       }
     }
@@ -528,7 +527,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.create_black_hole.black_hole_id) {
         sound_c.sound_player->Stop(sound_black_hole_active);
-        sound_c.sound_player->Play(sound_black_hole_destroy, 0, 5.0f);
+        sound_c.sound_player->Play(sound_black_hole_destroy, 0, 1.0f);
         break;
       }
     }

@@ -44,6 +44,7 @@ class EXPORT SoundEngine {
   void SetMasterVolume(float vol);
   void SetListenerAttributes(glm::vec3 pos, glm::quat orientation,
                              glm::vec3 vel);
+  void DestroyPlayer(SoundPlayer* in_player);
   SoundPlayer* CreatePlayer();
   SoundPlayer* GetPlayer();
 

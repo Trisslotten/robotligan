@@ -13,7 +13,7 @@ void MainMenuState::Startup() {
   CreateInformationMenu();
   CreateBackgroundEnitites();
 
-  information_image_ = glob::GetGUIItem("assets/GUI_elements/info_menu.png");
+  information_image_ = glob::GetGUIItem("assets/GUI_elements/info_menu_v2.png");
 
   loggo_image_ = glob::GetGUIItem("assets/GUI_elements/logga.png");
 }
@@ -29,12 +29,17 @@ void MainMenuState::Init() {
   if (client.IsConnected()) {
     client.Disconnect();
   }
+  glob::GetCamera().SetFov(90.f);
 }
 
 void MainMenuState::Update(float dt) {
   //
   if (engine_->GetCurrentRegistry() == &registry_information_) {
-    glob::Submit(information_image_, glm::vec2(560, 300), 1.0f);
+    auto ws = glob::window::GetWindowDimensions();
+    glm::vec2 pos;
+    pos.x = ws.x - 1152.0f;
+    pos.y = ws.y - 648.0f;
+    glob::Submit(information_image_, pos, 1.0f);
   } else {
     auto ws = glob::window::GetWindowDimensions();
     float scale = 0.8f;
@@ -92,6 +97,75 @@ void MainMenuState::CreateInformationMenu() {
   b_c->button_func = [&]() {
     engine_->SetCurrentRegistry(&registry_mainmenu_);
   };
+
+  // Background scene
+  // add the lights to scene
+
+  auto light_test = registry_information_.create();  // Get from engine
+  registry_information_.assign<LightComponent>(light_test, glm::vec3(0.05f),
+                                               30.f, 0.1f);
+  registry_information_.assign<TransformComponent>(
+      light_test, glm::vec3(0.f, 16.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      glm::vec3(1.f));
+
+  glm::vec3 zero_vec = glm::vec3(0.0f);
+
+  auto light_test2 = registry_information_.create();  // Get from engine
+  registry_information_.assign<LightComponent>(
+      light_test2, glm::vec3(1.f, 1.f, 1.0f), 50.f, 0.1f);
+  registry_information_.assign<TransformComponent>(
+      light_test2, glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      glm::vec3(1.f));
+  {
+    // ladda in och skapa entity för bana
+    auto arena = registry_information_.create();
+    glm::vec3 arena_scale = glm::vec3(2.0f);
+
+    glob::ModelHandle model_arena =
+        glob::GetModel("assets/Arena/Map_V3_ARENA.fbx");
+    glob::ModelHandle model_arena_banner =
+        glob::GetModel("assets/Arena/Map_V3_ARENA_SIGNS.fbx");
+    glob::ModelHandle model_map = glob::GetModel("assets/MapV3/Map_Walls.fbx");
+    glob::ModelHandle model_map_floor =
+        glob::GetModel("assets/MapV3/Map_Floor.fbx");
+    glob::ModelHandle model_map_projectors =
+        glob::GetModel("assets/MapV3/Map_Projectors.fbx");
+
+    auto& model_c = registry_information_.assign<ModelComponent>(arena);
+    model_c.handles.push_back(model_arena);
+    model_c.handles.push_back(model_arena_banner);
+    model_c.handles.push_back(model_map);
+    model_c.handles.push_back(model_map_floor);
+    model_c.handles.push_back(model_map_projectors);
+    // model_c.cast_shadow = false;
+
+    registry_information_.assign<TransformComponent>(arena, zero_vec, zero_vec,
+                                                     arena_scale);
+  }
+  {
+    glm::vec3 zero_vec = glm::vec3(0.0f);
+    glm::vec3 arena_scale = glm::vec3(1.f);
+    auto arena = registry_information_.create();
+    glob::ModelHandle model_map_walls =
+        glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
+
+    auto& model_c = registry_information_.assign<ModelComponent>(arena);
+    model_c.handles.push_back(model_map_walls);
+    model_c.cast_shadow = false;
+
+    registry_information_.assign<TransformComponent>(arena, zero_vec, zero_vec,
+                                                     arena_scale);
+  }
+  {
+    // lägga ut en kamera i scenen
+    auto camera = registry_information_.create();
+    auto& cam_c = registry_information_.assign<CameraComponent>(camera);
+    auto& cam_trans = registry_information_.assign<TransformComponent>(camera);
+    cam_trans.position = glm::vec3(15.f, 3.f, 0.f);
+    glm::vec3 dir = glm::vec3(0) - cam_trans.position;
+    cam_c.orientation =
+        glm::quat(glm::vec3(0.f, 0.f, 0.f * glm::radians(-86.f)));
+  }
 }
 
 void MainMenuState::CreateBackgroundEnitites() {
@@ -211,5 +285,6 @@ void MainMenuState::CreateBackgroundEnitites() {
     glm::vec3 dir = glm::vec3(0) - cam_trans.position;
     cam_c.orientation =
         glm::quat(glm::vec3(0.f, 0.f, 0.f * glm::radians(-86.f)));
+
   }
 }

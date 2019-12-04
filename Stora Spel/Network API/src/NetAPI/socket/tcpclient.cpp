@@ -136,7 +136,7 @@ std::vector<NetAPI::Common::Packet> NetAPI::Socket::TcpClient::Receive(
       }
       return result;
     }
-    if (last_buff_len_ == 0 || (WSAGetLastError() == WSAECONNRESET)) {
+    if (last_buff_len_ == 0 || (WSAGetLastError() == WSAECONNRESET) || WSAGetLastError() == WSAECONNABORTED) {
       connected_ = false;
       this->Disconnect();
       return result;

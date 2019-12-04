@@ -31,15 +31,18 @@ void ServerLobbyState::Update(float dt) {
     if (!cli.second->client.IsConnected() && cli.second->is_active) {
       cli.second->is_active = false;
       this->client_teams_.erase(cli.second->ID);
+      this->client_abilities_.erase(cli.second->ID);
       this->clients_ready_.erase(cli.second->ID);
       NetAPI::Common::Packet p;
       p << cli.second->ID;
       p << PacketBlockType::PLAYER_LOBBY_DISCONNECT;
       this->game_server_->GetServer().KickPlayer(cli.second->ID);
+      this->game_server_->RemoveClientName(cli.second->ID);
       teams_updated_ = true;
       this->game_server_->GetServer().SendToAll(p);
     }
   }
+
   bool can_start = clients_ready_.size() >= min_players;
   for (auto ready : clients_ready_) {
     can_start = can_start && ready.second;
@@ -108,7 +111,7 @@ void ServerPlayState::Init() {
   match_timer_.Restart();
   countdown_timer_.Restart();
   CreatePickupSpawners();
-  CreateInitialEntities(server.GetConnectedPlayers());
+  CreateInitialEntities(server.GetNumConnected());
 
   ResetEntities();
   created_pick_ups_.clear();
@@ -160,7 +163,7 @@ void ServerPlayState::Init() {
     arena_scale.x = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
     arena_scale.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
     arena_scale.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
-    int num_players = server.GetConnectedPlayers();
+    int num_players = server.GetNumConnected();
     to_send << num_players;
     to_send << client_abilities_[client_id];
     to_send << arena_scale;
@@ -275,6 +278,22 @@ void ServerPlayState::Update(float dt) {
     ge.type = GameEvent::SWITCH_GOALS_DONE;
     dispatcher.trigger(ge);
     switching_goals = false;
+  }
+
+  if (!wants_dab_.empty()) {
+    auto view = registry.view<IDComponent, PlayerComponent>();
+    for (auto entity : view) {
+      auto& id_c = view.get<IDComponent>(entity);
+      auto& player_c = view.get<PlayerComponent>(entity);
+
+      if(wants_dab_.count(player_c.client_id) > 0) {
+        GameEvent event;
+        event.type = GameEvent::DABBING;
+        event.dabbing.player_entity_id = id_c.id;
+        dispatcher.trigger(event);
+      }
+    }
+    wants_dab_.clear();
   }
 }
 
@@ -515,7 +534,7 @@ void ServerPlayState::Cleanup() {
     delete this->replay_machine_;
   }
   game_server_->GetRegistry().reset();
-  game_server_->GetServer().ResetPlayers();
+  //game_server_->GetServer().ResetPlayers();
   client_abilities_.clear();
   client_teams_.clear();
   clients_player_ids_.clear();
@@ -876,6 +895,20 @@ void ServerPlayState::ResetEntities() {
       dispatcher.trigger(homing_ball_end_event);
     }
     ball_component.homer_cid = -1;
+
+	// clear projectiles and hooks
+    auto view_projectiles = registry.view<ProjectileComponent, IDComponent>();
+    for (auto projectile : view_projectiles) {
+      auto id_c = registry.get<IDComponent>(projectile);
+      destroy_entities_.push_back(id_c.id);
+      registry.destroy(projectile);
+	}
+    auto view_hooks = registry.view<HookComponent, IDComponent>();
+    for (auto hook : view_hooks) {
+      auto id_c = registry.get<IDComponent>(hook);
+      destroy_entities_.push_back(id_c.id);
+      registry.destroy(hook);
+    }
   }
 
   // remove fishing hook
@@ -1174,7 +1207,7 @@ void ServerPlayState::Reconnect(int id) {
     auto& ball_c = ball_view.get<BallComponent>(ball);
     auto& id_c = ball_view.get<IDComponent>(ball);
 
-    if(team_id == ball_c.faker_team) {
+    if (team_id == ball_c.faker_team) {
       to_send << ball_c.is_real;
     } else {
       to_send << true;
@@ -1192,7 +1225,7 @@ void ServerPlayState::Reconnect(int id) {
   arena_scale.x = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
   arena_scale.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
   arena_scale.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
-  int num_players = server.GetConnectedPlayers();
+  int num_players = server.GetNumConnected();
   std::cout << "Num players : " << num_players << std::endl;
   to_send << num_players;
   to_send << client_abilities_[id];

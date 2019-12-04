@@ -16,6 +16,8 @@ const double kClientUpdateRate = 64;
 const double kServerUpdateRate = 64;
 const unsigned kServerTimeout = 6;
 
+const bool kEnableReconnect = false;
+
 enum class ServerStateType {
   LOBBY = 0,
   PLAY,
@@ -90,6 +92,7 @@ enum : int16_t {
   PLAYER_MOVE_DIR,
   TO_CLIENT_NAME,
   YOU_CAN_SMASH,
+  WANT_DAB,
   NUM_BLOCK_TYPES,
 };
 
@@ -167,6 +170,7 @@ struct GameEvent {
     FISHING_HOOK_ATTACHED,
     REMOVE_FISHING_HOOK,
     PICKED_UP_PICKUP,
+    DABBING,
     NUM_EVENTS
   } type;
   union {
@@ -377,6 +381,11 @@ struct GameEvent {
       EntityID hook_id;
       EntityID owner_id;
     } hook_removed;
+
+    struct {
+      EntityID player_entity_id;
+    } dabbing;
+
   };
 };
 

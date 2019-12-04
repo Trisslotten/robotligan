@@ -434,12 +434,12 @@ physics::IntersectData physics::Intersect(const physics::MeshHitbox& m,
   data.normal = glm::vec3(0.f);
   data.collision = false;
   float mini1, mini2, maxi1, maxi2;
-  std::vector<glm::vec3> L;
-  L.reserve(13);
+  //std::vector<glm::vec3> L;
+  //L.reserve(13);
+  glm::vec3 L[13];
 
   Corners c1 = GetCorners(o);
   float minimum = 1000.0f;
-  glm::vec3 Normal;
   for (size_t i = 0; i < m.indices.size(); i += 3) {
     Triangle tri{m.pos[m.indices[i]], m.pos[m.indices[i + 1]],
                  m.pos[m.indices[i + 2]]};
@@ -450,17 +450,24 @@ physics::IntersectData physics::Intersect(const physics::MeshHitbox& m,
     E[2] = E[1] - E[0];
     glm::vec3 D = tri.p0 - o.center;
     glm::vec3 N = glm::cross(E[0], E[1]);
-    L.push_back(N);
+    int current_index = 0;
+    //L.push_back(N);
+    L[current_index] = N;
+    current_index++;
 
     for (int k = 0; k < 3; ++k) {
-      L.push_back(o.normals[k]);
+      //L.push_back(o.normals[k]);
+      L[current_index] = o.normals[k];
+      current_index++;
       for (int j = 0; j < 3; ++j) {
-        L.push_back(glm::cross(o.normals[k], E[j]));
+        //L.push_back(glm::cross(o.normals[k], E[j]));
+        L[current_index] = glm::cross(o.normals[k], E[j]);
+        current_index++;
       }
     }
 
     bool collision = true;
-    for (int k = 0; k < L.size(); ++k) {
+    for (int k = 0; k < 13; ++k) {
       float min1, max1, min2, max2;
       SatTest(L[k], c1, &min1, &max1);
       SatTest(L[k], tri, &min2, &max2);
@@ -493,7 +500,7 @@ physics::IntersectData physics::Intersect(const physics::MeshHitbox& m,
       data.move_vector = min_dist * data.normal;
       return data;
     }
-    L.clear();
+    //L.clear();
   }
   return data;
 }
