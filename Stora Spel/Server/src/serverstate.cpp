@@ -31,6 +31,7 @@ void ServerLobbyState::Update(float dt) {
     if (!cli.second->client.IsConnected() && cli.second->is_active) {
       cli.second->is_active = false;
       this->client_teams_.erase(cli.second->ID);
+      this->client_abilities_.erase(cli.second->ID);
       this->clients_ready_.erase(cli.second->ID);
       NetAPI::Common::Packet p;
       p << cli.second->ID;
@@ -110,7 +111,7 @@ void ServerPlayState::Init() {
   match_timer_.Restart();
   countdown_timer_.Restart();
   CreatePickupSpawners();
-  CreateInitialEntities(server.GetConnectedPlayers());
+  CreateInitialEntities(server.GetNumConnected());
 
   ResetEntities();
   created_pick_ups_.clear();
@@ -162,7 +163,7 @@ void ServerPlayState::Init() {
     arena_scale.x = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
     arena_scale.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
     arena_scale.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
-    int num_players = server.GetConnectedPlayers();
+    int num_players = server.GetNumConnected();
     to_send << num_players;
     to_send << client_abilities_[client_id];
     to_send << arena_scale;
@@ -533,7 +534,7 @@ void ServerPlayState::Cleanup() {
     delete this->replay_machine_;
   }
   game_server_->GetRegistry().reset();
-  game_server_->GetServer().ResetPlayers();
+  //game_server_->GetServer().ResetPlayers();
   client_abilities_.clear();
   client_teams_.clear();
   clients_player_ids_.clear();
@@ -1224,7 +1225,7 @@ void ServerPlayState::Reconnect(int id) {
   arena_scale.x = GlobalSettings::Access()->ValueOf("ARENA_SCALE_X");
   arena_scale.y = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Y");
   arena_scale.z = GlobalSettings::Access()->ValueOf("ARENA_SCALE_Z");
-  int num_players = server.GetConnectedPlayers();
+  int num_players = server.GetNumConnected();
   std::cout << "Num players : " << num_players << std::endl;
   to_send << num_players;
   to_send << client_abilities_[id];

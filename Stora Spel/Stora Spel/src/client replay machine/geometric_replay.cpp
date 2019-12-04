@@ -276,11 +276,11 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     // Transfer
     bf_c_ptr->WriteBack(transform_c);
   } else if (in_type == REPLAY_PICKUP) {
+    // TRACKER PICKUP WRITEBACK
     PickUpFrame* pu_c_ptr = dynamic_cast<PickUpFrame*>(in_df_ptr);
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
     pu_c_ptr->WriteBack(trans_c);
-    // TBA
   } else if (in_type == REPLAY_WALL) {
     // Cast
     WallFrame* wf_c_ptr = dynamic_cast<WallFrame*>(in_df_ptr);
@@ -428,7 +428,7 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
 
     TransformComponent& trans_c =
         in_registry.assign<TransformComponent>(entity);
-    pu_ptr->WriteBack(trans_c);
+    pu_ptr->WriteBack(trans_c);  // TRACKER PICKUP WRITEBACK
 
     glob::ModelHandle pickup_model = glob::GetModel(kModelPathPickup);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
@@ -446,9 +446,11 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     wf_c_ptr->WriteBack(trans_c);
     // - Assign a model component to thew entity
     glob::ModelHandle wall_model = glob::GetModel(kModelPathWall);
+    glob::ModelHandle wall_trans = glob::GetModel(kModelPathWallTransparent);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     // - Add the relevant ModelHandle:s to entity
     model_c.handles.push_back(wall_model);
+    model_c.handles.push_back(wall_trans);
   } else if (object_type == REPLAY_SHOT) {
     ShotFrame* sf_ptr = dynamic_cast<ShotFrame*>(df_ptr);
     in_registry.assign<IDComponent>(
@@ -771,14 +773,12 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
   // - Check the vector of captured events
   // - Read all events with the current read frame's number
   // - Dispatch them
-  if (next_event_index_to_read_ < captured_events_.size()) {
-    while (captured_events_[next_event_index_to_read_].frame_number ==
-           current_frame_number_read_) {
-      dispatcher.trigger(captured_events_[next_event_index_to_read_].event);
-      // printf("Triggered event of type: %i \n",
-      //       captured_events_[next_index_to_read_].event.type);
-      next_event_index_to_read_++;
-    }
+  while (next_event_index_to_read_ < captured_events_.size() &&
+         captured_events_[next_event_index_to_read_].frame_number ==
+             current_frame_number_read_) {
+	//
+    dispatcher.trigger(captured_events_[next_event_index_to_read_].event);
+    next_event_index_to_read_++;
   }
 
   // Increment read index

@@ -19,6 +19,7 @@
 #include "ecs/systems/particle_system.hpp"
 #include "ecs/systems/render_system.hpp"
 #include "ecs/systems/sound_system.hpp"
+#include "ecs/systems/pickup_bob_system.hpp"
 #include "entitycreation.hpp"
 #include "eventdispatcher.hpp"
 #include "shared/camera_component.hpp"
@@ -73,7 +74,6 @@ void Engine::Init() {
   /*gameplay_timer_.reserve(2);
   gameplay_timer_.push_back(4);
   gameplay_timer_.push_back(59);*/
-
 
   // TODO: move to states
   gui_scoreboard_back_ =
@@ -155,13 +155,6 @@ void Engine::Update(float dt) {
     glm::vec2 mouse_movement = mouse_sensitivity * Input::MouseMov();
 
     play_state_.AddPitchYaw(-mouse_movement.y, -mouse_movement.x);
-
-    if (Input::IsKeyPressed(GLFW_KEY_K)) {  //???: What is this?
-      new_team_ = TEAM_BLUE;
-    }
-    if (Input::IsKeyPressed(GLFW_KEY_L)) {
-      new_team_ = TEAM_RED;
-    }
   }
 
   // Update current state
@@ -221,10 +214,11 @@ void Engine::Update(float dt) {
     glob::ReloadShaders();
   }
 
-  if (Input::IsKeyPressed(GLFW_KEY_F4)) {
-    std::cout << "NAMES:\n";
-    for (auto& [client_id, name] : this->player_names_) {
-      std::cout << "\t" << name << "\n";
+  for (auto iter = player_names_.begin(); iter != player_names_.end();) {
+    if (iter->second == "") {
+      player_names_.erase(iter++);
+    } else {
+      ++iter;
     }
   }
 
@@ -263,17 +257,6 @@ void Engine::UpdateNetwork() {
     to_send << PacketBlockType::MESSAGE;
     message_.clear();
   }
-  /*
-  TODO: fix
-  // choose new team
-  if (new_team_ != std::numeric_limits<unsigned int>::max()) {
-    to_send << new_team_;
-    to_send << my_id_;
-    to_send << PacketBlockType::CHOOSE_TEAM;
-
-    new_team_ = std::numeric_limits<unsigned int>::max();
-  }
-  */
 
   if (should_send_input_) {
     // play_state_.AddPitchYaw(accum_pitch_, accum_yaw_);
@@ -542,7 +525,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::UPDATE_POINTS: {
       long id;
       EntityID eid;
-      int goals, points, assists, saves, ping;
+      int goals, points, assists, saves;//ping;
       unsigned int team;
       packet >> assists;
       packet >> saves;
@@ -836,6 +819,8 @@ void Engine::UpdateSystems(float dt) {
   trailsystem::Update(*registry_current_, dt);
   skylight_system::Update(*registry_current_);
   lifetime::Update(*registry_current_, dt);
+  pickup_bob_system::Update(*registry_current_, dt);
+  
   RenderSystem(*registry_current_);
 }
 

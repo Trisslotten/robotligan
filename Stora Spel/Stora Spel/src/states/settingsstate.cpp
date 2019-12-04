@@ -101,7 +101,7 @@ void SettingsState::CreateSettingsMenu() {
   auto& slider_c = registry_settings_.assign<SliderComponent>(fov_slider);
   slider_c.back_tex = glob::GetGUIItem("assets/GUI_Elements/slider_back.png");
   slider_c.front_tex = glob::GetGUIItem("assets/GUI_Elements/slider_front.png");
-  slider_c.value = glob::GetCamera().GetFov();
+  slider_c.value = setting_fov_;
   slider_c.position = graphics_start_pos + down_jump * 0.f;
   slider_c.min_val = 60.f;
   slider_c.max_val = 120.f;

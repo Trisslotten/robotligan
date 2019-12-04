@@ -210,6 +210,7 @@ void glob::Font2D::CreateTexture() {
 
   font_texture_.clear();
   font_texture_.reserve(1);
+  font_texture_.shrink_to_fit();
 
   tex_id = texture_id;
 }

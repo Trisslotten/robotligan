@@ -1,5 +1,6 @@
 #include "state.hpp"
 
+#include <GLFW\glfw3.h>
 #include <glob/window.hpp>
 #include <util/asset_paths.hpp>
 #include "..//ecs/components.hpp"
@@ -124,16 +125,23 @@ void LobbyState::Init() {
   engine_->GetAnimationSystem().Reset(registry_lobby_);
 
   engine_->GetChat()->SetShowChat();
+  glob::GetCamera().SetFov(90.f);
 }
 
 void LobbyState::Update(float dt) {
+  auto& cli = engine_->GetClient();
+  if (!cli.IsConnected()) {
+    cli.Disconnect();
+    engine_->ChangeState(StateType::MAIN_MENU);
+  }
+
   server_state_ = engine_->GetServerState();
   DrawTeamSelect();
   DrawAbilitySelect();
 
   // draw ready string
   glm::vec2 pos =
-      glm::vec2((glob::window::GetWindowDimensions().x / 2) - 100, 50);
+      glm::vec2((glob::window::GetWindowDimensions().x / 2) - 100, 40);
   glob::Submit(font_test_, pos, 72, "Ready: ");
 
   bool everyone_ready = true;
@@ -191,16 +199,18 @@ void LobbyState::HandleUpdateLobbyTeamPacket(NetAPI::Common::Packet& packet) {
   packet >> team;
   packet >> id;
   packet >> len;
-  name.resize(len);
-  packet.Remove(name.data(), len);
-  //std::cout << "Lobby: name: " << name << "\n";
-  if (id != -1) {
-    LobbyPlayer plyr;
-    plyr.ready = ready;
-    plyr.team = team;
-    lobby_players_[id] = plyr;
+  if (len > 0) {
+    name.resize(len);
+    packet.Remove(name.data(), len);
+    // std::cout << "Lobby: name: " << name << "\n";
+    if (id != -1) {
+      LobbyPlayer plyr;
+      plyr.ready = ready;
+      plyr.team = team;
+      lobby_players_[id] = plyr;
+    }
+    engine_->player_names_[id] = name;
   }
-  engine_->player_names_[id] = name;
 }
 
 void LobbyState::HandlePlayerDisconnect(NetAPI::Common::Packet& packet) {
@@ -309,7 +319,7 @@ void LobbyState::CreateGUIElements() {
   ability_blacklist.push_back((int)AbilityID::MINE);
   ability_blacklist.push_back((int)AbilityID::GRAVITY_CHANGE);
   ability_blacklist.push_back((int)AbilityID::FAKE_BALL);
-  //ability_blacklist.push_back((int)AbilityID::HOMING_BALL);
+  // ability_blacklist.push_back((int)AbilityID::HOMING_BALL);
 
   red_team_select_back_ = glob::GetGUIItem("Assets/GUI_elements/red_team.png");
   blue_team_select_back_ =
@@ -359,7 +369,9 @@ void LobbyState::CreateGUIElements() {
       "TELEPORT: Fire a projectile that teleports you to the point of impact.";
   ability_tooltips_[11] = "BLACKOUT: Turn off the lights.";
   ability_tooltips_[12] = "BLACK HOLE: No, don't do it. You have been warned.";
-  ability_tooltips_[13] = "MINE: Place an explosive mine on the ground that will launch enemies into the air.";
+  ability_tooltips_[13] =
+      "MINE: Place an explosive mine on the ground that will launch enemies "
+      "into the air.";
   ability_tooltips_[14] = "FISHING POLE: It's literally just a grappling hook.";
 
   // auto button_join_red = registry_lobby_.create();
