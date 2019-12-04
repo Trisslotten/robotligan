@@ -222,6 +222,7 @@
     <ClInclude Include="src\ecs\components\wall_component.hpp" />
     <ClInclude Include="src\ecs\systems\animation_system.hpp" />
     <ClInclude Include="src\ecs\systems\fireworks_system.hpp" />
+    <ClInclude Include="src\ecs\systems\free_look_system.hpp" />
     <ClInclude Include="src\ecs\systems\lifetime_system.hpp" />
     <ClInclude Include="src\ecs\systems\particle_system.hpp" />
     <ClInclude Include="src\ecs\systems\gui_system.hpp" />
