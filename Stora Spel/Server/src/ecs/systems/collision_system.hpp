@@ -812,7 +812,7 @@ void PlayerProjectileCollision(entt::registry& registry) {
         switch (id.projectile_id) {
           case ProjectileID::CANNON_BALL: {
             // registry.destroy(projectile);
-            if (registry.has<HookComponent, IDComponent>(projectile)) {
+            if (registry.has<IDComponent>(projectile)) {
               auto id_c = registry.get<IDComponent>(projectile);
               GameEvent missile_impact_event;
               missile_impact_event.type = GameEvent::CANNON_IMPACT;
@@ -902,7 +902,7 @@ void ProjectileBallCollision(entt::registry& registry, entt::entity ball) {
           //glm::vec3 dir = normalize(ball_hitbox.center - proj_hitbox.center);
           //ball_physics.velocity += dir * 20.0f;
           //ball_physics.is_airborne = true;
-          if (registry.has<HookComponent, IDComponent>(projectile)) {
+          if (registry.has<IDComponent>(projectile)) {
             auto id_c = registry.get<IDComponent>(projectile);
             GameEvent missile_impact_event;
             missile_impact_event.type = GameEvent::CANNON_IMPACT;
@@ -995,7 +995,6 @@ void ProjectileArenaCollision(entt::registry& registry) {
       if (data.collision) {
         switch (proj_id.projectile_id) {
           case ProjectileID::CANNON_BALL: {
-            // registry.destroy(projectile);
             GameEvent missile_impact_event;
             missile_impact_event.type = GameEvent::CANNON_IMPACT;
             missile_impact_event.cannon_impact.projectile_id = id_c.id;
@@ -1273,14 +1272,13 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
 void ApplyCannonPush(entt::registry& registry, glm::vec3 pos) {
   physics::Sphere force_push;
   force_push.center = pos;
-  force_push.radius = 2.f;
 
   auto balls =
       registry.view<physics::Sphere, BallComponent, PhysicsComponent>();
   for (auto ball : balls) {
     auto& hitbox = balls.get<physics::Sphere>(ball);
     auto& physics_c = balls.get<PhysicsComponent>(ball);
-    ApplyForcePushOnEntity(force_push.center, hitbox.center, physics_c,
+    ApplyCannonPushOnEntity(force_push.center, hitbox.center, physics_c,
                            registry, ball);
   }
 
@@ -1291,7 +1289,7 @@ void ApplyCannonPush(entt::registry& registry, glm::vec3 pos) {
     auto& hitbox = players.get<physics::OBB>(player);
     auto& physics_c = players.get<PhysicsComponent>(player);
     auto& player_c = players.get<PlayerComponent>(player);
-    ApplyForcePushOnEntity(force_push.center, hitbox.center, physics_c,
+    ApplyCannonPushOnEntity(force_push.center, hitbox.center, physics_c,
                            registry, player);
   }
 }
@@ -1301,12 +1299,12 @@ void ApplyCannonPushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
                             entt::registry& registry, entt::entity& entity) {
   physics::Sphere force_push;
   force_push.center = explosion_pos;
-  force_push.radius = 2.f;
+  force_push.radius = 5.f;
   glm::vec3 dir = entity_pos - force_push.center;
   float length = glm::length(dir);
   if (length < force_push.radius) {
     physics_c.is_airborne = true;
-    float force = 30.f;
+    float force = 25.f;
     dir = glm::normalize(dir);
     physics_c.velocity =
         dir * force * (force_push.radius - length) / force_push.radius;

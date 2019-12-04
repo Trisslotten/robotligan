@@ -113,8 +113,9 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
   } else if (object_type == REPLAY_SHOT) {
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
+    TrailComponent& trail_c = in_registry.get<TrailComponent>(in_entity);
 
-    ret_ptr = new ShotFrame(transform_c);
+    ret_ptr = new ShotFrame(transform_c, trail_c);
   } else if (object_type == REPLAY_TELEPORT_SHOT) {
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
@@ -295,8 +296,9 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     // Get
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
+    TrailComponent& trail_c = in_registry.get<TrailComponent>(in_entity);
     // Transfer
-    sf_c_ptr->WriteBack(transform_c);
+    sf_c_ptr->WriteBack(transform_c, trail_c);
   } else if (in_type == REPLAY_TELEPORT_SHOT) {
     // Cast
     TeleportShotFrame* tsf_c_ptr = dynamic_cast<TeleportShotFrame*>(in_df_ptr);
@@ -457,7 +459,10 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     //
     TransformComponent& transform_c =
         in_registry.assign<TransformComponent>(entity);
-    sf_ptr->WriteBack(transform_c);
+    TrailComponent& trail_c = in_registry.assign<TrailComponent>(entity);
+    trail_c.width = 0.2f;
+
+    sf_ptr->WriteBack(transform_c, trail_c);
 
     // Create and add ModelHandle
     glob::ModelHandle mh_shot = glob::GetModel(kModelPathRocket);

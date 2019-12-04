@@ -467,11 +467,14 @@ void WallFrame::WriteBack(TransformComponent& trans_c) {
 
 ShotFrame::ShotFrame() {}
 
-ShotFrame::ShotFrame(TransformComponent& in_transform_c) {
+ShotFrame::ShotFrame(TransformComponent& in_transform_c,
+                     TrailComponent& in_trail_c) {
   //
   this->position_ = in_transform_c.position;
   this->rotation_ = in_transform_c.rotation;
   // this->scale_ = in_transform_c.scale;
+
+  this->trail_color_ = in_trail_c.color;
 }
 
 ShotFrame::~ShotFrame() {}
@@ -483,6 +486,7 @@ ShotFrame* ShotFrame::Clone() {
   ret_ptr->rotation_ = this->rotation_;
   // ret_ptr->scale_ = this->scale_;
 
+  ret_ptr->trail_color_ = this->trail_color_;
   return ret_ptr;
 }
 
@@ -535,6 +539,7 @@ DataFrame* ShotFrame::InterpolateForward(unsigned int in_dist_to_target,
 
     // SCALE
     // ret_frame->scale_ = this->scale_;
+    ret_frame->trail_color_ = trail_color_;
 
     return ret_frame;
 
@@ -544,11 +549,13 @@ DataFrame* ShotFrame::InterpolateForward(unsigned int in_dist_to_target,
   }
 }
 
-void ShotFrame::WriteBack(TransformComponent& in_transform_c) {
+void ShotFrame::WriteBack(TransformComponent& in_transform_c, TrailComponent& in_trail_c) {
   in_transform_c.position = this->position_;
   in_transform_c.rotation = this->rotation_;
   // in_transform_c.scale = this->scale_;
   in_transform_c.scale = glm::vec3(0.5f);
+
+  in_trail_c.color = trail_color_;
 }
 
 //##############################
@@ -908,8 +915,7 @@ DataFrame* BlackholeFrame::InterpolateForward(unsigned int in_dist_to_target,
   }
 }
 
-bool BlackholeFrame::ThresholdCheck(
-    DataFrame& in_future_df) {
+bool BlackholeFrame::ThresholdCheck(DataFrame& in_future_df) {
   BlackholeFrame& future_pf = dynamic_cast<BlackholeFrame&>(in_future_df);
 
   float threshold = 0.0f;

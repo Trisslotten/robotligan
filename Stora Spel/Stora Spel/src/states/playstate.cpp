@@ -2472,7 +2472,7 @@ void PlayState::SetPlayerMoveDir(EntityID id, glm::vec3 move_dir) {
 }
 
 void PlayState::ReceiveGameEvent(const GameEvent& e) {
-  entt::registry* correct_registry = &registry_gameplay_;
+  entt::registry* correct_registry = engine_->GetCurrentRegistry();
   switch (e.type) {
     case GameEvent::GOAL: {
       CreateGoalParticles(e.goal.x, *correct_registry);
@@ -2579,7 +2579,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       break;
     }
     case GameEvent::FORCE_PUSH_IMPACT: {
-      auto ent = correct_registry->create();
+      auto registry = engine_->GetCurrentRegistry();
+      auto ent = registry->create();
       auto handle = glob::CreateParticleSystem();
 
       std::vector handles = {handle};
@@ -2588,7 +2589,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
       glob::SetParticleSettings(handle, "force_push.txt");
 
-      auto registry = engine_->GetCurrentRegistry();
+      
       auto view_controller = registry->view<IDComponent, TransformComponent>();
 
       for (auto proj_ent : view_controller) {
@@ -2603,13 +2604,14 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         }
       }
 
-      correct_registry->assign<ParticleComponent>(ent, handles, offsets,
+      registry->assign<ParticleComponent>(ent, handles, offsets,
                                                   directions);
-      correct_registry->assign<TimerComponent>(ent, 1.f);
+      registry->assign<TimerComponent>(ent, 1.f);
       break;
     }
     case GameEvent::MISSILE_IMPACT: {
-      auto ent = correct_registry->create();
+      auto registry = engine_->GetCurrentRegistry();
+      auto ent = registry->create();
       auto handle = glob::CreateParticleSystem();
 
       std::vector handles = {handle};
@@ -2617,8 +2619,6 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       std::vector<glm::vec3> directions;
 
       glob::SetParticleSettings(handle, "missile_impact.txt");
-
-      auto registry = engine_->GetCurrentRegistry();
       auto view_controller = registry->view<IDComponent, TransformComponent>();
 
       for (auto proj_ent : view_controller) {
@@ -2634,22 +2634,23 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         }
       }
 
-      correct_registry->assign<ParticleComponent>(ent, handles, offsets,
+      registry->assign<ParticleComponent>(ent, handles, offsets,
                                                   directions);
-      correct_registry->assign<TimerComponent>(ent, 1.f);
+      registry->assign<TimerComponent>(ent, 1.f);
       break;
     }
     case GameEvent::CANNON_IMPACT: {
-      auto ent = correct_registry->create();
+      auto registry = engine_->GetCurrentRegistry();
+      auto ent = registry->create();
       auto handle = glob::CreateParticleSystem();
 
       std::vector handles = {handle};
       std::vector<glm::vec3> offsets;
       std::vector<glm::vec3> directions;
 
-      glob::SetParticleSettings(handle, "missile_impact.txt");
+      glob::SetParticleSettings(handle, "cannon_impact.txt");
 
-      auto registry = engine_->GetCurrentRegistry();
+     
       auto view_controller = registry->view<IDComponent, TransformComponent>();
 
       for (auto proj_ent : view_controller) {
@@ -2657,17 +2658,17 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         auto& trans_c = view_controller.get<TransformComponent>(proj_ent);
 
         if (id_c.id == e.cannon_impact.projectile_id) {
-          glob::SetEmitPosition(handle, trans_c.position);
+          glob::SetEmitPosition(handle, trans_c.position); 
 
-          glob::CreateShockwave(trans_c.position, 0.30f, 20.f);
+          glob::CreateShockwave(trans_c.position, 0.30f, 10.f);
 
           break;
         }
       }
 
-      correct_registry->assign<ParticleComponent>(ent, handles, offsets,
+      registry->assign<ParticleComponent>(ent, handles, offsets,
                                                   directions);
-      correct_registry->assign<TimerComponent>(ent, 1.f);
+      registry->assign<TimerComponent>(ent, 1.f);
       break;
     }
     case GameEvent::TELEPORT_CAST: {
