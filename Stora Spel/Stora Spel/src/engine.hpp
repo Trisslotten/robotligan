@@ -102,6 +102,10 @@ class Engine {
   bool IsRecording() const { return this->play_state_.IsRecording(); }
   // Replay stuff---
 
+  // Entity destruction---
+  void EngineDestroyEntity(entt::registry& in_registry, entt::entity& in_entity);
+  // Entity destruction---
+
   void ClearNames() {
     player_names_.clear();
   }

@@ -2406,7 +2406,8 @@ void PlayState::DestroyEntity(EntityID id) {
       if (registry_gameplay_.has<TransformComponent>(entity)) {
         pos = registry_gameplay_.get<TransformComponent>(entity).position;
       }
-      registry_gameplay_.destroy(entity);
+      // registry_gameplay_.destroy(entity);
+      engine_->EngineDestroyEntity(registry_gameplay_, entity);
       break;
     }
   }
@@ -2968,8 +2969,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       for (auto hook : view_hooks) {
         auto& hook_id_c = registry_gameplay_.get<IDComponent>(hook);
         if (hook_id_c.id == id) {
-          //registry_gameplay_.destroy(hook);
-          correct_registry->destroy(hook);
+          // registry_gameplay_.destroy(hook);
+          // correct_registry->destroy(hook);
+          engine_->EngineDestroyEntity(registry_gameplay_, hook);
         }
       }
       if (e.hook_removed.owner_id == my_id_) {
@@ -2986,6 +2988,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 }
 
 void PlayState::Reset() {
+  //
+
+  // NTS: Call to engine destroy not needed?
   auto destroy_view = registry_gameplay_.view<DestroyOnResetComponent>();
   registry_gameplay_.destroy(destroy_view.begin(), destroy_view.end());
 
