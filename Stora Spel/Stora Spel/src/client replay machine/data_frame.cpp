@@ -951,9 +951,11 @@ void BlackholeFrame::WriteBack(TransformComponent& trans_c) {
 
 HookFrame::HookFrame() {}
 
-HookFrame::HookFrame(TransformComponent& trans_c) {
+HookFrame::HookFrame(TransformComponent& trans_c, HookComponent& hook_c) {
   position_ = trans_c.position;
   rotation_ = trans_c.rotation;
+
+  owner_ = hook_c.creator;
 }
 
 HookFrame::~HookFrame() {}
@@ -963,6 +965,7 @@ DataFrame* HookFrame::Clone() {
 
   ret_ptr->position_ = this->position_;
   ret_ptr->rotation_ = this->rotation_;
+  ret_ptr->owner_ = this->owner_;
 
   return ret_ptr;
 }
@@ -995,6 +998,8 @@ DataFrame* HookFrame::InterpolateForward(unsigned int in_dist_to_target,
     ret_frame->rotation_ =
         glm::slerp(rotation_, point_b.rotation_, percentage_a);
 
+	ret_frame->owner_ = owner_;
+
     return ret_frame;
 
   } catch (std::bad_cast exp) {
@@ -1020,8 +1025,10 @@ bool HookFrame::ThresholdCheck(DataFrame& in_future_df) {
   return false;
 }
 
-void HookFrame::WriteBack(TransformComponent& trans_c) {
+void HookFrame::WriteBack(TransformComponent& trans_c, HookComponent& hook_c) {
   trans_c.position = position_;
   trans_c.rotation = rotation_;
   trans_c.scale = glm::vec3(0.3f);
+
+  hook_c.creator = owner_;
 }

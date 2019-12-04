@@ -202,6 +202,7 @@
     <ClInclude Include="src\ecs\components\black_hole_component.hpp" />
     <ClInclude Include="src\ecs\components\destroy_on_reset_component.h" />
     <ClInclude Include="src\ecs\components\follow_bone_component.hpp" />
+    <ClInclude Include="src\ecs\components\hook_component.hpp" />
     <ClInclude Include="src\ecs\components\skylight_component.hpp" />
     <ClInclude Include="src\ecs\components\button_component.hpp" />
     <ClInclude Include="src\ecs\components\fireworks_component.hpp" />

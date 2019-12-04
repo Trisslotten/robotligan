@@ -509,6 +509,8 @@ class ReplayState : public State {
 
   void ShowScoreboard();
 
+  void DrawFishingLines();
+
  public:
   void Startup() override;
   void Init() override;
