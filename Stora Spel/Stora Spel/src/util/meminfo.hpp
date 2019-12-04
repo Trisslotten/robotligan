@@ -35,19 +35,19 @@ class MemoryInfo {
   int GetUsedVRAM(unsigned short suffix = MB) {
 	  //Om funktionen kallas mer än en gång så måste vi släppa på föregående 
 	  //Devices för att undvika memoryleaks.
-    if (curr_adapter_ || adapters_) {
-      dx_factory_->Release();
-      adapters_->Release();
-    }
+    //if (curr_adapter_ || adapters_) {
+    //  dx_factory_->Release();
+    //  adapters_->Release();
+    //}
 	//Adapters innehåller alla renderings-enheter, både fysiska och virtuella 
-    curr_adapter_ = nullptr;
-    adapters_ = nullptr;
+    //curr_adapter_ = nullptr;
+    //adapters_ = nullptr;
 	//Vi vet att vi enbart vill ha den första fysiska enheten, så vi skippar att loopa
-    dx_factory_->EnumAdapters1(0, &curr_adapter_);
+    //dx_factory_->EnumAdapters1(0, &curr_adapter_);
     DXGI_ADAPTER_DESC1 desc;
     curr_adapter_->GetDesc1(&desc);
-    if (!adapters_ && desc.Flags == 0) {
-      curr_adapter_->QueryInterface(IID_PPV_ARGS(&adapters_));
+    if (!false && desc.Flags == 0) {
+      //curr_adapter_->QueryInterface(IID_PPV_ARGS(&adapters_));
 	  //Få fram minnesinfo från adaptern.
       DXGI_QUERY_VIDEO_MEMORY_INFO info = {};
       adapters_->QueryVideoMemoryInfo(0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL,
@@ -83,10 +83,15 @@ class MemoryInfo {
   }
 
  private:
-  MemoryInfo() { CreateDXGIFactory1(IID_PPV_ARGS(&dx_factory_)); }
+  MemoryInfo() {
+    CreateDXGIFactory1(IID_PPV_ARGS(&dx_factory_));
+    dx_factory_->EnumAdapters1(0, &curr_adapter_);
+    curr_adapter_->QueryInterface(IID_PPV_ARGS(&adapters_));
+  }
   ~MemoryInfo() {
     dx_factory_->Release();
     adapters_->Release();
+    curr_adapter_->Release();
   }
   MemoryInfo(const MemoryInfo&) = delete;
   MemoryInfo& operator=(const MemoryInfo&) = delete;
