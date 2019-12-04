@@ -22,6 +22,23 @@ void ServerLobbyState::Init() {
   for (auto& ready_c : clients_ready_) {
     ready_c.second = false;
   }
+
+  for (auto& cli : this->game_server_->GetServer().GetClients()) {
+    if (!cli.second->client.IsConnected()) {
+      cli.second->is_active = false;
+      this->client_teams_.erase(cli.second->ID);
+      this->client_abilities_.erase(cli.second->ID);
+      this->clients_ready_.erase(cli.second->ID);
+      NetAPI::Common::Packet p;
+      p << cli.second->ID;
+      p << PacketBlockType::PLAYER_LOBBY_DISCONNECT;
+      this->game_server_->GetServer().KickPlayer(cli.second->ID);
+      this->game_server_->RemoveClientName(cli.second->ID);
+      teams_updated_ = true;
+      this->game_server_->GetServer().SendToAll(p);
+    }
+  }
+
   srand(time(NULL));
 }
 
