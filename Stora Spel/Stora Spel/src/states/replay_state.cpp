@@ -365,6 +365,33 @@ void ReplayState::ShowScoreboard() {
   glob::Submit(font_test_, pos, 48, winnin_team_text, best_team_color);
 }
 
+void ReplayState::DrawFishingLines() {
+  auto view_hooks = replay_registry_.view<HookComponent, TransformComponent>();
+  for (auto hook : view_hooks) {
+    TransformComponent hook_trans_c =
+        replay_registry_.get<TransformComponent>(hook);
+    EntityID owner = replay_registry_.get<HookComponent>(hook).creator;
+    auto view_players =
+        replay_registry_.view<TransformComponent, IDComponent>();
+    for (auto player : view_players) {
+      EntityID player_eid = replay_registry_.get<IDComponent>(player).id;
+      if (player_eid == owner) {
+        TransformComponent player_trans_c =
+            replay_registry_.get<TransformComponent>(player);
+        glm::vec3 player_pos = player_trans_c.position;
+        glm::vec3 player_forward =
+            replay_registry_.get<TransformComponent>(player).Forward();
+
+		 glm::vec3 right = glm::cross(player_forward, glm::vec3(0, 1, 0));
+        player_pos -= right * 0.6f;
+        player_pos += player_forward * 0.28f;
+        glob::SubmitRope(player_pos, hook_trans_c.position);
+        break;
+      }
+    }
+  }
+}
+
 // Public----------------------------------------------------------------------
 
 void ReplayState::Startup() {
@@ -410,6 +437,8 @@ void ReplayState::Update(float dt) {
   if (this->replay_state_timer_.Elapsed() > this->replay_state_duration_) {
     engine_->ChangeState(StateType::LOBBY);
   }
+
+  DrawFishingLines();
 }
 
 void ReplayState::UpdateNetwork() {

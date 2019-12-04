@@ -83,7 +83,7 @@ void SoundSystem::Init(Engine* engine) {
   sound_woosh_ = sound_engine_.GetSound("assets/sound/kick_swing.mp3");
   sound_hit_ = sound_engine_.GetSound("assets/sound/ball_hit_sound.mp3");
   sound_nudge_ = sound_engine_.GetSound("assets/sound/ball_nudge.mp3");
-  sound_rmb_shot_ = sound_engine_.GetSound("assets/sound/rmb_fire.mp3");
+  sound_rmb_shot_ = sound_engine_.GetSound("assets/sound/rmb_fire2.ogg");
   sound_goal_ = sound_engine_.GetSound("assets/sound/goal.mp3");
   sound_ball_bounce_ = sound_engine_.GetSound("assets/sound/bounce.mp3");
   sound_player_land_ = sound_engine_.GetSound("assets/sound/robot_land.mp3");

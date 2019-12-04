@@ -134,9 +134,11 @@ class ShotFrame : public DataFrame {
   glm::vec3 position_;
   glm::quat rotation_;
 
+  glm::vec4 trail_color_;
+
  public:
   ShotFrame();
-  ShotFrame(TransformComponent& in_transform_c);
+  ShotFrame(TransformComponent& in_transform_c, TrailComponent& in_trail_c);
   ~ShotFrame();
 
   ShotFrame* Clone();
@@ -145,7 +147,7 @@ class ShotFrame : public DataFrame {
   DataFrame* InterpolateForward(unsigned int in_dist_to_target,
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
-  void WriteBack(TransformComponent& in_transform_c);
+  void WriteBack(TransformComponent& in_transform_c, TrailComponent& in_trail_c);
 };
 
 //---
@@ -255,9 +257,11 @@ class HookFrame : public DataFrame {
   glm::vec3 position_;
   glm::quat rotation_;
 
+  EntityID owner_;
+
  public:
   HookFrame();
-  HookFrame(TransformComponent& trans_c);
+  HookFrame(TransformComponent& trans_c, HookComponent& hook_c);
   ~HookFrame();
 
   DataFrame* Clone();
@@ -265,7 +269,7 @@ class HookFrame : public DataFrame {
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
   bool ThresholdCheck(DataFrame& in_future_df);
-  void WriteBack(TransformComponent& trans_c);
+  void WriteBack(TransformComponent& trans_c, HookComponent& hook_c);
 };
 
 #endif  // DATA_FRAME_HPP_

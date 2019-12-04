@@ -171,6 +171,7 @@ struct GameEvent {
     REMOVE_FISHING_HOOK,
     PICKED_UP_PICKUP,
     DABBING,
+    CANNON_IMPACT,
     NUM_EVENTS
   } type;
   union {
@@ -385,7 +386,9 @@ struct GameEvent {
     struct {
       EntityID player_entity_id;
     } dabbing;
-
+    struct {
+      EntityID projectile_id;
+    } cannon_impact;
   };
 };
 
