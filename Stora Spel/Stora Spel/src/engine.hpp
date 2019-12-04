@@ -93,6 +93,10 @@ class Engine {
     play_state_.Init();
   }
 
+  StateType CurrentStateType() {
+    return current_state_->Type();
+  }
+
   std::unordered_map<long, PlayerStatInfo> GetPlayerScores() {
     return player_scores_;
   }

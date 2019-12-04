@@ -202,7 +202,7 @@ void LobbyState::HandleUpdateLobbyTeamPacket(NetAPI::Common::Packet& packet) {
   if (len > 0) {
     name.resize(len);
     packet.Remove(name.data(), len);
-    // std::cout << "Lobby: name: " << name << "\n";
+    std::cout << "\t" << id << ": " << name << "\n";
     if (id != -1) {
       LobbyPlayer plyr;
       plyr.ready = ready;
