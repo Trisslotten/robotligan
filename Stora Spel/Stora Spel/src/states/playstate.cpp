@@ -1334,8 +1334,9 @@ void PlayState::DrawJumbotronText() {
     std::string text = "TEST";
     int count = countdown_time_ - engine_->GetCountdownTimer();
     if (count > 0) {
-      glob::Submit(font_test_, temp_pos, 30.f, std::to_string(count), color_white, orient);
-	} else {
+      glob::Submit(font_test_, temp_pos, 30.f, std::to_string(count),
+                   color_white, orient);
+    } else {
       switch (current_jumbo_effect_) {
         case TEAM_SCORES: {
           std::string team_score_red, team_score_blue;
@@ -1399,7 +1400,26 @@ void PlayState::DrawJumbotronText() {
           size = 14;
           text = "GOOOAL!";
           temp_pos -= right * ((float)text.size() / 2);
+          temp_pos += glm::vec3(0, 10, 0);
           glob::Submit(font_test_, temp_pos, size, text, color_white, orient);
+          long clid = -1;
+          unsigned int goal_maker_team = TEAM_RED;
+          for (auto player : engine_->GetPlayerScores()) {
+            if (player.second.enttity_id == last_goal_maker_) {
+              clid = player.first;
+              goal_maker_team = player.second.team;
+              break;
+            }
+          }
+          if (clid != -1) {
+            std::string player_name = engine_->player_names_[clid];
+            color = color_red;
+            if (goal_maker_team == TEAM_BLUE) color = color_blue;
+
+            temp_pos -= glm::vec3(0, 1, 0) * 15.f;
+            glob::Submit(font_test_, temp_pos, 6.f, player_name, color, orient);
+          }
+
           break;
         }
         default: {
@@ -2485,6 +2505,37 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       current_jumbo_effect_ = GOAL_SCORED;
       jumbo_effect_timer_.Pause();
 
+      if (e.goal.good_goal) {
+        last_goal_maker_ = e.goal.goal_maker;
+      }
+
+      auto view_players =
+          correct_registry
+              ->view<PlayerComponent, IDComponent, TransformComponent>();
+      for (auto player : view_players) {
+        auto& player_player_c = correct_registry->get<PlayerComponent>(player);
+        auto& player_id_c = correct_registry->get<IDComponent>(player);
+        auto& player_trans_c = correct_registry->get<TransformComponent>(player);
+
+		if (player_id_c.id == e.goal.goal_maker) {
+          // Particles
+          entt::entity particle_entity = correct_registry->create();
+          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+          std::vector<glob::ParticleSystemHandle> in_handles;
+          std::vector<glm::vec3> in_offsets;
+          std::vector<glm::vec3> in_directions;
+
+          glob::SetParticleSettings(handle, "ball_destroy.txt");
+          glob::SetEmitPosition(handle, player_trans_c.position);
+          in_handles.push_back(handle);
+
+          ParticleComponent& par_c =
+              correct_registry->assign<ParticleComponent>(
+                  particle_entity, in_handles, in_offsets, in_directions);
+          correct_registry->assign<TimerComponent>(particle_entity, 5.f);
+			break;
+		}
+      }
       if (this->recording_) {
         this->engine_->GetReplayMachinePtr()->StoreAndClearReplay();
       }

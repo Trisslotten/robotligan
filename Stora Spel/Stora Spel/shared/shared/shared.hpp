@@ -178,6 +178,8 @@ struct GameEvent {
     // Goal
     struct {
       float x;
+      bool good_goal;
+      EntityID goal_maker;
     } goal;
 
     // Kick
