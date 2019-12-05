@@ -494,6 +494,7 @@ class ReplayState : public State {
   void AddLights();
   void AddSpotlights();
   void AddAudience();
+  void AddJumbotron();
   void AddCamera(glm::vec3 in_cam_pos);
 
   void UpdateCamera();
@@ -508,6 +509,7 @@ class ReplayState : public State {
   void SoundComponentDestroyed(entt::entity e, entt::registry& registry);
 
   void ShowScoreboard();
+  void DrawJumbotronText();
 
  public:
   void Startup() override;
