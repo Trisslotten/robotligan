@@ -1112,6 +1112,10 @@ void PlayState::Collision() {
       my_phys_c.velocity.y = 0.f;
       predicted_state_.velocity.y = 0.f;
       server_predicted_.velocity.y = 0.f;
+    } else if (data.move_vector.x) {
+      my_phys_c.velocity.x = 0.f;
+    } else if (data.move_vector.z) {
+      my_phys_c.velocity.z = 0.f;
     }
   }
   if (my_obb.center.x > arena_hitbox2.arena.xmax - 0.9f) {
