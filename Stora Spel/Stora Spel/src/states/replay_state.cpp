@@ -181,7 +181,7 @@ void ReplayState::AddCamera(glm::vec3 in_cam_pos) {
 }
 
 void ReplayState::UpdateCamera() {
-  float dt = 1.f/128.f;
+  float dt = 1.f / 128.f;
 
   // Default point of interest
   glm::vec3 point_of_interest = glm::vec3(0.0f);
@@ -217,7 +217,8 @@ void ReplayState::UpdateCamera() {
         glm::quatLookAt(temp_dir, glm::vec3(0, 1, 0)) * quarter_turn;
 
     // Follow ball
-    float speed = 0.65f * glm::distance(cam_trans_c.position.x, point_of_interest.x);
+    float speed =
+        0.65f * glm::distance(cam_trans_c.position.x, point_of_interest.x);
     if (cam_trans_c.position.x < point_of_interest.x) {
       cam_trans_c.position.x += speed * dt;
     } else {
@@ -261,12 +262,18 @@ void ReplayState::PlayReplay() {
     this->replay_registry_.reset();
     replay_counter_++;
 
+    GlobalSettings::Access()->WriteError("", "Replay Swap",
+                                         std::to_string(replay_counter_));
+
     // Add the constant stuff back in again
     // Also prevents black-sceen when all replays are done
     this->AddConstantStuff();
     this->CreateInGameMenu();
 
     if (!engine_->GetReplayMachinePtr()->SelectReplay(replay_counter_)) {
+      GlobalSettings::Access()->WriteError("", "Replay Termination",
+                                           std::to_string(replay_counter_));
+
       // And stop replaying
       this->replaying_ = false;
     }

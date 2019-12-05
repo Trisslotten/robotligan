@@ -443,8 +443,6 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     in_registry.assign<LightComponent>(entity, glm::vec3(0.f, 1.f, 0.f), 20.f,
                                        0.f, false);
 
-    // Add trail
-    in_registry.assign<TrailComponent>(entity);
   } else if (object_type == REPLAY_PICKUP) {
     PickUpFrame* pu_ptr = dynamic_cast<PickUpFrame*>(df_ptr);
     in_registry.assign<IDComponent>(entity,
