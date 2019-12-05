@@ -250,6 +250,8 @@ void ReplayState::StartReplayMode() {
 
   // Add in stuff that is in all replays
   this->AddConstantStuff();
+
+  GlobalSettings::Access()->WriteError("","","\n" + this->engine_->GetReplayMachinePtr()->GetDebugString() + "\n");
 }
 
 void ReplayState::PlayReplay() {

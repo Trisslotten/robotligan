@@ -937,9 +937,9 @@ std::string GeometricReplay::GetGeometricReplayTree() {
                std::to_string(this->channels_.at(i).object_type) + "\n";
     ret_str += "\t\tChannel Entries: " +
                std::to_string(this->channels_.at(i).entries.size()) + "\n";
-    ret_str += "\t\tChannel write ended at frame: " +
+    ret_str += "\t\tChannel write at frame: " +
                std::to_string(this->current_frame_number_write_) + "\n";
-    ret_str += "\t\tChannel read starts at frame: " +
+    ret_str += "\t\tChannel read at frame: " +
                std::to_string(this->current_frame_number_read_) + "\n";
 
     unsigned int oea = this->current_frame_number_write_ -
@@ -948,21 +948,24 @@ std::string GeometricReplay::GetGeometricReplayTree() {
                        this->channels_.at(i).entries.back().frame_number;
 
     ret_str += "\t\t\tOldest Entry Age: " + std::to_string(oea) + "\n";
-    ret_str += "\t\t\tNewest Entry Age: " + std::to_string(nea) + "\n";
+    ret_str +=
+        "\t\t\tNewest Entry Age: " + std::to_string(nea) +
+        (this->channels_.at(i).entries.back().ending_entry ? ":end" : "") +
+        "\n";
 
     //---
-    ret_str += "\t\t\t\t";
-    for (unsigned int j = 0; j < this->channels_.at(i).entries.size(); j++) {
-      std::string age_str =
-          std::to_string(this->current_frame_number_write_ -
-                         this->channels_.at(i).entries.at(j).frame_number);
-      ret_str += "[" + age_str;
-      if (this->channels_.at(i).entries.at(j).ending_entry) {
-        ret_str += ":end";
-      }
-      ret_str += "] ";
-    }
-    ret_str += "\n";
+    // ret_str += "\t\t\t\t";
+    // for (unsigned int j = 0; j < this->channels_.at(i).entries.size(); j++) {
+    //  std::string age_str =
+    //      std::to_string(this->current_frame_number_write_ -
+    //                     this->channels_.at(i).entries.at(j).frame_number);
+    //  ret_str += "[" + age_str;
+    //  if (this->channels_.at(i).entries.at(j).ending_entry) {
+    //    ret_str += ":end";
+    //  }
+    //  ret_str += "] ";
+    //}
+    // ret_str += "\n";
     //---
     ret_str += "\t\t---\n";
   }
