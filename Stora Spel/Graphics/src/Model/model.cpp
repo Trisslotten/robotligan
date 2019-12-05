@@ -433,7 +433,7 @@ std::vector<Texture> Model::LoadMaterielTextures(aiMaterial* material,
 
 void Model::calcSortSphere()
 {
-  float avg_radius = 0;
+  float radius = 0;
   glm::vec3 center;
 
   for (int i = 0; i < mesh_.size(); i++) {
@@ -457,14 +457,14 @@ void Model::calcSortSphere()
       glm::vec3 transformed = mesh_trans * glm::vec4(vertex.position, 1);
 
       float dist = length(transformed - center);
-      mesh_radius += dist;
-    }
-    avg_radius += mesh_radius / vertices->size();
+      if (dist > radius) {
+        radius = dist;
+      } 
+    } 
   }
-  avg_radius /= mesh_.size();
 
   sort_sphere_center = center;
-  sort_sphere_radius = avg_radius;
+  sort_sphere_radius = radius;
 }
 
 Model::Model(const std::string& path) { LoadModel(path); }
