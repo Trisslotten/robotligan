@@ -17,7 +17,7 @@ void ReplayState::AddConstantStuff() {
   this->AddAudience();
   this->AddJumbotron();
   this->AddCamera(glm::vec3(0.f, 13.f, 42.f));  //  glm::vec3(60.f, 4.f, 38.f);
-  glob::GetCamera().SetFov(60);
+  glob::GetCamera().SetFov(75);
 }
 
 void ReplayState::AddArenaStuff() {
@@ -426,9 +426,12 @@ void ReplayState::DrawJumbotronText() {
     glm::mat4 orient = glm::toMat4(rotation);
 
     glm::vec4 color_white = glm::vec4(1.f, 1.f, 1.f, .8f);
-    float size = 20.0;
+    float size = 10.f;
     std::string text = "HIGHLIGHTS";
     glob::Submit(font_test_, temp_pos, size, text, color_white, orient);
+
+	std::swap(xrot, zrot);
+    zrot *= -1.f;
   }
 }
 
