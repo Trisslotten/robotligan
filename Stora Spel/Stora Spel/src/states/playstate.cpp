@@ -487,6 +487,8 @@ void PlayState::UpdateNetwork() {
 }
 
 void PlayState::Cleanup() {
+  engine_->GetSoundSystem().StopAmbientSound(registry_gameplay_);
+  glob::SetBlackout(false);
   registry_gameplay_.reset();
   game_has_ended_ = false;
 

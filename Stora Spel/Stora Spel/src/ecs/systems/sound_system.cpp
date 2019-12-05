@@ -150,10 +150,19 @@ void SoundSystem::PlayAmbientSound(entt::registry& registry) {
   // Play static sounds (music, ambient etc)
   auto local_view = registry.view<CameraComponent, SoundComponent>();
   for (auto local_entity : local_view) {
-    auto& cam_c = local_view.get<CameraComponent>(local_entity);
     auto& sound_c = local_view.get<SoundComponent>(local_entity);
 
     crowd_ambience_ = sound_c.sound_player->Play(sound_crowd_, -1, 0.06f);
+    break;
+  }
+}
+
+void SoundSystem::StopAmbientSound(entt::registry& registry) {
+  auto local_view = registry.view<CameraComponent, SoundComponent>();
+  for (auto local_entity : local_view) {
+    auto& sound_c = local_view.get<SoundComponent>(local_entity);
+
+    sound_c.sound_player->Stop(sound_crowd_);
     break;
   }
 }
