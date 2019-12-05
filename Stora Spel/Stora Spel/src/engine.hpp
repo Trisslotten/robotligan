@@ -49,6 +49,8 @@ class Engine {
     previous_state_ = current_state_->Type();
     UpdateSettingsValues();
   }
+  void ClearPlayerInfos();
+
   NetAPI::Socket::Client& GetClient() { return client_; }
   NetAPI::Common::Packet& GetPacket() { return packet_; }
   void SetTakeInput(bool should_take) { take_game_input_ = should_take; }
