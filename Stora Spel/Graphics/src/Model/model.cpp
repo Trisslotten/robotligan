@@ -312,6 +312,9 @@ void Model::LoadModel(std::string path) {
       animations_.push_back(anim);
     }
   }
+
+  calcSortSphere();
+
   is_loaded_ = true;
 }
 
@@ -428,6 +431,42 @@ std::vector<Texture> Model::LoadMaterielTextures(aiMaterial* material,
   return texture;
 }
 
+void Model::calcSortSphere()
+{
+  float avg_radius = 0;
+  glm::vec3 center;
+
+  for (int i = 0; i < mesh_.size(); i++) {
+    auto vertices = mesh_[i].GetVertexData();
+    glm::mat4 mesh_trans = mesh_[i].GetTransform();
+
+    glm::vec3 mesh_center{0};
+    for (const auto& vertex : *vertices) {
+      glm::vec3 transformed = mesh_trans * glm::vec4(vertex.position, 1);
+      mesh_center += transformed;
+    }
+    center += mesh_center / float(vertices->size());
+  }
+  center /= float(mesh_.size());
+  
+  for (int i = 0; i < mesh_.size(); i++) {
+    auto vertices = mesh_[i].GetVertexData();
+    glm::mat4 mesh_trans = mesh_[i].GetTransform();
+    float mesh_radius = 0;
+    for (const auto& vertex : *vertices) {
+      glm::vec3 transformed = mesh_trans * glm::vec4(vertex.position, 1);
+
+      float dist = length(transformed - center);
+      mesh_radius += dist;
+    }
+    avg_radius += mesh_radius / vertices->size();
+  }
+  avg_radius /= mesh_.size();
+
+  sort_sphere_center = center;
+  sort_sphere_radius = avg_radius;
+}
+
 Model::Model(const std::string& path) { LoadModel(path); }
 Model::Model() {}
 
@@ -457,11 +496,11 @@ void Model::Draw(ShaderProgram& shader) {
 float Model::MaxDistance(glm::mat4 transform, glm::vec3 point) {
   float result = 0.f;
   for (int i = 0; i < mesh_.size(); i++) {
-    MeshData temp = mesh_[i].GetMeshData();
+    auto vertices = mesh_[i].GetVertexData();
     glm::mat4 mesh_trans = mesh_[i].GetTransform();
     glm::mat4 curr_transform = transform * mesh_trans;
-    for (auto pos : temp.pos) {
-      glm::vec3 transformed = curr_transform * glm::vec4(pos, 1);
+    for (const auto& vertex : *vertices) {
+      glm::vec3 transformed = curr_transform * glm::vec4(vertex.position, 1);
       int len = length(point - transformed);
       if (len > result) {
         result = len;
@@ -484,6 +523,38 @@ MeshData Model::GetMeshData() {
   }
 
   return mesh_data;
+}
+
+float Model::TraceSortSphere(glm::vec3 cam_dir, glm::vec3 cam_pos, glm::mat4 transform)
+{
+  glm::vec3 center = sort_sphere_center;
+  glm::vec3 offset = sort_sphere_radius * normalize(glm::vec3(1,1,1));
+  center = transform * glm::vec4(center, 1);
+  offset = transform * glm::vec4(offset, 1);
+  float radius = length(center - offset);
+  float radius2 = radius * radius;
+
+  float t0, t1;
+
+  glm::vec3 l = center - cam_pos;
+  float tca = dot(l, cam_dir);
+  float d2 = dot(l, l) - tca*tca;
+  if (d2 <= radius2) {
+    float thc = sqrt(radius2 - d2);
+    t0 = tca - thc;
+    t1 = tca + thc;
+
+    if(t0 > t1) std::swap(t0, t1);
+    if (t0 < 0) {
+      return t1;
+    }
+    else {
+      return t0;
+    }
+  }
+  else {
+    return length(cam_pos - center) - radius;
+  }
 }
 
 }  // namespace glob
