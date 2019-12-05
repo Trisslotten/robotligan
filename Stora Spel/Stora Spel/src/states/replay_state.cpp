@@ -13,7 +13,7 @@ void ReplayState::AddConstantStuff() {
   this->AddArenaStuff();
   this->AddBatmanLights();
   this->AddLights();
-  this->AddSpotlights();
+  //this->AddSpotlights();
   this->AddAudience();
   this->AddCamera(glm::vec3(0.f, 13.f, 42.f));  //  glm::vec3(60.f, 4.f, 38.f);
   glob::GetCamera().SetFov(60);
@@ -178,10 +178,12 @@ void ReplayState::AddCamera(glm::vec3 in_cam_pos) {
   glm::vec3 cam_pos = in_cam_pos;
   this->replay_registry_.assign<TransformComponent>(
       camera, cam_pos, glm::quat(), glm::vec3(0.f));
+  this->replay_registry_.assign<PhysicsComponent>(camera);
+  this->replay_registry_.assign<SoundComponent>(camera, engine_->GetSoundEngine().CreatePlayer());
 }
 
 void ReplayState::UpdateCamera() {
-  float dt = 1.f/128.f;
+  float dt = 1.f / 128.f;
 
   // Default point of interest
   glm::vec3 point_of_interest = glm::vec3(0.0f);
@@ -217,7 +219,8 @@ void ReplayState::UpdateCamera() {
         glm::quatLookAt(temp_dir, glm::vec3(0, 1, 0)) * quarter_turn;
 
     // Follow ball
-    float speed = 0.65f * glm::distance(cam_trans_c.position.x, point_of_interest.x);
+    float speed =
+        0.65f * glm::distance(cam_trans_c.position.x, point_of_interest.x);
     if (cam_trans_c.position.x < point_of_interest.x) {
       cam_trans_c.position.x += speed * dt;
     } else {
@@ -249,6 +252,9 @@ void ReplayState::StartReplayMode() {
 
   // Add in stuff that is in all replays
   this->AddConstantStuff();
+
+  // Play crowd cheers
+  engine_->GetSoundSystem().PlayAmbientSound(this->replay_registry_);
 }
 
 void ReplayState::PlayReplay() {
@@ -382,7 +388,7 @@ void ReplayState::DrawFishingLines() {
         glm::vec3 player_forward =
             replay_registry_.get<TransformComponent>(player).Forward();
 
-		 glm::vec3 right = glm::cross(player_forward, glm::vec3(0, 1, 0));
+        glm::vec3 right = glm::cross(player_forward, glm::vec3(0, 1, 0));
         player_pos -= right * 0.6f;
         player_pos += player_forward * 0.28f;
         glob::SubmitRope(player_pos, hook_trans_c.position);
@@ -447,6 +453,12 @@ void ReplayState::UpdateNetwork() {
 }
 
 void ReplayState::Cleanup() {
+  // Stop playing crowd cheer
+  engine_->GetSoundSystem().StopAmbientSound(this->replay_registry_);
+
+  // Turn lights back on :)
+  glob::SetBlackout(false);
+
   // Clear registry
   this->replay_registry_.reset();
 

@@ -487,6 +487,8 @@ void PlayState::UpdateNetwork() {
 }
 
 void PlayState::Cleanup() {
+  engine_->GetSoundSystem().StopAmbientSound(registry_gameplay_);
+  glob::SetBlackout(false);
   registry_gameplay_.reset();
   game_has_ended_ = false;
 
@@ -1112,6 +1114,10 @@ void PlayState::Collision() {
       my_phys_c.velocity.y = 0.f;
       predicted_state_.velocity.y = 0.f;
       server_predicted_.velocity.y = 0.f;
+    } else if (data.move_vector.x) {
+      my_phys_c.velocity.x = 0.f;
+    } else if (data.move_vector.z) {
+      my_phys_c.velocity.z = 0.f;
     }
   }
   if (my_obb.center.x > arena_hitbox2.arena.xmax - 0.9f) {
@@ -1332,75 +1338,80 @@ void PlayState::DrawJumbotronText() {
 
     float size = 20.0;
     std::string text = "TEST";
-    switch (current_jumbo_effect_) {
-      case TEAM_SCORES: {
-        std::string team_score_red, team_score_blue;
-        team_score_red = std::to_string(engine_->GetTeamScores()[0]);
-        team_score_blue = std::to_string(engine_->GetTeamScores()[1]);
+    int count = countdown_time_ - engine_->GetCountdownTimer();
+    if (count > 0) {
+      glob::Submit(font_test_, temp_pos, 30.f, std::to_string(count), color_white, orient);
+	} else {
+      switch (current_jumbo_effect_) {
+        case TEAM_SCORES: {
+          std::string team_score_red, team_score_blue;
+          team_score_red = std::to_string(engine_->GetTeamScores()[0]);
+          team_score_blue = std::to_string(engine_->GetTeamScores()[1]);
 
-        glm::vec3 red_pos = temp_pos + right * size * .8f;
-        glm::vec3 blue_pos =
-            temp_pos -
-            right * size * std::min(1.3f, (float)team_score_blue.size());
+          glm::vec3 red_pos = temp_pos + right * size * .8f;
+          glm::vec3 blue_pos =
+              temp_pos -
+              right * size * std::min(1.3f, (float)team_score_blue.size());
 
-        glob::Submit(font_test_, red_pos, size, team_score_red, color_red,
-                     orient);
-        glob::Submit(font_test_, temp_pos, size, "-", color_white, orient);
-        glob::Submit(font_test_, blue_pos, size, team_score_blue, color_blue,
-                     orient);
-        break;
-      }
-      case MATCH_TIME: {
-        int temp = 0;
-        if (!overtime_has_started_) {
-          temp = match_time_ - engine_->GetGameplayTimer();
-        } else {
-          temp = engine_->GetGameplayTimer() - match_time_;
+          glob::Submit(font_test_, red_pos, size, team_score_red, color_red,
+                       orient);
+          glob::Submit(font_test_, temp_pos, size, "-", color_white, orient);
+          glob::Submit(font_test_, blue_pos, size, team_score_blue, color_blue,
+                       orient);
+          break;
         }
-        // Gameplay timer
-        int sec = 0;
-        int min = 5;
+        case MATCH_TIME: {
+          int temp = 0;
+          if (!overtime_has_started_) {
+            temp = match_time_ - engine_->GetGameplayTimer();
+          } else {
+            temp = engine_->GetGameplayTimer() - match_time_;
+          }
+          // Gameplay timer
+          int sec = 0;
+          int min = 5;
 
-        min = temp / 60;
-        sec = temp % 60;
+          min = temp / 60;
+          sec = temp % 60;
 
-        std::string min_str = std::to_string(min);
-        std::string sec_str = std::to_string(sec);
-        if (min < 10) min_str = "0" + min_str;
-        if (sec < 10) sec_str = "0" + sec_str;
+          std::string min_str = std::to_string(min);
+          std::string sec_str = std::to_string(sec);
+          if (min < 10) min_str = "0" + min_str;
+          if (sec < 10) sec_str = "0" + sec_str;
 
-        text = min_str + ":" + sec_str;
-        if (overtime_has_started_) {
-          text = "OVERTIME";
+          text = min_str + ":" + sec_str;
+          if (overtime_has_started_) {
+            text = "OVERTIME";
+            size = 14;
+          }
+          temp_pos -= right * ((float)text.size() / 2);
+          glob::Submit(font_test_, temp_pos, size, text, color_white, orient);
+          break;
+        }
+        case BEST_PLAYER: {
+          temp_pos += right * 2.f;
+          unsigned long best_player_id = GetBestPlayer();
+          std::string best_name = engine_->player_names_[best_player_id];
+          text = "GO GO " + best_name + "!";
+          size = (5 / (float)text.size()) * size;
+          temp_pos -= right * ((float)text.size() / 2);
+          color = color_red;
+          if (engine_->GetPlayerScores()[best_player_id].team == TEAM_BLUE)
+            color = color_blue;
+          glob::Submit(font_test_, temp_pos, size, text, color, orient);
+          break;
+        }
+        case GOAL_SCORED: {
           size = 14;
+          text = "GOOOAL!";
+          temp_pos -= right * ((float)text.size() / 2);
+          glob::Submit(font_test_, temp_pos, size, text, color_white, orient);
+          break;
         }
-        temp_pos -= right * ((float)text.size() / 2);
-        glob::Submit(font_test_, temp_pos, size, text, color_white, orient);
-        break;
-      }
-      case BEST_PLAYER: {
-        temp_pos += right * 2.f;
-        unsigned long best_player_id = GetBestPlayer();
-        std::string best_name = engine_->player_names_[best_player_id];
-        text = "GO GO " + best_name + "!";
-        size = (5 / (float)text.size()) * size;
-        temp_pos -= right * ((float)text.size() / 2);
-        color = color_red;
-        if (engine_->GetPlayerScores()[best_player_id].team == TEAM_BLUE)
-          color = color_blue;
-        glob::Submit(font_test_, temp_pos, size, text, color, orient);
-        break;
-      }
-      case GOAL_SCORED: {
-        size = 14;
-        text = "GOOOAL!";
-        temp_pos -= right * ((float)text.size() / 2);
-        glob::Submit(font_test_, temp_pos, size, text, color_white, orient);
-        break;
-      }
-      default: {
-        glob::Submit(font_test_, temp_pos, size, text, color, orient);
-        break;
+        default: {
+          glob::Submit(font_test_, temp_pos, size, text, color, orient);
+          break;
+        }
       }
     }
 
@@ -2590,7 +2601,6 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
       glob::SetParticleSettings(handle, "force_push.txt");
 
-      
       auto view_controller = registry->view<IDComponent, TransformComponent>();
 
       for (auto proj_ent : view_controller) {
@@ -2605,8 +2615,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         }
       }
 
-      registry->assign<ParticleComponent>(ent, handles, offsets,
-                                                  directions);
+      registry->assign<ParticleComponent>(ent, handles, offsets, directions);
       registry->assign<TimerComponent>(ent, 1.f);
       break;
     }
@@ -2635,8 +2644,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         }
       }
 
-      registry->assign<ParticleComponent>(ent, handles, offsets,
-                                                  directions);
+      registry->assign<ParticleComponent>(ent, handles, offsets, directions);
       registry->assign<TimerComponent>(ent, 1.f);
       break;
     }
@@ -2651,7 +2659,6 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
       glob::SetParticleSettings(handle, "cannon_impact.txt");
 
-     
       auto view_controller = registry->view<IDComponent, TransformComponent>();
 
       for (auto proj_ent : view_controller) {
@@ -2659,7 +2666,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         auto& trans_c = view_controller.get<TransformComponent>(proj_ent);
 
         if (id_c.id == e.cannon_impact.projectile_id) {
-          glob::SetEmitPosition(handle, trans_c.position); 
+          glob::SetEmitPosition(handle, trans_c.position);
 
           glob::CreateShockwave(trans_c.position, 0.30f, 10.f);
 
@@ -2667,8 +2674,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         }
       }
 
-      registry->assign<ParticleComponent>(ent, handles, offsets,
-                                                  directions);
+      registry->assign<ParticleComponent>(ent, handles, offsets, directions);
       registry->assign<TimerComponent>(ent, 1.f);
       break;
     }
@@ -3002,7 +3008,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       for (auto hook : view_hooks) {
         auto& hook_id_c = registry_gameplay_.get<IDComponent>(hook);
         if (hook_id_c.id == id) {
-          //registry_gameplay_.destroy(hook);
+          // registry_gameplay_.destroy(hook);
           correct_registry->destroy(hook);
         }
       }
@@ -3042,8 +3048,8 @@ void PlayState::Reset() {
   }
   pitch_ = 0.0f;
   if (registry_gameplay_.valid(my_entity_)) {
-	auto& player_c = registry_gameplay_.get<PlayerComponent>(my_entity_);
-	player_c.can_jump = false;
+    auto& player_c = registry_gameplay_.get<PlayerComponent>(my_entity_);
+    player_c.can_jump = false;
   }
   server_predicted_.velocity = glm::vec3(0.0f);
   predicted_state_.velocity = glm::vec3(0.0f);
