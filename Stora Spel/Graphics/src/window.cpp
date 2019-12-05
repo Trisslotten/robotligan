@@ -16,14 +16,14 @@ glm::dvec2 mouse_pos(0, 0);
 glm::vec2 last_mouse_pos(0, 0);
 
 }  // namespace
-
+ 
 namespace glob {
 
 namespace window {
 
 unsigned int window_width = 1280;
 unsigned int window_height = 720;
-bool fullscreen = false;
+bool fullscreen = true;
 
 void Create() {
   if (glfw_window) {

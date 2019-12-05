@@ -370,7 +370,7 @@ entt::entity CreateCannonBallEntity(entt::registry& registry, PlayerID id) {
       registry.assign<TransformComponent>(
           cannonball, glm::vec3(tc.position + tc.rotation * cc.offset),
           cc.orientation, glm::vec3(.6f, .6f, .6f));
-      registry.assign<physics::Sphere>(cannonball, glm::vec3(0.f), .6f);
+      registry.assign<physics::Sphere>(cannonball, glm::vec3(0.f), 0.6f);
       registry.assign<ProjectileComponent>(cannonball,
                                            ProjectileID::CANNON_BALL, id);
       registry.assign<TeamComponent>(cannonball, team_c.team);

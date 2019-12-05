@@ -342,6 +342,7 @@ class PlayState : public State {
   void CreateSpotlights();
   void CreateJumbotron();
   void ParticleComponentDestroyed(entt::entity e, entt::registry& registry);
+  void SoundComponentDestroyed(entt::entity e, entt::registry& registry);
   void CreateInGameMenu();
   void AddPlayer();
   void TestCreateLights();
@@ -389,8 +390,6 @@ class PlayState : public State {
   std::unordered_map<EntityID, glm::vec3> player_move_dirs_;
   FrameState server_predicted_;
   entt::entity my_entity_, arena_entity_, map_visual_entity_;
-
-  std::vector<entt::entity> Audiences;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
 
@@ -458,6 +457,8 @@ class PlayState : public State {
 
   std::vector<Fishermans> fishers_;
 
+  bool want_dab_ = false;
+
   // Replay stuff
   bool recording_ = false;
   // Replay stuff
@@ -488,8 +489,14 @@ class ReplayState : public State {
 
   // Functions
   void AddConstantStuff();
+  void AddArenaStuff();
+  void AddBatmanLights();
+  void AddLights();
+  void AddSpotlights();
+  void AddAudience();
+  void AddCamera(glm::vec3 in_cam_pos);
+
   void UpdateCamera();
-  void UpdatePickUpMovement(/*float dt*/);
 
   void StartReplayMode();
   void PlayReplay();
@@ -498,7 +505,11 @@ class ReplayState : public State {
   void UpdateInGameMenu(bool show_menu);
   void CreateInGameMenu();
 
+  void SoundComponentDestroyed(entt::entity e, entt::registry& registry);
+
   void ShowScoreboard();
+
+  void DrawFishingLines();
 
  public:
   void Startup() override;

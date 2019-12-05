@@ -39,7 +39,7 @@ class Engine {
   void UpdateSettingsValues() {
     sound_system_.GetSoundEngine().SetMasterVolume(
         GlobalSettings::Access()->ValueOf("SOUND_VOLUME") / 100.f);
-    glob::GetCamera().SetFov(GlobalSettings::Access()->ValueOf("GRAPHICS_FOV"));
+    //glob::GetCamera().SetFov(GlobalSettings::Access()->ValueOf("GRAPHICS_FOV"));
     mouse_sensitivity_ = GlobalSettings::Access()->ValueOf("INPUT_MOUSE_SENS");
   }
 
@@ -102,6 +102,10 @@ class Engine {
   bool IsRecording() const { return this->play_state_.IsRecording(); }
   // Replay stuff---
 
+  void ClearNames() {
+    player_names_.clear();
+  }
+
  private:
   void SetKeybinds();
 
@@ -160,7 +164,6 @@ class Engine {
   ParticleSystem particle_system_;
 
   AbilityID second_ability_ = AbilityID::NULL_ABILITY;
-  unsigned int new_team_ = std::numeric_limits<unsigned int>::max();
 
   std::unordered_map<long, PlayerStatInfo> player_scores_;
 
