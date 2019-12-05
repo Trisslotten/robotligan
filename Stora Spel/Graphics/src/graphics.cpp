@@ -1442,15 +1442,6 @@ void Render() {
         shader.uniform("model_transform", BARI.transform);
         shader.uniformv("bone_transform", BARI.bone_transforms.size(),
                         BARI.bone_transforms.data());
-        /*
-        int numBones = 0;
-        for (auto &bone : BARI.bone_transforms) {
-          shader.uniform("bone_transform[" + std::to_string(numBones) + "]",
-                         bone);
-          numBones++;
-        }
-        */
-        // shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
         BARI.model->Draw(animated_model_shader);
       }
     }
@@ -1611,7 +1602,7 @@ void Render() {
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glViewport(0, 0, ws.x, ws.y);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glClear(GL_DEPTH_BUFFER_BIT);
 
   shockwaves.Update(camera);
   blackholes.Update(camera);
