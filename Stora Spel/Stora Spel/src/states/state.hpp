@@ -512,7 +512,7 @@ class ReplayState : public State {
   void ShowScoreboard();
 
   void DrawFishingLines();
-
+  void ParticleComponentDestroyed(entt::entity e, entt::registry& registry);
  public:
   void Startup() override;
   void Init() override;

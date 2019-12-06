@@ -407,6 +407,8 @@ void ReplayState::Startup() {
 
   this->replay_registry_.on_destroy<SoundComponent>()
       .connect<&ReplayState::SoundComponentDestroyed>(*this);
+  replay_registry_.on_destroy<ParticleComponent>()
+      .connect<&ReplayState::ParticleComponentDestroyed>(*this);
 }
 
 void ReplayState::Init() {
@@ -471,4 +473,11 @@ void ReplayState::Cleanup() {
 
   // Tell replay machine to clear stored data
   this->engine_->GetReplayMachinePtr()->ResetMachine();
+}
+
+void ReplayState::ParticleComponentDestroyed(entt::entity e, entt::registry& registry) {
+  auto& pc = registry.get<ParticleComponent>(e);
+  for (int i = 0; i < pc.handles.size(); ++i) {
+    glob::DestroyParticleSystem(pc.handles[i]);
+  }
 }
