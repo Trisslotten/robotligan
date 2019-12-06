@@ -111,8 +111,7 @@ void Engine::Init() {
   unsigned int length_sec =
       (unsigned int)GlobalSettings::Access()->ValueOf("REPLAY_LENGTH_SECONDS");
   unsigned int approximate_tickrate =
-      kClientUpdateRate;  // TODO: Replace with better
-                          // approximation
+      kClientUpdateRate;
   this->replay_machine_ =
       new ClientReplayMachine(length_sec, approximate_tickrate);
   replay_machine_->SetEngine(this);
