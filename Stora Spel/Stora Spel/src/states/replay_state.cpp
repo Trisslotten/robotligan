@@ -293,6 +293,7 @@ void ReplayState::PlayReplay() {
 
   if (this->engine_->GetReplayMachinePtr()->LoadFrame(this->replay_registry_)) {
     // Once replay is done playing, clear the registry
+    glob::ClearEffects();
     this->replay_registry_.reset();
     replay_counter_++;
 
