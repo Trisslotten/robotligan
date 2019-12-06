@@ -202,6 +202,7 @@ class SettingsState : public State {
  private:
   void CreateSettingsMenu();
   void SaveSettings();
+  void CreateBackground();
   glob::Font2DHandle font_test_ = 0;
   entt::registry registry_settings_;
 
