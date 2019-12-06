@@ -27,8 +27,7 @@ class PlayableAnimation {
 
   std::vector<int> modes;
 
-  bool fading_out_ = false;
-  bool fading_in_ = false;
+  bool stopping_ = false;
   float fade_ = 0.f;
 
   bool bonesSpecified() {

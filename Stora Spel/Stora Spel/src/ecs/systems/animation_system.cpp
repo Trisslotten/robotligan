@@ -101,6 +101,10 @@ void AnimationSystem::PlayAnimation(std::string name, float speed,
   for (int i = 0; i < ac->active_animations.size(); i++) {
     if (ac->active_animations.at(i)->animation_ ==
         ac->model_data.animations.at(anim)) {
+      if (ac->active_animations.at(i)->stopping_) {
+        ac->active_animations.at(i)->stopping_ = false;
+        return;
+      }
       std::cout << "WARNING: Attempting to play animation: \""
                 << ac->model_data.animations.at(anim)->name_
                 << "\" is already playing, cannot stack the same animation!\n";
@@ -122,6 +126,9 @@ void AnimationSystem::PlayAnimation(std::string name, float speed,
   p_anim->playing_ = true;
   p_anim->time_ = 0;
   p_anim->strength_ = strength;
+
+  p_anim->stopping_ = false;
+  p_anim->fade_ = 0.f;
 
   if (ac->model_data.humanoid) {
     if (bodyInclude != nullptr) {
@@ -180,7 +187,7 @@ void AnimationSystem::StopAnimation(std::string name, AnimationComponent* ac) {
         << name << "\"!\n";
     return;
   }
-  ac->active_animations.at(anim)->playing_ = false;
+  ac->active_animations.at(anim)->stopping_ = true;
 }
 
 void AnimationSystem::StrengthModulator(AnimationComponent* ac) {
@@ -259,8 +266,10 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
 
 	  //Kick animations
 	  if (pl.kicking) {
-        PAC::playSlideAnims(this, ac, pl.localPlayer);
-        PAC::stopLookAnims(this, ac, pl.localPlayer);
+        if (GetActiveAnimationByName("SlideF", &ac) < 0) {
+          PAC::playSlideAnims(this, ac, pl.localPlayer);
+          PAC::stopLookAnims(this, ac, pl.localPlayer);
+        }
         rotator = dt * 10.f;
         if (GetActiveAnimationByName("Kick", &ac) < 0) {
           pl.kicking = false;
@@ -486,8 +495,10 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
         if (view.get<IDComponent>(entity).id == event.kick.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
-          PAC::playKickAnims(this, ac, pc.localPlayer);
-          pc.kicking = true;
+          if (!pc.kicking) {
+            PAC::playKickAnims(this, ac, pc.localPlayer);
+            pc.kicking = true;
+          }
           break;
         }
       }
@@ -643,7 +654,7 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
         if (anim->mode_ == LOOP) {
           anim->time_ = 0;
         } else if (anim->mode_ == MUTE_ALL || anim->mode_ == PARTIAL_MUTE) {
-          anim->playing_ = false;
+          anim->stopping_ = true;
         }
       }
       if (!anim->playing_) {
@@ -691,8 +702,19 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
           }
         }
       }
+      if (!anim->stopping_) {
+        anim->time_ += anim->speed_ * anim->animation_->tick_per_second_ * dt;
+      }
 
-      anim->time_ += anim->speed_ * anim->animation_->tick_per_second_ * dt;
+	  if (anim->stopping_ && anim->fade_ <= 0) {
+        anim->playing_ = false;
+      } else if (anim->stopping_) {
+        anim->fade_ -= dt * 5.f;
+      } else if (!anim->stopping_) {
+        anim->fade_ += dt * 5.f;
+	  }
+
+      anim->fade_ = std::clamp(anim->fade_, 0.f, 1.f);
     }
 
     std::vector<glm::vec3> f_pos(a.model_data.bones.size(), glm::vec3(0.f));
@@ -706,7 +728,10 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
         glob::Channel* channel = &anim->animation_->channels_.at(j);
         int jointId = (int)channel->boneID;
 
-                switch (anim->mode_) {
+		bool blend = false;
+        bool set = false;
+
+        switch (anim->mode_) {
           case (LOOP): {
             if (anim->priority_ >
                 bonePriorities.at(jointId)) {  // priority override
@@ -715,19 +740,11 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
                                anim->body_exclude_)) {  // body argument
                                                         // success, override
                   bonePriorities.at(jointId) = anim->priority_;
-
-                  setPRS(f_pos.at(jointId), f_rot.at(jointId),
-                         f_scale.at(jointId), anim->bone_position_->at(jointId),
-                         anim->bone_rotation_->at(jointId),
-                         anim->bone_scale_->at(jointId));
+                  set = true;
                 }
               } else {  // No body argument, override
                 bonePriorities.at(jointId) = anim->priority_;
-
-                setPRS(f_pos.at(jointId), f_rot.at(jointId),
-                       f_scale.at(jointId), anim->bone_position_->at(jointId),
-                       anim->bone_rotation_->at(jointId),
-                       anim->bone_scale_->at(jointId));
+                set = true;
               }
             } else if (anim->priority_ ==
                        bonePriorities.at(jointId)) {  // blend
@@ -735,20 +752,11 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
                 if (IsIncluded(jointId, anim->body_include_,
                                anim->body_exclude_)) {  // body argument
                                                         // success, blend
-
-                  interpolatePRS(
-                      f_pos.at(jointId), f_rot.at(jointId), f_scale.at(jointId),
-                      anim->bone_position_->at(jointId),
-                      anim->bone_rotation_->at(jointId),
-                      anim->bone_scale_->at(jointId), anim->strength_);
+                  blend = true;
                 }
               } else {  // No body argument, blend
 
-                interpolatePRS(f_pos.at(jointId), f_rot.at(jointId),
-                               f_scale.at(jointId),
-                               anim->bone_position_->at(jointId),
-                               anim->bone_rotation_->at(jointId),
-                               anim->bone_scale_->at(jointId), anim->strength_);
+				  blend = true;
               }
             }
             break;
@@ -756,12 +764,7 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
 
           case (MUTE_ALL): {  // override
             bonePriorities.at(jointId) = 255;
-
-            setPRS(f_pos.at(jointId), f_rot.at(jointId), f_scale.at(jointId),
-                   anim->bone_position_->at(jointId),
-                   anim->bone_rotation_->at(jointId),
-                   anim->bone_scale_->at(jointId));
-
+            set = true;
             break;
           }
 
@@ -771,35 +774,44 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
                              anim->body_exclude_)) {  // override specified
                                                       // bodyparts
                 bonePriorities.at(jointId) = 254;
-
-                setPRS(f_pos.at(jointId), f_rot.at(jointId),
-                       f_scale.at(jointId), anim->bone_position_->at(jointId),
-                       anim->bone_rotation_->at(jointId),
-                       anim->bone_scale_->at(jointId));
-
+                set = true;
               } else {
                 if (anim->priority_ >=
                     bonePriorities.at(jointId)) {  // priority override
                   bonePriorities.at(jointId) = anim->priority_;
-
-                  setPRS(f_pos.at(jointId), f_rot.at(jointId),
-                         f_scale.at(jointId), anim->bone_position_->at(jointId),
-                         anim->bone_rotation_->at(jointId),
-                         anim->bone_scale_->at(jointId));
-
+                  set = true;
                 } else if (anim->priority_ ==
                            bonePriorities.at(jointId)) {  // blend
-                  interpolatePRS(
-                      f_pos.at(jointId), f_rot.at(jointId), f_scale.at(jointId),
-                      anim->bone_position_->at(jointId),
-                      anim->bone_rotation_->at(jointId),
-                      anim->bone_scale_->at(jointId), anim->strength_);
+                  blend = true;
                 }
               }
             }
             break;
           }
         }
+
+		if (blend) {
+          interpolatePRS(f_pos.at(jointId), f_rot.at(jointId),
+                         f_scale.at(jointId), anim->bone_position_->at(jointId),
+                         anim->bone_rotation_->at(jointId),
+                                 anim->bone_scale_->at(jointId),
+                                 anim->strength_ * anim->fade_);
+		} else if(set) {
+                  if (anim->stopping_) {
+                    interpolatePRS(
+                        f_pos.at(jointId), f_rot.at(jointId),
+                        f_scale.at(jointId), anim->bone_position_->at(jointId),
+                        anim->bone_rotation_->at(jointId),
+                        anim->bone_scale_->at(jointId), anim->strength_ * anim->fade_);
+                  } else {
+                    setPRS(f_pos.at(jointId), f_rot.at(jointId),
+                           f_scale.at(jointId),
+                           anim->bone_position_->at(jointId),
+                           anim->bone_rotation_->at(jointId),
+                           anim->bone_scale_->at(jointId));
+                  }
+		}
+
       }
     }
 
