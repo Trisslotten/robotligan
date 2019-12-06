@@ -1666,7 +1666,7 @@ void PlayState::CreatePlayerEntities() {
 
     glob::ModelHandle player_model;
     if (entity_id == my_id_) {
-//#define TEST_3RD_PERSON
+#define TEST_3RD_PERSON
 #ifdef TEST_3RD_PERSON
       glm::vec3 camera_offset = glm::vec3(-4.5f, 1.4f, 0.0f);
       player_model = glob::GetModel(kModelPathMech);
@@ -1704,6 +1704,11 @@ void PlayState::CreatePlayerEntities() {
     f.emitters.push_back(
         {joints["Gun autoloader"].id, glm::vec3(4.39386, -3.68348, 9.73308),
          glm::normalize(glm::vec3(0, -1, 0)), BoneEmitterType::SHOOT, 10.0f});
+
+	f.emitters.push_back(
+        {joints["Chest"].id, glm::vec3(-0.005052, 2.15061f, 13.7683f),
+                          glm::normalize(glm::vec3(0, 1, 0)),
+                          BoneEmitterType::GOAL_MAKER, 5.f});
     if (entity_id != my_id_) {
       f.emitters.push_back({joints["Thruster upper L"].id,
                             glm::vec3(1.90377, 4.66975, 14.3237),
@@ -1755,6 +1760,9 @@ void PlayState::CreatePlayerEntities() {
           break;
         case BoneEmitterType::SHOOT:
           glob::SetParticleSettings(handle, "shoot.txt");
+          break;
+        case BoneEmitterType::GOAL_MAKER:
+          glob::SetParticleSettings(handle, "goal_maker.txt");
           break;
       }
       part_c.handles.push_back(handle);
@@ -2517,24 +2525,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         auto& player_id_c = correct_registry->get<IDComponent>(player);
         auto& player_trans_c = correct_registry->get<TransformComponent>(player);
 
-		if (player_id_c.id == e.goal.goal_maker) {
-          // Particles
-          entt::entity particle_entity = correct_registry->create();
-          glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
-          std::vector<glob::ParticleSystemHandle> in_handles;
-          std::vector<glm::vec3> in_offsets;
-          std::vector<glm::vec3> in_directions;
-
-          glob::SetParticleSettings(handle, "ball_destroy.txt");
-          glob::SetEmitPosition(handle, player_trans_c.position);
-          in_handles.push_back(handle);
-
-          ParticleComponent& par_c =
-              correct_registry->assign<ParticleComponent>(
-                  particle_entity, in_handles, in_offsets, in_directions);
-          correct_registry->assign<TimerComponent>(particle_entity, 5.f);
-			break;
-		}
+		
       }
       if (this->recording_) {
         this->engine_->GetReplayMachinePtr()->StoreAndClearReplay();

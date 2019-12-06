@@ -1,16 +1,15 @@
 #ifndef FOLLOW_BONE_COMPONENT_HPP_
 #define FOLLOW_BONE_COMPONENT_HPP_
 
-#include <vector>
 #include <glm/glm.hpp>
+#include <vector>
 
-
-enum class BoneEmitterType
-{
-	ROCKET,
+enum class BoneEmitterType {
+  ROCKET,
   SLIDE_SPARKS,
-	HIT,
+  HIT,
   SHOOT,
+  GOAL_MAKER,
 };
 
 struct BoneEmitter {
@@ -28,4 +27,4 @@ struct FollowBoneComponent {
   std::vector<BoneEmitter> emitters;
 };
 
-#endif // FOLLOW_BONE_COMPONENT_HPP_
+#endif  // FOLLOW_BONE_COMPONENT_HPP_
