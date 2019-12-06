@@ -1666,7 +1666,7 @@ void PlayState::CreatePlayerEntities() {
 
     glob::ModelHandle player_model;
     if (entity_id == my_id_) {
-#define TEST_3RD_PERSON
+//#define TEST_3RD_PERSON
 #ifdef TEST_3RD_PERSON
       glm::vec3 camera_offset = glm::vec3(-4.5f, 1.4f, 0.0f);
       player_model = glob::GetModel(kModelPathMech);
