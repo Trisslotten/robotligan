@@ -202,7 +202,7 @@ void LobbyState::HandleUpdateLobbyTeamPacket(NetAPI::Common::Packet& packet) {
   if (len > 0) {
     name.resize(len);
     packet.Remove(name.data(), len);
-    // std::cout << "Lobby: name: " << name << "\n";
+    std::cout << "\t" << id << ": " << name << "\n";
     if (id != -1) {
       LobbyPlayer plyr;
       plyr.ready = ready;
@@ -218,6 +218,11 @@ void LobbyState::HandlePlayerDisconnect(NetAPI::Common::Packet& packet) {
   packet >> id;
   lobby_players_.erase(id);
   engine_->player_names_.erase(id);
+}
+
+void LobbyState::ClearLobbyPlayers()
+{
+  lobby_players_.clear();
 }
 
 void LobbyState::CreateBackgroundEntities() {
@@ -486,6 +491,17 @@ void LobbyState::DrawTeamSelect() {
   // glob::window::Relative720(glm::vec2(930, 680));
   int blue_count = 0;
   int red_count = 0;
+
+  if (Input::IsKeyPressed(GLFW_KEY_F4)) {
+    std::cout << "LobbyPlayers:\n";
+    for (auto& [client_id, lp] : lobby_players_) {
+      std::cout << "\t" << client_id << ": " << lp.team << "\n";
+    }
+    std::cout << "Names:\n";
+    for (auto& [client_id, name] : engine_->player_names_) {
+      std::cout << "\t" << client_id << ": " << name<< "\n";
+    }
+  }
 
   for (auto& lobby_player : lobby_players_) {
     glm::vec4 color = glm::vec4(1.f, 1.f, 1.f, 1.f);

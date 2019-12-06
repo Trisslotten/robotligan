@@ -106,6 +106,8 @@ class LobbyState : public State {
   void HandlePlayerDisconnect(NetAPI::Common::Packet& packet);
   void SetMyId(int client_id) { my_id_ = client_id; }
 
+  void ClearLobbyPlayers();
+
  private:
   glm::vec2 ws_;
   entt::registry registry_lobby_;

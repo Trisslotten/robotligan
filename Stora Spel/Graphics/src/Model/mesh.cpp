@@ -123,4 +123,9 @@ MeshData Mesh::GetMeshData() {
   return mesh_data;
 }
 
+std::vector<Vertex>* Mesh::GetVertexData()
+{
+  return &vertices_;
+}
+
 }  // namespace glob

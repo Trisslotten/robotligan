@@ -115,7 +115,6 @@ void NetAPI::Socket::Server::ListenForClients() {
       std::cout << "DEBUG: Found existing client, overwriting\n";
     } else if (GetNumConnected() < max_players_) {
       std::cout << "DEBUG: adding new client\n";
-      std::cout << "DEBUG: adding new client\n";
 
       connection_client_->ID = current_client_guid_;
       ids_[address] = current_client_guid_;

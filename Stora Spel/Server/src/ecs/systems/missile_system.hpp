@@ -27,7 +27,7 @@ void Update(entt::registry& registry, float dt) {
   homing_time = GlobalSettings::Access()->ValueOf("ABILITY_HOMING_DURATION");
 
   auto view_missiles =
-      registry.view<MissileComponent, TransformComponent, PhysicsComponent>();
+      registry.view<MissileComponent, TransformComponent, PhysicsComponent, IDComponent>();
 
   bool exploded = false;
   for (auto missile : view_missiles) {

@@ -547,6 +547,10 @@ void PlayerArenaCollision(entt::registry& registry) {
           player_c.can_jump = true;
         } else if (data.move_vector.y < 0.0f) {
           physics_c.velocity.y = 0.f;
+        } else if (data.move_vector.x) {
+          physics_c.velocity.x = 0.f;
+        } else if (data.move_vector.z) {
+          physics_c.velocity.z = 0.f;
         }
       }
     }
