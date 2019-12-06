@@ -1,15 +1,16 @@
 #include "engine.hpp"
 
 #include <GLFW/glfw3.h>
-#include <bitset>
-#include <glm/gtx/transform.hpp>
-#include <glob/graphics.hpp>
-#include <iostream>
 
+#include <bitset>
 #include <ecs\systems\skylight_system.hpp>
 #include <ecs\systems\trail_system.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glob/graphics.hpp>
 #include <glob\window.hpp>
+#include <iostream>
 #include <shared\pick_up_component.hpp>
+
 #include "ecs/components.hpp"
 #include "ecs/systems/animation_system.hpp"
 #include "ecs/systems/fireworks_system.hpp"
@@ -109,8 +110,9 @@ void Engine::Init() {
   // Initiate the Replay Machine
   unsigned int length_sec =
       (unsigned int)GlobalSettings::Access()->ValueOf("REPLAY_LENGTH_SECONDS");
-  unsigned int approximate_tickrate = 64;  // TODO: Replace with better
-                                            // approximation
+  unsigned int approximate_tickrate =
+      kClientUpdateRate;  // TODO: Replace with better
+                          // approximation
   this->replay_machine_ =
       new ClientReplayMachine(length_sec, approximate_tickrate);
   replay_machine_->SetEngine(this);
