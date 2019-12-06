@@ -17,7 +17,7 @@ void glob::PostProcess::Init(Blur& blur) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, ws.x, ws.y, 0, GL_RGBA, GL_FLOAT,
-               NULL);
+    NULL);
 
   glGenTextures(1, &draw_emission_texture_);
   glBindTexture(GL_TEXTURE_2D, draw_emission_texture_);
@@ -25,10 +25,10 @@ void glob::PostProcess::Init(Blur& blur) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                  GL_LINEAR_MIPMAP_LINEAR);
+    GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, ws.x, ws.y, 0, GL_RGBA, GL_FLOAT,
-               NULL);
+    NULL);
   glGenerateMipmap(GL_TEXTURE_2D);
 
   glGenTextures(1, &draw_depth_texture_);
@@ -38,7 +38,7 @@ void glob::PostProcess::Init(Blur& blur) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, ws.x, ws.y, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
-               NULL);
+    NULL);
   // glGenerateMipmap(GL_TEXTURE_2D);
   // glGenerateMipmap(GL_TEXTURE_2D);
 
@@ -52,30 +52,53 @@ void glob::PostProcess::Init(Blur& blur) {
   //glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, ws.x, ws.y);
 
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-                         draw_color_texture_, 0);
+    draw_color_texture_, 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D,
-                         draw_emission_texture_, 0);
+    draw_emission_texture_, 0);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
-                         draw_depth_texture_, 0);
+    draw_depth_texture_, 0);
 
   //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
   //                          GL_RENDERBUFFER, renderbuffer_);
 
-  GLuint att[2] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+  GLuint att[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
   glDrawBuffers(2, att);
+  //glReadBuffer(GL_NONE);
 
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     std::cout << "ERROR: postprocess.cpp: framebuffer_ is not complete!"
-              << std::endl;
+    << std::endl;
+
+  glGenFramebuffers(1, &prepass_framebuffer_);
+  glBindFramebuffer(GL_FRAMEBUFFER, prepass_framebuffer_);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D,
+    draw_depth_texture_, 0);
+  glDrawBuffer(GL_NONE);
+  glReadBuffer(GL_NONE);
+  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    std::cout << "ERROR: postprocess.cpp: prepass_framebuffer_ is not complete!"
+    << std::endl;
+
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void glob::PostProcess::BeforeDraw() {
-  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
+void glob::PostProcess::BeginPrePass()
+{
+  glBindFramebuffer(GL_FRAMEBUFFER, prepass_framebuffer_);
   glClear(GL_DEPTH_BUFFER_BIT);
 }
 
-void glob::PostProcess::AfterDraw(Blur& blur) {
+void glob::PostProcess::EndPrePass()
+{
+  glDepthFunc(GL_LEQUAL);
+}
+
+void glob::PostProcess::BeginRender() {
+  glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_);
+  //glClear(GL_DEPTH_BUFFER_BIT);
+}
+
+void glob::PostProcess::EndRender(Blur& blur) {
   glBindTexture(GL_TEXTURE_2D, draw_emission_texture_);
   glGenerateMipmap(GL_TEXTURE_2D);
 

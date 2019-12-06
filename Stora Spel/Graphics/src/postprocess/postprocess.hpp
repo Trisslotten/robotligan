@@ -15,15 +15,19 @@ class PostProcess {
 public:
   void Init(Blur& blur);
 
-  void BeforeDraw();
+  void BeginPrePass();
+  void EndPrePass();
 
-  void AfterDraw(Blur& blur);
+  void BeginRender();
+  void EndRender(Blur& blur);
   
   void BindColorTex(GLuint slot);
   void BindEmissionTex(GLuint slot);
   void BindDepthTex(GLuint slot);
 
 private:
+GLuint prepass_framebuffer_ = 0;
+
 GLuint framebuffer_ = 0;
 //GLuint renderbuffer_ = 0;
 GLuint draw_color_texture_ = 0;

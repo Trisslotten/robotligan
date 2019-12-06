@@ -59,7 +59,7 @@ void Mesh::SetupMesh(bool weighted) {
 
 Mesh::Mesh(const std::vector<Vertex>& vertices,
            const std::vector<GLuint>& indices,
-           const std::vector<Texture>& textures, glm::mat4 transform) {
+           const std::vector<Texture>& textures, const glm::mat4& transform) {
   vertices_ = vertices;
   indices_ = indices;
   textures_ = textures;
@@ -73,11 +73,13 @@ Mesh::Mesh(const std::vector<Vertex>& vertices,
 Mesh::Mesh(const std::vector<Vertex>& vertices,
            const std::vector<GLuint>& indices,
            const std::vector<Texture>& textures,
-           const std::vector<glm::vec4> weights,
-           const std::vector<glm::ivec4> boneIndex) {
+           const std::vector<glm::vec4>& weights,
+           const std::vector<glm::ivec4>& boneIndex, const glm::mat4& transform) {
   vertices_ = vertices;
   indices_ = indices;
   textures_ = textures;
+
+  transform_ = transform;
 
   weights_ = weights;
   bone_index_ = boneIndex;
@@ -104,7 +106,7 @@ void Mesh::Draw(ShaderProgram& shader) {
   // Draw mesh
   glBindVertexArray(vertex_array_object_);
   glDrawElements(GL_TRIANGLES, indices_.size(), GL_UNSIGNED_INT, 0);
-  glBindVertexArray(0);
+  //glBindVertexArray(0);
 }
 
 MeshData Mesh::GetMeshData() {

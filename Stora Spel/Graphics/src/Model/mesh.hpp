@@ -3,8 +3,8 @@
 
 #include <assimp/scene.h>
 #include <glad/glad.h>
-#include <glm/glm.hpp>
 
+#include <glm/glm.hpp>
 #include <string>
 #include <vector>
 
@@ -46,11 +46,11 @@ class Mesh {
 
  public:
   Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices,
-       const std::vector<Texture>& textures, glm::mat4 transform);
+       const std::vector<Texture>& textures, const glm::mat4& transform);
   Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices,
        const std::vector<Texture>& textures,
-       const std::vector<glm::vec4> weights,
-       const std::vector<glm::ivec4> boneIndex);
+       const std::vector<glm::vec4>& weights,
+       const std::vector<glm::ivec4>& boneIndex, const glm::mat4& transform);
   ~Mesh();
 
   void Draw(ShaderProgram& shader);

@@ -149,7 +149,7 @@ void ReplayState::AddSpotlights() {
 void ReplayState::AddAudience() {
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
-  glob::ModelHandle model_audience = glob::GetModel(kModelPathAudience);
+  glob::ModelHandle model_audience = glob::GetTransparentModel(kModelPathAudience);
 
   for (int i = 0; i < 4; i++) {
     auto audience = this->replay_registry_.create();

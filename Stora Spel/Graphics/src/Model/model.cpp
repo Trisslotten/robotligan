@@ -172,7 +172,7 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene, glm::mat4 transform)
         }
       }
     }
-    return Mesh(vertex, indices, textures, weights, boneIndex);
+    return Mesh(vertex, indices, textures, weights, boneIndex, transform);
   }
 
   return Mesh(vertex, indices, textures, transform);
@@ -184,11 +184,11 @@ GLint Model::TextureFromFile(const char* path, std::string directory,
   filename = directory + '/' + filename;
 
   GLint internal_format = GL_RGBA;
-  LodePNGColorType color_type = LCT_RGBA;
-
+  LodePNGColorType color_type = LodePNGColorType::LCT_RGBA;
+  
   if (type == aiTextureType_EMISSIVE) {
     internal_format = GL_RED;
-    color_type = LCT_GREY;
+    color_type = LodePNGColorType::LCT_GREY;
     is_emissive_ = true;
   }
 
