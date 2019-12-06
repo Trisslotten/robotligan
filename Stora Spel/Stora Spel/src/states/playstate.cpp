@@ -1504,7 +1504,7 @@ void PlayState::CreateInitialEntities() {
 }
 
 void PlayState::CreatePlayerEntities() {
-  bool ThirdPersonDebug = false;
+  bool ThirdPersonDebug = true;
   auto& sound_engine = engine_->GetSoundEngine();
 
   std::cout << "DEBUG: playstate.cpp: Created " << player_ids_.size()
