@@ -584,7 +584,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
       auto view =
           registry->view<IDComponent, AnimationComponent, PlayerComponent>();
       for (auto entity : view) {
-        if (view.get<IDComponent>(entity).id == event.kick.player_id) {
+        if (view.get<IDComponent>(entity).id == event.super_kick.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           if (pc.localPlayer) {
