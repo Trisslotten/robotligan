@@ -1378,6 +1378,8 @@ namespace glob {
     shockwaves.Clear();
     blackholes.Clear();
     SetStunned(false);
+    SetInvisibleEffect(false);
+    SetBlackout(false);
   }
 
   void SubmitCube(glm::mat4 t) { cubes.push_back(t); }
