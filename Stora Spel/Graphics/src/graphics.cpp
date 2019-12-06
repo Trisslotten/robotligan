@@ -362,6 +362,10 @@ void Init() {
   compute_shaders["sparks"]->add("Particle compute shaders/sparks.comp");
   compute_shaders["sparks"]->compile();
 
+  compute_shaders["glitter"] = std::make_unique<ShaderProgram>();
+  compute_shaders["glitter"]->add("Particle compute shaders/glitter.comp");
+  compute_shaders["glitter"]->compile();
+
   CreateDefaultParticleTexture();
   textures["smoke"] = TextureFromFile("smoke.png");
   textures["confetti"] = TextureFromFile("confetti.png");

@@ -1707,8 +1707,8 @@ void PlayState::CreatePlayerEntities() {
 
 	f.emitters.push_back(
         {joints["Chest"].id, glm::vec3(-0.005052, 2.15061f, 13.7683f),
-                          glm::normalize(glm::vec3(0, 1, 0)),
-                          BoneEmitterType::GOAL_MAKER, 5.f});
+                          glm::normalize(glm::vec3(0, 0, 1)),
+                          BoneEmitterType::GOAL_MAKER, 12.f});
     if (entity_id != my_id_) {
       f.emitters.push_back({joints["Thruster upper L"].id,
                             glm::vec3(1.90377, 4.66975, 14.3237),
