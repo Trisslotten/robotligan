@@ -39,7 +39,7 @@ class Shadows {
  private:
   int GetBlurredSize() { return size_ / glm::pow(2, blurred_level_); }
 
-  static const int max_maps_ = 4;
+  static const int max_maps_ = 2;
   int num_maps_used_ = 0;
   GLuint framebuffer_ = 0;
   GLuint renderbuffer_ = 0;

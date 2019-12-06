@@ -26,6 +26,8 @@ void MainMenuState::Init() {
   engine_->SetCurrentRegistry(&registry_mainmenu_);
   engine_->SetEnableChat(false);
 
+  engine_->ClearPlayerInfos();
+
   if (client.IsConnected()) {
     client.Disconnect();
   }
