@@ -458,11 +458,9 @@ void PlayState::Update(float dt) {
 
   if (game_has_ended_) {
     engine_->DrawScoreboard();
+    this->recording_ = false;
+    engine_->ChangeState(StateType::REPLAY);
 
-    if (game_has_ended_) {
-      this->recording_ = false;
-      engine_->ChangeState(StateType::REPLAY);
-    }
     if (primary_cd_ > 0) {
       primary_cd_ -= dt;
     }

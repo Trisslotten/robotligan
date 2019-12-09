@@ -78,7 +78,7 @@ void Update(entt::registry& registry) {
           dispatcher.trigger<GameEvent>(event);
 
           // each team "owns" the goal where to score.
-          printf("Team %i scored a goal!\n", goal_team_c.team);
+          //printf("Team %i scored a goal!\n", goal_team_c.team);
           goal_goal_c.goals++;
           auto view_players =
               registry.view<PlayerComponent, TeamComponent, PointsComponent>();
