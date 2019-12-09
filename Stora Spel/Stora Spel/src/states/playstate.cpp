@@ -1900,7 +1900,7 @@ void PlayState::CreateMapEntity() {
 }
 
 void AddLightToBall(entt::registry& registry, entt::entity& ball) {
-  registry.assign<LightComponent>(ball, glm::vec3(0.f, 1.f, 0.f), 20.f, 0.f,
+  registry.assign<LightComponent>(ball, glm::vec3(0.f, 1.f, 0.f), 100.f, 0.f,
                                   false);
 }
 

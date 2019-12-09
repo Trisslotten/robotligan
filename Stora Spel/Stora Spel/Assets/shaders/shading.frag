@@ -132,19 +132,21 @@ Lighting shading(const vec3 position, const vec3 normal) {
 
 		vec3 light_dir = normalize(pointToLight);
 
-		float intensity = 1.f - clamp(length(pointToLight)/pos_rad.w, 0., 1.);
+		//float intensity = 1.f - clamp(length(pointToLight)/pos_rad.w, 0., 1.);
+		float x2 = dot(pointToLight, pointToLight);
+		float a = 254.5 / (pos_rad.w * pos_rad.w);
+		float intensity = 1./(1.+ a * x2);
 		if(intensity > 0.) {
 			float diffuse = calcDiffuse(position, normal, light_dir);
 			lighting.diffuse += diffuse * intensity * col_amb.rgb;
-		}
 
-		const float sphere_radius = light_sphere_radii[l];
-		if(sphere_radius > 0.) {
-			light_dir = calcSphereLightVec(view_dir, normal, pointToLight, sphere_radius);
+			const float sphere_radius = light_sphere_radii[l];
+			if(sphere_radius > 0.) {
+				light_dir = calcSphereLightVec(view_dir, normal, pointToLight, sphere_radius);
+			}
+			float specular = calcSpecular(position, normal, light_dir, view_dir, roughness);
+			lighting.specular += specular * intensity * col_amb.rgb;
 		}
-		float specular = calcSpecular(position, normal, light_dir, view_dir, roughness);
-
-		lighting.specular += specular * col_amb.rgb;
 	}
 
 	for(int i = 0; i < num_shadows; i++) {
