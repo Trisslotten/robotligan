@@ -1340,8 +1340,9 @@ void PlayState::DrawJumbotronText() {
     std::string text = "TEST";
     int count = countdown_time_ - engine_->GetCountdownTimer();
     if (count > 0) {
-      glob::Submit(font_test_, temp_pos, 30.f, std::to_string(count), color_white, orient);
-	} else {
+      glob::Submit(font_test_, temp_pos, 30.f, std::to_string(count),
+                   color_white, orient);
+    } else {
       switch (current_jumbo_effect_) {
         case TEAM_SCORES: {
           std::string team_score_red, team_score_blue;
@@ -1405,7 +1406,26 @@ void PlayState::DrawJumbotronText() {
           size = 14;
           text = "GOOOAL!";
           temp_pos -= right * ((float)text.size() / 2);
+          temp_pos += glm::vec3(0, 10, 0);
           glob::Submit(font_test_, temp_pos, size, text, color_white, orient);
+          long clid = -1;
+          unsigned int goal_maker_team = TEAM_RED;
+          for (auto player : engine_->GetPlayerScores()) {
+            if (player.second.enttity_id == last_goal_maker_) {
+              clid = player.first;
+              goal_maker_team = player.second.team;
+              break;
+            }
+          }
+          if (clid != -1) {
+            std::string player_name = engine_->player_names_[clid];
+            color = color_red;
+            if (goal_maker_team == TEAM_BLUE) color = color_blue;
+
+            temp_pos -= glm::vec3(0, 1, 0) * 15.f;
+            glob::Submit(font_test_, temp_pos, 6.f, player_name, color, orient);
+          }
+
           break;
         }
         default: {
@@ -1690,6 +1710,11 @@ void PlayState::CreatePlayerEntities() {
     f.emitters.push_back(
         {joints["Gun autoloader"].id, glm::vec3(4.39386, -3.68348, 9.73308),
          glm::normalize(glm::vec3(0, -1, 0)), BoneEmitterType::SHOOT, 10.0f});
+
+	f.emitters.push_back(
+        {joints["Chest"].id, glm::vec3(-0.005052, 2.15061f, 13.7683f),
+                          glm::normalize(glm::vec3(0, 0, 1)),
+                          BoneEmitterType::GOAL_MAKER, 12.f});
     if (entity_id != my_id_) {
       f.emitters.push_back({joints["Thruster upper L"].id,
                             glm::vec3(1.90377, 4.66975, 14.3237),
@@ -1741,6 +1766,9 @@ void PlayState::CreatePlayerEntities() {
           break;
         case BoneEmitterType::SHOOT:
           glob::SetParticleSettings(handle, "shoot.txt");
+          break;
+        case BoneEmitterType::GOAL_MAKER:
+          glob::SetParticleSettings(handle, "goal_maker.txt");
           break;
       }
       part_c.handles.push_back(handle);
@@ -2491,6 +2519,20 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       current_jumbo_effect_ = GOAL_SCORED;
       jumbo_effect_timer_.Pause();
 
+      if (e.goal.good_goal) {
+        last_goal_maker_ = e.goal.goal_maker;
+      }
+
+      auto view_players =
+          correct_registry
+              ->view<PlayerComponent, IDComponent, TransformComponent>();
+      for (auto player : view_players) {
+        auto& player_player_c = correct_registry->get<PlayerComponent>(player);
+        auto& player_id_c = correct_registry->get<IDComponent>(player);
+        auto& player_trans_c = correct_registry->get<TransformComponent>(player);
+
+		
+      }
       if (this->recording_) {
         this->engine_->GetReplayMachinePtr()->StoreAndClearReplay();
       }

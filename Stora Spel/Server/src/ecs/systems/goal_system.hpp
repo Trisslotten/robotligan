@@ -75,29 +75,33 @@ void Update(entt::registry& registry) {
           GameEvent event;
           event.type = GameEvent::GOAL;
           event.goal.x = goal_trans_c.position.x;
-          dispatcher.trigger<GameEvent>(event);
 
           // each team "owns" the goal where to score.
           printf("Team %i scored a goal!\n", goal_team_c.team);
           goal_goal_c.goals++;
-          auto view_players =
-              registry.view<PlayerComponent, TeamComponent, PointsComponent>();
+          auto view_players = registry.view<PlayerComponent, TeamComponent,
+                                            PointsComponent, IDComponent>();
           // give the player who touched the ball last points
           for (auto player : view_players) {
             auto& player_player_c = registry.get<PlayerComponent>(player);
             auto& player_team_c = registry.get<TeamComponent>(player);
             auto& player_points_c = registry.get<PointsComponent>(player);
+            auto& player_id_c = registry.get<IDComponent>(player);
 
             if (player_player_c.client_id == ball_ball_c.last_touch) {
               if (goal_team_c.team == player_team_c.team) {
                 // if correct goal, add POINTS_GOAL points
                 player_points_c.AddPoints(POINTS_GOAL);
                 player_points_c.AddGoals(1);
+                event.goal.good_goal = true;
+                event.goal.goal_maker = player_id_c.id;
               } else {
                 // else, self goal, subtract POINTS_GOAL
                 player_points_c.AddPoints((int)(POINTS_GOAL) * -1);
+				event.goal.good_goal = false;
                 // player_points_c.AddGoals(-1); Man får inte minus mål bara för
                 // att man gör självmål >:(
+                // vem bestämmer det då rymdfotbollspolisen elr smh KEKW
               }
             } else if (player_player_c.client_id == ball_ball_c.prev_touch) {
               if (goal_team_c.team == player_team_c.team) {
@@ -106,6 +110,7 @@ void Update(entt::registry& registry) {
               }
             }
           }
+          dispatcher.trigger<GameEvent>(event);
 
           return;
         } else if (distance < kDistanceForBlock) {

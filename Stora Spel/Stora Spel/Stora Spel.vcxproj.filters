@@ -163,6 +163,7 @@
     <None Include="Assets\shaders\Particle compute shaders\black_hole.comp" />
     <None Include="Assets\shaders\Particle compute shaders\jet.comp" />
     <None Include="Assets\shaders\Particle compute shaders\sparks.comp" />
+    <None Include="Assets\shaders\Particle compute shaders\glitter.comp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\testshader.vert" />

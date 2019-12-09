@@ -19,6 +19,7 @@ class ParticleSystem {
  private:
   void HandleHit(const GameEvent& event);
   void HandleShoot(const GameEvent& event);
+  void HandleGoalMaker(const GameEvent& event, bool emit);
 
   Engine* engine_ = nullptr;
 };

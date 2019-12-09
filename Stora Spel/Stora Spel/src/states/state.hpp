@@ -465,6 +465,8 @@ class PlayState : public State {
   // Replay stuff
   bool recording_ = false;
   // Replay stuff
+
+  EntityID last_goal_maker_;
 };
 
 class ReplayState : public State {
