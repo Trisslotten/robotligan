@@ -9,9 +9,9 @@ float lerp(float a, float b, float f) { return a + f * (b - a); }
 
 namespace glob {
 Ssao::Ssao() {
-  internal_format_ = GL_R8;
-  downscale_ = 4.f;
-  num_samples_ = 16;
+  internal_format_ = GL_R32F;
+  downscale_ = 1.f;
+  num_samples_ = 64;
 }
 
 Ssao::~Ssao() {}
@@ -118,6 +118,6 @@ void Ssao::Process(PostProcess& post_process, Blur& blur,
   //glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
   blurred_ssao_texture_  = ssao_texture_;
-  blurred_ssao_texture_ = blur.BlurTexture(blur_id_, 3, ssao_texture_, 0);
+  blurred_ssao_texture_ = blur.BlurTexture(blur_id_, 5, ssao_texture_, 0);
 }
 }  // namespace glob

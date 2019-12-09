@@ -69,7 +69,7 @@ void Update(entt::registry& registry, float dt) {
         speed = 30.f;
 	  }
       if (Input::IsKeyDown(GLFW_KEY_LEFT_CONTROL)) {
-          speed = 3.f;
+          speed = 1.f;
       }
       if (glm::length(dir) > 0)
 		 dir = glm::normalize(dir);

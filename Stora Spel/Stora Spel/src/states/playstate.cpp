@@ -1317,11 +1317,48 @@ void PlayState::CreateTechDemoScene()
 	auto& window1_m_c = registry_gameplay_.assign<ModelComponent>(window1);
 	window1_m_c.handles.push_back(hndl_plane);
 	window1_m_c.cast_shadow = false;
-	auto& window_trans = registry_gameplay_.assign<TransformComponent>(window1, glm::vec3(37, -9, 28));
+	auto& window_trans = registry_gameplay_.assign<TransformComponent>(window1, glm::vec3(37, -9, 16));
 	window_trans.scale.x = 4.f;
 	window_trans.scale.y = 4.f;
 
-	
+	// Particle section
+	auto e = registry_gameplay_.create();
+
+	std::vector<glob::ParticleSystemHandle> handles;
+	std::vector<glm::vec3> offsets;
+	//= {glm::vec3(0.f)};
+	std::vector<glm::vec3> directions;
+	//= {glm::vec3(0.f, 1.f, 0.f)};
+
+	auto handle = glob::CreateParticleSystem();
+	handles.push_back(handle);
+	glob::SetParticleSettings(handle, "goal_fire.txt");
+	glob::SetEmitPosition(handle,
+		glm::vec3(6, -11.f, -23.f));
+
+	handle = glob::CreateParticleSystem();
+	handles.push_back(handle);
+	glob::SetParticleSettings(handle, "goal_fire.txt");
+	glob::SetEmitPosition(handle,
+		glm::vec3(-6, -11.f, -23.f));
+
+	registry_gameplay_.assign<ParticleComponent>(e, handles, offsets, directions);
+	registry_gameplay_.assign<TimerComponent>(e, 500.f);
+
+
+	// Animation
+	auto robot = registry_gameplay_.create();
+	auto& trans = registry_gameplay_.assign<TransformComponent>(
+		robot, glm::vec3(10,-10.5,0), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.01f));
+	glob::ModelHandle model_robot = glob::GetModel(kModelPathMech);
+	auto& model_c = registry_gameplay_.assign<ModelComponent>(robot);
+	model_c.handles.push_back(model_robot);
+	auto& animation_c = registry_gameplay_.assign<AnimationComponent>(robot,
+		glob::GetAnimationData(model_robot));
+	trans.position = glm::vec3(-15, -11.5, 0);
+
+	engine_->GetAnimationSystem().PlayAnimation(
+		"Run", 1.f, &animation_c, 10, 1.f, engine_->GetAnimationSystem().LOOP);
 }
 
 void PlayState::UpdateTechDemo(float dt)
@@ -1332,6 +1369,21 @@ void PlayState::UpdateTechDemo(float dt)
 	if (Input::IsKeyPressed(GLFW_KEY_P)) {
 		glm::vec3 pos = registry_gameplay_.get<TransformComponent>(my_entity_).position;
 		printf("my pos: %f %f %f \n", pos.x, pos.y, pos.z);
+	}
+	if (Input::IsKeyPressed(GLFW_KEY_F2)) {
+		std::vector<glob::ParticleSystemHandle> handles;
+		std::vector<glm::vec3> offsets;
+		std::vector<glm::vec3> directions;
+
+		auto e = registry_gameplay_.create();
+		glob::ParticleSystemHandle handle = glob::CreateParticleSystem();
+		handles.push_back(handle);
+		glob::SetParticleSettings(handle, "confetti.txt");
+		glob::SetEmitPosition(handle, glm::vec3(0, -11, -23.f));
+		glob::SetParticleDirection(handle, glm::vec3(0, 5.f, 1.f));
+
+		registry_gameplay_.assign<ParticleComponent>(e, handles, offsets, directions);
+		registry_gameplay_.assign<TimerComponent>(e, 10.f);
 	}
 
 	// "animate" entities
@@ -1803,7 +1855,7 @@ void PlayState::CreatePlayerEntities() {
 
 		glob::ModelHandle player_model;
 		if (entity_id == my_id_) {
-			//#define TEST_3RD_PERSON
+			#define TEST_3RD_PERSON
 #ifdef TEST_3RD_PERSON
 			glm::vec3 camera_offset = glm::vec3(-4.5f, 1.4f, 0.0f);
 			player_model = glob::GetModel(kModelPathMech);
@@ -2279,7 +2331,7 @@ void PlayState::TestCreateLights() {
 
 	auto light = registry_gameplay_.create();
 	registry_gameplay_.assign<LightComponent>(light, glm::vec3(0.4f, 0.4f, 0.4f),
-		20.f, 0.1f);
+		20.f, 0.01f);
 	registry_gameplay_.assign<TransformComponent>(
 		light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
 }

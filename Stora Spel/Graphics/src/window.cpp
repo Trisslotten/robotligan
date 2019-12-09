@@ -21,9 +21,9 @@ namespace glob {
 
 namespace window {
 
-unsigned int window_width = 1280;
-unsigned int window_height = 720;
-bool fullscreen = false;
+unsigned int window_width = 1920;
+unsigned int window_height = 1080;
+bool fullscreen = true;
 
 void Create() {
   if (glfw_window) {
@@ -80,7 +80,7 @@ void Create() {
   glfwSetInputMode(glfw_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
   // vsync 1, off 0
-  glfwSwapInterval(0);
+  glfwSwapInterval(1);
 
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
