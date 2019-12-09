@@ -116,6 +116,8 @@ class Engine {
     player_names_.clear();
   }
 
+  bool GetShoulSendInput() { return should_send_input_; }
+  bool GetTakeGameInput() { return take_game_input_; }
  private:
   void SetKeybinds();
 

@@ -872,7 +872,7 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action,
       if (a == PlayerAction::JUMP && player_c.can_jump) {
         player_c.can_jump = false;
         // Add velocity upwards
-        final_velocity += up * 8.0f;
+        final_velocity += up * 16.0f;
         // Set them to be airborne
         new_state.is_airborne = true;
         // Subtract energy cost from resources
@@ -944,8 +944,11 @@ void PlayState::MovePlayer(float dt) {
       AddAction(action);
     }
   }
-  for (auto& a : actions_) {
-    new_frame.actions.push_back(a);
+  if (engine_->GetShoulSendInput() && engine_->GetTakeGameInput() &&
+      countdown_time_ - engine_->GetCountdownTimer() <= 0) {
+    for (auto& a : actions_) {
+      new_frame.actions.push_back(a);
+    }
   }
   auto& cam_o = registry_gameplay_.get<CameraComponent>(my_entity_).orientation;
 
@@ -988,6 +991,7 @@ void PlayState::OnServerFrame() {
   if (glm::length(predicted_state_.position - server_predicted_.position) >
       5.0f) {
     trans_c.position = server_predicted_.position;
+    predicted_state_ = server_predicted_;
     return;
   }
 }
