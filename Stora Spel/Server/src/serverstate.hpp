@@ -133,7 +133,7 @@ class ServerPlayState : public ServerState {
               unsigned int in_player_index);
   EntityID CreatePickUpComponents(glm::vec3 pos);
   EntityID GetNextEntityGuid() { return entity_guid_++; }
-  void OverTime();
+  bool OverTime();
   void EndGame();
   void WallAnimation();
   void UpdateSwitchGoals();
@@ -161,6 +161,10 @@ class ServerPlayState : public ServerState {
   Timer match_timer_;
   Timer countdown_timer_;
   Timer reset_timer_;
+
+  Timer overtime_reset_timer_;
+  bool overtime_started_ = false;
+
   Timer pickup_spawn_timer_;
   float pickup_spawn_time_ = 10.0f;
   bool reset_ = false;
