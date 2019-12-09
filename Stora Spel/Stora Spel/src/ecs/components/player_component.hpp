@@ -15,6 +15,7 @@ struct PlayerComponent {  // Client side
   bool running = false;
   bool jumping = false;
   bool kicking = false;
+  bool shooting = false;
   float jump_force = 0.f;
 
   bool localPlayer = false;

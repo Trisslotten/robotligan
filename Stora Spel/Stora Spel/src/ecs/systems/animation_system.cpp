@@ -265,24 +265,38 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       float yaw = 0.f;
 
 	  //Kick animations
-	  if (pl.kicking) {
+	  if (pl.kicking || pl.shooting) {
         if (GetActiveAnimationByName("SlideF", &ac) < 0) {
           PAC::playSlideAnims(this, ac, pl.localPlayer);
-          PAC::stopLookAnims(this, ac, pl.localPlayer);
         }
         rotator = dt * 10.f;
-        if (GetActiveAnimationByName("Kick", &ac) < 0) {
-          pl.kicking = false;
-          if (!pl.sprinting) {
-            PAC::stopSlideAnims(this, ac, pl.localPlayer);
-            PAC::playLookAnims(this, ac, pl.localPlayer);
+        int animNumKick = GetActiveAnimationByName("Kick", &ac);
+        int animNumShoot = GetActiveAnimationByName("Shoot", &ac);
+        if (animNumKick >= 0) {
+          glob::PlayableAnimation* animKick =
+              ac.active_animations.at(animNumKick);
+          if (animKick->stopping_) {
+            pl.kicking = false;
+            if (!pl.sprinting && !pl.shooting) {
+              PAC::stopSlideAnims(this, ac, pl.localPlayer);
+            }
+          }
+        }
+        if (animNumShoot >= 0) {
+          glob::PlayableAnimation* animShoot =
+              ac.active_animations.at(animNumShoot);
+          if (animShoot->stopping_) {
+            pl.shooting = false;
+            if (!pl.sprinting && !pl.kicking) {
+              PAC::stopSlideAnims(this, ac, pl.localPlayer);
+            }
           }
         }
       }
 
       // LOOK ANIMATIONS
       constexpr float pi = glm::pi<float>();
-      if (!pl.sprinting && !pl.kicking) {
+      if (!pl.sprinting && !pl.kicking && !pl.shooting) {
         glm::quat offset = -t.rotation;
 
         if (backwards && pl.running && !pl.jumping) {
@@ -357,7 +371,7 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       }
 
       // SLIDE ANIMATIONS
-      if (pl.sprinting || pl.kicking) {
+      if (pl.sprinting || pl.kicking || pl.shooting) {
         glm::quat offset = -t.rotation;
 
 		float yaw = atan2(pl.look_dir.x, pl.look_dir.z);
@@ -482,7 +496,10 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
         if (view.get<IDComponent>(entity).id == event.shoot.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
-          PAC::playShootAnims(this, ac, pc.localPlayer);
+          if (!pc.shooting) {
+            PAC::playShootAnims(this, ac, pc.localPlayer);
+            pc.shooting = true;
+          }
           break;
         }
       }
@@ -655,6 +672,7 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
           anim->time_ = 0;
         } else if (anim->mode_ == MUTE_ALL || anim->mode_ == PARTIAL_MUTE) {
           anim->stopping_ = true;
+          anim->time_ = anim->animation_->duration_ - 0.1f;
         }
       }
       if (!anim->playing_) {
