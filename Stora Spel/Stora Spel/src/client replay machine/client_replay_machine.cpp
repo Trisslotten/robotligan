@@ -1,4 +1,5 @@
 #include "client_replay_machine.hpp"
+
 #include "engine.hpp"
 
 // Private---------------------------------------------------------------------
@@ -120,8 +121,8 @@ void ClientReplayMachine::SetEngine(Engine* in_engine_ptr) {
 void ClientReplayMachine::ReceiveGameEvent(GameEvent event) {
   // -vvv- EVENT BLACKLIST -vvv-
   switch (event.type) {
-	//case GameEvent::WHATEVER:
-	//case GameEvent::WHATELSE:
+      // case GameEvent::WHATEVER:
+      // case GameEvent::WHATELSE:
     case GameEvent::RESET:
       return;
       break;
@@ -149,4 +150,18 @@ void ClientReplayMachine::ResetMachine() {
     this->stored_replays_.erase(this->stored_replays_.end() - 1);
   }
   this->selected_replay_index_ = 0;
+}
+
+std::string ClientReplayMachine::GetDebugString() {
+  std::string ret_str = "";
+
+  for (unsigned int i = 0; i < this->stored_replays_.size(); i++) {
+    ret_str += "<R" + std::to_string(i) + "> : ";
+
+    ret_str += this->stored_replays_.at(i)->GetGeometricReplayEventList();
+
+    ret_str += "\n\n";
+  }
+
+  return ret_str;
 }

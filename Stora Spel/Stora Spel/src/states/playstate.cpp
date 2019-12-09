@@ -3063,6 +3063,7 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       if (e.hook_attached.owner_id == my_id_) {
         me_hooked_ = true;
       }
+      break;
     }
   }
 }

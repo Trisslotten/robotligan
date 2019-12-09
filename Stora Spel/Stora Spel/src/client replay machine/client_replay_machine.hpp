@@ -40,15 +40,7 @@ class ClientReplayMachine {
 
   void ResetMachine();
 
-  std::string GetDebugString() {
-    std::string ret_str = "";
-
-    for (unsigned int i = 0; i < this->stored_replays_.size(); i++) {
-      ret_str += this->stored_replays_.at(i)->GetGeometricReplayTree();
-    }
-
-    return ret_str;
-  }
+  std::string GetDebugString();
 };
 
 #endif  // !CLIENT_REPLAY_MACHINE_HPP_

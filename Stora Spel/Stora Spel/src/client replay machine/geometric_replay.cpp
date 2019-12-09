@@ -1,9 +1,6 @@
 #include "geometric_replay.hpp"
 
 #include <ecs/components.hpp>
-#include <map>
-
-#include <ecs/components.hpp>
 #include <ecs/components/ball_component.hpp>
 #include <ecs/components/model_component.hpp>
 #include <ecs/components/player_component.hpp>
@@ -15,6 +12,7 @@
 #include <shared/transform_component.hpp>
 #include <util/asset_paths.hpp>
 #include <util/global_settings.hpp>
+
 #include "eventdispatcher.hpp"
 
 // Private---------------------------------------------------------------------
@@ -822,6 +820,7 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
              current_frame_number_read_) {
     //
     dispatcher.trigger(captured_events_[next_event_index_to_read_].event);
+
     next_event_index_to_read_++;
   }
 
@@ -895,6 +894,7 @@ void GeometricReplay::ChannelCatchUp() {
   // the reading tracker starts from
   this->SetReadFrameToStart();
 
+  // Catchup for FrameChannel:s
   for (unsigned int i = 0; i < this->channels_.size(); i++) {
     // Check the age of the first entry
     unsigned int age = this->current_frame_number_write_ -
@@ -915,6 +915,12 @@ void GeometricReplay::ChannelCatchUp() {
       delete this->channels_.at(i).entries.at(0).data_ptr;
       this->channels_.at(i).entries.at(0).data_ptr = threshold_frame_ptr;
     }
+  }
+
+  // Catchup for CapturedGameEvent:s
+  // - Discard all captured events that lie before the threshold
+  while (this->captured_events_.at(0).frame_number < this->current_frame_number_read_) {
+    this->captured_events_.erase(this->captured_events_.begin());
   }
 }
 
@@ -1051,6 +1057,23 @@ std::string GeometricReplay::GetGeometricReplaySummary() {
         " - EntId:" + std::to_string(this->channels_.at(i).object_id) +
         " - ChannelType: " + std::to_string(this->channels_.at(i).object_type) +
         "\n";
+  }
+
+  return ret_str;
+}
+
+std::string GeometricReplay::GetGeometricReplayEventList() {
+  std::string ret_str = "";
+
+  std::string last_event = "";
+
+  for (unsigned int i = 0; i < this->captured_events_.size(); i++) {
+    if (last_event != std::to_string(this->captured_events_[i].event.type)) {
+      last_event = std::to_string(this->captured_events_[i].event.type);
+      ret_str += "] : #" + last_event + "[";
+    }
+
+    ret_str += std::to_string(this->captured_events_[i].frame_number) + "|";
   }
 
   return ret_str;

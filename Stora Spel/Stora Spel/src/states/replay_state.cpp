@@ -1,11 +1,12 @@
-#include "state.hpp"
-
 #include <GLFW/glfw3.h>
+
 #include <glob/graphics.hpp>
 #include <glob/window.hpp>
 #include <util/asset_paths.hpp>
+
 #include "..//entitycreation.hpp"
 #include "engine.hpp"
+#include "state.hpp"
 
 // Private---------------------------------------------------------------------
 
@@ -13,7 +14,7 @@ void ReplayState::AddConstantStuff() {
   this->AddArenaStuff();
   this->AddBatmanLights();
   this->AddLights();
-  //this->AddSpotlights();
+  // this->AddSpotlights();
   this->AddAudience();
   this->AddJumbotron();
   this->AddCamera(glm::vec3(0.f, 13.f, 42.f));  //  glm::vec3(60.f, 4.f, 38.f);
@@ -211,7 +212,8 @@ void ReplayState::AddCamera(glm::vec3 in_cam_pos) {
   this->replay_registry_.assign<TransformComponent>(
       camera, cam_pos, glm::quat(), glm::vec3(0.f));
   this->replay_registry_.assign<PhysicsComponent>(camera);
-  this->replay_registry_.assign<SoundComponent>(camera, engine_->GetSoundEngine().CreatePlayer());
+  this->replay_registry_.assign<SoundComponent>(
+      camera, engine_->GetSoundEngine().CreatePlayer());
 }
 
 void ReplayState::UpdateCamera() {
@@ -467,7 +469,7 @@ void ReplayState::DrawJumbotronText() {
     std::string text = "HIGHLIGHTS";
     glob::Submit(font_test_, temp_pos, size, text, color_white, orient);
 
-	std::swap(xrot, zrot);
+    std::swap(xrot, zrot);
     zrot *= -1.f;
   }
 }
@@ -550,7 +552,8 @@ void ReplayState::Cleanup() {
   this->engine_->GetReplayMachinePtr()->ResetMachine();
 }
 
-void ReplayState::ParticleComponentDestroyed(entt::entity e, entt::registry& registry) {
+void ReplayState::ParticleComponentDestroyed(entt::entity e,
+                                             entt::registry& registry) {
   auto& pc = registry.get<ParticleComponent>(e);
   for (int i = 0; i < pc.handles.size(); ++i) {
     glob::DestroyParticleSystem(pc.handles[i]);

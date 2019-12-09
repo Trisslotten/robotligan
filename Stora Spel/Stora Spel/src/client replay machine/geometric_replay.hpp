@@ -178,6 +178,7 @@ class GeometricReplay {
   std::string GetGeometricReplayTree();
   std::string GetGeometricReplayState();
   std::string GetGeometricReplaySummary();
+  std::string GetGeometricReplayEventList();
 };
 
 #endif  // !GEOMETRIC_REPLAY_HPP_
