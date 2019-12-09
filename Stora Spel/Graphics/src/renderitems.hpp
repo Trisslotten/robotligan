@@ -80,6 +80,7 @@ struct LightItem {
   glm::vec3 color;
   glm::float32 radius;
   glm::float32 ambient;
+  glm::float32 sphere_radius;
 };
 
 struct TrailItem {

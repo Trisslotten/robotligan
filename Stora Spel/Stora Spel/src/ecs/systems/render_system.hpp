@@ -79,7 +79,7 @@ void RenderSystem(entt::registry& registry) {
     glm::vec3 pos = transform.position;
     glm::vec3 dir = glm::quat(transform.rotation) * glm::vec3(1.f, 0.f, 0.f);
     if (!light.blackout) {
-      glob::SubmitLightSource(pos, light.color, light.radius, light.ambient);
+      glob::SubmitLightSource(pos, light.color, light.radius, light.ambient, light.sphere_radius);
     }
   }
 

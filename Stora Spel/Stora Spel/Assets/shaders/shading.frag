@@ -4,6 +4,8 @@
 
 #define MAX_LIGHTS 32
 
+#define MAX_PLANES 4
+
 in vec4 v_shadow_spaces[MAX_SHADOWS];
 
 uniform int num_shadows;
@@ -15,6 +17,11 @@ uniform vec4 light_pos_radius[MAX_LIGHTS];
 uniform vec4 light_col_amb[MAX_LIGHTS];
 uniform float light_sphere_radii[MAX_LIGHTS];
 uniform int NR_OF_LIGHTS;
+
+uniform vec3 plane_normals[MAX_PLANES];
+uniform vec3 plane_positions[MAX_PLANES];
+uniform vec2 plane_sizes[MAX_PLANES];
+uniform int NR_OF_PLANES;
 
 in vec3 local_pos;
 in vec3 local_normal;
@@ -96,12 +103,20 @@ float calcSpecular(const vec3 surf_pos, const vec3 normal, const vec3 light_dir,
 	return specular;
 }
 
+
 vec3 calcSphereLightVec(const vec3 view_dir, const vec3 normal, const vec3 light_vec, const float radius)
 {
 	vec3 r = normalize(reflect(normalize(view_dir), normal));
 	vec3 center_to_ray = dot(light_vec, r) * r - light_vec;
 	vec3 closest_point = light_vec + center_to_ray * clamp(radius/length(center_to_ray),0,1);
 	return normalize(closest_point);
+}
+
+// https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
+float sdBox( vec3 p, vec3 b )
+{
+  vec3 q = abs(p) - b;
+  return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
 }
 
 struct Lighting {
@@ -148,6 +163,23 @@ Lighting shading(const vec3 position, const vec3 normal) {
 			lighting.specular += specular * intensity * col_amb.rgb;
 		}
 	}
+	/*
+	vec3 ppos = vec3(2,2,0);
+	vec3 plane_normal = normalize(vec3(1,0,1));
+	vec3 tangent = vec3(0,1,0);
+	vec3 bitangent = normalize(cross(plane_normal, tangent));
+
+	vec3 r = normalize(reflect(normalize(view_dir), normal));
+	float t = dot(ppos - position, plane_normal) / dot(r, plane_normal);
+	vec3 v = (position + t * r) - ppos;
+	if (abs(dot(v, tangent)) < 2.0 && abs(dot(v, bitangent)) < 5.0 && t < 0) {
+		lighting.specular += vec3(0.5,0,0);
+	}
+	*/
+	
+
+	//float dist = sdBox(position - vec3(10,0,0), vec3(0.1, 5, 5));
+	//lighting.diffuse += vec3(1,0.5,0.5)/(1.+ 0.01 * dist*dist);
 
 	for(int i = 0; i < num_shadows; i++) {
 		vec4 shadow_space = v_shadow_spaces[i];
