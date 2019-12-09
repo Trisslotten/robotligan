@@ -311,6 +311,8 @@ class PlayState : public State {
   bool IsRecording() const { return this->recording_; }
   // void SetRecording(bool in_val) { this->recording_ = in_val; }
   //
+  void ToggleFreelook();
+  bool FreelookActive() { return free_look_; }
 
  private:
   struct GuiNotRespnding {
@@ -466,6 +468,9 @@ class PlayState : public State {
   // Replay stuff
   bool recording_ = false;
   // Replay stuff
+
+  bool free_look_ = false;
+  bool show_gui_ = true;
 
   EntityID last_goal_maker_;
 };

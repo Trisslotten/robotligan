@@ -20,6 +20,7 @@
 #include "ecs/systems/render_system.hpp"
 #include "ecs/systems/sound_system.hpp"
 #include "ecs/systems/pickup_bob_system.hpp"
+#include "ecs/systems/free_look_system.hpp"
 #include "entitycreation.hpp"
 #include "eventdispatcher.hpp"
 #include "shared/camera_component.hpp"
@@ -212,6 +213,10 @@ void Engine::Update(float dt) {
 
   if (Input::IsKeyPressed(GLFW_KEY_F5)) {
     glob::ReloadShaders();
+  }
+  if (Input::IsKeyPressed(GLFW_KEY_L) && current_state_->Type() == StateType::PLAY) {
+    play_state_.ToggleFreelook();
+    free_look_system::SetActive(*registry_current_, play_state_.FreelookActive());
   }
 
   for (auto iter = player_names_.begin(); iter != player_names_.end();) {
@@ -828,7 +833,7 @@ void Engine::UpdateSystems(float dt) {
   skylight_system::Update(*registry_current_);
   lifetime::Update(*registry_current_, dt);
   pickup_bob_system::Update(*registry_current_, dt);
-  
+  free_look_system::Update(*registry_current_, dt);
   RenderSystem(*registry_current_);
 }
 

@@ -325,7 +325,7 @@ void PlayState::Update(float dt) {
           glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
       orientation = glm::normalize(orientation);
 
-      if (!show_in_game_menu_buttons_) {
+      if (!show_in_game_menu_buttons_ && !free_look_) {
         cam_c.orientation = orientation;
         trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
         // FPS Model rotations
@@ -340,7 +340,7 @@ void PlayState::Update(float dt) {
       glm::vec4(mc.offset, 1.f); mc.offset = glm::vec3(f.x, f.y, f.z);
 
           std::cout << f.x << ", " << f.y << ", " << f.z << "\n";*/
-      if (!show_in_game_menu_buttons_) {
+      if (!show_in_game_menu_buttons_ && !free_look_) {
         cam_c.orientation = orientation;
         trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
       }
@@ -383,30 +383,33 @@ void PlayState::Update(float dt) {
     glob::Submit(in_game_menu_gui_, in_game_menu_pos, 1.0f);
   }
 
-  UpdateGameplayTimer();
-  UpdateSwitchGoalTimer();
-  DrawNameOverPlayer();
-  DrawWallOutline();
+  if (show_gui_) {
+    UpdateGameplayTimer();
+    UpdateSwitchGoalTimer();
+    DrawNameOverPlayer();
+    DrawWallOutline();
+    // draw quickslots
+    DrawQuickslots();
+    // draw stamina bar
+    glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
+    glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
+    glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
+
+    // draw crosshair
+    glm::vec2 crosshair_pos = glob::window::GetWindowDimensions();
+    crosshair_pos /= 2;
+    glob::Submit(gui_crosshair_, crosshair_pos - glm::vec2(12, 12), 1.f);
+
+	// draw mini map
+    DrawMiniMap();
+  }
+
   DrawJumbotronText();
   if (primary_cd_ > 0) {
     primary_cd_ -= dt;
   }
 
-  // draw quickslots
-  DrawQuickslots();
-
-  // draw stamina bar
-  glob::Submit(gui_stamina_base_, glm::vec2(0, 5), 0.85, 100);
-  glob::Submit(gui_stamina_fill_, glm::vec2(7, 12), 0.85, current_stamina_);
-  glob::Submit(gui_stamina_icon_, glm::vec2(0, 5), 0.85, 100);
-
-  // draw crosshair
-  glm::vec2 crosshair_pos = glob::window::GetWindowDimensions();
-  crosshair_pos /= 2;
-  glob::Submit(gui_crosshair_, crosshair_pos - glm::vec2(12, 12), 1.f);
-
-  // draw mini map
-  DrawMiniMap();
+  
   typedef std::chrono::high_resolution_clock Time;
   typedef std::chrono::milliseconds ms;
   typedef std::chrono::duration<float> fsec;
@@ -426,9 +429,12 @@ void PlayState::Update(float dt) {
     }
   }
 
-  DrawTopScores();
-  DrawTarget();
-  DrawStunTimer();
+  if (show_gui_) {
+    DrawTopScores();
+    DrawTarget();
+    DrawStunTimer();
+  }
+
   DrawFishingLines();
 
   auto view_players = registry_gameplay_.view<PlayerComponent, IDComponent>();
@@ -454,6 +460,9 @@ void PlayState::Update(float dt) {
 
   if (Input::IsKeyPressed(GLFW_KEY_F)) {
     want_dab_ = true;
+  }
+  if (Input::IsKeyPressed(GLFW_KEY_F1)) {
+    show_gui_ = !show_gui_;
   }
 
   if (game_has_ended_) {
@@ -819,150 +828,155 @@ void PlayState::DrawTopScores() {
 
 FrameState PlayState::SimulateMovement(std::vector<int>& action,
                                        FrameState& state, float dt) {
-  auto view_controller =
-      registry_gameplay_
-          .view<CameraComponent, PlayerComponent, TransformComponent>();
+  if (!free_look_) {
+    auto view_controller =
+        registry_gameplay_
+            .view<CameraComponent, PlayerComponent, TransformComponent>();
 
-  glm::vec3 final_velocity = glm::vec3(0.f, state.velocity.y, 0.f);
-  FrameState new_state;
-  new_state.is_airborne = state.is_airborne;
-  for (auto entity : view_controller) {
-    CameraComponent& cam_c = view_controller.get<CameraComponent>(entity);
-    // PlayerComponent& player_c =
-    // view_controller.get<PlayerComponent>(entity);
-    TransformComponent& trans_c =
-        view_controller.get<TransformComponent>(entity);
-    // PhysicsComponent& physics_c =
-    // view_controller.get<PhysicsComponent>(entity);
+    glm::vec3 final_velocity = glm::vec3(0.f, state.velocity.y, 0.f);
+    FrameState new_state;
+    new_state.is_airborne = state.is_airborne;
+    for (auto entity : view_controller) {
+      CameraComponent& cam_c = view_controller.get<CameraComponent>(entity);
+      // PlayerComponent& player_c =
+      // view_controller.get<PlayerComponent>(entity);
+      TransformComponent& trans_c =
+          view_controller.get<TransformComponent>(entity);
+      // PhysicsComponent& physics_c =
+      // view_controller.get<PhysicsComponent>(entity);
 
-    // Caputre keyboard input and apply velocity
+      // Caputre keyboard input and apply velocity
 
-    // auto& phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
-    glm::vec3 accum_velocity = glm::vec3(0.f);
+      // auto& phys_c = registry_gameplay_.get<PhysicsComponent>(my_entity_);
+      glm::vec3 accum_velocity = glm::vec3(0.f);
 
-    constexpr float pi = glm::pi<float>();
-    // state.pitch = glm::clamp(state.pitch, -0.49f * pi, 0.49f * pi);
-    //// base movement direction on camera orientation.
-    ////glm::vec3 frwd = cam_c.GetLookDir();
-    glm::quat orientation = glm::quat(glm::vec3(0, state.yaw, 0)) *
-                            glm::quat(glm::vec3(0, 0, state.pitch));
-    // orientation = glm::normalize(orientation);
-    glm::vec3 frwd = orientation * glm::vec3(1, 0, 0);
-    frwd.y = 0;
-    frwd = glm::normalize(frwd);
-    glm::vec3 up(0, 1, 0);
-    glm::vec3 right = glm::normalize(glm::cross(frwd, up));
-    bool sprint = false;
-    for (int a : action) {
-      if (a == PlayerAction::WALK_FORWARD) {
-        accum_velocity += frwd;
+      constexpr float pi = glm::pi<float>();
+      // state.pitch = glm::clamp(state.pitch, -0.49f * pi, 0.49f * pi);
+      //// base movement direction on camera orientation.
+      ////glm::vec3 frwd = cam_c.GetLookDir();
+      glm::quat orientation = glm::quat(glm::vec3(0, state.yaw, 0)) *
+                              glm::quat(glm::vec3(0, 0, state.pitch));
+      // orientation = glm::normalize(orientation);
+      glm::vec3 frwd = orientation * glm::vec3(1, 0, 0);
+      frwd.y = 0;
+      frwd = glm::normalize(frwd);
+      glm::vec3 up(0, 1, 0);
+      glm::vec3 right = glm::normalize(glm::cross(frwd, up));
+      bool sprint = false;
+      for (int a : action) {
+        if (a == PlayerAction::WALK_FORWARD) {
+          accum_velocity += frwd;
+        }
+        if (a == PlayerAction::WALK_BACKWARD) {
+          accum_velocity -= frwd;
+        }
+        if (a == PlayerAction::WALK_RIGHT) {
+          accum_velocity += right;
+        }
+        if (a == PlayerAction::WALK_LEFT) {
+          accum_velocity -= right;
+        }
+        if (a == PlayerAction::SPRINT && sprinting_) {
+          sprint = true;
+        }
+        auto& player_c = registry_gameplay_.get<PlayerComponent>(my_entity_);
+        if (a == PlayerAction::JUMP && player_c.can_jump) {
+          player_c.can_jump = false;
+          // Add velocity upwards
+          final_velocity += up * 8.0f;
+          // Set them to be airborne
+          new_state.is_airborne = true;
+          // Subtract energy cost from resources
+          // player_c.energy_current -= player_c.cost_jump;
+        }
       }
-      if (a == PlayerAction::WALK_BACKWARD) {
-        accum_velocity -= frwd;
+
+      if (glm::length(accum_velocity) > 0.f)
+        accum_velocity = glm::normalize(accum_velocity) * 12.0f;
+      if (sprint) {
+        accum_velocity *= 2.f;
       }
-      if (a == PlayerAction::WALK_RIGHT) {
-        accum_velocity += right;
-      }
-      if (a == PlayerAction::WALK_LEFT) {
-        accum_velocity -= right;
-      }
-      if (a == PlayerAction::SPRINT && sprinting_) {
-        sprint = true;
-      }
-      auto& player_c = registry_gameplay_.get<PlayerComponent>(my_entity_);
-      if (a == PlayerAction::JUMP && player_c.can_jump) {
-        player_c.can_jump = false;
-        // Add velocity upwards
-        final_velocity += up * 8.0f;
-        // Set them to be airborne
-        new_state.is_airborne = true;
-        // Subtract energy cost from resources
-        // player_c.energy_current -= player_c.cost_jump;
-      }
+      // black_hole prediction
+      BlackHoleMovement(dt);
+      // physics stuff
+
+      final_velocity += accum_velocity;
+
+      // physics_c.velocity = final_velocity;
+
+      // glm::vec3 cur_move_dir = glm::normalize(physics_c.velocity);
+
+      // IF player is pressing space
+      // AND is not airborne
+      // AND has more enery than the cost for jumping
+
+      // slowdown
+      glm::vec3 sidemov = glm::vec3(final_velocity.x, 0, final_velocity.z);
+      float cur_move_speed = glm::length(sidemov);
+      // if (cur_move_speed > 0.f) {
+      // movement "floatiness", lower value = less floaty
+      float t = 0.0005f;
+      new_state.velocity.x =
+          glm::mix(state.velocity.x, final_velocity.x, 1.f - glm::pow(t, dt));
+      new_state.velocity.z =
+          glm::mix(state.velocity.z, final_velocity.z, 1.f - glm::pow(t, dt));
+      new_state.velocity.y = final_velocity.y;
+
+      physics::PhysicsObject po;
+      po.acceleration = glm::vec3(0.f);
+      po.airborne = new_state.is_airborne;
+      po.friction = 0.f;
+      po.max_speed = 1000;
+      po.position = state.position;
+      po.velocity = new_state.velocity;
+      physics::Update(&po, dt);
+      new_state.velocity = po.velocity;
+      new_state.position = po.position;
+      new_state.pitch = state.pitch;
+      new_state.yaw = state.yaw;
+      return new_state;
     }
-
-    if (glm::length(accum_velocity) > 0.f)
-      accum_velocity = glm::normalize(accum_velocity) * 12.0f;
-    if (sprint) {
-      accum_velocity *= 2.f;
-    }
-    // black_hole prediction
-    BlackHoleMovement(dt);
-    // physics stuff
-
-    final_velocity += accum_velocity;
-
-    // physics_c.velocity = final_velocity;
-
-    // glm::vec3 cur_move_dir = glm::normalize(physics_c.velocity);
-
-    // IF player is pressing space
-    // AND is not airborne
-    // AND has more enery than the cost for jumping
-
-    // slowdown
-    glm::vec3 sidemov = glm::vec3(final_velocity.x, 0, final_velocity.z);
-    float cur_move_speed = glm::length(sidemov);
-    // if (cur_move_speed > 0.f) {
-    // movement "floatiness", lower value = less floaty
-    float t = 0.0005f;
-    new_state.velocity.x =
-        glm::mix(state.velocity.x, final_velocity.x, 1.f - glm::pow(t, dt));
-    new_state.velocity.z =
-        glm::mix(state.velocity.z, final_velocity.z, 1.f - glm::pow(t, dt));
-    new_state.velocity.y = final_velocity.y;
-
-    physics::PhysicsObject po;
-    po.acceleration = glm::vec3(0.f);
-    po.airborne = new_state.is_airborne;
-    po.friction = 0.f;
-    po.max_speed = 1000;
-    po.position = state.position;
-    po.velocity = new_state.velocity;
-    physics::Update(&po, dt);
-    new_state.velocity = po.velocity;
-    new_state.position = po.position;
-    new_state.pitch = state.pitch;
-    new_state.yaw = state.yaw;
-    return new_state;
   }
 }
 
 void PlayState::MovePlayer(float dt) {
-  auto view_controller =
-      registry_gameplay_
-          .view<CameraComponent, PlayerComponent, TransformComponent>();
+  if (!free_look_) {
+    auto view_controller =
+        registry_gameplay_
+            .view<CameraComponent, PlayerComponent, TransformComponent>();
 
-  PlayerData new_frame;
-  new_frame.delta_time = dt;
-  new_frame.id = frame_id;
-  new_frame.pitch = predicted_state_.pitch;
-  new_frame.yaw = predicted_state_.yaw;
+    PlayerData new_frame;
+    new_frame.delta_time = dt;
+    new_frame.id = frame_id;
+    new_frame.pitch = predicted_state_.pitch;
+    new_frame.yaw = predicted_state_.yaw;
 
-  actions_.clear();
-  for (auto const& [key, action] : engine_->GetKeyBinds()) {
-    if (Input::IsKeyDown(key)) {
-      AddAction(action);
+    actions_.clear();
+    for (auto const& [key, action] : engine_->GetKeyBinds()) {
+      if (Input::IsKeyDown(key)) {
+        AddAction(action);
+      }
     }
-  }
-  for (auto& a : actions_) {
-    new_frame.actions.push_back(a);
-  }
-  auto& cam_o = registry_gameplay_.get<CameraComponent>(my_entity_).orientation;
+    for (auto& a : actions_) {
+      new_frame.actions.push_back(a);
+    }
+    auto& cam_o =
+        registry_gameplay_.get<CameraComponent>(my_entity_).orientation;
 
-  auto& trans_c = view_controller.get<TransformComponent>(my_entity_);
-  predicted_state_.position = trans_c.position;
-  FrameState new_state =
-      SimulateMovement(new_frame.actions, predicted_state_, dt);
-  predicted_state_ = new_state;
-  // std::cout << "y: " << predicted_state_.velocity.y << std::endl;
-  // std::cout << new_state.velocity.y << std::endl;
-  history_.push_back(new_frame);
+    auto& trans_c = view_controller.get<TransformComponent>(my_entity_);
+    predicted_state_.position = trans_c.position;
+    FrameState new_state =
+        SimulateMovement(new_frame.actions, predicted_state_, dt);
+    predicted_state_ = new_state;
+    // std::cout << "y: " << predicted_state_.velocity.y << std::endl;
+    // std::cout << new_state.velocity.y << std::endl;
+    history_.push_back(new_frame);
 
-  server_predicted_.pitch = predicted_state_.pitch;
-  server_predicted_.yaw = predicted_state_.yaw;
-  new_state = SimulateMovement(new_frame.actions, server_predicted_, dt);
-  server_predicted_ = new_state;
+    server_predicted_.pitch = predicted_state_.pitch;
+    server_predicted_.yaw = predicted_state_.yaw;
+    new_state = SimulateMovement(new_frame.actions, server_predicted_, dt);
+    server_predicted_ = new_state;
+  }
 }
 
 void PlayState::OnServerFrame() {
@@ -3123,4 +3137,11 @@ void PlayState::SetPitchYaw(float pitch, float yaw) {
   yaw_ = yaw;
   constexpr float pi = glm::pi<float>();
   pitch_ = glm::clamp(pitch_, -0.49f * pi, 0.49f * pi);
+}
+
+void PlayState::ToggleFreelook() {
+  free_look_ = !free_look_;
+  engine_->SetSendInput(!free_look_);
+  engine_->SetTakeInput(!free_look_);
+  show_gui_ = !free_look_;
 }
