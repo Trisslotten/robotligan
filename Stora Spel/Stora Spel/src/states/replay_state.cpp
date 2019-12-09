@@ -297,11 +297,12 @@ void ReplayState::PlayReplay() {
   if (this->engine_->GetReplayMachinePtr()->LoadFrame(this->replay_registry_)) {
     // Once replay is done playing, clear the registry
     glob::ClearEffects();
+    // and close menu
+    if (show_in_game_menu_buttons_) {
+      ToggleInGameMenu();
+    }
     this->replay_registry_.reset();
     replay_counter_++;
-
-    GlobalSettings::Access()->WriteError("", "Replay Swap",
-                                         std::to_string(replay_counter_));
 
     // Add the constant stuff back in again
     // Also prevents black-sceen when all replays are done
@@ -309,9 +310,6 @@ void ReplayState::PlayReplay() {
     this->CreateInGameMenu();
 
     if (!engine_->GetReplayMachinePtr()->SelectReplay(replay_counter_)) {
-      GlobalSettings::Access()->WriteError("", "Replay Termination",
-                                           std::to_string(replay_counter_));
-
       // And stop replaying
       this->replaying_ = false;
     }
