@@ -20,6 +20,7 @@ void SettingsState::Init() {
   setting_mouse_sens_ = GlobalSettings::Access()->ValueOf("INPUT_MOUSE_SENS");
   setting_username_ = GlobalSettings::Access()->StringValueOf("USERNAME");
   CreateSettingsMenu();
+  CreateBackground();
 }
 
 void SettingsState::Update(float dt) {
@@ -32,7 +33,7 @@ void SettingsState::Update(float dt) {
                glm::vec2(35, glob::window::GetWindowDimensions().y - 60), 48,
                "GRAPHICS");
   glob::Submit(font_test_,
-               glm::vec2(400, glob::window::GetWindowDimensions().y - 60), 48,
+               glm::vec2(540, glob::window::GetWindowDimensions().y - 60), 48,
                "SOUND");
   glob::Submit(font_test_,
                glm::vec2(1000, glob::window::GetWindowDimensions().y - 60), 48,
@@ -72,6 +73,7 @@ void SettingsState::Update(float dt) {
 void SettingsState::UpdateNetwork() {
   //
 }
+
 void SettingsState::Cleanup() { registry_settings_.reset(); }
 
 void SettingsState::CreateSettingsMenu() {
@@ -112,7 +114,7 @@ void SettingsState::CreateSettingsMenu() {
   slider_c.font_handle = font_test_;
 
   glm::vec2 sound_start_pos =
-      glm::vec2(400, glob::window::GetWindowDimensions().y - 175);
+      glm::vec2(540, glob::window::GetWindowDimensions().y - 175);
   // volume slider
   auto volume_slider = registry_settings_.create();
   auto& vol_slider_c =
@@ -155,7 +157,7 @@ void SettingsState::CreateSettingsMenu() {
   auto& input = registry_settings_.assign<InputComponent>(input_entity);
   input.font_size = 32;
   input.max_length = 12;
-  input.pos = game_start_pos - down_jump * 1.0f;
+  input.pos = game_start_pos - down_jump * 1.5f;
   input.input_name = "Username";
   input.text = setting_username_;
   input.linked_value = &setting_username_;
@@ -172,4 +174,58 @@ void SettingsState::SaveSettings() {
   engine_->UpdateSettingsValues();
   applied_ = true;
   time_ = std::chrono::high_resolution_clock::now();
+}
+
+void SettingsState::CreateBackground() {
+  {
+    // ladda in och skapa entity för bana
+    auto arena = registry_settings_.create();
+    glm::vec3 arena_scale = glm::vec3(2.0f);
+    glm::vec3 zero_vec = glm::vec3(0.0f);
+
+    glob::ModelHandle model_arena =
+        glob::GetModel("assets/Arena/Map_V3_ARENA.fbx");
+    glob::ModelHandle model_arena_banner =
+        glob::GetModel("assets/Arena/Map_V3_ARENA_SIGNS.fbx");
+    glob::ModelHandle model_map = glob::GetModel("assets/MapV3/Map_Walls.fbx");
+    glob::ModelHandle model_map_floor =
+        glob::GetModel("assets/MapV3/Map_Floor.fbx");
+    glob::ModelHandle model_map_projectors =
+        glob::GetModel("assets/MapV3/Map_Projectors.fbx");
+
+    auto& model_c = registry_settings_.assign<ModelComponent>(arena);
+    model_c.handles.push_back(model_arena);
+    model_c.handles.push_back(model_arena_banner);
+    model_c.handles.push_back(model_map);
+    model_c.handles.push_back(model_map_floor);
+    model_c.handles.push_back(model_map_projectors);
+    // model_c.cast_shadow = false;
+
+    registry_settings_.assign<TransformComponent>(arena, zero_vec, zero_vec,
+                                                  arena_scale);
+  }
+  {
+    glm::vec3 zero_vec = glm::vec3(0.0f);
+    glm::vec3 arena_scale = glm::vec3(1.f);
+    auto arena = registry_settings_.create();
+    glob::ModelHandle model_map_walls =
+        glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
+
+    auto& model_c = registry_settings_.assign<ModelComponent>(arena);
+    model_c.handles.push_back(model_map_walls);
+    model_c.cast_shadow = false;
+
+    registry_settings_.assign<TransformComponent>(arena, zero_vec, zero_vec,
+                                                  arena_scale);
+  }
+  {
+    // lägga ut en kamera i scenen
+    auto camera = registry_settings_.create();
+    auto& cam_c = registry_settings_.assign<CameraComponent>(camera);
+    auto& cam_trans = registry_settings_.assign<TransformComponent>(camera);
+    cam_trans.position = glm::vec3(15.f, 3.f, 0.f);
+    glm::vec3 dir = glm::vec3(0) - cam_trans.position;
+    cam_c.orientation =
+        glm::quat(glm::vec3(0.f, 0.f, 0.f * glm::radians(-86.f)));
+  }
 }

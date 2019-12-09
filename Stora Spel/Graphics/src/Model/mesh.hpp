@@ -57,6 +57,8 @@ class Mesh {
 
   MeshData GetMeshData();
 
+  std::vector<Vertex>* GetVertexData();
+
   glm::mat4 GetTransform() { return transform_; }
 };
 
