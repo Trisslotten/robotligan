@@ -103,6 +103,7 @@ void AnimationSystem::PlayAnimation(std::string name, float speed,
         ac->model_data.animations.at(anim)) {
       if (ac->active_animations.at(i)->stopping_) {
         ac->active_animations.at(i)->stopping_ = false;
+        ac->active_animations.at(i)->fade_ = 0.f;
         return;
       }
       std::cout << "WARNING: Attempting to play animation: \""
@@ -320,40 +321,44 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
         float totStrength = 0.f;
         for (int i = 0; i < 4; i++) {
           int anim = GetActiveAnimationByName(look_anims_[i], &ac);
-          switch (i) {
-            case 0: {  // U
-              strength = glm::clamp(
-                  glm::dot(glm::vec3(0.f, 1.f, 0.f), UDlookDir), 0.f, 1.f);
-              break;
+          if (anim >= 0) {
+            switch (i) {
+              case 0: {  // U
+                strength = glm::clamp(
+                    glm::dot(glm::vec3(0.f, 1.f, 0.f), UDlookDir), 0.f, 1.f);
+                break;
+              }
+              case 1: {  // D
+                strength = glm::clamp(
+                    glm::dot(glm::vec3(0.f, -1.f, 0.f), UDlookDir), 0.f, 1.f);
+                break;
+              }
+              case 2: {  // R
+                strength = abs(std::clamp(
+                    glm::dot(
+                        glm::vec3(1.f, 0.f, 0.f) * (t.rotation),
+                        glm::vec3(0.f, 0.f, 1.f) * (t.rotation + m.rot_offset)),
+                    -1.f, 0.f));
+                break;
+              }
+              case 3: {  // L
+                strength =
+                    std::clamp(glm::dot(glm::vec3(1.f, 0.f, 0.f) * (t.rotation),
+                                        glm::vec3(0.f, 0.f, 1.f) *
+                                            (t.rotation + m.rot_offset)),
+                               0.f, 1.f);
+                break;
+              }
             }
-            case 1: {  // D
-              strength = glm::clamp(
-                  glm::dot(glm::vec3(0.f, -1.f, 0.f), UDlookDir), 0.f, 1.f);
-              break;
-            }
-            case 2: {  // R
-              strength = abs(
-                  std::clamp(glm::dot(glm::vec3(1.f, 0.f, 0.f) * (t.rotation),
-                                      glm::vec3(0.f, 0.f, 1.f) *
-                                          (t.rotation + m.rot_offset)),
-                             -1.f, 0.f));
-              break;
-            }
-            case 3: {  // L
-              strength =
-                  std::clamp(glm::dot(glm::vec3(1.f, 0.f, 0.f) * (t.rotation),
-                                      glm::vec3(0.f, 0.f, 1.f) *
-                                          (t.rotation + m.rot_offset)),
-                             0.f, 1.f);
-              break;
-            }
+            totStrength += strength;
+            ac.active_animations.at(anim)->strength_ = strength;
           }
-          totStrength += strength;
-          ac.active_animations.at(anim)->strength_ = strength;
         }
         float LAStrength = 1.f - glm::clamp(totStrength, 0.f, 1.f);
         int LAAnim = GetActiveAnimationByName("LookAhead", &ac);
-        ac.active_animations.at(LAAnim)->strength_ = LAStrength;
+        if (LAAnim >= 0) {
+          ac.active_animations.at(LAAnim)->strength_ = LAStrength;
+        }
       }
 
       // RUN ANIMATIONS
@@ -396,39 +401,41 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
         glm::vec3 h_lookDir;
         for (int i = 0; i < 4; i++) {
           int anim = GetActiveAnimationByName(slide_anims_[i], &ac);
-          switch (i) {
-            case 0: {  // F
-              h_lookDir = glm::normalize(LRlookDir);
-              strength = std::clamp(glm::dot(h_lookDir, moveDir), 0.f, 1.f);
-              break;
+          if (anim >= 0) {
+            switch (i) {
+              case 0: {  // F
+                h_lookDir = glm::normalize(LRlookDir);
+                strength = std::clamp(glm::dot(h_lookDir, moveDir), 0.f, 1.f);
+                break;
+              }
+              case 1: {  // B
+                h_lookDir = glm::normalize(LRlookDir);
+                strength =
+                    abs(std::clamp(glm::dot(h_lookDir, moveDir), -1.f, 0.f));
+                break;
+              }
+              case 2: {  // R
+                h_lookDir = glm::normalize(glm::cross(LRlookDir, up));
+                strength = std::clamp(glm::dot(h_lookDir, moveDir), 0.f, 1.f);
+                break;
+              }
+              case 3: {  // L
+                h_lookDir = glm::normalize(glm::cross(LRlookDir, up));
+                strength =
+                    abs(std::clamp(glm::dot(h_lookDir, moveDir), -1.f, 0.f));
+                break;
+              }
             }
-            case 1: {  // B
-              h_lookDir = glm::normalize(LRlookDir);
-              strength =
-                  abs(std::clamp(glm::dot(h_lookDir, moveDir), -1.f, 0.f));
-              break;
+            if (speed < cutoffSpeed) {
+              strength = std::clamp(strength - pl.sprint_coeff, 0.f, 1.f);
+              pl.sprint_coeff += 1.f * dt;
+            } else {
+              pl.sprint_coeff -= 1.f * dt;
             }
-            case 2: {  // R
-              h_lookDir = glm::normalize(glm::cross(LRlookDir, up));
-              strength = std::clamp(glm::dot(h_lookDir, moveDir), 0.f, 1.f);
-              break;
-            }
-            case 3: {  // L
-              h_lookDir = glm::normalize(glm::cross(LRlookDir, up));
-              strength =
-                  abs(std::clamp(glm::dot(h_lookDir, moveDir), -1.f, 0.f));
-              break;
-            }
+            pl.sprint_coeff = std::clamp(pl.sprint_coeff, 0.f, 1.f);
+            ac.active_animations.at(anim)->strength_ = strength;
+            totStrength += strength;
           }
-          if (speed < cutoffSpeed) {
-            strength = std::clamp(strength - pl.sprint_coeff, 0.f, 1.f);
-            pl.sprint_coeff += 1.f * dt;
-          } else {
-            pl.sprint_coeff -= 1.f * dt;
-          }
-          pl.sprint_coeff = std::clamp(pl.sprint_coeff, 0.f, 1.f);
-          ac.active_animations.at(anim)->strength_ = strength;
-          totStrength += strength;
         }
         if (speed < cutoffSpeed) {
           int f = GetActiveAnimationByName("SlideF", &ac);
