@@ -873,7 +873,7 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action,
       if (a == PlayerAction::JUMP && player_c.can_jump) {
         player_c.can_jump = false;
         // Add velocity upwards
-        final_velocity += up * 8.0f;
+        final_velocity += up * 16.0f;
         // Set them to be airborne
         new_state.is_airborne = true;
         // Subtract energy cost from resources
@@ -945,8 +945,11 @@ void PlayState::MovePlayer(float dt) {
       AddAction(action);
     }
   }
-  for (auto& a : actions_) {
-    new_frame.actions.push_back(a);
+  if (engine_->GetShoulSendInput() && engine_->GetTakeGameInput() &&
+      countdown_time_ - engine_->GetCountdownTimer() <= 0) {
+    for (auto& a : actions_) {
+      new_frame.actions.push_back(a);
+    }
   }
   auto& cam_o = registry_gameplay_.get<CameraComponent>(my_entity_).orientation;
 
@@ -989,6 +992,7 @@ void PlayState::OnServerFrame() {
   if (glm::length(predicted_state_.position - server_predicted_.position) >
       5.0f) {
     trans_c.position = server_predicted_.position;
+    predicted_state_ = server_predicted_;
     return;
   }
 }
@@ -1711,8 +1715,8 @@ void PlayState::CreatePlayerEntities() {
         {joints["Gun autoloader"].id, glm::vec3(4.39386, -3.68348, 9.73308),
          glm::normalize(glm::vec3(0, -1, 0)), BoneEmitterType::SHOOT, 10.0f});
 
-	f.emitters.push_back(
-        {joints["Chest"].id, glm::vec3(-0.005052, 2.15061f, 13.7683f),
+    f.emitters.push_back({joints["Chest"].id,
+                          glm::vec3(-0.005052, 2.15061f, 13.7683f),
                           glm::normalize(glm::vec3(0, 0, 1)),
                           BoneEmitterType::GOAL_MAKER, 12.f});
     if (entity_id != my_id_) {
@@ -2529,9 +2533,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       for (auto player : view_players) {
         auto& player_player_c = correct_registry->get<PlayerComponent>(player);
         auto& player_id_c = correct_registry->get<IDComponent>(player);
-        auto& player_trans_c = correct_registry->get<TransformComponent>(player);
-
-		
+        auto& player_trans_c =
+            correct_registry->get<TransformComponent>(player);
       }
       if (this->recording_) {
         this->engine_->GetReplayMachinePtr()->StoreAndClearReplay();
