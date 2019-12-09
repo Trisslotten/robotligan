@@ -262,11 +262,11 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
 
       bool backwards = (lookMoveOffset < -0.2);
 
-	  float rotator = dt * 5.f;
+      float rotator = dt * 5.f;
       float yaw = 0.f;
 
-	  //Kick animations
-	  if (pl.kicking || pl.shooting) {
+      // Kick animations
+      if (pl.kicking || pl.shooting) {
         if (GetActiveAnimationByName("SlideF", &ac) < 0) {
           PAC::playSlideAnims(this, ac, pl.localPlayer);
         }
@@ -379,20 +379,18 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       if (pl.sprinting || pl.kicking || pl.shooting) {
         glm::quat offset = -t.rotation;
 
-		float yaw = atan2(pl.look_dir.x, pl.look_dir.z);
+        float yaw = atan2(pl.look_dir.x, pl.look_dir.z);
 
-		        float lYaw = yaw + pi;
-                float SA =
-                    fmod(fmod((lYaw - ac.yawInterpolator + pi), pi * 2.f) +
-                             (pi * 3.f),
-                         pi * 2.f) -
-                    pi;
+        float lYaw = yaw + pi;
+        float SA =
+            fmod(fmod((lYaw - ac.yawInterpolator + pi), pi * 2.f) + (pi * 3.f),
+                 pi * 2.f) -
+            pi;
 
-                ac.yawInterpolator += fmod(SA * rotator, pi);
+        ac.yawInterpolator += fmod(SA * rotator, pi);
 
-                offset += glm::quat(
-                    glm::vec3(0.f, ac.yawInterpolator - pi / 2.f, 0.f));
-                m.rot_offset = offset;
+        offset += glm::quat(glm::vec3(0.f, ac.yawInterpolator - pi / 2.f, 0.f));
+        m.rot_offset = offset;
 
         float strength = 0.f;
         float totStrength = 0.f;
@@ -723,7 +721,6 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
             anim->bone_position_->at(jointId) = pos;
             anim->bone_rotation_->at(jointId) = glm::normalize(rotation);
             anim->bone_scale_->at(jointId) = scale;
-
           }
         }
       }
@@ -731,13 +728,13 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
         anim->time_ += anim->speed_ * anim->animation_->tick_per_second_ * dt;
       }
 
-	  if (anim->stopping_ && anim->fade_ <= 0) {
+      if (anim->stopping_ && anim->fade_ <= 0) {
         anim->playing_ = false;
       } else if (anim->stopping_) {
         anim->fade_ -= dt * 5.f;
       } else if (!anim->stopping_) {
         anim->fade_ += dt * 5.f;
-	  }
+      }
 
       anim->fade_ = std::clamp(anim->fade_, 0.f, 1.f);
     }
@@ -753,7 +750,7 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
         glob::Channel* channel = &anim->animation_->channels_.at(j);
         int jointId = (int)channel->boneID;
 
-		bool blend = false;
+        bool blend = false;
         bool set = false;
 
         switch (anim->mode_) {
@@ -781,7 +778,7 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
                 }
               } else {  // No body argument, blend
 
-				  blend = true;
+                blend = true;
               }
             }
             break;
@@ -815,40 +812,39 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
           }
         }
 
-		if (blend) {
+        if (blend) {
           interpolatePRS(f_pos.at(jointId), f_rot.at(jointId),
                          f_scale.at(jointId), anim->bone_position_->at(jointId),
                          anim->bone_rotation_->at(jointId),
-                                 anim->bone_scale_->at(jointId),
-                                 anim->strength_ * anim->fade_);
-		} else if(set) {
-                  if (anim->stopping_) {
-                    interpolatePRS(
-                        f_pos.at(jointId), f_rot.at(jointId),
-                        f_scale.at(jointId), anim->bone_position_->at(jointId),
-                        anim->bone_rotation_->at(jointId),
-                        anim->bone_scale_->at(jointId), anim->strength_ * anim->fade_);
-                  } else {
-                    setPRS(f_pos.at(jointId), f_rot.at(jointId),
-                           f_scale.at(jointId),
-                           anim->bone_position_->at(jointId),
-                           anim->bone_rotation_->at(jointId),
-                           anim->bone_scale_->at(jointId));
-                  }
-		}
-
+                         anim->bone_scale_->at(jointId),
+                         anim->strength_ * anim->fade_);
+        } else if (set) {
+          if (anim->stopping_) {
+            interpolatePRS(
+                f_pos.at(jointId), f_rot.at(jointId), f_scale.at(jointId),
+                anim->bone_position_->at(jointId),
+                anim->bone_rotation_->at(jointId),
+                anim->bone_scale_->at(jointId), anim->strength_ * anim->fade_);
+          } else {
+            setPRS(f_pos.at(jointId), f_rot.at(jointId), f_scale.at(jointId),
+                   anim->bone_position_->at(jointId),
+                   anim->bone_rotation_->at(jointId),
+                   anim->bone_scale_->at(jointId));
+          }
+        }
       }
     }
 
     // add all AC positions/rotations/scales togeather here
-	for (int i = 0; i < a.model_data.bones.size(); i++) {
+    for (int i = 0; i < a.model_data.bones.size(); i++) {
       if (i != rootBone) {
+        glm::mat4 mat = glm::mat4(glm::translate(f_pos.at(i)) *
+                                  glm::mat4(glm::normalize(f_rot.at(i))) *
+                                  glm::scale(f_scale.at(i)));
 
-      glm::mat4 mat = glm::mat4(glm::translate(f_pos.at(i)) * glm::mat4(glm::normalize(f_rot.at(i))) * glm::scale(f_scale.at(i)));
-
-	  a.model_data.bones.at(i).transform = mat;
-		}
-	}
+        a.model_data.bones.at(i).transform = mat;
+      }
+    }
 
     GetDefaultPose(glm::mat4(1.f), &a.model_data.bones.at(rootBone),
                    &a.model_data.bones, a.model_data.globalInverseTransform);

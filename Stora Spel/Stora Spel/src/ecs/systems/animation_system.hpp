@@ -38,7 +38,8 @@ class AnimationSystem {
 
   bool IsAChildOf(int parent, int lookFor, AnimationComponent* ac);
 
-  bool IsIncluded(int bone, std::vector<int>* included, std::vector<int>* excluded);
+  bool IsIncluded(int bone, std::vector<int>* included,
+                  std::vector<int>* excluded);
   bool IsExcluded(int bone, std::vector<int>* excluded);
 
   int GetAnimationByName(std::string name, AnimationComponent* ac);
@@ -71,7 +72,7 @@ class AnimationSystem {
 
   void Reset(entt::registry& registry);
 
-    enum ANIM_MODES { LOOP, MUTE_ALL, PARTIAL_MUTE };
+  enum ANIM_MODES { LOOP, MUTE_ALL, PARTIAL_MUTE };
 };
 
 #endif  // ANIMATION_SYSTEM_HPP_
