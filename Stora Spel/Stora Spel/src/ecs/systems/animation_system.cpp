@@ -580,6 +580,24 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
       }
       break;
     }
+    case GameEvent::SUPER_KICK: {
+      auto view =
+          registry->view<IDComponent, AnimationComponent, PlayerComponent>();
+      for (auto entity : view) {
+        if (view.get<IDComponent>(entity).id == event.super_kick.player_id) {
+          auto& ac = view.get<AnimationComponent>(entity);
+          auto& pc = view.get<PlayerComponent>(entity);
+          if (pc.localPlayer) {
+            PlayAnimation("Kick", 1.f, &ac, 14, 1.f, MUTE_ALL);
+          } else {
+            PlayAnimation("Kick", 4.f, &ac, 14, 1.f, PARTIAL_MUTE,
+                          &ac.model_data.upperBody);
+          }
+          break;
+        }
+      }
+      break;
+    };
     case GameEvent::DABBING: {
       auto view =
           registry->view<IDComponent, AnimationComponent, PlayerComponent>();

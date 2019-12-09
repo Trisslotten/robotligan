@@ -26,5 +26,7 @@
 #include "components/wall_component.hpp"
 #include "components/target_component.hpp"
 #include "components/skylight_component.hpp"
+#include "components/hook_component.hpp"
+
 
 #endif COMPONENTS_HPP_

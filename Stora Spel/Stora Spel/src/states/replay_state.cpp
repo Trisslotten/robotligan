@@ -13,7 +13,7 @@ void ReplayState::AddConstantStuff() {
   this->AddArenaStuff();
   this->AddBatmanLights();
   this->AddLights();
-  this->AddSpotlights();
+  //this->AddSpotlights();
   this->AddAudience();
   this->AddJumbotron();
   this->AddCamera(glm::vec3(0.f, 13.f, 42.f));  //  glm::vec3(60.f, 4.f, 38.f);
@@ -210,6 +210,8 @@ void ReplayState::AddCamera(glm::vec3 in_cam_pos) {
   glm::vec3 cam_pos = in_cam_pos;
   this->replay_registry_.assign<TransformComponent>(
       camera, cam_pos, glm::quat(), glm::vec3(0.f));
+  this->replay_registry_.assign<PhysicsComponent>(camera);
+  this->replay_registry_.assign<SoundComponent>(camera, engine_->GetSoundEngine().CreatePlayer());
 }
 
 void ReplayState::UpdateCamera() {
@@ -283,7 +285,8 @@ void ReplayState::StartReplayMode() {
   // Add in stuff that is in all replays
   this->AddConstantStuff();
 
-  GlobalSettings::Access()->WriteError("","","\n" + this->engine_->GetReplayMachinePtr()->GetDebugString() + "\n");
+  // Play crowd cheers
+  engine_->GetSoundSystem().PlayAmbientSound(this->replay_registry_);
 }
 
 void ReplayState::PlayReplay() {
@@ -407,6 +410,33 @@ void ReplayState::ShowScoreboard() {
   glob::Submit(font_test_, pos, 48, winnin_team_text, best_team_color);
 }
 
+void ReplayState::DrawFishingLines() {
+  auto view_hooks = replay_registry_.view<HookComponent, TransformComponent>();
+  for (auto hook : view_hooks) {
+    TransformComponent hook_trans_c =
+        replay_registry_.get<TransformComponent>(hook);
+    EntityID owner = replay_registry_.get<HookComponent>(hook).creator;
+    auto view_players =
+        replay_registry_.view<TransformComponent, IDComponent>();
+    for (auto player : view_players) {
+      EntityID player_eid = replay_registry_.get<IDComponent>(player).id;
+      if (player_eid == owner) {
+        TransformComponent player_trans_c =
+            replay_registry_.get<TransformComponent>(player);
+        glm::vec3 player_pos = player_trans_c.position;
+        glm::vec3 player_forward =
+            replay_registry_.get<TransformComponent>(player).Forward();
+
+        glm::vec3 right = glm::cross(player_forward, glm::vec3(0, 1, 0));
+        player_pos -= right * 0.6f;
+        player_pos += player_forward * 0.28f;
+        glob::SubmitRope(player_pos, hook_trans_c.position);
+        break;
+      }
+    }
+  }
+}
+
 void ReplayState::DrawJumbotronText() {
   glm::vec3 pos_base;
   pos_base.x = GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEX");
@@ -453,6 +483,8 @@ void ReplayState::Startup() {
 
   this->replay_registry_.on_destroy<SoundComponent>()
       .connect<&ReplayState::SoundComponentDestroyed>(*this);
+  replay_registry_.on_destroy<ParticleComponent>()
+      .connect<&ReplayState::ParticleComponentDestroyed>(*this);
 }
 
 void ReplayState::Init() {
@@ -489,6 +521,8 @@ void ReplayState::Update(float dt) {
   if (this->replay_state_timer_.Elapsed() > this->replay_state_duration_) {
     engine_->ChangeState(StateType::LOBBY);
   }
+
+  DrawFishingLines();
   DrawJumbotronText();
 }
 
@@ -498,6 +532,12 @@ void ReplayState::UpdateNetwork() {
 }
 
 void ReplayState::Cleanup() {
+  // Stop playing crowd cheer
+  engine_->GetSoundSystem().StopAmbientSound(this->replay_registry_);
+
+  // Turn lights back on :)
+  glob::SetBlackout(false);
+
   // Clear registry
   this->replay_registry_.reset();
 
@@ -510,4 +550,11 @@ void ReplayState::Cleanup() {
 
   // Tell replay machine to clear stored data
   this->engine_->GetReplayMachinePtr()->ResetMachine();
+}
+
+void ReplayState::ParticleComponentDestroyed(entt::entity e, entt::registry& registry) {
+  auto& pc = registry.get<ParticleComponent>(e);
+  for (int i = 0; i < pc.handles.size(); ++i) {
+    glob::DestroyParticleSystem(pc.handles[i]);
+  }
 }

@@ -1,7 +1,9 @@
 #define NOMINMAX
 #include <iostream>
 #include <sstream>
-
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
 #include "util/event.hpp"
 #include "gameserver.hpp"
 #include "util/timer.hpp"
@@ -16,6 +18,8 @@ std::string workingdir() {
   return std::string(buf) + '\\';
 }
 int main(unsigned argc, char** argv) {
+  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+  _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
   std::cout << "Workingdir: " << workingdir() << std::endl;
   std::unordered_map<std::string, std::string> arguments;
   std::cout << "Num server arguments: " << argc << std::endl;
@@ -82,5 +86,6 @@ int main(unsigned argc, char** argv) {
   dispatcher.sink<EventInfo>().disconnect<&ServerPlayState::ReceiveEvent>(
       *server.GetPlayState());
   WSACleanup();
+  _CrtDumpMemoryLeaks();
   return EXIT_SUCCESS;
 }

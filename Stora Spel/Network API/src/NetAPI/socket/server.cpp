@@ -115,7 +115,6 @@ void NetAPI::Socket::Server::ListenForClients() {
       std::cout << "DEBUG: Found existing client, overwriting\n";
     } else if (GetNumConnected() < max_players_) {
       std::cout << "DEBUG: adding new client\n";
-      std::cout << "DEBUG: adding new client\n";
 
       connection_client_->ID = current_client_guid_;
       ids_[address] = current_client_guid_;
@@ -202,11 +201,11 @@ bool NetAPI::Socket::Server::Update() {
   SendStoredData();
 
   // CHECK DC
-  for (auto& [id, client_data] : client_data_) {
-    if (client_data->client.TimeSinceLastUpdate() > 3000) {
-      client_data->client.Disconnect();
-    }
-  }
+  //for (auto& [id, client_data] : client_data_) {
+  //  if (client_data->client.TimeSinceLastUpdate() > 3000) {
+  //    client_data->client.Disconnect();
+  //  }
+  //}
 
   for(auto client_id : client_to_remove_) {
     //std::cout << "!!!!!!!!!!!!!!!! Remove client: " << client_id << "\n";

@@ -34,6 +34,8 @@ class Model {
                                             std::string type_name,
                                             int tex_slot);
 
+  void calcSortSphere();
+
   std::string filepath_;
   std::string directory_;
 
@@ -52,6 +54,8 @@ class Model {
   float metallic_map_scale_ = 1.f;
   float roughness_map_scale_ = 1.f;
 
+  float sort_sphere_radius = 0;
+  glm::vec3 sort_sphere_center{0};
  public:
   Model();
   Model(const std::string& path);
@@ -71,6 +75,8 @@ class Model {
   glm::mat4 globalInverseTransform_;
 
   glob::MeshData GetMeshData();
+
+  float TraceSortSphere(glm::vec3 cam_dir, glm::vec3 cam_pos, glm::mat4 transform);
 
   bool IsEmissive() { return is_emissive_; }
   void SetTransparent(bool is_transparent) { is_transparent_ = is_transparent; }

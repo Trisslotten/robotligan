@@ -84,8 +84,8 @@ bool ClientReplayMachine::SelectReplay(unsigned int in_index) {
   // Set its read to the start
   this->ResetSelectedReplay();
 
-  GlobalSettings::Access()->WriteError(
-      "", "Selected", std::to_string(this->selected_replay_index_));
+  /*GlobalSettings::Access()->WriteError(
+      "", "Selected", std::to_string(this->selected_replay_index_));*/
 
   return true;
 }

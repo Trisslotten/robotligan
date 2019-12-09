@@ -27,6 +27,8 @@ void glob::Elements2D::CreateTexture() {
   glBindTexture(GL_TEXTURE_2D, 0);  // Unbind the texture
 
   tex_id_ = texture_id;
+  gui_element_texture_.clear();
+  gui_element_texture_.shrink_to_fit();
 }
 
 glob::Elements2D::Elements2D() {}

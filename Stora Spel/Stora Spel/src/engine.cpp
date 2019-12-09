@@ -773,6 +773,14 @@ void Engine::SetCurrentRegistry(entt::registry* registry) {
   this->registry_current_ = registry;
 }
 
+void Engine::ClearPlayerInfos()
+{
+  this->player_names_.clear();
+  this->player_scores_.clear();
+  this->playing_players_.clear();
+  lobby_state_.ClearLobbyPlayers();
+}
+
 void Engine::UpdateChat(float dt) {
   if (enable_chat_) {
     // chat_ code

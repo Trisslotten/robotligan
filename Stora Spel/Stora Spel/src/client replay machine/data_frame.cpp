@@ -439,11 +439,14 @@ void WallFrame::WriteBack(TransformComponent& trans_c, WallComponent& wall_c) {
 
 ShotFrame::ShotFrame() {}
 
-ShotFrame::ShotFrame(TransformComponent& in_transform_c) {
+ShotFrame::ShotFrame(TransformComponent& in_transform_c,
+                     TrailComponent& in_trail_c) {
   //
   this->position_ = in_transform_c.position;
   this->rotation_ = in_transform_c.rotation;
   // this->scale_ = in_transform_c.scale;
+
+  this->trail_color_ = in_trail_c.color;
 }
 
 ShotFrame::~ShotFrame() {}
@@ -455,6 +458,7 @@ ShotFrame* ShotFrame::Clone() {
   ret_ptr->rotation_ = this->rotation_;
   // ret_ptr->scale_ = this->scale_;
 
+  ret_ptr->trail_color_ = this->trail_color_;
   return ret_ptr;
 }
 
@@ -507,6 +511,7 @@ DataFrame* ShotFrame::InterpolateForward(unsigned int in_dist_to_target,
 
     // SCALE
     // ret_frame->scale_ = this->scale_;
+    ret_frame->trail_color_ = trail_color_;
 
     return ret_frame;
 
@@ -516,11 +521,13 @@ DataFrame* ShotFrame::InterpolateForward(unsigned int in_dist_to_target,
   }
 }
 
-void ShotFrame::WriteBack(TransformComponent& in_transform_c) {
+void ShotFrame::WriteBack(TransformComponent& in_transform_c, TrailComponent& in_trail_c) {
   in_transform_c.position = this->position_;
   in_transform_c.rotation = this->rotation_;
   // in_transform_c.scale = this->scale_;
   in_transform_c.scale = glm::vec3(0.5f);
+
+  in_trail_c.color = trail_color_;
 }
 
 //##############################
@@ -918,9 +925,11 @@ void BlackholeFrame::WriteBack(TransformComponent& trans_c) {
 
 HookFrame::HookFrame() {}
 
-HookFrame::HookFrame(TransformComponent& trans_c) {
+HookFrame::HookFrame(TransformComponent& trans_c, HookComponent& hook_c) {
   position_ = trans_c.position;
   rotation_ = trans_c.rotation;
+
+  owner_ = hook_c.creator;
 }
 
 HookFrame::~HookFrame() {}
@@ -930,6 +939,7 @@ DataFrame* HookFrame::Clone() {
 
   ret_ptr->position_ = this->position_;
   ret_ptr->rotation_ = this->rotation_;
+  ret_ptr->owner_ = this->owner_;
 
   return ret_ptr;
 }
@@ -962,6 +972,8 @@ DataFrame* HookFrame::InterpolateForward(unsigned int in_dist_to_target,
     ret_frame->rotation_ =
         glm::slerp(rotation_, point_b.rotation_, percentage_a);
 
+	ret_frame->owner_ = owner_;
+
     return ret_frame;
 
   } catch (std::bad_cast exp) {
@@ -987,8 +999,10 @@ bool HookFrame::ThresholdCheck(DataFrame& in_future_df) {
   return false;
 }
 
-void HookFrame::WriteBack(TransformComponent& trans_c) {
+void HookFrame::WriteBack(TransformComponent& trans_c, HookComponent& hook_c) {
   trans_c.position = position_;
   trans_c.rotation = rotation_;
   trans_c.scale = glm::vec3(0.3f);
+
+  hook_c.creator = owner_;
 }

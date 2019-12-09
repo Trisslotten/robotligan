@@ -50,6 +50,11 @@ struct BoneAnimatedRenderItem {
   bool cast_shadow = true;
 };
 
+struct CombinedRenderItem {
+  bool is_animated = false;
+  void* item = nullptr;
+};
+
 struct TextItem {
   Font2D *font = nullptr;
   glm::vec2 pos{0};

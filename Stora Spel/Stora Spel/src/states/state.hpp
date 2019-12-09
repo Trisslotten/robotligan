@@ -106,6 +106,8 @@ class LobbyState : public State {
   void HandlePlayerDisconnect(NetAPI::Common::Packet& packet);
   void SetMyId(int client_id) { my_id_ = client_id; }
 
+  void ClearLobbyPlayers();
+
  private:
   glm::vec2 ws_;
   entt::registry registry_lobby_;
@@ -200,6 +202,7 @@ class SettingsState : public State {
  private:
   void CreateSettingsMenu();
   void SaveSettings();
+  void CreateBackground();
   glob::Font2DHandle font_test_ = 0;
   entt::registry registry_settings_;
 
@@ -462,6 +465,8 @@ class PlayState : public State {
   // Replay stuff
   bool recording_ = false;
   // Replay stuff
+
+  EntityID last_goal_maker_;
 };
 
 class ReplayState : public State {
@@ -511,6 +516,8 @@ class ReplayState : public State {
   void ShowScoreboard();
   void DrawJumbotronText();
 
+  void DrawFishingLines();
+  void ParticleComponentDestroyed(entt::entity e, entt::registry& registry);
  public:
   void Startup() override;
   void Init() override;

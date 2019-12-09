@@ -25,7 +25,7 @@ class EXPORT Packet {
 
   bool IsEmpty() {
     return (!data_ || GetHeader()->packet_size <= sizeof(PacketHeader) ||
-            (strcmp(data_ + sizeof(PacketHeader), kNoDataAvailable) == 0));
+            (strcmp(data_ + sizeof(PacketHeader), kNoDataAvailable) == 0)) || read_too_much_;
   }
 
   template <typename T>
@@ -84,6 +84,7 @@ class EXPORT Packet {
                 << ", min=" << sizeof(PacketHeader) << "\n\ttried getting a '"
                 << typeid(T).name() << "' (" << sizeof(T) << " bytes) \n";
       GetHeader()->packet_size = sizeof(PacketHeader);
+      read_too_much_ = true;
     } else {
       GetHeader()->packet_size -= sizeof(T);
       std::memcpy(&data, data_ + GetHeader()->packet_size, sizeof(data));
@@ -133,6 +134,7 @@ class EXPORT Packet {
                 << "\n\ttried getting: " << size << " '" << typeid(T).name()
                 << "'s (" << sizeof(T) * size << " bytes)\n";
       GetHeader()->packet_size = sizeof(PacketHeader);
+      read_too_much_ = true;
     } else {
       GetHeader()->packet_size -= (long)sizeof(T) * size;
       std::memcpy(data, data_ + GetHeader()->packet_size, sizeof(T) * size);
@@ -142,6 +144,7 @@ class EXPORT Packet {
   }
 
  private:
+  bool read_too_much_ = false;
   char* data_ = nullptr;
 };
 
