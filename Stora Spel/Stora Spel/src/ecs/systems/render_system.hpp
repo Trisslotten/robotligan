@@ -169,7 +169,9 @@ void RenderSystem(entt::registry& registry) {
   auto view_trails = registry.view<TrailComponent>();
   for (auto entity : view_trails) {
     auto& trail_c = view_trails.get(entity);
-    glob::SubmitTrail(trail_c.positions, trail_c.width, trail_c.color);
+    if (registry.valid(entity)) {
+      glob::SubmitTrail(trail_c.positions, trail_c.width, trail_c.color);
+	}
   }
 }
 #endif  // RENDER_SYSTEM_HPP_

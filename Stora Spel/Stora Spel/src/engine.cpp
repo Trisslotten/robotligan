@@ -1,15 +1,16 @@
 #include "engine.hpp"
 
 #include <GLFW/glfw3.h>
-#include <bitset>
-#include <glm/gtx/transform.hpp>
-#include <glob/graphics.hpp>
-#include <iostream>
 
+#include <bitset>
 #include <ecs\systems\skylight_system.hpp>
 #include <ecs\systems\trail_system.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glob/graphics.hpp>
 #include <glob\window.hpp>
+#include <iostream>
 #include <shared\pick_up_component.hpp>
+
 #include "ecs/components.hpp"
 #include "ecs/systems/animation_system.hpp"
 #include "ecs/systems/fireworks_system.hpp"
@@ -17,9 +18,9 @@
 #include "ecs/systems/input_system.hpp"
 #include "ecs/systems/lifetime_system.hpp"
 #include "ecs/systems/particle_system.hpp"
+#include "ecs/systems/pickup_bob_system.hpp"
 #include "ecs/systems/render_system.hpp"
 #include "ecs/systems/sound_system.hpp"
-#include "ecs/systems/pickup_bob_system.hpp"
 #include "entitycreation.hpp"
 #include "eventdispatcher.hpp"
 #include "shared/camera_component.hpp"
@@ -109,8 +110,8 @@ void Engine::Init() {
   // Initiate the Replay Machine
   unsigned int length_sec =
       (unsigned int)GlobalSettings::Access()->ValueOf("REPLAY_LENGTH_SECONDS");
-  unsigned int approximate_tickrate = 128;  // TODO: Replace with better
-                                            // approximation
+  unsigned int approximate_tickrate =
+      kClientUpdateRate;
   this->replay_machine_ =
       new ClientReplayMachine(length_sec, approximate_tickrate);
   replay_machine_->SetEngine(this);
@@ -525,7 +526,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::UPDATE_POINTS: {
       long id;
       EntityID eid;
-      int goals, points, assists, saves;//ping;
+      int goals, points, assists, saves;  // ping;
       unsigned int team;
       packet >> assists;
       packet >> saves;
@@ -683,10 +684,11 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> id;
 
       // Notify replay machine before entity is gone
-      if (this->IsRecording()) {
-        this->replay_machine_->NotifyDestroyedObject(
-            id, *(this->registry_current_));
-      }
+      // if (this->IsRecording()) {
+      //  this->replay_machine_->NotifyDestroyedObject(
+      //      id, *(this->registry_current_));
+      //}
+      // NTS: ^^^ Moved to dedicated function EngineDestroyEntity()
 
       // Remove the entity
       play_state_.DestroyEntity(id);
@@ -828,7 +830,7 @@ void Engine::UpdateSystems(float dt) {
   skylight_system::Update(*registry_current_);
   lifetime::Update(*registry_current_, dt);
   pickup_bob_system::Update(*registry_current_, dt);
-  
+
   RenderSystem(*registry_current_);
 }
 
@@ -935,3 +937,20 @@ int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }
 float Engine::GetSwitchGoalCountdownTimer() const { return switch_goal_timer_; }
 
 int Engine::GetSwitchGoalTime() const { return switch_goal_time_; }
+
+// Entity destruction---
+
+void Engine::EngineDestroyEntity(entt::registry& in_registry,
+                                 entt::entity& in_entity) {
+  // If we are recording and the entity has an ID,
+  // notify replay machine before entity is gone
+  if (this->IsRecording() && in_registry.has<IDComponent>(in_entity)) {
+    IDComponent id_c = in_registry.get<IDComponent>(in_entity);
+    this->replay_machine_->NotifyDestroyedObject(id_c.id, in_registry);
+  }
+
+  // Delete the entity from thr registry
+  in_registry.destroy(in_entity);
+}
+
+// Entity destruction---

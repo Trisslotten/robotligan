@@ -1,20 +1,19 @@
 #include "serverstate.hpp"
 
-#include "shared/camera_component.hpp"
-#include "shared/transform_component.hpp"
-
 #include <collision.hpp>
 #include <ecs\components\pick_up_event.hpp>
 #include <glm/gtx/compatibility.hpp>
 #include <glob\graphics.hpp>
+#include <map>
 #include <physics.hpp>
 #include <shared\id_component.hpp>
 #include <shared\pick_up_component.hpp>
+
 #include "ecs/components.hpp"
 #include "ecs/components/match_timer_component.hpp"
 #include "gameserver.hpp"
-
-#include <map>
+#include "shared/camera_component.hpp"
+#include "shared/transform_component.hpp"
 
 void ServerLobbyState::Init() {
   start_game_timer.Restart();
@@ -111,6 +110,8 @@ void ServerPlayState::Init() {
 
   reset_timer_.Restart();
   reset_timer_.Pause();
+  overtime_reset_timer_.Restart();
+  overtime_reset_timer_.Pause();
   auto& server = game_server_->GetServer();
   auto& registry = game_server_->GetRegistry();
 
@@ -277,9 +278,7 @@ void ServerPlayState::Update(float dt) {
   }
 
   if (match_timer_.Elapsed() > match_time_) {
-    if (score_[0] == score_[1]) {
-      OverTime();
-    } else {
+    if (!OverTime()) {
       EndGame();
     }
   }
@@ -303,7 +302,7 @@ void ServerPlayState::Update(float dt) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& player_c = view.get<PlayerComponent>(entity);
 
-      if(wants_dab_.count(player_c.client_id) > 0) {
+      if (wants_dab_.count(player_c.client_id) > 0) {
         GameEvent event;
         event.type = GameEvent::DABBING;
         event.dabbing.player_entity_id = id_c.id;
@@ -551,7 +550,7 @@ void ServerPlayState::Cleanup() {
     delete this->replay_machine_;
   }
   game_server_->GetRegistry().reset();
-  //game_server_->GetServer().ResetPlayers();
+  // game_server_->GetServer().ResetPlayers();
   client_abilities_.clear();
   client_teams_.clear();
   clients_player_ids_.clear();
@@ -913,13 +912,13 @@ void ServerPlayState::ResetEntities() {
     }
     ball_component.homer_cid = -1;
 
-	// clear projectiles and hooks
+    // clear projectiles and hooks
     auto view_projectiles = registry.view<ProjectileComponent, IDComponent>();
     for (auto projectile : view_projectiles) {
       auto id_c = registry.get<IDComponent>(projectile);
       destroy_entities_.push_back(id_c.id);
       registry.destroy(projectile);
-	}
+    }
     auto view_hooks = registry.view<HookComponent, IDComponent>();
     for (auto hook : view_hooks) {
       auto id_c = registry.get<IDComponent>(hook);
@@ -959,14 +958,27 @@ EntityID ServerPlayState::CreatePickUpComponents(glm::vec3 pos) {
   return registry.get<IDComponent>(entity).id;
 }
 
-void ServerPlayState::OverTime() {
-  for (auto& [client_id, to_send] : game_server_->GetPackets()) {
-    to_send << PacketBlockType::GAME_OVERTIME;
+bool ServerPlayState::OverTime() {
+  if (!overtime_started_ && score_[0] == score_[1]) {
+    for (auto& [client_id, to_send] : game_server_->GetPackets()) {
+      to_send << PacketBlockType::GAME_OVERTIME;
+    }
+    overtime_started_ = true;
   }
 
-  if (score_[0] > score_[1] || score_[1] > score_[0]) {
-    EndGame();
+  if (score_[0] != score_[1]) {
+    overtime_reset_timer_.Resume();
   }
+
+  if (overtime_reset_timer_.Elapsed() > 2.5f) {
+    GameEvent reset_event;
+    reset_event.type = GameEvent::RESET;
+    dispatcher.trigger(reset_event);
+
+    overtime_started_ = false;
+  }
+
+  return overtime_started_;
 }
 
 void ServerPlayState::EndGame() {

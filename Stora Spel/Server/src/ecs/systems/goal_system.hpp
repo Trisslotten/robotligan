@@ -77,7 +77,7 @@ void Update(entt::registry& registry) {
           event.goal.x = goal_trans_c.position.x;
 
           // each team "owns" the goal where to score.
-          printf("Team %i scored a goal!\n", goal_team_c.team);
+          //printf("Team %i scored a goal!\n", goal_team_c.team);
           goal_goal_c.goals++;
           auto view_players = registry.view<PlayerComponent, TeamComponent,
                                             PointsComponent, IDComponent>();

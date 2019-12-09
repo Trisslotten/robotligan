@@ -459,10 +459,9 @@ void PlayState::Update(float dt) {
 
   if (game_has_ended_) {
     engine_->DrawScoreboard();
+    this->recording_ = false;
+    engine_->ChangeState(StateType::REPLAY);
 
-    if (game_has_ended_) {
-      engine_->ChangeState(StateType::REPLAY);
-    }
     if (primary_cd_ > 0) {
       primary_cd_ -= dt;
     }
@@ -2226,7 +2225,7 @@ void PlayState::CreateWall(EntityID id, glm::vec3 position, glm::quat rotation,
   hs.push_back(model);
   hs.push_back(model_t);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(wall, hs);
-  registry_gameplay_.assign<WallComponent>(wall);
+  registry_gameplay_.assign<WallComponent>(wall, team);
   if (team == TEAM_BLUE) {
     model_c.diffuse_index = 1;
   } else {
@@ -2448,7 +2447,8 @@ void PlayState::DestroyEntity(EntityID id) {
       if (registry_gameplay_.has<TransformComponent>(entity)) {
         pos = registry_gameplay_.get<TransformComponent>(entity).position;
       }
-      registry_gameplay_.destroy(entity);
+      // registry_gameplay_.destroy(entity);
+      engine_->EngineDestroyEntity(registry_gameplay_, entity);
       break;
     }
   }
@@ -2530,16 +2530,14 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       for (auto player : view_players) {
         auto& player_player_c = correct_registry->get<PlayerComponent>(player);
         auto& player_id_c = correct_registry->get<IDComponent>(player);
-        auto& player_trans_c = correct_registry->get<TransformComponent>(player);
-
-		
-      }
-      if (this->recording_) {
-        this->engine_->GetReplayMachinePtr()->StoreAndClearReplay();
+        auto& player_trans_c = correct_registry->get<TransformComponent>(player);		
       }
       break;
     }
     case GameEvent::RESET: {
+      if (this->recording_) {
+        this->engine_->GetReplayMachinePtr()->StoreAndClearReplay();
+      }
       Reset();
       break;
     }
@@ -3052,7 +3050,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         auto& hook_id_c = registry_gameplay_.get<IDComponent>(hook);
         if (hook_id_c.id == id) {
           // registry_gameplay_.destroy(hook);
-          correct_registry->destroy(hook);
+          // correct_registry->destroy(hook);
+          engine_->EngineDestroyEntity(registry_gameplay_, hook);
         }
       }
       if (e.hook_removed.owner_id == my_id_) {
@@ -3069,6 +3068,9 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 }
 
 void PlayState::Reset() {
+  //
+
+  // NTS: Call to engine destroy not needed?
   auto destroy_view = registry_gameplay_.view<DestroyOnResetComponent>();
   registry_gameplay_.destroy(destroy_view.begin(), destroy_view.end());
 

@@ -118,6 +118,18 @@ void ClientReplayMachine::SetEngine(Engine* in_engine_ptr) {
 }
 
 void ClientReplayMachine::ReceiveGameEvent(GameEvent event) {
+  // -vvv- EVENT BLACKLIST -vvv-
+  switch (event.type) {
+	//case GameEvent::WHATEVER:
+	//case GameEvent::WHATELSE:
+    case GameEvent::RESET:
+      return;
+      break;
+    default:
+      break;
+  }
+  // -^^^- EVENT BLACKLIST -^^^-
+
   if (this->engine_->IsRecording()) {
     primary_replay_->ReceiveGameEvent(event);
   }
