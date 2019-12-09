@@ -169,6 +169,7 @@ void PlayState::Init() {
   my_target_ = -1;
   primary_cd_ = 0;
 
+  show_in_game_menu_buttons_ = false;
   CreateInGameMenu();
   CreateInitialEntities();
 
