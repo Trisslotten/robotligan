@@ -236,6 +236,36 @@ void Update(entt::registry& registry, float dt) {
       kicked = true;
     }
 
+	/*
+	if (!player_c.actions[PlayerAction::KICK] &&
+        !player_c.actions[PlayerAction::SPRINT] &&
+        !player_c.actions[PlayerAction::JUMP] &&
+        !player_c.actions[PlayerAction::WALK_FORWARD] &&
+        !player_c.actions[PlayerAction::WALK_BACKWARD] &&
+        !player_c.actions[PlayerAction::WALK_RIGHT] &&
+        !player_c.actions[PlayerAction::WALK_LEFT] &&
+        !player_c.actions[PlayerAction::SHOOT]) {  // idle
+
+		if (!player_c.idle) {
+            player_c.idle = true;
+
+			GameEvent idle_event;
+            idle_event.type = GameEvent::PLAYER_IDLE;
+            idle_event.player_idle.player_id = id_c.id;
+            dispatcher.trigger(idle_event);
+		}
+    } else {
+        if (player_c.idle) {
+			player_c.idle = false;
+
+            GameEvent idle_event;
+            idle_event.type = GameEvent::PLAYER_IDLE_END;
+            idle_event.player_idle_end.player_id = id_c.id;
+            dispatcher.trigger(idle_event);
+        }
+	}
+	*/
+
     auto view_balls =
         registry.view<BallComponent, PhysicsComponent, TransformComponent>();
     for (auto entity : view_balls) {

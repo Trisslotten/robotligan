@@ -162,6 +162,8 @@ struct GameEvent {
     PRIMARY_USED,
     SECONDARY_USED,
     PICKUP_SPAWNED,
+	PLAYER_IDLE,
+	PLAYER_IDLE_END,
     BLACK_HOLE_CREATED,
     BLACK_HOLE_ACTIVATED,
     BLACK_HOLE_DESTROYED,
@@ -391,6 +393,13 @@ struct GameEvent {
     struct {
       EntityID projectile_id;
     } cannon_impact;
+
+    struct {
+      EntityID player_id;
+    } player_idle;
+    struct {
+      EntityID player_id;
+    } player_idle_end;
   };
 };
 
