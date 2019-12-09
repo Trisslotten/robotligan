@@ -1436,15 +1436,13 @@ namespace glob {
     glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
 
     // render models and light
-    std::vector<glm::vec3> light_positions;
-    std::vector<glm::vec3> light_colors;
-    std::vector<float> light_radii;
-    std::vector<float> light_ambients;
+    std::vector<glm::vec4> light_pos_radius;
+    std::vector<glm::vec4> light_colors_amb;
+    std::vector<float> light_sphere_radii;
     for (auto& light_item : lights_to_render) {
-      light_positions.push_back(light_item.pos);
-      light_colors.push_back(light_item.color);
-      light_radii.push_back(light_item.radius);
-      light_ambients.push_back(light_item.ambient);
+      light_pos_radius.push_back(glm::vec4(light_item.pos, light_item.radius));
+      light_colors_amb.push_back(glm::vec4(light_item.color, light_item.ambient));
+      light_sphere_radii.push_back(1.0);
     }
 
     std::vector<RenderItem> normal_items;
@@ -1500,14 +1498,12 @@ namespace glob {
     for (auto& shader : mesh_render_group) {
       shader->use();
       for (auto& light_item : lights_to_render) {
-        shader->uniformv("light_pos", lights_to_render.size(),
-          light_positions.data());
-        shader->uniformv("light_col", lights_to_render.size(),
-          light_colors.data());
-        shader->uniformv("light_radius", lights_to_render.size(),
-          light_radii.data());
-        shader->uniformv("light_amb", lights_to_render.size(),
-          light_ambients.data());
+        shader->uniformv("light_pos_radius", lights_to_render.size(),
+                         light_pos_radius.data());
+        shader->uniformv("light_col_amb", lights_to_render.size(),
+                         light_colors_amb.data());
+        shader->uniformv("light_sphere_radii", lights_to_render.size(),
+                         light_sphere_radii.data());
       }
       shader->uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
       shader->uniform("cam_transform", cam_transform);

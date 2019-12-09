@@ -11,10 +11,9 @@ uniform sampler2D shadow_maps[MAX_SHADOWS];
 uniform mat4 shadow_transforms[MAX_SHADOWS];
 uniform vec3 shadow_light_positions[MAX_SHADOWS];
 
-uniform vec3 light_pos[MAX_LIGHTS];
-uniform vec3 light_col[MAX_LIGHTS];
-uniform float light_radius[MAX_LIGHTS];
-uniform float light_amb[MAX_LIGHTS];
+uniform vec4 light_pos_radius[MAX_LIGHTS];
+uniform vec4 light_col_amb[MAX_LIGHTS];
+uniform float light_sphere_radii[MAX_LIGHTS];
 uniform int NR_OF_LIGHTS;
 
 in vec3 local_pos;
@@ -86,15 +85,23 @@ float triplanarRoughness() {
 	return result;
 }
 
-float calcDiffuse(vec3 surf_pos, vec3 normal, vec3 light_dir) {
+float calcDiffuse(const vec3 surf_pos, const vec3 normal, const vec3 light_dir) {
 	float diffuse = max(dot(light_dir, normal), 0);
 	return diffuse;
 }
-float calcSpecular(vec3 surf_pos, vec3 normal, vec3 light_dir, vec3 view_dir, float roughness) {
+float calcSpecular(const vec3 surf_pos, const vec3 normal, const vec3 light_dir, const vec3 view_dir, const float roughness) {
 	float glossy = 1-roughness;
 	vec3 half_vec = normalize(light_dir + view_dir);
 	float specular = pow(clamp(dot(normal, half_vec), 0, 1), 1 + 1000.0 * glossy);
 	return specular;
+}
+
+vec3 calcSphereLightVec(const vec3 view_dir, const vec3 normal, const vec3 light_vec, const float radius)
+{
+	vec3 r = normalize(reflect(normalize(view_dir), normal));
+	vec3 center_to_ray = dot(light_vec, r) * r - light_vec;
+	vec3 closest_point = light_vec + center_to_ray * clamp(radius/length(center_to_ray),0,1);
+	return normalize(closest_point);
 }
 
 struct Lighting {
@@ -103,7 +110,7 @@ struct Lighting {
 	vec3 ambient;
 };
 
-Lighting shading(vec3 position, vec3 normal) {
+Lighting shading(const vec3 position, const vec3 normal) {
 	float roughness = 0.;
 	if(use_roughness != 0)
 	{
@@ -118,20 +125,26 @@ Lighting shading(vec3 position, vec3 normal) {
 	lighting.specular = vec3(0);
 
 	for(int l = 0; l < NR_OF_LIGHTS; l++){
-		vec3 pointToLight = light_pos[l] - position;
-		float radius = light_radius[l];
-		lighting.ambient += light_amb[l];
-		if(length(pointToLight) <= radius) {
-			vec3 light_dir = normalize(pointToLight);
-			vec3 light_color = light_col[l];
+		const vec4 pos_rad = light_pos_radius[l];
+		vec3 pointToLight = pos_rad.xyz - position;
+		const vec4 col_amb = light_col_amb[l];
+		lighting.ambient += col_amb.w;
 
-			float intensity = 1.f - clamp(length(pointToLight)/radius, 0., 1.);
+		vec3 light_dir = normalize(pointToLight);
+
+		float intensity = 1.f - clamp(length(pointToLight)/pos_rad.w, 0., 1.);
+		if(intensity > 0.) {
 			float diffuse = calcDiffuse(position, normal, light_dir);
-			float specular = calcSpecular(position, normal, light_dir, view_dir, roughness);
-
-			lighting.diffuse += diffuse * intensity * light_color;
-			lighting.specular += specular * intensity * light_color;
+			lighting.diffuse += diffuse * intensity * col_amb.rgb;
 		}
+
+		const float sphere_radius = light_sphere_radii[l];
+		if(sphere_radius > 0.) {
+			light_dir = calcSphereLightVec(view_dir, normal, pointToLight, sphere_radius);
+		}
+		float specular = calcSpecular(position, normal, light_dir, view_dir, roughness);
+
+		lighting.specular += specular * col_amb.rgb;
 	}
 
 	for(int i = 0; i < num_shadows; i++) {
