@@ -13,6 +13,7 @@
 #include "client replay machine/client_replay_machine.hpp"
 #include "ecs/systems/animation_system.hpp"
 #include "ecs/systems/sound_system.hpp"
+#include "ecs/systems/particle_system.hpp"
 #include "shared/shared.hpp"
 #include "states/state.hpp"
 struct PlayerStatInfo {
@@ -38,7 +39,7 @@ class Engine {
   void UpdateSettingsValues() {
     sound_system_.GetSoundEngine().SetMasterVolume(
         GlobalSettings::Access()->ValueOf("SOUND_VOLUME") / 100.f);
-    glob::GetCamera().SetFov(GlobalSettings::Access()->ValueOf("GRAPHICS_FOV"));
+    //glob::GetCamera().SetFov(GlobalSettings::Access()->ValueOf("GRAPHICS_FOV"));
     mouse_sensitivity_ = GlobalSettings::Access()->ValueOf("INPUT_MOUSE_SENS");
   }
 
@@ -48,6 +49,8 @@ class Engine {
     previous_state_ = current_state_->Type();
     UpdateSettingsValues();
   }
+  void ClearPlayerInfos();
+
   NetAPI::Socket::Client& GetClient() { return client_; }
   NetAPI::Common::Packet& GetPacket() { return packet_; }
   void SetTakeInput(bool should_take) { take_game_input_ = should_take; }
@@ -92,12 +95,26 @@ class Engine {
     play_state_.Init();
   }
 
-  std::unordered_map<PlayerID, PlayerStatInfo> GetPlayerScores() {
+  StateType CurrentStateType() {
+    return current_state_->Type();
+  }
+
+  std::unordered_map<long, PlayerStatInfo> GetPlayerScores() {
     return player_scores_;
   }
 
-  bool IsRecording() { return recording_; }
-  bool IsReplaying() { return replaying_; }
+  // Replay stuff---
+  ClientReplayMachine* GetReplayMachinePtr() { return this->replay_machine_; }
+  bool IsRecording() const { return this->play_state_.IsRecording(); }
+  // Replay stuff---
+
+  // Entity destruction---
+  void EngineDestroyEntity(entt::registry& in_registry, entt::entity& in_entity);
+  // Entity destruction---
+
+  void ClearNames() {
+    player_names_.clear();
+  }
 
  private:
   void SetKeybinds();
@@ -105,16 +122,6 @@ class Engine {
   void UpdateChat(float dt);
   void UpdateSystems(float dt);
   void HandlePacketBlock(NetAPI::Common::Packet& packet);
-
-  // Replay Functions---
-  void BeginRecording();
-  // void DoRecording();
-  void StopRecording();
-  void SaveRecording();
-  void BeginReplay();
-  void PlayReplay();
-  void UpdateReplayCamera();
-  // Replay Functions---
 
   NetAPI::Socket::Client client_;
   NetAPI::Common::Packet packet_;
@@ -126,6 +133,7 @@ class Engine {
   MainMenuState main_menu_state_;
   LobbyState lobby_state_;
   PlayState play_state_;
+  ReplayState replay_state_;
   ConnectMenuState connect_menu_state_;
   SettingsState settings_state_;
   CreateServerState create_server_state_;
@@ -163,11 +171,11 @@ class Engine {
   ServerStateType server_state_;
   SoundSystem sound_system_;
   AnimationSystem animation_system_;
+  ParticleSystem particle_system_;
 
   AbilityID second_ability_ = AbilityID::NULL_ABILITY;
-  unsigned int new_team_ = std::numeric_limits<unsigned int>::max();
 
-  std::unordered_map<PlayerID, PlayerStatInfo> player_scores_;
+  std::unordered_map<long, PlayerStatInfo> player_scores_;
 
   StateType previous_state_;
 
@@ -177,10 +185,6 @@ class Engine {
   std::list<float> time_test;
 
   // Replay Variables ---
-  bool recording_ = false;
-  bool replaying_ = false;
-  entt::registry* registry_on_hold_ = nullptr;
-  entt::registry* registry_replay_ = nullptr;
   ClientReplayMachine* replay_machine_ = nullptr;
   // Replay Variables ---
 };

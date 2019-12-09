@@ -1,0 +1,13 @@
+
+>color= 1.0 1.0 0.3 1.0
+>end_color= 0.5 0.5 0.5 0.0
+>velocity= 10.0
+>dir_val= 0.0
+>end_velocity= 0.0
+>spawn_rate=100
+>direction= -1 0 0
+>time= 1.0
+>size= 0.017
+>end_size= 0.017
+>emissive= 1
+>shader= sparks

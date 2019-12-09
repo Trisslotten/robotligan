@@ -1,10 +1,10 @@
 #include "gameserver.hpp"
 #include <algorithm>
 #include <bitset>
+#include <filesystem>
 #include <glob/graphics.hpp>
 #include <iostream>
 #include <numeric>
-#include <filesystem>
 
 #include "shared/id_component.hpp"
 #include "shared/pick_up_component.hpp"
@@ -16,13 +16,14 @@
 #include "ecs/systems/black_hole_system.hpp"
 #include "ecs/systems/buff_controller_system.hpp"
 #include "ecs/systems/collision_system.hpp"
+#include "ecs/systems/fishing_system.hpp"
 #include "ecs/systems/goal_system.hpp"
 #include "ecs/systems/lifetime_system.hpp"
 #include "ecs/systems/missile_system.hpp"
 #include "ecs/systems/physics_system.hpp"
+#include "ecs/systems/pickup_spawner_system.hpp"
 #include "ecs/systems/player_controller_system.hpp"
 #include "ecs/systems/target_system.hpp"
-#include "ecs/systems/pickup_spawner_system.hpp"
 #include "util/settings.hpp"
 #include "util/winadpihelpers.hpp"
 namespace {}  // namespace
@@ -68,6 +69,8 @@ void GameServer::Init(double in_update_rate,
       GlobalSettings::Access()->ValueOf("ABILITY_BLACKOUT_COOLDOWN");
   ability_cooldowns_[AbilityID::MINE] =
       GlobalSettings::Access()->ValueOf("ABILITY_MINE_COOLDOWN");
+  ability_cooldowns_[AbilityID::FISHINGING_POLE] =
+      GlobalSettings::Access()->ValueOf("ABILITY_FISHING_POLE_COOLDOWN");
 
   ability_controller::ability_cooldowns = ability_cooldowns_;
 
@@ -111,22 +114,6 @@ void GameServer::Update(float dt) {
     p << this->current_state_type_ << PacketBlockType::SERVER_STATE;
     server_.Send(p);
   }
-
-  /*
-  TODO: fix
-  if (client_sent_name_ && current_state_type_ == ServerStateType::PLAY) {
-    for (auto& [client_id, to_send] : GetPackets()) {
-      for (auto [cl_id, name] : client_names_) {
-        std::cout << "TO_CLIENT_SEND: " << name << "\n";
-        to_send.Add(name.data(), name.size());
-        to_send << name.size();
-        to_send << cl_id;
-        to_send << PacketBlockType::TO_CLIENT_NAME;
-      }
-    }
-  }
-  client_sent_name_ = false;
-  */
 
   // handle received data
   for (auto& [id, client_data] : server_.GetClients()) {
@@ -242,7 +229,7 @@ void GameServer::HandleStateChange() {
     p << this->current_state_type_ << PacketBlockType::SERVER_STATE;
     server_.Send(p);
 
-    if (went_from_play_to_lobby) client_names_.clear();
+    //if (went_from_play_to_lobby) client_names_.clear();
   }
 }
 
@@ -263,7 +250,6 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
     }
     case PacketBlockType::CLIENT_READY: {
       lobby_state_.SetClientIsReady(client_id, true);
-      std::cout << "PACKET: CLIENT_READY: " << client_id << "\n";
       break;
     }
     case PacketBlockType::CLIENT_NOT_READY: {
@@ -356,19 +342,24 @@ void GameServer::HandlePacketBlock(NetAPI::Common::Packet& packet,
       packet.Remove(name.data(), len);
       if (client_names_[client_id] != name) {
         while (NameAlreadyExists(name)) {
-          if (name.find("(") != std::string::npos) {
+          name.append("xD");
+          /*if (name.find("(") != std::string::npos) {
             auto index = name.find("(");
             unsigned s = (name.at(index + 1) - '0');
             s++;
             name.at(index + 1) = (char)s;
           } else {
             name.append("(1)");
-          }
+          }*/
         }
         client_names_[client_id] = name;
         lobby_state_.SetTeamsUpdated(true);
         this->client_sent_name_ = true;
       }
+      break;
+    }
+    case PacketBlockType::WANT_DAB: {
+      play_state_.SetWantDab(client_id);
       break;
     }
   }
@@ -388,6 +379,9 @@ void GameServer::ReceiveGameEvent(const GameEvent& event) {
   if (event.type == GameEvent::GOAL) {
     play_state_.StartResetTimer();
   }
+  if (event.type == GameEvent::SWITCH_GOALS_BEGIN) {
+    play_state_.SetSwitchingGoals(true);
+  }
 }
 
 void GameServer::UpdateSystems(float dt) {
@@ -402,11 +396,16 @@ void GameServer::UpdateSystems(float dt) {
   UpdateCollisions(registry_);
   lifetime::Update(registry_, dt);
   pickup_spawner_system::Update(registry_, dt);
+  fishing_system::Update(registry_, dt);
 
   if (!play_state_.IsResetting()) goal_system::Update(registry_);
 
   dispatcher.update<EventInfo>();
   // glob::LoadWireframeMesh(model_arena, mh.pos, mh.indices);
+}
+
+void GameServer::HandleSwitchGoal() {
+  goal_system::PerformSwitchGoals(registry_);
 }
 
 void GameServer::ReceiveEvent(const EventInfo& e) {

@@ -7,7 +7,6 @@
 #include <ecs/components.hpp>
 #include <ecs/components/player_component.hpp>
 #include <shared/transform_component.hpp>
-#include <ecs/components.hpp>
 
 #include <glob/graphics.hpp>
 //---
@@ -47,10 +46,13 @@ class PlayerFrame : public DataFrame {
   // physics stuff
   glm::vec3 velocity_;
 
+  // Team
+  unsigned int team_ = TEAM_RED;
+
  public:
   PlayerFrame();
   PlayerFrame(TransformComponent& in_transform_c, PlayerComponent& in_player_c,
-              PhysicsComponent& in_phys_c);
+              PhysicsComponent& in_phys_c, unsigned int player_team);
   ~PlayerFrame();
 
   DataFrame* Clone();
@@ -60,7 +62,8 @@ class PlayerFrame : public DataFrame {
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
   void WriteBack(TransformComponent& in_transform_c,
-                 PlayerComponent& in_player_c, PhysicsComponent& in_phys_c);
+                 PlayerComponent& in_player_c, PhysicsComponent& in_phys_c,
+                 unsigned int& in_team);
 };
 
 //---
@@ -72,10 +75,11 @@ class BallFrame : public DataFrame {
   // glm::vec3 scale_;
 
   // NTS: See comment in declaration of PlayerFrame
+  glm::vec4 trail_color_;
 
  public:
   BallFrame();
-  BallFrame(TransformComponent& in_transform_c);
+  BallFrame(TransformComponent& in_transform_c, TrailComponent& in_trail_c);
   ~BallFrame();
 
   DataFrame* Clone();
@@ -84,7 +88,7 @@ class BallFrame : public DataFrame {
   DataFrame* InterpolateForward(unsigned int in_dist_to_target,
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
-  void WriteBack(TransformComponent& in_transform_c);
+  void WriteBack(TransformComponent& in_transform_c, TrailComponent& in_trail_c);
 };
 
 //---
@@ -107,15 +111,15 @@ class PickUpFrame : public DataFrame {
   void WriteBack(TransformComponent& in_transform_c);
 };
 
-
 //-----Wall---------------
 class WallFrame : public DataFrame {
  protected:
   glm::vec3 position_;
   glm::quat rotation_;
+  unsigned int team_ = TEAM_RED;
  public:
   WallFrame();
-  WallFrame(TransformComponent& trans_c);
+  WallFrame(TransformComponent& trans_c, WallComponent& wall_c);
   ~WallFrame();
 
   DataFrame* Clone();
@@ -123,8 +127,7 @@ class WallFrame : public DataFrame {
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
   bool ThresholdCheck(DataFrame& in_future_df);
-  void WriteBack(TransformComponent& trans_c);
-
+  void WriteBack(TransformComponent& trans_c, WallComponent& wall_c);
 };
 
 //---
@@ -134,9 +137,11 @@ class ShotFrame : public DataFrame {
   glm::vec3 position_;
   glm::quat rotation_;
 
+  glm::vec4 trail_color_;
+
  public:
   ShotFrame();
-  ShotFrame(TransformComponent& in_transform_c);
+  ShotFrame(TransformComponent& in_transform_c, TrailComponent& in_trail_c);
   ~ShotFrame();
 
   ShotFrame* Clone();
@@ -145,7 +150,7 @@ class ShotFrame : public DataFrame {
   DataFrame* InterpolateForward(unsigned int in_dist_to_target,
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
-  void WriteBack(TransformComponent& in_transform_c);
+  void WriteBack(TransformComponent& in_transform_c, TrailComponent& in_trail_c);
 };
 
 //---
@@ -172,24 +177,25 @@ class TeleportShotFrame : public DataFrame {
 
 class MissileFrame : public DataFrame {
  protected:
-   glm::vec3 position_;
-   glm::quat rotation_;
+  glm::vec3 position_;
+  glm::quat rotation_;
 
  public:
-   MissileFrame();
-   MissileFrame(TransformComponent& in_transform_c);
-   ~MissileFrame();
+  MissileFrame();
+  MissileFrame(TransformComponent& in_transform_c);
+  ~MissileFrame();
 
-   MissileFrame* Clone();
+  MissileFrame* Clone();
 
-   bool ThresholdCheck(DataFrame& in_future_df);
-   DataFrame* InterpolateForward(unsigned int in_dist_to_target,
-                                 unsigned int in_dist_to_point_b,
-                                 DataFrame& in_point_b);
-   void WriteBack(TransformComponent& in_transform_c);
+  bool ThresholdCheck(DataFrame& in_future_df);
+  DataFrame* InterpolateForward(unsigned int in_dist_to_target,
+                                unsigned int in_dist_to_point_b,
+                                DataFrame& in_point_b);
+  void WriteBack(TransformComponent& in_transform_c);
 };
 
-//-----Force push---------------
+//---
+
 class ForcePushFrame : public DataFrame {
  protected:
   glm::vec3 position_;
@@ -208,14 +214,16 @@ class ForcePushFrame : public DataFrame {
   void WriteBack(TransformComponent& trans_c);
 };
 
-//-----Mines---------------
+//---
+
 class MineFrame : public DataFrame {
  protected:
   glm::vec3 position_;
+  unsigned int team_;
 
  public:
   MineFrame();
-  MineFrame(TransformComponent& trans_c);
+  MineFrame(TransformComponent& trans_c, MineComponent& mine_c);
   ~MineFrame();
 
   DataFrame* Clone();
@@ -223,10 +231,11 @@ class MineFrame : public DataFrame {
                                 unsigned int in_dist_to_point_b,
                                 DataFrame& in_point_b);
   bool ThresholdCheck(DataFrame& in_future_df);
-  void WriteBack(TransformComponent& trans_c);
+  void WriteBack(TransformComponent& trans_c, MineComponent& mine_c);
 };
 
-//-----Mines---------------
+//---
+
 class BlackholeFrame : public DataFrame {
  protected:
   glm::vec3 position_;
@@ -244,4 +253,27 @@ class BlackholeFrame : public DataFrame {
   bool ThresholdCheck(DataFrame& in_future_df);
   void WriteBack(TransformComponent& trans_c);
 };
+
+//---
+
+class HookFrame : public DataFrame {
+ protected:
+  glm::vec3 position_;
+  glm::quat rotation_;
+
+  EntityID owner_;
+
+ public:
+  HookFrame();
+  HookFrame(TransformComponent& trans_c, HookComponent& hook_c);
+  ~HookFrame();
+
+  DataFrame* Clone();
+  DataFrame* InterpolateForward(unsigned int in_dist_to_target,
+                                unsigned int in_dist_to_point_b,
+                                DataFrame& in_point_b);
+  bool ThresholdCheck(DataFrame& in_future_df);
+  void WriteBack(TransformComponent& trans_c, HookComponent& hook_c);
+};
+
 #endif  // DATA_FRAME_HPP_

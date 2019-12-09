@@ -134,10 +134,7 @@ void RenderSystem(entt::registry& registry) {
         }
       }
       if (button_c.has_hovered) {
-        glm::vec2 tooltip_pos = Input::MousePos();
-        tooltip_pos.y =
-            glob::window::GetWindowDimensions().y - tooltip_pos.y - 15;
-        tooltip_pos.x += 20;
+        glm::vec2 tooltip_pos = button_c.tooltip_pos;
 		glob::Submit(button_c.f_handle, tooltip_pos - glm::vec2(1,1), 32, button_c.hover_text, glm::vec4(0,0,0,0.7));
         glob::Submit(button_c.f_handle, tooltip_pos, 32, button_c.hover_text);
 	  }
@@ -172,7 +169,9 @@ void RenderSystem(entt::registry& registry) {
   auto view_trails = registry.view<TrailComponent>();
   for (auto entity : view_trails) {
     auto& trail_c = view_trails.get(entity);
-    glob::SubmitTrail(trail_c.positions, trail_c.width, trail_c.color);
+    if (registry.valid(entity)) {
+      glob::SubmitTrail(trail_c.positions, trail_c.width, trail_c.color);
+	}
   }
 }
 #endif  // RENDER_SYSTEM_HPP_

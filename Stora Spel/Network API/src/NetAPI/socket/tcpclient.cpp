@@ -7,7 +7,7 @@ NetAPI::Socket::TcpClient::TcpClient() {
   rec_buffer_ = new char[buffer_size_];
   temp_buffer_ = new char[buffer_size_];
   timeout_.tv_sec = 0;
-  timeout_.tv_usec = 50;
+  timeout_.tv_usec = 1;
 }
 
 NetAPI::Socket::TcpClient::TcpClient(const TcpClient& other) {
@@ -80,7 +80,7 @@ bool NetAPI::Socket::TcpClient::Send(NetAPI::Common::Packet& p) {
   FD_ZERO(&write_fd);  // Reset the File Descriptor
   FD_SET(send_socket_, &write_fd);
   timeout_.tv_sec = 0;
-  timeout_.tv_usec = 50;
+  timeout_.tv_usec = 1;
   // std::cout << "Network: send packet size=" << p.GetPacketSize() << "\n";
   if (select(send_socket_, NULL, &write_fd, NULL, &timeout_) > 0) {
     error_ = send(send_socket_, p.GetRaw(), (int)p.GetPacketSize(), 0);
@@ -136,7 +136,7 @@ std::vector<NetAPI::Common::Packet> NetAPI::Socket::TcpClient::Receive(
       }
       return result;
     }
-    if (last_buff_len_ == 0 || (WSAGetLastError() == WSAECONNRESET)) {
+    if (last_buff_len_ == 0 || (WSAGetLastError() == WSAECONNRESET) || WSAGetLastError() == WSAECONNABORTED) {
       connected_ = false;
       this->Disconnect();
       return result;
@@ -161,8 +161,8 @@ void NetAPI::Socket::TcpClient::operator=(const SOCKET& other) {
 }
 NetAPI::Socket::TcpClient& NetAPI::Socket::TcpClient::operator=(
     const TcpClient& other) {
-  delete rec_buffer_;
-  delete temp_buffer_;
+  delete[] rec_buffer_;
+  delete[] temp_buffer_;
   temp_buffer_ = rec_buffer_ = nullptr;
   rec_buffer_ = new char[other.buffer_size_];
   temp_buffer_ = new char[other.buffer_size_];

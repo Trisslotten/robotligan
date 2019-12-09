@@ -2,7 +2,7 @@
 
 layout(location = 0) out vec4 out_color;
 layout(location = 1) out vec4 out_emission;
-layout(location = 2) out vec4 out_depth;
+//layout(location = 2) out vec4 out_depth;
 
 in vec3 local_pos;
 in vec3 local_normal;
@@ -223,10 +223,7 @@ void main() {
 	color += dither();
 	//float gamma = 2.2;
 	//color = pow(color, vec3(gamma));
-	//vec3 color = vec3(1);
-	//float alpha = 1.0;
-	//vec3 emission = vec3(1); 
 	out_color = vec4(color, alpha);
 	out_emission = vec4(emission/2.0, emission_alpha);
-	out_depth = vec4(gl_FragCoord.z,0,0,0);
+	//out_depth = vec4(gl_FragCoord.z,0,0,0);
 }

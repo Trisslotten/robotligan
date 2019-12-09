@@ -22,6 +22,7 @@ enum ReplayObjectType {
   REPLAY_FORCE_PUSH,
   REPLAY_MINE,
   REPLAY_BLACKHOLE,
+  REPLAY_HOOK,
   NUM_OF_REPLAY_OBJECT_TYPES  // End
 };
 
@@ -32,9 +33,15 @@ class GeometricReplay {
     DataFrame* data_ptr = nullptr;
     bool ending_entry = false;
 
+    // Default constructor
     ChannelEntry() {}
 
+    // Copy Constructor
     ChannelEntry(const ChannelEntry& in_ce) {
+      if (data_ptr != nullptr) {
+        delete data_ptr;
+      }
+
       this->frame_number = in_ce.frame_number;
       this->data_ptr = nullptr;
       if (in_ce.data_ptr != nullptr) {
@@ -43,19 +50,29 @@ class GeometricReplay {
       this->ending_entry = in_ce.ending_entry;
     }
 
+    // Destructor
     ~ChannelEntry() {
       if (data_ptr != nullptr) {
         delete data_ptr;
       }
     }
 
-    void operator=(ChannelEntry const& rhs) {
+    // Assignment operator
+    ChannelEntry& operator=(ChannelEntry const& rhs) {
+      if (&rhs == this) return *this;
+
+      if (data_ptr != nullptr) {
+        delete data_ptr;
+      }
+
       this->frame_number = rhs.frame_number;
       this->data_ptr = nullptr;
       if (rhs.data_ptr != nullptr) {
         this->data_ptr = rhs.data_ptr->Clone();
       }
       this->ending_entry = rhs.ending_entry;
+
+      return *this;
     }
   };
 
@@ -65,6 +82,24 @@ class GeometricReplay {
     std::vector<ChannelEntry> entries;
     unsigned int index_a = 0;
     unsigned int index_b = 0;
+
+    // Destructor
+    ~FrameChannel() { entries.clear(); }
+
+    // Assignment operator
+    FrameChannel& operator=(FrameChannel const& rhs) {
+      if (&rhs == this) return *this;
+
+      this->object_type = rhs.object_type;
+      this->object_id = rhs.object_id;
+
+      this->entries = rhs.entries;
+
+      this->index_a = rhs.index_a;
+      this->index_b = rhs.index_b;
+
+      return *this;
+    }
   };
 
   struct CapturedGameEvent {
@@ -72,9 +107,7 @@ class GeometricReplay {
     unsigned int frame_number;
   };
 
-  std::vector<CapturedGameEvent> captured_events_;
-  unsigned int next_index_to_read_ = 0;
-
+  //---
   ReplayObjectType IdentifyEntity(entt::entity& in_entity,
                                   entt::registry& in_registry);
 
@@ -98,13 +131,19 @@ class GeometricReplay {
   void CreateEntityFromChannel(unsigned int in_channel_index,
                                entt::registry& in_registry);
 
-  Engine* engine_;
+  void CreateChannelForEntity(entt::entity& in_entity, IDComponent& in_id_c,
+                              entt::registry& in_registry);
+  void FrameChannelCleanUp();
 
  protected:
   std::vector<FrameChannel> channels_;
   unsigned int threshhold_age_;
   unsigned int current_frame_number_write_ = 0;
   unsigned int current_frame_number_read_ = 0;
+
+  Engine* engine_;
+  std::vector<CapturedGameEvent> captured_events_;
+  unsigned int next_event_index_to_read_ = 0;
 
   GeometricReplay();
 
@@ -129,11 +168,16 @@ class GeometricReplay {
 
   void ChannelCatchUp();
 
-  std::string GetGeometricReplayTree();
-  std::string GetStateOfReplay();
-
   void ReceiveGameEvent(GameEvent event);
   void SetEngine(Engine* eng) { engine_ = eng; }
+
+  void ClearAllVectors();
+
+  //---
+
+  std::string GetGeometricReplayTree();
+  std::string GetGeometricReplayState();
+  std::string GetGeometricReplaySummary();
 };
 
 #endif  // !GEOMETRIC_REPLAY_HPP_

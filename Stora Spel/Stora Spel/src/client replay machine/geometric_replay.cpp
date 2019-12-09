@@ -47,6 +47,8 @@ ReplayObjectType GeometricReplay::IdentifyEntity(entt::entity& in_entity,
       return ReplayObjectType::REPLAY_FORCE_PUSH;
     } else if (proj_c.projectile_id == ProjectileID::BLACK_HOLE) {
       return ReplayObjectType::REPLAY_BLACKHOLE;
+    } else if (proj_c.projectile_id == ProjectileID::FISHING_HOOK) {
+      return ReplayObjectType::REPLAY_HOOK;
     }
   } else if (in_registry.has<MineComponent>(in_entity)) {
     return ReplayObjectType::REPLAY_MINE;
@@ -92,13 +94,16 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
         in_registry.get<TransformComponent>(in_entity);
     PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
     PhysicsComponent& phys_c = in_registry.get<PhysicsComponent>(in_entity);
+    IDComponent& id_c = in_registry.get<IDComponent>(in_entity);
 
-    ret_ptr = new PlayerFrame(transform_c, player_c, phys_c);
+    ret_ptr = new PlayerFrame(transform_c, player_c, phys_c,
+                              engine_->GetPlayerTeam(id_c.id));
   } else if (object_type == REPLAY_BALL) {
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
+    TrailComponent& trail_c = in_registry.get<TrailComponent>(in_entity);
 
-    ret_ptr = new BallFrame(transform_c);
+    ret_ptr = new BallFrame(transform_c, trail_c);
   } else if (object_type == REPLAY_PICKUP) {
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
@@ -107,12 +112,14 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
   } else if (object_type == REPLAY_WALL) {
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
-    ret_ptr = new WallFrame(trans_c);
+    WallComponent& wall_c = in_registry.get<WallComponent>(in_entity);
+    ret_ptr = new WallFrame(trans_c, wall_c);
   } else if (object_type == REPLAY_SHOT) {
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
+    TrailComponent& trail_c = in_registry.get<TrailComponent>(in_entity);
 
-    ret_ptr = new ShotFrame(transform_c);
+    ret_ptr = new ShotFrame(transform_c, trail_c);
   } else if (object_type == REPLAY_TELEPORT_SHOT) {
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
@@ -130,11 +137,17 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
   } else if (object_type == REPLAY_MINE) {
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
-    ret_ptr = new MineFrame(trans_c);
+    MineComponent& mine_c = in_registry.get<MineComponent>(in_entity);
+    ret_ptr = new MineFrame(trans_c, mine_c);
   } else if (object_type == REPLAY_BLACKHOLE) {
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
     ret_ptr = new BlackholeFrame(trans_c);
+  } else if (object_type == REPLAY_HOOK) {
+    TransformComponent& trans_c =
+        in_registry.get<TransformComponent>(in_entity);
+    HookComponent& hook_c = in_registry.get<HookComponent>(in_entity);
+    ret_ptr = new HookFrame(trans_c, hook_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unidentified entity");
@@ -259,38 +272,44 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
     PhysicsComponent& phys_c = in_registry.get<PhysicsComponent>(in_entity);
 
+    // Just placeholder, isn't used here
+    unsigned int player_team = TEAM_RED;
+
     // Transfer
-    pf_c_ptr->WriteBack(transform_c, player_c, phys_c);
+    pf_c_ptr->WriteBack(transform_c, player_c, phys_c, player_team);
   } else if (in_type == REPLAY_BALL) {
     // Cast
     BallFrame* bf_c_ptr = dynamic_cast<BallFrame*>(in_df_ptr);
     // Get
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
+    TrailComponent& trail_c = in_registry.get<TrailComponent>(in_entity);
     // Transfer
-    bf_c_ptr->WriteBack(transform_c);
+    bf_c_ptr->WriteBack(transform_c, trail_c);
   } else if (in_type == REPLAY_PICKUP) {
+    // TRACKER PICKUP WRITEBACK
     PickUpFrame* pu_c_ptr = dynamic_cast<PickUpFrame*>(in_df_ptr);
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
     pu_c_ptr->WriteBack(trans_c);
-    // TBA
   } else if (in_type == REPLAY_WALL) {
     // Cast
     WallFrame* wf_c_ptr = dynamic_cast<WallFrame*>(in_df_ptr);
     // Get
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
+    WallComponent& wall_c = in_registry.get<WallComponent>(in_entity);
     // Transfer
-    wf_c_ptr->WriteBack(trans_c);
+    wf_c_ptr->WriteBack(trans_c, wall_c);
   } else if (in_type == REPLAY_SHOT) {
     // Cast
     ShotFrame* sf_c_ptr = dynamic_cast<ShotFrame*>(in_df_ptr);
     // Get
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
+    TrailComponent& trail_c = in_registry.get<TrailComponent>(in_entity);
     // Transfer
-    sf_c_ptr->WriteBack(transform_c);
+    sf_c_ptr->WriteBack(transform_c, trail_c);
   } else if (in_type == REPLAY_TELEPORT_SHOT) {
     // Cast
     TeleportShotFrame* tsf_c_ptr = dynamic_cast<TeleportShotFrame*>(in_df_ptr);
@@ -321,8 +340,9 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     // Get
     TransformComponent& trans_c =
         in_registry.get<TransformComponent>(in_entity);
+    MineComponent& mine_c = in_registry.get<MineComponent>(in_entity);
     // Transfer
-    mf_c_ptr->WriteBack(trans_c);
+    mf_c_ptr->WriteBack(trans_c, mine_c);
   } else if (in_type == REPLAY_BLACKHOLE) {
     // Cast
     BlackholeFrame* bh_c_ptr = dynamic_cast<BlackholeFrame*>(in_df_ptr);
@@ -331,6 +351,15 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
         in_registry.get<TransformComponent>(in_entity);
     // Transfer
     bh_c_ptr->WriteBack(trans_c);
+  } else if (in_type == REPLAY_HOOK) {
+    // Cast
+    HookFrame* hf_c_ptr = dynamic_cast<HookFrame*>(in_df_ptr);
+    // Get
+    TransformComponent& trans_c =
+        in_registry.get<TransformComponent>(in_entity);
+    HookComponent& hook_c = in_registry.get<HookComponent>(in_entity);
+    // Transfer
+    hf_c_ptr->WriteBack(trans_c, hook_c);
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
@@ -374,13 +403,25 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     model_c.handles.push_back(mh_mech);
     model_c.offset = glm::vec3(0.f, 0.9f, 0.f);
 
+    // Add animation stuff
     AnimationComponent& anim_c = in_registry.assign<AnimationComponent>(
         entity, glob::GetAnimationData(mh_mech));
 
+    // Add sound stuff
     in_registry.assign<SoundComponent>(
         entity, engine_->GetSoundEngine().CreatePlayer());
 
-    pf_ptr->WriteBack(transform_c, player_c, phys_c);
+    // Assume mech to be red
+    unsigned int player_team = TEAM_RED;
+    model_c.diffuse_index = 0;
+
+    // Write back date from DataFrame
+    pf_ptr->WriteBack(transform_c, player_c, phys_c, player_team);
+
+    // If assumption wrong, swap
+    if (player_team == TEAM_BLUE) {
+      model_c.diffuse_index = 1;
+    }
   } else if (object_type == REPLAY_BALL) {
     BallFrame* bf_ptr = dynamic_cast<BallFrame*>(df_ptr);
     in_registry.assign<IDComponent>(
@@ -392,7 +433,8 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     //
     TransformComponent& transform_c =
         in_registry.assign<TransformComponent>(entity);
-    bf_ptr->WriteBack(transform_c);
+    TrailComponent& trail_c = in_registry.assign<TrailComponent>(entity);
+    bf_ptr->WriteBack(transform_c, trail_c);
 
     // Create and add ModelHandle
     glob::ModelHandle mh_ball_proj = glob::GetModel(kModelPathBallProjectors);
@@ -405,20 +447,20 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     in_registry.assign<LightComponent>(entity, glm::vec3(0.f, 1.f, 0.f), 20.f,
                                        0.f, false);
 
-    // Add trail
-    in_registry.assign<TrailComponent>(entity);
   } else if (object_type == REPLAY_PICKUP) {
     PickUpFrame* pu_ptr = dynamic_cast<PickUpFrame*>(df_ptr);
     in_registry.assign<IDComponent>(entity,
                                     channels_.at(in_channel_index).object_id);
+
     TransformComponent& trans_c =
         in_registry.assign<TransformComponent>(entity);
-    pu_ptr->WriteBack(trans_c);
+    pu_ptr->WriteBack(trans_c);  // TRACKER PICKUP WRITEBACK
 
     glob::ModelHandle pickup_model = glob::GetModel(kModelPathPickup);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     model_c.handles.push_back(pickup_model);
-    // TBA
+
+    in_registry.assign<PickUpComponent>(entity, trans_c.position);
   } else if (object_type == REPLAY_WALL) {
     // -Cast DataFrame to correct type
     WallFrame* wf_c_ptr = dynamic_cast<WallFrame*>(df_ptr);
@@ -427,12 +469,21 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     // - Assign the relevant components to entity
     TransformComponent& trans_c =
         in_registry.assign<TransformComponent>(entity);
-    wf_c_ptr->WriteBack(trans_c);
+    WallComponent& wall_c = in_registry.assign<WallComponent>(entity);
+    wf_c_ptr->WriteBack(trans_c, wall_c);
     // - Assign a model component to thew entity
     glob::ModelHandle wall_model = glob::GetModel(kModelPathWall);
+    glob::ModelHandle wall_trans = glob::GetModel(kModelPathWallTransparent);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    // - Set color on wall
+    if (wall_c.owner_team == TEAM_BLUE) {
+      model_c.diffuse_index = 1;
+    } else {
+      model_c.diffuse_index = 0;
+    }
     // - Add the relevant ModelHandle:s to entity
     model_c.handles.push_back(wall_model);
+    model_c.handles.push_back(wall_trans);
   } else if (object_type == REPLAY_SHOT) {
     ShotFrame* sf_ptr = dynamic_cast<ShotFrame*>(df_ptr);
     in_registry.assign<IDComponent>(
@@ -441,7 +492,10 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     //
     TransformComponent& transform_c =
         in_registry.assign<TransformComponent>(entity);
-    sf_ptr->WriteBack(transform_c);
+    TrailComponent& trail_c = in_registry.assign<TrailComponent>(entity);
+    trail_c.width = 0.2f;
+
+    sf_ptr->WriteBack(transform_c, trail_c);
 
     // Create and add ModelHandle
     glob::ModelHandle mh_shot = glob::GetModel(kModelPathRocket);
@@ -497,15 +551,22 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
   } else if (object_type == REPLAY_MINE) {
     // -Cast DataFrame to correct type
     MineFrame* mf_c_ptr = dynamic_cast<MineFrame*>(df_ptr);
+    // - Assign the relevant components to entity
     in_registry.assign<IDComponent>(entity,
                                     channels_.at(in_channel_index).object_id);
-    // - Assign the relevant components to entity
     TransformComponent& trans_c =
         in_registry.assign<TransformComponent>(entity);
-    mf_c_ptr->WriteBack(trans_c);
+    MineComponent& mine_c = in_registry.assign<MineComponent>(entity);
+    mf_c_ptr->WriteBack(trans_c, mine_c);
     // - Assign a model component to thew entity
     glob::ModelHandle mine_model = glob::GetModel(kModelPathMine);
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    // - Set color on wall
+    if (mine_c.owner_team == TEAM_BLUE) {
+      model_c.diffuse_index = 1;
+    } else {
+      model_c.diffuse_index = 0;
+    }
     // - Add the relevant ModelHandle:s to entity
     model_c.handles.push_back(mine_model);
   } else if (object_type == REPLAY_BLACKHOLE) {
@@ -522,17 +583,98 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     // - Add the relevant ModelHandle:s to entity
     model_c.handles.push_back(blackhole_model);
+  } else if (object_type == REPLAY_HOOK) {
+    // -Cast DataFrame to correct type
+    HookFrame* h_c_ptr = dynamic_cast<HookFrame*>(df_ptr);
+    in_registry.assign<IDComponent>(entity,
+                                    channels_.at(in_channel_index).object_id);
+    // - Assign the relevant components to entity
+    TransformComponent& trans_c =
+        in_registry.assign<TransformComponent>(entity);
+    HookComponent& hook_c = in_registry.assign<HookComponent>(entity);
+    h_c_ptr->WriteBack(trans_c, hook_c);
+    // - Assign a model component to thew entity
+    glob::ModelHandle hook_model = glob::GetModel(kModelPathHook);
+    ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
+    // - Add the relevant ModelHandle:s to entity
+    model_c.handles.push_back(hook_model);
+
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
   }
 }
 
-void GeometricReplay::ReceiveGameEvent(GameEvent event) {
-  CapturedGameEvent cge;
-  cge.event = event;
-  cge.frame_number = current_frame_number_write_;
-  captured_events_.push_back(cge);
+void GeometricReplay::CreateChannelForEntity(entt::entity& in_entity,
+                                             IDComponent& in_id_c,
+                                             entt::registry& in_registry) {
+  // Entry
+  ChannelEntry temp_ce;
+  this->FillChannelEntry(temp_ce, in_entity, in_registry);
+
+  // Channel
+  FrameChannel temp_fc;
+  temp_fc.object_type = this->IdentifyEntity(in_entity, in_registry);
+  temp_fc.object_id = in_id_c.id;
+  temp_fc.entries.push_back(temp_ce);
+
+  this->channels_.push_back(temp_fc);
+}
+
+void GeometricReplay::FrameChannelCleanUp() {
+  // Check the first entry in each channel
+  // Its age can be calculated by checking the current number of
+  // frames passed and comparing it to the frame it was saved on
+  // We do not want to record the entire match (due to memory consumption)
+  // so therefore:
+  //	1. Check if there are more than one entry in channel
+  //	2. If so, check if second entry is over age threshold
+  //	3. If so, remove first entry in channel (3.2) OR remove entire
+  //	channel if the second entry marks an ending entry* (3.1)
+  //
+  // *When an object disappears from the game world (and thus the replay)
+  // register that as an "ending entry".
+
+  for (unsigned int i = 0; i < this->channels_.size(); i++) {
+    if (this->channels_.at(i).entries.size() > 1) {  //(1.)
+      unsigned int age = this->current_frame_number_write_ -
+                         this->channels_.at(i).entries.at(1).frame_number;
+      if (age > this->threshhold_age_) {                         //(2.)
+        if (this->channels_.at(i).entries.at(1).ending_entry) {  //(3.1)
+          // Debug output
+          // GlobalSettings::Access()->WriteError(
+          //    "Target", "ObjID",
+          //    std::to_string(this->channels_.at(i).object_id));
+          // for (unsigned int j = 0; j < this->channels_.size(); j++) {
+          //  GlobalSettings::Access()->WriteError(
+          //      "Channel Sizes", "(id|pre-delete size)",
+          //      std::to_string(this->channels_.at(j).object_id) + "|" +
+          //          std::to_string(this->channels_.at(j).entries.size()));
+          //}
+          // GlobalSettings::Access()->WriteError("", "", "");
+          // Debug output
+
+          this->channels_.erase(this->channels_.begin() + i);
+          i--;
+
+          // Debug output
+          // for (unsigned int j = 0; j < this->channels_.size(); j++) {
+          //  GlobalSettings::Access()->WriteError(
+          //      "Channel Sizes", "(id|post-delete size)",
+          //      std::to_string(this->channels_.at(j).object_id) + "|" +
+          //          std::to_string(this->channels_.at(j).entries.size()));
+          //}
+          // GlobalSettings::Access()->WriteError("", "", "");
+          // Debug output
+        } else {  //(3.2)
+          this->channels_.at(i).entries.erase(
+              this->channels_.at(i).entries.begin());
+          // GlobalSettings::Access()->WriteError("", "", "Removing First
+          // Entry");
+        }
+      }
+    }
+  }
 }
 
 // Protected-------------------------------------------------------------------
@@ -542,6 +684,7 @@ GeometricReplay::GeometricReplay() {
   this->threshhold_age_ = 0;
   this->current_frame_number_write_ = 0;
   this->current_frame_number_read_ = 0;
+  this->engine_ = nullptr;
 }
 
 // Public----------------------------------------------------------------------
@@ -549,9 +692,9 @@ GeometricReplay::GeometricReplay() {
 GeometricReplay::GeometricReplay(unsigned int in_replay_length_sec,
                                  unsigned int in_frames_per_sec) {
   this->threshhold_age_ = in_replay_length_sec * in_frames_per_sec;
-
   this->current_frame_number_write_ = 0;
   this->current_frame_number_read_ = 0;
+  this->engine_ = nullptr;
 }
 
 GeometricReplay::~GeometricReplay() {}
@@ -559,13 +702,20 @@ GeometricReplay::~GeometricReplay() {}
 GeometricReplay* GeometricReplay::Clone() {
   GeometricReplay* clone = new GeometricReplay();
 
-  clone->channels_ = std::vector<FrameChannel>(this->channels_);
+  // clone->channels_ = std::vector<FrameChannel>(this->channels_);
   // NTS: According to the internet the above should produce a deep copy
+  // Fock it
+  for (unsigned int i = 0; i < this->channels_.size(); i++) {
+    FrameChannel temp_fc = this->channels_.at(i);
+    clone->channels_.push_back(temp_fc);
+  }
   clone->threshhold_age_ = this->threshhold_age_;
   clone->current_frame_number_write_ = this->current_frame_number_write_;
   clone->current_frame_number_read_ = this->current_frame_number_read_;
-  clone->captured_events_ = this->captured_events_;
+
   clone->engine_ = this->engine_;
+  clone->captured_events_ = this->captured_events_;
+  clone->next_event_index_to_read_ = this->next_event_index_to_read_;
 
   return clone;
 }
@@ -602,47 +752,12 @@ bool GeometricReplay::SaveFrame(entt::registry& in_registry) {
     // If after looping through an object still hasn't been found
     // it should be added to its own channel
     if (id_unfound) {
-      // Entry
-      ChannelEntry temp_ce;
-      this->FillChannelEntry(temp_ce, entity, in_registry);
-
-      // Channel
-      FrameChannel temp_fc;
-      temp_fc.object_type = this->IdentifyEntity(entity, in_registry);
-      temp_fc.object_id = id_c.id;
-      temp_fc.entries.push_back(temp_ce);
-
-      this->channels_.push_back(temp_fc);
+      this->CreateChannelForEntity(entity, id_c, in_registry);
     }
   }
 
-  // Check the first entry in each channel
-  // Its age can be calculated by checking the current number of
-  // frames passed and comparing it to the frame it was saved on
-  // We do not want to record the entire match (due to memory consumption)
-  // so therefore:
-  //	1. Check if there are more than one entry in channel
-  //	2. If so, check if second entry is over age threshold
-  //	3. If so, remove first entry in channel (3.2) OR remove entire
-  //	channel if the second entry marks an ending entry* (3.1)
-  //
-  // *When an object disappears from the game world (and thus the replay)
-  // register that as an "ending entry".
-  for (unsigned int i = 0; i < this->channels_.size(); i++) {
-    if (this->channels_.at(i).entries.size() > 1) {  //(1.)
-      unsigned int age = this->current_frame_number_write_ -
-                         this->channels_.at(i).entries.at(1).frame_number;
-      if (age > this->threshhold_age_) {                         //(2.)
-        if (this->channels_.at(i).entries.at(1).ending_entry) {  //(3.1)
-          this->channels_.erase(this->channels_.begin() + i);
-          i--;
-        } else {  //(3.2)
-          this->channels_.at(i).entries.erase(
-              this->channels_.at(i).entries.begin());
-        }
-      }
-    }
-  }
+  // Clear old and unnecessary data
+  this->FrameChannelCleanUp();
 
   // After having saved a frame, increment
   this->current_frame_number_write_++;
@@ -698,15 +813,18 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
     }
   }
 
-  if (next_index_to_read_ < captured_events_.size()) {
-    while (captured_events_[next_index_to_read_].frame_number ==
-           current_frame_number_read_) {
-      dispatcher.trigger(captured_events_[next_index_to_read_].event);
-      printf("Triggered event of type: %i \n",
-             captured_events_[next_index_to_read_].event.type);
-      next_index_to_read_++;
-    }
+  // Event handling:
+  // - Check the vector of captured events
+  // - Read all events with the current read frame's number
+  // - Dispatch them
+  while (next_event_index_to_read_ < captured_events_.size() &&
+         captured_events_[next_event_index_to_read_].frame_number ==
+             current_frame_number_read_) {
+    //
+    dispatcher.trigger(captured_events_[next_event_index_to_read_].event);
+    next_event_index_to_read_++;
   }
+
   // Increment read index
   this->current_frame_number_read_++;
 
@@ -738,6 +856,12 @@ void GeometricReplay::SetEndingFrame(EntityID in_id,
           this->channels_.at(i).entries.push_back(ending_ce);
 
           unfound = false;
+
+          // GlobalSettings::Access()->WriteError(
+          //    "Setting Ending Frame in Channel", "(Index|Id|Obj)",
+          //    std::to_string(i) + "|" +
+          //        std::to_string(this->channels_.at(i).object_id) + "|" +
+          //        std::to_string(this->channels_.at(i).object_type));
         }
       }
     }
@@ -794,6 +918,22 @@ void GeometricReplay::ChannelCatchUp() {
   }
 }
 
+void GeometricReplay::ReceiveGameEvent(GameEvent event) {
+  CapturedGameEvent cge;
+  cge.event = event;
+  cge.frame_number = current_frame_number_write_;
+  captured_events_.push_back(cge);
+}
+
+void GeometricReplay::ClearAllVectors() {
+  // Clear FrameChannel:s and CapturedGameEvent:S
+  // without reseting frame reads and writes
+  this->channels_.clear();
+  this->captured_events_.clear();
+}
+
+//---
+
 std::string GeometricReplay::GetGeometricReplayTree() {
   std::string ret_str = "Geometric Replay Tree\n";
   ret_str += "\tThreshold age: " + std::to_string(this->threshhold_age_) + "\n";
@@ -805,9 +945,9 @@ std::string GeometricReplay::GetGeometricReplayTree() {
                std::to_string(this->channels_.at(i).object_type) + "\n";
     ret_str += "\t\tChannel Entries: " +
                std::to_string(this->channels_.at(i).entries.size()) + "\n";
-    ret_str += "\t\tChannel write ended at frame: " +
+    ret_str += "\t\tChannel write at frame: " +
                std::to_string(this->current_frame_number_write_) + "\n";
-    ret_str += "\t\tChannel read starts at frame: " +
+    ret_str += "\t\tChannel read at frame: " +
                std::to_string(this->current_frame_number_read_) + "\n";
 
     unsigned int oea = this->current_frame_number_write_ -
@@ -816,21 +956,24 @@ std::string GeometricReplay::GetGeometricReplayTree() {
                        this->channels_.at(i).entries.back().frame_number;
 
     ret_str += "\t\t\tOldest Entry Age: " + std::to_string(oea) + "\n";
-    ret_str += "\t\t\tNewest Entry Age: " + std::to_string(nea) + "\n";
+    ret_str +=
+        "\t\t\tNewest Entry Age: " + std::to_string(nea) +
+        (this->channels_.at(i).entries.back().ending_entry ? ":end" : "") +
+        "\n";
 
     //---
-    ret_str += "\t\t\t\t";
-    for (unsigned int j = 0; j < this->channels_.at(i).entries.size(); j++) {
-      std::string age_str =
-          std::to_string(this->current_frame_number_write_ -
-                         this->channels_.at(i).entries.at(j).frame_number);
-      ret_str += "[" + age_str;
-      if (this->channels_.at(i).entries.at(j).ending_entry) {
-        ret_str += ":end";
-      }
-      ret_str += "] ";
-    }
-    ret_str += "\n";
+    // ret_str += "\t\t\t\t";
+    // for (unsigned int j = 0; j < this->channels_.at(i).entries.size(); j++) {
+    //  std::string age_str =
+    //      std::to_string(this->current_frame_number_write_ -
+    //                     this->channels_.at(i).entries.at(j).frame_number);
+    //  ret_str += "[" + age_str;
+    //  if (this->channels_.at(i).entries.at(j).ending_entry) {
+    //    ret_str += ":end";
+    //  }
+    //  ret_str += "] ";
+    //}
+    // ret_str += "\n";
     //---
     ret_str += "\t\t---\n";
   }
@@ -838,7 +981,7 @@ std::string GeometricReplay::GetGeometricReplayTree() {
   return ret_str;
 }
 
-std::string GeometricReplay::GetStateOfReplay() {
+std::string GeometricReplay::GetGeometricReplayState() {
   std::string ret_str = "";
 
   unsigned int start_frame = 0;
@@ -850,6 +993,65 @@ std::string GeometricReplay::GetStateOfReplay() {
   ret_str += std::to_string(start_frame);
   ret_str += "  [" + std::to_string(this->current_frame_number_read_) + "]  ";
   ret_str += std::to_string(this->current_frame_number_write_);
+
+  return ret_str;
+}
+
+std::string GeometricReplay::GetGeometricReplaySummary() {
+  std::string ret_str = "";
+
+  // Number of Channels
+  ret_str += "\tNumber of Channels: " + std::to_string(this->channels_.size()) +
+             "\n\t---\n";
+
+  // Oldest and newest frame in entire geometric replay
+  unsigned int oldest_entry_frame_number =
+      this->channels_.at(0).entries.at(0).frame_number;
+  unsigned int newest_entry_frame_number =
+      this->channels_.at(0).entries.back().frame_number;
+  for (unsigned int i = 1; i < this->channels_.size(); i++) {
+    // lower number = older
+    unsigned int a = this->channels_.at(i).entries.at(0).frame_number;
+    if (oldest_entry_frame_number < a) {
+      oldest_entry_frame_number = a;
+    }
+    // higher number = younger
+    unsigned int b = this->channels_.at(i).entries.back().frame_number;
+    if (newest_entry_frame_number < b) {
+      newest_entry_frame_number = b;
+    }
+  }
+  ret_str += "\tOldest Entry [" + std::to_string(oldest_entry_frame_number) +
+             "] age: " +
+             std::to_string(this->current_frame_number_write_ -
+                            oldest_entry_frame_number) +
+             "\n";
+  ret_str += "\tNewest Entry [" + std::to_string(newest_entry_frame_number) +
+             "] age: " +
+             std::to_string(this->current_frame_number_write_ -
+                            newest_entry_frame_number) +
+             "\n\t---\n";
+
+  // Span
+  ret_str += "\tThreshold: " + std::to_string(this->threshhold_age_) +
+             "\t(should hold about " +
+             std::to_string(
+                 GlobalSettings::Access()->ValueOf("REPLAY_LENGTH_SECONDS")) +
+             " seconds)\n";
+  ret_str +=
+      "\tReplay age span: " +
+      std::to_string(newest_entry_frame_number - oldest_entry_frame_number) +
+      "\n";
+
+  // Frame channel numbers
+  ret_str += "\tFrame channels in replay:\n";
+  for (unsigned int i = 0; i < this->channels_.size(); i++) {
+    ret_str +=
+        "\t\tIndex: " + std::to_string(i) +
+        " - EntId:" + std::to_string(this->channels_.at(i).object_id) +
+        " - ChannelType: " + std::to_string(this->channels_.at(i).object_type) +
+        "\n";
+  }
 
   return ret_str;
 }

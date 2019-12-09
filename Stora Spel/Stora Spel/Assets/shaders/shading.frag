@@ -34,33 +34,28 @@ float rand(vec2 n) {
 }
 
 vec3 dither() {
-	vec3 result = vec3(0);
-	float num_colors = 256.0;
-	float val = 0.5*rand(gl_FragCoord.xy)/num_colors;
-	result += val;
-	return result;
+	const float num_colors = 256.0;
+	return vec3(0.5*rand(gl_FragCoord.xy)/num_colors);
 }
 
-float shadow(vec3 position, int index) {
-	float result = 1.0;
+const float near = 0.1;
+const float far = 300.0;
+float linearDepth(float depth)
+{
+	return far*near/(depth * (near - far) + far);
+}
 
-	vec4 shadow_space = v_shadow_spaces[index];
-	shadow_space /= shadow_space.w;
-
+float shadow(vec3 shadow_space, int index) {
 	vec2 uv = (shadow_space.xy+1.)*0.5;
-	float frag_depth = length(position - shadow_light_positions[index]);
+	shadow_space.z = linearDepth(shadow_space.z*0.5 + 0.5);// length(position - shadow_light_positions[index]);
 
 	vec2 depths = texture(shadow_maps[index], uv).xy;
-	float E_x2 = depths.y;
-	float Ex_2 = depths.x*depths.x;
-	float variance = E_x2 - Ex_2;
-
-	float mD = depths.x - frag_depth;
+	float variance = depths.y - depths.x*depths.x;
+	float mD = depths.x - shadow_space.z;
 	float p = variance / (variance + mD*mD);
 	
-	result = 0.0;
-	if(frag_depth <= depths.x)
-		result = 1.0;
+	// lessThanEqual
+	float result = float(shadow_space.z <= depths.x);
 	result = max(p, result);
 	result = clamp(result, 0.0, 1.0);
 
@@ -146,13 +141,13 @@ Lighting shading(vec3 position, vec3 normal) {
 		vec2 uv = (shadow_space.xy+1.)*0.5;
 		if(shadow_space.w > 0 && !(uv.x < 0. || uv.x > 1. || uv.y < 0. || uv.y > 1.)) {
 			vec3 ld = normalize(shadow_light_positions[i] - position);
-			vec3 light_color = vec3(0.23);
+			vec3 light_color = vec3(0.4);
 
 			vec2 q = abs(shadow_space.xy) - vec2(0.5);
   			float len = length(max(q,0.0)) + min(max(q.x, q.y), 0.0);
 			float mask = smoothstep(0.5, 0.0, len);
 
-			mask *= shadow(position, i);
+			mask *= shadow(shadow_space.xyz, i);
 
 			float diffuse = calcDiffuse(position, normal, ld);
 			float specular = calcSpecular(position, normal, ld, view_dir, roughness);

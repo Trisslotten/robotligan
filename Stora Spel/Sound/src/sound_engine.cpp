@@ -6,8 +6,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include <fmod_api_core_inc/fmod.hpp>
 #include <fmod_api_core_inc/fmod_errors.h>
+#include <fmod_api_core_inc/fmod.hpp>
 
 #include <glm/ext.hpp>
 
@@ -22,7 +22,7 @@ class EXPORT Sound {
     sound_->setMode(FMOD_LOOP_NORMAL);
   }
   PlayingSound Play(FMOD::System* system, FMOD::ChannelGroup* group,
-                      int loop_count, float volume) {
+                    int loop_count, float volume) {
     FMOD::Channel* channel = nullptr;
     FMOD_RESULT result = system->playSound(sound_, group, true, &channel);
     if (result != FMOD_OK) {
@@ -85,10 +85,10 @@ H GetAsset(std::unordered_map<std::string, H>& handles,
 SoundEngine::SoundEngine() { this->impl_ = new Impl(); }
 
 SoundEngine::~SoundEngine() {
-  delete impl_;
   for (auto sp : impl_->sound_players) {
     delete sp;
   }
+  delete impl_;
 }
 
 void SoundEngine::Init() {
@@ -138,6 +138,17 @@ void SoundEngine::SetListenerAttributes(glm::vec3 pos, glm::quat orientation,
       (FMOD_VECTOR*)&up);
 }
 
+void SoundEngine::DestroyPlayer(SoundPlayer* in_player) {
+  //std::vector<SoundPlayer*> sound_players = impl_->sound_players;
+  for (int i = 0; i < impl_->sound_players.size(); i++) {
+    if (impl_->sound_players[i] == in_player) {
+      delete impl_->sound_players[i];
+      impl_->sound_players.erase(impl_->sound_players.begin() + i);
+      break;
+    }
+  }
+}
+
 SoundPlayer* SoundEngine::CreatePlayer() {
   auto result = new SoundPlayer(impl_);
   impl_->sound_players.push_back(result);
@@ -163,8 +174,8 @@ PlayingSound SoundPlayer::Play(SoundHandle handle, int loop_count,
                                float volume) {
   auto iter = i_->sound_engine->sounds.find(handle);
   if (iter != i_->sound_engine->sounds.end()) {
-    return iter->second.Play(i_->sound_engine->system, i_->channel_group, loop_count,
-                      volume);
+    return iter->second.Play(i_->sound_engine->system, i_->channel_group,
+                             loop_count, volume);
   }
   return PlayingSound();
 }

@@ -19,7 +19,7 @@ ClientReplayMachine::ClientReplayMachine(unsigned int in_replay_length_sec,
   // ---
   this->selected_replay_index_ = 0;
 
-  //NTS: Engine uninitialized. Is that a problem?
+  this->engine_ = nullptr;
 }
 
 ClientReplayMachine::~ClientReplayMachine() {
@@ -46,11 +46,14 @@ void ClientReplayMachine::NotifyDestroyedObject(EntityID in_id,
   this->primary_replay_->SetEndingFrame(in_id, in_registry);
 }
 
-void ClientReplayMachine::StoreReplay() {
+void ClientReplayMachine::StoreAndClearReplay() {
   // Take a copy of the current state of the
   // primary replay and store it in the vector
   GeometricReplay* replay_to_save = this->primary_replay_->Clone();
   this->stored_replays_.push_back(replay_to_save);
+
+  // Clear the primary replay of its data
+  this->primary_replay_->ClearAllVectors();
 
   // Adjust the beginning of the stored vector
   // to lie at its threshold value
@@ -71,7 +74,7 @@ int ClientReplayMachine::CurrentlySelectedReplay() const {
 
 bool ClientReplayMachine::SelectReplay(unsigned int in_index) {
   // If the index is out of scope return false
-  if (in_index > this->stored_replays_.size()) {
+  if (in_index >= this->stored_replays_.size()) {
     return false;
   }
 
@@ -80,6 +83,9 @@ bool ClientReplayMachine::SelectReplay(unsigned int in_index) {
 
   // Set its read to the start
   this->ResetSelectedReplay();
+
+  /*GlobalSettings::Access()->WriteError(
+      "", "Selected", std::to_string(this->selected_replay_index_));*/
 
   return true;
 }
@@ -106,26 +112,41 @@ bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
   return load_result;
 }
 
-std::string ClientReplayMachine::GetSelectedReplayStringTree() {
-  if (this->stored_replays_.empty()) {
-    return "ERROR: There are no stored replays";
-  }
-
-  return this->stored_replays_.at(this->selected_replay_index_)
-      ->GetGeometricReplayTree();
-}
-
-std::string ClientReplayMachine::GetSelectedReplayStringState() {
-  if (this->stored_replays_.empty()) {
-    return "ERROR: There are no stored replays";
-  }
-
-  return this->stored_replays_.at(this->selected_replay_index_)
-      ->GetStateOfReplay();
+void ClientReplayMachine::SetEngine(Engine* in_engine_ptr) {
+  this->engine_ = in_engine_ptr;
+  this->primary_replay_->SetEngine(in_engine_ptr);
 }
 
 void ClientReplayMachine::ReceiveGameEvent(GameEvent event) {
+  // -vvv- EVENT BLACKLIST -vvv-
+  switch (event.type) {
+	//case GameEvent::WHATEVER:
+	//case GameEvent::WHATELSE:
+    case GameEvent::RESET:
+      return;
+      break;
+    default:
+      break;
+  }
+  // -^^^- EVENT BLACKLIST -^^^-
+
   if (this->engine_->IsRecording()) {
     primary_replay_->ReceiveGameEvent(event);
   }
+}
+
+void ClientReplayMachine::ResetMachine() {
+  // Delete the primary replay and
+  // create a new one
+  delete this->primary_replay_;
+  this->primary_replay_ = new GeometricReplay(this->replay_length_sec_,
+                                              this->replay_frames_per_sec_);
+  this->primary_replay_->SetEngine(this->engine_);
+
+  // Clear out the stored replays
+  while (!this->stored_replays_.empty()) {
+    delete this->stored_replays_.back();
+    this->stored_replays_.erase(this->stored_replays_.end() - 1);
+  }
+  this->selected_replay_index_ = 0;
 }

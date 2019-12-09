@@ -3,30 +3,25 @@
 
 #include <entity/registry.hpp>
 
+#include <ecs\components\follow_bone_component.hpp>
 #include "ecs/components.hpp"
 
-void ParticleSystem(entt::registry& registry, float dt) {
-  auto view_movable = registry.view<ParticleComponent, TransformComponent>();
-  for (auto& entity : view_movable) {
-    auto& particle_c = view_movable.get<ParticleComponent>(entity);
-    auto& transform_c = view_movable.get<TransformComponent>(entity);
+class Engine;
 
-    for (int i = 0; i < particle_c.handles.size(); ++i) {
-      glob::SetEmitPosition(particle_c.handles[i],
-                            transform_c.position + particle_c.offsets[i]);
-      glob::SetParticleDirection(
-          particle_c.handles[i],
-          transform_c.rotation * particle_c.directions[i]);
-    }
-  }
+class ParticleSystem {
+ public:
+  void Init(Engine* engine);
 
-  auto view_particle = registry.view<ParticleComponent>();
-  for (auto& entity : view_particle) {
-    auto& particle_c = view_particle.get(entity);
+  void Update(entt::registry& registry, float dt);
 
-    for (int i = 0; i < particle_c.handles.size(); ++i) {
-      glob::UpdateParticles(particle_c.handles[i], dt);
-    }
-  }
-}
+  void ReceiveGameEvent(const GameEvent& event);
+
+ private:
+  void HandleHit(const GameEvent& event);
+  void HandleShoot(const GameEvent& event);
+  void HandleGoalMaker(const GameEvent& event, bool emit);
+
+  Engine* engine_ = nullptr;
+};
+
 #endif  // PARTICLE_SYSTEM_HPP_

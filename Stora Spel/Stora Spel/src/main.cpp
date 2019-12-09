@@ -1,5 +1,8 @@
 #define NOMINMAX
 #pragma comment(lib, "ws2_32.lib")
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
 #include <NetAPI/networkTest.hpp>
 #include <NetAPI/packet.hpp>
 #include <NetAPI/socket/server.hpp>
@@ -20,6 +23,8 @@ entt::dispatcher menu_dispatcher{};
 entt::dispatcher dispatcher{};
 
 int main(unsigned argc, char** argv) {
+  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+  _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);
   std::cout << "WSA is initialized? " << std::boolalpha
             << NetAPI::Initialization::WinsockInitialized() << std::endl;
 
@@ -88,5 +93,6 @@ int main(unsigned argc, char** argv) {
             << " MB\n";
   */
   WSACleanup();
+  _CrtDumpMemoryLeaks();
   return EXIT_SUCCESS;
 }

@@ -9,6 +9,7 @@
 #include "shared/shared.hpp"
 #include "util/event.hpp"
 #include "util/timer.hpp"
+#include <set>
 
 class GameServer;
 
@@ -108,6 +109,14 @@ class ServerPlayState : public ServerState {
   void SetFrameID(int client_id, int id) { player_frame_id_[client_id] = id; }
   void Reconnect(int id);
   void SetReconnect(unsigned int ID) { reconnect_id_ = ID; }
+  void SetSwitchingGoals(bool val) {
+    switching_goals = val;
+    switch_goal_timer_.Restart();
+  }
+
+  void SetWantDab(long client_id) {
+    wants_dab_.insert(client_id);
+  }
 
  private:
   entt::entity CreateIDEntity();
@@ -124,9 +133,10 @@ class ServerPlayState : public ServerState {
               unsigned int in_player_index);
   EntityID CreatePickUpComponents(glm::vec3 pos);
   EntityID GetNextEntityGuid() { return entity_guid_++; }
-  void OverTime();
+  bool OverTime();
   void EndGame();
   void WallAnimation();
+  void UpdateSwitchGoals();
 
   std::unordered_map<long, bool> clients_receive_updates_;
   std::unordered_map<int, EntityID> clients_player_ids_;
@@ -137,6 +147,8 @@ class ServerPlayState : public ServerState {
   std::vector<entt::entity> created_pick_ups_;
   std::vector<entt::entity> created_walls_;
   std::vector<entt::entity> created_mines_;
+
+  std::set<long> wants_dab_;
 
   EntityID entity_guid_ = 0;
 
@@ -149,12 +161,16 @@ class ServerPlayState : public ServerState {
   Timer match_timer_;
   Timer countdown_timer_;
   Timer reset_timer_;
+
+  Timer overtime_reset_timer_;
+  bool overtime_started_ = false;
+
   Timer pickup_spawn_timer_;
   float pickup_spawn_time_ = 10.0f;
   bool reset_ = false;
 
   int switch_goal_time_ =
-      (int)GlobalSettings::Access()->ValueOf("ABILITY_SWITCH_GOAL_COUNTDOWN");
+      (int)GlobalSettings::Access()->ValueOf("ABILITY_SWITCH_GOAL_TIMER");
   Timer switch_goal_timer_;
 
   std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
@@ -167,6 +183,8 @@ class ServerPlayState : public ServerState {
   ReplayMachine* replay_machine_ = nullptr;
   bool record_ = false;
   bool replay_ = false;
+  bool switched_goals = false;
+  bool switching_goals = false;
   //---
 };
 

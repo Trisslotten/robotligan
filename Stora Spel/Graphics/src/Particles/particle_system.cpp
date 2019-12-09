@@ -5,7 +5,7 @@
 #define CPUSPAWN 0
 
 namespace glob {
-  GLsync fence;
+  //GLsync fence;
 
   ParticleSystem::ParticleSystem(ShaderProgram* ptr, GLuint tex) {
     settings_.texture = tex;
@@ -101,135 +101,135 @@ namespace glob {
     glDeleteVertexArrays(1, &vertex_array_object_);
   }
 
-  void ParticleSystem::Spawn(int num) {
-    std::uniform_real_distribution<float> dist(-1.0, 1.0);
-
-    std::vector<Particle> particles;
-    particles.reserve(num);
-
-    int new_index = current_index_ + num;
-    if (new_index > SIZE) {
-      new_index = SIZE;
-      num = new_index - current_index_;
-    }
-
-    if (settings_.direction_strength > 1.f) settings_.direction_strength = 1.f;
-    if (settings_.direction != glm::vec3(0.f))
-      settings_.direction = glm::normalize(settings_.direction);
-
-    std::uniform_real_distribution<float> nor_dist(settings_.direction_strength, 1.0);
-    std::uniform_real_distribution<float> vel_dist(settings_.min_velocity, settings_.velocity);
-    for (int i = 0; i < num; ++i) {
-      float normal_factor = nor_dist(gen_);
-      glm::vec3 dir = glm::vec3(dist(gen_), dist(gen_), dist(gen_));
-
-      if (dir != glm::vec3(0.f))
-        dir = glm::normalize(dir);
-
-      dir -= dir * glm::dot(dir, settings_.direction);
-      if (dir != glm::vec3(0.f))
-        dir = glm::normalize(dir);
-      float dir_factor = sqrtf(1.0f - normal_factor * normal_factor);
-
-      dir = settings_.direction * normal_factor + dir * dir_factor;
-
-      dir = glm::normalize(dir);
-
-      glm::vec3 vel = dir;
-
-     
-
-      vel *= vel_dist(gen_);
-
-      glm::vec4 color = settings_.colors[i % settings_.colors.size()];
-
-      particles.push_back({glm::vec4(dir * settings_.radius + settings_.emit_pos, 0.f),
-                           glm::vec4(vel, 0.f), color,
-                           settings_.size, settings_.time});
-    }
-
-    std::vector<glm::vec4> pos_data;
-    pos_data.reserve(num);
-    std::vector<glm::vec4> vel_data;
-    vel_data.reserve(num);
-    std::vector<glm::vec4> color_data;
-    color_data.reserve(num);
-    std::vector<float> size_data;
-    size_data.reserve(num);
-    std::vector<float> time_data;
-    time_data.reserve(num);
-    
-    for (auto& p : particles) {
-      pos_data.push_back(p.position);
-      vel_data.push_back(p.velocity);
-      color_data.push_back(p.color);
-      size_data.push_back(p.size);
-
-      time_data.push_back(p.time);
-    }
-
-    glBindBuffer(GL_ARRAY_BUFFER, position_vbo_);
-    void* old_data =
-        glMapBufferRange(GL_ARRAY_BUFFER, current_index_ * sizeof(glm::vec4), num * sizeof(glm::vec4),
-                         GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT |
-                             GL_MAP_UNSYNCHRONIZED_BIT);
-    glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
-
-    memcpy(old_data, pos_data.data(), pos_data.size() * sizeof(glm::vec4));
-    glFlushMappedBufferRange(GL_ARRAY_BUFFER, current_index_ * sizeof(glm::vec4), num * sizeof(glm::vec4));
-    GLboolean succes = glUnmapBuffer(GL_ARRAY_BUFFER);
-
-    glBindBuffer(GL_ARRAY_BUFFER, color_vbo_);
-    old_data =
-        glMapBufferRange(GL_ARRAY_BUFFER, current_index_ * sizeof(glm::vec4),
-                         num * sizeof(glm::vec4),
-                                GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT |
-                                    GL_MAP_UNSYNCHRONIZED_BIT);
-    glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
-    
-    memcpy(old_data, color_data.data(), color_data.size() * sizeof(glm::vec4));
-    glFlushMappedBufferRange(GL_ARRAY_BUFFER, current_index_ * sizeof(glm::vec4), num * sizeof(glm::vec4));
-    succes = glUnmapBuffer(GL_ARRAY_BUFFER);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, size_vbo_);
-    old_data =
-        glMapBufferRange(GL_ARRAY_BUFFER, current_index_ * sizeof(float),
-                         num * sizeof(float),
-                                GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT |
-                                    GL_MAP_UNSYNCHRONIZED_BIT);
-    glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
-    
-    memcpy(old_data, size_data.data(), size_data.size() * sizeof(float));
-    glFlushMappedBufferRange(GL_ARRAY_BUFFER, current_index_ * sizeof(float), num * sizeof(float));
-    succes = glUnmapBuffer(GL_ARRAY_BUFFER);
-    
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, velocity_buffer_);
-    old_data = glMapBufferRange(GL_SHADER_STORAGE_BUFFER,
-                                current_index_ * sizeof(glm::vec4),
-                                num * sizeof(glm::vec4),
-                         GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT |
-                             GL_MAP_UNSYNCHRONIZED_BIT);
-    
-    glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
-    
-    memcpy(old_data, vel_data.data(), vel_data.size() * sizeof(glm::vec4));
-    glFlushMappedBufferRange(GL_SHADER_STORAGE_BUFFER, current_index_ * sizeof(glm::vec4), num * sizeof(glm::vec4));
-    succes = glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, time_buffer_);
-    old_data = glMapBufferRange(GL_ARRAY_BUFFER, current_index_ * sizeof(float), num * sizeof(float),
-                                GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT |
-                                    GL_MAP_UNSYNCHRONIZED_BIT);
-    glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
-    
-    memcpy(old_data, time_data.data(), time_data.size() * sizeof(float));
-    glFlushMappedBufferRange(GL_ARRAY_BUFFER, current_index_ * sizeof(float), num * sizeof(float));
-    succes = glUnmapBuffer(GL_ARRAY_BUFFER);
-
-
-    current_index_ = new_index;
-    current_index_ = current_index_ % SIZE;
-  }
+  //void ParticleSystem::Spawn(int num) {
+  //  std::uniform_real_distribution<float> dist(-1.0, 1.0);
+  //
+  //  std::vector<Particle> particles;
+  //  particles.reserve(num);
+  //
+  //  int new_index = current_index_ + num;
+  //  if (new_index > SIZE) {
+  //    new_index = SIZE;
+  //    num = new_index - current_index_;
+  //  }
+  //
+  //  if (settings_.direction_strength > 1.f) settings_.direction_strength = 1.f;
+  //  if (settings_.direction != glm::vec3(0.f))
+  //    settings_.direction = glm::normalize(settings_.direction);
+  //
+  //  std::uniform_real_distribution<float> nor_dist(settings_.direction_strength, 1.0);
+  //  std::uniform_real_distribution<float> vel_dist(settings_.min_velocity, settings_.velocity);
+  //  for (int i = 0; i < num; ++i) {
+  //    float normal_factor = nor_dist(gen_);
+  //    glm::vec3 dir = glm::vec3(dist(gen_), dist(gen_), dist(gen_));
+  //
+  //    if (dir != glm::vec3(0.f))
+  //      dir = glm::normalize(dir);
+  //
+  //    dir -= dir * glm::dot(dir, settings_.direction);
+  //    if (dir != glm::vec3(0.f))
+  //      dir = glm::normalize(dir);
+  //    float dir_factor = sqrtf(1.0f - normal_factor * normal_factor);
+  //
+  //    dir = settings_.direction * normal_factor + dir * dir_factor;
+  //
+  //    dir = glm::normalize(dir);
+  //
+  //    glm::vec3 vel = dir;
+  //
+  //   
+  //
+  //    vel *= vel_dist(gen_);
+  //
+  //    glm::vec4 color = settings_.colors[i % settings_.colors.size()];
+  //
+  //    particles.push_back({glm::vec4(dir * settings_.radius + settings_.emit_pos, 0.f),
+  //                         glm::vec4(vel, 0.f), color,
+  //                         settings_.size, settings_.time});
+  //  }
+  //
+  //  std::vector<glm::vec4> pos_data;
+  //  pos_data.reserve(num);
+  //  std::vector<glm::vec4> vel_data;
+  //  vel_data.reserve(num);
+  //  std::vector<glm::vec4> color_data;
+  //  color_data.reserve(num);
+  //  std::vector<float> size_data;
+  //  size_data.reserve(num);
+  //  std::vector<float> time_data;
+  //  time_data.reserve(num);
+  //  
+  //  for (auto& p : particles) {
+  //    pos_data.push_back(p.position);
+  //    vel_data.push_back(p.velocity);
+  //    color_data.push_back(p.color);
+  //    size_data.push_back(p.size);
+  //
+  //    time_data.push_back(p.time);
+  //  }
+  //
+  //  glBindBuffer(GL_ARRAY_BUFFER, position_vbo_);
+  //  void* old_data =
+  //      glMapBufferRange(GL_ARRAY_BUFFER, current_index_ * sizeof(glm::vec4), num * sizeof(glm::vec4),
+  //                       GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT |
+  //                           GL_MAP_UNSYNCHRONIZED_BIT);
+  //  glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
+  //
+  //  memcpy(old_data, pos_data.data(), pos_data.size() * sizeof(glm::vec4));
+  //  glFlushMappedBufferRange(GL_ARRAY_BUFFER, current_index_ * sizeof(glm::vec4), num * sizeof(glm::vec4));
+  //  GLboolean succes = glUnmapBuffer(GL_ARRAY_BUFFER);
+  //
+  //  glBindBuffer(GL_ARRAY_BUFFER, color_vbo_);
+  //  old_data =
+  //      glMapBufferRange(GL_ARRAY_BUFFER, current_index_ * sizeof(glm::vec4),
+  //                       num * sizeof(glm::vec4),
+  //                              GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT |
+  //                                  GL_MAP_UNSYNCHRONIZED_BIT);
+  //  glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
+  //  
+  //  memcpy(old_data, color_data.data(), color_data.size() * sizeof(glm::vec4));
+  //  glFlushMappedBufferRange(GL_ARRAY_BUFFER, current_index_ * sizeof(glm::vec4), num * sizeof(glm::vec4));
+  //  succes = glUnmapBuffer(GL_ARRAY_BUFFER);
+  //  
+  //  glBindBuffer(GL_ARRAY_BUFFER, size_vbo_);
+  //  old_data =
+  //      glMapBufferRange(GL_ARRAY_BUFFER, current_index_ * sizeof(float),
+  //                       num * sizeof(float),
+  //                              GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT |
+  //                                  GL_MAP_UNSYNCHRONIZED_BIT);
+  //  glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
+  //  
+  //  memcpy(old_data, size_data.data(), size_data.size() * sizeof(float));
+  //  glFlushMappedBufferRange(GL_ARRAY_BUFFER, current_index_ * sizeof(float), num * sizeof(float));
+  //  succes = glUnmapBuffer(GL_ARRAY_BUFFER);
+  //  
+  //  glBindBuffer(GL_SHADER_STORAGE_BUFFER, velocity_buffer_);
+  //  old_data = glMapBufferRange(GL_SHADER_STORAGE_BUFFER,
+  //                              current_index_ * sizeof(glm::vec4),
+  //                              num * sizeof(glm::vec4),
+  //                       GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT |
+  //                           GL_MAP_UNSYNCHRONIZED_BIT);
+  //  
+  //  glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
+  //  
+  //  memcpy(old_data, vel_data.data(), vel_data.size() * sizeof(glm::vec4));
+  //  glFlushMappedBufferRange(GL_SHADER_STORAGE_BUFFER, current_index_ * sizeof(glm::vec4), num * sizeof(glm::vec4));
+  //  succes = glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+  //  
+  //  glBindBuffer(GL_ARRAY_BUFFER, time_buffer_);
+  //  old_data = glMapBufferRange(GL_ARRAY_BUFFER, current_index_ * sizeof(float), num * sizeof(float),
+  //                              GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT |
+  //                                  GL_MAP_UNSYNCHRONIZED_BIT);
+  //  glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
+  //  
+  //  memcpy(old_data, time_data.data(), time_data.size() * sizeof(float));
+  //  glFlushMappedBufferRange(GL_ARRAY_BUFFER, current_index_ * sizeof(float), num * sizeof(float));
+  //  succes = glUnmapBuffer(GL_ARRAY_BUFFER);
+  //
+  //
+  //  current_index_ = new_index;
+  //  current_index_ = current_index_ % SIZE;
+  //}
 
   void ParticleSystem::Update(float dt) {
 #if CPUSPAWN == 0
@@ -269,6 +269,7 @@ namespace glob {
     settings_.compute_shader->uniform("min_speed", settings_.min_velocity);
     settings_.compute_shader->uniform("size", settings_.size);
     settings_.compute_shader->uniform("time", settings_.time);
+    settings_.compute_shader->uniform("emitter_vel", settings_.emitter_vel);
 #endif
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 7, position_vbo_);
@@ -322,7 +323,7 @@ namespace glob {
     glDisable(GL_BLEND);
     glEnable(GL_CULL_FACE);
     
-    fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+    //fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
   }
 
   void ParticleSystem::Settings(const ParticleSettings& ps) {
@@ -371,7 +372,7 @@ namespace glob {
     void* old_data = glMapBufferRange(GL_ARRAY_BUFFER, 0, SIZE * sizeof(float),
                                 GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT |
                                     GL_MAP_UNSYNCHRONIZED_BIT);
-    glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
+    //glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
 
     memcpy(old_data, time_data.data(), time_data.size() * sizeof(float));
     glFlushMappedBufferRange(GL_ARRAY_BUFFER, 0, SIZE * sizeof(float));

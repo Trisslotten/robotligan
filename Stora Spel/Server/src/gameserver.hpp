@@ -7,8 +7,8 @@
 #include <entt.hpp>
 #include <glm/glm.hpp>
 #include <shared/shared.hpp>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 #include "serverstate.hpp"
 
 #include "replay machine/replay_machine.hpp"
@@ -39,13 +39,17 @@ class GameServer {
   }
   entt::registry& GetRegistry() { return registry_; }
 
-  std::unordered_map<AbilityID, float> GetAbilityCooldowns() {
+  std::unordered_map<AbilityID, float>& GetAbilityCooldowns() {
     return ability_cooldowns_;
   }
 
   std::unordered_map<long, std::string> GetClientNames() {
     return client_names_;
   }
+
+  void HandleSwitchGoal();
+
+  void RemoveClientName(long client_id) { client_names_.erase(client_id); }
 
  private:
   void UpdateSystems(float dt);

@@ -13,7 +13,7 @@ class EXPORT Client {
   ~Client() { delete client_; }
   bool Connect(const char* addr, short port);
   bool Send(NetAPI::Common::Packet& p);
-  std::vector<NetAPI::Common::Packet> Receive(const short timeout = 50);
+  std::vector<NetAPI::Common::Packet> Receive(const short timeout = 1);
   unsigned short& GetID() { return ID_; }
 
   void Disconnect() { client_->Disconnect(); }
@@ -21,7 +21,11 @@ class EXPORT Client {
   TcpClient* GetRaw() { return client_; }
   bool JustDiconnected() { return just_disconnected_; }
   void SetDisconnected(bool disconnected) { just_disconnected_ = disconnected; }
+  uint64_t TimeSinceLastUpdate();
+
  private:
+  std::chrono::high_resolution_clock::time_point last_client_update_time_ =
+      std::chrono::high_resolution_clock::now();
   bool just_disconnected_ = false;
   unsigned short ID_ = 0;
   NetAPI::Socket::TcpClient* client_ = nullptr;

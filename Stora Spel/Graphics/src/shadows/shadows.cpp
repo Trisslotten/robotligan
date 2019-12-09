@@ -82,7 +82,7 @@ void glob::Shadows::RenderToMaps(
     float zrot = 1.f;
     for (int i = 0; i < max_maps_; i++) {
       positions_[i] = glm::vec3(xrot * 40.0, 20.0, zrot * 20.0);
-      transforms_[i] = glm::perspective(glm::radians(70.f), 1.f, 0.1f, 100.f) *
+      transforms_[i] = glm::perspective(glm::radians(70.f), 1.f, 0.1f, 300.f) *
                        glm::lookAt(positions_[i], glm::vec3(0, -40.0, 0),
                                    glm::vec3(0, 1, 0));
 
@@ -95,7 +95,7 @@ void glob::Shadows::RenderToMaps(
   glViewport(0, 0, size_, size_);
 
   for (int i = 0; i < num_maps_used_; i++) {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
     glm::vec3 light_pos = positions_[i];
     glm::mat4 transform = transforms_[i];
 
@@ -144,4 +144,8 @@ void glob::Shadows::AddSpotlight(glm::vec3 position, glm::mat4 transform) {
     num_maps_used_++;
   }
   set_manually_ = true;
+}
+
+void glob::Shadows::ClearSpotlights() {
+  num_maps_used_ = 0;
 }

@@ -148,6 +148,8 @@ EXPORT void SubmitTrail(const std::vector<glm::vec3>& pos_history, float width,
 EXPORT void CreateShockwave(glm::vec3 position, float duration, float size);
 EXPORT void CreateBlackHole(glm::vec3 position);
 
+EXPORT void ClearEffects();
+
 EXPORT void SubmitRope(glm::vec3 start, glm::vec3 end);
 
 EXPORT Camera& GetCamera();
@@ -168,6 +170,7 @@ EXPORT bool IsBlackoutActive();
 EXPORT void SetSky(const std::string& texture);
 
 EXPORT void AddSpotlight(glm::vec3 position, glm::mat4 transform);
+EXPORT void ClearSpotlights();
 
 EXPORT void SetStunned(bool is_stunned);
 
