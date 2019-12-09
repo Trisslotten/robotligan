@@ -1,32 +1,31 @@
-#include "state.hpp"
-
 #include <GLFW/glfw3.h>
-#include <boundingboxes.hpp>
-#include <glob/graphics.hpp>
-#include <glob/window.hpp>
-#include <slob/sound_engine.hpp>
-
-#include <glm/gtx/compatibility.hpp>
-#include <glm/gtx/rotate_vector.hpp>
-#include "shared/camera_component.hpp"
-#include "shared/id_component.hpp"
-#include "shared/transform_component.hpp"
 
 #include <algorithm>
+#include <boundingboxes.hpp>
 #include <collision.hpp>
 #include <ecs\components\follow_bone_component.hpp>
 #include <ecs\components\skylight_component.hpp>
 #include <ecs\components\trail_component.hpp>
+#include <glm/gtx/compatibility.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 #include <glm\gtx\extended_min_max.hpp>
+#include <glob/graphics.hpp>
+#include <glob/window.hpp>
 #include <physics.hpp>
 #include <shared/fail_safe_arena.hpp>
 #include <shared/physics_component.hpp>
 #include <shared/pick_up_component.hpp>
+#include <slob/sound_engine.hpp>
 #include <util/asset_paths.hpp>
+
 #include "ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
 #include "eventdispatcher.hpp"
+#include "shared/camera_component.hpp"
+#include "shared/id_component.hpp"
+#include "shared/transform_component.hpp"
+#include "state.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
 
@@ -1711,8 +1710,8 @@ void PlayState::CreatePlayerEntities() {
         {joints["Gun autoloader"].id, glm::vec3(4.39386, -3.68348, 9.73308),
          glm::normalize(glm::vec3(0, -1, 0)), BoneEmitterType::SHOOT, 10.0f});
 
-	f.emitters.push_back(
-        {joints["Chest"].id, glm::vec3(-0.005052, 2.15061f, 13.7683f),
+    f.emitters.push_back({joints["Chest"].id,
+                          glm::vec3(-0.005052, 2.15061f, 13.7683f),
                           glm::normalize(glm::vec3(0, 0, 1)),
                           BoneEmitterType::GOAL_MAKER, 12.f});
     if (entity_id != my_id_) {
@@ -2530,7 +2529,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       for (auto player : view_players) {
         auto& player_player_c = correct_registry->get<PlayerComponent>(player);
         auto& player_id_c = correct_registry->get<IDComponent>(player);
-        auto& player_trans_c = correct_registry->get<TransformComponent>(player);		
+        auto& player_trans_c =
+            correct_registry->get<TransformComponent>(player);
       }
       break;
     }
@@ -3069,7 +3069,15 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
 void PlayState::Reset() {
   //
+  auto view_ball = registry_gameplay_.view<BallComponent, TrailComponent, TransformComponent>();
+  for (auto ball : view_ball) {
+    auto& trail = view_ball.get<TrailComponent>(ball);
+    auto& trans = view_ball.get<TransformComponent>(ball);
 
+    for (auto& pos : trail.history) {
+      pos.position = glm::vec3(0.f, 10.f, 0.f);
+    }
+  }
   // NTS: Call to engine destroy not needed?
   auto destroy_view = registry_gameplay_.view<DestroyOnResetComponent>();
   registry_gameplay_.destroy(destroy_view.begin(), destroy_view.end());
