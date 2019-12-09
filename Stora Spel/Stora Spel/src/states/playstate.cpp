@@ -1,32 +1,31 @@
-#include "state.hpp"
-
 #include <GLFW/glfw3.h>
-#include <boundingboxes.hpp>
-#include <glob/graphics.hpp>
-#include <glob/window.hpp>
-#include <slob/sound_engine.hpp>
-
-#include <glm/gtx/compatibility.hpp>
-#include <glm/gtx/rotate_vector.hpp>
-#include "shared/camera_component.hpp"
-#include "shared/id_component.hpp"
-#include "shared/transform_component.hpp"
 
 #include <algorithm>
+#include <boundingboxes.hpp>
 #include <collision.hpp>
 #include <ecs\components\follow_bone_component.hpp>
 #include <ecs\components\skylight_component.hpp>
 #include <ecs\components\trail_component.hpp>
+#include <glm/gtx/compatibility.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 #include <glm\gtx\extended_min_max.hpp>
+#include <glob/graphics.hpp>
+#include <glob/window.hpp>
 #include <physics.hpp>
 #include <shared/fail_safe_arena.hpp>
 #include <shared/physics_component.hpp>
 #include <shared/pick_up_component.hpp>
+#include <slob/sound_engine.hpp>
 #include <util/asset_paths.hpp>
+
 #include "ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
 #include "eventdispatcher.hpp"
+#include "shared/camera_component.hpp"
+#include "shared/id_component.hpp"
+#include "shared/transform_component.hpp"
+#include "state.hpp"
 #include "util/global_settings.hpp"
 #include "util/input.hpp"
 
@@ -1340,8 +1339,9 @@ void PlayState::DrawJumbotronText() {
     std::string text = "TEST";
     int count = countdown_time_ - engine_->GetCountdownTimer();
     if (count > 0) {
-      glob::Submit(font_test_, temp_pos, 30.f, std::to_string(count), color_white, orient);
-	} else {
+      glob::Submit(font_test_, temp_pos, 30.f, std::to_string(count),
+                   color_white, orient);
+    } else {
       switch (current_jumbo_effect_) {
         case TEAM_SCORES: {
           std::string team_score_red, team_score_blue;
@@ -2263,6 +2263,10 @@ void PlayState::CreateTeleportProjectile(EntityID id, glm::vec3 pos,
                                             glm::vec4(1, 1, 1, 1));
   registry_gameplay_.assign<TransformComponent>(teleport_projectile, pos, ori,
                                                 glm::vec3(0.3f));
+
+  registry_gameplay_.assign<LightComponent>(teleport_projectile, glm::vec3(1),
+                                            250.f, 0.f);
+
   registry_gameplay_.assign<ProjectileComponent>(
       teleport_projectile, ProjectileID::TELEPORT_PROJECTILE);
   registry_gameplay_.assign<IDComponent>(teleport_projectile, id);
@@ -2288,6 +2292,10 @@ void PlayState::CreateForcePushObject(EntityID id, glm::vec3 pos,
       force_object, ProjectileID::FORCE_PUSH_OBJECT);
   registry_gameplay_.assign<TrailComponent>(force_object, 1.f,
                                             glm::vec4(0.4, 0.4, 1, 1));
+
+  registry_gameplay_.assign<LightComponent>(force_object,
+                                            glm::vec3(0.4, 0.4, 1),
+                                            250.f, 0.f);
 }
 
 void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
