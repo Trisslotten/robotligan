@@ -128,10 +128,10 @@ void ServerPlayState::Init() {
   // Start the countdown and match timer
   match_timer_.Restart();
   countdown_timer_.Restart();
-  CreatePickupSpawners();
   CreateInitialEntities(server.GetNumConnected());
 
   ResetEntities();
+  CreatePickupSpawners();
   created_pick_ups_.clear();
 
   // Replay machine
@@ -1296,15 +1296,18 @@ void ServerPlayState::CreatePickupSpawners() {
   positions.push_back(pos);
 
   auto& registry = this->game_server_->GetRegistry();
-
+  auto time = std::chrono::high_resolution_clock::now();
+  std::chrono::high_resolution_clock::duration dtn(
+      std::chrono::duration<int>(8));
+  time -= dtn;
   for (int i = 0; i < 4; i++) {
     auto spawner = registry.create();
 
-    auto& spawner_c = registry.assign<PickupSpawnerComponent>(spawner);
+    auto& spawner_c = registry.assign<PickupSpawnerComponent>(spawner, time);
     auto& trans_c = registry.assign<TransformComponent>(spawner);
     registry.assign<IDComponent>(spawner, GetNextEntityGuid());
     trans_c.position = positions[i];
-    spawner_c.override_respawn = true;
+    spawner_c.override_respawn = false;
   }
 }
 

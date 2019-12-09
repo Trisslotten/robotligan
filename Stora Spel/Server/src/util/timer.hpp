@@ -11,6 +11,9 @@ class Timer {
 
  public:
   Timer() { start_ = std::chrono::high_resolution_clock::now(); }
+  Timer(std::chrono::time_point<std::chrono::high_resolution_clock> start) {
+    start_ = start;
+  }
   double Restart() {
     auto now = std::chrono::high_resolution_clock::now();
     double diff = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(
