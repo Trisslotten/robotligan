@@ -68,12 +68,13 @@ void Update(entt::registry& registry, float dt) {
       if (Input::IsKeyDown(GLFW_KEY_LEFT_SHIFT)) {
         speed = 30.f;
 	  }
+      if (Input::IsKeyDown(GLFW_KEY_LEFT_CONTROL)) {
+          speed = 3.f;
+      }
       if (glm::length(dir) > 0)
 		 dir = glm::normalize(dir);
 
       c_c.offset += dir * speed * dt;
-      printf("Camera offset: %f %f %f \n", c_c.offset.x, c_c.offset.y,
-             c_c.offset.z);
     }
   }
 }

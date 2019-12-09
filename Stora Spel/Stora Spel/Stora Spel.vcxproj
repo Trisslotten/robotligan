@@ -167,7 +167,6 @@
     <ClCompile Include="src\states\connectmenustate.cpp" />
     <ClCompile Include="src\client replay machine\client_replay_machine.cpp" />
     <ClCompile Include="src\states\createserverstate.cpp" />
-    <ClCompile Include="src\states\demostate.cpp" />
     <ClCompile Include="src\states\lobbystate.cpp" />
     <ClCompile Include="src\states\mainmenustate.cpp" />
     <ClCompile Include="src\states\playstate.cpp" />

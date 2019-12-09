@@ -1,0 +1,5 @@
+w normal_map assets/materials/PaintedMetal04_nrm.png
+f normal_map_scale 5
+
+w metallic_map assets/materials/PaintedMetal04_met.png
+f metallic_map_scale 5

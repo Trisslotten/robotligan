@@ -626,7 +626,7 @@ void ServerPlayState::CreateMapEntity() {
   glm::vec3 arena_scale = glm::vec3(1.0f) * arena_scale2;
   glm::vec3 zero_vec = glm::vec3(0.0f);
 
-  glob::ModelHandle model_map = glob::GetModel("assets/MapV3/Map_Hitbox.fbx");
+  glob::ModelHandle model_map = glob::GetModel("assets/map_rectangular/map_rextangular.fbx");
 
   // Add components for an arena
   // registry_.assign<ModelComponent>(entity, model_arena);

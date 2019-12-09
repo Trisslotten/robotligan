@@ -424,7 +424,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         player_scores_[client_id] = psbi;
       }
       play_state_.SetGoalsSwappedAtStart(switched);
-      ChangeState(StateType::DEMO);
+      ChangeState(StateType::PLAY);
 
       std::cout << "PACKET: GAME_START\n";
       break;
@@ -574,7 +574,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::DESTROY_PICK_UP: {
       EntityID id;
       packet >> id;
-      if (current_state_->Type() == StateType::PLAY || current_state_->Type() == StateType::DEMO) {
+      if (current_state_->Type() == StateType::PLAY) {
         auto pick_up_view =
             registry_current_->view<PickUpComponent, IDComponent>();
         for (auto entity : pick_up_view) {
@@ -820,7 +820,7 @@ void Engine::UpdateSystems(float dt) {
   sound_system_.Update(*registry_current_);
 
   if (Input::IsKeyDown(GLFW_KEY_TAB) &&
-      current_state_->Type() == StateType::PLAY || current_state_->Type() == StateType::DEMO) {
+      current_state_->Type() == StateType::PLAY) {
     DrawScoreboard();
   }
 
@@ -876,7 +876,7 @@ void Engine::DrawScoreboard() {
         ping
   */
   if (current_state_->Type() == StateType::PLAY ||
-      current_state_->Type() == StateType::REPLAY || current_state_->Type() == StateType::DEMO) {
+      current_state_->Type() == StateType::REPLAY) {
     for (auto& p_score : player_scores_) {
       if (p_score.second.team == TEAM_BLUE) {
         glm::vec2 text_pos = start_pos_blue + glm::vec2(0, blue_count * jump);
