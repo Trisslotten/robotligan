@@ -102,9 +102,9 @@ void RenderSystem(entt::registry& registry) {
                                                  : glm::vec3(0.5, 0.5, 1.0);
     glob::SubmitPlaneLight(pos, normal, 0.4f * color, glm::vec2(2.5, 5));
     glob::SubmitPlaneLight(pos + bitangent * 5.5f, normal, 0.4f * color,
-                           glm::vec2(2.5, 0.2));
+                           glm::vec2(2.5, 0.2), false);
     glob::SubmitPlaneLight(pos - bitangent * 5.5f, normal, 0.4f * color,
-                           glm::vec2(2.5, 0.2));
+                           glm::vec2(2.5, 0.2), false);
   }
 
   // Render wireframes

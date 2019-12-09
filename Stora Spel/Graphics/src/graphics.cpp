@@ -1066,12 +1066,13 @@ void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
 }
 
 void SubmitPlaneLight(glm::vec3 pos, glm::vec3 normal, glm::vec3 color,
-                      glm::vec2 sizes) {
+                      glm::vec2 sizes, bool diffuse) {
   PlaneLightItem item;
   item.pos = pos;
   item.normal = normal;
   item.color = color;
   item.sizes = sizes;
+  item.diffuse = diffuse;
   plane_lights_to_render.push_back(item);
 }
 
@@ -1426,11 +1427,25 @@ void Render() {
   std::vector<glm::vec3> plane_positions;
   std::vector<glm::vec3> plane_colors;
   std::vector<glm::vec2> plane_sizes;
+  std::vector<glm::mat4> plane_matrices;
+  std::vector<int> plane_diffuse;
   for (auto& item : plane_lights_to_render) {
     plane_normals.push_back(item.normal);
     plane_positions.push_back(item.pos);
     plane_colors.push_back(item.color);
     plane_sizes.push_back(item.sizes);
+
+    glm::mat4 view =
+        glm::lookAt(item.pos - item.normal, item.pos, glm::vec3(0, 1, 0));
+    glm::mat4 view2 =
+        glm::lookAt(item.pos + item.normal, item.pos, glm::vec3(0, 1, 0));
+    glm::mat4 pers =
+        glm::perspective(90.f, item.sizes.y / item.sizes.x, 1.f, 100.f);
+
+    plane_matrices.push_back(pers * view2);
+    plane_matrices.push_back(pers * view);
+
+    plane_diffuse.push_back(item.diffuse ? 1 : 0);
   }
 
   std::vector<RenderItem> normal_items;
@@ -1503,6 +1518,10 @@ void Render() {
                      plane_positions.data());
     shader->uniformv("plane_sizes", plane_lights_to_render.size(),
                      plane_sizes.data());
+    shader->uniformv("plane_matrices", plane_matrices.size(),
+                     plane_matrices.data());
+    shader->uniformv("plane_diffuse", plane_diffuse.size(),
+                     plane_diffuse.data());
     shader->uniform("NR_OF_PLANES", (int)plane_lights_to_render.size());
 
     shader->uniform("cam_transform", cam_transform);
@@ -1543,39 +1562,6 @@ void Render() {
         render_item.model->Draw(model_shader);
       }
     }
-
-    /*
-      model_shader.use();
-      for (auto &render_item : normal_items) {
-        SetDefaultMaterials(model_shader);
-        model_shader.uniform("diffuse_index", render_item.material_index);
-        model_shader.uniform("model_transform", render_item.transform);
-        model_shader.uniform("normal_transform",
-                             calcNormalTransform(render_item.transform));
-        model_shader.uniform("dynamic_em_strength",
-                             render_item.emission_strength);
-        render_item.model->Draw(model_shader);
-      }
-
-      // render bone animated items
-      animated_model_shader.use();
-      for (auto &BARI : bone_animated_items_to_render) {
-        animated_model_shader.uniform("diffuse_index", BARI.material_index);
-        animated_model_shader.uniform("model_transform", BARI.transform);
-        animated_model_shader.uniformv("bone_transform",
-                                       BARI.bone_transforms.size(),
-                                       BARI.bone_transforms.data());
-        animated_model_shader.uniform("normal_transform",
-                                      calcNormalTransform(BARI.transform));
-        animated_model_shader.uniform("dynamic_em_strength",
-                                      BARI.emission_strength);
-
-        // animated_model_shader.uniform("NR_OF_BONES",
-        // (int)BARI.bone_transforms.size());
-        SetDefaultMaterials(animated_model_shader);
-        BARI.model->Draw(animated_model_shader);
-      }
-    */
 
     rope.Draw(cam_transform);
 
