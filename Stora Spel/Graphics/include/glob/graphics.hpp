@@ -97,6 +97,9 @@ EXPORT void UpdateParticles(ParticleSystemHandle handle, float dt);
 EXPORT void SubmitLightSource(glm::vec3 pos, glm::vec3 color,
                               glm::float32 radius, glm::float32 ambient,
                               glm::float32 sphere_radius = 0.f);
+
+EXPORT void SubmitPlaneLight(glm::vec3 pos, glm::vec3 normal, glm::vec3 color, glm::vec2 sizes);
+
 // Submit Bone Animated Mesh
 EXPORT void SubmitBAM(ModelHandle model_h, glm::mat4 transform,
                       std::vector<glm::mat4> bone_transforms,

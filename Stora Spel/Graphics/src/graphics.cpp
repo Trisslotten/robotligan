@@ -131,6 +131,7 @@ std::unordered_map<ModelHandle, GLuintBuffers> wireframe_buffers;
 
 std::vector<RenderItem> items_to_render;
 std::vector<LightItem> lights_to_render;
+std::vector<PlaneLightItem> plane_lights_to_render;
 std::vector<int> particles_to_render;
 std::vector<BoneAnimatedRenderItem> bone_animated_items_to_render;
 std::vector<glm::mat4> cubes;
@@ -1064,6 +1065,16 @@ void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
   lights_to_render.push_back(item);
 }
 
+void SubmitPlaneLight(glm::vec3 pos, glm::vec3 normal, glm::vec3 color,
+                      glm::vec2 sizes) {
+  PlaneLightItem item;
+  item.pos = pos;
+  item.normal = normal;
+  item.color = color;
+  item.sizes = sizes;
+  plane_lights_to_render.push_back(item);
+}
+
 void SubmitBAM(const std::vector<ModelHandle>& handles, glm::mat4 transform,
                std::vector<glm::mat4> bone_transforms, int material_index,
                bool cast_shadow,
@@ -1411,6 +1422,16 @@ void Render() {
     light_colors_amb.push_back(glm::vec4(light_item.color, light_item.ambient));
     light_sphere_radii.push_back(light_item.sphere_radius);
   }
+  std::vector<glm::vec3> plane_normals;
+  std::vector<glm::vec3> plane_positions;
+  std::vector<glm::vec3> plane_colors;
+  std::vector<glm::vec2> plane_sizes;
+  for (auto& item : plane_lights_to_render) {
+    plane_normals.push_back(item.normal);
+    plane_positions.push_back(item.pos);
+    plane_colors.push_back(item.color);
+    plane_sizes.push_back(item.sizes);
+  }
 
   std::vector<RenderItem> normal_items;
   std::map<float, std::vector<RenderItem>> transparent_items;
@@ -1473,6 +1494,17 @@ void Render() {
     shader->uniformv("light_sphere_radii", lights_to_render.size(),
                      light_sphere_radii.data());
     shader->uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
+
+    shader->uniformv("plane_normals", plane_lights_to_render.size(),
+                     plane_normals.data());
+    shader->uniformv("plane_colors", plane_lights_to_render.size(),
+                     plane_colors.data());
+    shader->uniformv("plane_positions", plane_lights_to_render.size(),
+                     plane_positions.data());
+    shader->uniformv("plane_sizes", plane_lights_to_render.size(),
+                     plane_sizes.data());
+    shader->uniform("NR_OF_PLANES", (int)plane_lights_to_render.size());
+
     shader->uniform("cam_transform", cam_transform);
     shader->uniform("cam_position", camera.GetPosition());
     shadows.SetUniforms(*shader);
@@ -1683,6 +1715,7 @@ void Render() {
 
   trails_to_render.clear();
   lights_to_render.clear();
+  plane_lights_to_render.clear();
   items_to_render.clear();
   bone_animated_items_to_render.clear();
   e2D_items_to_render.clear();

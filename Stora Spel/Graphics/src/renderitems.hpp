@@ -83,6 +83,13 @@ struct LightItem {
   glm::float32 sphere_radius;
 };
 
+struct PlaneLightItem {
+  glm::vec3 pos;
+  glm::vec3 normal;
+  glm::vec3 color;
+  glm::vec2 sizes;
+};
+
 struct TrailItem {
   std::vector<glm::vec3> position_history;
   float width;

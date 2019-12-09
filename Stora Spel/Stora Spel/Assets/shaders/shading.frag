@@ -4,7 +4,7 @@
 
 #define MAX_LIGHTS 32
 
-#define MAX_PLANES 4
+#define MAX_PLANES 9
 
 in vec4 v_shadow_spaces[MAX_SHADOWS];
 
@@ -20,6 +20,7 @@ uniform int NR_OF_LIGHTS;
 
 uniform vec3 plane_normals[MAX_PLANES];
 uniform vec3 plane_positions[MAX_PLANES];
+uniform vec3 plane_colors[MAX_PLANES];
 uniform vec2 plane_sizes[MAX_PLANES];
 uniform int NR_OF_PLANES;
 
@@ -125,7 +126,7 @@ struct Lighting {
 	vec3 ambient;
 };
 
-Lighting shading(const vec3 position, const vec3 normal) {
+Lighting shading(const vec3 position, const vec3 normal, const float reflective) {
 	float roughness = 0.;
 	if(use_roughness != 0)
 	{
@@ -155,28 +156,32 @@ Lighting shading(const vec3 position, const vec3 normal) {
 			float diffuse = calcDiffuse(position, normal, light_dir);
 			lighting.diffuse += diffuse * intensity * col_amb.rgb;
 
-			const float sphere_radius = light_sphere_radii[l];
-			if(sphere_radius > 0.) {
-				light_dir = calcSphereLightVec(view_dir, normal, pointToLight, sphere_radius);
+			if(reflective >= 1.0/255.0) {
+				const float sphere_radius = light_sphere_radii[l];
+				if(sphere_radius > 0.) {
+					light_dir = calcSphereLightVec(view_dir, normal, pointToLight, sphere_radius);
+				}
+				float specular = calcSpecular(position, normal, light_dir, view_dir, roughness);
+				lighting.specular += specular * intensity * col_amb.rgb;
 			}
-			float specular = calcSpecular(position, normal, light_dir, view_dir, roughness);
-			lighting.specular += specular * intensity * col_amb.rgb;
 		}
 	}
-	/*
-	vec3 ppos = vec3(2,2,0);
-	vec3 plane_normal = normalize(vec3(1,0,1));
-	vec3 tangent = vec3(0,1,0);
-	vec3 bitangent = normalize(cross(plane_normal, tangent));
+	if(reflective >= 1.0/255.0) {
+		vec3 r = normalize(reflect(normalize(view_dir), normal));
+		for(int i = 0; i < NR_OF_PLANES; i++) {
+			const vec2 sizes = plane_sizes[i];
+			const vec3 ppos = plane_positions[i];
+			const vec3 plane_normal = plane_normals[i];
+			const vec3 tangent = vec3(0,1,0);
+			const vec3 bitangent = normalize(cross(plane_normal, tangent));
 
-	vec3 r = normalize(reflect(normalize(view_dir), normal));
-	float t = dot(ppos - position, plane_normal) / dot(r, plane_normal);
-	vec3 v = (position + t * r) - ppos;
-	if (abs(dot(v, tangent)) < 2.0 && abs(dot(v, bitangent)) < 5.0 && t < 0) {
-		lighting.specular += vec3(0.5,0,0);
+			const float t = dot(ppos - position, plane_normal) / dot(r, plane_normal);
+			const vec3 v = (position + t * r) - ppos;
+			if (abs(dot(v, tangent)) < sizes.x && abs(dot(v, bitangent)) < sizes.y && t < 0) {
+				lighting.specular += plane_colors[i];
+			}
+		}
 	}
-	*/
-	
 
 	//float dist = sdBox(position - vec3(10,0,0), vec3(0.1, 5, 5));
 	//lighting.diffuse += vec3(1,0.5,0.5)/(1.+ 0.01 * dist*dist);
