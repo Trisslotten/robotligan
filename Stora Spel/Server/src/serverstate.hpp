@@ -184,4 +184,110 @@ class ServerPlayState : public ServerState {
   //---
 };
 
+class ServerPlayState : public ServerState {
+ public:
+  void Init() override;
+  void Update(float dt) override;
+  void HandleDataToSend() override;
+  void Cleanup() override;
+  ServerPlayState() = default;
+  ~ServerPlayState() {}
+
+  void SetPlayerInput(int client_id, uint16_t actions, float pitch, float yaw) {
+    players_inputs_[client_id] = std::make_pair(actions, glm::vec2(pitch, yaw));
+  }
+  // void CreatePlayer(long client_id);
+
+  void ResetEntities();
+  void StartResetTimer();
+  bool IsResetting() { return reset_; }
+  bool StartRecording(unsigned int in_replay_length_seconds);
+
+  void SetClientReceiveUpdates(long client_id, bool initialized) {
+    clients_receive_updates_[client_id] = initialized;
+  }
+
+  std::unordered_map<int, AbilityID> client_abilities_;
+  std::unordered_map<int, unsigned int> client_teams_;
+
+  void ReceiveEvent(const EventInfo& e);
+  // EntityID GetNextEntityGuid() { return entity_guid_++; }
+  void SetFrameID(int client_id, int id) { player_frame_id_[client_id] = id; }
+  void Reconnect(int id);
+  void SetReconnect(unsigned int ID) { reconnect_id_ = ID; }
+  void SetSwitchingGoals(bool val) {
+    switching_goals = val;
+    switch_goal_timer_.Restart();
+  }
+
+  void SetWantDab(long client_id) {
+    wants_dab_.insert(client_id);
+  }
+
+ private:
+  entt::entity CreateIDEntity();
+  unsigned short reconnect_id_ = 100;
+  void CreateInitialEntities(int num_players);
+  void CreateMapEntity();
+  void CreateBallEntity();
+  void CreatePlayerEntity();
+  void CreateGoals();
+  void CreatePickupSpawners();
+  void Record(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value,
+              const float& in_dt, unsigned int in_player_index);
+  void Replay(std::bitset<10>& in_bitset, float& in_x_value, float& in_y_value,
+              unsigned int in_player_index);
+  EntityID CreatePickUpComponents(glm::vec3 pos);
+  EntityID GetNextEntityGuid() { return entity_guid_++; }
+  void OverTime();
+  void EndGame();
+  void WallAnimation();
+  void UpdateSwitchGoals();
+
+  std::unordered_map<long, bool> clients_receive_updates_;
+  std::unordered_map<int, EntityID> clients_player_ids_;
+  std::unordered_map<int, std::pair<uint16_t, glm::vec2>> players_inputs_;
+
+  std::vector<unsigned int> score_;
+
+  std::vector<entt::entity> created_pick_ups_;
+  std::vector<entt::entity> created_walls_;
+  std::vector<entt::entity> created_mines_;
+
+  std::set<long> wants_dab_;
+
+  EntityID entity_guid_ = 0;
+
+  int last_spawned_team_ = 1;
+  int red_players_ = 0;
+  int blue_players_ = 0;
+
+  int match_time_ = 300;
+  int count_down_time_ = 5;
+  Timer match_timer_;
+  Timer countdown_timer_;
+  Timer reset_timer_;
+  Timer pickup_spawn_timer_;
+  float pickup_spawn_time_ = 10.0f;
+  bool reset_ = false;
+
+  int switch_goal_time_ =
+      (int)GlobalSettings::Access()->ValueOf("ABILITY_SWITCH_GOAL_TIMER");
+  Timer switch_goal_timer_;
+
+  std::vector<std::pair<PlayerID, unsigned int>> new_teams_;
+  std::vector<Projectile> created_projectiles_;
+  std::vector<int> destroy_entities_;
+
+  std::unordered_map<int, int> player_frame_id_;
+
+  // Replay stuff ---
+  ReplayMachine* replay_machine_ = nullptr;
+  bool record_ = false;
+  bool replay_ = false;
+  bool switched_goals = false;
+  bool switching_goals = false;
+  //---
+};
+
 #endif  // !STATE_HPP_

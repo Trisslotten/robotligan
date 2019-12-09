@@ -25,6 +25,7 @@
     <ClCompile Include="src\states\replay_state.cpp" />
     <ClCompile Include="src\states\createserverstate.cpp" />
     <ClCompile Include="src\ecs\systems\particle_system.cpp" />
+    <ClCompile Include="src\states\demostate.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AbilityHandler\ability.hpp" />
