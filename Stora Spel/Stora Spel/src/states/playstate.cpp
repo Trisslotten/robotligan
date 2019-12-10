@@ -90,6 +90,8 @@ void PlayState::Startup() {
 
 	registry_gameplay_.on_destroy<SoundComponent>()
 		.connect<&PlayState::SoundComponentDestroyed>(*this);
+
+	gamevent_type_strings = { "GOAL","KICK","HIT","NUDGE","BOUNCE","LAND","JUMP","SHOOT","GRAVITY_DROP","SUPER_KICK","MISSILE_FIRE","MISSILE_IMPACT","TELEPORT_CAST","TELEPORT_IMPACT","HOMING_BALL","HOMING_BALL_END","FORCE_PUSH","FORCE_PUSH_IMPACT","SWITCH_GOALS_BEGIN","SWITCH_GOALS_DONE","BUILD_WALL","FAKE_BALL_CREATED","FAKE_BALL_POOF","INVISIBILITY_CAST","INVISIBILITY_END","BLACKOUT_CAST","BLACKOUT_TRIGGER","BLACKOUT_END","MINE_PLACE","MINE_TRIGGER","SPRINT_START","SPRINT_END","RUN_START","RUN_END","RESET","PRIMARY_USED","SECONDARY_USED","PICKUP_SPAWNED","BLACK_HOLE_CREATED","BLACK_HOLE_ACTIVATED","BLACK_HOLE_DESTROYED","PLAYER_STUNNED","FISHING_HOOK_SHOOT","FISHING_HOOK_ATTACHED","REMOVE_FISHING_HOOK","PICKED_UP_PICKUP","DABBING","CANNON_IMPACT" };
 }
 
 void PlayState::CreateGoalParticles(float x, entt::registry& registry) {
@@ -301,6 +303,7 @@ void PlayState::Update(float dt) {
 
 	float f = 0.5;  // 0.25f * dt;  // pow(0.75f, dt);
 
+
 	for (auto entity : view_entities) {
 		auto& trans_c = view_entities.get<TransformComponent>(entity);
 		auto& id_c = view_entities.get<IDComponent>(entity);
@@ -322,7 +325,7 @@ void PlayState::Update(float dt) {
 			glm::vec3 temp =
 				lerp(predicted_state_.position, server_predicted_.position, 0.2f);
 			trans_c.position = glm::lerp(trans_c.position, temp, 1.0f);
-			if (player_hooked) trans_c.position = server_predicted_.position;
+			if (player_hooked || !interpolate_) trans_c.position = server_predicted_.position;
 			// trans_c.position = trans.first;
 			glm::quat orientation =
 				glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
@@ -354,7 +357,9 @@ void PlayState::Update(float dt) {
 				trans_c.position = trans.first;
 			}
 			else {
-				trans_c.position = glm::lerp(trans_c.position, trans.first, 0.5f);
+				if (interpolate_) trans_c.position = glm::lerp(trans_c.position, trans.first, 0.5f);
+				else
+					trans_c.position = trans.first;
 				// trans_c.position = trans.first;
 			}
 			bool slerp = true;
@@ -1321,6 +1326,15 @@ void PlayState::CreateTechDemoScene()
 	window_trans.scale.x = 4.f;
 	window_trans.scale.y = 4.f;
 
+	auto window2 = registry_gameplay_.create();
+	auto& window2_m_c = registry_gameplay_.assign<ModelComponent>(window2);
+	window2_m_c.handles.push_back(hndl_plane);
+	window2_m_c.cast_shadow = false;
+	auto& window_trans2 = registry_gameplay_.assign<TransformComponent>(window2, glm::vec3(37, -7, 14));
+	window_trans2.scale.x = 2.f;
+	window_trans2.scale.y = 2.f;
+	window_trans2.Rotate(glm::vec3(0, glm::radians(20.f), 0));
+
 	// Particle section
 	auto e = registry_gameplay_.create();
 
@@ -1349,7 +1363,7 @@ void PlayState::CreateTechDemoScene()
 	// Animation
 	auto robot = registry_gameplay_.create();
 	auto& trans = registry_gameplay_.assign<TransformComponent>(
-		robot, glm::vec3(10,-10.5,0), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.01f));
+		robot, glm::vec3(10, -10.5, 0), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.01f));
 	glob::ModelHandle model_robot = glob::GetModel(kModelPathMech);
 	auto& model_c = registry_gameplay_.assign<ModelComponent>(robot);
 	model_c.handles.push_back(model_robot);
@@ -1384,6 +1398,9 @@ void PlayState::UpdateTechDemo(float dt)
 
 		registry_gameplay_.assign<ParticleComponent>(e, handles, offsets, directions);
 		registry_gameplay_.assign<TimerComponent>(e, 10.f);
+	}
+	if (Input::IsKeyPressed(GLFW_KEY_F3)) {
+		interpolate_ = !interpolate_;
 	}
 
 	// "animate" entities
@@ -1855,7 +1872,7 @@ void PlayState::CreatePlayerEntities() {
 
 		glob::ModelHandle player_model;
 		if (entity_id == my_id_) {
-			#define TEST_3RD_PERSON
+			//#define TEST_3RD_PERSON
 #ifdef TEST_3RD_PERSON
 			glm::vec3 camera_offset = glm::vec3(-4.5f, 1.4f, 0.0f);
 			player_model = glob::GetModel(kModelPathMech);
@@ -2703,6 +2720,19 @@ void PlayState::SetPlayerMoveDir(EntityID id, glm::vec3 move_dir) {
 
 void PlayState::ReceiveGameEvent(const GameEvent& e) {
 	entt::registry* correct_registry = engine_->GetCurrentRegistry();
+	if (e.type != GameEvent::HOMING_BALL_END)
+		engine_->GetChat()->AddMessage("EVENT: ", gamevent_type_strings[(int)e.type], 0);
+	if (e.type == GameEvent::FISHING_HOOK_ATTACHED) {
+		engine_->GetChat()->AddMessage("FISHING_HOOK_ATTACHED:", "Owner ID: " + std::to_string(e.hook_attached.owner_id) + ", Hook entity ID: " + std::to_string(e.hook_attached.hook_id) + ".", 0);
+	}
+	if (engine_->GetChat()->IsVisable() == false) {
+		engine_->GetChat()->SetShowChat();
+		engine_->GetChat()->CloseChat();
+	}
+	else if (engine_->GetChat()->IsClosing() == true) {
+		// resets the closing timer
+		engine_->GetChat()->CloseChat();
+	}
 	switch (e.type) {
 	case GameEvent::GOAL: {
 		CreateGoalParticles(e.goal.x, *correct_registry);

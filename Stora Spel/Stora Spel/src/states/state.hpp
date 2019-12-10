@@ -384,9 +384,11 @@ class PlayState : public State {
   entt::entity l_corner_light3;
 
   Timer demo_anim_timer;
+  std::vector<std::string> gamevent_type_strings;
 
   void CreateTechDemoScene();
   void UpdateTechDemo(float dt);
+  bool interpolate_ = true;
 
   EntityID ClientIDToEntityID(long client_id);
   ////////////////////////////////////////

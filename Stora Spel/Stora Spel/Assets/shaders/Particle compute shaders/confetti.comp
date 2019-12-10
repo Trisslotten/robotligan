@@ -60,10 +60,10 @@ void main()
 		velocities[gid] = vel;
 		positions[gid] += vel * dt;
 
-		if (positions[gid].y < 0.1) {
+		if (positions[gid].y < -11.4) {
 			velocities[gid] = vec4(0);
 		}
-		positions[gid].y = clamp(positions[gid].y, 0.1, 144.0);
+		positions[gid].y = clamp(positions[gid].y, -11.4, 144.0);
 		positions[gid].z = clamp(positions[gid].z, -28.0, 28.0);
 		colors[gid] -= color_delta * dt;
 		sizes[gid] -= size_delta * dt;
