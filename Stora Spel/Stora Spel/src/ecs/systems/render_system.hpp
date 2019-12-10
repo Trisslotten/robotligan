@@ -195,26 +195,9 @@ void RenderSystem(entt::registry& registry) {
   auto view_trails = registry.view<TrailComponent>();
   for (auto entity : view_trails) {
     auto& trail_c = view_trails.get(entity);
-    glob::SubmitTrail(trail_c.positions, trail_c.width, trail_c.color);
-
-    /*
-    // Trail Lights, very laggy
-    float resolution = 10;
-    for (int i = 0; i < resolution; i++) {
-      float posx = i / resolution;
-      int index = int(glm::floor(posx * (trail_c.positions.size() - 1)));
-      float t = glm::smoothstep(
-          0.f, 1.f, glm::fract(posx * (trail_c.positions.size() - 1)));
-
-      glm::vec3 p1 = trail_c.positions[index];
-      glm::vec3 p2 = trail_c.positions[index + 1];
-
-      glm::vec3 wpos = glm::mix(p1, p2, t);
-      float width = 0.5*trail_c.width * (1.f - posx);
-
-      glob::SubmitLightSource(wpos, trail_c.color, 100.f, 0.f, width);
-    }
-    */
+    if (registry.valid(entity)) {
+      glob::SubmitTrail(trail_c.positions, trail_c.width, trail_c.color);
+	}
   }
 }
 #endif  // RENDER_SYSTEM_HPP_

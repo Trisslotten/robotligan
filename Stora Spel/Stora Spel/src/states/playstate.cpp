@@ -168,6 +168,7 @@ void PlayState::Init() {
   my_target_ = -1;
   primary_cd_ = 0;
 
+  show_in_game_menu_buttons_ = false;
   CreateInGameMenu();
   CreateInitialEntities();
 
@@ -457,10 +458,9 @@ void PlayState::Update(float dt) {
 
   if (game_has_ended_) {
     engine_->DrawScoreboard();
+    this->recording_ = false;
+    engine_->ChangeState(StateType::REPLAY);
 
-    if (game_has_ended_) {
-      engine_->ChangeState(StateType::REPLAY);
-    }
     if (primary_cd_ > 0) {
       primary_cd_ -= dt;
     }
@@ -872,7 +872,7 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action,
       if (a == PlayerAction::JUMP && player_c.can_jump) {
         player_c.can_jump = false;
         // Add velocity upwards
-        final_velocity += up * 8.0f;
+        final_velocity += up * 16.0f;
         // Set them to be airborne
         new_state.is_airborne = true;
         // Subtract energy cost from resources
@@ -944,8 +944,11 @@ void PlayState::MovePlayer(float dt) {
       AddAction(action);
     }
   }
-  for (auto& a : actions_) {
-    new_frame.actions.push_back(a);
+  if (engine_->GetShoulSendInput() && engine_->GetTakeGameInput() &&
+      countdown_time_ - engine_->GetCountdownTimer() <= 0) {
+    for (auto& a : actions_) {
+      new_frame.actions.push_back(a);
+    }
   }
   auto& cam_o = registry_gameplay_.get<CameraComponent>(my_entity_).orientation;
 
@@ -988,6 +991,7 @@ void PlayState::OnServerFrame() {
   if (glm::length(predicted_state_.position - server_predicted_.position) >
       5.0f) {
     trans_c.position = server_predicted_.position;
+    predicted_state_ = server_predicted_;
     return;
   }
 }
@@ -1405,7 +1409,26 @@ void PlayState::DrawJumbotronText() {
           size = 14;
           text = "GOOOAL!";
           temp_pos -= right * ((float)text.size() / 2);
+          temp_pos += glm::vec3(0, 10, 0);
           glob::Submit(font_test_, temp_pos, size, text, color_white, orient);
+          long clid = -1;
+          unsigned int goal_maker_team = TEAM_RED;
+          for (auto player : engine_->GetPlayerScores()) {
+            if (player.second.enttity_id == last_goal_maker_) {
+              clid = player.first;
+              goal_maker_team = player.second.team;
+              break;
+            }
+          }
+          if (clid != -1) {
+            std::string player_name = engine_->player_names_[clid];
+            color = color_red;
+            if (goal_maker_team == TEAM_BLUE) color = color_blue;
+
+            temp_pos -= glm::vec3(0, 1, 0) * 15.f;
+            glob::Submit(font_test_, temp_pos, 6.f, player_name, color, orient);
+          }
+
           break;
         }
         default: {
@@ -1611,6 +1634,7 @@ void PlayState::CreateInitialEntities() {
 }
 
 void PlayState::CreatePlayerEntities() {
+  bool ThirdPersonDebug = true;
   auto& sound_engine = engine_->GetSoundEngine();
 
   std::cout << "DEBUG: playstate.cpp: Created " << player_ids_.size()
@@ -1690,6 +1714,11 @@ void PlayState::CreatePlayerEntities() {
     f.emitters.push_back(
         {joints["Gun autoloader"].id, glm::vec3(4.39386, -3.68348, 9.73308),
          glm::normalize(glm::vec3(0, -1, 0)), BoneEmitterType::SHOOT, 10.0f});
+
+    f.emitters.push_back({joints["Chest"].id,
+                          glm::vec3(-0.005052, 2.15061f, 13.7683f),
+                          glm::normalize(glm::vec3(0, 0, 1)),
+                          BoneEmitterType::GOAL_MAKER, 12.f});
     if (entity_id != my_id_) {
       f.emitters.push_back({joints["Thruster upper L"].id,
                             glm::vec3(1.90377, 4.66975, 14.3237),
@@ -1741,6 +1770,9 @@ void PlayState::CreatePlayerEntities() {
           break;
         case BoneEmitterType::SHOOT:
           glob::SetParticleSettings(handle, "shoot.txt");
+          break;
+        case BoneEmitterType::GOAL_MAKER:
+          glob::SetParticleSettings(handle, "goal_maker.txt");
           break;
       }
       part_c.handles.push_back(handle);
@@ -2197,7 +2229,7 @@ void PlayState::CreateWall(EntityID id, glm::vec3 position, glm::quat rotation,
   hs.push_back(model);
   hs.push_back(model_t);
   auto& model_c = registry_gameplay_.assign<ModelComponent>(wall, hs);
-  registry_gameplay_.assign<WallComponent>(wall);
+  registry_gameplay_.assign<WallComponent>(wall, team);
   if (team == TEAM_BLUE) {
     model_c.diffuse_index = 1;
   } else {
@@ -2427,7 +2459,8 @@ void PlayState::DestroyEntity(EntityID id) {
       if (registry_gameplay_.has<TransformComponent>(entity)) {
         pos = registry_gameplay_.get<TransformComponent>(entity).position;
       }
-      registry_gameplay_.destroy(entity);
+      // registry_gameplay_.destroy(entity);
+      engine_->EngineDestroyEntity(registry_gameplay_, entity);
       break;
     }
   }
@@ -2499,12 +2532,25 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
       current_jumbo_effect_ = GOAL_SCORED;
       jumbo_effect_timer_.Pause();
 
-      if (this->recording_) {
-        this->engine_->GetReplayMachinePtr()->StoreAndClearReplay();
+      if (e.goal.good_goal) {
+        last_goal_maker_ = e.goal.goal_maker;
+      }
+
+      auto view_players =
+          correct_registry
+              ->view<PlayerComponent, IDComponent, TransformComponent>();
+      for (auto player : view_players) {
+        auto& player_player_c = correct_registry->get<PlayerComponent>(player);
+        auto& player_id_c = correct_registry->get<IDComponent>(player);
+        auto& player_trans_c =
+            correct_registry->get<TransformComponent>(player);
       }
       break;
     }
     case GameEvent::RESET: {
+      if (this->recording_) {
+        this->engine_->GetReplayMachinePtr()->StoreAndClearReplay();
+      }
       Reset();
       break;
     }
@@ -3017,7 +3063,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
         auto& hook_id_c = registry_gameplay_.get<IDComponent>(hook);
         if (hook_id_c.id == id) {
           // registry_gameplay_.destroy(hook);
-          correct_registry->destroy(hook);
+          // correct_registry->destroy(hook);
+          engine_->EngineDestroyEntity(registry_gameplay_, hook);
         }
       }
       if (e.hook_removed.owner_id == my_id_) {
@@ -3034,6 +3081,17 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 }
 
 void PlayState::Reset() {
+  //
+  auto view_ball = registry_gameplay_.view<BallComponent, TrailComponent, TransformComponent>();
+  for (auto ball : view_ball) {
+    auto& trail = view_ball.get<TrailComponent>(ball);
+    auto& trans = view_ball.get<TransformComponent>(ball);
+
+    for (auto& pos : trail.history) {
+      pos.position = glm::vec3(0.f, 10.f, 0.f);
+    }
+  }
+  // NTS: Call to engine destroy not needed?
   auto destroy_view = registry_gameplay_.view<DestroyOnResetComponent>();
   registry_gameplay_.destroy(destroy_view.begin(), destroy_view.end());
 

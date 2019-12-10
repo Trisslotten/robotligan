@@ -15,8 +15,9 @@ void ReplayState::AddConstantStuff() {
   this->AddLights();
   //this->AddSpotlights();
   this->AddAudience();
+  this->AddJumbotron();
   this->AddCamera(glm::vec3(0.f, 13.f, 42.f));  //  glm::vec3(60.f, 4.f, 38.f);
-  glob::GetCamera().SetFov(60);
+  glob::GetCamera().SetFov(75);
 }
 
 void ReplayState::AddArenaStuff() {
@@ -169,6 +170,37 @@ void ReplayState::AddAudience() {
   }
 }
 
+void ReplayState::AddJumbotron() {
+  glm::vec3 pos_base;
+  pos_base.x = GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEX");
+  pos_base.y = GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEY");
+  pos_base.z = GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEZ");
+
+  pos_base *= arena_scale_;
+
+  float xrot = 1.f;
+  float zrot = 1.f;
+  for (int i = 0; i < 4; i++) {
+    auto jumbo = replay_registry_.create();
+    ModelComponent& model_c = replay_registry_.assign<ModelComponent>(jumbo);
+    glob::ModelHandle jumbo_m_hndl =
+        glob::GetModel("assets/Jumbotron/Jumbotron.fbx");
+    model_c.handles.push_back(jumbo_m_hndl);
+    model_c.offset = glm::vec3(0, 0, -120.f * arena_scale_.z);
+    TransformComponent& trans_c =
+        replay_registry_.assign<TransformComponent>(jumbo);
+    trans_c.position =
+        glm::vec3(xrot * pos_base.x, pos_base.y, zrot * pos_base.z);
+    trans_c.scale = arena_scale_ * 2.0f;
+    trans_c.rotation *= glm::quatLookAtRH(
+        glm::normalize(glm::vec3(0, trans_c.position.y, 0) - trans_c.position),
+        glm::vec3(0, 1, 0));
+    trans_c.Rotate(glm::vec3(0.f, glm::radians(180.f), 0.f));
+    std::swap(xrot, zrot);
+    zrot *= -1.f;
+  }
+}
+
 void ReplayState::AddCamera(glm::vec3 in_cam_pos) {
   // Camera
   entt::entity camera = this->replay_registry_.create();
@@ -264,8 +296,12 @@ void ReplayState::PlayReplay() {
 
   if (this->engine_->GetReplayMachinePtr()->LoadFrame(this->replay_registry_)) {
     // Once replay is done playing, clear the registry
+    glob::ClearEffects();
     this->replay_registry_.reset();
     replay_counter_++;
+
+    GlobalSettings::Access()->WriteError("", "Replay Swap",
+                                         std::to_string(replay_counter_));
 
     // Add the constant stuff back in again
     // Also prevents black-sceen when all replays are done
@@ -273,6 +309,9 @@ void ReplayState::PlayReplay() {
     this->CreateInGameMenu();
 
     if (!engine_->GetReplayMachinePtr()->SelectReplay(replay_counter_)) {
+      GlobalSettings::Access()->WriteError("", "Replay Termination",
+                                           std::to_string(replay_counter_));
+
       // And stop replaying
       this->replaying_ = false;
     }
@@ -398,6 +437,43 @@ void ReplayState::DrawFishingLines() {
   }
 }
 
+void ReplayState::DrawJumbotronText() {
+  glm::vec3 pos_base;
+  pos_base.x = GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEX");
+  pos_base.y =
+      GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEY") + 15.f;
+  pos_base.z = GlobalSettings::Access()->ValueOf("JUMBOTRON_POSITION_BASEZ");
+
+  pos_base *= arena_scale_;
+
+  float xrot = 1.f;
+  float zrot = 1.f;
+  for (int i = 0; i < 4; i++) {
+    glm::vec3 temp_pos =
+        glm::vec3(xrot * pos_base.x, pos_base.y, pos_base.z * zrot);
+
+    float goal_side_switch = goals_swapped_ ? xrot * -1 : xrot;
+
+    glm::vec3 dir = glm::normalize(glm::vec3(0, temp_pos.y, 0) - temp_pos);
+    temp_pos += dir * 30.f;
+    glm::vec3 right =
+        glm::normalize(glm::cross(dir, glm::vec3(0, 1, 0))) * -1.f;
+    temp_pos += right * 5.f;
+
+    glm::quat rotation = glm::quatLookAtRH(dir, glm::vec3(0, 1, 0));
+    rotation *= glm::quat(glm::vec3(0.f, glm::radians(180.0f), 0.f));
+    glm::mat4 orient = glm::toMat4(rotation);
+
+    glm::vec4 color_white = glm::vec4(1.f, 1.f, 1.f, .8f);
+    float size = 10.f;
+    std::string text = "HIGHLIGHTS";
+    glob::Submit(font_test_, temp_pos, size, text, color_white, orient);
+
+	std::swap(xrot, zrot);
+    zrot *= -1.f;
+  }
+}
+
 // Public----------------------------------------------------------------------
 
 void ReplayState::Startup() {
@@ -447,6 +523,7 @@ void ReplayState::Update(float dt) {
   }
 
   DrawFishingLines();
+  DrawJumbotronText();
 }
 
 void ReplayState::UpdateNetwork() {

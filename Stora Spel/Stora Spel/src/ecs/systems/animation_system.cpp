@@ -2,6 +2,7 @@
 
 #include "engine.hpp"
 #include "glob/AssimpToGLMConverter.hpp"
+#include "util/player_animation_controller.hpp"
 
 void AnimationSystem::Init(Engine* engine) { engine_ = engine; }
 
@@ -100,6 +101,11 @@ void AnimationSystem::PlayAnimation(std::string name, float speed,
   for (int i = 0; i < ac->active_animations.size(); i++) {
     if (ac->active_animations.at(i)->animation_ ==
         ac->model_data.animations.at(anim)) {
+      if (ac->active_animations.at(i)->stopping_) {
+        ac->active_animations.at(i)->stopping_ = false;
+        ac->active_animations.at(i)->fade_ = 0.f;
+        return;
+      }
       std::cout << "WARNING: Attempting to play animation: \""
                 << ac->model_data.animations.at(anim)->name_
                 << "\" is already playing, cannot stack the same animation!\n";
@@ -121,6 +127,9 @@ void AnimationSystem::PlayAnimation(std::string name, float speed,
   p_anim->playing_ = true;
   p_anim->time_ = 0;
   p_anim->strength_ = strength;
+
+  p_anim->stopping_ = false;
+  p_anim->fade_ = 0.f;
 
   if (ac->model_data.humanoid) {
     if (bodyInclude != nullptr) {
@@ -179,7 +188,7 @@ void AnimationSystem::StopAnimation(std::string name, AnimationComponent* ac) {
         << name << "\"!\n";
     return;
   }
-  ac->active_animations.at(anim)->playing_ = false;
+  ac->active_animations.at(anim)->stopping_ = true;
 }
 
 void AnimationSystem::StrengthModulator(AnimationComponent* ac) {
@@ -224,29 +233,14 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
       if (ac.init) {
         PlayAnimation("Resting", 0.5f, &ac, 10, 1.f, LOOP);
 
-        PlayAnimation("LookUp", 0.5f, &ac, 21, 0.f, LOOP,
-                      &ac.model_data.upperBody, &ac.model_data.arms);
-        PlayAnimation("LookDown", 0.5f, &ac, 21, 0.f, LOOP,
-                      &ac.model_data.upperBody, &ac.model_data.arms);
-        PlayAnimation("LookLeft", 0.5f, &ac, 21, 0.f, LOOP,
-                      &ac.model_data.upperBody, &ac.model_data.arms);
-        PlayAnimation("LookRight", 0.5f, &ac, 21, 0.f, LOOP,
-                      &ac.model_data.upperBody, &ac.model_data.arms);
-        PlayAnimation("LookAhead", 1.f, &ac, 21, 0.f, LOOP,
-                      &ac.model_data.upperBody, &ac.model_data.arms);
-
         if (pl.running) {
-          PlayAnimation("Run", 1.f, &ac, 15, 1.f, LOOP);
-        }
-        if (pl.jumping) {
-          PlayAnimation("JumpStart", 0.5f, &ac, 25, 1.f, LOOP);
-          PlayAnimation("JumpEnd", 0.5f, &ac, 25, 0.f, LOOP);
-        }
-        if (pl.sprinting) {
-          PlayAnimation("SlideF", 1.f, &ac, 20, 0.f, LOOP);
-          PlayAnimation("SlideB", 1.f, &ac, 20, 0.f, LOOP);
-          PlayAnimation("SlideR", 1.f, &ac, 20, 0.f, LOOP);
-          PlayAnimation("SlideL", 1.f, &ac, 20, 0.f, LOOP);
+          PAC::playRunAnims(this, ac, pl.localPlayer);
+        } else if (pl.jumping) {
+          PAC::playJumpAnims(this, ac, pl.localPlayer);
+        } else if (pl.sprinting) {
+          PAC::playSlideAnims(this, ac, pl.localPlayer);
+        } else {
+          PAC::playLookAnims(this, ac, pl.localPlayer);
         }
 
         ac.init = false;
@@ -256,64 +250,147 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
           glm::normalize(pl.look_dir * glm::vec3(1.f, 0.f, 1.f));
       glm::vec3 UDlookDir = glm::normalize(pl.look_dir);
       glm::vec3 moveDir;
-      if (abs(ph.velocity.x) > 0.01 || abs(ph.velocity.y > 0.01) ||
-          abs(ph.velocity.z > 0.01)) {
+      if (abs(ph.velocity.x) > 0.01 || abs(ph.velocity.z > 0.01)) {
         moveDir = ph.velocity;
         pl.vel_dir = moveDir;
       } else {
         moveDir = pl.vel_dir;
       }
-      // SLIDE ANIMATIONS
+
+      float lookMoveOffset = glm::dot(
+          LRlookDir, glm::normalize(moveDir * glm::vec3(1.f, 0.1, 1.f)));
+
+      bool backwards = (lookMoveOffset < -0.2);
+
+      float rotator = dt * 5.f;
+      float yaw = 0.f;
+
+      // Kick animations
+      if (pl.kicking || pl.shooting) {
+        if (GetActiveAnimationByName("SlideF", &ac) < 0) {
+          PAC::playSlideAnims(this, ac, pl.localPlayer);
+        }
+        rotator = dt * 10.f;
+        int animNumKick = GetActiveAnimationByName("Kick", &ac);
+        int animNumShoot = GetActiveAnimationByName("Shoot", &ac);
+        if (animNumKick >= 0) {
+          glob::PlayableAnimation* animKick =
+              ac.active_animations.at(animNumKick);
+          if (animKick->stopping_) {
+            pl.kicking = false;
+            if (!pl.sprinting && !pl.shooting) {
+              PAC::stopSlideAnims(this, ac, pl.localPlayer);
+            }
+          }
+        }
+        if (animNumShoot >= 0) {
+          glob::PlayableAnimation* animShoot =
+              ac.active_animations.at(animNumShoot);
+          if (animShoot->stopping_) {
+            pl.shooting = false;
+            if (!pl.sprinting && !pl.kicking) {
+              PAC::stopSlideAnims(this, ac, pl.localPlayer);
+            }
+          }
+        }
+      }
+
+      // LOOK ANIMATIONS
       constexpr float pi = glm::pi<float>();
-      if (!pl.sprinting) {
+      if (!pl.sprinting && !pl.kicking && !pl.shooting) {
         glm::quat offset = -t.rotation;
 
-        float yaw = atan2(moveDir.x, moveDir.z);
-        offset += glm::quat(glm::vec3(0.f, yaw - pi / 2.f, 0.f));
+        if (backwards && pl.running && !pl.jumping) {
+          yaw = atan2(-moveDir.x, -moveDir.z);
+        } else {
+          yaw = atan2(moveDir.x, moveDir.z);
+        }
 
+        float lYaw = yaw + pi;
+        float SA =
+            fmod(fmod((lYaw - ac.yawInterpolator + pi), pi * 2.f) + (pi * 3.f),
+                 pi * 2.f) -
+            pi;
+
+        ac.yawInterpolator += fmod(SA * rotator, pi);
+
+        offset += glm::quat(glm::vec3(0.f, ac.yawInterpolator - pi / 2.f, 0.f));
         m.rot_offset = offset;
 
         float strength = 0.f;
         float totStrength = 0.f;
         for (int i = 0; i < 4; i++) {
           int anim = GetActiveAnimationByName(look_anims_[i], &ac);
-          switch (i) {
-            case 0: {  // U
-              strength = glm::clamp(
-                  glm::dot(glm::vec3(0.f, 1.f, 0.f), UDlookDir), 0.f, 1.f);
-              break;
+          if (anim >= 0) {
+            switch (i) {
+              case 0: {  // U
+                strength = glm::clamp(
+                    glm::dot(glm::vec3(0.f, 1.f, 0.f), UDlookDir), 0.f, 1.f);
+                break;
+              }
+              case 1: {  // D
+                strength = glm::clamp(
+                    glm::dot(glm::vec3(0.f, -1.f, 0.f), UDlookDir), 0.f, 1.f);
+                break;
+              }
+              case 2: {  // R
+                strength = abs(std::clamp(
+                    glm::dot(
+                        glm::vec3(1.f, 0.f, 0.f) * (t.rotation),
+                        glm::vec3(0.f, 0.f, 1.f) * (t.rotation + m.rot_offset)),
+                    -1.f, 0.f));
+                break;
+              }
+              case 3: {  // L
+                strength =
+                    std::clamp(glm::dot(glm::vec3(1.f, 0.f, 0.f) * (t.rotation),
+                                        glm::vec3(0.f, 0.f, 1.f) *
+                                            (t.rotation + m.rot_offset)),
+                               0.f, 1.f);
+                break;
+              }
             }
-            case 1: {  // D
-              strength = glm::clamp(
-                  glm::dot(glm::vec3(0.f, -1.f, 0.f), UDlookDir), 0.f, 1.f);
-              break;
-            }
-            case 2: {  // R
-              strength = abs(
-                  std::clamp(glm::dot(glm::vec3(1.f, 0.f, 0.f) * (t.rotation),
-                                      glm::vec3(0.f, 0.f, 1.f) *
-                                          (t.rotation + m.rot_offset) / 1.5f),
-                             -1.f, 0.f));
-              break;
-            }
-            case 3: {  // L
-              strength =
-                  std::clamp(glm::dot(glm::vec3(1.f, 0.f, 0.f) * (t.rotation),
-                                      glm::vec3(0.f, 0.f, 1.f) *
-                                          (t.rotation + m.rot_offset) / 1.5f),
-                             0.f, 1.f);
-              break;
-            }
+            totStrength += strength;
+            ac.active_animations.at(anim)->strength_ = strength;
           }
-          totStrength += strength;
-          ac.active_animations.at(anim)->strength_ = strength;
         }
         float LAStrength = 1.f - glm::clamp(totStrength, 0.f, 1.f);
         int LAAnim = GetActiveAnimationByName("LookAhead", &ac);
-        ac.active_animations.at(LAAnim)->strength_ = LAStrength;
+        if (LAAnim >= 0) {
+          ac.active_animations.at(LAAnim)->strength_ = LAStrength;
+        }
+      }
 
-      } else {
-        m.rot_offset = glm::quat();
+      // RUN ANIMATIONS
+      if (pl.running && GetActiveAnimationByName("Run_B", &ac) != -1 &&
+          GetActiveAnimationByName("Run", &ac) != -1) {
+        int RAnim;
+        if (backwards) {
+          RAnim = GetActiveAnimationByName("Run_B", &ac);
+
+        } else {
+          RAnim = GetActiveAnimationByName("Run", &ac);
+        }
+
+        ac.active_animations.at(RAnim)->strength_ = 1.f;
+      }
+
+      // SLIDE ANIMATIONS
+      if (pl.sprinting || pl.kicking || pl.shooting) {
+        glm::quat offset = -t.rotation;
+
+        float yaw = atan2(pl.look_dir.x, pl.look_dir.z);
+
+        float lYaw = yaw + pi;
+        float SA =
+            fmod(fmod((lYaw - ac.yawInterpolator + pi), pi * 2.f) + (pi * 3.f),
+                 pi * 2.f) -
+            pi;
+
+        ac.yawInterpolator += fmod(SA * rotator, pi);
+
+        offset += glm::quat(glm::vec3(0.f, ac.yawInterpolator - pi / 2.f, 0.f));
+        m.rot_offset = offset;
 
         float strength = 0.f;
         float totStrength = 0.f;
@@ -322,88 +399,88 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
         glm::vec3 h_lookDir;
         for (int i = 0; i < 4; i++) {
           int anim = GetActiveAnimationByName(slide_anims_[i], &ac);
-          switch (i) {
-            case 0: {  // F
-              h_lookDir = glm::normalize(LRlookDir);
-              strength = std::clamp(glm::dot(h_lookDir, moveDir), 0.f, 1.f);
-              break;
+          if (anim >= 0) {
+            switch (i) {
+              case 0: {  // F
+                h_lookDir = glm::normalize(LRlookDir);
+                strength = std::clamp(glm::dot(h_lookDir, moveDir), 0.f, 1.f);
+                break;
+              }
+              case 1: {  // B
+                h_lookDir = glm::normalize(LRlookDir);
+                strength =
+                    abs(std::clamp(glm::dot(h_lookDir, moveDir), -1.f, 0.f));
+                break;
+              }
+              case 2: {  // R
+                h_lookDir = glm::normalize(glm::cross(LRlookDir, up));
+                strength = std::clamp(glm::dot(h_lookDir, moveDir), 0.f, 1.f);
+                break;
+              }
+              case 3: {  // L
+                h_lookDir = glm::normalize(glm::cross(LRlookDir, up));
+                strength =
+                    abs(std::clamp(glm::dot(h_lookDir, moveDir), -1.f, 0.f));
+                break;
+              }
             }
-            case 1: {  // B
-              h_lookDir = glm::normalize(LRlookDir);
-              strength =
-                  abs(std::clamp(glm::dot(h_lookDir, moveDir), -1.f, 0.f));
-              break;
+            if (speed < cutoffSpeed) {
+              strength = std::clamp(strength - pl.sprint_coeff, 0.f, 1.f);
+              pl.sprint_coeff += 1.f * dt;
+            } else {
+              pl.sprint_coeff -= 1.f * dt;
             }
-            case 2: {  // R
-              h_lookDir = glm::normalize(glm::cross(LRlookDir, up));
-              strength = std::clamp(glm::dot(h_lookDir, moveDir), 0.f, 1.f);
-              break;
-            }
-            case 3: {  // L
-              h_lookDir = glm::normalize(glm::cross(LRlookDir, up));
-              strength =
-                  abs(std::clamp(glm::dot(h_lookDir, moveDir), -1.f, 0.f));
-              break;
-            }
+            pl.sprint_coeff = std::clamp(pl.sprint_coeff, 0.f, 1.f);
+            ac.active_animations.at(anim)->strength_ = strength;
+            totStrength += strength;
           }
-          if (speed < cutoffSpeed) {
-            strength = std::clamp(strength - pl.sprint_coeff, 0.f, 1.f);
-            pl.sprint_coeff += 1.f * dt;
-          } else {
-            pl.sprint_coeff -= 1.f * dt;
-          }
-          pl.sprint_coeff = std::clamp(pl.sprint_coeff, 0.f, 1.f);
-          if (anim != -1) ac.active_animations.at(anim)->strength_ = strength;
-          totStrength += strength;
         }
         if (speed < cutoffSpeed) {
           int f = GetActiveAnimationByName("SlideF", &ac);
           int b = GetActiveAnimationByName("SlideB", &ac);
           float defaultPoseModifier =
               std::clamp(1.f - totStrength, 0.f, 1.f) / 2.f;
-          if (f != -1)
+          if (f >= 0 && b >= 0) {
             ac.active_animations.at(f)->strength_ = defaultPoseModifier;
-          if (b != -1)
             ac.active_animations.at(b)->strength_ = defaultPoseModifier;
+          }
         }
       }
 
-      // RUNNING ANIMATIONS
-
       // JUMPING ANIMATIONS
       if (pl.jumping) {
-        float startStrength = 0.f;
+        float startStrength = 1.f;
         float endStrength = 0.f;
+        float velCoeff = 1.f;
+        float vertVel = std::clamp(
+            glm::vec3((ph.velocity / pl.jump_force) * up).y, -1.f, 1.f);
 
-        float velCoeff =
-            std::clamp(glm::dot(ph.velocity / pl.jump_force, up), 0.f, 1.f);
+        if (vertVel != 0) {
+          startStrength = std::clamp(vertVel, 0.f, 1.f);
 
-        startStrength = velCoeff;
+          try {
+            int js = GetActiveAnimationByName("JumpStart", &ac);
+            if (js < 0 || js >= ac.active_animations.size()) {
+              std::cout << "Error: could not find animation JumpStart"
+                        << std::endl;
+            } else {
+              ac.active_animations.at(js)->strength_ = startStrength;
+            }
 
-        try {
-          int js = GetActiveAnimationByName("JumpStart", &ac);
-          // std::cout << js << " : js\n";
-          if (js < 0 || js >= ac.active_animations.size()) {
-            std::cout << "Error: could not find animation JumpStart"
-                      << std::endl;
-          } else {
-            ac.active_animations.at(js)->strength_ = startStrength;
+            endStrength = std::clamp((1.f - vertVel) / 2.f, 0.f, 1.f);
+
+            int es = GetActiveAnimationByName("JumpEnd", &ac);
+            if (es < 0 || es >= ac.active_animations.size()) {
+              std::cout << "Error: could not find animation JumpEnd"
+                        << std::endl;
+            } else {
+              ac.active_animations.at(es)->strength_ = endStrength;
+            }
+
+          } catch (std::exception& e) {
+            // ???
+            // std::cout << e.what() << '\n';
           }
-          // std::cout << startStrength << "\n";
-
-          endStrength = 1.f - velCoeff;
-
-          int es = GetActiveAnimationByName("JumpEnd", &ac);
-          // std::cout << es << " : es\n";
-          if (es < 0 || es >= ac.active_animations.size()) {
-            std::cout << "Error: could not find animation JumpEnd" << std::endl;
-          } else {
-            ac.active_animations.at(es)->strength_ = endStrength;
-          }
-
-        } catch (std::exception& e) {
-          // ???
-          // std::cout << e.what() << '\n';
         }
       }
 
@@ -424,11 +501,11 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
         if (view.get<IDComponent>(entity).id == event.shoot.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
-          if (pc.localPlayer) {
-            PlayAnimation("Shoot", 1.f, &ac, 14, 1.f, MUTE_ALL);
-          } else {
-            PlayAnimation("Shoot", 4.f, &ac, 14, 1.f, PARTIAL_MUTE,
-                          &ac.model_data.upperBody);
+          if (!pc.shooting) {
+            PAC::playShootAnims(this, ac, pc.localPlayer);
+            if (!pc.localPlayer) {
+                pc.shooting = true;
+            }
           }
           break;
         }
@@ -442,11 +519,11 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
         if (view.get<IDComponent>(entity).id == event.kick.player_id) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
-          if (pc.localPlayer) {
-            PlayAnimation("Kick", 1.f, &ac, 14, 1.f, MUTE_ALL);
-          } else {
-            PlayAnimation("Kick", 4.f, &ac, 14, 1.f, PARTIAL_MUTE,
-                          &ac.model_data.upperBody);
+          if (!pc.kicking) {
+            PAC::playKickAnims(this, ac, pc.localPlayer);
+            if (!pc.localPlayer) {
+                pc.kicking = true;
+            }
           }
           break;
         }
@@ -461,8 +538,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           pc.jumping = true;
-          PlayAnimation("JumpStart", 0.5f, &ac, 25, 1.f, LOOP);
-          PlayAnimation("JumpEnd", 0.5f, &ac, 25, 0.f, LOOP);
+          PAC::playJumpAnims(this, ac, pc.localPlayer);
           pc.jump_force =
               GlobalSettings::Access()->ValueOf("PLAYER_SPEED_JUMP");
           break;
@@ -478,8 +554,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           pc.jumping = false;
-          StopAnimation("JumpStart", &ac);
-          StopAnimation("JumpEnd", &ac);
+          PAC::stopJumpAnims(this, ac, pc.localPlayer);
 
           break;
         }
@@ -494,7 +569,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           pc.running = true;
-          PlayAnimation("Run", 1.f, &ac, 15, 1.f, LOOP);
+          PAC::playRunAnims(this, ac, pc.localPlayer);
 
           break;
         }
@@ -509,7 +584,7 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           auto& ac = view.get<AnimationComponent>(entity);
           auto& pc = view.get<PlayerComponent>(entity);
           pc.running = false;
-          StopAnimation("Run", &ac);
+          PAC::stopRunAnims(this, ac, pc.localPlayer);
 
           break;
         }
@@ -525,21 +600,8 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           auto& ac = view.get<AnimationComponent>(entity);
 
           pc.sprinting = true;
-          if (pc.localPlayer) {
-            PlayAnimation("Slide", 1.f, &ac, 20, 1.f, LOOP);
-          } else {
-            PlayAnimation("SlideF", 1.f, &ac, 20, 0.f, LOOP);
-            PlayAnimation("SlideB", 1.f, &ac, 20, 0.f, LOOP);
-            PlayAnimation("SlideR", 1.f, &ac, 20, 0.f, LOOP);
-            PlayAnimation("SlideL", 1.f, &ac, 20, 0.f, LOOP);
-
-            StopAnimation("LookUp", &ac);
-            StopAnimation("LookDown", &ac);
-            StopAnimation("LookRight", &ac);
-            StopAnimation("LookLeft", &ac);
-            StopAnimation("LookAhead", &ac);
-          }
-
+          PAC::playSlideAnims(this, ac, pc.localPlayer);
+          PAC::stopLookAnims(this, ac, pc.localPlayer);
           break;
         }
       }
@@ -554,27 +616,41 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           auto& ac = view.get<AnimationComponent>(entity);
 
           pc.sprinting = false;
-          if (pc.localPlayer) {
-            StopAnimation("Slide", &ac);
-          } else {
-            StopAnimation("SlideF", &ac);
-            StopAnimation("SlideB", &ac);
-            StopAnimation("SlideR", &ac);
-            StopAnimation("SlideL", &ac);
-            pc.sprint_coeff = 0.f;
+          PAC::stopSlideAnims(this, ac, pc.localPlayer);
+          PAC::playLookAnims(this, ac, pc.localPlayer);
+          pc.sprint_coeff = 0.f;
 
-            PlayAnimation("LookUp", 0.5f, &ac, 21, 0.f, LOOP,
-                          &ac.model_data.upperBody, &ac.model_data.arms);
-            PlayAnimation("LookDown", 0.5f, &ac, 21, 0.f, LOOP,
-                          &ac.model_data.upperBody, &ac.model_data.arms);
-            PlayAnimation("LookLeft", 0.5f, &ac, 21, 0.f, LOOP,
-                          &ac.model_data.upperBody, &ac.model_data.arms);
-            PlayAnimation("LookRight", 0.5f, &ac, 21, 0.f, LOOP,
-                          &ac.model_data.upperBody, &ac.model_data.arms);
-            PlayAnimation("LookAhead", 1.f, &ac, 21, 0.f, LOOP,
-                          &ac.model_data.upperBody, &ac.model_data.arms);
-          }
+          break;
+        }
+      }
+      break;
+    }
 
+    case GameEvent::PLAYER_IDLE: {
+      auto view =
+          registry->view<IDComponent, AnimationComponent, PlayerComponent>();
+      for (auto entity : view) {
+        if (view.get<IDComponent>(entity).id == event.player_idle.player_id) {
+          auto& pc = view.get<PlayerComponent>(entity);
+          auto& ac = view.get<AnimationComponent>(entity);
+
+          PAC::playLookAnims(this, ac, pc.localPlayer);
+
+          break;
+        }
+      }
+      break;
+    }
+
+    case GameEvent::PLAYER_IDLE_END: {
+      auto view =
+          registry->view<IDComponent, AnimationComponent, PlayerComponent>();
+      for (auto entity : view) {
+        if (view.get<IDComponent>(entity).id ==
+            event.player_idle_end.player_id) {
+          auto& pc = view.get<PlayerComponent>(entity);
+          auto& ac = view.get<AnimationComponent>(entity);
+          PAC::stopLookAnims(this, ac, pc.localPlayer);
           break;
         }
       }
@@ -641,7 +717,8 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
         if (anim->mode_ == LOOP) {
           anim->time_ = 0;
         } else if (anim->mode_ == MUTE_ALL || anim->mode_ == PARTIAL_MUTE) {
-          anim->playing_ = false;
+          anim->stopping_ = true;
+          anim->time_ = anim->animation_->duration_ - 0.1f;
         }
       }
       if (!anim->playing_) {
@@ -673,72 +750,141 @@ void AnimationSystem::UpdateAnimations(entt::registry& registry, float dt) {
                 InterpolateVector(anim->time_, &channel->position_keys);
             glm::mat4 position = glm::translate(pos);
 
-            glm::mat4 rotation =
+            glm::quat rotation =
                 InterpolateQuat(anim->time_, &channel->rotation_keys);
 
             glm::vec3 scale =
                 InterpolateVector(anim->time_, &channel->scaling_keys);
             glm::mat4 scaling = glm::scale(scale);
 
+            // Unused for the moment, potential fix for additive animation
+            // scaling problems
             anim->bone_position_->at(jointId) = pos;
-            anim->bone_rotation_->at(jointId) = rotation;
+            anim->bone_rotation_->at(jointId) = glm::normalize(rotation);
             anim->bone_scale_->at(jointId) = scale;
-
-            glm::mat4 combPRS = position * rotation * scaling;
-
-            glm::mat4 finalMat = combPRS * anim->strength_;
-
-            if (anim->mode_ == LOOP) {
-              if (anim->priority_ >
-                  bonePriorities.at(jointId)) {  // priority override
-                if (anim->bonesSpecified()) {
-                  if (IsIncluded(jointId, anim->body_include_,
-                                 anim->body_exclude_)) {  // body argument
-                                                          // success, override
-                    bonePriorities.at(jointId) = anim->priority_;
-                    a.model_data.bones.at(jointId).transform = finalMat;
-                  }
-                } else {  // No body argument, override
-                  bonePriorities.at(jointId) = anim->priority_;
-                  a.model_data.bones.at(jointId).transform = finalMat;
-                }
-              } else if (anim->priority_ ==
-                         bonePriorities.at(jointId)) {  // blend
-                if (anim->bonesSpecified()) {
-                  if (IsIncluded(jointId, anim->body_include_,
-                                 anim->body_exclude_)) {  // body argument
-                                                          // success, blend
-                    a.model_data.bones.at(jointId).transform += finalMat;
-                  }
-                } else {  // No body argument, blend
-                  a.model_data.bones.at(jointId).transform += finalMat;
-                }
-              }
-            } else if (anim->mode_ == MUTE_ALL) {  // override
-              bonePriorities.at(jointId) = 255;
-              a.model_data.bones.at(jointId).transform = finalMat;
-            } else if (anim->mode_ == PARTIAL_MUTE) {
-              if (anim->bonesSpecified()) {
-                if (IsIncluded(
-                        jointId, anim->body_include_,
-                        anim->body_exclude_)) {  // override specified bodyparts
-                  bonePriorities.at(jointId) = 254;
-                  a.model_data.bones.at(jointId).transform = finalMat;
-                } else {
-                  if (anim->priority_ >= bonePriorities.at(jointId)) {
-                    bonePriorities.at(jointId) = anim->priority_;
-                    a.model_data.bones.at(jointId).transform = finalMat;
-                  } else if (anim->priority_ == bonePriorities.at(jointId)) {
-                    a.model_data.bones.at(jointId).transform += finalMat;
-                  }
-                }
-              }
-            }
           }
         }
       }
+      if (!anim->stopping_) {
+        anim->time_ += anim->speed_ * anim->animation_->tick_per_second_ * dt;
+      }
 
-      anim->time_ += anim->speed_ * anim->animation_->tick_per_second_ * dt;
+      if (anim->stopping_ && anim->fade_ <= 0) {
+        anim->playing_ = false;
+      } else if (anim->stopping_) {
+        anim->fade_ -= dt * 5.f;
+      } else if (!anim->stopping_) {
+        anim->fade_ += dt * 5.f;
+      }
+
+      anim->fade_ = std::clamp(anim->fade_, 0.f, 1.f);
+    }
+
+    std::vector<glm::vec3> f_pos(a.model_data.bones.size(), glm::vec3(0.f));
+    std::vector<glm::quat> f_rot(a.model_data.bones.size(), glm::quat());
+    std::vector<glm::vec3> f_scale(a.model_data.bones.size(), glm::vec3(0.f));
+
+    for (int i = 0; i < a.active_animations.size(); i++) {
+      glob::PlayableAnimation* anim = a.active_animations.at(i);
+      for (int j = 0; j < anim->bone_position_->size();
+           j++) {  // all channels (bones)
+        glob::Channel* channel = &anim->animation_->channels_.at(j);
+        int jointId = (int)channel->boneID;
+
+        bool blend = false;
+        bool set = false;
+
+        switch (anim->mode_) {
+          case (LOOP): {
+            if (anim->priority_ >
+                bonePriorities.at(jointId)) {  // priority override
+              if (anim->bonesSpecified()) {
+                if (IsIncluded(jointId, anim->body_include_,
+                               anim->body_exclude_)) {  // body argument
+                                                        // success, override
+                  bonePriorities.at(jointId) = anim->priority_;
+                  set = true;
+                }
+              } else {  // No body argument, override
+                bonePriorities.at(jointId) = anim->priority_;
+                set = true;
+              }
+            } else if (anim->priority_ ==
+                       bonePriorities.at(jointId)) {  // blend
+              if (anim->bonesSpecified()) {
+                if (IsIncluded(jointId, anim->body_include_,
+                               anim->body_exclude_)) {  // body argument
+                                                        // success, blend
+                  blend = true;
+                }
+              } else {  // No body argument, blend
+
+                blend = true;
+              }
+            }
+            break;
+          }
+
+          case (MUTE_ALL): {  // override
+            bonePriorities.at(jointId) = 255;
+            set = true;
+            break;
+          }
+
+          case (PARTIAL_MUTE): {
+            if (anim->bonesSpecified()) {
+              if (IsIncluded(jointId, anim->body_include_,
+                             anim->body_exclude_)) {  // override specified
+                                                      // bodyparts
+                bonePriorities.at(jointId) = 254;
+                set = true;
+              } else {
+                if (anim->priority_ >=
+                    bonePriorities.at(jointId)) {  // priority override
+                  bonePriorities.at(jointId) = anim->priority_;
+                  set = true;
+                } else if (anim->priority_ ==
+                           bonePriorities.at(jointId)) {  // blend
+                  blend = true;
+                }
+              }
+            }
+            break;
+          }
+        }
+
+        if (blend) {
+          interpolatePRS(f_pos.at(jointId), f_rot.at(jointId),
+                         f_scale.at(jointId), anim->bone_position_->at(jointId),
+                         anim->bone_rotation_->at(jointId),
+                         anim->bone_scale_->at(jointId),
+                         anim->strength_ * anim->fade_);
+        } else if (set) {
+          if (anim->stopping_) {
+            interpolatePRS(
+                f_pos.at(jointId), f_rot.at(jointId), f_scale.at(jointId),
+                anim->bone_position_->at(jointId),
+                anim->bone_rotation_->at(jointId),
+                anim->bone_scale_->at(jointId), anim->strength_ * anim->fade_);
+          } else {
+            setPRS(f_pos.at(jointId), f_rot.at(jointId), f_scale.at(jointId),
+                   anim->bone_position_->at(jointId),
+                   anim->bone_rotation_->at(jointId),
+                   anim->bone_scale_->at(jointId));
+          }
+        }
+      }
+    }
+
+    // add all AC positions/rotations/scales togeather here
+    for (int i = 0; i < a.model_data.bones.size(); i++) {
+      if (i != rootBone) {
+        glm::mat4 mat = glm::mat4(glm::translate(f_pos.at(i)) *
+                                  glm::mat4(glm::normalize(f_rot.at(i))) *
+                                  glm::scale(f_scale.at(i)));
+
+        a.model_data.bones.at(i).transform = mat;
+      }
     }
 
     GetDefaultPose(glm::mat4(1.f), &a.model_data.bones.at(rootBone),
@@ -780,7 +926,7 @@ glm::vec3 AnimationSystem::InterpolateVector(float time,
   return start + f * dtv3;
 }
 
-glm::mat4 AnimationSystem::InterpolateQuat(float time,
+glm::quat AnimationSystem::InterpolateQuat(float time,
                                            std::vector<aiQuatKey>* keys) {
   aiQuaternion ret;
   if (keys->size() == 1) {
@@ -806,8 +952,29 @@ glm::mat4 AnimationSystem::InterpolateQuat(float time,
   aiQuaternion end = keys->at(nextPos).mValue;
   aiQuaternion::Interpolate(ret, start, end, f);
 
-  return glm::mat4(
-      glob::AssToGLM::ConvertToGLM3x3(ret.Normalize().GetMatrix()));
+  glm::quat q;
+  q.w = ret.w;
+  q.x = ret.x;
+  q.y = ret.y;
+  q.z = ret.z;
+  return q;
+}
+
+void AnimationSystem::interpolatePRS(glm::vec3& j_pos, glm::quat& j_rot,
+                                     glm::vec3& j_scale, glm::vec3 pos,
+                                     glm::quat rot, glm::vec3 scale,
+                                     float str) {
+  j_pos = j_pos + (j_pos - pos) * str;
+  j_rot = glm::slerp(j_rot, rot, str);
+  j_scale = j_scale + (j_scale - scale) * str;
+}
+
+void AnimationSystem::setPRS(glm::vec3& j_pos, glm::quat& j_rot,
+                             glm::vec3& j_scale, glm::vec3 pos, glm::quat rot,
+                             glm::vec3 scale) {
+  j_pos = pos;
+  j_rot = rot;
+  j_scale = scale;
 }
 
 void AnimationSystem::Reset(entt::registry& registry) {
