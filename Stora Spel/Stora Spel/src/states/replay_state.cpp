@@ -19,6 +19,8 @@ void ReplayState::AddConstantStuff() {
   this->AddJumbotron();
   this->AddCamera(glm::vec3(0.f, 13.f, 42.f));  //  glm::vec3(60.f, 4.f, 38.f);
   glob::GetCamera().SetFov(75);
+  // Play crowd cheers
+  engine_->GetSoundSystem().PlayAmbientSound(this->replay_registry_);
 }
 
 void ReplayState::AddArenaStuff() {
@@ -286,9 +288,6 @@ void ReplayState::StartReplayMode() {
 
   // Add in stuff that is in all replays
   this->AddConstantStuff();
-
-  // Play crowd cheers
-  engine_->GetSoundSystem().PlayAmbientSound(this->replay_registry_);
 }
 
 void ReplayState::PlayReplay() {
@@ -297,18 +296,22 @@ void ReplayState::PlayReplay() {
   }
 
   if (this->engine_->GetReplayMachinePtr()->LoadFrame(this->replay_registry_)) {
-    // Once replay is done playing, clear the registry
+    // Clear glob effects from screen
     glob::ClearEffects();
-    // and close menu
+
+    // Close menu
     if (show_in_game_menu_buttons_) {
       ToggleInGameMenu();
     }
-    this->replay_registry_.reset();
+
+    // Reset registry
+    //this->replay_registry_.reset();
+    this->ReplayReset();
     replay_counter_++;
 
     // Add the constant stuff back in again
     // Also prevents black-sceen when all replays are done
-    this->AddConstantStuff();
+    //this->AddConstantStuff();
     this->CreateInGameMenu();
 
     if (!engine_->GetReplayMachinePtr()->SelectReplay(replay_counter_)) {
@@ -557,5 +560,23 @@ void ReplayState::ParticleComponentDestroyed(entt::entity e,
   auto& pc = registry.get<ParticleComponent>(e);
   for (int i = 0; i < pc.handles.size(); ++i) {
     glob::DestroyParticleSystem(pc.handles[i]);
+  }
+}
+
+void ReplayState::ReplayReset() {
+  // Reset entities created from channels
+  entt::basic_view destroy_view = this->replay_registry_.view<DestroyOnResetComponent>();
+  this->replay_registry_.destroy(destroy_view.begin(), destroy_view.end());
+
+  // Destroy entities used for particle effects
+  entt::basic_view view_particle = this->replay_registry_.view<ParticleComponent>();
+  for (entt::entity entity : view_particle) {
+    if (this->replay_registry_.has<TimerComponent>(entity)) continue;
+
+    ParticleComponent& particle_c = view_particle.get(entity);
+
+    for (int i = 0; i < particle_c.handles.size(); ++i) {
+      glob::ResetParticles(particle_c.handles[i]);
+    }
   }
 }

@@ -596,11 +596,13 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     // - Add the relevant ModelHandle:s to entity
     model_c.handles.push_back(hook_model);
-
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
   }
+
+  // Add on DestroyOnResetComponent on all entities created from channels
+  in_registry.assign<DestroyOnResetComponent>(entity);
 }
 
 void GeometricReplay::CreateChannelForEntity(entt::entity& in_entity,
