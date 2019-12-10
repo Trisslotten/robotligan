@@ -503,7 +503,9 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           auto& pc = view.get<PlayerComponent>(entity);
           if (!pc.shooting) {
             PAC::playShootAnims(this, ac, pc.localPlayer);
-            pc.shooting = true;
+            if (!pc.localPlayer) {
+                pc.shooting = true;
+            }
           }
           break;
         }
@@ -519,7 +521,9 @@ void AnimationSystem::ReceiveGameEvent(GameEvent event) {
           auto& pc = view.get<PlayerComponent>(entity);
           if (!pc.kicking) {
             PAC::playKickAnims(this, ac, pc.localPlayer);
-            pc.kicking = true;
+            if (!pc.localPlayer) {
+                pc.kicking = true;
+            }
           }
           break;
         }
