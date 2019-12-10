@@ -389,6 +389,9 @@ class PlayState : public State {
   void CreateTechDemoScene();
   void UpdateTechDemo(float dt);
   bool interpolate_ = true;
+  bool show_demo_gui = false;
+  std::string demo_text_3d_ = "TEXT 3D";
+  glob::E2DHandle spritenshiten_hndl;
 
   EntityID ClientIDToEntityID(long client_id);
   ////////////////////////////////////////

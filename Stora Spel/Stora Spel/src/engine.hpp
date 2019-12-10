@@ -112,6 +112,9 @@ class Engine {
     player_names_.clear();
   }
 
+  void UpdateDemoRegistry(float dt);
+  entt::registry* GetDemoRegistry() { return &demo_registry_; }
+
  private:
   void SetKeybinds();
 
@@ -183,6 +186,8 @@ class Engine {
   // Replay Variables ---
   ClientReplayMachine* replay_machine_ = nullptr;
   // Replay Variables ---
+
+  entt::registry demo_registry_;
 };
 
 #endif  // ENGINE_HPP_

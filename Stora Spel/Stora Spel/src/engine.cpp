@@ -837,6 +837,13 @@ void Engine::UpdateSystems(float dt) {
   RenderSystem(*registry_current_);
 }
 
+void Engine::UpdateDemoRegistry(float dt)
+{
+    gui_system::Update(demo_registry_);
+    RenderSystem(demo_registry_);
+    input_system::Update(demo_registry_);
+}
+
 void Engine::SetKeybinds() {
   keybinds_[GLFW_KEY_W] = PlayerAction::WALK_FORWARD;
   keybinds_[GLFW_KEY_S] = PlayerAction::WALK_BACKWARD;

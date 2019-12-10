@@ -331,7 +331,7 @@ void PlayState::Update(float dt) {
 				glm::quat(glm::vec3(0, yaw_, 0)) * glm::quat(glm::vec3(0, 0, pitch_));
 			orientation = glm::normalize(orientation);
 
-			if (!show_in_game_menu_buttons_ && !free_look_) {
+			if (!show_in_game_menu_buttons_ && !free_look_ && !show_demo_gui) {
 				cam_c.orientation = orientation;
 				trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
 				// FPS Model rotations
@@ -346,7 +346,7 @@ void PlayState::Update(float dt) {
 			glm::vec4(mc.offset, 1.f); mc.offset = glm::vec3(f.x, f.y, f.z);
 
 				std::cout << f.x << ", " << f.y << ", " << f.z << "\n";*/
-			if (!show_in_game_menu_buttons_ && !free_look_) {
+			if (!show_in_game_menu_buttons_ && !free_look_ && !show_demo_gui) {
 				cam_c.orientation = orientation;
 				trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
 			}
@@ -1269,8 +1269,25 @@ unsigned long PlayState::GetBestPlayer() {
 	return best_id;
 }
 
-void PlayState::CreateTechDemoScene()
-{
+void PlayState::CreateTechDemoScene() {
+	glob::GUIHandle blink_hndl = glob::GetGUIItem("assets/gui_elements/input_blinker.png");
+	glob::GUIHandle input_hndl = glob::GetGUIItem("assets/gui_elements/input_field.png");
+	spritenshiten_hndl = glob::GetE2DItem("assets/fonts/generated/ariblk_msdf.png");
+	// demo GUI
+	entt::registry* demo_reg = engine_->GetDemoRegistry();
+	auto text_input = demo_reg->create();
+	auto& input_c = demo_reg->assign<InputComponent>(text_input);
+	input_c.pos = glob::window::GetWindowDimensions();
+	input_c.pos.x /= 2;
+	input_c.pos.x -= 25;
+	input_c.pos.y -= 50;
+	input_c.font_hndl = font_test_;
+	input_c.gui_hndl = input_hndl;
+	input_c.blinker_gui_hndl = blink_hndl;
+	input_c.input_name = "CHANGE TEXT";
+	input_c.linked_value = &demo_text_3d_;
+	input_c.text = demo_text_3d_;
+
 	// Lighting corner
 	l_corner_light1 = registry_gameplay_.create();
 	auto& light_c1 = registry_gameplay_.assign<LightComponent>(l_corner_light1);
@@ -1295,7 +1312,7 @@ void PlayState::CreateTechDemoScene()
 	glob::ModelHandle hndl_cube2 = glob::GetModel("assets/test_cube/cube_2.fbx");
 	glob::ModelHandle hndl_cube3 = glob::GetModel("assets/test_cube/cube_3.fbx");
 	glob::ModelHandle hndl_plane = glob::GetTransparentModel("assets/test_glass/plane.fbx");
-	glob::ModelHandle hndl_pickup = glob::GetTransparentModel(kModelPathPickup);
+	glob::ModelHandle hndl_pickup = glob::GetModel(kModelPathPickup);
 
 	auto cube_1 = registry_gameplay_.create();
 	auto& cube_1_m_c = registry_gameplay_.assign<ModelComponent>(cube_1);
@@ -1402,6 +1419,12 @@ void PlayState::UpdateTechDemo(float dt)
 	if (Input::IsKeyPressed(GLFW_KEY_F3)) {
 		interpolate_ = !interpolate_;
 	}
+	if (Input::IsKeyPressed(GLFW_KEY_F4)) {
+		show_demo_gui = !show_demo_gui;
+		engine_->SetSendInput(!show_demo_gui);
+		engine_->SetTakeInput(!show_demo_gui);
+		glob::window::SetMouseLocked(!show_demo_gui);
+	}
 
 	// "animate" entities
 	auto& l_light_trans_c1 = registry_gameplay_.get<TransformComponent>(l_corner_light1);
@@ -1419,6 +1442,12 @@ void PlayState::UpdateTechDemo(float dt)
 	l_light_trans_c3.position.x = orig_pos3.x + std::sin(demo_anim_timer.Elapsed());
 	l_light_trans_c3.position.y = orig_pos3.y - std::sin(demo_anim_timer.Elapsed());
 	l_light_trans_c3.position.z = orig_pos3.z - std::sin(demo_anim_timer.Elapsed());
+
+	glm::vec3 pos = glm::vec3(32, -2, -28);
+	glob::Submit(spritenshiten_hndl, pos, glm::scale(glm::vec3(7,7,1)));
+	glob::Submit(font_test_, pos + glm::vec3(0, -8, 0.4), 2, demo_text_3d_, glm::vec4(1, 1, 1, 1));
+	 
+	if (show_demo_gui) engine_->UpdateDemoRegistry(dt);
 }
 
 EntityID PlayState::ClientIDToEntityID(long client_id) {

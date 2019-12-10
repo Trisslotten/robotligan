@@ -9,7 +9,7 @@ struct InputComponent {
   glob::Font2DHandle font_hndl = 0;
   glob::GUIHandle gui_hndl = 0;
   glob::GUIHandle blinker_gui_hndl = 0;
-  unsigned short font_size = 0;
+  unsigned short font_size = 32;
   std::string text = "";
   std::string input_name = "";
   unsigned max_length = 16;
