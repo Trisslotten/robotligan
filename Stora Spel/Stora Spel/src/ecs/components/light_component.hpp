@@ -8,6 +8,7 @@ struct LightComponent {
 	float radius = 10.f;
 	float ambient = 0.5f;
   bool blackout = false;
+	float sphere_radius = 0.f;
 };
 
 #endif //LIGHT_COMPONENT_HPP_

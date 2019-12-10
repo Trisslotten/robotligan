@@ -1932,8 +1932,8 @@ void PlayState::CreateMapEntity() {
 }
 
 void AddLightToBall(entt::registry& registry, entt::entity& ball) {
-  registry.assign<LightComponent>(ball, glm::vec3(0.f, 1.f, 0.f), 20.f, 0.f,
-                                  false);
+  registry.assign<LightComponent>(ball, glm::vec3(0.f, 1.f, 0.f), 100.f, 0.f,
+                                  false, 0.9f);
 }
 
 void PlayState::CreateBallEntities() {
@@ -2295,6 +2295,10 @@ void PlayState::CreateTeleportProjectile(EntityID id, glm::vec3 pos,
                                             glm::vec4(1, 1, 1, 1));
   registry_gameplay_.assign<TransformComponent>(teleport_projectile, pos, ori,
                                                 glm::vec3(0.3f));
+
+  registry_gameplay_.assign<LightComponent>(teleport_projectile, glm::vec3(1),
+                                            50.f, 0.f);
+
   registry_gameplay_.assign<ProjectileComponent>(
       teleport_projectile, ProjectileID::TELEPORT_PROJECTILE);
   registry_gameplay_.assign<IDComponent>(teleport_projectile, id);
@@ -2320,6 +2324,10 @@ void PlayState::CreateForcePushObject(EntityID id, glm::vec3 pos,
       force_object, ProjectileID::FORCE_PUSH_OBJECT);
   registry_gameplay_.assign<TrailComponent>(force_object, 1.f,
                                             glm::vec4(0.4, 0.4, 1, 1));
+
+  registry_gameplay_.assign<LightComponent>(force_object,
+                                            glm::vec3(0.4, 0.4, 1),
+                                            50.f, 0.f);
 }
 
 void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {

@@ -80,6 +80,15 @@ struct LightItem {
   glm::vec3 color;
   glm::float32 radius;
   glm::float32 ambient;
+  glm::float32 sphere_radius;
+};
+
+struct PlaneLightItem {
+  glm::vec3 pos;
+  glm::vec3 normal;
+  glm::vec3 color;
+  glm::vec2 sizes;
+  bool diffuse;
 };
 
 struct TrailItem {

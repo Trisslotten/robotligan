@@ -35,8 +35,10 @@ void RenderSystem(entt::registry& registry) {
 
       if (!m.invisible) {
         glob::Submit(m.handles,
-          glm::translate(t.position) * glm::toMat4(t.rotation) *
-          glm::translate(-m.offset) * glm::scale(t.scale*0.01f), m.diffuse_index, m.cast_shadow, m.emission_strength);
+                     glm::translate(t.position) * glm::toMat4(t.rotation) *
+                         glm::translate(-m.offset) *
+                         glm::scale(t.scale * 0.01f),
+                     m.diffuse_index, m.cast_shadow, m.emission_strength);
       }
     }
   }
@@ -50,10 +52,11 @@ void RenderSystem(entt::registry& registry) {
 
     if (!m.invisible) {
       glob::SubmitBAM(m.handles,
-        glm::translate(t.position) *
-        glm::toMat4(t.rotation + m.rot_offset) *
-        glm::translate(-m.offset) * glm::scale(t.scale),
-        a.bone_transforms, m.diffuse_index, m.cast_shadow, m.emission_strength);
+                      glm::translate(t.position) *
+                          glm::toMat4(t.rotation + m.rot_offset) *
+                          glm::translate(-m.offset) * glm::scale(t.scale),
+                      a.bone_transforms, m.diffuse_index, m.cast_shadow,
+                      m.emission_strength);
     }
   }
 
@@ -79,8 +82,29 @@ void RenderSystem(entt::registry& registry) {
     glm::vec3 pos = transform.position;
     glm::vec3 dir = glm::quat(transform.rotation) * glm::vec3(1.f, 0.f, 0.f);
     if (!light.blackout) {
-      glob::SubmitLightSource(pos, light.color, light.radius, light.ambient);
+      glob::SubmitLightSource(pos, light.color, light.radius, light.ambient,
+                              light.sphere_radius);
     }
+  }
+
+  auto walls =
+      registry.view<WallComponent, TransformComponent, ModelComponent>();
+  for (auto& w : walls) {
+    auto& transform = walls.get<TransformComponent>(w);
+    auto model_c = walls.get<ModelComponent>(w);
+
+    glm::vec3 pos = transform.position + glm::vec3(0, 4, 0);
+    glm::vec3 normal = transform.rotation * glm::vec3(1.f, 0.f, 0.f);
+    glm::vec3 tangent = glm::vec3(0, 1, 0);
+    glm::vec3 bitangent = glm::normalize(glm::cross(normal, tangent));
+
+    glm::vec3 color = model_c.diffuse_index == 0 ? glm::vec3(1.0, 0.1, 0.1)
+                                                 : glm::vec3(0.5, 0.5, 1.0);
+    glob::SubmitPlaneLight(pos, normal, 0.4f * color, glm::vec2(2.5, 5));
+    glob::SubmitPlaneLight(pos + bitangent * 5.5f, normal, 0.4f * color,
+                           glm::vec2(2.5, 0.2), false);
+    glob::SubmitPlaneLight(pos - bitangent * 5.5f, normal, 0.4f * color,
+                           glm::vec2(2.5, 0.2), false);
   }
 
   // Render wireframes
@@ -103,10 +127,11 @@ void RenderSystem(entt::registry& registry) {
       glob::SubmitCube(glm::translate(sphere.center) *
                        glm::scale(glm::vec3(sphere.radius)));
     }
-    //for (auto& w : view_wireframe_arena) {
+    // for (auto& w : view_wireframe_arena) {
     //  auto& arena = view_wireframe_arena.get(w);
     //  glob::SubmitCube(
-    //      glm::scale(glm::vec3(arena.xmax - arena.xmin, arena.ymax - arena.ymin,
+    //      glm::scale(glm::vec3(arena.xmax - arena.xmin, arena.ymax -
+    //      arena.ymin,
     //                           arena.zmax - arena.zmin) *
     //                 0.5f));
     //}
@@ -125,19 +150,20 @@ void RenderSystem(entt::registry& registry) {
                    button_c.font_size, button_c.text, glm::vec4(0, 0, 0, 1));
       glob::Submit(button_c.f_handle, button_pos, button_c.font_size,
                    button_c.text, button_c.text_current_color);
-      
+
       if (button_c.gui_handle_current) {
-        glob::Submit(button_c.gui_handle_current, button_pos, 0.66f); // 720p
+        glob::Submit(button_c.gui_handle_current, button_pos, 0.66f);  // 720p
 
         if (button_c.gui_handle_icon) {
-          glob::Submit(button_c.gui_handle_icon, button_pos, 0.66f); // 720p
+          glob::Submit(button_c.gui_handle_icon, button_pos, 0.66f);  // 720p
         }
       }
       if (button_c.has_hovered) {
         glm::vec2 tooltip_pos = button_c.tooltip_pos;
-		glob::Submit(button_c.f_handle, tooltip_pos - glm::vec2(1,1), 32, button_c.hover_text, glm::vec4(0,0,0,0.7));
+        glob::Submit(button_c.f_handle, tooltip_pos - glm::vec2(1, 1), 32,
+                     button_c.hover_text, glm::vec4(0, 0, 0, 0.7));
         glob::Submit(button_c.f_handle, tooltip_pos, 32, button_c.hover_text);
-	  }
+      }
     }
   }
 
