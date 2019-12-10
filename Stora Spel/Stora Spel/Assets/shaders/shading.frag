@@ -115,11 +115,23 @@ vec3 calcSphereLightVec(const vec3 view_dir, const vec3 normal, const vec3 light
 	return normalize(closest_point);
 }
 
-// https://www.iquilezles.org/www/articles/distfunctions/distfunctions.htm
-float sdBox( vec3 p, vec3 b )
-{
-  vec3 q = abs(p) - b;
-  return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
+float rectangleSolidAngle(vec3 pos, vec3 p0, vec3 p1, vec3 p2, vec3 p3) {
+	vec3 v0 = p0 - pos;
+	vec3 v1 = p1 - pos;
+	vec3 v2 = p2 - pos;
+	vec3 v3 = p3 - pos;
+
+	vec3 n0 = normalize(cross(v0, v1));
+	vec3 n1 = normalize(cross(v1, v2));
+	vec3 n2 = normalize(cross(v2, v3));
+	vec3 n3 = normalize(cross(v3, v0));
+
+	float g0 = acos(dot(-n0,n1));
+	float g1 = acos(dot(-n1,n2));
+	float g2 = acos(dot(-n2,n3));
+	float g3 = acos(dot(-n3,n0));
+
+	return g0 + g1 + g2 + g3 - 2 * 3.14159;
 }
 
 struct Lighting {
@@ -152,10 +164,10 @@ Lighting shading(const vec3 position, const vec3 normal, const float reflective)
 		vec3 light_dir = normalize(pointToLight);
 
 		//float intensity = 1.f - clamp(length(pointToLight)/pos_rad.w, 0., 1.);
-		float x2 = dot(pointToLight, pointToLight);
-		float a = 254.5 / (pos_rad.w * pos_rad.w);
-		float intensity = 1./(1.+ a * x2);
-		if(intensity > 0.) {
+
+		float t = clamp(length(pointToLight)/pos_rad.w, 0, 1);
+		float intensity = 1-sqrt(t);
+		if(intensity >= 1./255.) {
 			float diffuse = calcDiffuse(position, normal, light_dir);
 			lighting.diffuse += diffuse * intensity * col_amb.rgb;
 
@@ -176,32 +188,35 @@ Lighting shading(const vec3 position, const vec3 normal, const float reflective)
 		const vec2 sizes = plane_sizes[i];
 		const vec3 ppos = plane_positions[i];
 		const vec3 plane_normal = plane_normals[i];
-		const vec3 tangent = vec3(0,1,0);
-		const vec3 bitangent = normalize(cross(plane_normal, tangent));
+		const vec3 up = vec3(0,1,0);
+		const vec3 side = normalize(cross(plane_normal, up));
+
+		const vec3 plane_color = plane_colors[i];
 
 		vec3 l = ppos - position;
-		float dist2 = dot(l,l);
+		float intensity = 1-sqrt(clamp(length(l)/50.0, 0, 1));
 
-		float intensity = 1./(1.+ 0.1*dist2);
-
-		const float t = dot(ppos - position, plane_normal) / dot(r, plane_normal);
+		float t = dot(ppos - position, plane_normal) / dot(r, plane_normal);
 		const vec3 v = (position + t * r) - ppos;
-		if (abs(dot(v, tangent)) < sizes.x && abs(dot(v, bitangent)) < sizes.y && t < 0) {
-			lighting.specular += plane_colors[i];
+		if (abs(dot(v, up)) < sizes.x && abs(dot(v, side)) < sizes.y && t < 0) {
+			lighting.specular += plane_color;
 		}
+		
+		if (plane_diffuse[i] != 0 && intensity >= 1.0/255.0) {
+			vec3 p0 = ppos + side * -sizes.y + up *  sizes.x;
+			vec3 p1 = ppos + side * -sizes.y + up * -sizes.x;
+			vec3 p2 = ppos + side *  sizes.y + up * -sizes.x;
+			vec3 p3 = ppos + side *  sizes.y + up *  sizes.x;
+			float solid_angle = rectangleSolidAngle(position,p0,p1,p2,p3);
 
-		if (plane_diffuse[i] != 0) {
-			float d = dot((position - ppos), plane_normal);
-			int offset = int(d > 0.0);
-			vec4 plane_space = plane_matrices[2*i+offset] * vec4(position, 1.0);
-			plane_space.xyz /= plane_space.w;
-			vec4 plane_space_norm = plane_matrices[2*i+offset] * vec4(plane_normal, 0.0);
-			plane_space_norm.xyz /= plane_space_norm.w;
-			float i2 = clamp(plane_space_norm.z, 0.f, 1.f);
-			vec2 q = abs(plane_space.xy) - vec2(0.5);
-  			float len = length(max(q,0.0)) + min(max(q.x, q.y), 0.0);
-			float mask = smoothstep(0.8, 0.0, len);
-			lighting.diffuse += 5.0 * i2 * mask * plane_colors[i] * intensity;
+			float illuminance = solid_angle * 0.25 * (
+				clamp(dot(normalize(p0-position), normal), 0, 1) + 
+				clamp(dot(normalize(p1-position), normal), 0, 1) + 
+				clamp(dot(normalize(p2-position), normal), 0, 1) + 
+				clamp(dot(normalize(p3-position), normal), 0, 1));
+
+			lighting.diffuse += 4.*intensity * illuminance * plane_color;
+
 		}
 	}
 	//}

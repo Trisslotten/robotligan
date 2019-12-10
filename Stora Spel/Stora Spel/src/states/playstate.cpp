@@ -2265,7 +2265,7 @@ void PlayState::CreateTeleportProjectile(EntityID id, glm::vec3 pos,
                                                 glm::vec3(0.3f));
 
   registry_gameplay_.assign<LightComponent>(teleport_projectile, glm::vec3(1),
-                                            250.f, 0.f);
+                                            50.f, 0.f);
 
   registry_gameplay_.assign<ProjectileComponent>(
       teleport_projectile, ProjectileID::TELEPORT_PROJECTILE);
@@ -2295,7 +2295,7 @@ void PlayState::CreateForcePushObject(EntityID id, glm::vec3 pos,
 
   registry_gameplay_.assign<LightComponent>(force_object,
                                             glm::vec3(0.4, 0.4, 1),
-                                            250.f, 0.f);
+                                            50.f, 0.f);
 }
 
 void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
