@@ -201,8 +201,8 @@ Lighting shading(const vec3 position, const vec3 normal, const float reflective)
 		if (abs(dot(v, up)) < sizes.x && abs(dot(v, side)) < sizes.y && t < 0) {
 			lighting.specular += plane_color;
 		}
-		
-		if (plane_diffuse[i] != 0 && intensity >= 1.0/255.0) {
+
+		if (reflective < 1.0 && plane_diffuse[i] != 0 && intensity >= 1.0/255.0) {
 			vec3 p0 = ppos + side * -sizes.y + up *  sizes.x;
 			vec3 p1 = ppos + side * -sizes.y + up * -sizes.x;
 			vec3 p2 = ppos + side *  sizes.y + up * -sizes.x;
