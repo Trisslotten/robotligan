@@ -12,7 +12,7 @@
 #include "ecs/components/goal_component.hpp"
 #include "ecs/components/team_component.hpp"
 namespace goal_system {
-const unsigned kDistanceForBlock = 250;
+const unsigned kDistanceForBlock = 500;
 const float kTimeToSimulate = 1.5f;
 bool just_blocked = false;
 glm::vec3 last_blocked = glm::vec3(0.0f);
@@ -124,7 +124,7 @@ void Update(entt::registry& registry) {
           s.radius = ball_sphere_c.radius;
           physics::IntersectData simulated_goal =
               physics::Intersect(s, goal_OBB_c);
-          if (glm::distance(s.center, goal_OBB_c.center) < 100 ||
+          if (glm::distance(s.center, goal_OBB_c.center) < 50 ||
               simulated_goal.collision)  // Arbitrary distance, målområde typ?
           {
             for (auto player : view_players) {
@@ -139,17 +139,18 @@ void Update(entt::registry& registry) {
 
               if (simulated_player.collision) {
                 if (goal_team_c.team != player_team_c.team &&
-                    ball_ball_c.prev_touch != player_player_c.client_id &&
-                    ball_ball_c.last_touch == player_player_c.client_id &&
+                    //ball_ball_c.prev_touch != player_player_c.client_id &&
+                    //ball_ball_c.last_touch == player_player_c.client_id &&
                     !just_blocked && glm::length(ball_physics_c.velocity) > 2) {
                   // ball_ball_c.prev_touch = ball_ball_c.last_touch;
                   // ball_ball_c.last_touch = player_player_c.cl'ient_id;
                   just_blocked = true;
                   last_blocked = ball_sphere_c.center;
+                  std::cout << "Block: Player " << ball_ball_c.last_touch << " Blocked " << ball_ball_c.prev_touch << "s shot! \n";
                   // Blocked
 
-                  //player_points_c.AddPoints(POINTS_SAVE);
-                  //player_points_c.AddBlock(1);
+                  player_points_c.AddPoints(POINTS_SAVE);
+                  player_points_c.AddBlock(1);
                   break;
                 }
               }
