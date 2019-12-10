@@ -602,9 +602,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::RECEIVE_PICK_UP: {
+      long client_id;
       packet >> second_ability_;
+      packet >> client_id;
       GameEvent ge;
       ge.type = GameEvent::PICKED_UP_PICKUP;
+      ge.picked_up_pickup.player_id = GetPlayerScores()[client_id].enttity_id;
       dispatcher.trigger(ge);
       break;
     }
