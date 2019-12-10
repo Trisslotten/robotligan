@@ -1,6 +1,5 @@
 #ifndef GOAL_SYSTEM_HPP_
 #define GOAL_SYSTEM_HPP_
-
 #include <boundingboxes.hpp>
 #include <collision.hpp>
 #include <entt.hpp>
@@ -17,7 +16,7 @@ const unsigned kDistanceForBlock = 250;
 const float kTimeToSimulate = 1.5f;
 bool just_blocked = false;
 glm::vec3 last_blocked = glm::vec3(0.0f);
-
+std::unordered_map<PlayerID, int> add_blocks;
 void PerformSwitchGoals(entt::registry& registry) {
   auto view_goals = registry.view<GoalComponenet, TeamComponent>();
   GoalComponenet* first_goal_comp = nullptr;
@@ -49,7 +48,7 @@ void PerformSwitchGoals(entt::registry& registry) {
 void Update(entt::registry& registry) {
   auto view_balls = registry.view<BallComponent, TransformComponent,
                                   physics::Sphere, PhysicsComponent>();
-
+  just_blocked = false;
   // get all balls
   for (auto ball : view_balls) {
     BallComponent& ball_ball_c = registry.get<BallComponent>(ball);
@@ -125,7 +124,7 @@ void Update(entt::registry& registry) {
           s.radius = ball_sphere_c.radius;
           physics::IntersectData simulated_goal =
               physics::Intersect(s, goal_OBB_c);
-          if (glm::distance(s.center, goal_OBB_c.center) < 10 ||
+          if (glm::distance(s.center, goal_OBB_c.center) < 100 ||
               simulated_goal.collision)  // Arbitrary distance, målområde typ?
           {
             for (auto player : view_players) {
@@ -141,14 +140,16 @@ void Update(entt::registry& registry) {
               if (simulated_player.collision) {
                 if (goal_team_c.team != player_team_c.team &&
                     ball_ball_c.prev_touch != player_player_c.client_id &&
+                    ball_ball_c.last_touch == player_player_c.client_id &&
                     !just_blocked && glm::length(ball_physics_c.velocity) > 2) {
                   // ball_ball_c.prev_touch = ball_ball_c.last_touch;
-                  // ball_ball_c.last_touch = player_player_c.client_id;
+                  // ball_ball_c.last_touch = player_player_c.cl'ient_id;
                   just_blocked = true;
                   last_blocked = ball_sphere_c.center;
                   // Blocked
-                  player_points_c.AddPoints(POINTS_SAVE);
-                  player_points_c.AddBlock(1);
+
+                  //player_points_c.AddPoints(POINTS_SAVE);
+                  //player_points_c.AddBlock(1);
                   break;
                 }
               }
