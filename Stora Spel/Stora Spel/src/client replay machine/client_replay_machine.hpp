@@ -40,6 +40,8 @@ class ClientReplayMachine {
 
   void ResetMachine();
 
+  int GetStartingEnvironment();
+
   std::string GetDebugString();
 };
 

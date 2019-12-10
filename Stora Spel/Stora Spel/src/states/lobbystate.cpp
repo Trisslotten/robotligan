@@ -318,7 +318,7 @@ void LobbyState::CreateBackgroundEntities() {
 }
 
 void LobbyState::CreateGUIElements() {
-  ability_blacklist.push_back((int)AbilityID::BLACKOUT);
+  //ability_blacklist.push_back((int)AbilityID::BLACKOUT);
   ability_blacklist.push_back((int)AbilityID::SWITCH_GOALS);
   ability_blacklist.push_back((int)AbilityID::BLACKHOLE);
   ability_blacklist.push_back((int)AbilityID::MINE);

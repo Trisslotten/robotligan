@@ -66,9 +66,12 @@ void ReplayState::AddArenaStuff() {
       this->replay_registry_.assign<TransformComponent>(
           arena_floor, zero_vec, zero_vec, this->arena_scale_);
   // Ensure goals are correctly drawn
-  if (goals_swapped_) {
+  if (this->goals_swapped_) {
     trans_c.rotation *= glm::quat(glm::vec3(0.f, glm::pi<float>(), 0.f));
   }
+
+  // Save arena entity
+  this->map_visual_entity_ = arena;
 }
 
 void ReplayState::AddBatmanLights() {
@@ -112,6 +115,22 @@ void ReplayState::AddLights() {
       light, glm::vec3(0.4f, 0.4f, 0.4f), 90.f, 0.2f);
   this->replay_registry_.assign<TransformComponent>(
       light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
+
+  // "Test" lights
+  // Create lights
+  blue_goal_light_ = this->replay_registry_.create();
+  this->replay_registry_.assign<LightComponent>(
+      blue_goal_light_, glm::vec3(0.1f, 0.1f, 1.0f), 30.f, 0.0f);
+  this->replay_registry_.assign<TransformComponent>(
+      blue_goal_light_, glm::vec3(45.f, -8.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      glm::vec3(1.f));
+
+  red_goal_light_ = this->replay_registry_.create();
+  this->replay_registry_.assign<LightComponent>(
+      red_goal_light_, glm::vec3(1.f, 0.1f, 0.1f), 30.f, 0.f);
+  this->replay_registry_.assign<TransformComponent>(
+      red_goal_light_, glm::vec3(-45.f, -8.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
+      glm::vec3(1.f));
 }
 
 void ReplayState::AddSpotlights() {
@@ -299,24 +318,32 @@ void ReplayState::PlayReplay() {
     // Clear glob effects from screen
     glob::ClearEffects();
 
+    // TODO: set blackout and switch goals
+
     // Close menu
     if (show_in_game_menu_buttons_) {
-      ToggleInGameMenu();
+      this->ToggleInGameMenu();
     }
 
     // Reset registry
-    //this->replay_registry_.reset();
+    // this->replay_registry_.reset();
     this->ReplayReset();
     replay_counter_++;
 
     // Add the constant stuff back in again
     // Also prevents black-sceen when all replays are done
-    //this->AddConstantStuff();
+    // this->AddConstantStuff();
     this->CreateInGameMenu();
 
     if (!engine_->GetReplayMachinePtr()->SelectReplay(replay_counter_)) {
-      // And stop replaying
+      // Stops replaying if there is no further replays
       this->replaying_ = false;
+    } else {
+      // Set beginning state for next replay
+      int start_code =
+          this->engine_->GetReplayMachinePtr()->GetStartingEnvironment();
+
+      this->SetEnvironment(start_code);
     }
   }
 
@@ -477,6 +504,82 @@ void ReplayState::DrawJumbotronText() {
   }
 }
 
+void ReplayState::ParticleComponentDestroyed(entt::entity e,
+                                             entt::registry& registry) {
+  auto& pc = registry.get<ParticleComponent>(e);
+  for (int i = 0; i < pc.handles.size(); ++i) {
+    glob::DestroyParticleSystem(pc.handles[i]);
+  }
+}
+
+void ReplayState::ReplayReset() {
+  // Reset entities created from channels
+  entt::basic_view destroy_view =
+      this->replay_registry_.view<DestroyOnResetComponent>();
+  this->replay_registry_.destroy(destroy_view.begin(), destroy_view.end());
+
+  // Destroy entities used for particle effects
+  entt::basic_view view_particle =
+      this->replay_registry_.view<ParticleComponent>();
+  for (entt::entity entity : view_particle) {
+    if (this->replay_registry_.has<TimerComponent>(entity)) continue;
+
+    ParticleComponent& particle_c = view_particle.get(entity);
+
+    for (int i = 0; i < particle_c.handles.size(); ++i) {
+      glob::ResetParticles(particle_c.handles[i]);
+    }
+  }
+}
+
+void ReplayState::SetEnvironment(int in_code) {
+  // 0: Blackout false,  Switch goals false
+  // 1: Blackout true,   Switch goals false
+  // 2: Blackout false,  Switch goals true
+  // 3: Blackout true,   Switch goals true
+
+  // Set blackout state accordingly
+  glob::SetBlackout((in_code == 0 || in_code == 2));
+  auto view_controller = this->replay_registry_.view<LightComponent>();
+  for (auto entity : view_controller) {
+    LightComponent& light_c = view_controller.get(entity);
+
+    // Turn off all light sources affected by blackout
+    if (!this->replay_registry_.has<BallComponent>(entity) &&
+        (entity != this->red_goal_light_ && entity != this->blue_goal_light_)) {
+      light_c.blackout = (in_code == 0 || in_code == 2);
+    }
+  }
+
+  // Set switch goals state accordingly
+  if ((in_code == 2 || in_code == 3) != this->goals_swapped_) {
+    TransformComponent& blue_light_trans_c =
+        this->replay_registry_.get<TransformComponent>(blue_goal_light_);
+    TransformComponent& red_light_trans_c =
+        this->replay_registry_.get<TransformComponent>(red_goal_light_);
+
+    glm::vec3 blue_light_pos = blue_light_trans_c.position;
+    blue_light_trans_c.position = red_light_trans_c.position;
+    red_light_trans_c.position = blue_light_pos;
+
+    auto& blue_light =
+        this->replay_registry_.get<LightComponent>(blue_goal_light_);
+    blue_light.color = glm::vec3(0.1f, 0.1f, 1.f);
+    blue_light.radius = 30;
+
+    auto& red_light =
+        this->replay_registry_.get<LightComponent>(red_goal_light_);
+    red_light.color = glm::vec3(1.f, 0.1f, 0.1f);
+    red_light.radius = 30;
+
+    auto& map_trans =
+        this->replay_registry_.get<TransformComponent>(map_visual_entity_);
+
+    map_trans.rotation *= glm::quat(glm::vec3(0.f, glm::pi<float>(), 0.f));
+    this->goals_swapped_ = (in_code == 2 || in_code == 3);
+  }
+}
+
 // Public----------------------------------------------------------------------
 
 void ReplayState::Startup() {
@@ -553,30 +656,4 @@ void ReplayState::Cleanup() {
 
   // Tell replay machine to clear stored data
   this->engine_->GetReplayMachinePtr()->ResetMachine();
-}
-
-void ReplayState::ParticleComponentDestroyed(entt::entity e,
-                                             entt::registry& registry) {
-  auto& pc = registry.get<ParticleComponent>(e);
-  for (int i = 0; i < pc.handles.size(); ++i) {
-    glob::DestroyParticleSystem(pc.handles[i]);
-  }
-}
-
-void ReplayState::ReplayReset() {
-  // Reset entities created from channels
-  entt::basic_view destroy_view = this->replay_registry_.view<DestroyOnResetComponent>();
-  this->replay_registry_.destroy(destroy_view.begin(), destroy_view.end());
-
-  // Destroy entities used for particle effects
-  entt::basic_view view_particle = this->replay_registry_.view<ParticleComponent>();
-  for (entt::entity entity : view_particle) {
-    if (this->replay_registry_.has<TimerComponent>(entity)) continue;
-
-    ParticleComponent& particle_c = view_particle.get(entity);
-
-    for (int i = 0; i < particle_c.handles.size(); ++i) {
-      glob::ResetParticles(particle_c.handles[i]);
-    }
-  }
 }

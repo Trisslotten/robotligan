@@ -206,6 +206,7 @@ void GameServer::HandleStateChange() {
       client_abilities_lobby = lobby_state_.client_abilities_;
     }
 
+    ability_controller::SetBlackoutInEffect(false);
     current_state_->Cleanup();
     switch (wanted_state_type_) {
       case ServerStateType::LOBBY:

@@ -583,7 +583,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& id_c = view.get<IDComponent>(entity);
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.picked_up_pickup.player_id) {
-        sound_c.sound_player->Play(sound_picked_up_pickup_, 0, 3.f);
+        sound_c.sound_player->Play(sound_picked_up_pickup_, 0, 0.5f);
       }
       break;
     }

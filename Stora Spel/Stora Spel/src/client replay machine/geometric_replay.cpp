@@ -433,6 +433,7 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
         in_registry.assign<TransformComponent>(entity);
     TrailComponent& trail_c = in_registry.assign<TrailComponent>(entity);
     bf_ptr->WriteBack(transform_c, trail_c);
+    BallComponent& ball_c = in_registry.assign<BallComponent>(entity);
 
     // Create and add ModelHandle
     glob::ModelHandle mh_ball_proj = glob::GetModel(kModelPathBallProjectors);
@@ -716,7 +717,9 @@ GeometricReplay* GeometricReplay::Clone() {
   clone->engine_ = this->engine_;
   clone->captured_events_ = this->captured_events_;
   clone->next_event_index_to_read_ = this->next_event_index_to_read_;
-
+  
+  clone->state_logs_ = this->state_logs_;
+  
   return clone;
 }
 
@@ -896,6 +899,8 @@ void GeometricReplay::ChannelCatchUp() {
   // the reading tracker starts from
   this->SetReadFrameToStart();
 
+  unsigned int threshold_frame = this->current_frame_number_read_;
+
   // Catchup for FrameChannel:s
   for (unsigned int i = 0; i < this->channels_.size(); i++) {
     // Check the age of the first entry
@@ -907,7 +912,7 @@ void GeometricReplay::ChannelCatchUp() {
       // Create an interpolation that lies right
       // at the the threshold
       // unsigned int threshold_frame = age - this->threshhold_age_;
-      unsigned int threshold_frame = this->current_frame_number_read_;
+      // unsigned int threshold_frame = this->current_frame_number_read_;
 
       DataFrame* threshold_frame_ptr =
           this->InterpolateDataFrame(i, 0, 1, threshold_frame);
@@ -921,16 +926,65 @@ void GeometricReplay::ChannelCatchUp() {
 
   // Catchup for CapturedGameEvent:s
   // - Discard all captured events that lie before the threshold
-  while (this->captured_events_.at(0).frame_number < this->current_frame_number_read_) {
+  while (this->captured_events_.at(0).frame_number < threshold_frame) {
     this->captured_events_.erase(this->captured_events_.begin());
+  }
+
+  // Figure out what statring state the replay should have
+  // in regard to blackout and switch-goal
+  bool first_is_old;
+  bool second_is_old;
+  do {
+    first_is_old =
+        (this->state_logs_.size() > 1)
+            ? (this->state_logs_.at(0).frame_number < threshold_frame)
+            : false;
+
+    second_is_old =
+        (this->state_logs_.size() > 2)
+            ? (this->state_logs_.at(1).frame_number < threshold_frame)
+            : false;
+
+    // If both older than threshold
+    if (first_is_old && second_is_old) {
+      // Kill first
+      this->state_logs_.erase(this->state_logs_.begin());
+    }
+  } while (first_is_old && second_is_old);
+
+  if (!this->state_logs_.empty()) {
+    this->state_logs_.at(0).frame_number = threshold_frame;
+
+    this->state_logs_.erase(this->state_logs_.begin() + 1,
+                            this->state_logs_.end());
   }
 }
 
 void GeometricReplay::ReceiveGameEvent(GameEvent event) {
   CapturedGameEvent cge;
   cge.event = event;
-  cge.frame_number = current_frame_number_write_;
-  captured_events_.push_back(cge);
+  cge.frame_number = this->current_frame_number_write_;
+  this->captured_events_.push_back(cge);
+}
+
+void GeometricReplay::LogCurrentState() {
+  StateLogEntry sle;
+  sle.blackout_active = glob::IsBlackoutActive();
+  sle.goals_switched = this->engine_->IsGoalsSwapped();
+  sle.frame_number = this->current_frame_number_write_;
+
+  this->state_logs_.push_back(sle);
+}
+
+int GeometricReplay::GetStartingEnvironment() {
+  StateLogEntry& sle = this->state_logs_.at(0);
+
+  if (!sle.blackout_active && !sle.goals_switched) return 0;
+  if (sle.blackout_active && !sle.goals_switched) return 1;
+  if (!sle.blackout_active && sle.goals_switched) return 2;
+  if (sle.blackout_active && sle.goals_switched) return 3;
+
+  return -1;
 }
 
 void GeometricReplay::ClearAllVectors() {
@@ -938,6 +992,10 @@ void GeometricReplay::ClearAllVectors() {
   // without reseting frame reads and writes
   this->channels_.clear();
   this->captured_events_.clear();
+
+  /*
+    NTS: Do not change current state
+  */
 }
 
 //---

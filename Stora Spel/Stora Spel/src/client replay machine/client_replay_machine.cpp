@@ -119,20 +119,26 @@ void ClientReplayMachine::SetEngine(Engine* in_engine_ptr) {
 }
 
 void ClientReplayMachine::ReceiveGameEvent(GameEvent event) {
-  // -vvv- EVENT BLACKLIST -vvv-
+  // -vvv- EVENT SPECIAL CASES -vvv-
   switch (event.type) {
       // case GameEvent::WHATEVER:
       // case GameEvent::WHATELSE:
     case GameEvent::RESET:
+      // Do not save event to replay
       return;
+      break;
+    case GameEvent::BLACKOUT_TRIGGER:
+    case GameEvent::BLACKOUT_END:
+    case GameEvent::SWITCH_GOALS_DONE:
+      this->primary_replay_->LogCurrentState();
       break;
     default:
       break;
   }
-  // -^^^- EVENT BLACKLIST -^^^-
+  // -^^^- EVENT SPECIAL CASES -^^^-
 
   if (this->engine_->IsRecording()) {
-    primary_replay_->ReceiveGameEvent(event);
+    this->primary_replay_->ReceiveGameEvent(event);
   }
 }
 
@@ -150,6 +156,10 @@ void ClientReplayMachine::ResetMachine() {
     this->stored_replays_.erase(this->stored_replays_.end() - 1);
   }
   this->selected_replay_index_ = 0;
+}
+
+int ClientReplayMachine::GetStartingEnvironment() {
+  return this->stored_replays_.at(this->selected_replay_index_)->GetStartingEnvironment();
 }
 
 std::string ClientReplayMachine::GetDebugString() {

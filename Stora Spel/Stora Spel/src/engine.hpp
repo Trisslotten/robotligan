@@ -106,6 +106,7 @@ class Engine {
   // Replay stuff---
   ClientReplayMachine* GetReplayMachinePtr() { return this->replay_machine_; }
   bool IsRecording() const { return this->play_state_.IsRecording(); }
+  bool IsGoalsSwapped() const { return this->play_state_.IsGoalsSwitched(); }
   // Replay stuff---
 
   // Entity destruction---
