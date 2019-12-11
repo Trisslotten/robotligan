@@ -2493,6 +2493,7 @@ void PlayState::SwitchGoals() {
   } else {
     goals_swapped_ = false;
   }
+  /*
   TransformComponent& blue_light_trans_c =
       registry_gameplay_.get<TransformComponent>(blue_goal_light_);
   TransformComponent& red_light_trans_c =
@@ -2501,7 +2502,7 @@ void PlayState::SwitchGoals() {
   glm::vec3 blue_light_pos = blue_light_trans_c.position;
   blue_light_trans_c.position = red_light_trans_c.position;
   red_light_trans_c.position = blue_light_pos;
-
+  // TODO: fix crash here in replay
   auto& blue_light = registry_gameplay_.get<LightComponent>(blue_goal_light_);
   blue_light.color = glm::vec3(0.1f, 0.1f, 1.f);
   blue_light.radius = 30;
@@ -2509,6 +2510,7 @@ void PlayState::SwitchGoals() {
   auto& red_light = registry_gameplay_.get<LightComponent>(red_goal_light_);
   red_light.color = glm::vec3(1.f, 0.1f, 0.1f);
   red_light.radius = 30;
+  */
 
   auto& map_trans =
       registry_gameplay_.get<TransformComponent>(map_visual_entity_);
