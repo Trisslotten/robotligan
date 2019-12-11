@@ -2965,8 +2965,8 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 			}
 		}
 
-		registry->assign<ParticleComponent>(ent, handles, offsets, directions);
-		registry->assign<TimerComponent>(ent, 1.f);
+		//registry->assign<ParticleComponent>(ent, handles, offsets, directions);
+		//registry->assign<TimerComponent>(ent, 1.f);
 		break;
 	}
 	case GameEvent::TELEPORT_CAST: {
