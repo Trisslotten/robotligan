@@ -329,7 +329,8 @@ void PlayState::Update(float dt) {
         cam_c.orientation = orientation;
         trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
         // FPS Model rotations
-        // mc.rot_offset = orientation - glm::quat(glm::vec3(0.f, yaw_, 0.f));
+        mc.rot_offset = orientation - glm::quat(glm::vec3(0.f, yaw_, 0.f));
+
       }
 
       // rotate model offset as well, this does not want to work...
