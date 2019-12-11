@@ -531,9 +531,11 @@ class ReplayState : public State {
   void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
+  void ReplaySwitchGoals();
 
   StateType Type() { return StateType::REPLAY; }
   void SetArenaScale(glm::vec3 in_scale) { this->arena_scale_ = in_scale; }
+  bool IsReplaying() const { return this->replaying_; }
 };
 
 class CreateServerState : public State {

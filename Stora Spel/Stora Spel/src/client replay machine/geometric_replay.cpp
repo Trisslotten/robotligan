@@ -976,7 +976,18 @@ void GeometricReplay::LogCurrentState() {
   this->state_logs_.push_back(sle);
 }
 
+void GeometricReplay::LogReset() {
+  StateLogEntry sle;
+  sle.blackout_active = glob::IsBlackoutActive();
+  sle.goals_switched = false;
+  sle.frame_number = this->current_frame_number_write_;
+
+  this->state_logs_.push_back(sle);
+}
+
 int GeometricReplay::GetStartingEnvironment() {
+  if (this->state_logs_.empty()) return 0;
+
   StateLogEntry& sle = this->state_logs_.at(0);
 
   if (!sle.blackout_active && !sle.goals_switched) return 0;

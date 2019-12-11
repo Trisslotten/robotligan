@@ -180,6 +180,7 @@ class GeometricReplay {
   void SetEngine(Engine* eng) { engine_ = eng; }
 
   void LogCurrentState();
+  void LogReset();
   int GetStartingEnvironment();
 
   void ClearAllVectors();

@@ -65,13 +65,9 @@ void ReplayState::AddArenaStuff() {
   TransformComponent& trans_c =
       this->replay_registry_.assign<TransformComponent>(
           arena_floor, zero_vec, zero_vec, this->arena_scale_);
-  // Ensure goals are correctly drawn
-  if (this->goals_swapped_) {
-    trans_c.rotation *= glm::quat(glm::vec3(0.f, glm::pi<float>(), 0.f));
-  }
 
   // Save arena entity
-  this->map_visual_entity_ = arena;
+  this->map_visual_entity_ = arena_floor;
 }
 
 void ReplayState::AddBatmanLights() {
@@ -307,6 +303,11 @@ void ReplayState::StartReplayMode() {
 
   // Add in stuff that is in all replays
   this->AddConstantStuff();
+
+  // Set beginning state for first replay
+  int start_code =
+      this->engine_->GetReplayMachinePtr()->GetStartingEnvironment();
+  this->SetEnvironment(start_code);
 }
 
 void ReplayState::PlayReplay() {
@@ -317,8 +318,6 @@ void ReplayState::PlayReplay() {
   if (this->engine_->GetReplayMachinePtr()->LoadFrame(this->replay_registry_)) {
     // Clear glob effects from screen
     glob::ClearEffects();
-
-    // TODO: set blackout and switch goals
 
     // Close menu
     if (show_in_game_menu_buttons_) {
@@ -342,7 +341,6 @@ void ReplayState::PlayReplay() {
       // Set beginning state for next replay
       int start_code =
           this->engine_->GetReplayMachinePtr()->GetStartingEnvironment();
-
       this->SetEnvironment(start_code);
     }
   }
@@ -539,7 +537,7 @@ void ReplayState::SetEnvironment(int in_code) {
   // 3: Blackout true,   Switch goals true
 
   // Set blackout state accordingly
-  glob::SetBlackout((in_code == 0 || in_code == 2));
+  glob::SetBlackout((in_code == 1 || in_code == 3));
   auto view_controller = this->replay_registry_.view<LightComponent>();
   for (auto entity : view_controller) {
     LightComponent& light_c = view_controller.get(entity);
@@ -547,36 +545,13 @@ void ReplayState::SetEnvironment(int in_code) {
     // Turn off all light sources affected by blackout
     if (!this->replay_registry_.has<BallComponent>(entity) &&
         (entity != this->red_goal_light_ && entity != this->blue_goal_light_)) {
-      light_c.blackout = (in_code == 0 || in_code == 2);
+      light_c.blackout = (in_code == 1 || in_code == 3);
     }
   }
 
   // Set switch goals state accordingly
   if ((in_code == 2 || in_code == 3) != this->goals_swapped_) {
-    TransformComponent& blue_light_trans_c =
-        this->replay_registry_.get<TransformComponent>(blue_goal_light_);
-    TransformComponent& red_light_trans_c =
-        this->replay_registry_.get<TransformComponent>(red_goal_light_);
-
-    glm::vec3 blue_light_pos = blue_light_trans_c.position;
-    blue_light_trans_c.position = red_light_trans_c.position;
-    red_light_trans_c.position = blue_light_pos;
-
-    auto& blue_light =
-        this->replay_registry_.get<LightComponent>(blue_goal_light_);
-    blue_light.color = glm::vec3(0.1f, 0.1f, 1.f);
-    blue_light.radius = 30;
-
-    auto& red_light =
-        this->replay_registry_.get<LightComponent>(red_goal_light_);
-    red_light.color = glm::vec3(1.f, 0.1f, 0.1f);
-    red_light.radius = 30;
-
-    auto& map_trans =
-        this->replay_registry_.get<TransformComponent>(map_visual_entity_);
-
-    map_trans.rotation *= glm::quat(glm::vec3(0.f, glm::pi<float>(), 0.f));
-    this->goals_swapped_ = (in_code == 2 || in_code == 3);
+    this->ReplaySwitchGoals();
   }
 }
 
@@ -651,9 +626,38 @@ void ReplayState::Cleanup() {
   this->replaying_ = false;
   this->num_of_replays_ = 0;
   this->replay_counter_ = 0;
+  this->goals_swapped_ = false;
 
   this->replay_state_timer_.Pause();
 
   // Tell replay machine to clear stored data
   this->engine_->GetReplayMachinePtr()->ResetMachine();
+}
+
+void ReplayState::ReplaySwitchGoals() {
+  this->goals_swapped_ = !this->goals_swapped_;
+
+  TransformComponent& blue_light_trans_c =
+      this->replay_registry_.get<TransformComponent>(this->blue_goal_light_);
+  TransformComponent& red_light_trans_c =
+      this->replay_registry_.get<TransformComponent>(this->red_goal_light_);
+
+  glm::vec3 blue_light_pos = blue_light_trans_c.position;
+  blue_light_trans_c.position = red_light_trans_c.position;
+  red_light_trans_c.position = blue_light_pos;
+
+  auto& blue_light =
+      this->replay_registry_.get<LightComponent>(this->blue_goal_light_);
+  blue_light.color = glm::vec3(0.1f, 0.1f, 1.f);
+  blue_light.radius = 30;
+
+  auto& red_light =
+      this->replay_registry_.get<LightComponent>(this->red_goal_light_);
+  red_light.color = glm::vec3(1.f, 0.1f, 0.1f);
+  red_light.radius = 30;
+
+  auto& map_trans =
+      this->replay_registry_.get<TransformComponent>(this->map_visual_entity_);
+
+  map_trans.rotation *= glm::quat(glm::vec3(0.f, glm::pi<float>(), 0.f));
 }

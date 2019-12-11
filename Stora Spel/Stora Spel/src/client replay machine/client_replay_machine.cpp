@@ -113,8 +113,10 @@ bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
   return load_result;
 }
 
-void ClientReplayMachine::SetEngine(Engine* in_engine_ptr) {
+void ClientReplayMachine::SetEngineAndOwner(Engine* in_engine_ptr,
+                                            ReplayState* in_replay_state_ptr_) {
   this->engine_ = in_engine_ptr;
+  this->replay_state_ = in_replay_state_ptr_;
   this->primary_replay_->SetEngine(in_engine_ptr);
 }
 
@@ -125,12 +127,19 @@ void ClientReplayMachine::ReceiveGameEvent(GameEvent event) {
       // case GameEvent::WHATELSE:
     case GameEvent::RESET:
       // Do not save event to replay
+      this->primary_replay_->LogReset();
       return;
       break;
     case GameEvent::BLACKOUT_TRIGGER:
     case GameEvent::BLACKOUT_END:
+      this->primary_replay_->LogCurrentState();
+      break;
     case GameEvent::SWITCH_GOALS_DONE:
       this->primary_replay_->LogCurrentState();
+      if (this->replay_state_->IsReplaying()) {
+        this->replay_state_->ReplaySwitchGoals();
+        return;
+      }
       break;
     default:
       break;
@@ -140,6 +149,8 @@ void ClientReplayMachine::ReceiveGameEvent(GameEvent event) {
   if (this->engine_->IsRecording()) {
     this->primary_replay_->ReceiveGameEvent(event);
   }
+
+  // Special event triggers for replay state
 }
 
 void ClientReplayMachine::ResetMachine() {
@@ -159,7 +170,8 @@ void ClientReplayMachine::ResetMachine() {
 }
 
 int ClientReplayMachine::GetStartingEnvironment() {
-  return this->stored_replays_.at(this->selected_replay_index_)->GetStartingEnvironment();
+  return this->stored_replays_.at(this->selected_replay_index_)
+      ->GetStartingEnvironment();
 }
 
 std::string ClientReplayMachine::GetDebugString() {

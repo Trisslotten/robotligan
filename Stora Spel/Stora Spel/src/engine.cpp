@@ -114,7 +114,7 @@ void Engine::Init() {
       kClientUpdateRate;
   this->replay_machine_ =
       new ClientReplayMachine(length_sec, approximate_tickrate);
-  replay_machine_->SetEngine(this);
+  replay_machine_->SetEngineAndOwner(this, &this->replay_state_);
 
   dispatcher.sink<GameEvent>().connect<&ClientReplayMachine::ReceiveGameEvent>(
       *replay_machine_);

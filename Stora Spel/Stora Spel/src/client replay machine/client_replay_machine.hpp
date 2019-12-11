@@ -6,6 +6,7 @@
 #include "geometric_replay.hpp"
 
 class Engine;
+class ReplayState;
 
 class ClientReplayMachine {
  private:
@@ -16,6 +17,7 @@ class ClientReplayMachine {
   std::vector<GeometricReplay*> stored_replays_;
   unsigned int selected_replay_index_;
   Engine* engine_;
+  ReplayState* replay_state_;
 
  public:
   ClientReplayMachine(unsigned int in_replay_length_sec,
@@ -35,7 +37,7 @@ class ClientReplayMachine {
   bool LoadFrame(entt::registry& in_registry);
   bool IsEmpty() { return stored_replays_.empty(); }
 
-  void SetEngine(Engine* in_engine_ptr);
+  void SetEngineAndOwner(Engine* in_engine_ptr, ReplayState* in_replay_state_ptr_);
   void ReceiveGameEvent(GameEvent event);
 
   void ResetMachine();
