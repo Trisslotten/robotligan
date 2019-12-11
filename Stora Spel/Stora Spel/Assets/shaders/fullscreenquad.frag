@@ -46,6 +46,12 @@ float noise(vec2 p){
 		u.y);
 	return res*res;
 }
+
+vec3 dither() {
+	const float num_colors = 256.0;
+	return vec3(0.5*rand(gl_FragCoord.xy)/num_colors);
+}
+
 float noise(float p){
 	float ip = floor(p);
 	float  u = fract(p);
@@ -60,7 +66,7 @@ vec3 calcColor(vec2 uv) {
 	vec4 emission = texture(texture_emission, uv, 1);
 	float ao = texture(texture_ssao, uv).r;
 	if(use_ao) color*=ao;
-	color += 2.*emission.rgb;
+	color += emission.rgb;
 	
 	if (is_invisible == 1) {
 		vec3 effect = vec3(noise(gl_FragCoord.xy/100.0));
@@ -112,7 +118,10 @@ void main() {
 	color.b = calcColor(uv - n).b;
 	color = mix(color, noise_color, t);
 
-	//color = pow(color, vec3(1/2.2));
+	color = pow(color, vec3(1/2.2));
+
+	color += dither();
+
 	//color = texture(texture_ssao, v_uv).rrr;
 	out_color = vec4(color, 1);
 	//if(use_ao) out_color = vec4(vec3(ao),1);

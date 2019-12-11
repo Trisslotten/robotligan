@@ -140,8 +140,8 @@ float noise(vec3 p){
     return o4.y * d.y + o4.x * (1.0 - d.y);
 }
 vec3 fakeCubeMap(vec3 dir) {
-	float d = 0.1;
-    float l = 0.4;
+	float d = 0.001;
+    float l = 0.1;
     float n = (l - d) * pow(noise(3.*dir), 2.0) + d;
 	return n.rrr;
 }
@@ -199,7 +199,7 @@ void main() {
 
 	vec3 reflective_shading = vec3(0);
 	reflective_shading += reflective * lighting.specular;
-	reflective_shading += 1.0*reflective * cube_map;
+	reflective_shading += reflective * cube_map;
 
 	float alpha = surface_color.a;
 
@@ -211,8 +211,8 @@ void main() {
 
 	surface_color.rgb = mix(surface_color.rgb, iron_color, metallic*(1.-emission_strength));
 	
-	vec3 emission = 1.2*emission_strength * surface_color.rgb;
-	emission += 2.0*reflective * lighting.specular * (1.-emission_strength);
+	vec3 emission = emission_strength * surface_color.rgb;
+	emission += reflective * lighting.specular * (1.-emission_strength);
 
 	vec3 color = surface_color.rgb;
 	color *= mix(diffuse_shading, vec3(1), emission_strength);
@@ -220,10 +220,10 @@ void main() {
 	color += mix(reflective_shading, vec3(0), emission_strength);
 	
 
-	color += dither();
+	//color += dither();
 	//float gamma = 2.2;
 	//color = pow(color, vec3(gamma));
 	out_color = vec4(color, alpha);
-	out_emission = vec4(emission/2.0, emission_alpha);
+	out_emission = vec4(emission, emission_alpha);
 	//out_depth = vec4(gl_FragCoord.z,0,0,0);
 }

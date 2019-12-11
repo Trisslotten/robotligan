@@ -1932,8 +1932,8 @@ void PlayState::CreateMapEntity() {
 }
 
 void AddLightToBall(entt::registry& registry, entt::entity& ball) {
-  registry.assign<LightComponent>(ball, glm::vec3(0.f, 1.f, 0.f), 100.f, 0.f,
-                                  false, 0.9f);
+  registry.assign<LightComponent>(ball, glm::vec3(0.f, 1.f, 0.f), 80.f, 0.f,
+                                  false, 0.85f);
 }
 
 void PlayState::CreateBallEntities() {
@@ -2133,6 +2133,7 @@ void PlayState::CreateInGameMenu() {
 
 void PlayState::TestCreateLights() {
   // Create lights
+  /*
   blue_goal_light_ = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(
       blue_goal_light_, glm::vec3(0.1f, 0.1f, 1.0f), 30.f, 0.0f);
@@ -2146,12 +2147,15 @@ void PlayState::TestCreateLights() {
   registry_gameplay_.assign<TransformComponent>(
       red_goal_light_, glm::vec3(-45.f, -8.f, 0.f), glm::vec3(0.f, 0.f, 1.f),
       glm::vec3(1.f));
+      */
 
+      
   auto light = registry_gameplay_.create();
   registry_gameplay_.assign<LightComponent>(light, glm::vec3(0.4f, 0.4f, 0.4f),
-                                            90.f, 0.2f);
+                                            90.f, 0.08f);
   registry_gameplay_.assign<TransformComponent>(
       light, glm::vec3(0, 4.f, 0.f), glm::vec3(0.f, 0.f, 1.f), glm::vec3(1.f));
+  
 }
 
 void PlayState::AddPlayer() {

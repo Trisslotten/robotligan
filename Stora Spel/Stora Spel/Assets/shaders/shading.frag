@@ -155,6 +155,8 @@ Lighting shading(const vec3 position, const vec3 normal, const float reflective)
 	lighting.specular = vec3(0);
 
 	
+	//lighting.ambient += 0.08;
+
 	for(int l = 0; l < NR_OF_LIGHTS; l++){
 		const vec4 pos_rad = light_pos_radius[l];
 		vec3 pointToLight = pos_rad.xyz - position;
@@ -165,8 +167,8 @@ Lighting shading(const vec3 position, const vec3 normal, const float reflective)
 
 		//float intensity = 1.f - clamp(length(pointToLight)/pos_rad.w, 0., 1.);
 
-		float t = clamp(length(pointToLight)/pos_rad.w, 0, 1);
-		float intensity = 1-sqrt(t);
+		const float a = (sqrt(255)-1)/200.0;
+		float intensity = 1./pow(1 + a*length(pointToLight), 2.0);
 		if(intensity >= 1./255.) {
 			float diffuse = calcDiffuse(position, normal, light_dir);
 			lighting.diffuse += diffuse * intensity * col_amb.rgb;
@@ -222,10 +224,10 @@ Lighting shading(const vec3 position, const vec3 normal, const float reflective)
 	//}
 
 	
-
+	
 	//float dist = sdBox(position - vec3(10,0,0), vec3(0.1, 5, 5));
 	//lighting.diffuse += vec3(1,0.5,0.5)/(1.+ 0.01 * dist*dist);
-	
+	/*
 	for(int i = 0; i < num_shadows; i++) {
 		vec4 shadow_space = v_shadow_spaces[i];
 		shadow_space.xyz /= shadow_space.w;
@@ -233,7 +235,7 @@ Lighting shading(const vec3 position, const vec3 normal, const float reflective)
 		vec2 uv = (shadow_space.xy+1.)*0.5;
 		if(shadow_space.w > 0 && !(uv.x < 0. || uv.x > 1. || uv.y < 0. || uv.y > 1.)) {
 			vec3 ld = normalize(shadow_light_positions[i] - position);
-			vec3 light_color = vec3(0.4);
+			vec3 light_color = vec3(0.3);
 
 			vec2 q = abs(shadow_space.xy) - vec2(0.5);
   			float len = length(max(q,0.0)) + min(max(q.x, q.y), 0.0);
@@ -250,6 +252,6 @@ Lighting shading(const vec3 position, const vec3 normal, const float reflective)
 			lighting.specular += light_color * specular;
 		}
 	}
-
+	*/
 	return lighting;
 }

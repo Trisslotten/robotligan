@@ -183,12 +183,14 @@ GLint Model::TextureFromFile(const char* path, std::string directory,
   std::string filename = std::string(path);
   filename = directory + '/' + filename;
 
-  GLint internal_format = GL_RGBA;
-  LodePNGColorType color_type = LCT_RGBA;
+  GLint internal_format = GL_COMPRESSED_SRGB_ALPHA;
+  GLint upload_format = GL_RGBA;
+  LodePNGColorType color_type = LodePNGColorType::LCT_RGBA;
 
   if (type == aiTextureType_EMISSIVE) {
-    internal_format = GL_RED;
-    color_type = LCT_GREY;
+    internal_format = GL_COMPRESSED_RED;
+    upload_format = GL_RED;
+    color_type = LodePNGColorType::LCT_GREY;
     is_emissive_ = true;
   }
 
@@ -213,7 +215,7 @@ GLint Model::TextureFromFile(const char* path, std::string directory,
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0,
-               internal_format, GL_UNSIGNED_BYTE, image.data());
+               upload_format, GL_UNSIGNED_BYTE, image.data());
   // glGenerateMipmap(GL_TEXTURE_2D);
 
   glBindTexture(GL_TEXTURE_2D, 0);  // Unbind the texture
