@@ -2511,7 +2511,6 @@ void PlayState::SwitchGoals() {
   auto& red_light = registry_gameplay_.get<LightComponent>(red_goal_light_);
   red_light.color = glm::vec3(1.f, 0.1f, 0.1f);
   red_light.radius = 30;
-  */
 
   auto& map_trans =
       registry_gameplay_.get<TransformComponent>(map_visual_entity_);
