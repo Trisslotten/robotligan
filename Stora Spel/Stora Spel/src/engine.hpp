@@ -62,14 +62,15 @@ class Engine {
   entt::registry* GetCurrentRegistry() { return registry_current_; }
   std::unordered_map<int, int> GetKeyBinds() { return keybinds_; };
 
-  std::unordered_map<long, std::string> player_names_;
   void SetSecondaryAbility(AbilityID id) { second_ability_ = id; }
   AbilityID GetSecondaryAbility() { return second_ability_; }
   std::vector<unsigned int> GetTeamScores() { return scores_; }
   std::vector<int>* GetPlayingPlayers();
+  /*
   void SetPlayingPlayers(std::unordered_map<int, LobbyPlayer> plyrs) {
     playing_players_ = plyrs;
   }
+  */
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
   float GetSwitchGoalCountdownTimer() const;
@@ -118,6 +119,9 @@ class Engine {
 
   bool GetShoulSendInput() { return should_send_input_; }
   bool GetTakeGameInput() { return take_game_input_; }
+
+  std::unordered_map<long, std::string> player_names_;
+  std::unordered_map<long, PlayerStatInfo> player_scores_;
  private:
   void SetKeybinds();
 
@@ -142,7 +146,7 @@ class Engine {
 
   // Registry
   entt::registry* registry_current_;
-  std::unordered_map<int, LobbyPlayer> playing_players_;
+  //std::unordered_map<int, LobbyPlayer> playing_players_;
   bool should_send_input_ = false;
 
   std::unordered_map<int, int> keybinds_;
@@ -177,7 +181,7 @@ class Engine {
 
   AbilityID second_ability_ = AbilityID::NULL_ABILITY;
 
-  std::unordered_map<long, PlayerStatInfo> player_scores_;
+  
 
   StateType previous_state_;
 

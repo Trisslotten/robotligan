@@ -218,6 +218,8 @@ void Engine::Update(float dt) {
   for (auto iter = player_names_.begin(); iter != player_names_.end();) {
     if (iter->second == "") {
       player_names_.erase(iter++);
+      player_scores_.erase(iter->first);
+      //playing_players_
     } else {
       ++iter;
     }
@@ -417,7 +419,9 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         psbi.enttity_id = e_id;
         psbi.assists = 0;
         psbi.saves = 0;
-        player_scores_[client_id] = psbi;
+        if (player_names_.count(client_id) != 0) {
+          player_scores_[client_id] = psbi;
+        }
       }
       play_state_.SetGoalsSwappedAtStart(switched);
       ChangeState(StateType::PLAY);
@@ -777,7 +781,7 @@ void Engine::ClearPlayerInfos()
 {
   this->player_names_.clear();
   this->player_scores_.clear();
-  this->playing_players_.clear();
+  //this->playing_players_.clear();
   lobby_state_.ClearLobbyPlayers();
 }
 
