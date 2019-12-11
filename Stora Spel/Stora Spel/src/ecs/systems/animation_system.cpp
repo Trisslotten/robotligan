@@ -106,9 +106,11 @@ void AnimationSystem::PlayAnimation(std::string name, float speed,
         ac->active_animations.at(i)->fade_ = 0.f;
         return;
       }
-      std::cout << "WARNING: Attempting to play animation: \""
-                << ac->model_data.animations.at(anim)->name_
-                << "\" is already playing, cannot stack the same animation!\n";
+      if (ac->active_animations.at(i)->mode_ != MUTE_ALL) {
+          std::cout << "WARNING: Attempting to play animation: \""
+              << ac->model_data.animations.at(anim)->name_
+              << "\" is already playing, cannot stack the same animation!\n";
+      }
       return;
     }
   }
@@ -175,7 +177,6 @@ void AnimationSystem::PlayAnimation(std::string name, float speed,
     pg.animations.push_back(p_anim);
     ac->p_groups.push_back(pg);
   }
-
   ac->active_animations.push_back(p_anim);
   // std::cout << "Playing " << p_anim.animation_->name_ << "\n";
 }
@@ -273,6 +274,7 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
         rotator = dt * 10.f;
         int animNumKick = GetActiveAnimationByName("Kick", &ac);
         int animNumShoot = GetActiveAnimationByName("Shoot", &ac);
+
         if (animNumKick >= 0) {
           glob::PlayableAnimation* animKick =
               ac.active_animations.at(animNumKick);
@@ -283,6 +285,10 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
             }
           }
         }
+        else {
+            pl.kicking = false;
+        }
+
         if (animNumShoot >= 0) {
           glob::PlayableAnimation* animShoot =
               ac.active_animations.at(animNumShoot);
@@ -292,6 +298,9 @@ void AnimationSystem::UpdateEntities(entt::registry& registry, float dt) {
               PAC::stopSlideAnims(this, ac, pl.localPlayer);
             }
           }
+        }
+        else {
+            pl.shooting = false;
         }
       }
 
