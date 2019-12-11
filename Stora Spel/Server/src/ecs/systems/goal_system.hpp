@@ -105,57 +105,17 @@ void Update(entt::registry& registry) {
               }
             }
           }
-
+          
           return;
         } else if (distance < kDistanceForBlock) {
           auto view_players =
               registry.view<PlayerComponent, TeamComponent, PointsComponent>();
-          auto time =
-              (((ball_physics_c.velocity.x + ball_physics_c.velocity.y) /
-                2.0f) *
-               distance) *
-              (1.0f / 64.f);
-          auto simulated_position =
-              ball_physics_c.velocity * time +
-              (float(1.0 / 2.0) * ball_physics_c.acceleration *
-               (time * time));  // Fucked?
+          //Simulate ball position
+          //s = (v² – u²)/2a
+          //v² = u² + 2as
+          glm::vec3 simulated_position(1.0f);
           physics::Sphere s;
-          s.center = ball_sphere_c.center + simulated_position;
-          s.radius = ball_sphere_c.radius;
-          physics::IntersectData simulated_goal =
-              physics::Intersect(s, goal_OBB_c);
-          if (glm::distance(s.center, goal_OBB_c.center) < 50 ||
-              simulated_goal.collision)  // Arbitrary distance, målområde typ?
-          {
-            for (auto player : view_players) {
-              auto& player_player_c = registry.get<PlayerComponent>(player);
-              auto& player_transform_c =
-                  registry.get<TransformComponent>(player);
-              auto& player_team_c = registry.get<TeamComponent>(player);
-              auto& player_points_c = registry.get<PointsComponent>(player);
-              auto& player_obb = registry.get<physics::OBB>(player);
-              auto simulated_player =
-                  physics::Intersect(ball_sphere_c, player_obb);
-
-              if (simulated_player.collision) {
-                if (goal_team_c.team != player_team_c.team &&
-                    //ball_ball_c.prev_touch != player_player_c.client_id &&
-                    //ball_ball_c.last_touch == player_player_c.client_id &&
-                    !just_blocked && glm::length(ball_physics_c.velocity) > 2) {
-                  // ball_ball_c.prev_touch = ball_ball_c.last_touch;
-                  // ball_ball_c.last_touch = player_player_c.cl'ient_id;
-                  just_blocked = true;
-                  last_blocked = ball_sphere_c.center;
-                  std::cout << "Block: Player " << ball_ball_c.last_touch << " Blocked " << ball_ball_c.prev_touch << "s shot! \n";
-                  // Blocked
-
-                  player_points_c.AddPoints(POINTS_SAVE);
-                  player_points_c.AddBlock(1);
-                  break;
-                }
-              }
-            }
-          }
+          auto goal_pos = goal_trans_c.position;
         }
       }
     }
