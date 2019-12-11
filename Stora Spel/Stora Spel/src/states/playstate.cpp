@@ -1448,6 +1448,8 @@ void PlayState::UpdateTechDemo(float dt)
 	glob::Submit(font_test_, pos + glm::vec3(0, -8, 0.4), 2, demo_text_3d_, glm::vec4(1, 1, 1, 1));
 	 
 	if (show_demo_gui) engine_->UpdateDemoRegistry(dt);
+
+	glob::Submit(font_test_, glm::vec2(50, 50), 72, "interpolate: " + std::string(interpolate_ ? "ON" : "OFF"));
 }
 
 EntityID PlayState::ClientIDToEntityID(long client_id) {
