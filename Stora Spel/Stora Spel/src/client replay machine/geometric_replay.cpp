@@ -696,6 +696,11 @@ GeometricReplay::GeometricReplay(unsigned int in_replay_length_sec,
   this->current_frame_number_write_ = 0;
   this->current_frame_number_read_ = 0;
   this->engine_ = nullptr;
+  StateLogEntry sle;
+  sle.blackout_active = false;
+  sle.goals_switched = false;
+  sle.frame_number = 0;
+  this->state_logs_.push_back(sle);
 }
 
 GeometricReplay::~GeometricReplay() {}

@@ -536,6 +536,8 @@ void ReplayState::SetEnvironment(int in_code) {
   // 2: Blackout false,  Switch goals true
   // 3: Blackout true,   Switch goals true
 
+  GlobalSettings::Access()->WriteError("", "In code: ", std::to_string(in_code));
+
   // Set blackout state accordingly
   glob::SetBlackout((in_code == 1 || in_code == 3));
   auto view_controller = this->replay_registry_.view<LightComponent>();
