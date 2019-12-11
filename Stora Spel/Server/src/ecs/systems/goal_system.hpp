@@ -109,13 +109,27 @@ void Update(entt::registry& registry) {
           return;
         } else if (distance < kDistanceForBlock) {
           auto view_players =
-              registry.view<PlayerComponent, TeamComponent, PointsComponent>();
+              registry.view<PlayerComponent, TeamComponent, PointsComponent, physics::OBB>();
           //Simulate ball position
-          //s = (v² – u²)/2a
-          //v² = u² + 2as
           glm::vec3 simulated_position(1.0f);
-          physics::Sphere s;
-          auto goal_pos = goal_trans_c.position;
+          auto goal_pos = goal_OBB_c.center;
+          //Set up corners for the goal
+          auto ball_pos = ball_trans_c.position;
+          for (auto& player : view_players)
+          {
+              auto& player_player_c = registry.get<PlayerComponent>(player);
+              auto& player_team_c = registry.get<TeamComponent>(player);
+              auto& player_points_c = registry.get<PointsComponent>(player);
+              auto& player_obb = registry.get<physics::OBB>(player);
+              
+              physics::IntersectData player_collision = Intersect(ball_sphere_c, player_obb);
+              if (player_collision.collision)
+              {
+                  //Create plane from corners of goal
+                  //Project the point onto the goal-plane?
+                  //Check if it's within bounds?
+              }
+          }
         }
       }
     }
