@@ -17,6 +17,10 @@ const float kTimeToSimulate = 1.5f;
 bool just_blocked = false;
 glm::vec3 last_blocked = glm::vec3(0.0f);
 std::unordered_map<PlayerID, int> add_blocks;
+bool IsWithinGoal(glm::vec3 &pos, glm::vec3 &dir, physics::OBB &goal_obb)
+{
+    glm::vec3 goal_center = goal_obb.center;
+}
 void PerformSwitchGoals(entt::registry& registry) {
   auto view_goals = registry.view<GoalComponenet, TeamComponent>();
   GoalComponenet* first_goal_comp = nullptr;
@@ -128,6 +132,14 @@ void Update(entt::registry& registry) {
                   //Create plane from corners of goal
                   //Project the point onto the goal-plane?
                   //Check if it's within bounds?
+                  std::cout << "Block?" << std::endl;
+                  glm::vec3 ball_dir = glm::normalize(ball_physics_c.velocity);
+                  if (IsWithinGoal(ball_pos, ball_dir, goal_OBB_c) && !just_blocked)
+                  {
+                      player_points_c.AddBlock(1);
+                      player_points_c.AddPoints(POINTS_SAVE);
+                      just_blocked = true;
+                  }
               }
           }
         }
