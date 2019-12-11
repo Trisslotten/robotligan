@@ -22,6 +22,10 @@
 entt::dispatcher menu_dispatcher{};
 entt::dispatcher dispatcher{};
 
+extern "C" {
+    _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+}
+
 int main(unsigned argc, char** argv) {
   _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
   _CrtSetReportMode(_CRT_ERROR, _CRTDBG_MODE_DEBUG);

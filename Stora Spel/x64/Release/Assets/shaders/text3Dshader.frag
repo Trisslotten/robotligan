@@ -8,6 +8,7 @@ uniform vec4 fgColor;
 in vec2 v_tex;
 
 out vec4 color;
+layout(location = 1) out vec4 out_emission;
 
 float median(float r, float g, float b) {
     return max(min(r, g), min(max(r, g), b));
@@ -27,4 +28,5 @@ void main() {
 		discard;
 
     color = vec4(fgColor.rgb, opacity);
+	out_emission = vec4(0);
 }

@@ -97,7 +97,7 @@ void main()
 		}
 	} else if (gid < 1000 && times[gid] < 0.f && times[0] < 4.f) {
 		uint rest = gid % 50;
-		float ratio = rest / 50.0 * 0.5;
+		float ratio = float(rest) / 50.0 * 0.5;
 		times[gid] = 2.0 + 0.5 - ratio;
 		positions[gid] = positions[0] + velocities[gid] * ratio * 1.0;
 	}

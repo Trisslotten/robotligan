@@ -112,6 +112,7 @@ void main() {
 	color.b = calcColor(uv - n).b;
 	color = mix(color, noise_color, t);
 
+	//color = pow(color, vec3(1/2.2));
 	//color = texture(texture_ssao, v_uv).rrr;
 	out_color = vec4(color, 1);
 	//if(use_ao) out_color = vec4(vec3(ao),1);

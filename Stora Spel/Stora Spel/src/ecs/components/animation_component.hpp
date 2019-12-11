@@ -17,20 +17,25 @@ struct AnimationComponent {
 
   std::vector<glm::mat4> bone_transforms;
 
-    std::vector<priorityGroup> p_groups;
+  std::vector<glm::quat> bone_rotations;
+  std::vector<glm::mat4> bone_positions;
+  std::vector<glm::mat4> bone_scales;
 
-	bool init = true;
+  std::vector<priorityGroup> p_groups;
+
+  bool init = true;
+
+  float yawInterpolator = 0.f;
 };
 
 #endif  // ANIMATION_COMPONENT_HPP_
 
-
-//alternative version
+// alternative version
 /*
 std::vector<playableAnimation> active_animations;
 
 model data{
-	innehåller ett bibliotek avpekare till en modells animationer
+        innehåller ett bibliotek avpekare till en modells animationer
 }
 
 */

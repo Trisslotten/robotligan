@@ -329,7 +329,8 @@ void PlayState::Update(float dt) {
         cam_c.orientation = orientation;
         trans_c.rotation = glm::quat(glm::vec3(0, yaw_, 0));
         // FPS Model rotations
-        // mc.rot_offset = orientation - glm::quat(glm::vec3(0.f, yaw_, 0.f));
+        mc.rot_offset = orientation - glm::quat(glm::vec3(0.f, yaw_, 0.f));
+
       }
 
       // rotate model offset as well, this does not want to work...
@@ -872,7 +873,7 @@ FrameState PlayState::SimulateMovement(std::vector<int>& action,
       if (a == PlayerAction::JUMP && player_c.can_jump) {
         player_c.can_jump = false;
         // Add velocity upwards
-        final_velocity += up * 8.0f;
+        final_velocity += up * 16.0f;
         // Set them to be airborne
         new_state.is_airborne = true;
         // Subtract energy cost from resources
@@ -944,8 +945,11 @@ void PlayState::MovePlayer(float dt) {
       AddAction(action);
     }
   }
-  for (auto& a : actions_) {
-    new_frame.actions.push_back(a);
+  if (engine_->GetShoulSendInput() && engine_->GetTakeGameInput() &&
+      countdown_time_ - engine_->GetCountdownTimer() <= 0) {
+    for (auto& a : actions_) {
+      new_frame.actions.push_back(a);
+    }
   }
   auto& cam_o = registry_gameplay_.get<CameraComponent>(my_entity_).orientation;
 
@@ -988,6 +992,7 @@ void PlayState::OnServerFrame() {
   if (glm::length(predicted_state_.position - server_predicted_.position) >
       5.0f) {
     trans_c.position = server_predicted_.position;
+    predicted_state_ = server_predicted_;
     return;
   }
 }
@@ -1630,6 +1635,7 @@ void PlayState::CreateInitialEntities() {
 }
 
 void PlayState::CreatePlayerEntities() {
+  bool ThirdPersonDebug = true;
   auto& sound_engine = engine_->GetSoundEngine();
 
   std::cout << "DEBUG: playstate.cpp: Created " << player_ids_.size()
@@ -1927,8 +1933,8 @@ void PlayState::CreateMapEntity() {
 }
 
 void AddLightToBall(entt::registry& registry, entt::entity& ball) {
-  registry.assign<LightComponent>(ball, glm::vec3(0.f, 1.f, 0.f), 20.f, 0.f,
-                                  false);
+  registry.assign<LightComponent>(ball, glm::vec3(0.f, 1.f, 0.f), 100.f, 0.f,
+                                  false, 0.9f);
 }
 
 void PlayState::CreateBallEntities() {
@@ -2290,6 +2296,10 @@ void PlayState::CreateTeleportProjectile(EntityID id, glm::vec3 pos,
                                             glm::vec4(1, 1, 1, 1));
   registry_gameplay_.assign<TransformComponent>(teleport_projectile, pos, ori,
                                                 glm::vec3(0.3f));
+
+  registry_gameplay_.assign<LightComponent>(teleport_projectile, glm::vec3(1),
+                                            50.f, 0.f);
+
   registry_gameplay_.assign<ProjectileComponent>(
       teleport_projectile, ProjectileID::TELEPORT_PROJECTILE);
   registry_gameplay_.assign<IDComponent>(teleport_projectile, id);
@@ -2315,6 +2325,10 @@ void PlayState::CreateForcePushObject(EntityID id, glm::vec3 pos,
       force_object, ProjectileID::FORCE_PUSH_OBJECT);
   registry_gameplay_.assign<TrailComponent>(force_object, 1.f,
                                             glm::vec4(0.4, 0.4, 1, 1));
+
+  registry_gameplay_.assign<LightComponent>(force_object,
+                                            glm::vec3(0.4, 0.4, 1),
+                                            50.f, 0.f);
 }
 
 void PlayState::CreateMissileObject(EntityID id, glm::vec3 pos, glm::quat ori) {
@@ -2489,7 +2503,7 @@ void PlayState::SwitchGoals() {
   glm::vec3 blue_light_pos = blue_light_trans_c.position;
   blue_light_trans_c.position = red_light_trans_c.position;
   red_light_trans_c.position = blue_light_pos;
-
+  // TODO: fix crash here in replay
   auto& blue_light = registry_gameplay_.get<LightComponent>(blue_goal_light_);
   blue_light.color = glm::vec3(0.1f, 0.1f, 1.f);
   blue_light.radius = 30;
@@ -2497,6 +2511,7 @@ void PlayState::SwitchGoals() {
   auto& red_light = registry_gameplay_.get<LightComponent>(red_goal_light_);
   red_light.color = glm::vec3(1.f, 0.1f, 0.1f);
   red_light.radius = 30;
+  */
 
   auto& map_trans =
       registry_gameplay_.get<TransformComponent>(map_visual_entity_);
@@ -3071,7 +3086,15 @@ void PlayState::ReceiveGameEvent(const GameEvent& e) {
 
 void PlayState::Reset() {
   //
+  auto view_ball = registry_gameplay_.view<BallComponent, TrailComponent, TransformComponent>();
+  for (auto ball : view_ball) {
+    auto& trail = view_ball.get<TrailComponent>(ball);
+    auto& trans = view_ball.get<TransformComponent>(ball);
 
+    for (auto& pos : trail.history) {
+      pos.position = glm::vec3(0.f, 10.f, 0.f);
+    }
+  }
   // NTS: Call to engine destroy not needed?
   auto destroy_view = registry_gameplay_.view<DestroyOnResetComponent>();
   registry_gameplay_.destroy(destroy_view.begin(), destroy_view.end());
