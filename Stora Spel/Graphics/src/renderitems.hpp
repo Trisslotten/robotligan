@@ -50,6 +50,11 @@ struct BoneAnimatedRenderItem {
   bool cast_shadow = true;
 };
 
+struct CombinedRenderItem {
+  bool is_animated = false;
+  void* item = nullptr;
+};
+
 struct TextItem {
   Font2D *font = nullptr;
   glm::vec2 pos{0};
@@ -75,6 +80,15 @@ struct LightItem {
   glm::vec3 color;
   glm::float32 radius;
   glm::float32 ambient;
+  glm::float32 sphere_radius;
+};
+
+struct PlaneLightItem {
+  glm::vec3 pos;
+  glm::vec3 normal;
+  glm::vec3 color;
+  glm::vec2 sizes;
+  bool diffuse;
 };
 
 struct TrailItem {

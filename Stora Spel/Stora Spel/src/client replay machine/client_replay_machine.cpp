@@ -84,8 +84,8 @@ bool ClientReplayMachine::SelectReplay(unsigned int in_index) {
   // Set its read to the start
   this->ResetSelectedReplay();
 
-  GlobalSettings::Access()->WriteError(
-      "", "Selected", std::to_string(this->selected_replay_index_));
+  /*GlobalSettings::Access()->WriteError(
+      "", "Selected", std::to_string(this->selected_replay_index_));*/
 
   return true;
 }
@@ -118,6 +118,18 @@ void ClientReplayMachine::SetEngine(Engine* in_engine_ptr) {
 }
 
 void ClientReplayMachine::ReceiveGameEvent(GameEvent event) {
+  // -vvv- EVENT BLACKLIST -vvv-
+  switch (event.type) {
+	//case GameEvent::WHATEVER:
+	//case GameEvent::WHATELSE:
+    case GameEvent::RESET:
+      return;
+      break;
+    default:
+      break;
+  }
+  // -^^^- EVENT BLACKLIST -^^^-
+
   if (this->engine_->IsRecording()) {
     primary_replay_->ReceiveGameEvent(event);
   }

@@ -67,7 +67,7 @@ void main()
 		vec3 random_dir = normalize(vec3(random * 2 - 1, random1 * 2 - 1, random2 * 2 - 1));
 		//random_dir -= random_dir * dot(dir, random_dir);
 		random_dir = normalize(random_dir);
-		velocities[gid] += random_dir * rand(times[gid]) * 0.01;
+		velocities[gid] += vec4(random_dir * rand(times[gid]) * 0.01, 0);
 
 		colors[gid] -= color_delta * dt;
 		sizes[gid] -= size_delta * dt;
@@ -95,7 +95,7 @@ void main()
 		times[gid] = time;
 		colors[gid] = color[0];
 		sizes[gid] = size;
-		positions[gid] = vec4(80 * random1 - 40, 0.5, 56 * random2 - 28, 0.0);
+		positions[gid] = vec4(80.0 * random1 - 40.0, 0.5, 56.0 * random2 - 28.0, 0.0);
 		velocities[gid] = vec4(0, 5.0 * rand(random) + 0.05, 0, 0);
 	}
 }

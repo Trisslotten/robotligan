@@ -83,7 +83,7 @@ void SoundSystem::Init(Engine* engine) {
   sound_woosh_ = sound_engine_.GetSound("assets/sound/kick_swing.mp3");
   sound_hit_ = sound_engine_.GetSound("assets/sound/ball_hit_sound.mp3");
   sound_nudge_ = sound_engine_.GetSound("assets/sound/ball_nudge.mp3");
-  sound_rmb_shot_ = sound_engine_.GetSound("assets/sound/rmb_fire.mp3");
+  sound_rmb_shot_ = sound_engine_.GetSound("assets/sound/rmb_fire2.ogg");
   sound_goal_ = sound_engine_.GetSound("assets/sound/goal.mp3");
   sound_ball_bounce_ = sound_engine_.GetSound("assets/sound/bounce.mp3");
   sound_player_land_ = sound_engine_.GetSound("assets/sound/robot_land.mp3");
@@ -150,10 +150,19 @@ void SoundSystem::PlayAmbientSound(entt::registry& registry) {
   // Play static sounds (music, ambient etc)
   auto local_view = registry.view<CameraComponent, SoundComponent>();
   for (auto local_entity : local_view) {
-    auto& cam_c = local_view.get<CameraComponent>(local_entity);
     auto& sound_c = local_view.get<SoundComponent>(local_entity);
 
     crowd_ambience_ = sound_c.sound_player->Play(sound_crowd_, -1, 0.06f);
+    break;
+  }
+}
+
+void SoundSystem::StopAmbientSound(entt::registry& registry) {
+  auto local_view = registry.view<CameraComponent, SoundComponent>();
+  for (auto local_entity : local_view) {
+    auto& sound_c = local_view.get<SoundComponent>(local_entity);
+
+    sound_c.sound_player->Stop(sound_crowd_);
     break;
   }
 }

@@ -7,15 +7,17 @@
 #include <GLFW/glfw3.h>
 #include <msdfgen/msdfgen-ext.h>
 #include <msdfgen/msdfgen.h>
+
 #include <fstream>
 #include <glm/glm.hpp>
 #include <iostream>
 #include <lodepng.hpp>
 #include <map>
+#include <postprocess\blackholes.hpp>
 #include <sstream>
+#include <textureslots.hpp>
 #include <unordered_map>
 
-#include <textureslots.hpp>
 #include "2D/elements2D.hpp"
 #include "Font/Font2D.hpp"
 #include "Model/model.hpp"
@@ -32,7 +34,6 @@
 #include "renderitems.hpp"
 #include "shader.hpp"
 #include "shadows/shadows.hpp"
-#include <postprocess\blackholes.hpp>
 
 namespace glob {
 
@@ -53,7 +54,7 @@ ShaderProgram e2D_shader;
 ShaderProgram ssao_shader;
 ShaderProgram sky_shader;
 
-std::vector<ShaderProgram *> mesh_render_group;
+std::vector<ShaderProgram*> mesh_render_group;
 
 ShaderProgram trail_shader;
 int num_trail_quads = 0;
@@ -108,7 +109,7 @@ struct ParticleSystemInfo {
   ParticleSystem system;
   bool in_use;
 
-  ParticleSystemInfo(ShaderProgram *ptr, GLuint tex, bool use)
+  ParticleSystemInfo(ShaderProgram* ptr, GLuint tex, bool use)
       : system(ptr, tex), in_use(use) {}
 };
 std::vector<ParticleSystemInfo> buffer_particle_systems;
@@ -130,6 +131,7 @@ std::unordered_map<ModelHandle, GLuintBuffers> wireframe_buffers;
 
 std::vector<RenderItem> items_to_render;
 std::vector<LightItem> lights_to_render;
+std::vector<PlaneLightItem> plane_lights_to_render;
 std::vector<int> particles_to_render;
 std::vector<BoneAnimatedRenderItem> bone_animated_items_to_render;
 std::vector<glm::mat4> cubes;
@@ -140,7 +142,7 @@ std::vector<GUIItem> gui_items_to_render;
 std::vector<E2DItem> e2D_items_to_render;
 std::vector<TrailItem> trails_to_render;
 
-void SetDefaultMaterials(ShaderProgram &shader) {
+void SetDefaultMaterials(ShaderProgram& shader) {
   /*
   glActiveTexture(GL_TEXTURE0 + TEXTURE_SLOT_EMISSIVE);
   glBindTexture(GL_TEXTURE_2D, black_texture);
@@ -252,7 +254,7 @@ void CreateDefaultParticleTexture() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  for (auto &p : data) {
+  for (auto& p : data) {
     if (p != 0.f) p = 1.0f;
   }
 
@@ -278,7 +280,7 @@ void CreateDefaultParticleTexture() {
 }
 
 GLint TextureFromFile(std::string filename) {
-  const char *path = "Assets/Texture";
+  const char* path = "Assets/Texture";
   std::string directory = std::string(path);
   filename = directory + '/' + filename;
 
@@ -351,7 +353,8 @@ void Init() {
   compute_shaders["firework"]->compile();
 
   compute_shaders["black_hole"] = std::make_unique<ShaderProgram>();
-  compute_shaders["black_hole"]->add("Particle compute shaders/black_hole.comp");
+  compute_shaders["black_hole"]->add(
+      "Particle compute shaders/black_hole.comp");
   compute_shaders["black_hole"]->compile();
 
   compute_shaders["jet"] = std::make_unique<ShaderProgram>();
@@ -361,6 +364,10 @@ void Init() {
   compute_shaders["sparks"] = std::make_unique<ShaderProgram>();
   compute_shaders["sparks"]->add("Particle compute shaders/sparks.comp");
   compute_shaders["sparks"]->compile();
+
+  compute_shaders["glitter"] = std::make_unique<ShaderProgram>();
+  compute_shaders["glitter"]->add("Particle compute shaders/glitter.comp");
+  compute_shaders["glitter"]->compile();
 
   CreateDefaultParticleTexture();
   textures["smoke"] = TextureFromFile("smoke.png");
@@ -421,7 +428,7 @@ void Init() {
                vertices.data(), GL_STATIC_DRAW);
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
-                        (GLvoid *)0);
+                        (GLvoid*)0);
 
   glGenVertexArrays(1, &cube_vao);
   glBindVertexArray(cube_vao);
@@ -449,7 +456,7 @@ void Init() {
                vertices_cube.data(), GL_STATIC_DRAW);
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
-                        (GLvoid *)0);
+                        (GLvoid*)0);
 
   std::vector<glm::vec3> quad_vertices{
       {-1, -1, 0}, {1, -1, 0}, {-1, 1, 0}, {1, 1, 0}};
@@ -461,7 +468,7 @@ void Init() {
                quad_vertices.data(), GL_STATIC_DRAW);
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
-                        (GLvoid *)0);
+                        (GLvoid*)0);
   glBindVertexArray(0);
 
   trail_shader.add("trail.vert");
@@ -492,7 +499,7 @@ void Init() {
                trail_verts.data(), GL_STATIC_DRAW);
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
-                        (GLvoid *)0);
+                        (GLvoid*)0);
   glBindVertexArray(0);
 
   glGenTextures(1, &black_texture);
@@ -531,8 +538,8 @@ void Init() {
 
 // H=Handle, A=Asset
 template <class H, class A>
-H GetAsset(std::unordered_map<std::string, H> &handles,
-           std::unordered_map<H, A> &assets, H &guid,
+H GetAsset(std::unordered_map<std::string, H>& handles,
+           std::unordered_map<H, A>& assets, H& guid,
            const std::string filepath) {
   H result = 0;
 
@@ -542,7 +549,7 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
   auto item = handles.find(borg);
   if (item == handles.end()) {
     // std::cout << "DEBUG graphics.cpp: Loading asset '" << filepath << "'\n";
-    A &asset = assets[guid];
+    A& asset = assets[guid];
     asset.LoadFromFile(borg);
     if (asset.IsLoaded()) {
       handles[borg] = guid;
@@ -564,11 +571,11 @@ H GetAsset(std::unordered_map<std::string, H> &handles,
   return result;
 }
 
-ModelHandle GetModel(const std::string &filepath) {
+ModelHandle GetModel(const std::string& filepath) {
   return GetAsset(model_handles, models, current_model_guid, filepath);
 }
 
-ModelHandle GetTransparentModel(const std::string &filepath) {
+ModelHandle GetTransparentModel(const std::string& filepath) {
   auto result = GetAsset(model_handles, models, current_model_guid, filepath);
   models[result].SetTransparent(true);
   return result;
@@ -576,8 +583,8 @@ ModelHandle GetTransparentModel(const std::string &filepath) {
 
 ParticleSettings ProccessMap(
     ParticleSettings ps,
-    const std::unordered_map<std::string, std::string> &map,
-    const std::vector<std::string> &colors) {
+    const std::unordered_map<std::string, std::string>& map,
+    const std::vector<std::string>& colors) {
   bool color_delta = false;
   glm::vec4 end_color = glm::vec4(1.f);
   bool vel_delta = false;
@@ -753,7 +760,7 @@ ParticleSettings ProccessMap(
 }
 
 ParticleSettings ReadParticleFile(std::string filename) {
-  const char *path = "Assets/Particle config";
+  const char* path = "Assets/Particle config";
   std::string directory = std::string(path);
   filename = directory + '/' + filename;
   // Create three strings to hold entire line, key and value
@@ -910,12 +917,12 @@ void SetParticleSettings(ParticleSystemHandle handle, std::string filename) {
   buffer_particle_systems[index].system.Settings(settings);
 }
 
-GUIHandle GetGUIItem(const std::string &filepath) {
+GUIHandle GetGUIItem(const std::string& filepath) {
   return GetAsset<GUIHandle, Elements2D>(gui_handles, gui_elements,
                                          current_gui_guid, filepath);
 }
 
-Font2DHandle GetFont(const std::string &filepath) {
+Font2DHandle GetFont(const std::string& filepath) {
   return GetAsset<Font2DHandle, Font2D>(font_2D_handles, fonts,
                                         current_font_guid, filepath);
 }
@@ -928,7 +935,7 @@ animData GetAnimationData(ModelHandle handle) {
     return data;
   }
 
-  const glob::Model *model = &res->second;
+  const glob::Model* model = &res->second;
 
   // copy armature
   for (auto source : model->bones_) {
@@ -963,7 +970,7 @@ animData GetAnimationData(ModelHandle handle) {
 
   if (data.humanoid) {
     for (int i = 0; i < data.bones.size(); i++) {
-      Joint *bone = &data.bones.at(i);
+      Joint* bone = &data.bones.at(i);
       if (bone->name == "Spine") {
         data.makeGroup(i, &data.spine);
         // std::cout << "Upper body found!\n";
@@ -1026,10 +1033,10 @@ MeshData GetMeshData(ModelHandle model_h) {
     return {};
   }
 
-  auto &model = models[model_h];
+  auto& model = models[model_h];
   return model.GetMeshData();
 }
-E2DHandle GetE2DItem(const std::string &filepath) {
+E2DHandle GetE2DItem(const std::string& filepath) {
   return GetAsset<E2DHandle, Elements2D>(e2D_handles, e2D_elements,
                                          current_e2D_guid, filepath);
 }
@@ -1052,16 +1059,28 @@ return GetAsset<TextureHandle, Texture>(texture_handles, textures,
 */
 
 void SubmitLightSource(glm::vec3 pos, glm::vec3 color, glm::float32 radius,
-                       glm::float32 ambient) {
+                       glm::float32 ambient, glm::float32 sphere_radius) {
   LightItem item;
   item.pos = pos;
   item.color = color;
   item.radius = radius;
   item.ambient = ambient;
+  item.sphere_radius = sphere_radius;
   lights_to_render.push_back(item);
 }
 
-void SubmitBAM(const std::vector<ModelHandle> &handles, glm::mat4 transform,
+void SubmitPlaneLight(glm::vec3 pos, glm::vec3 normal, glm::vec3 color,
+                      glm::vec2 sizes, bool diffuse) {
+  PlaneLightItem item;
+  item.pos = pos;
+  item.normal = normal;
+  item.color = color;
+  item.sizes = sizes;
+  item.diffuse = diffuse;
+  plane_lights_to_render.push_back(item);
+}
+
+void SubmitBAM(const std::vector<ModelHandle>& handles, glm::mat4 transform,
                std::vector<glm::mat4> bone_transforms, int material_index,
                bool cast_shadow,
                float emissive_strength) {  // Submit Bone Animated Mesh
@@ -1105,7 +1124,7 @@ void Submit(ModelHandle model_h, glm::vec3 pos, int material_index,
   Submit(model_h, transform, material_index, cast_shadow, emissive_strength);
 }
 
-void Submit(const std::vector<ModelHandle> &handles, glm::mat4 transform,
+void Submit(const std::vector<ModelHandle>& handles, glm::mat4 transform,
             int material_index, bool cast_shadow, float emissive_strength) {
   for (auto handle : handles) {
     Submit(handle, transform, material_index, cast_shadow, emissive_strength);
@@ -1144,7 +1163,7 @@ void SubmitParticles(ParticleSystemHandle handle) {
 }
 
 double GetWidthOfText(Font2DHandle font_handle, std::string text, float size) {
-  const char *chars = text.c_str();
+  const char* chars = text.c_str();
   int len = text.length();
 
   //////////////////////////////////
@@ -1154,7 +1173,7 @@ double GetWidthOfText(Font2DHandle font_handle, std::string text, float size) {
 
   double offset_accum = 0;
   for (int i = 0; i < len; i++) {
-    unsigned char cur = *(unsigned char *)(chars + i);
+    unsigned char cur = *(unsigned char*)(chars + i);
 
     offset_accum += fonts[font_handle].GetAdvance(cur, size);
 
@@ -1165,7 +1184,7 @@ double GetWidthOfText(Font2DHandle font_handle, std::string text, float size) {
 
 double GetWidthOfChatText(Font2DHandle font_handle, std::string text,
                           float size) {
-  const char *chars = text.c_str();
+  const char* chars = text.c_str();
   int len = text.length();
 
   //////////////////////////////////
@@ -1175,7 +1194,7 @@ double GetWidthOfChatText(Font2DHandle font_handle, std::string text,
 
   double offset_accum = 0;
   for (int i = 0; i < len; i++) {
-    unsigned char cur = *(unsigned char *)(chars + i);
+    unsigned char cur = *(unsigned char*)(chars + i);
 
     offset_accum += fonts[font_handle].GetAdvance(cur, size);
 
@@ -1242,7 +1261,7 @@ void SetBlackout(bool _blackout) {
 
 bool IsBlackoutActive() { return blackout; }
 
-void SetSky(const std::string &file) {
+void SetSky(const std::string& file) {
   if (sky_texture != 0) {
     glDeleteTextures(1, &sky_texture);
     sky_texture = 0;
@@ -1275,7 +1294,7 @@ void ReloadShaders() {
   wireframe_shader.reload();
   gui_shader.reload();
   e2D_shader.reload();
-  for(auto& [str, shader] : compute_shaders) {
+  for (auto& [str, shader] : compute_shaders) {
     shader->reload();
   }
 }
@@ -1329,7 +1348,7 @@ void Submit(E2DHandle e2D_h, glm::vec3 pos, glm::mat4 matrix) {
   e2D_items_to_render.push_back(to_render);
 }
 
-void SubmitTrail(const std::vector<glm::vec3> &pos_history, float width,
+void SubmitTrail(const std::vector<glm::vec3>& pos_history, float width,
                  glm::vec4 color) {
   trails_to_render.push_back({pos_history, width, color});
 }
@@ -1338,17 +1357,16 @@ void CreateShockwave(glm::vec3 position, float duration, float size) {
   shockwaves.Create(position, duration, size);
 }
 
-void SubmitRope(glm::vec3 start, glm::vec3 end) {
-  rope.Submit(start, end);
-}
+void SubmitRope(glm::vec3 start, glm::vec3 end) { rope.Submit(start, end); }
 
-void CreateBlackHole(glm::vec3 position) {
-  blackholes.Create(position); }
+void CreateBlackHole(glm::vec3 position) { blackholes.Create(position); }
 
 void ClearEffects() {
   shockwaves.Clear();
   blackholes.Clear();
   SetStunned(false);
+  SetInvisibleEffect(false);
+  SetBlackout(false);
 }
 
 void SubmitCube(glm::mat4 t) { cubes.push_back(t); }
@@ -1358,8 +1376,8 @@ void SubmitWireframeMesh(ModelHandle model_h) {
 }
 
 void LoadWireframeMesh(ModelHandle model_h,
-                       const std::vector<glm::vec3> &vertices,
-                       const std::vector<unsigned int> &indices) {
+                       const std::vector<glm::vec3>& vertices,
+                       const std::vector<unsigned int>& indices) {
   auto find_res = wireframe_buffers.find(model_h);
   if (find_res == wireframe_buffers.end()) {
     GLuintBuffers b;
@@ -1383,7 +1401,7 @@ void LoadWireframeMesh(ModelHandle model_h,
     /*---------------Enable arrays----------------------*/
     glEnableVertexAttribArray(0);  // Layout 0 for vertices
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3),
-                          (GLvoid *)0);
+                          (GLvoid*)0);
 
     wireframe_buffers[model_h] = b;
   }
@@ -1393,32 +1411,50 @@ void AddSpotlight(glm::vec3 position, glm::mat4 transform) {
   shadows.AddSpotlight(position, transform);
 }
 
-void ClearSpotlights() {
-  shadows.ClearSpotlights();
-}
+void ClearSpotlights() { shadows.ClearSpotlights(); }
 
-void SetStunned(bool is_stunned) {
-  stunned = is_stunned;
-}
+void SetStunned(bool is_stunned) { stunned = is_stunned; }
 
 void Render() {
   glm::mat4 cam_transform = camera.GetViewPerspectiveMatrix();
 
   // render models and light
-  std::vector<glm::vec3> light_positions;
-  std::vector<glm::vec3> light_colors;
-  std::vector<float> light_radii;
-  std::vector<float> light_ambients;
-  for (auto &light_item : lights_to_render) {
-    light_positions.push_back(light_item.pos);
-    light_colors.push_back(light_item.color);
-    light_radii.push_back(light_item.radius);
-    light_ambients.push_back(light_item.ambient);
+  std::vector<glm::vec4> light_pos_radius;
+  std::vector<glm::vec4> light_colors_amb;
+  std::vector<float> light_sphere_radii;
+  for (auto& light_item : lights_to_render) {
+    light_pos_radius.push_back(glm::vec4(light_item.pos, light_item.radius));
+    light_colors_amb.push_back(glm::vec4(light_item.color, light_item.ambient));
+    light_sphere_radii.push_back(light_item.sphere_radius);
+  }
+  std::vector<glm::vec3> plane_normals;
+  std::vector<glm::vec3> plane_positions;
+  std::vector<glm::vec3> plane_colors;
+  std::vector<glm::vec2> plane_sizes;
+  std::vector<glm::mat4> plane_matrices;
+  std::vector<int> plane_diffuse;
+  for (auto& item : plane_lights_to_render) {
+    plane_normals.push_back(item.normal);
+    plane_positions.push_back(item.pos);
+    plane_colors.push_back(item.color);
+    plane_sizes.push_back(item.sizes);
+
+    glm::mat4 view =
+        glm::lookAt(item.pos - item.normal, item.pos, glm::vec3(0, 1, 0));
+    glm::mat4 view2 =
+        glm::lookAt(item.pos + item.normal, item.pos, glm::vec3(0, 1, 0));
+    glm::mat4 pers =
+        glm::perspective(90.f, item.sizes.y / item.sizes.x, 1.f, 100.f);
+
+    plane_matrices.push_back(pers * view2);
+    plane_matrices.push_back(pers * view);
+
+    plane_diffuse.push_back(item.diffuse ? 1 : 0);
   }
 
   std::vector<RenderItem> normal_items;
   std::map<float, std::vector<RenderItem>> transparent_items;
-  for (auto &render_item : items_to_render) {
+  for (auto& render_item : items_to_render) {
     if (render_item.model->IsTransparent()) {
       float max_dist = render_item.model->MaxDistance(render_item.transform,
                                                       camera.GetPosition());
@@ -1428,29 +1464,20 @@ void Render() {
     }
   }
 
-  auto draw_function = [&](ShaderProgram &shader) {
-    for (auto &render_item : items_to_render) {
+  auto draw_function = [&](ShaderProgram& shader) {
+    for (auto& render_item : items_to_render) {
       if (render_item.cast_shadow) {
         shader.uniform("model_transform", render_item.transform);
         render_item.model->Draw(shader);
       }
     }
   };
-  auto anim_draw_function = [&](ShaderProgram &shader) {
-    for (auto &BARI : bone_animated_items_to_render) {
+  auto anim_draw_function = [&](ShaderProgram& shader) {
+    for (auto& BARI : bone_animated_items_to_render) {
       if (BARI.cast_shadow) {
         shader.uniform("model_transform", BARI.transform);
         shader.uniformv("bone_transform", BARI.bone_transforms.size(),
                         BARI.bone_transforms.data());
-        /*
-        int numBones = 0;
-        for (auto &bone : BARI.bone_transforms) {
-          shader.uniform("bone_transform[" + std::to_string(numBones) + "]",
-                         bone);
-          numBones++;
-        }
-        */
-        // shader.uniform("NR_OF_BONES", (int)BARI.bone_transforms.size());
         BARI.model->Draw(animated_model_shader);
       }
     }
@@ -1458,19 +1485,49 @@ void Render() {
   shadows.RenderToMaps(draw_function, anim_draw_function, blur);
   shadows.BindMaps(TEXTURE_SLOT_SHADOWS);
 
-  for (auto &shader : mesh_render_group) {
+  std::multimap<float, CombinedRenderItem> combined_items;
+  for (auto& render_item : normal_items) {
+    float dist = render_item.model->TraceSortSphere(
+        camera.GetDir(), camera.GetPosition(), render_item.transform);
+    CombinedRenderItem item;
+    item.is_animated = false;
+    item.item = &render_item;
+    combined_items.insert(std::make_pair(dist, item));
+  }
+  for (auto& BARI : bone_animated_items_to_render) {
+    float dist = BARI.model->TraceSortSphere(
+        camera.GetDir(), camera.GetPosition(), BARI.transform);
+    ;
+    CombinedRenderItem item;
+    item.is_animated = true;
+    item.item = &BARI;
+    combined_items.insert(std::make_pair(dist, item));
+  }
+
+  for (auto& shader : mesh_render_group) {
     shader->use();
-    for (auto &light_item : lights_to_render) {
-      shader->uniformv("light_pos", lights_to_render.size(),
-                       light_positions.data());
-      shader->uniformv("light_col", lights_to_render.size(),
-                       light_colors.data());
-      shader->uniformv("light_radius", lights_to_render.size(),
-                       light_radii.data());
-      shader->uniformv("light_amb", lights_to_render.size(),
-                       light_ambients.data());
-    }
+    shader->uniformv("light_pos_radius", lights_to_render.size(),
+                     light_pos_radius.data());
+    shader->uniformv("light_col_amb", lights_to_render.size(),
+                     light_colors_amb.data());
+    shader->uniformv("light_sphere_radii", lights_to_render.size(),
+                     light_sphere_radii.data());
     shader->uniform("NR_OF_LIGHTS", (int)lights_to_render.size());
+
+    shader->uniformv("plane_normals", plane_lights_to_render.size(),
+                     plane_normals.data());
+    shader->uniformv("plane_colors", plane_lights_to_render.size(),
+                     plane_colors.data());
+    shader->uniformv("plane_positions", plane_lights_to_render.size(),
+                     plane_positions.data());
+    shader->uniformv("plane_sizes", plane_lights_to_render.size(),
+                     plane_sizes.data());
+    shader->uniformv("plane_matrices", plane_matrices.size(),
+                     plane_matrices.data());
+    shader->uniformv("plane_diffuse", plane_diffuse.size(),
+                     plane_diffuse.data());
+    shader->uniform("NR_OF_PLANES", (int)plane_lights_to_render.size());
+
     shader->uniform("cam_transform", cam_transform);
     shader->uniform("cam_position", camera.GetPosition());
     shadows.SetUniforms(*shader);
@@ -1481,50 +1538,41 @@ void Render() {
   glViewport(0, 0, ws.x, ws.y);
   post_process.BeforeDraw();
   {
-    model_shader.use();
-    for (auto &render_item : normal_items) {
-      SetDefaultMaterials(model_shader);
-      model_shader.uniform("diffuse_index", render_item.material_index);
-      model_shader.uniform("model_transform", render_item.transform);
-      model_shader.uniform("normal_transform",
-                           calcNormalTransform(render_item.transform));
-      model_shader.uniform("dynamic_em_strength",
-                           render_item.emission_strength);
-      render_item.model->Draw(model_shader);
+    for (auto& [dist, item] : combined_items) {
+      if (item.is_animated) {
+        animated_model_shader.use();
+        auto& BARI = *reinterpret_cast<BoneAnimatedRenderItem*>(item.item);
+        animated_model_shader.uniform("diffuse_index", BARI.material_index);
+        animated_model_shader.uniform("model_transform", BARI.transform);
+        animated_model_shader.uniformv("bone_transform",
+                                       BARI.bone_transforms.size(),
+                                       BARI.bone_transforms.data());
+        animated_model_shader.uniform("normal_transform",
+                                      calcNormalTransform(BARI.transform));
+        animated_model_shader.uniform("dynamic_em_strength",
+                                      BARI.emission_strength);
+        SetDefaultMaterials(animated_model_shader);
+        BARI.model->Draw(animated_model_shader);
+      } else {
+        model_shader.use();
+        auto& render_item = *reinterpret_cast<RenderItem*>(item.item);
+        SetDefaultMaterials(model_shader);
+        model_shader.uniform("diffuse_index", render_item.material_index);
+        model_shader.uniform("model_transform", render_item.transform);
+        model_shader.uniform("normal_transform",
+                             calcNormalTransform(render_item.transform));
+        model_shader.uniform("dynamic_em_strength",
+                             render_item.emission_strength);
+        render_item.model->Draw(model_shader);
+      }
     }
 
-    // render bone animated items
-    animated_model_shader.use();
-    for (auto &BARI : bone_animated_items_to_render) {
-      animated_model_shader.uniform("diffuse_index", BARI.material_index);
-      animated_model_shader.uniform("model_transform", BARI.transform);
-      animated_model_shader.uniformv("bone_transform",
-                                     BARI.bone_transforms.size(),
-                                     BARI.bone_transforms.data());
-      animated_model_shader.uniform("normal_transform",
-                                    calcNormalTransform(BARI.transform));
-      animated_model_shader.uniform("dynamic_em_strength",
-                                    BARI.emission_strength);
-      /*
-      int numBones = 0;
-      for (auto &bone : BARI.bone_transforms) {
-        animated_model_shader.uniform(
-            "bone_transform[" + std::to_string(numBones) + "]", bone);
-        numBones++;
-      }
-      */
-      // animated_model_shader.uniform("NR_OF_BONES",
-      // (int)BARI.bone_transforms.size());
-      SetDefaultMaterials(animated_model_shader);
-      BARI.model->Draw(animated_model_shader);
-    }
     rope.Draw(cam_transform);
 
-
     // render wireframe cubes
-    for (auto &m : cubes) DrawCube(m);
+    for (auto& m : cubes) DrawCube(m);
     // render wireframe meshes
-    for (auto &m : wireframe_meshes) DrawWireFrameMeshes(m);
+    for (auto& m : wireframe_meshes) DrawWireFrameMeshes(m);
 
     // render gui elements
     glBindVertexArray(quad_vao);
@@ -1534,7 +1582,7 @@ void Render() {
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       e2D_shader.use();
       e2D_shader.uniform("cam_transform", cam_transform);
-      for (auto &e2D_item : e2D_items_to_render) {
+      for (auto& e2D_item : e2D_items_to_render) {
         e2D_item.e2D->DrawInWorld(e2D_shader, e2D_item.pos, e2D_item.scale,
                                   e2D_item.rot);
       }
@@ -1566,7 +1614,7 @@ void Render() {
     glBindVertexArray(quad_vao);
     text3D_shader.use();
     text3D_shader.uniform("cam_transform", cam_transform);
-    for (auto &text3D : text3D_to_render) {
+    for (auto& text3D : text3D_to_render) {
       text3D.font->Draw3D(text3D_shader, text3D.pos, text3D.size, text3D.text,
                           text3D.color, text3D.rotation);
     }
@@ -1574,8 +1622,8 @@ void Render() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     model_shader.use();
-    for (auto &[dist, render_items] : transparent_items) {
-      for (auto &render_item : render_items) {
+    for (auto& [dist, render_items] : transparent_items) {
+      for (auto& render_item : render_items) {
         SetDefaultMaterials(model_shader);
         model_shader.uniform("diffuse_index", render_item.material_index);
         model_shader.uniform("model_transform", render_item.transform);
@@ -1590,11 +1638,11 @@ void Render() {
     trail_shader.use();
     trail_shader.uniform("cam_transform", cam_transform);
     trail_shader.uniform("cam_pos", camera.GetPosition());
-    for (auto &trail_item : trails_to_render) {
+    for (auto& trail_item : trails_to_render) {
       trail_shader.uniform("width", trail_item.width);
       trail_shader.uniform("color", trail_item.color);
       int max_positions = 100;
-      auto &ph = trail_item.position_history;
+      auto& ph = trail_item.position_history;
       int history_size = glm::min((int)ph.size(), max_positions);
       trail_shader.uniformv("position_history", history_size, ph.data());
       trail_shader.uniform("history_size", history_size);
@@ -1611,7 +1659,7 @@ void Render() {
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glViewport(0, 0, ws.x, ws.y);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glClear(GL_DEPTH_BUFFER_BIT);
 
   shockwaves.Update(camera);
   blackholes.Update(camera);
@@ -1638,7 +1686,7 @@ void Render() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glDepthFunc(GL_ALWAYS);
   gui_shader.use();
-  for (auto &gui_item : gui_items_to_render) {
+  for (auto& gui_item : gui_items_to_render) {
     gui_item.gui->DrawOnScreen(gui_shader, gui_item.pos, gui_item.scale,
                                gui_item.scale_x, gui_item.opacity,
                                gui_item.rot);
@@ -1646,7 +1694,7 @@ void Render() {
   // glBindTexture(GL_TEXTURE_2D, 0);
 
   text_shader.use();
-  for (auto &text_item : text_to_render) {
+  for (auto& text_item : text_to_render) {
     text_item.font->Draw(text_shader, text_item.pos, text_item.size,
                          text_item.text, text_item.color, text_item.visible,
                          text_item.equal_spacing, text_item.spacing);
@@ -1657,6 +1705,7 @@ void Render() {
 
   trails_to_render.clear();
   lights_to_render.clear();
+  plane_lights_to_render.clear();
   items_to_render.clear();
   bone_animated_items_to_render.clear();
   e2D_items_to_render.clear();
@@ -1668,6 +1717,6 @@ void Render() {
   particles_to_render.clear();
 }
 
-Camera &GetCamera() { return camera; }
+Camera& GetCamera() { return camera; }
 
 }  // namespace glob

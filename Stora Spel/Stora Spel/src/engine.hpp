@@ -49,6 +49,8 @@ class Engine {
     previous_state_ = current_state_->Type();
     UpdateSettingsValues();
   }
+  void ClearPlayerInfos();
+
   NetAPI::Socket::Client& GetClient() { return client_; }
   NetAPI::Common::Packet& GetPacket() { return packet_; }
   void SetTakeInput(bool should_take) { take_game_input_ = should_take; }
@@ -93,6 +95,10 @@ class Engine {
     play_state_.Init();
   }
 
+  StateType CurrentStateType() {
+    return current_state_->Type();
+  }
+
   std::unordered_map<long, PlayerStatInfo> GetPlayerScores() {
     return player_scores_;
   }
@@ -102,10 +108,16 @@ class Engine {
   bool IsRecording() const { return this->play_state_.IsRecording(); }
   // Replay stuff---
 
+  // Entity destruction---
+  void EngineDestroyEntity(entt::registry& in_registry, entt::entity& in_entity);
+  // Entity destruction---
+
   void ClearNames() {
     player_names_.clear();
   }
 
+  bool GetShoulSendInput() { return should_send_input_; }
+  bool GetTakeGameInput() { return take_game_input_; }
  private:
   void SetKeybinds();
 

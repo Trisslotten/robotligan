@@ -16,7 +16,7 @@ const double kClientUpdateRate = 64;
 const double kServerUpdateRate = 64;
 const unsigned kServerTimeout = 6;
 
-const bool kEnableReconnect = false;
+const bool kEnableReconnect = true;
 
 enum class ServerStateType {
   LOBBY = 0,
@@ -162,6 +162,8 @@ struct GameEvent {
     PRIMARY_USED,
     SECONDARY_USED,
     PICKUP_SPAWNED,
+	PLAYER_IDLE,
+	PLAYER_IDLE_END,
     BLACK_HOLE_CREATED,
     BLACK_HOLE_ACTIVATED,
     BLACK_HOLE_DESTROYED,
@@ -171,12 +173,15 @@ struct GameEvent {
     REMOVE_FISHING_HOOK,
     PICKED_UP_PICKUP,
     DABBING,
+    CANNON_IMPACT,
     NUM_EVENTS
   } type;
   union {
     // Goal
     struct {
       float x;
+      bool good_goal;
+      EntityID goal_maker;
     } goal;
 
     // Kick
@@ -385,7 +390,16 @@ struct GameEvent {
     struct {
       EntityID player_entity_id;
     } dabbing;
+    struct {
+      EntityID projectile_id;
+    } cannon_impact;
 
+    struct {
+      EntityID player_id;
+    } player_idle;
+    struct {
+      EntityID player_id;
+    } player_idle_end;
   };
 };
 
