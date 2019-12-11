@@ -41,7 +41,7 @@ struct Lighting {
 };
 
 // from file "shading.frag"
-Lighting shading(vec3 position, vec3 normal, float reflective);
+Lighting shading(const vec3 position, const vec3 normal, const float reflective);
 vec3 dither();
 
 float triplanarMetallic() {
