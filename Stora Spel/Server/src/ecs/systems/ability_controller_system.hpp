@@ -4,17 +4,15 @@
 #include <entt.hpp>
 //#include <position.h>
 #include <boundingboxes.hpp>
+#include <physics.hpp>
+
 #include "ecs/components.hpp"
+#include "ecs/systems/missile_system.hpp"
 #include "shared/camera_component.hpp"
 #include "shared/transform_component.hpp"
 #include "util/event.hpp"
-
-#include "util/event.hpp"
 #include "util/global_settings.hpp"
 #include "util/timer.hpp"
-
-#include <physics.hpp>
-#include "ecs/systems/missile_system.hpp"
 
 namespace ability_controller {
 Timer gravity_timer;
@@ -43,6 +41,8 @@ bool PlaceMine(entt::registry& registry, PlayerID id);
 void DoFishing(entt::registry& registry, long creator);
 
 std::unordered_map<AbilityID, float> ability_cooldowns;
+
+void SetBlackoutInEffect(bool is_active) { blackout_in_effect = is_active; }
 
 void Update(entt::registry& registry, float dt) {
   auto view_players = registry.view<PlayerComponent, TransformComponent,
@@ -88,17 +88,16 @@ void Update(entt::registry& registry, float dt) {
             ability_component.cooldown_remaining;
         dispatcher.trigger(primary_used_event);
       }
-    } else if (ability_component.use_primary && ability_component
-                   .primary_ability ==
-               AbilityID::FISHINGING_POLE) {
+    } else if (ability_component.use_primary &&
+               ability_component.primary_ability ==
+                   AbilityID::FISHINGING_POLE) {
       auto view_hooks = registry.view<HookComponent>();
-      for (auto hook : view_hooks)
-      {
+      for (auto hook : view_hooks) {
         auto& hook_c = registry.get<HookComponent>(hook);
         if (hook_c.attached && hook_c.owner == id_component.id) {
-			hook_c.should_remove = true;
-		}
-	  }
+          hook_c.should_remove = true;
+        }
+      }
     }
     // When finished set primary ability to not activated
     ability_component.use_primary = false;

@@ -1,9 +1,6 @@
 #include "geometric_replay.hpp"
 
 #include <ecs/components.hpp>
-#include <map>
-
-#include <ecs/components.hpp>
 #include <ecs/components/ball_component.hpp>
 #include <ecs/components/model_component.hpp>
 #include <ecs/components/player_component.hpp>
@@ -15,6 +12,7 @@
 #include <shared/transform_component.hpp>
 #include <util/asset_paths.hpp>
 #include <util/global_settings.hpp>
+
 #include "eventdispatcher.hpp"
 
 // Private---------------------------------------------------------------------
@@ -435,6 +433,7 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
         in_registry.assign<TransformComponent>(entity);
     TrailComponent& trail_c = in_registry.assign<TrailComponent>(entity);
     bf_ptr->WriteBack(transform_c, trail_c);
+    BallComponent& ball_c = in_registry.assign<BallComponent>(entity);
 
     // Create and add ModelHandle
     glob::ModelHandle mh_ball_proj = glob::GetModel(kModelPathBallProjectors);
@@ -598,11 +597,13 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
     ModelComponent& model_c = in_registry.assign<ModelComponent>(entity);
     // - Add the relevant ModelHandle:s to entity
     model_c.handles.push_back(hook_model);
-
   } else {
     GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__,
                                          "Unknown type identifier");
   }
+
+  // Add on DestroyOnResetComponent on all entities created from channels
+  in_registry.assign<DestroyOnResetComponent>(entity);
 }
 
 void GeometricReplay::CreateChannelForEntity(entt::entity& in_entity,
@@ -695,6 +696,11 @@ GeometricReplay::GeometricReplay(unsigned int in_replay_length_sec,
   this->current_frame_number_write_ = 0;
   this->current_frame_number_read_ = 0;
   this->engine_ = nullptr;
+  StateLogEntry sle;
+  sle.blackout_active = false;
+  sle.goals_switched = false;
+  sle.frame_number = 0;
+  this->state_logs_.push_back(sle);
 }
 
 GeometricReplay::~GeometricReplay() {}
@@ -716,7 +722,9 @@ GeometricReplay* GeometricReplay::Clone() {
   clone->engine_ = this->engine_;
   clone->captured_events_ = this->captured_events_;
   clone->next_event_index_to_read_ = this->next_event_index_to_read_;
-
+  
+  clone->state_logs_ = this->state_logs_;
+  
   return clone;
 }
 
@@ -822,6 +830,7 @@ bool GeometricReplay::LoadFrame(entt::registry& in_registry) {
              current_frame_number_read_) {
     //
     dispatcher.trigger(captured_events_[next_event_index_to_read_].event);
+
     next_event_index_to_read_++;
   }
 
@@ -895,6 +904,9 @@ void GeometricReplay::ChannelCatchUp() {
   // the reading tracker starts from
   this->SetReadFrameToStart();
 
+  unsigned int threshold_frame = this->current_frame_number_read_;
+
+  // Catchup for FrameChannel:s
   for (unsigned int i = 0; i < this->channels_.size(); i++) {
     // Check the age of the first entry
     unsigned int age = this->current_frame_number_write_ -
@@ -905,7 +917,7 @@ void GeometricReplay::ChannelCatchUp() {
       // Create an interpolation that lies right
       // at the the threshold
       // unsigned int threshold_frame = age - this->threshhold_age_;
-      unsigned int threshold_frame = this->current_frame_number_read_;
+      // unsigned int threshold_frame = this->current_frame_number_read_;
 
       DataFrame* threshold_frame_ptr =
           this->InterpolateDataFrame(i, 0, 1, threshold_frame);
@@ -916,13 +928,79 @@ void GeometricReplay::ChannelCatchUp() {
       this->channels_.at(i).entries.at(0).data_ptr = threshold_frame_ptr;
     }
   }
+
+  // Catchup for CapturedGameEvent:s
+  // - Discard all captured events that lie before the threshold
+  while (this->captured_events_.at(0).frame_number < threshold_frame) {
+    this->captured_events_.erase(this->captured_events_.begin());
+  }
+
+  // Figure out what statring state the replay should have
+  // in regard to blackout and switch-goal
+  bool first_is_old;
+  bool second_is_old;
+  do {
+    first_is_old =
+        (this->state_logs_.size() > 1)
+            ? (this->state_logs_.at(0).frame_number < threshold_frame)
+            : false;
+
+    second_is_old =
+        (this->state_logs_.size() > 2)
+            ? (this->state_logs_.at(1).frame_number < threshold_frame)
+            : false;
+
+    // If both older than threshold
+    if (first_is_old && second_is_old) {
+      // Kill first
+      this->state_logs_.erase(this->state_logs_.begin());
+    }
+  } while (first_is_old && second_is_old);
+
+  if (!this->state_logs_.empty()) {
+    this->state_logs_.at(0).frame_number = threshold_frame;
+
+    this->state_logs_.erase(this->state_logs_.begin() + 1,
+                            this->state_logs_.end());
+  }
 }
 
 void GeometricReplay::ReceiveGameEvent(GameEvent event) {
   CapturedGameEvent cge;
   cge.event = event;
-  cge.frame_number = current_frame_number_write_;
-  captured_events_.push_back(cge);
+  cge.frame_number = this->current_frame_number_write_;
+  this->captured_events_.push_back(cge);
+}
+
+void GeometricReplay::LogCurrentState() {
+  StateLogEntry sle;
+  sle.blackout_active = glob::IsBlackoutActive();
+  sle.goals_switched = this->engine_->IsGoalsSwapped();
+  sle.frame_number = this->current_frame_number_write_;
+
+  this->state_logs_.push_back(sle);
+}
+
+void GeometricReplay::LogReset() {
+  StateLogEntry sle;
+  sle.blackout_active = glob::IsBlackoutActive();
+  sle.goals_switched = false;
+  sle.frame_number = this->current_frame_number_write_;
+
+  this->state_logs_.push_back(sle);
+}
+
+int GeometricReplay::GetStartingEnvironment() {
+  if (this->state_logs_.empty()) return 0;
+
+  StateLogEntry& sle = this->state_logs_.at(0);
+
+  if (!sle.blackout_active && !sle.goals_switched) return 0;
+  if (sle.blackout_active && !sle.goals_switched) return 1;
+  if (!sle.blackout_active && sle.goals_switched) return 2;
+  if (sle.blackout_active && sle.goals_switched) return 3;
+
+  return -1;
 }
 
 void GeometricReplay::ClearAllVectors() {
@@ -930,6 +1008,10 @@ void GeometricReplay::ClearAllVectors() {
   // without reseting frame reads and writes
   this->channels_.clear();
   this->captured_events_.clear();
+
+  /*
+    NTS: Do not change current state
+  */
 }
 
 //---
@@ -1051,6 +1133,23 @@ std::string GeometricReplay::GetGeometricReplaySummary() {
         " - EntId:" + std::to_string(this->channels_.at(i).object_id) +
         " - ChannelType: " + std::to_string(this->channels_.at(i).object_type) +
         "\n";
+  }
+
+  return ret_str;
+}
+
+std::string GeometricReplay::GetGeometricReplayEventList() {
+  std::string ret_str = "";
+
+  std::string last_event = "";
+
+  for (unsigned int i = 0; i < this->captured_events_.size(); i++) {
+    if (last_event != std::to_string(this->captured_events_[i].event.type)) {
+      last_event = std::to_string(this->captured_events_[i].event.type);
+      ret_str += "] : #" + last_event + "[";
+    }
+
+    ret_str += std::to_string(this->captured_events_[i].frame_number) + "|";
   }
 
   return ret_str;

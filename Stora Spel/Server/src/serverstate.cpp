@@ -451,6 +451,7 @@ void ServerPlayState::HandleDataToSend() {
       to_send << pick_event.pick_up_id;
       to_send << PacketBlockType::DESTROY_PICK_UP;
       if (client_id == pick_event.client_id) {
+        to_send << pick_event.client_id;
         to_send << pick_event.ability_id;
         to_send << PacketBlockType::RECEIVE_PICK_UP;
       }

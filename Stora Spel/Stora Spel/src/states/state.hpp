@@ -308,6 +308,7 @@ class PlayState : public State {
 
   // Replay stuff
   bool IsRecording() const { return this->recording_; }
+  bool IsGoalsSwitched() const {return this->goals_swapped_;}
   // void SetRecording(bool in_val) { this->recording_ = in_val; }
   //
 
@@ -491,6 +492,9 @@ class ReplayState : public State {
   glob::Font2DHandle font_test_ = 0;
   glm::vec3 arena_scale_ = glm::vec3(0.f);
   bool goals_swapped_ = false;
+  entt::entity map_visual_entity_;
+  entt::entity blue_goal_light_;
+  entt::entity red_goal_light_;
 
   // Functions
   void AddConstantStuff();
@@ -518,15 +522,20 @@ class ReplayState : public State {
 
   void DrawFishingLines();
   void ParticleComponentDestroyed(entt::entity e, entt::registry& registry);
+
+  void ReplayReset();
+  void SetEnvironment(int in_code);
  public:
   void Startup() override;
   void Init() override;
   void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
+  void ReplaySwitchGoals();
 
   StateType Type() { return StateType::REPLAY; }
   void SetArenaScale(glm::vec3 in_scale) { this->arena_scale_ = in_scale; }
+  bool IsReplaying() const { return this->replaying_; }
 };
 
 class CreateServerState : public State {

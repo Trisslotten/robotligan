@@ -357,10 +357,14 @@ struct GameEvent {
     struct {
       EntityID player_id;
     } secondary_used;
-
+    // Pickup spawned
     struct {
       EntityID pickup_id;
     } pickup_spawned;
+    // Picked up Pickup
+    struct {
+      EntityID player_id;
+    } picked_up_pickup;
     // create black hole
     struct {
       EntityID black_hole_id;

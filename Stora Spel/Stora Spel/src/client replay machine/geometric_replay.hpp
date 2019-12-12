@@ -107,6 +107,12 @@ class GeometricReplay {
     unsigned int frame_number;
   };
 
+  struct StateLogEntry {
+    bool blackout_active = false;
+    bool goals_switched = false;
+    unsigned int frame_number;
+  };
+
   //---
   ReplayObjectType IdentifyEntity(entt::entity& in_entity,
                                   entt::registry& in_registry);
@@ -145,6 +151,8 @@ class GeometricReplay {
   std::vector<CapturedGameEvent> captured_events_;
   unsigned int next_event_index_to_read_ = 0;
 
+  std::vector<StateLogEntry> state_logs_;
+
   GeometricReplay();
 
  public:
@@ -171,6 +179,10 @@ class GeometricReplay {
   void ReceiveGameEvent(GameEvent event);
   void SetEngine(Engine* eng) { engine_ = eng; }
 
+  void LogCurrentState();
+  void LogReset();
+  int GetStartingEnvironment();
+
   void ClearAllVectors();
 
   //---
@@ -178,6 +190,7 @@ class GeometricReplay {
   std::string GetGeometricReplayTree();
   std::string GetGeometricReplayState();
   std::string GetGeometricReplaySummary();
+  std::string GetGeometricReplayEventList();
 };
 
 #endif  // !GEOMETRIC_REPLAY_HPP_
