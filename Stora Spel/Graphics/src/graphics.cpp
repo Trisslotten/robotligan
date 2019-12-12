@@ -531,7 +531,7 @@ void Init() {
 
   buffer_particle_systems.reserve(10);
 
-  SetSky("assets/texture/darksky2.png");
+  SetSky("assets/texture/boispace.png");
 
   // glEnable(GL_RASTERIZER_DISCARD);
 }
