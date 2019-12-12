@@ -1,11 +1,12 @@
-#include "state.hpp"
-
 #include <GLFW\glfw3.h>
+
 #include <glob/window.hpp>
 #include <util/asset_paths.hpp>
+
 #include "..//ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
+#include "state.hpp"
 
 struct ReadyButtonComponent {};
 
@@ -218,12 +219,10 @@ void LobbyState::HandlePlayerDisconnect(NetAPI::Common::Packet& packet) {
   packet >> id;
   lobby_players_.erase(id);
   engine_->player_names_.erase(id);
+  engine_->player_scores_.erase(id);
 }
 
-void LobbyState::ClearLobbyPlayers()
-{
-  lobby_players_.clear();
-}
+void LobbyState::ClearLobbyPlayers() { lobby_players_.clear(); }
 
 void LobbyState::CreateBackgroundEntities() {
   // add the lights to scene
@@ -301,8 +300,8 @@ void LobbyState::CreateBackgroundEntities() {
     glob::ModelHandle model_robot = glob::GetModel(kModelPathMech);
     auto& model_c = registry_lobby_.assign<ModelComponent>(robot);
     model_c.handles.push_back(model_robot);
-    registry_lobby_.assign<AnimationComponent>(robot,
-     glob::GetAnimationData(model_robot));
+    registry_lobby_.assign<AnimationComponent>(
+        robot, glob::GetAnimationData(model_robot));
     trans.position = glm::vec3(10.f, 1.f, 0.f);
   }
 
@@ -499,7 +498,7 @@ void LobbyState::DrawTeamSelect() {
     }
     std::cout << "Names:\n";
     for (auto& [client_id, name] : engine_->player_names_) {
-      std::cout << "\t" << client_id << ": " << name<< "\n";
+      std::cout << "\t" << client_id << ": " << name << "\n";
     }
   }
 
