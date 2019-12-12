@@ -41,6 +41,8 @@ void ReplayState::AddArenaStuff() {
       glob::GetModel(kModelPathMiscStarfighter);
   glob::ModelHandle model_map_misc_mig = glob::GetModel(kModelPathMiscMig);
   glob::ModelHandle model_map_misc1 = glob::GetModel(kModelPathMisc1);
+  glob::ModelHandle model_map_walls =
+      glob::GetTransparentModel(kModelPathMapEnergyWalls);
 
   ModelComponent& model_c =
       this->replay_registry_.assign<ModelComponent>(arena);
@@ -52,6 +54,7 @@ void ReplayState::AddArenaStuff() {
   model_c.handles.push_back(model_map_misc_spectre);
   model_c.handles.push_back(model_map_misc_starfighter);
   model_c.handles.push_back(model_map_misc_mig);
+  model_c.handles.push_back(model_map_walls);
   model_c.cast_shadow = false;
 
   this->replay_registry_.assign<TransformComponent>(arena, zero_vec, zero_vec,

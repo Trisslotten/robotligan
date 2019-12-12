@@ -146,7 +146,7 @@ void MainMenuState::CreateInformationMenu() {
   }
   {
     glm::vec3 zero_vec = glm::vec3(0.0f);
-    glm::vec3 arena_scale = glm::vec3(1.f);
+    glm::vec3 arena_scale = glm::vec3(2.f);
     auto arena = registry_information_.create();
     glob::ModelHandle model_map_walls =
         glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
@@ -216,7 +216,7 @@ void MainMenuState::CreateBackgroundEnitites() {
   }
   {
     glm::vec3 zero_vec = glm::vec3(0.0f);
-    glm::vec3 arena_scale = glm::vec3(1.f);
+    glm::vec3 arena_scale = glm::vec3(2.f);
     auto arena = registry_mainmenu_.create();
     glob::ModelHandle model_map_walls =
         glob::GetTransparentModel("assets/MapV3/Map_EnergyWall.fbx");
