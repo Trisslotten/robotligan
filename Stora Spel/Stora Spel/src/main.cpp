@@ -1,6 +1,6 @@
 #define NOMINMAX
 #pragma comment(lib, "ws2_32.lib")
-#define _CRTDBG_MAP_ALLOC
+//#define _CRTDBG_MAP_ALLOC
 #include <GLFW/glfw3.h>  //NTS: This one must be included after certain other things
 #include <crtdbg.h>
 #include <stdlib.h>
