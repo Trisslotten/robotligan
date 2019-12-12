@@ -9,7 +9,7 @@ NetAPI::Common::Packet::Packet() {
 }
 
 NetAPI::Common::Packet::Packet(const Packet& other) {
-  delete[] data_;
+  //delete[] data_;
   data_ = new char[kNumPacketBytes];
   memcpy(data_, other.data_, kNumPacketBytes);
   GetHeader()->packet_size = other.GetHeader()->packet_size;
@@ -18,9 +18,14 @@ NetAPI::Common::Packet::Packet(const Packet& other) {
 NetAPI::Common::Packet& NetAPI::Common::Packet::operator=(const Packet& other) {
   if (&other == this) return *this;
 
-  delete[] data_;
+  /*
+  if (data_ != nullptr)
+    delete[] data_;
 
-  data_ = new char[kNumPacketBytes];
+  */
+  if (data_ == nullptr) {
+    data_ = new char[kNumPacketBytes];
+  }
   memcpy(data_, other.data_, kNumPacketBytes);
   GetHeader()->packet_size = other.GetHeader()->packet_size;
 
