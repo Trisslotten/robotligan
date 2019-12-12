@@ -23,7 +23,7 @@ PlayerFrame::PlayerFrame() {}
 PlayerFrame::PlayerFrame(TransformComponent& in_transform_c,
                          PlayerComponent& in_player_c_,
                          PhysicsComponent& in_phys_c,
-                         unsigned int player_team) {
+                         int player_team) {
   //
   this->position_ = in_transform_c.position;
   this->rotation_ = in_transform_c.rotation;
@@ -137,6 +137,7 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
         glm::slerp(this->rotation_, point_b.rotation_, percentage_a);
 
     ret_frame->scale_ = this->scale_;
+    ret_frame->team_ = this->team_;
 
     // PLAYER COMPONENT : Set it dependnat on how far we are towards the next
     // point
@@ -169,7 +170,7 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
 void PlayerFrame::WriteBack(TransformComponent& in_transform_c,
                             PlayerComponent& in_player_c_,
                             PhysicsComponent& in_phys_c,
-                            unsigned int& in_team) {
+                            int& in_team) {
   in_transform_c.position = this->position_;
   in_transform_c.rotation = this->rotation_;
   in_transform_c.scale = this->scale_;

@@ -47,12 +47,12 @@ class PlayerFrame : public DataFrame {
   glm::vec3 velocity_;
 
   // Team
-  unsigned int team_ = TEAM_RED;
+  int team_ = TEAM_RED;
 
  public:
   PlayerFrame();
   PlayerFrame(TransformComponent& in_transform_c, PlayerComponent& in_player_c,
-              PhysicsComponent& in_phys_c, unsigned int player_team);
+              PhysicsComponent& in_phys_c, int player_team);
   ~PlayerFrame();
 
   DataFrame* Clone();
@@ -63,7 +63,7 @@ class PlayerFrame : public DataFrame {
                                 DataFrame& in_point_b);
   void WriteBack(TransformComponent& in_transform_c,
                  PlayerComponent& in_player_c, PhysicsComponent& in_phys_c,
-                 unsigned int& in_team);
+                 int& in_team);
 };
 
 //---

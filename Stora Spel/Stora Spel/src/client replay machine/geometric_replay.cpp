@@ -93,9 +93,10 @@ DataFrame* GeometricReplay::PolymorphIntoDataFrame(
     PlayerComponent& player_c = in_registry.get<PlayerComponent>(in_entity);
     PhysicsComponent& phys_c = in_registry.get<PhysicsComponent>(in_entity);
     IDComponent& id_c = in_registry.get<IDComponent>(in_entity);
+    ModelComponent& model_c = in_registry.get<ModelComponent>(in_entity);
 
     ret_ptr = new PlayerFrame(transform_c, player_c, phys_c,
-                              engine_->GetPlayerTeam(id_c.id));
+                             model_c.diffuse_index);
   } else if (object_type == REPLAY_BALL) {
     TransformComponent& transform_c =
         in_registry.get<TransformComponent>(in_entity);
@@ -271,7 +272,7 @@ void GeometricReplay::DepolymorphFromDataframe(DataFrame* in_df_ptr,
     PhysicsComponent& phys_c = in_registry.get<PhysicsComponent>(in_entity);
 
     // Just placeholder, isn't used here
-    unsigned int player_team = TEAM_RED;
+    int player_team = 0;
 
     // Transfer
     pf_c_ptr->WriteBack(transform_c, player_c, phys_c, player_team);
@@ -410,16 +411,10 @@ void GeometricReplay::CreateEntityFromChannel(unsigned int in_channel_index,
         entity, engine_->GetSoundEngine().CreatePlayer());
 
     // Assume mech to be red
-    unsigned int player_team = TEAM_RED;
-    model_c.diffuse_index = 0;
+    unsigned int mech_diffuse_index = 0;
 
     // Write back date from DataFrame
-    pf_ptr->WriteBack(transform_c, player_c, phys_c, player_team);
-
-    // If assumption wrong, swap
-    if (player_team == TEAM_BLUE) {
-      model_c.diffuse_index = 1;
-    }
+    pf_ptr->WriteBack(transform_c, player_c, phys_c, model_c.diffuse_index);
   } else if (object_type == REPLAY_BALL) {
     BallFrame* bf_ptr = dynamic_cast<BallFrame*>(df_ptr);
     in_registry.assign<IDComponent>(
