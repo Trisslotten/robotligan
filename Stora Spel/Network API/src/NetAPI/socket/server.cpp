@@ -30,7 +30,7 @@ void NetAPI::Socket::Server::Receive() {
     }
     if (c.second && c.second->client.IsConnected()) {
       int num_packets = 0;
-      for (auto packet : c.second->client.Receive()) {
+      for (auto& packet : c.second->client.Receive()) {
         num_packets++;
         if (!packet.IsEmpty()) {
           c.second->packets.push_back(packet);
