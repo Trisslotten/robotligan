@@ -438,7 +438,7 @@ void SoundSystem::ReceiveGameEvent(const GameEvent& event) {
       auto& sound_c = view.get<SoundComponent>(entity);
       if (id_c.id == event.invisibility_cast.player_id) {
         sound_c.sound_player->Play(ability_sounds_[AbilityID::INVISIBILITY], 0,
-                                   0.5f);
+                                   0.3f);
         break;
       }
     }
@@ -597,12 +597,12 @@ void SoundSystem::ReceiveMenuEvent(const MenuEvent& event) {
   switch (event.type) {
     case MenuEvent::HOVER: {
       // Play hover sound
-      sound_engine_.GetPlayer()->Play(button_hover_);
+      sound_engine_.GetPlayer()->Play(button_hover_, 0, 0.4);
       break;
     }
     case MenuEvent::CLICK: {
       // Play click sound
-      sound_engine_.GetPlayer()->Play(button_click_);
+      sound_engine_.GetPlayer()->Play(button_click_, 0, 0.4);
       break;
     }
   }
