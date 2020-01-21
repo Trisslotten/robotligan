@@ -1,5 +1,5 @@
 # Robotligan
-Multiplayer football game made for the course Large Game Project
+Multiplayer football game made for the course Large Game Project from BTH
 
 # Trailer
 [![Trailer link](https://img.youtube.com/vi/CIdk4syJrQQ/0.jpg)](https://www.youtube.com/watch?v=CIdk4syJrQQ)
