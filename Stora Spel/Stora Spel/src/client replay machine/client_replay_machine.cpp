@@ -1,4 +1,5 @@
 #include "client_replay_machine.hpp"
+
 #include "engine.hpp"
 
 // Private---------------------------------------------------------------------
@@ -84,8 +85,8 @@ bool ClientReplayMachine::SelectReplay(unsigned int in_index) {
   // Set its read to the start
   this->ResetSelectedReplay();
 
-  GlobalSettings::Access()->WriteError(
-      "", "Selected", std::to_string(this->selected_replay_index_));
+  /*GlobalSettings::Access()->WriteError(
+      "", "Selected", std::to_string(this->selected_replay_index_));*/
 
   return true;
 }
@@ -112,15 +113,44 @@ bool ClientReplayMachine::LoadFrame(entt::registry& in_registry) {
   return load_result;
 }
 
-void ClientReplayMachine::SetEngine(Engine* in_engine_ptr) {
+void ClientReplayMachine::SetEngineAndOwner(Engine* in_engine_ptr,
+                                            ReplayState* in_replay_state_ptr_) {
   this->engine_ = in_engine_ptr;
+  this->replay_state_ = in_replay_state_ptr_;
   this->primary_replay_->SetEngine(in_engine_ptr);
 }
 
 void ClientReplayMachine::ReceiveGameEvent(GameEvent event) {
-  if (this->engine_->IsRecording()) {
-    primary_replay_->ReceiveGameEvent(event);
+  // -vvv- EVENT SPECIAL CASES -vvv-
+  switch (event.type) {
+      // case GameEvent::WHATEVER:
+      // case GameEvent::WHATELSE:
+    case GameEvent::RESET:
+      // Do not save event to replay
+      this->primary_replay_->LogReset();
+      return;
+      break;
+    case GameEvent::BLACKOUT_TRIGGER:
+    case GameEvent::BLACKOUT_END:
+      this->primary_replay_->LogCurrentState();
+      break;
+    case GameEvent::SWITCH_GOALS_DONE:
+      this->primary_replay_->LogCurrentState();
+      if (this->replay_state_->IsReplaying()) {
+        this->replay_state_->ReplaySwitchGoals();
+        return;
+      }
+      break;
+    default:
+      break;
   }
+  // -^^^- EVENT SPECIAL CASES -^^^-
+
+  if (this->engine_->IsRecording()) {
+    this->primary_replay_->ReceiveGameEvent(event);
+  }
+
+  // Special event triggers for replay state
 }
 
 void ClientReplayMachine::ResetMachine() {
@@ -137,4 +167,23 @@ void ClientReplayMachine::ResetMachine() {
     this->stored_replays_.erase(this->stored_replays_.end() - 1);
   }
   this->selected_replay_index_ = 0;
+}
+
+int ClientReplayMachine::GetStartingEnvironment() {
+  return this->stored_replays_.at(this->selected_replay_index_)
+      ->GetStartingEnvironment();
+}
+
+std::string ClientReplayMachine::GetDebugString() {
+  std::string ret_str = "";
+
+  for (unsigned int i = 0; i < this->stored_replays_.size(); i++) {
+    ret_str += "<R" + std::to_string(i) + "> : ";
+
+    ret_str += this->stored_replays_.at(i)->GetGeometricReplayEventList();
+
+    ret_str += "\n\n";
+  }
+
+  return ret_str;
 }

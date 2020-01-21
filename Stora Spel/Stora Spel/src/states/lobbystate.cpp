@@ -1,10 +1,12 @@
-#include "state.hpp"
+#include <GLFW\glfw3.h>
 
 #include <glob/window.hpp>
 #include <util/asset_paths.hpp>
+
 #include "..//ecs/components.hpp"
 #include "engine.hpp"
 #include "entitycreation.hpp"
+#include "state.hpp"
 
 struct ReadyButtonComponent {};
 
@@ -106,8 +108,6 @@ void LobbyState::Startup() {
 }
 
 void LobbyState::Init() {
-  //
-
   glob::window::SetMouseLocked(false);
   auto& cli = engine_->GetClient();
   engine_->SetSendInput(false);
@@ -126,16 +126,23 @@ void LobbyState::Init() {
   engine_->GetAnimationSystem().Reset(registry_lobby_);
 
   engine_->GetChat()->SetShowChat();
+  glob::GetCamera().SetFov(90.f);
 }
 
 void LobbyState::Update(float dt) {
+  auto& cli = engine_->GetClient();
+  if (!cli.IsConnected()) {
+    cli.Disconnect();
+    engine_->ChangeState(StateType::MAIN_MENU);
+  }
+
   server_state_ = engine_->GetServerState();
   DrawTeamSelect();
   DrawAbilitySelect();
 
   // draw ready string
   glm::vec2 pos =
-      glm::vec2((glob::window::GetWindowDimensions().x / 2) - 100, 50);
+      glm::vec2((glob::window::GetWindowDimensions().x / 2) - 100, 40);
   glob::Submit(font_test_, pos, 72, "Ready: ");
 
   bool everyone_ready = true;
@@ -193,23 +200,29 @@ void LobbyState::HandleUpdateLobbyTeamPacket(NetAPI::Common::Packet& packet) {
   packet >> team;
   packet >> id;
   packet >> len;
-  name.resize(len);
-  packet.Remove(name.data(), len);
-  std::cout << "Lobby: name: " << name << "\n";
-  if (id != -1) {
-    LobbyPlayer plyr;
-    plyr.ready = ready;
-    plyr.team = team;
-    lobby_players_[id] = plyr;
+  if (len > 0) {
+    name.resize(len);
+    packet.Remove(name.data(), len);
+    std::cout << "\t" << id << ": " << name << "\n";
+    if (id != -1) {
+      LobbyPlayer plyr;
+      plyr.ready = ready;
+      plyr.team = team;
+      lobby_players_[id] = plyr;
+    }
+    engine_->player_names_[id] = name;
   }
-  engine_->player_names_[id] = name;
 }
 
 void LobbyState::HandlePlayerDisconnect(NetAPI::Common::Packet& packet) {
   unsigned short id = -1;
   packet >> id;
   lobby_players_.erase(id);
+  engine_->player_names_.erase(id);
+  engine_->player_scores_.erase(id);
 }
+
+void LobbyState::ClearLobbyPlayers() { lobby_players_.clear(); }
 
 void LobbyState::CreateBackgroundEntities() {
   // add the lights to scene
@@ -280,19 +293,6 @@ void LobbyState::CreateBackgroundEntities() {
   }
 
   {
-    // ladda in och skapa entity för robotar
-    auto robot = registry_lobby_.create();
-    auto& trans = registry_lobby_.assign<TransformComponent>(
-        robot, zero_vec, glm::vec3(0.f, 180.f, 0.f), glm::vec3(0.01f));
-    glob::ModelHandle model_robot = glob::GetModel(kModelPathMech);
-    auto& model_c = registry_lobby_.assign<ModelComponent>(robot);
-    model_c.handles.push_back(model_robot);
-    // registry_lobby_.assign<AnimationComponent>(robot,
-    // glob::GetAnimationData(model_robot));
-    trans.position = glm::vec3(10.f, 1.f, 0.f);
-  }
-
-  {
     // lägga ut en kamera i scenen
     auto camera = registry_lobby_.create();
     auto& cam_c = registry_lobby_.assign<CameraComponent>(camera);
@@ -310,7 +310,7 @@ void LobbyState::CreateGUIElements() {
   ability_blacklist.push_back((int)AbilityID::MINE);
   ability_blacklist.push_back((int)AbilityID::GRAVITY_CHANGE);
   ability_blacklist.push_back((int)AbilityID::FAKE_BALL);
-  //ability_blacklist.push_back((int)AbilityID::HOMING_BALL);
+  // ability_blacklist.push_back((int)AbilityID::HOMING_BALL);
 
   red_team_select_back_ = glob::GetGUIItem("Assets/GUI_elements/red_team.png");
   blue_team_select_back_ =
@@ -360,7 +360,9 @@ void LobbyState::CreateGUIElements() {
       "TELEPORT: Fire a projectile that teleports you to the point of impact.";
   ability_tooltips_[11] = "BLACKOUT: Turn off the lights.";
   ability_tooltips_[12] = "BLACK HOLE: No, don't do it. You have been warned.";
-  ability_tooltips_[13] = "MINE: Place an explosive mine on the ground that will launch enemies into the air.";
+  ability_tooltips_[13] =
+      "MINE: Place an explosive mine on the ground that will launch enemies "
+      "into the air.";
   ability_tooltips_[14] = "FISHING POLE: It's literally just a grappling hook.";
 
   // auto button_join_red = registry_lobby_.create();
@@ -449,6 +451,8 @@ void LobbyState::CreateGUIElements() {
                                               glm::vec2(60, 50), font_test_);
   b_c->button_func = [&]() {
     engine_->GetClient().Disconnect();
+    engine_->ClearNames();
+    lobby_players_.clear();
     engine_->ChangeState(StateType::MAIN_MENU);
   };
 }
@@ -473,6 +477,17 @@ void LobbyState::DrawTeamSelect() {
   // glob::window::Relative720(glm::vec2(930, 680));
   int blue_count = 0;
   int red_count = 0;
+
+  if (Input::IsKeyPressed(GLFW_KEY_F4)) {
+    std::cout << "LobbyPlayers:\n";
+    for (auto& [client_id, lp] : lobby_players_) {
+      std::cout << "\t" << client_id << ": " << lp.team << "\n";
+    }
+    std::cout << "Names:\n";
+    for (auto& [client_id, name] : engine_->player_names_) {
+      std::cout << "\t" << client_id << ": " << name << "\n";
+    }
+  }
 
   for (auto& lobby_player : lobby_players_) {
     glm::vec4 color = glm::vec4(1.f, 1.f, 1.f, 1.f);

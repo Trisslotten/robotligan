@@ -16,6 +16,8 @@ const double kClientUpdateRate = 64;
 const double kServerUpdateRate = 64;
 const unsigned kServerTimeout = 6;
 
+const bool kEnableReconnect = true;
+
 enum class ServerStateType {
   LOBBY = 0,
   PLAY,
@@ -90,6 +92,7 @@ enum : int16_t {
   PLAYER_MOVE_DIR,
   TO_CLIENT_NAME,
   YOU_CAN_SMASH,
+  WANT_DAB,
   NUM_BLOCK_TYPES,
 };
 
@@ -159,6 +162,8 @@ struct GameEvent {
     PRIMARY_USED,
     SECONDARY_USED,
     PICKUP_SPAWNED,
+	PLAYER_IDLE,
+	PLAYER_IDLE_END,
     BLACK_HOLE_CREATED,
     BLACK_HOLE_ACTIVATED,
     BLACK_HOLE_DESTROYED,
@@ -167,12 +172,16 @@ struct GameEvent {
     FISHING_HOOK_ATTACHED,
     REMOVE_FISHING_HOOK,
     PICKED_UP_PICKUP,
+    DABBING,
+    CANNON_IMPACT,
     NUM_EVENTS
   } type;
   union {
     // Goal
     struct {
       float x;
+      bool good_goal;
+      EntityID goal_maker;
     } goal;
 
     // Kick
@@ -348,10 +357,14 @@ struct GameEvent {
     struct {
       EntityID player_id;
     } secondary_used;
-
+    // Pickup spawned
     struct {
       EntityID pickup_id;
     } pickup_spawned;
+    // Picked up Pickup
+    struct {
+      EntityID player_id;
+    } picked_up_pickup;
     // create black hole
     struct {
       EntityID black_hole_id;
@@ -377,6 +390,20 @@ struct GameEvent {
       EntityID hook_id;
       EntityID owner_id;
     } hook_removed;
+
+    struct {
+      EntityID player_entity_id;
+    } dabbing;
+    struct {
+      EntityID projectile_id;
+    } cannon_impact;
+
+    struct {
+      EntityID player_id;
+    } player_idle;
+    struct {
+      EntityID player_id;
+    } player_idle_end;
   };
 };
 

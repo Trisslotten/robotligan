@@ -22,7 +22,8 @@ PlayerFrame::PlayerFrame() {}
 
 PlayerFrame::PlayerFrame(TransformComponent& in_transform_c,
                          PlayerComponent& in_player_c_,
-                         PhysicsComponent& in_phys_c) {
+                         PhysicsComponent& in_phys_c,
+                         int player_team) {
   //
   this->position_ = in_transform_c.position;
   this->rotation_ = in_transform_c.rotation;
@@ -41,6 +42,8 @@ PlayerFrame::PlayerFrame(TransformComponent& in_transform_c,
 
   // physic stuff
   this->velocity_ = in_phys_c.velocity;
+
+  this->team_ = player_team;
 }
 
 PlayerFrame::~PlayerFrame() {}
@@ -60,6 +63,8 @@ DataFrame* PlayerFrame::Clone() {
   ret_ptr->pc_move_dir_ = this->pc_move_dir_;
 
   ret_ptr->velocity_ = this->velocity_;
+
+  ret_ptr->team_ = this->team_;
 
   return ret_ptr;
 }
@@ -132,6 +137,7 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
         glm::slerp(this->rotation_, point_b.rotation_, percentage_a);
 
     ret_frame->scale_ = this->scale_;
+    ret_frame->team_ = this->team_;
 
     // PLAYER COMPONENT : Set it dependnat on how far we are towards the next
     // point
@@ -163,18 +169,22 @@ DataFrame* PlayerFrame::InterpolateForward(unsigned int in_dist_to_target,
 
 void PlayerFrame::WriteBack(TransformComponent& in_transform_c,
                             PlayerComponent& in_player_c_,
-                            PhysicsComponent& in_phys_c) {
+                            PhysicsComponent& in_phys_c,
+                            int& in_team) {
   in_transform_c.position = this->position_;
   in_transform_c.rotation = this->rotation_;
   in_transform_c.scale = this->scale_;
 
-  in_player_c_.jumping = pc_jumping_;
-  in_player_c_.sprinting = pc_sprinting_;
-  in_player_c_.running = pc_running_;
-  in_player_c_.vel_dir = pc_vel_dir_;
-  in_player_c_.look_dir = pc_look_dir_;
-  in_player_c_.move_dir = pc_move_dir_;
-  in_phys_c.velocity = velocity_;
+  in_player_c_.jumping = this->pc_jumping_;
+  in_player_c_.sprinting = this->pc_sprinting_;
+  in_player_c_.running = this->pc_running_;
+  in_player_c_.vel_dir = this->pc_vel_dir_;
+  in_player_c_.look_dir = this->pc_look_dir_;
+  in_player_c_.move_dir = this->pc_move_dir_;
+
+  in_phys_c.velocity = this->velocity_;
+
+  in_team = this->team_;
 }
 
 //##############################
@@ -183,10 +193,12 @@ void PlayerFrame::WriteBack(TransformComponent& in_transform_c,
 
 BallFrame::BallFrame() {}
 
-BallFrame::BallFrame(TransformComponent& in_transform_c) {
+BallFrame::BallFrame(TransformComponent& in_transform_c,
+                     TrailComponent& in_trail_c) {
   //
   this->position_ = in_transform_c.position;
   this->rotation_ = in_transform_c.rotation;
+  this->trail_color_ = in_trail_c.color;
   // this->scale_ = in_transform_c.scale;
 }
 
@@ -197,6 +209,8 @@ DataFrame* BallFrame::Clone() {
 
   ret_ptr->position_ = this->position_;
   ret_ptr->rotation_ = this->rotation_;
+
+  ret_ptr->trail_color_ = trail_color_;
   // ret_ptr->scale_ = this->scale_;
 
   return ret_ptr;
@@ -258,6 +272,8 @@ DataFrame* BallFrame::InterpolateForward(unsigned int in_dist_to_target,
     ret_frame->rotation_ =
         glm::slerp(this->rotation_, point_b.rotation_, percentage_a);
 
+	ret_frame->trail_color_ = trail_color_;
+
     // SCALE
     // ret_frame->scale_ = this->scale_;
 
@@ -269,11 +285,13 @@ DataFrame* BallFrame::InterpolateForward(unsigned int in_dist_to_target,
   }
 }
 
-void BallFrame::WriteBack(TransformComponent& in_transform_c) {
+void BallFrame::WriteBack(TransformComponent& in_transform_c,
+                          TrailComponent& in_trail_c) {
   in_transform_c.position = this->position_;
   in_transform_c.rotation = this->rotation_;
   // in_transform_c.scale = this->scale_;
   in_transform_c.scale = glm::vec3(1.0);
+  in_trail_c.color = trail_color_;
 }
 
 //##############################
@@ -304,69 +322,18 @@ DataFrame* PickUpFrame::Clone() {
 DataFrame* PickUpFrame::InterpolateForward(unsigned int in_dist_to_target,
                                            unsigned int in_dist_to_point_b,
                                            DataFrame& in_point_b) {
-  // Cast the DataFrame to PlayerFrame
-  try {
-    PickUpFrame& point_b = dynamic_cast<PickUpFrame&>(in_point_b);
-    // Skips forward if std::bad_cast
+  // INTERPOLATED FRAME
+  PickUpFrame* ret_frame = new PickUpFrame();
 
-    // INTERPOLATED FRAME
-    PickUpFrame* ret_frame = new PickUpFrame();
+  // "INTERPOLATION" :D
 
-    // RATIO
-    if (in_dist_to_point_b < 1) {
-      // Prevent division on zero
-      in_dist_to_point_b = 1;
-    }
-    float percentage_a = in_dist_to_target / in_dist_to_point_b;
+  // POSITION
+  ret_frame->position_ = this->position_;
 
-    // INTERPOLATION
-    // vvv
-
-    // POSITION
-    ret_frame->position_ =
-        this->position_ + (point_b.position_ - position_) * percentage_a;
-
-    // ROTATION
-    ret_frame->rotation_ =
-        glm::slerp(rotation_, point_b.rotation_, percentage_a);
-
-    // SCALE
-    // ret_frame->scale_ = this->scale_;
-
-    return ret_frame;
-
-  } catch (std::bad_cast exp) {
-    GlobalSettings::Access()->WriteError(__FILE__, __FUNCTION__, "Bad cast");
-    return nullptr;
-  }
-
-  return nullptr;
+  return ret_frame;
 }
 
 bool PickUpFrame::ThresholdCheck(DataFrame& in_future_df) {
-  //// Cast to PickupFrame
-  // PickUpFrame& future_pf = dynamic_cast<PickUpFrame&>(in_future_df);
-
-  // float threshold = 0.0f;
-
-  //// POSITION
-  // float pos_diff = glm::distance(position_, future_pf.position_);
-  // threshold =
-  //    GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_PICKUP_POSITION");
-  // if (pos_diff > threshold) {
-  //  // If we have moved over the threshold value away
-  //  return true;
-  //}
-
-  //// ROTATION
-  // float rot_diff = glm::dot(rotation_, future_pf.rotation_);
-  // threshold =
-  //    GlobalSettings::Access()->ValueOf("REPLAY_THRESHOLD_PICKUP_ROTATION");
-  // if (abs(rot_diff - 1.0f) > threshold) {
-  //  // If we have rotated more than the theshhold value allows
-  //  return true;
-  //}
-
   return false;
 }
 
@@ -384,11 +351,13 @@ void PickUpFrame::WriteBack(TransformComponent& in_transform_c) {
 WallFrame::WallFrame() {
   position_ = glm::vec3(0.f);
   rotation_ = glm::quat();
+  team_ = TEAM_RED;
 }
 
-WallFrame::WallFrame(TransformComponent& trans_c) {
+WallFrame::WallFrame(TransformComponent& trans_c, WallComponent& wall_c) {
   position_ = trans_c.position;
   rotation_ = trans_c.rotation;
+  team_ = wall_c.owner_team;
 }
 
 WallFrame::~WallFrame() {}
@@ -397,7 +366,8 @@ DataFrame* WallFrame::Clone() {
   WallFrame* return_wall = new WallFrame();
   return_wall->position_ = position_;
   return_wall->rotation_ = rotation_;
-
+  return_wall->team_ = team_;
+  
   return return_wall;
 }
 
@@ -428,6 +398,9 @@ DataFrame* WallFrame::InterpolateForward(unsigned int in_dist_to_target,
     // ROTATION
     ret_frame->rotation_ = rotation_;
 
+    // TEAM
+    ret_frame->team_ = team_;
+
     return ret_frame;
 
   } catch (std::bad_cast exp) {
@@ -454,11 +427,11 @@ bool WallFrame::ThresholdCheck(DataFrame& in_future_df) {
   return false;
 }
 
-void WallFrame::WriteBack(TransformComponent& trans_c) {
+void WallFrame::WriteBack(TransformComponent& trans_c, WallComponent& wall_c) {
   trans_c.position = position_;
   trans_c.rotation = rotation_;
-  trans_c.scale =
-      glm::vec3(1.f, 4.f, 5.f);  // Values from Playstate -> CreateWall
+  trans_c.scale = glm::vec3(1.f);  // Values from Playstate -> CreateWall
+  wall_c.owner_team = team_;
 }
 
 //##############################
@@ -467,11 +440,14 @@ void WallFrame::WriteBack(TransformComponent& trans_c) {
 
 ShotFrame::ShotFrame() {}
 
-ShotFrame::ShotFrame(TransformComponent& in_transform_c) {
+ShotFrame::ShotFrame(TransformComponent& in_transform_c,
+                     TrailComponent& in_trail_c) {
   //
   this->position_ = in_transform_c.position;
   this->rotation_ = in_transform_c.rotation;
   // this->scale_ = in_transform_c.scale;
+
+  this->trail_color_ = in_trail_c.color;
 }
 
 ShotFrame::~ShotFrame() {}
@@ -483,6 +459,7 @@ ShotFrame* ShotFrame::Clone() {
   ret_ptr->rotation_ = this->rotation_;
   // ret_ptr->scale_ = this->scale_;
 
+  ret_ptr->trail_color_ = this->trail_color_;
   return ret_ptr;
 }
 
@@ -535,6 +512,7 @@ DataFrame* ShotFrame::InterpolateForward(unsigned int in_dist_to_target,
 
     // SCALE
     // ret_frame->scale_ = this->scale_;
+    ret_frame->trail_color_ = trail_color_;
 
     return ret_frame;
 
@@ -544,11 +522,13 @@ DataFrame* ShotFrame::InterpolateForward(unsigned int in_dist_to_target,
   }
 }
 
-void ShotFrame::WriteBack(TransformComponent& in_transform_c) {
+void ShotFrame::WriteBack(TransformComponent& in_transform_c, TrailComponent& in_trail_c) {
   in_transform_c.position = this->position_;
   in_transform_c.rotation = this->rotation_;
   // in_transform_c.scale = this->scale_;
   in_transform_c.scale = glm::vec3(0.5f);
+
+  in_trail_c.color = trail_color_;
 }
 
 //##############################
@@ -810,10 +790,14 @@ void ForcePushFrame::WriteBack(TransformComponent& trans_c) {
 //			MineFrame
 //##############################
 
-MineFrame::MineFrame() { position_ = glm::vec3(0.f); }
+MineFrame::MineFrame() {
+  position_ = glm::vec3(0.f);
+  team_ = TEAM_RED;
+}
 
-MineFrame::MineFrame(TransformComponent& trans_c) {
+MineFrame::MineFrame(TransformComponent& trans_c, MineComponent& mine_c) {
   position_ = trans_c.position;
+  team_ = mine_c.owner_team;
 }
 
 MineFrame::~MineFrame() {}
@@ -821,7 +805,8 @@ MineFrame::~MineFrame() {}
 DataFrame* MineFrame::Clone() {
   MineFrame* mine_return = new MineFrame();
 
-  mine_return->position_ = position_;
+  mine_return->position_ = this->position_;
+  mine_return->team_ = this->team_;
 
   return mine_return;
 }
@@ -837,14 +822,18 @@ DataFrame* MineFrame::InterpolateForward(unsigned int in_dist_to_target,
   // POSITION
   ret_frame->position_ = this->position_;
 
+  // TEAM
+  ret_frame->team_ = this->team_;
+
   return ret_frame;
 }
 
 bool MineFrame::ThresholdCheck(DataFrame& in_future_df) { return false; }
 
-void MineFrame::WriteBack(TransformComponent& trans_c) {
+void MineFrame::WriteBack(TransformComponent& trans_c, MineComponent& mine_c) {
   trans_c.position = position_;
   trans_c.scale = glm::vec3(1.0f);
+  mine_c.owner_team = team_;
 }
 
 //##############################
@@ -908,8 +897,7 @@ DataFrame* BlackholeFrame::InterpolateForward(unsigned int in_dist_to_target,
   }
 }
 
-bool BlackholeFrame::ThresholdCheck(
-    DataFrame& in_future_df) {
+bool BlackholeFrame::ThresholdCheck(DataFrame& in_future_df) {
   BlackholeFrame& future_pf = dynamic_cast<BlackholeFrame&>(in_future_df);
 
   float threshold = 0.0f;
@@ -938,9 +926,11 @@ void BlackholeFrame::WriteBack(TransformComponent& trans_c) {
 
 HookFrame::HookFrame() {}
 
-HookFrame::HookFrame(TransformComponent& trans_c) {
+HookFrame::HookFrame(TransformComponent& trans_c, HookComponent& hook_c) {
   position_ = trans_c.position;
   rotation_ = trans_c.rotation;
+
+  owner_ = hook_c.creator;
 }
 
 HookFrame::~HookFrame() {}
@@ -950,6 +940,7 @@ DataFrame* HookFrame::Clone() {
 
   ret_ptr->position_ = this->position_;
   ret_ptr->rotation_ = this->rotation_;
+  ret_ptr->owner_ = this->owner_;
 
   return ret_ptr;
 }
@@ -982,6 +973,8 @@ DataFrame* HookFrame::InterpolateForward(unsigned int in_dist_to_target,
     ret_frame->rotation_ =
         glm::slerp(rotation_, point_b.rotation_, percentage_a);
 
+	ret_frame->owner_ = owner_;
+
     return ret_frame;
 
   } catch (std::bad_cast exp) {
@@ -1007,8 +1000,10 @@ bool HookFrame::ThresholdCheck(DataFrame& in_future_df) {
   return false;
 }
 
-void HookFrame::WriteBack(TransformComponent& trans_c) {
+void HookFrame::WriteBack(TransformComponent& trans_c, HookComponent& hook_c) {
   trans_c.position = position_;
   trans_c.rotation = rotation_;
   trans_c.scale = glm::vec3(0.3f);
+
+  hook_c.creator = owner_;
 }

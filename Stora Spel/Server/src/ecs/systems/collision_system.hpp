@@ -26,6 +26,10 @@ void ApplyForcePush(entt::registry& registry, glm::vec3 pos);
 void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
                             PhysicsComponent& physics_c,
                             entt::registry& registry, entt::entity& entity);
+void ApplyCannonPush(entt::registry& registry, glm::vec3 pos);
+void ApplyCannonPushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
+                            PhysicsComponent& physics_c,
+                            entt::registry& registry, entt::entity& entity);
 void ApplyMineStun(entt::registry& registry, PhysicsComponent& physics_c,
                    PlayerComponent& player_c, IDComponent& id_c);
 void TeleportToCollision(entt::registry& registry, glm::vec3 hit_pos,
@@ -543,6 +547,10 @@ void PlayerArenaCollision(entt::registry& registry) {
           player_c.can_jump = true;
         } else if (data.move_vector.y < 0.0f) {
           physics_c.velocity.y = 0.f;
+        } else if (data.move_vector.x) {
+          physics_c.velocity.x = 0.f;
+        } else if (data.move_vector.z) {
+          physics_c.velocity.z = 0.f;
         }
       }
     }
@@ -808,6 +816,15 @@ void PlayerProjectileCollision(entt::registry& registry) {
         switch (id.projectile_id) {
           case ProjectileID::CANNON_BALL: {
             // registry.destroy(projectile);
+            if (registry.has<IDComponent>(projectile)) {
+              auto id_c = registry.get<IDComponent>(projectile);
+              GameEvent missile_impact_event;
+              missile_impact_event.type = GameEvent::CANNON_IMPACT;
+              missile_impact_event.cannon_impact.projectile_id = id_c.id;
+              dispatcher.trigger(missile_impact_event);
+			}
+             
+            ApplyCannonPush(registry, proj_hitbox.center);
             DestroyEntity(registry, projectile);
             break;
           }
@@ -886,9 +903,17 @@ void ProjectileBallCollision(entt::registry& registry, entt::entity ball) {
     if (data.collision) {
       switch (proj_c.projectile_id) {
         case ProjectileID::CANNON_BALL: {
-          glm::vec3 dir = normalize(ball_hitbox.center - proj_hitbox.center);
-          ball_physics.velocity = dir * 20.0f;
-          ball_physics.is_airborne = true;
+          //glm::vec3 dir = normalize(ball_hitbox.center - proj_hitbox.center);
+          //ball_physics.velocity += dir * 20.0f;
+          //ball_physics.is_airborne = true;
+          if (registry.has<IDComponent>(projectile)) {
+            auto id_c = registry.get<IDComponent>(projectile);
+            GameEvent missile_impact_event;
+            missile_impact_event.type = GameEvent::CANNON_IMPACT;
+            missile_impact_event.cannon_impact.projectile_id = id_c.id;
+            dispatcher.trigger(missile_impact_event);
+          }
+          ApplyCannonPush(registry, proj_hitbox.center);
           ball_c.last_touch = proj_c.creator;
           // registry.destroy(projectile);
 
@@ -974,7 +999,11 @@ void ProjectileArenaCollision(entt::registry& registry) {
       if (data.collision) {
         switch (proj_id.projectile_id) {
           case ProjectileID::CANNON_BALL: {
-            // registry.destroy(projectile);
+            GameEvent missile_impact_event;
+            missile_impact_event.type = GameEvent::CANNON_IMPACT;
+            missile_impact_event.cannon_impact.projectile_id = id_c.id;
+            dispatcher.trigger(missile_impact_event);
+            ApplyCannonPush(registry, proj_hitbox.center);
             DestroyEntity(registry, projectile);
             break;
           }
@@ -1240,6 +1269,49 @@ void ApplyForcePushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
       ge.player_stunned.stun_time = player_c.stun_time;
       dispatcher.trigger(ge);
     }
+    std::cout << " Velocity: " << physics_c.velocity;
+  }
+}
+
+void ApplyCannonPush(entt::registry& registry, glm::vec3 pos) {
+  physics::Sphere force_push;
+  force_push.center = pos;
+
+  auto balls =
+      registry.view<physics::Sphere, BallComponent, PhysicsComponent>();
+  for (auto ball : balls) {
+    auto& hitbox = balls.get<physics::Sphere>(ball);
+    auto& physics_c = balls.get<PhysicsComponent>(ball);
+    ApplyCannonPushOnEntity(force_push.center, hitbox.center, physics_c,
+                           registry, ball);
+  }
+
+  auto players =
+      registry.view<physics::OBB, PlayerComponent, PhysicsComponent>();
+
+  for (auto player : players) {
+    auto& hitbox = players.get<physics::OBB>(player);
+    auto& physics_c = players.get<PhysicsComponent>(player);
+    auto& player_c = players.get<PlayerComponent>(player);
+    ApplyCannonPushOnEntity(force_push.center, hitbox.center, physics_c,
+                           registry, player);
+  }
+}
+
+void ApplyCannonPushOnEntity(glm::vec3 explosion_pos, glm::vec3 entity_pos,
+                            PhysicsComponent& physics_c,
+                            entt::registry& registry, entt::entity& entity) {
+  physics::Sphere force_push;
+  force_push.center = explosion_pos;
+  force_push.radius = 5.f;
+  glm::vec3 dir = entity_pos - force_push.center;
+  float length = glm::length(dir);
+  if (length < force_push.radius) {
+    physics_c.is_airborne = true;
+    float force = 25.f;
+    dir = glm::normalize(dir);
+    physics_c.velocity =
+        dir * force * (force_push.radius - length) / force_push.radius;
     std::cout << " Velocity: " << physics_c.velocity;
   }
 }

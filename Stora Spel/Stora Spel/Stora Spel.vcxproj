@@ -200,7 +200,9 @@
     <ClInclude Include="src\ecs\components\animation_component.hpp" />
     <ClInclude Include="src\ecs\components\ball_component.hpp" />
     <ClInclude Include="src\ecs\components\black_hole_component.hpp" />
+    <ClInclude Include="src\ecs\components\destroy_on_reset_component.h" />
     <ClInclude Include="src\ecs\components\follow_bone_component.hpp" />
+    <ClInclude Include="src\ecs\components\hook_component.hpp" />
     <ClInclude Include="src\ecs\components\skylight_component.hpp" />
     <ClInclude Include="src\ecs\components\button_component.hpp" />
     <ClInclude Include="src\ecs\components\fireworks_component.hpp" />
@@ -223,6 +225,7 @@
     <ClInclude Include="src\ecs\systems\lifetime_system.hpp" />
     <ClInclude Include="src\ecs\systems\particle_system.hpp" />
     <ClInclude Include="src\ecs\systems\gui_system.hpp" />
+    <ClInclude Include="src\ecs\systems\pickup_bob_system.hpp" />
     <ClInclude Include="src\ecs\systems\print_position_system.hpp" />
     <ClInclude Include="src\ecs\systems\render_system.hpp" />
     <ClInclude Include="shared\shared\camera_component.hpp" />
@@ -253,6 +256,7 @@
     <ClInclude Include="src\ecs\systems\trail_system.hpp" />
     <ClInclude Include="src\util\asset_paths.hpp" />
     <ClInclude Include="src\util\debugoverlay.hpp" />
+    <ClInclude Include="src\util\player_animation_controller.hpp" />
     <ClInclude Include="src\util\winadpihelpers.hpp" />
     <ClInclude Include="util\global_settings.hpp" />
     <ClInclude Include="util\input.hpp" />
@@ -305,6 +309,7 @@
     <None Include="Assets\shaders\Particle compute shaders\black_hole.comp" />
     <None Include="Assets\shaders\Particle compute shaders\dust.comp" />
     <None Include="Assets\shaders\Particle compute shaders\firework.comp" />
+    <None Include="Assets\shaders\Particle compute shaders\glitter.comp" />
     <None Include="Assets\shaders\Particle compute shaders\jet.comp" />
     <None Include="Assets\shaders\Particle compute shaders\sparks.comp" />
     <None Include="Assets\shaders\particle.geom" />

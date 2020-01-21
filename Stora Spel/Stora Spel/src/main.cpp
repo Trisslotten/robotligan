@@ -1,5 +1,10 @@
 #define NOMINMAX
 #pragma comment(lib, "ws2_32.lib")
+//#define _CRTDBG_MAP_ALLOC
+#include <GLFW/glfw3.h>  //NTS: This one must be included after certain other things
+#include <crtdbg.h>
+#include <stdlib.h>
+
 #include <NetAPI/networkTest.hpp>
 #include <NetAPI/packet.hpp>
 #include <NetAPI/socket/server.hpp>
@@ -10,7 +15,6 @@
 #include <iostream>
 #include <thread>
 
-#include <GLFW/glfw3.h>  //NTS: This one must be included after certain other things
 #include "engine.hpp"
 #include "util/debugoverlay.hpp"
 #include "util/meminfo.hpp"
@@ -19,7 +23,21 @@
 entt::dispatcher menu_dispatcher{};
 entt::dispatcher dispatcher{};
 
+extern "C" {
+_declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+}
+
+const bool kEnableConsole = false;
+
 int main(unsigned argc, char** argv) {
+  HWND hWnd = GetConsoleWindow();
+  if (kEnableConsole) {
+    ShowWindow(hWnd, SW_SHOW);
+  } else {
+    ShowWindow(hWnd, SW_HIDE);
+    std::cout.setstate(std::ios_base::failbit);
+  }
+
   std::cout << "WSA is initialized? " << std::boolalpha
             << NetAPI::Initialization::WinsockInitialized() << std::endl;
 
@@ -58,7 +76,7 @@ int main(unsigned argc, char** argv) {
       net_update_accum -= net_update_time;
     }
 
-    if (debug_timer.Elapsed() > 1.0) {
+    if (debug_timer.Elapsed() > 10.0) {
       double elapsed = debug_timer.Restart();
       std::cout << "DEBUG:    net update rate = " << num_net_updates / elapsed
                 << " U/s\n       render update rate = "
@@ -88,5 +106,6 @@ int main(unsigned argc, char** argv) {
             << " MB\n";
   */
   WSACleanup();
+  _CrtDumpMemoryLeaks();
   return EXIT_SUCCESS;
 }

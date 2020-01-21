@@ -9,6 +9,7 @@
 #include "shared/shared.hpp"
 #include "util/event.hpp"
 #include "util/timer.hpp"
+#include <set>
 
 class GameServer;
 
@@ -113,6 +114,10 @@ class ServerPlayState : public ServerState {
     switch_goal_timer_.Restart();
   }
 
+  void SetWantDab(long client_id) {
+    wants_dab_.insert(client_id);
+  }
+
  private:
   entt::entity CreateIDEntity();
   unsigned short reconnect_id_ = 100;
@@ -128,7 +133,7 @@ class ServerPlayState : public ServerState {
               unsigned int in_player_index);
   EntityID CreatePickUpComponents(glm::vec3 pos);
   EntityID GetNextEntityGuid() { return entity_guid_++; }
-  void OverTime();
+  bool OverTime();
   void EndGame();
   void WallAnimation();
   void UpdateSwitchGoals();
@@ -143,6 +148,8 @@ class ServerPlayState : public ServerState {
   std::vector<entt::entity> created_walls_;
   std::vector<entt::entity> created_mines_;
 
+  std::set<long> wants_dab_;
+
   EntityID entity_guid_ = 0;
 
   int last_spawned_team_ = 1;
@@ -154,6 +161,10 @@ class ServerPlayState : public ServerState {
   Timer match_timer_;
   Timer countdown_timer_;
   Timer reset_timer_;
+
+  Timer overtime_reset_timer_;
+  bool overtime_started_ = false;
+
   Timer pickup_spawn_timer_;
   float pickup_spawn_time_ = 10.0f;
   bool reset_ = false;

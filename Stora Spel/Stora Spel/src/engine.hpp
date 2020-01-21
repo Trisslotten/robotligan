@@ -39,7 +39,7 @@ class Engine {
   void UpdateSettingsValues() {
     sound_system_.GetSoundEngine().SetMasterVolume(
         GlobalSettings::Access()->ValueOf("SOUND_VOLUME") / 100.f);
-    glob::GetCamera().SetFov(GlobalSettings::Access()->ValueOf("GRAPHICS_FOV"));
+    //glob::GetCamera().SetFov(GlobalSettings::Access()->ValueOf("GRAPHICS_FOV"));
     mouse_sensitivity_ = GlobalSettings::Access()->ValueOf("INPUT_MOUSE_SENS");
   }
 
@@ -49,6 +49,8 @@ class Engine {
     previous_state_ = current_state_->Type();
     UpdateSettingsValues();
   }
+  void ClearPlayerInfos();
+
   NetAPI::Socket::Client& GetClient() { return client_; }
   NetAPI::Common::Packet& GetPacket() { return packet_; }
   void SetTakeInput(bool should_take) { take_game_input_ = should_take; }
@@ -60,14 +62,15 @@ class Engine {
   entt::registry* GetCurrentRegistry() { return registry_current_; }
   std::unordered_map<int, int> GetKeyBinds() { return keybinds_; };
 
-  std::unordered_map<long, std::string> player_names_;
   void SetSecondaryAbility(AbilityID id) { second_ability_ = id; }
   AbilityID GetSecondaryAbility() { return second_ability_; }
   std::vector<unsigned int> GetTeamScores() { return scores_; }
   std::vector<int>* GetPlayingPlayers();
+  /*
   void SetPlayingPlayers(std::unordered_map<int, LobbyPlayer> plyrs) {
     playing_players_ = plyrs;
   }
+  */
   int GetGameplayTimer() const;
   int GetCountdownTimer() const;
   float GetSwitchGoalCountdownTimer() const;
@@ -93,6 +96,10 @@ class Engine {
     play_state_.Init();
   }
 
+  StateType CurrentStateType() {
+    return current_state_->Type();
+  }
+
   std::unordered_map<long, PlayerStatInfo> GetPlayerScores() {
     return player_scores_;
   }
@@ -100,8 +107,22 @@ class Engine {
   // Replay stuff---
   ClientReplayMachine* GetReplayMachinePtr() { return this->replay_machine_; }
   bool IsRecording() const { return this->play_state_.IsRecording(); }
+  bool IsGoalsSwapped() const { return this->play_state_.IsGoalsSwitched(); }
   // Replay stuff---
 
+  // Entity destruction---
+  void EngineDestroyEntity(entt::registry& in_registry, entt::entity& in_entity);
+  // Entity destruction---
+
+  void ClearNames() {
+    player_names_.clear();
+  }
+
+  bool GetShoulSendInput() { return should_send_input_; }
+  bool GetTakeGameInput() { return take_game_input_; }
+
+  std::unordered_map<long, std::string> player_names_;
+  std::unordered_map<long, PlayerStatInfo> player_scores_;
  private:
   void SetKeybinds();
 
@@ -126,7 +147,7 @@ class Engine {
 
   // Registry
   entt::registry* registry_current_;
-  std::unordered_map<int, LobbyPlayer> playing_players_;
+  //std::unordered_map<int, LobbyPlayer> playing_players_;
   bool should_send_input_ = false;
 
   std::unordered_map<int, int> keybinds_;
@@ -160,9 +181,8 @@ class Engine {
   ParticleSystem particle_system_;
 
   AbilityID second_ability_ = AbilityID::NULL_ABILITY;
-  unsigned int new_team_ = std::numeric_limits<unsigned int>::max();
 
-  std::unordered_map<long, PlayerStatInfo> player_scores_;
+  
 
   StateType previous_state_;
 

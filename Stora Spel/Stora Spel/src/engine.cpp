@@ -1,15 +1,16 @@
 #include "engine.hpp"
 
 #include <GLFW/glfw3.h>
-#include <bitset>
-#include <glm/gtx/transform.hpp>
-#include <glob/graphics.hpp>
-#include <iostream>
 
+#include <bitset>
 #include <ecs\systems\skylight_system.hpp>
 #include <ecs\systems\trail_system.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glob/graphics.hpp>
 #include <glob\window.hpp>
+#include <iostream>
 #include <shared\pick_up_component.hpp>
+
 #include "ecs/components.hpp"
 #include "ecs/systems/animation_system.hpp"
 #include "ecs/systems/fireworks_system.hpp"
@@ -17,6 +18,7 @@
 #include "ecs/systems/input_system.hpp"
 #include "ecs/systems/lifetime_system.hpp"
 #include "ecs/systems/particle_system.hpp"
+#include "ecs/systems/pickup_bob_system.hpp"
 #include "ecs/systems/render_system.hpp"
 #include "ecs/systems/sound_system.hpp"
 #include "entitycreation.hpp"
@@ -74,13 +76,6 @@ void Engine::Init() {
   gameplay_timer_.push_back(4);
   gameplay_timer_.push_back(59);*/
 
-  std::vector<std::string> names = {"Bogdan",  "Smibel Gork", "Big King",
-                                    "Blorgon", "Thrall",      "Fisken",
-                                    "Snabel",  "BOI"};
-  for (int i = 0; i < names.size(); i++) {
-    player_names_[i] = names[i];
-  }
-
   // TODO: move to states
   gui_scoreboard_back_ =
       glob::GetGUIItem("assets/GUI_elements/Scoreboard_no_players.png");
@@ -95,7 +90,6 @@ void Engine::Init() {
   settings_state_.SetEngine(this);
   replay_state_.SetEngine(this);
   create_server_state_.SetEngine(this);
-
 
   main_menu_state_.Startup();
   settings_state_.Startup();
@@ -116,11 +110,11 @@ void Engine::Init() {
   // Initiate the Replay Machine
   unsigned int length_sec =
       (unsigned int)GlobalSettings::Access()->ValueOf("REPLAY_LENGTH_SECONDS");
-  unsigned int approximate_tickrate = 128;  // TODO: Replace with better
-                                            // approximation
+  unsigned int approximate_tickrate =
+      kClientUpdateRate;
   this->replay_machine_ =
       new ClientReplayMachine(length_sec, approximate_tickrate);
-  replay_machine_->SetEngine(this);
+  replay_machine_->SetEngineAndOwner(this, &this->replay_state_);
 
   dispatcher.sink<GameEvent>().connect<&ClientReplayMachine::ReceiveGameEvent>(
       *replay_machine_);
@@ -162,13 +156,6 @@ void Engine::Update(float dt) {
     glm::vec2 mouse_movement = mouse_sensitivity * Input::MouseMov();
 
     play_state_.AddPitchYaw(-mouse_movement.y, -mouse_movement.x);
-
-    if (Input::IsKeyPressed(GLFW_KEY_K)) { //???: What is this?
-      new_team_ = TEAM_BLUE;
-    }
-    if (Input::IsKeyPressed(GLFW_KEY_L)) {
-      new_team_ = TEAM_RED;
-    }
   }
 
   // Update current state
@@ -180,6 +167,7 @@ void Engine::Update(float dt) {
   if (wanted_state_type_ != current_state_->Type()) {
     // cleanup old state
     current_state_->Cleanup();
+    glob::ClearEffects();
     // set new state
     switch (wanted_state_type_) {
       case StateType::MAIN_MENU:
@@ -227,6 +215,16 @@ void Engine::Update(float dt) {
     glob::ReloadShaders();
   }
 
+  for (auto iter = player_names_.begin(); iter != player_names_.end();) {
+    if (iter->second == "") {
+      player_names_.erase(iter++);
+      player_scores_.erase(iter->first);
+      //playing_players_
+    } else {
+      ++iter;
+    }
+  }
+
   Input::Reset();
 }
 
@@ -262,17 +260,6 @@ void Engine::UpdateNetwork() {
     to_send << PacketBlockType::MESSAGE;
     message_.clear();
   }
-  /*
-  TODO: fix
-  // choose new team
-  if (new_team_ != std::numeric_limits<unsigned int>::max()) {
-    to_send << new_team_;
-    to_send << my_id_;
-    to_send << PacketBlockType::CHOOSE_TEAM;
-
-    new_team_ = std::numeric_limits<unsigned int>::max();
-  }
-  */
 
   if (should_send_input_) {
     // play_state_.AddPitchYaw(accum_pitch_, accum_yaw_);
@@ -388,7 +375,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       std::vector<EntityID> player_ids;
       EntityID my_id;
       int num_balls = 0;
-      
+
       int ability_id;
       int num_team_ids;
       glm::vec3 arena_scale;
@@ -432,7 +419,9 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
         psbi.enttity_id = e_id;
         psbi.assists = 0;
         psbi.saves = 0;
-        player_scores_[client_id] = psbi;
+        if (player_names_.count(client_id) != 0) {
+          player_scores_[client_id] = psbi;
+        }
       }
       play_state_.SetGoalsSwappedAtStart(switched);
       ChangeState(StateType::PLAY);
@@ -541,7 +530,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
     case PacketBlockType::UPDATE_POINTS: {
       long id;
       EntityID eid;
-      int goals, points, assists, saves, ping;
+      int goals, points, assists, saves;  // ping;
       unsigned int team;
       packet >> assists;
       packet >> saves;
@@ -590,8 +579,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
             registry_current_->view<PickUpComponent, IDComponent>();
         for (auto entity : pick_up_view) {
           if (id == pick_up_view.get<IDComponent>(entity).id) {
-
-			// Notify replay machine before entity is gone
+            // Notify replay machine before entity is gone
             if (this->IsRecording()) {
               this->replay_machine_->NotifyDestroyedObject(
                   id, *(this->registry_current_));
@@ -618,9 +606,12 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::RECEIVE_PICK_UP: {
+      long client_id;
       packet >> second_ability_;
+      packet >> client_id;
       GameEvent ge;
       ge.type = GameEvent::PICKED_UP_PICKUP;
+      ge.picked_up_pickup.player_id = GetPlayerScores()[client_id].enttity_id;
       dispatcher.trigger(ge);
       break;
     }
@@ -631,7 +622,7 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       break;
     }
     case PacketBlockType::LOBBY_UPDATE_TEAM: {
-      // std::cout << "PACKET: LOBBY_UPDATE_TEAM\n";
+      std::cout << "PACKET: LOBBY_UPDATE_TEAM\n";
       lobby_state_.HandleUpdateLobbyTeamPacket(packet);
       break;
     }
@@ -700,10 +691,11 @@ void Engine::HandlePacketBlock(NetAPI::Common::Packet& packet) {
       packet >> id;
 
       // Notify replay machine before entity is gone
-      if (this->IsRecording()) {
-        this->replay_machine_->NotifyDestroyedObject(
-            id, *(this->registry_current_));
-      }
+      // if (this->IsRecording()) {
+      //  this->replay_machine_->NotifyDestroyedObject(
+      //      id, *(this->registry_current_));
+      //}
+      // NTS: ^^^ Moved to dedicated function EngineDestroyEntity()
 
       // Remove the entity
       play_state_.DestroyEntity(id);
@@ -788,6 +780,14 @@ void Engine::SetCurrentRegistry(entt::registry* registry) {
   this->registry_current_ = registry;
 }
 
+void Engine::ClearPlayerInfos()
+{
+  this->player_names_.clear();
+  this->player_scores_.clear();
+  //this->playing_players_.clear();
+  lobby_state_.ClearLobbyPlayers();
+}
+
 void Engine::UpdateChat(float dt) {
   if (enable_chat_) {
     // chat_ code
@@ -836,6 +836,8 @@ void Engine::UpdateSystems(float dt) {
   trailsystem::Update(*registry_current_, dt);
   skylight_system::Update(*registry_current_);
   lifetime::Update(*registry_current_, dt);
+  pickup_bob_system::Update(*registry_current_, dt);
+
   RenderSystem(*registry_current_);
 }
 
@@ -877,7 +879,8 @@ void Engine::DrawScoreboard() {
         points
         ping
   */
-  if (current_state_->Type() == StateType::PLAY) {
+  if (current_state_->Type() == StateType::PLAY ||
+      current_state_->Type() == StateType::REPLAY) {
     for (auto& p_score : player_scores_) {
       if (p_score.second.team == TEAM_BLUE) {
         glm::vec2 text_pos = start_pos_blue + glm::vec2(0, blue_count * jump);
@@ -941,3 +944,20 @@ int Engine::GetCountdownTimer() const { return countdown_timer_sec_; }
 float Engine::GetSwitchGoalCountdownTimer() const { return switch_goal_timer_; }
 
 int Engine::GetSwitchGoalTime() const { return switch_goal_time_; }
+
+// Entity destruction---
+
+void Engine::EngineDestroyEntity(entt::registry& in_registry,
+                                 entt::entity& in_entity) {
+  // If we are recording and the entity has an ID,
+  // notify replay machine before entity is gone
+  if (this->IsRecording() && in_registry.has<IDComponent>(in_entity)) {
+    IDComponent id_c = in_registry.get<IDComponent>(in_entity);
+    this->replay_machine_->NotifyDestroyedObject(id_c.id, in_registry);
+  }
+
+  // Delete the entity from thr registry
+  in_registry.destroy(in_entity);
+}
+
+// Entity destruction---

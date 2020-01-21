@@ -16,7 +16,7 @@ glm::dvec2 mouse_pos(0, 0);
 glm::vec2 last_mouse_pos(0, 0);
 
 }  // namespace
-
+ 
 namespace glob {
 
 namespace window {

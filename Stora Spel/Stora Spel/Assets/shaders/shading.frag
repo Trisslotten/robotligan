@@ -4,6 +4,8 @@
 
 #define MAX_LIGHTS 32
 
+#define MAX_PLANES 9
+
 in vec4 v_shadow_spaces[MAX_SHADOWS];
 
 uniform int num_shadows;
@@ -11,11 +13,18 @@ uniform sampler2D shadow_maps[MAX_SHADOWS];
 uniform mat4 shadow_transforms[MAX_SHADOWS];
 uniform vec3 shadow_light_positions[MAX_SHADOWS];
 
-uniform vec3 light_pos[MAX_LIGHTS];
-uniform vec3 light_col[MAX_LIGHTS];
-uniform float light_radius[MAX_LIGHTS];
-uniform float light_amb[MAX_LIGHTS];
+uniform vec4 light_pos_radius[MAX_LIGHTS];
+uniform vec4 light_col_amb[MAX_LIGHTS];
+uniform float light_sphere_radii[MAX_LIGHTS];
 uniform int NR_OF_LIGHTS;
+
+uniform vec3 plane_normals[MAX_PLANES];
+uniform vec3 plane_positions[MAX_PLANES];
+uniform vec3 plane_colors[MAX_PLANES];
+uniform vec2 plane_sizes[MAX_PLANES];
+uniform int plane_diffuse[MAX_PLANES];
+uniform mat4 plane_matrices[2*MAX_PLANES];
+uniform int NR_OF_PLANES;
 
 in vec3 local_pos;
 in vec3 local_normal;
@@ -34,33 +43,28 @@ float rand(vec2 n) {
 }
 
 vec3 dither() {
-	vec3 result = vec3(0);
-	float num_colors = 256.0;
-	float val = 0.5*rand(gl_FragCoord.xy)/num_colors;
-	result += val;
-	return result;
+	const float num_colors = 256.0;
+	return vec3(0.5*rand(gl_FragCoord.xy)/num_colors);
 }
 
-float shadow(vec3 position, int index) {
-	float result = 1.0;
+const float near = 0.1;
+const float far = 300.0;
+float linearDepth(float depth)
+{
+	return far*near/(depth * (near - far) + far);
+}
 
-	vec4 shadow_space = v_shadow_spaces[index];
-	shadow_space /= shadow_space.w;
-
+float shadow(vec3 shadow_space, int index) {
 	vec2 uv = (shadow_space.xy+1.)*0.5;
-	float frag_depth = length(position - shadow_light_positions[index]);
+	shadow_space.z = linearDepth(shadow_space.z*0.5 + 0.5);// length(position - shadow_light_positions[index]);
 
 	vec2 depths = texture(shadow_maps[index], uv).xy;
-	float E_x2 = depths.y;
-	float Ex_2 = depths.x*depths.x;
-	float variance = E_x2 - Ex_2;
-
-	float mD = depths.x - frag_depth;
+	float variance = depths.y - depths.x*depths.x;
+	float mD = depths.x - shadow_space.z;
 	float p = variance / (variance + mD*mD);
 	
-	result = 0.0;
-	if(frag_depth <= depths.x)
-		result = 1.0;
+	// lessThanEqual
+	float result = float(shadow_space.z <= depths.x);
 	result = max(p, result);
 	result = clamp(result, 0.0, 1.0);
 
@@ -91,15 +95,43 @@ float triplanarRoughness() {
 	return result;
 }
 
-float calcDiffuse(vec3 surf_pos, vec3 normal, vec3 light_dir) {
+float calcDiffuse(const vec3 surf_pos, const vec3 normal, const vec3 light_dir) {
 	float diffuse = max(dot(light_dir, normal), 0);
 	return diffuse;
 }
-float calcSpecular(vec3 surf_pos, vec3 normal, vec3 light_dir, vec3 view_dir, float roughness) {
+float calcSpecular(const vec3 surf_pos, const vec3 normal, const vec3 light_dir, const vec3 view_dir, const float roughness) {
 	float glossy = 1-roughness;
 	vec3 half_vec = normalize(light_dir + view_dir);
 	float specular = pow(clamp(dot(normal, half_vec), 0, 1), 1 + 1000.0 * glossy);
 	return specular;
+}
+
+
+vec3 calcSphereLightVec(const vec3 view_dir, const vec3 normal, const vec3 light_vec, const float radius)
+{
+	vec3 r = normalize(reflect(normalize(view_dir), normal));
+	vec3 center_to_ray = dot(light_vec, r) * r - light_vec;
+	vec3 closest_point = light_vec + center_to_ray * clamp(radius/length(center_to_ray),0,1);
+	return normalize(closest_point);
+}
+
+float rectangleSolidAngle(vec3 pos, vec3 p0, vec3 p1, vec3 p2, vec3 p3) {
+	vec3 v0 = p0 - pos;
+	vec3 v1 = p1 - pos;
+	vec3 v2 = p2 - pos;
+	vec3 v3 = p3 - pos;
+
+	vec3 n0 = normalize(cross(v0, v1));
+	vec3 n1 = normalize(cross(v1, v2));
+	vec3 n2 = normalize(cross(v2, v3));
+	vec3 n3 = normalize(cross(v3, v0));
+
+	float g0 = acos(dot(-n0,n1));
+	float g1 = acos(dot(-n1,n2));
+	float g2 = acos(dot(-n2,n3));
+	float g3 = acos(dot(-n3,n0));
+
+	return g0 + g1 + g2 + g3 - 2 * 3.14159;
 }
 
 struct Lighting {
@@ -108,7 +140,7 @@ struct Lighting {
 	vec3 ambient;
 };
 
-Lighting shading(vec3 position, vec3 normal) {
+Lighting shading(const vec3 position, const vec3 normal, const float reflective) {
 	float roughness = 0.;
 	if(use_roughness != 0)
 	{
@@ -122,23 +154,78 @@ Lighting shading(vec3 position, vec3 normal) {
 	lighting.diffuse = vec3(0);
 	lighting.specular = vec3(0);
 
+	
 	for(int l = 0; l < NR_OF_LIGHTS; l++){
-		vec3 pointToLight = light_pos[l] - position;
-		float radius = light_radius[l];
-		lighting.ambient += light_amb[l];
-		if(length(pointToLight) <= radius) {
-			vec3 light_dir = normalize(pointToLight);
-			vec3 light_color = light_col[l];
+		const vec4 pos_rad = light_pos_radius[l];
+		vec3 pointToLight = pos_rad.xyz - position;
+		const vec4 col_amb = light_col_amb[l];
+		lighting.ambient += col_amb.w;
 
-			float intensity = 1.f - clamp(length(pointToLight)/radius, 0., 1.);
+		vec3 light_dir = normalize(pointToLight);
+
+		//float intensity = 1.f - clamp(length(pointToLight)/pos_rad.w, 0., 1.);
+
+		float t = clamp(length(pointToLight)/pos_rad.w, 0, 1);
+		float intensity = 1-sqrt(t);
+		if(intensity >= 1./255.) {
 			float diffuse = calcDiffuse(position, normal, light_dir);
-			float specular = calcSpecular(position, normal, light_dir, view_dir, roughness);
+			lighting.diffuse += diffuse * intensity * col_amb.rgb;
 
-			lighting.diffuse += diffuse * intensity * light_color;
-			lighting.specular += specular * intensity * light_color;
+			if(reflective >= 1.0/255.0) {
+				const float sphere_radius = light_sphere_radii[l];
+				if(sphere_radius > 0.) {
+					light_dir = calcSphereLightVec(view_dir, normal, pointToLight, sphere_radius);
+				}
+				float specular = calcSpecular(position, normal, light_dir, view_dir, roughness);
+				lighting.specular += specular * intensity * col_amb.rgb;
+			}
 		}
 	}
+	
+	//if(reflective >= 1.0/255.0) {
+	vec3 r = normalize(reflect(normalize(view_dir), normal));
+	for(int i = 0; i < NR_OF_PLANES; i++) {
+		const vec2 sizes = plane_sizes[i];
+		const vec3 ppos = plane_positions[i];
+		const vec3 plane_normal = plane_normals[i];
+		const vec3 up = vec3(0,1,0);
+		const vec3 side = normalize(cross(plane_normal, up));
 
+		const vec3 plane_color = plane_colors[i];
+
+		vec3 l = ppos - position;
+		float intensity = 1-sqrt(clamp(length(l)/50.0, 0, 1));
+
+		float t = dot(ppos - position, plane_normal) / dot(r, plane_normal);
+		const vec3 v = (position + t * r) - ppos;
+		if (abs(dot(v, up)) < sizes.x && abs(dot(v, side)) < sizes.y && t < 0) {
+			lighting.specular += plane_color;
+		}
+
+		if (reflective < 1.0 && plane_diffuse[i] != 0 && intensity >= 1.0/255.0) {
+			vec3 p0 = ppos + side * -sizes.y + up *  sizes.x;
+			vec3 p1 = ppos + side * -sizes.y + up * -sizes.x;
+			vec3 p2 = ppos + side *  sizes.y + up * -sizes.x;
+			vec3 p3 = ppos + side *  sizes.y + up *  sizes.x;
+			float solid_angle = rectangleSolidAngle(position,p0,p1,p2,p3);
+
+			float illuminance = solid_angle * 0.25 * (
+				clamp(dot(normalize(p0-position), normal), 0, 1) + 
+				clamp(dot(normalize(p1-position), normal), 0, 1) + 
+				clamp(dot(normalize(p2-position), normal), 0, 1) + 
+				clamp(dot(normalize(p3-position), normal), 0, 1));
+
+			lighting.diffuse += 4.*intensity * illuminance * plane_color;
+
+		}
+	}
+	//}
+
+	
+
+	//float dist = sdBox(position - vec3(10,0,0), vec3(0.1, 5, 5));
+	//lighting.diffuse += vec3(1,0.5,0.5)/(1.+ 0.01 * dist*dist);
+	
 	for(int i = 0; i < num_shadows; i++) {
 		vec4 shadow_space = v_shadow_spaces[i];
 		shadow_space.xyz /= shadow_space.w;
@@ -152,7 +239,7 @@ Lighting shading(vec3 position, vec3 normal) {
   			float len = length(max(q,0.0)) + min(max(q.x, q.y), 0.0);
 			float mask = smoothstep(0.5, 0.0, len);
 
-			mask *= shadow(position, i);
+			mask *= shadow(shadow_space.xyz, i);
 
 			float diffuse = calcDiffuse(position, normal, ld);
 			float specular = calcSpecular(position, normal, ld, view_dir, roughness);

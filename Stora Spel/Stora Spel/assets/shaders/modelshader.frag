@@ -2,7 +2,7 @@
 
 layout(location = 0) out vec4 out_color;
 layout(location = 1) out vec4 out_emission;
-layout(location = 2) out vec4 out_depth;
+//layout(location = 2) out vec4 out_depth;
 
 in vec3 local_pos;
 in vec3 local_normal;
@@ -41,7 +41,7 @@ struct Lighting {
 };
 
 // from file "shading.frag"
-Lighting shading(vec3 position, vec3 normal);
+Lighting shading(const vec3 position, const vec3 normal, const float reflective);
 vec3 dither();
 
 float triplanarMetallic() {
@@ -189,7 +189,7 @@ void main() {
 		emission_alpha = 0;
 	}
 
-	Lighting lighting = shading(frag_pos, normal);
+	Lighting lighting = shading(frag_pos, normal, reflective);
 	//	lighting.ambient = vec3(0.1);
 	//	lighting.diffuse = vec3(0);
 	//	lighting.specular = vec3(0);
@@ -223,10 +223,7 @@ void main() {
 	color += dither();
 	//float gamma = 2.2;
 	//color = pow(color, vec3(gamma));
-	//vec3 color = vec3(1);
-	//float alpha = 1.0;
-	//vec3 emission = vec3(1); 
 	out_color = vec4(color, alpha);
 	out_emission = vec4(emission/2.0, emission_alpha);
-	out_depth = vec4(gl_FragCoord.z,0,0,0);
+	//out_depth = vec4(gl_FragCoord.z,0,0,0);
 }

@@ -106,6 +106,8 @@ class LobbyState : public State {
   void HandlePlayerDisconnect(NetAPI::Common::Packet& packet);
   void SetMyId(int client_id) { my_id_ = client_id; }
 
+  void ClearLobbyPlayers();
+
  private:
   glm::vec2 ws_;
   entt::registry registry_lobby_;
@@ -200,6 +202,7 @@ class SettingsState : public State {
  private:
   void CreateSettingsMenu();
   void SaveSettings();
+  void CreateBackground();
   glob::Font2DHandle font_test_ = 0;
   entt::registry registry_settings_;
 
@@ -305,6 +308,7 @@ class PlayState : public State {
 
   // Replay stuff
   bool IsRecording() const { return this->recording_; }
+  bool IsGoalsSwitched() const {return this->goals_swapped_;}
   // void SetRecording(bool in_val) { this->recording_ = in_val; }
   //
 
@@ -342,6 +346,7 @@ class PlayState : public State {
   void CreateSpotlights();
   void CreateJumbotron();
   void ParticleComponentDestroyed(entt::entity e, entt::registry& registry);
+  void SoundComponentDestroyed(entt::entity e, entt::registry& registry);
   void CreateInGameMenu();
   void AddPlayer();
   void TestCreateLights();
@@ -389,8 +394,6 @@ class PlayState : public State {
   std::unordered_map<EntityID, glm::vec3> player_move_dirs_;
   FrameState server_predicted_;
   entt::entity my_entity_, arena_entity_, map_visual_entity_;
-
-  std::vector<entt::entity> Audiences;
 
   std::unordered_map<EntityID, std::pair<glm::vec3, bool>> physics_;
 
@@ -458,9 +461,13 @@ class PlayState : public State {
 
   std::vector<Fishermans> fishers_;
 
+  bool want_dab_ = false;
+
   // Replay stuff
   bool recording_ = false;
   // Replay stuff
+
+  EntityID last_goal_maker_;
 };
 
 class ReplayState : public State {
@@ -485,11 +492,21 @@ class ReplayState : public State {
   glob::Font2DHandle font_test_ = 0;
   glm::vec3 arena_scale_ = glm::vec3(0.f);
   bool goals_swapped_ = false;
+  entt::entity map_visual_entity_;
+  entt::entity blue_goal_light_;
+  entt::entity red_goal_light_;
 
   // Functions
   void AddConstantStuff();
+  void AddArenaStuff();
+  void AddBatmanLights();
+  void AddLights();
+  void AddSpotlights();
+  void AddAudience();
+  void AddJumbotron();
+  void AddCamera(glm::vec3 in_cam_pos);
+
   void UpdateCamera();
-  void UpdatePickUpMovement(/*float dt*/);
 
   void StartReplayMode();
   void PlayReplay();
@@ -498,17 +515,27 @@ class ReplayState : public State {
   void UpdateInGameMenu(bool show_menu);
   void CreateInGameMenu();
 
-  void ShowScoreboard();
+  void SoundComponentDestroyed(entt::entity e, entt::registry& registry);
 
+  void ShowScoreboard();
+  void DrawJumbotronText();
+
+  void DrawFishingLines();
+  void ParticleComponentDestroyed(entt::entity e, entt::registry& registry);
+
+  void ReplayReset();
+  void SetEnvironment(int in_code);
  public:
   void Startup() override;
   void Init() override;
   void Update(float dt) override;
   void UpdateNetwork() override;
   void Cleanup() override;
+  void ReplaySwitchGoals();
 
   StateType Type() { return StateType::REPLAY; }
   void SetArenaScale(glm::vec3 in_scale) { this->arena_scale_ = in_scale; }
+  bool IsReplaying() const { return this->replaying_; }
 };
 
 class CreateServerState : public State {

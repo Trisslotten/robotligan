@@ -5,27 +5,29 @@
 #include <slob/sound_engine.hpp>
 
 //#include "util/global_settings.hpp"
-#include "shared/shared.hpp"
 #include "ecs/components.hpp"
+#include "shared/shared.hpp"
 #include "util/timer.hpp"
 
 class Engine;
 
 class SoundSystem {
-public:
+ public:
   void Update(entt::registry& registry);
   void Init(Engine* engine);
   void PlayAmbientSound(entt::registry& registry);
+  void StopAmbientSound(entt::registry& registry);
   slob::SoundEngine& GetSoundEngine() { return sound_engine_; }
   void SetArenaScale(glm::vec3 scale);
-  
+
   void ReceiveGameEvent(const GameEvent& event);
   void ReceiveMenuEvent(const MenuEvent& event);
 
   std::unordered_map<AbilityID, slob::SoundHandle> GetAbilitySounds() {
     return ability_sounds_;
   }
-private:
+
+ private:
   Timer nudge_timer_;
   std::unordered_map<AbilityID, slob::SoundHandle> ability_sounds_;
 
@@ -66,5 +68,4 @@ private:
   Engine* engine_;
 };
 
-
-#endif // !SOUND_SYSTEM_HPP_
+#endif  // !SOUND_SYSTEM_HPP_

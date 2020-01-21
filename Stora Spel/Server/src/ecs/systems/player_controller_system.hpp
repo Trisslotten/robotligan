@@ -4,11 +4,11 @@
 #include <entt.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <shared/physics_component.hpp>
+#include <util/global_settings.hpp>
 #include "ecs/components/ability_component.hpp"
 #include "ecs/components/player_component.hpp"
 #include "shared/camera_component.hpp"
 #include "shared/transform_component.hpp"
-#include <util/global_settings.hpp>
 
 namespace player_controller {
 
@@ -47,9 +47,11 @@ void Update(entt::registry& registry, float dt) {
     cam_c.orientation = glm::normalize(cam_c.orientation);
     trans_c.SetRotation(glm::vec3(0, player_c.yaw, 0));
 
-    if (player_c.actions[PlayerAction::SHOOT] && !player_c.stunned && ability_c.shoot_cooldown <= 0.f) {
+    if (player_c.actions[PlayerAction::SHOOT] && !player_c.stunned &&
+        ability_c.shoot_cooldown <= 0.f) {
       ability_c.shoot = true;
-      ability_c.shoot_cooldown = GlobalSettings::Access()->ValueOf("PLAYER_SHOT_COOLDOWN");
+      ability_c.shoot_cooldown =
+          GlobalSettings::Access()->ValueOf("PLAYER_SHOT_COOLDOWN");
 
       GameEvent shoot_event;
       shoot_event.type = GameEvent::SHOOT;
@@ -122,26 +124,23 @@ void Update(entt::registry& registry, float dt) {
         accum_velocity = glm::normalize(accum_velocity) * player_c.walkspeed;
       }
 
-      if (player_c.actions[PlayerAction::SPRINT]) {
-        if (!player_c.sprinting &&
-            player_c.energy_current > player_c.energy_min_sprint) {
-          player_c.sprinting = true;
+      if (player_c.actions[PlayerAction::SPRINT] &&
+          player_c.energy_current > player_c.energy_min_sprint &&
+          !player_c.sprinting) {
+        player_c.sprinting = true;
 
-          GameEvent sprint_event;
-          sprint_event.type = GameEvent::SPRINT_START;
-          sprint_event.sprint_start.player_id =
-              registry.get<IDComponent>(entity).id;
-          dispatcher.trigger(sprint_event);
-        }
-
-        if (player_c.sprinting &&
-            player_c.energy_current > player_c.cost_sprint * dt) {
-          accum_velocity *= 2.f;
-          player_c.energy_current -= player_c.cost_sprint * dt;
-        }
+        GameEvent sprint_event;
+        sprint_event.type = GameEvent::SPRINT_START;
+        sprint_event.sprint_start.player_id =
+            registry.get<IDComponent>(entity).id;
+        dispatcher.trigger(sprint_event);
+      }
+      if (player_c.sprinting) {
+        accum_velocity *= 2.f;
+        player_c.energy_current -= player_c.cost_sprint * dt;
       }
       if ((!player_c.actions[PlayerAction::SPRINT] ||
-           player_c.energy_current <= 0.1f) &&
+           player_c.energy_current <= 0.0f) &&
           player_c.sprinting) {
         player_c.sprinting = false;
 
@@ -184,7 +183,7 @@ void Update(entt::registry& registry, float dt) {
       }
     }
 
-    if (!player_c.actions[PlayerAction::SPRINT]) {
+    if (!player_c.sprinting) {
       player_c.energy_current =
           std::min((player_c.energy_current + player_c.energy_regen_tick * dt),
                    player_c.energy_max);
@@ -195,7 +194,7 @@ void Update(entt::registry& registry, float dt) {
     float cur_move_speed = glm::length(sidemov);
     // if (cur_move_speed > 0.f) {
     // movement "floatiness", lower value = less floaty
-    float t = 0.0005f;
+    float t = 0.0001f;
     if (player_c.hooked) t = 0.05f;
     if (!player_c.stunned || (player_c.stunned && !physics_c.is_airborne)) {
       physics_c.velocity.x = glm::mix(physics_c.velocity.x, final_velocity.x,
@@ -206,11 +205,10 @@ void Update(entt::registry& registry, float dt) {
       physics_c.velocity.y = final_velocity.y;
     }
 
-      // Ability buttons
-      if (player_c.actions[PlayerAction::ABILITY_PRIMARY] &&
-          !player_c.stunned) {
-        ability_c.use_primary = true;
-      }
+    // Ability buttons
+    if (player_c.actions[PlayerAction::ABILITY_PRIMARY] && !player_c.stunned) {
+      ability_c.use_primary = true;
+    }
     if (player_c.actions[PlayerAction::ABILITY_SECONDARY] &&
         !player_c.stunned) {
       ability_c.use_secondary = true;
@@ -237,6 +235,36 @@ void Update(entt::registry& registry, float dt) {
       dispatcher.trigger(kick_event);
       kicked = true;
     }
+
+	/*
+	if (!player_c.actions[PlayerAction::KICK] &&
+        !player_c.actions[PlayerAction::SPRINT] &&
+        !player_c.actions[PlayerAction::JUMP] &&
+        !player_c.actions[PlayerAction::WALK_FORWARD] &&
+        !player_c.actions[PlayerAction::WALK_BACKWARD] &&
+        !player_c.actions[PlayerAction::WALK_RIGHT] &&
+        !player_c.actions[PlayerAction::WALK_LEFT] &&
+        !player_c.actions[PlayerAction::SHOOT]) {  // idle
+
+		if (!player_c.idle) {
+            player_c.idle = true;
+
+			GameEvent idle_event;
+            idle_event.type = GameEvent::PLAYER_IDLE;
+            idle_event.player_idle.player_id = id_c.id;
+            dispatcher.trigger(idle_event);
+		}
+    } else {
+        if (player_c.idle) {
+			player_c.idle = false;
+
+            GameEvent idle_event;
+            idle_event.type = GameEvent::PLAYER_IDLE_END;
+            idle_event.player_idle_end.player_id = id_c.id;
+            dispatcher.trigger(idle_event);
+        }
+	}
+	*/
 
     auto view_balls =
         registry.view<BallComponent, PhysicsComponent, TransformComponent>();
